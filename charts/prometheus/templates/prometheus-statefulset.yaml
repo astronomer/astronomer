@@ -46,6 +46,9 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
     spec:
+      {{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+      {{ end }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
@@ -56,7 +59,8 @@ spec:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          securityContext:
+            {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -98,7 +102,9 @@ spec:
             - --volume-dir=/etc/prometheus/config
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "prometheus.securityContext" . }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
           {{- if .Values.configMapReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
@@ -111,10 +117,11 @@ spec:
             mountPath: /etc/prometheus/alerts.d
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/config
-        {{ if not $useClusterRoles }}
         - name: filesd-reloader
           image: {{ include "filesdReloader.image" . }}
           imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
           resources: {{ toYaml .Values.filesdReloader.resources | nindent 12 }}
           {{- if .Values.filesdReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.filesdReloader.livenessProbe) . | nindent 12 }}
@@ -130,22 +137,31 @@ spec:
                   key: connection
             - name: DATABASE_SCHEMA_NAME
               value: "houston$default"
-            - name: DATABASE_TABLE_NAME
+            - name: CLUSTER_TABLE_NAME
+              value: Cluster
+            - name: DEPLOYMENT_TABLE_NAME
               value: Deployment
             - name: DATABASE_NAME
               value: {{ .Release.Name }}_houston
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
+            {{- if not $useClusterRoles }}
+            - name: ENABLE_DEPLOYMENT_SCRAPING
+              value: "False"
+            {{- end }}
+            - name: ENABLE_CLUSTER_SCRAPING
+              value: "True"
 {{- if .Values.filesdReloader.extraEnv }}
 {{ toYaml .Values.filesdReloader.extraEnv | indent 12 }}
 {{- end }}
           volumeMounts:
           - mountPath: /prometheusreloader/airflow
             name: filesd
-        {{- end }}
         - name: prometheus
           image: {{ include "prometheus.image" . }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           args:
@@ -168,10 +184,8 @@ spec:
               mountPath: /etc/prometheus/alerts.d
             - name: data
               mountPath: {{ .Values.dataDir }}
-            {{ if not $useClusterRoles }}
             - name: filesd
               mountPath: /prometheusreloader/airflow
-            {{- end }}
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
@@ -220,10 +234,8 @@ spec:
             items:
               - key: alerts
                 path: alerts.yaml
-        {{ if not $useClusterRoles }}
         - name: filesd
           emptyDir: {}
-        {{- end }}
   {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
@@ -236,7 +248,7 @@ spec:
           {{- toYaml .Values.persistence.annotations | nindent 10 }}
         {{- end }}
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: {{ .Values.persistence.size }}

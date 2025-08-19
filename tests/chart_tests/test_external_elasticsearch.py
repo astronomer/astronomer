@@ -1,12 +1,12 @@
 import base64
+import pathlib
 
 import jmespath
 import pytest
-import yaml
-import pathlib
 
-from tests import get_containers_by_name, supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 secret = base64.b64encode(b"sample-secret").decode()
 
@@ -256,19 +256,6 @@ class TestExternalElasticSearch:
             "appProtocol": "http",
         } in jmespath.search("spec.ports", docs[2])
 
-    def test_externalelasticsearch_houston_configmap_with_disabled_kibanaUIFlag(self, kube_version):
-        """Test Houston Configmap with kibanaUIFlag."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"customLogging": {"enabled": True}}},
-            show_only=[
-                "charts/astronomer/templates/houston/houston-configmap.yaml",
-            ],
-        )
-        doc = docs[0]
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["kibanaUIEnabled"] is False
-
     def test_external_es_network_selector_defaults(self, kube_version):
         """Test External Elasticsearch Service with NetworkPolicies."""
         docs = render_chart(
@@ -322,25 +309,28 @@ class TestExternalElasticSearch:
         doc = docs[0]
         assert doc["kind"] == "NetworkPolicy"
         assert [
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
             {
                 "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "scheduler", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "worker", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "triggerer", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
+                "podSelector": {
+                    "matchExpressions": [
+                        {
+                            "key": "component",
+                            "operator": "In",
+                            "values": [
+                                "dag-server",
+                                "metacleanup",
+                                "airflow-downgrade",
+                                "git-sync-relay",
+                                "dag-processor",
+                                "triggerer",
+                                "worker",
+                                "scheduler",
+                            ],
+                        }
+                    ],
+                    "matchLabels": {"tier": "airflow"},
+                },
             },
         ] == doc["spec"]["ingress"][0]["from"]
 

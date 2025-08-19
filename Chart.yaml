@@ -1,7 +1,7 @@
 apiVersion: v2
 name: astronomer
-version: 0.37.0
-appVersion: 0.37.0
+version: 0.37.1
+appVersion: 0.37.1
 description: Helm chart to deploy the Astronomer Platform
 icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
 keywords:
@@ -25,20 +25,8 @@ dependencies:
     condition: global.alertmanagerEnabled
     tags:
       - monitoring
-  - name: grafana
-    condition: global.grafanaEnabled
-    tags:
-      - monitoring
   - name: kube-state
     condition: global.kubeStateEnabled
-    tags:
-      - monitoring
-  - name: prometheus-blackbox-exporter
-    condition: global.blackboxExporterEnabled
-    tags:
-      - monitoring
-  - name: prometheus-node-exporter
-    condition: global.nodeExporterEnabled
     tags:
       - monitoring
   - name: prometheus-postgres-exporter
@@ -53,10 +41,6 @@ dependencies:
   # Logging stack
   - name: elasticsearch
     condition: global.elasticsearchEnabled
-    tags:
-      - logging
-  - name: kibana
-    condition: global.kibanaEnabled
     tags:
       - logging
   - name: fluentd

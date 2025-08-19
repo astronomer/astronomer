@@ -1,0 +1,171 @@
+#################################
+## NGINX Data Plane Deployment ##
+#################################
+{{- if eq .Values.global.plane.mode "data" }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}
+  labels:
+    tier: {{ template "nginx.name" . }}
+    component: dp-ingress-controller
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicas }}
+  minReadySeconds: {{ .Values.minReadySeconds }}
+  selector:
+    matchLabels:
+      tier: {{ template "nginx.name" . }}
+      component: dp-ingress-controller
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: {{ template "nginx.name" . }}
+        component: dp-ingress-controller
+        release: {{ .Release.Name }}
+        app: {{ template "nginx.name" . }}
+        version: {{ .Chart.Version }}
+      annotations:
+        traffic.sidecar.istio.io/includeInboundPorts: ""
+        checksum/configmap: {{ include (print $.Template.BasePath "/dataplane/nginx-dp-configmap.yaml") . | sha256sum }}
+        checksum/headers-configmap: {{ include (print $.Template.BasePath "/dataplane/nginx-dp-headers-configmap.yaml") . | sha256sum }}
+        {{- if .Values.global.istio.enabled }}
+        sidecar.istio.io/inject: "false"
+        {{- end }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+    spec:
+      serviceAccountName: {{ template "nginx.serviceAccountName" . }}-dp
+      {{- include "nginx.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+        - name: etc-nginx-copier
+          image: {{ template "nginx.image" . }}
+          imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext| nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              cp -r /etc/nginx/* /etc/nginx_copy
+              mkdir /tmp/nginx
+              mkdir /etc/ingress-controller/auth /etc/ingress-controller/geoip /etc/ingress-controller/ssl /etc/ingress-controller/telemetry
+          volumeMounts:
+            - name: etc-nginx
+              mountPath: /etc/nginx_copy
+            - name: tmp
+              mountPath: /tmp
+            - name: etc-ingress-controller
+              mountPath: /etc/ingress-controller
+      containers:
+        - name: nginx
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext| nindent 12 }}
+          image: {{ template "nginx.image" . }}
+          imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          args:
+            - /nginx-ingress-controller
+            - --default-backend-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-default-backend
+            - --configmap={{ .Release.Namespace }}/{{ .Release.Name }}-dp-{{ template "nginx.name" . }}-ingress-controller
+            - --ingress-class={{ template "nginx.ingress.class" . }}
+            - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
+            {{- if .Values.enableAnnotationValidations }}
+            - --enable-annotation-validation=true
+            {{- end }}
+            {{- if .Values.disableLeaderElection }}
+            - --disable-leader-election=true
+            {{- end }}
+            {{- if .Values.electionTTL }}
+            - --election-ttl={{ .Values.electionTTL }}
+            {{- end }}
+            {{- if .Values.enableTopologyAwareRouting }}
+            - --enable-topology-aware-routing=true
+            {{- end }}
+            - --election-id={{ .Values.electionId }}-{{ template "nginx.fullname" . }}
+            - --publish-service={{ .Release.Namespace }}/{{ .Release.Name }}-dp-{{ template "nginx.name" . }}
+            - --http-port={{ .Values.ports.http }}
+            - --https-port={{ .Values.ports.https }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.ports.http }}
+            - name: https
+              containerPort: {{ .Values.ports.https }}
+            - name: metrics
+              containerPort: {{ .Values.ports.metrics }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.healthz }}
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: etc-ingress-controller
+              mountPath: /etc/ingress-controller
+            - name: etc-nginx
+              mountPath: /etc/nginx
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+    {{- if eq .Values.antiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "kubernetes.io/hostname"
+              labelSelector:
+                matchLabels:
+                  tier: {{ template "nginx.name" . }}
+                  component: dp-ingress-controller
+                  release: {{ .Release.Name }}
+    {{- else if eq .Values.antiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: "kubernetes.io/hostname"
+              labelSelector:
+                matchLabels:
+                  tier: {{ template "nginx.name" . }}
+                  component: dp-ingress-controller
+                  release: {{ .Release.Name }}
+    {{- if .Values.global.platformNodePool.affinity }}
+{{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
+    {{- end }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+    {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: etc-ingress-controller
+          emptyDir: {}
+        - name: etc-nginx
+          emptyDir: {}
+{{- end }}

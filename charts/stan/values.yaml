@@ -4,15 +4,15 @@
 images:
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.20.5
+    tag: 3.21.3-3
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
-    tag: 0.25.6-8
+    tag: 0.25.6-11
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.15.0-5
+    tag: 0.16.0-2
     pullPolicy: IfNotPresent
 
 
@@ -173,13 +173,6 @@ store:
     # source: "dbname=postgres user=postgres password=stan host=stan-db sslmode=disable"
     #
     source: ""
-
-    # Initialize the database.
-    initdb:
-      enabled: false
-
-      # Client to use to init the db.
-      image: postgres:11
 
     dbName: postgres
     dbUser: postgres

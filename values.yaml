@@ -5,6 +5,15 @@ global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
 
+  # This is to select the mode in which the Astronomer platform will run.
+  # The mode can be one of: control, data, unified
+  # - control: The Astronomer platform will run in control plane mode, where it is responsible for platform management, orchestration, and user interfaces
+  # - data: The Astronomer platform will run in data plane mode, where it is responsible for executing and monitoring Airflow workloads.
+  # - unified: The Astronomer platform will run with both the data plane and control plane in the same cluster and namespace. This is the behavior found in Astronomer 0.x.
+  plane:
+    mode: "unified"  # one of: control, data, unified
+    domainSuffix: ""    # cluster-id
+
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
 
@@ -28,7 +37,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.20.5
+      tag: 3.21.3-3
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -64,9 +73,6 @@ global:
   # URL to the Astronomer helm repo
   helmRepo: "https://helm.astronomer.io"
 
-  # Single namespace mode
-  singleNamespace: false
-
   # Use cluster roles
   clusterRoles: true
 
@@ -75,20 +81,11 @@ global:
     enabled: false
     rootNamespace: "istio-config"
 
-  # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
-  veleroEnabled: false
-
   # Enable default postgresql database.
   # This is not recommended for production.
   postgresqlEnabled: false
 
-  # Enables a node exporter DaemonSet for node-level metrics
-  #nodeExporterEnabled: true
-
   prometheusPostgresExporterEnabled: false
-
-  # Enables blackbox exporter
-  #blackboxExporterEnabled: false
 
   # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
@@ -114,9 +111,6 @@ global:
   # Enable security context constraints required for OpenShift
   sccEnabled: false
 
-  # Enabled nodeexporter security context constraints required for OpenShift
-  nodeExporterSccEnabled: false
-
   # Enables namespace labels for network policies
   networkNSLabels: false
 
@@ -133,13 +127,16 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.6.3
+    tag: 0.6.5
     securityContexts:
       pod:
         fsGroup: 50000
     server:
       readinessProbe: {}
       livenessProbe: {}
+      nodeSelector: {}
+      affinity: {}
+      tolerations: []
     client:
       readinessProbe: {}
       livenessProbe: {}
@@ -154,7 +151,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.44.0-2
+    tag: 0.47.0-4
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -173,12 +170,13 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.27.3
+    tag: 1.27.4-3
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
     readinessProbe: {}
     livenessProbe: {}
+    ingressAllowedNamespaces: []
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;
@@ -264,7 +262,7 @@ global:
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
   # Pods in the platformNodePool include alertmanager, commander, houston, kube-replicator, astro-ui,registry,
-  # es-client, es-data, es-exporter, es-master, nginx-es, grafana, kibana, kube-state, nginx, nginx-default, prometheus.
+  # es-client, es-data, es-exporter, es-master, nginx-es, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   platformNodePool:
@@ -284,11 +282,6 @@ global:
   ssl:
     enabled: false
     mode: "prefer"
-    # we need separate mode for grafana:
-    # grafana starting from (7.5.0) only supports sslmodes: disable/require/verify-ca/verify-full
-    # https://github.com/grafana/grafana/blob/master/CHANGELOG.md#750-beta1-2021-03-04 (Postgres: SSL certification)
-    grafana:
-      sslmode: "require"
 
   # Storage class for persistent volumes. If you have multiple storage classes available this will force all charts with persistent
   # volumes to use the one specified here.
@@ -303,27 +296,30 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.28.1
+        tag: 0.28.0-2
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 7.2.6
+        tag: 7.4.3
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.23.1-4
+        tag: 1.24.1
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.18.0-2
+        tag: 0.19.0-1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 4.2.3-1
+        tag: 4.4.0-1
+      xcom:
+        repository: quay.io/astronomer/ap-alpine
+        tag: 3.21.3-2
   gitSyncRelay:
     images:
       gitDaemon:
-        repository: "quay.io/astronomer/ap-git-daemon"
-        tag: "3.20.5"
+        repository: quay.io/astronomer/ap-git-daemon
+        tag: 3.21.3-3
       gitSync:
-        repository: "quay.io/astronomer/ap-git-sync-relay"
-        tag: "0.1.9"
+        repository: quay.io/astronomer/ap-git-sync-relay
+        tag: 0.1.11
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
@@ -348,10 +344,10 @@ tags:
   # Enable platform components by default (nginx, astronomer)
   platform: true
 
-  # Enable monitoring stack (prometheus, kube-state, grafana)
+  # Enable monitoring stack (prometheus, kube-state)
   monitoring: true
 
-  # Enable logging stack (elasticsearch, fluentd, kibana)
+  # Enable logging stack (elasticsearch, fluentd)
   logging: true
 
   # NATS Streaming
@@ -446,41 +442,6 @@ nginx:
         memory: "100Mi"
 
 #################################
-## Grafana configuration
-#################################
-grafana:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
-
-  dashboards:
-    {}
-    # default:
-    #   velero:
-    #     file: dashboards/velero.json
-
-  # provide extra configurations to grafana via environment variables
-  extraEnvVars:
-    []
-    # - name: GF_SMTP_ENABLED
-    #   value: "true"
-    # - name: GF_SMTP_HOST
-    #   value: smtp.astronomer.io
-    # - name: GF_SMTP_USER
-    #   value: grafana
-    # - name: GF_SMTP_PASSWORD
-    #   valueFrom:
-    #     secretKeyRef:
-    #       name: grafana-smtp-secret
-    #       key: smtp_password
-
-
-#################################
 ## Prometheus configuration
 #################################
 prometheus:
@@ -561,36 +522,6 @@ stan:
       limits:
         cpu: "250m"
         memory: "100Mi"
-
-#################################
-## Blackbox Exporter configuration
-#################################
-prometheus-blackbox-exporter:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "70Mi"
-    limits:
-      cpu: "100m"
-      memory: "200Mi"
-
-  # define what astronomer platform services will be checked
-  # for up/down status. Enable this will also include
-  # the required network policies
-  astroServices:
-    commander:
-      enabled: true
-    houston:
-      enabled: true
-    registry:
-      enabled: true
-    grafana:
-      enabled: true
-    elasticsearch:
-      enabled: true
-    kibana:
-      enabled: true
 
 #################################
 ## Elasticsearch configuration
@@ -690,19 +621,6 @@ elasticsearch:
       limits:
         cpu: "100m"
         memory: "256Mi"
-
-#################################
-## Kibana configuration
-#################################
-kibana:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
 
 #################################
 ## Fluentd configuration

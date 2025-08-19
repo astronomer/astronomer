@@ -36,7 +36,6 @@ metadata:
     heritage: Helm
   annotations:
     kubernetes.io/ingress.class: "release-name-nginx"
-    kubernetes.io/tls-acme: "false"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = 'example.com' ) {
@@ -68,7 +67,7 @@ With that data, we can begin coming up with assertions to make. We will create a
 We create a new file, `tests/chart_tests/test_ingress_example.py`, with the following content:
 
 ```python
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 import pytest
 from tests import supported_k8s_versions
 ```
@@ -92,20 +91,16 @@ This very simple test will render the helm chart using the default kubernetes ve
 To run python tests, it's best to use a virtual environment. From the root of the git repository, we will create a virtual environment named `venv` and install the required files in it.
 
 ```
-$ virtualenv venv -p python3
-created virtual environment CPython3.9.5.final.0-64 in 299ms
-  creator CPython3Posix(dest=/Users/danielh/a/astronomer/venv, clear=False, no_vcs_ignore=False, global=False)
-  seeder FromAppData(download=False, pip=bundle, setuptools=bundle, wheel=bundle, via=copy, app_data_dir=/Users/danielh/Library/Application Support/virtualenv)
-    added seed packages: pip==21.1.2, setuptools==57.0.0, wheel==0.36.2
-  activators BashActivator,CShellActivator,FishActivator,PowerShellActivator,PythonActivator,XonshActivator
-$ venv/bin/pip3 install -r requirements/chart-tests.txt
-Collecting docker
-  Using cached docker-5.0.0-py2.py3-none-any.whl (146 kB)
-Collecting filelock
-  Using cached filelock-3.0.12-py3-none-any.whl (7.6 kB)
-Collecting jmespath
-  Using cached jmespath-0.10.0-py2.py3-none-any.whl (24 kB)
-
+$ make venv
+[ -d .venv ] || { uv venv -p 3.13 --seed || virtualenv .venv -p python3 ; }
+Using CPython 3.12.8
+Creating virtual environment with seed packages at: .venv
+ + pip==25.1.1
+ + setuptools==80.9.0
+ + wheel==0.45.1
+Activate with: source .venv/bin/activate
+.venv/bin/pip install -r tests/requirements.txt
+Collecting attrs==25.3.0 (from -r tests/requirements.txt (line 3))
 ... LOTS OF OUTPUT ...
 $
 ```
@@ -113,7 +108,7 @@ $
 The above setup only needs to be done once, or whenever you need to recreate your virtual environment. Now let's run our tests from the root of the repository:
 
 ```
-$ venv/bin/python -m pytest -sv tests/chart_tests/test_ingress_example.py
+$ .venv/bin/python -m pytest -sv tests/chart_tests/test_ingress_example.py
 Test session starts (platform: darwin, Python 3.9.5, pytest 6.2.4, pytest-sugar 0.9.4)
 cachedir: .pytest_cache
 rootdir: /Users/danielh/a/astronomer
@@ -145,7 +140,7 @@ def test_basic_ingress(kube_version):
 When we run this test, all versions found in the `supported_k8s_version` list that we imported will be tested:
 
 ```
-$ venv/bin/python -m pytest -sv tests/chart_tests/test_ingress_example.py
+$ .venv/bin/python -m pytest -sv tests/chart_tests/test_ingress_example.py
 Test session starts (platform: darwin, Python 3.9.5, pytest 6.2.4, pytest-sugar 0.9.4)
 cachedir: .pytest_cache
 rootdir: /Users/danielh/a/astronomer
@@ -164,7 +159,7 @@ Results (3.45s):
 Let's write a new test where testing the kubernetes version would be important. In our chart, we use the Ingress v1 syntax starting with kubernetes 1.19, but v1beta1 with anything before 1.19. We will once again extend the function that we originally started, doing additional assertions depending on what version of kubernetes we are testing against. We can inspect the data produced for different versions of kubernetes by substituting `--kube-version=1.18.0` in our original command with `--kube-version=1.19.0`, allowing us to easily see what kind of assertions we can make for the various kubernetes versions. Here is the full content of our test file:
 
 ```python
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 import pytest
 from tests import supported_k8s_versions
 
@@ -194,7 +189,7 @@ The output of this test will be exactly the same as it was before, so there's no
 Adding print statements to view what is happening as code runs is a common debugging technique that works with pytest as long as you run pytest with `--capture=no/-s`. If we add `print(f'{kube_version=} {docs[0]["apiVersion"]=}')` to our code above each of the last two assertions and run `pytest -s`, we will see:
 
 ```
-$ venv/bin/python -m pytest -s tests/chart_tests/test_ingress_example.py
+$ .venv/bin/python -m pytest -s tests/chart_tests/test_ingress_example.py
 Test session starts (platform: darwin, Python 3.9.5, pytest 6.2.4, pytest-sugar 0.9.4)
 rootdir: /Users/danielh/a/astronomer
 plugins: sugar-0.9.4
@@ -239,7 +234,7 @@ def test_basic_ingress(kube_version):
 Then we run that test like so:
 
 ```
-$ venv/bin/python -m pytest -s --pdb tests/chart_tests/test_ingress_example.py
+$ .venv/bin/python -m pytest -s --pdb tests/chart_tests/test_ingress_example.py
 Test session starts (platform: darwin, Python 3.9.5, pytest 6.2.4, pytest-sugar 0.9.4)
 rootdir: /Users/danielh/a/astronomer
 plugins: sugar-0.9.4

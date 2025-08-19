@@ -2,7 +2,8 @@
 ## STAN Service Role ##
 #######################
 {{- if not .Values.global.nats.jetStream.enabled }}
-{{- if .Values.stan.nats.serviceRoleAuth.enabled }}
+{{- if and .Values.stan.nats.serviceRoleAuth.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: nats.io/v1alpha2
 kind: NatsServiceRole
 metadata:
@@ -17,5 +18,6 @@ spec:
   permissions:
     publish: [">"]
     subscribe: [">"]
+{{- end }}
 {{- end }}
 {{- end }}

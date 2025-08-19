@@ -1,0 +1,50 @@
+############################
+## Commander GRPC Ingress ##
+############################
+{{- if eq .Values.global.plane.mode "data" }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-commander-api-ingress
+  labels:
+    component: api-ingress
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    nginx.ingress.kubernetes.io/enable-http2: "true"
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    {{- end }}
+    {{- if .Values.commander.ingress.annotation  }}
+    {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret }}
+  tls:
+    - secretName: {{ .Values.global.tlsSecret }}
+      hosts:
+        - commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+  {{- end }}
+  rules:
+  - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-commander
+              port:
+                name: commander-grpc
+{{- end }}

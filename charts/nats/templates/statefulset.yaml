@@ -1,6 +1,7 @@
 ######################
 ## Nats StatefulSet ##
 ######################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -8,6 +9,7 @@ metadata:
   labels:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    plane: {{ .Values.global.plane.mode }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -143,7 +145,9 @@ spec:
       - name: nats
         image: {{ include "nats.image" . }}
         imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
-        securityContext: {{ template "nats.securityContext" . }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          {{ template "nats.securityContext" . }}
         ports:
         - containerPort: 4222
           name: client
@@ -158,9 +162,9 @@ spec:
         - containerPort: 7777
           name: metrics
         command:
-         - "nats-server"
-         - "--config"
-         - "/etc/nats-config/nats.conf"
+        - "nats-server"
+        - "--config"
+        - "/etc/nats-config/nats.conf"
 
         # Required to be able to define an environment variable
         # that refers to other environment variables.  This env var
@@ -286,11 +290,11 @@ spec:
         imagePullPolicy: {{ .Values.reloader.pullPolicy }}
         securityContext: {{ template "nats.securityContext" . }}
         command:
-         - "nats-server-config-reloader"
-         - "-pid"
-         - "/var/run/nats/nats.pid"
-         - "-config"
-         - "/etc/nats-config/nats.conf"
+          - "nats-server-config-reloader"
+          - "-pid"
+          - "/var/run/nats/nats.pid"
+          - "-config"
+          - "/etc/nats-config/nats.conf"
         volumeMounts:
           - name: config-volume
             mountPath: /etc/nats-config
@@ -303,6 +307,9 @@ spec:
         {{- if .Values.reloader.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.reloader.readinessProbe) . | nindent 10 }}
         {{- end }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          {{ template "nats.securityContext" . }}
       {{ end }}
 
       ##############################
@@ -312,21 +319,20 @@ spec:
       - name: metrics
         image: {{ template "nats-exporter.image" . }}
         imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
-        securityContext: {{ template "nats.securityContext" . }}
         args:
-        - -connz
-        - -routez
-        - -subz
-        - -varz
-        - -prefix=gnatsd
-        - -use_internal_server_id
+          - -connz
+          - -routez
+          - -subz
+          - -varz
+          - -prefix=gnatsd
+          - -use_internal_server_id
         {{- if .Values.nats.jetstream.enabled }}
-        - -jsz=all
+          - -jsz=all
         {{- end }}
-        - http://localhost:8222/
+          - http://localhost:8222/
         ports:
-        - containerPort: 7777
-          name: metrics
+          - containerPort: 7777
+            name: metrics
         resources: {{ toYaml .Values.exporter.resources | nindent 10 }}
         {{- if .Values.exporter.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.exporter.livenessProbe) . | nindent 10 }}
@@ -334,6 +340,9 @@ spec:
         {{- if .Values.exporter.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.exporter.readinessProbe) . | nindent 10 }}
         {{- end }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          {{ template "nats.securityContext" . }}
       {{ end }}
 
   {{- if and ( or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
@@ -363,3 +372,4 @@ spec:
         storageClassName: {{ .Values.nats.jetstream.fileStorage.storageClassName | quote }}
         {{- end }}
   {{- end }}
+{{- end }}

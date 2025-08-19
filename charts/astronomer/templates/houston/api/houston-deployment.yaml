@@ -1,6 +1,7 @@
 ###################################
 ## Astronomer Houston Deployment ##
 ###################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -11,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.houston.replicas }}
   selector:
@@ -26,6 +28,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
         checksum/houston-backend-secret: {{ include (print $.Template.BasePath "/houston/api/houston-backend-secret.yaml") . | sha256sum }}
@@ -68,7 +71,7 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-            {{- include "houston_environment" . | indent 12 }}
+           {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
@@ -181,3 +184,4 @@ spec:
 {{- end }}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}

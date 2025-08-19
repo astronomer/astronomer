@@ -1,8 +1,9 @@
 ########################################################
 ## Astronomer Platform Namespace label configure Hook ##
 ########################################################
-{{- if .Values.nats.createJetStreamJob -}}
+{{- if and .Values.nats.createJetStreamJob -}}
 {{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled .Values.global.stan.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
@@ -28,7 +29,7 @@ metadata:
   annotations:
     "helm.sh/hook": "pre-install,pre-upgrade"
     "helm.sh/hook-weight": "-2"
-  name: {{ .Release.Name }}-jetstream-role-binding
+  name: {{ .Release.Name }}-jetstream-rolebinding
   namespace: {{ .Release.Namespace }}
 subjects:
 - kind: ServiceAccount
@@ -48,9 +49,10 @@ metadata:
     "helm.sh/hook-weight": "3"
   name: {{ template "jetStream.serviceAccountName" . }}
   labels:
-    tier: jetsream-migrator
-    component: jetsream-migrator
+    tier: jetstream-migrator
+    component: jetstream-migrator
     release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -64,17 +66,19 @@ metadata:
     app: {{ template "nats.name" . }}
     tier: nats
     version: {{ .Chart.Version }}
-    component: jetsream-migrator
+    component: jetstream-migrator
     release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   template:
     metadata:
       labels:
         app: {{ template "nats.name" . }}
         tier: nats
-        component: jetsream-migrator
+        component: jetstream-migrator
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
+        plane: {{ .Values.global.plane.mode }}
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
       {{- if .Values.global.istio.enabled }}
@@ -94,7 +98,9 @@ spec:
       containers:
       - name: jetstream-template-fixer
         image: {{ template "dbBootstrapper.image" . }}
-        securityContext: {{ template "nats.securityContext" . }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          {{ template "nats.securityContext" . }}
         resources: {{ toYaml .Values.nats.resources | nindent 10 }}
         command:
         - /bin/sh
@@ -102,7 +108,7 @@ spec:
         - |
           {{- if and .Values.global.stan.enabled (not .Values.global.nats.jetStream.enabled) }}
           data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.stanEnabled}'`
-          if [[ "$data" = "" ]]  ; then
+          if [[ "$data" = "" ]] ; then
             kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
             kubectl label namespace {{ .Release.Namespace }} stanEnabled=true;
             kubectl label namespace {{ .Release.Namespace }} jetstreamEnabled-
@@ -111,8 +117,8 @@ spec:
           fi
           {{ else }}
           data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.jetstreamEnabled}'`
-          if [[ "$data" = "" ]]  ; then
-            kubectl delete sts {{ .Release.Name }}-nats  -n {{ .Release.Namespace }};
+          if [[ "$data" = "" ]] ; then
+            kubectl delete sts {{ .Release.Name }}-nats -n {{ .Release.Namespace }};
             kubectl label namespace {{ .Release.Namespace }} jetstreamEnabled=true;
             kubectl label namespace {{ .Release.Namespace }} stanEnabled-
           else
@@ -121,3 +127,4 @@ spec:
           {{ end }}
 {{ end }}
 {{ end }}
+{{- end }}

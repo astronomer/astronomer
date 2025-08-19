@@ -1,6 +1,7 @@
 ##################
 ## Nats Service ##
 ##################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -17,6 +18,7 @@ metadata:
   labels:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   selector:
     tier: astronomer
@@ -46,3 +48,4 @@ spec:
   - name: gateways
     port: 7522
     appProtocol: tcp
+{{- end }}

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Show a list of docker images that are deployed by the astronomer platform."""
 
-import subprocess
-from pathlib import Path
-import yaml
 import argparse
-import sys
 import json
-
+import subprocess
+import sys
 from collections import defaultdict
+from pathlib import Path
+
+import yaml
 
 
 def get_containers_from_spec(spec):
@@ -27,10 +27,10 @@ def print_results(items):
 def default_spec_parser(doc, args):
     """Parse and report on Deployments, StatefulSets, and DaemonSets."""
 
-    item_containers = get_containers_from_spec(doc["spec"]["template"]["spec"])
-
     if args.verbose:
         print(f"Processing {doc['kind']} {doc['metadata']['name']}", file=sys.stderr)
+
+    item_containers = get_containers_from_spec(doc["spec"]["template"]["spec"])
 
     if args.private_registry and "quay.io" in yaml.dump(item_containers):
         print(f"{doc['kind']} {doc['metadata']['name'].removeprefix('release-name-')} uses quay.io instead of private registry")
@@ -86,7 +86,9 @@ def helm_template(args):
         None,
     )
 
-    command = "helm template . --set forceIncompatibleKubernetes=true -f tests/enable_all_features.yaml"
+    command = "helm template . --set forceIncompatibleKubernetes=true"
+    if args.enable_all_features:
+        command += " -f tests/enable_all_features.yaml"
     if args.private_registry:
         command += (
             " --set global.privateRegistry.repository=example.com/the-private-registry --set global.privateRegistry.enabled=True"
@@ -120,6 +122,13 @@ def main():
         action="store_true",
         help="only check for multiple tags for the same image, do not print the images",
     )
+    parser.add_argument(
+        "--no-enable-all-features",
+        dest="enable_all_features",
+        action="store_false",
+        help="Disable enable-all-features",
+    )
+
     args = parser.parse_args()
 
     docs = helm_template(args)

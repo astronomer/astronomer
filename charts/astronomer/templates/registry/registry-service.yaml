@@ -1,7 +1,8 @@
 #################################
 ## Astronomer Registry Service ##
 #################################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -36,4 +38,5 @@ spec:
     #   protocol: TCP
     #   port: {{ .Values.ports.registryScrape }}
     #   targetPort: {{ .Values.ports.registryScrape }}
+{{- end }}
 {{- end }}

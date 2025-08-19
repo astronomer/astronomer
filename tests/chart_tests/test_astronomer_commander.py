@@ -1,6 +1,17 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
+
+
+def get_env_value(env_var):
+    """Helper function to get the value of an environment variable."""
+    if "value" in env_var:
+        return env_var["value"]
+    if "valueFrom" in env_var:
+        return env_var["valueFrom"]
+    return None
 
 
 @pytest.mark.parametrize(
@@ -11,8 +22,21 @@ class TestAstronomerCommander:
     def test_astronomer_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for
         astronomer/commander."""
+        values = {
+            "astronomer": {
+                "airflowChartVersion": "99.88.77",
+                "commander": {
+                    "cloudProvider": "aws",
+                    "region": "us-west-2",
+                    "houstonAuthorizationUrl": "https://houston.example.com/auth",
+                },
+                "images": {"commander": {"tag": "88.77.66"}},
+            },
+            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainSuffix": "custom-dp-123"}},
+        }
         docs = render_chart(
             kube_version=kube_version,
+            values=values,
             show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
 
@@ -26,9 +50,20 @@ class TestAstronomerCommander:
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
         assert c_by_name["commander"]["resources"]["limits"]["memory"] == "2Gi"
         assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
+
+        assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "99.88.77"
+        assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"] != ""
+        assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
+        assert env_vars["COMMANDER_VERSION"] == "88.77.66"
+        assert "COMMANDER_DATAPLANE_DATABASE_URL" in env_vars
+        assert env_vars["COMMANDER_DATAPLANE_ID"] == "custom-dp-123"
+        assert env_vars["COMMANDER_REGION"] == "us-west-2"
+        assert env_vars["COMMANDER_BASE_DOMAIN"] == "custom-dp-123.example.com"
+        assert env_vars["COMMANDER_DATAPLANE_MODE"] == "data"
+        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
@@ -51,7 +86,7 @@ class TestAstronomerCommander:
         assert len(c_by_name) == 1
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
 
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
     def test_astronomer_commander_rbac_cluster_role_enabled(self, kube_version):
@@ -246,7 +281,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         assert cluster_role["kind"] == "ClusterRole"
         assert cluster_role["rules"] == [expected_rule]
@@ -267,13 +302,13 @@ class TestAstronomerCommander:
         }
 
         cluster_role_binding = docs[3]
-        expected_cluster_role = {
+        expected_scc_cluster_role = {
             "apiGroup": "rbac.authorization.k8s.io",
             "kind": "ClusterRole",
-            "name": "release-name-commander",
+            "name": "release-name-commander-scc",
         }
 
-        assert cluster_role_binding["roleRef"] == expected_cluster_role
+        assert cluster_role_binding["roleRef"] == expected_scc_cluster_role
 
         for i in range(4, 6):
             role_binding = docs[i]
@@ -316,7 +351,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         cluster_role = docs[0]
 
@@ -347,7 +382,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
 
     def test_astronomer_commander_clusterscopedresources_overrides_with_custom_flags(self, kube_version):
@@ -376,7 +411,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_HELM_DEBUG"] == "true"
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
         assert env_vars["COMMANDER_MANUAL_NAMESPACE_NAMES"] == "true"

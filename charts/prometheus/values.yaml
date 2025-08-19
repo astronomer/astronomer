@@ -18,7 +18,7 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.53.3
+    tag: 2.53.4
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.5
+    tag: 0.1.7
     pullPolicy: IfNotPresent
 
 
@@ -118,30 +118,7 @@ astroHTTPTargets:
   commander: true
   houston: true
   registry: true
-  grafana: true
-  kibana: true
   elasticsearch: true
-
-# additional HTTP endpoints to use as targets
-#  for the blackbox exporter HTTP tests
-# astronomer platform targets are already include in the template
-httpTargets: {}
-
-# list of 1 or more DNS servers to use as targets
-# for the blackbox exporter DNS tests
-dnsTargets:
-  - 10.98.0.10
-
-# Blackbox exporter tcp probe configuration
-# Currently is only configured to scape two targets
-# listed below. To disable the probe and all of the targets
-# set tcpProbe.enabled to false.
-tcpProbe:
-  enabled: false
-  # Enable Blackbox TCP Probe for pg sql proxy in cloud
-  probePGProxy: true
-  # Enable Blackbox TCP Probe for tiller in cloud
-  probeTiller: true
 
 # Enable prometheus lifecycle api
 enableLifecycle: true
@@ -199,14 +176,19 @@ additionalScrapeJobs: {}
 # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
 # external_labels: {}
 
-extraFlags: []
+federation:
+  externalLabels: {}
+
+extraFlags:
+- "--enable-feature=auto-config-reload"
 #- "--log.level=debug"
+
 
 # Amost mirror the prometheus config data structure for values we want to customize.
 # Convert lists to dicts for more explicit assignment.
 # Convert dashes to underscores for golang compatibility.
 config:
-  enableSelfScrape: true
+  enableSelfScrape: false
   scrape_configs:
     kubernetes_apiservers:
       tls_config:
@@ -216,3 +198,5 @@ rbac:
   role:
     kind: ClusterRole
     create: true
+
+priorityClassName: ~

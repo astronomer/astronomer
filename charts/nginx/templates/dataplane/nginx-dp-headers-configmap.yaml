@@ -1,0 +1,35 @@
+################################
+## NGINX Data Plane ConfigMap ##
+################################
+{{- if eq .Values.global.plane.mode "data" }}
+{{- $cspPolicyEnabled :=  .Values.cspPolicy.cdnEnabled }}
+{{- $connectsrc :=  eq $cspPolicyEnabled true | ternary .Values.cspPolicy.connectsrc "" }}
+{{- $fontsrc := eq $cspPolicyEnabled true| ternary .Values.cspPolicy.fontsrc "" }}
+{{- $scriptsrc := eq $cspPolicyEnabled true | ternary .Values.cspPolicy.scriptsrc "" }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}-ingress-controller-headers
+  labels:
+    tier: {{ template "nginx.name" . }}
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+data:
+  # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+  Content-Security-Policy: >-
+    default-src 'self' *.{{ .Values.global.baseDomain }} ;
+    connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} {{ $connectsrc }} ;
+    font-src *.{{ .Values.global.baseDomain }} cdn.astronomer.io {{ $fontsrc }} data: ;
+    frame-src 'self' ;
+    img-src 'self' data: * ;
+    script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.astronomer.io {{ $scriptsrc }} ;
+    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} {{ $scriptsrc }} ;
+    worker-src blob: *.{{ .Values.global.baseDomain }} ;
+  Referrer-Policy: "same-origin"
+  X-Frame-Options: "deny"
+  X-XSS-Protection: "1; mode=block"
+  X-Content-Type-Options: "nosniff"
+  Feature-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; xr-spatial-tracking 'none'"
+{{- end }}

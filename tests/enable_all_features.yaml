@@ -18,7 +18,6 @@ global:
   prometheusPostgresExporterEnabled: true
   rbacEnabled: true
   taskUsageMetricsEnabled: true
-  veleroEnabled: true
 astronomer:
   houston:
     cleanupAirflowDb:
@@ -28,11 +27,10 @@ astronomer:
 nats:
   nats:
     createJetStreamJob: true
+    reloader:
+      enabled: true
+    exporter:
+      enabled: true
 postgresql:
   replication:
     enabled: true
-prometheus-node-exporter:
-  endpoints:
-  - example.com
-  rbac:
-    create: true

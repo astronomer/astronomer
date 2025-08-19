@@ -1,7 +1,8 @@
 ################################
 ## Elasticsearch Data Service ##
 ################################
-{{- if .Values.data.persistence.enabled }}
+{{- if and .Values.data.persistence.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -13,6 +14,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: data
+    plane: {{ .Values.global.plane.mode }}
 spec:
   ports:
   - port: {{ .Values.common.ports.transport }}
@@ -23,4 +25,5 @@ spec:
     component: {{ template "elasticsearch.name" . }}
     release: {{ .Release.Name }}
     role: data
+{{- end }}
 {{- end }}

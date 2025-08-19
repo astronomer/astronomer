@@ -1,6 +1,10 @@
-from tests.chart_tests.helm_template_generator import render_chart
+from pathlib import Path
+
 import pytest
-from tests import get_containers_by_name, supported_k8s_versions
+
+from tests import git_root_dir, supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 cron_test_data = [
     ("development-angular-system-6091", 0, 5),
@@ -314,3 +318,45 @@ class TestAstronomerConfigSyncer:
         )
 
         assert len(docs) == 1
+
+    def test_astronomer_config_syncer_all_resources_disabled_for_control_mode(self, kube_version):
+        """Test that config syncer resources are not rendered in control plane mode."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"configSyncer": {"enabled": True}},
+            },
+            show_only=sorted(
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/astronomer/templates/config-syncer").glob("*")
+                ]
+            ),
+        )
+        assert len(docs) == 0
+
+    def test_astronomer_config_syncer_rbac_enabled_for_unified_and_data_mode(self, kube_version):
+        """Test that helm renders config-syncer cronjob when global.plane.mode is 'data' or 'unified'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "unified"}}},
+            show_only=["charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "CronJob"
+        assert doc["apiVersion"] == "batch/v1"
+        assert doc["metadata"]["name"] == "release-name-config-syncer"
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=["charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "CronJob"
+        assert doc["apiVersion"] == "batch/v1"
+        assert doc["metadata"]["name"] == "release-name-config-syncer"

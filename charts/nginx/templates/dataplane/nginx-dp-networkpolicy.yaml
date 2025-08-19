@@ -1,0 +1,62 @@
+###############################################
+## Data Plane Nginx controller NetworkPolicy ##
+###############################################
+{{- if and .Values.global.networkPolicy.enabled }}
+{{- if eq .Values.global.plane.mode "data" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-dp-nginx-policy
+  labels:
+    tier: astronomer
+    component: dp-nginx-policy
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  podSelector:
+    matchLabels:
+      component: ingress-controller
+      tier: nginx
+      plane: data
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from Control Plane
+  - from:
+    - podSelector:
+        matchLabels:
+          plane: {{ .Values.global.plane.mode }}
+          component: ingress-controller
+    - podSelector:
+        matchLabels:
+          plane: {{ .Values.global.plane.mode }}
+          component: houston
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+    - protocol: TCP
+      port: {{ .Values.ports.https }}
+  # Allow internal Airflow component communication
+  - from:
+    - podSelector:
+        matchLabels:
+          plane: data
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+    - protocol: TCP
+      port: {{ .Values.ports.https }}
+  egress:
+  - to:
+    # Allow traffic to Airflow components
+    - podSelector:
+        matchLabels:
+          plane: data
+    ports:
+    - protocol: TCP  # Allowing all ports for internal communication
+{{- end }}
+{{- end }}

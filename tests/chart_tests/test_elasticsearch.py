@@ -1,10 +1,11 @@
 import pytest
 import yaml
-from tests import (
+
+from tests import git_root_dir, supported_k8s_versions
+from tests.utils import (
     get_containers_by_name,
-    supported_k8s_versions,
 )
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -12,37 +13,98 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestElasticSearch:
-    def test_elasticsearch_with_sysctl_defaults(self, kube_version):
-        """Test ElasticSearch with sysctl config/values.yaml."""
+    def test_elasticsearch_defaults(self, kube_version):
+        """Test ElasticSearch default behaviors."""
         docs = render_chart(
             kube_version=kube_version,
-            values={},
             show_only=[
-                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
-                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml",
                 "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml",
             ],
         )
 
         vm_max_map_count = "vm.max_map_count=262144"
-        assert len(docs) == 3
+        assert len(docs) == 5
+
+        curator_doc, client_doc, data_doc, master_doc, nginx_doc = docs
+
+        # elasticsearch curator
+        assert curator_doc["kind"] == "CronJob"
+        assert curator_doc["metadata"]["name"] == "release-name-elasticsearch-curator"
+        assert curator_doc["spec"]["schedule"] == "0 1 * * *"
+
+        curator_pod = curator_doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert not curator_pod.get("nodeSelector")
+        assert not curator_pod.get("affinity")
+        assert not curator_pod.get("tolerations")
+
+        curator_containers = get_containers_by_name(curator_doc, include_init_containers=True)
+        assert len(curator_containers) == 1
+
+        curator_container = curator_containers["curator"]
+        assert curator_container.get("volumeMounts") == [{"name": "config-volume", "mountPath": "/etc/config"}]
+        assert curator_container["command"] == ["/bin/sh", "-c"]
+        assert curator_container["args"] == [
+            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
+        ]
+        assert not curator_container["securityContext"]
 
         # elasticsearch master
-        assert docs[0]["kind"] == "StatefulSet"
-        esm_containers = get_containers_by_name(docs[0], include_init_containers=True)
+        assert master_doc["kind"] == "StatefulSet"
+        esm_containers = get_containers_by_name(master_doc, include_init_containers=True)
+        assert len(esm_containers) == 2
         assert vm_max_map_count in esm_containers["sysctl"]["command"]
-        assert "persistentVolumeClaimRetentionPolicy" not in docs[0]["spec"]
+        assert "persistentVolumeClaimRetentionPolicy" not in master_doc["spec"]
+        assert esm_containers["es-master"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"mountPath": "/usr/share/elasticsearch/data", "name": "data"},
+            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
+        ]
 
         # elasticsearch data
-        assert docs[1]["kind"] == "StatefulSet"
-        esd_containers = get_containers_by_name(docs[1], include_init_containers=True)
+        assert data_doc["kind"] == "StatefulSet"
+        esd_containers = get_containers_by_name(data_doc, include_init_containers=True)
+        assert len(esd_containers) == 2
         assert vm_max_map_count in esd_containers["sysctl"]["command"]
-        assert "persistentVolumeClaimRetentionPolicy" not in docs[1]["spec"]
+        assert "persistentVolumeClaimRetentionPolicy" not in data_doc["spec"]
+        assert esd_containers["es-data"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"mountPath": "/usr/share/elasticsearch/data", "name": "data"},
+            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
+        ]
 
         # elasticsearch client
-        assert docs[2]["kind"] == "Deployment"
-        esc_containers = get_containers_by_name(docs[1], include_init_containers=True)
+        assert client_doc["kind"] == "Deployment"
+        esc_containers = get_containers_by_name(client_doc, include_init_containers=True)
+        assert len(esc_containers) == 3
         assert vm_max_map_count in esc_containers["sysctl"]["command"]
+        assert esc_containers["es-client"]["volumeMounts"] == [
+            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "es-data", "mountPath": "/usr/share/elasticsearch/data"},
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
+            {"name": "es-client-logs", "mountPath": "/usr/share/elasticsearch/logs"},
+        ]
+
+        assert esc_containers["es-config-dir-copier"]["volumeMounts"] == [
+            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config_copy"},
+        ]
+
+        assert esc_containers["es-config-dir-copier"]["image"] == esc_containers["es-client"]["image"]
+        assert esc_containers["es-client"]["image"].startswith("quay.io/astronomer/ap-elasticsearch:")
+
+        # elasticsearch nginx
+        assert nginx_doc["kind"] == "Deployment"
+        esn_containers = get_containers_by_name(nginx_doc, include_init_containers=True)
+        assert len(esn_containers) == 1
+        assert esn_containers["nginx"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"name": "var-cache-nginx", "mountPath": "/var/cache/nginx"},
+            {"name": "nginx-config-volume", "mountPath": "/etc/nginx"},
+        ]
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
         """Test ElasticSearch master, data and client with sysctl
@@ -59,7 +121,7 @@ class TestElasticSearch:
 
         assert len(docs) == 3
         for doc in docs:
-            assert not doc["spec"]["template"]["spec"]["initContainers"]
+            assert all("sysctl" not in x["name"] for x in doc["spec"]["template"]["spec"].get("initContainers") or [])
 
     def test_elasticsearch_fsgroup_defaults(self, kube_version):
         """Test ElasticSearch master, data and client with fsGroup default
@@ -230,25 +292,28 @@ class TestElasticSearch:
         doc = docs[0]
         assert "NetworkPolicy" == doc["kind"]
         assert [
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
             {
                 "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "scheduler", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "worker", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "triggerer", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
+                "podSelector": {
+                    "matchExpressions": [
+                        {
+                            "key": "component",
+                            "operator": "In",
+                            "values": [
+                                "dag-server",
+                                "metacleanup",
+                                "airflow-downgrade",
+                                "git-sync-relay",
+                                "dag-processor",
+                                "triggerer",
+                                "worker",
+                                "scheduler",
+                            ],
+                        }
+                    ],
+                    "matchLabels": {"tier": "airflow"},
+                },
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
@@ -279,6 +344,22 @@ class TestElasticSearch:
                 "location ~ ^/ { deny all; } } }",
             ]
         )
+        assert "client_max_body_size 100M" in nginx_config
+
+    def test_elastic_nginx_config_custom_max_body_size(self, kube_version):
+        """Test that custom max body size is properly set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"nginx": {"maxBodySize": "123456789M"}}},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        nginx_config = " ".join(doc["data"]["nginx.conf"].split())
+        assert "client_max_body_size 123456789M" in nginx_config
 
     def test_elastic_nginx_config_pattern_defaults_and_index_prefix_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search with index prefix overrides."""
@@ -515,28 +596,6 @@ class TestElasticSearch:
         assert "elasticsearch" in LS
         assert "https://release-name-elasticsearch:9200" in LS["elasticsearch"]["client"]["hosts"]
 
-    def test_elasticsearch_curator_cronjob_defaults(self, kube_version):
-        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config defaults"""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={},
-            show_only=["charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"],
-        )
-        assert len(docs) == 1
-        c_by_name = get_containers_by_name(docs[0])
-        assert docs[0]["kind"] == "CronJob"
-        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
-        assert docs[0]["spec"]["schedule"] == "0 1 * * *"
-        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-        assert spec["nodeSelector"] == {}
-        assert spec["affinity"] == {}
-        assert spec["tolerations"] == []
-        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
-        assert c_by_name["curator"]["args"] == [
-            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
-        ]
-        assert c_by_name["curator"]["securityContext"] == {}
-
     def test_elasticsearch_curator_cronjob_overrides(self, kube_version, global_platform_node_pool_config):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
         values = {
@@ -657,3 +716,78 @@ class TestElasticSearch:
         for doc in docs:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+    def test_elasticsearch_statefulset_with_scc_disabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 0
+
+    def test_elasticsearch_statefulset_with_scc_enabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"sccEnabled": True}},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "SecurityContextConstraints"
+        assert docs[0]["apiVersion"] == "security.openshift.io/v1"
+        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-anyuid"
+        assert docs[0]["users"] == ["system:serviceaccount:default:release-name-elasticsearch"]
+
+    es_component_templates = [
+        str(path.relative_to(git_root_dir)) for path in list(git_root_dir.glob("charts/elasticsearch/templates/*/*.yaml"))
+    ]
+
+    @pytest.mark.parametrize("doc", es_component_templates)
+    @pytest.mark.parametrize("plane_mode,should_render", [("data", True), ("unified", True), ("control", False)])
+    def test_elasticsearch_templates_render_in_data_and_unified_mode(self, kube_version, doc, plane_mode, should_render):
+        """Test that elasticsearch templates are not rendered in control or unified plane modes."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}, "elasticsearch": {"data": {"persistence": {"enabled": True}}}},
+            show_only=[doc],
+        )
+        if should_render:
+            assert len(docs) == 1, f"Document {doc} should render in {plane_mode} mode"
+        else:
+            assert len(docs) == 0, f"Document {doc} should not render in {plane_mode} mode"
+
+    def test_elasticsearch_ingress_default(self, kube_version):
+        """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Ingress"
+        assert doc["metadata"]["name"] == "release-name-elasticsearch-ingress"
+        assert doc["metadata"]["labels"]["component"] == "elasticsearch-logging-ingress"
+        assert doc["metadata"]["labels"]["tier"] == "elasticsearch-networking"
+        assert doc["metadata"]["labels"]["plane"] == "data"
+
+    @pytest.mark.parametrize("plane_mode", ["control", "unified"])
+    def test_elasticsearch_ingress_disabled_when_data_mode_is_disabled(self, kube_version, plane_mode):
+        """Test that helm does not render Elasticsearch ingress in control plane mode."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                }
+            },
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 0

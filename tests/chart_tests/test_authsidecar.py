@@ -1,9 +1,8 @@
-import jmespath
 import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 
 def common_houston_config_test_cases(docs):
@@ -44,18 +43,18 @@ class TestAuthSidecar:
         assert doc["metadata"]["name"] == "release-name-alertmanager"
         assert doc["spec"]["template"]["spec"]["containers"][1]["name"] == "auth-proxy"
 
-        assert jmespath.search("kind", docs[2]) == "Service"
-        assert jmespath.search("metadata.name", docs[2]) == "release-name-alertmanager"
-        assert jmespath.search("spec.type", docs[2]) == "ClusterIP"
+        assert "Service" == docs[2]["kind"]
+        assert "release-name-alertmanager" == docs[2]["metadata"]["name"]
+        assert "ClusterIP" == docs[2]["spec"]["type"]
         assert {
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
             "appProtocol": "tcp",
-        } in jmespath.search("spec.ports", docs[2])
+        } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
-        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
+        assert any(x["ports"][1] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
 
     def test_authSidecar_houston_with_custom_resources(self, kube_version):
         """Test custom resources are applied on Houston"""
@@ -86,6 +85,7 @@ class TestAuthSidecar:
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
+            "ingressAllowedNamespaces": [],
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
@@ -116,55 +116,18 @@ class TestAuthSidecar:
         assert doc["metadata"]["name"] == "release-name-prometheus"
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][0]["name"]
 
-        assert "Service" == jmespath.search("kind", docs[2])
-        assert "release-name-prometheus" == jmespath.search("metadata.name", docs[2])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert "Service" == docs[2]["kind"]
+        assert "release-name-prometheus" == docs[2]["metadata"]["name"]
+        assert "ClusterIP" == docs[2]["spec"]["type"]
         assert {
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
             "appProtocol": "tcp",
-        } in jmespath.search("spec.ports", docs[2])
+        } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
-        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
-
-    def test_authSidecar_kibana(self, kube_version):
-        """Test Kibana Service with authSidecar."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True}}},
-            show_only=[
-                "charts/kibana/templates/kibana-deployment.yaml",
-                "charts/kibana/templates/kibana-auth-sidecar-configmap.yaml",
-                "charts/kibana/templates/kibana-service.yaml",
-                "charts/kibana/templates/kibana-networkpolicy.yaml",
-                "charts/kibana/templates/ingress.yaml",
-            ],
-        )
-
-        assert len(docs) == 5
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-kibana"
-        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
-
-        assert "Service" == jmespath.search("kind", docs[2])
-        assert "release-name-kibana" == jmespath.search("metadata.name", docs[2])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
-        assert {
-            "name": "auth-proxy",
-            "protocol": "TCP",
-            "port": 8084,
-            "appProtocol": "tcp",
-        } in jmespath.search("spec.ports", docs[2])
-
-        assert "NetworkPolicy" == docs[3]["kind"]
-        assert [{"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}}] == jmespath.search(
-            "spec.ingress[0].from", docs[3]
-        )
-        assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
+        assert any(x["ports"][1] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
 
     def test_authSidecar_houston_configmap_without_annotation(self, kube_version):
         """Test Houston Configmap with authSidecar."""
@@ -190,6 +153,7 @@ class TestAuthSidecar:
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
+            "ingressAllowedNamespaces": [],
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
@@ -226,6 +190,7 @@ class TestAuthSidecar:
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
+            "ingressAllowedNamespaces": [],
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
@@ -260,6 +225,7 @@ class TestAuthSidecar:
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         expected_output = {
             "enabled": True,
+            "ingressAllowedNamespaces": [],
             "repository": "someregistry.io/my-custom-image",
             "tag": "my-custom-tag",
             "port": 8084,
@@ -271,3 +237,92 @@ class TestAuthSidecar:
             "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_with_ingress_allowed_namespace(self, kube_version):
+        """Test Houston Configmap with authSidecar ingressAllowedNamespaces."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "ingressAllowedNamespaces": ["astronomer", "ingress"],
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "securityContext": {"runAsUser": 1000},
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        common_houston_config_test_cases(docs)
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+        expected_output = {
+            "enabled": True,
+            "ingressAllowedNamespaces": ["astronomer", "ingress"],
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "securityContext": {
+                "runAsUser": 1000,
+            },
+            "resources": default_resource,
+            "annotations": {},
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_with_ingress_allowed_namespaces_empty(self, kube_version):
+        """Test All Services with authSidecar and set no values in ingressAllowedNamespaces.
+        Only include networkpolicies that have the network.openshift.io/policy-group: ingress label."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
+            show_only=[
+                "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
+                "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
+                "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
+                "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
+                "charts/prometheus/templates/prometheus-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 5
+
+        for doc in docs:
+            assert "NetworkPolicy" == doc["kind"]
+            namespaceSelectors = doc["spec"]["ingress"][0]["from"]
+            assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
+
+    def test_authSidecar_all_services_with_ingress_allowed_namespaces(self, kube_version):
+        """Test All Services with authSidecar and allow some traffic namespaces.
+        Only include networkpolicies that have the network.openshift.io/policy-group: ingress label"""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}},
+            show_only=[
+                "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
+                "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
+                "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
+                "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
+                "charts/prometheus/templates/prometheus-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 5
+
+        for doc in docs:
+            assert "NetworkPolicy" == doc["kind"]
+            namespaceSelectors = doc["spec"]["ingress"][0]["from"]
+            assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
+            assert {
+                "namespaceSelector": {
+                    "matchExpressions": [
+                        {"key": "kubernetes.io/metadata.name", "operator": "In", "values": ["astro", "ingress-namespace"]}
+                    ]
+                }
+            } in namespaceSelectors

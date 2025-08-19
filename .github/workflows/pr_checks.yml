@@ -30,6 +30,11 @@ jobs:
             ((errors += 1))
           fi
 
+          if [[ "${PR_BODY}" == *"Yet to update"* ]] ; then
+            echo "PR description contains 'Yet to update'"
+            ((errors += 1))
+          fi
+
           if [[ "${KTLO}" != "true" ]] && [[ "${PR_BODY}" != *"astronomer/issues"* ]] ; then
             echo "PR description does not contain an issue link"
             ((errors += 1))

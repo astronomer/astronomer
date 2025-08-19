@@ -8,6 +8,7 @@
 *.tmp
 *.tmproj
 *~
+.*_cache
 .bzr/
 .bzrignore
 .DS_Store
@@ -19,6 +20,7 @@
 .project
 .pytest_cache
 .svn/
+.venv*
 /.circleci
 /.github
 /.pre-commit-config.yaml
@@ -36,5 +38,7 @@
 /tests
 /tiller-rbac
 /values.schema.json.example
-/venv
 __pycache__
+prof
+test-results
+venv*

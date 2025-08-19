@@ -2,7 +2,8 @@
 ## Stan NetworkPolicy   ##
 ##########################
 {{- if not .Values.global.nats.jetStream.enabled }}
-{{- if .Values.global.networkPolicy.enabled }}
+{{- if and .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -43,5 +44,6 @@ spec:
     ports:
     - protocol: TCP
       port: 8222
+{{- end }}
 {{- end }}
 {{- end }}

@@ -1,6 +1,7 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -8,11 +9,14 @@ metadata:
   labels:
     component: commander
     tier: astronomer
+    plane: {{ .Values.global.plane.mode }}
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+
   annotations:
+    checksum/jwks-secret: {{ printf "%s-commander-jwt-secret" .Release.Name | sha256sum }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:
@@ -30,6 +34,7 @@ spec:
         release: {{ .Release.Name }}
         app: commander
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
 {{- if .Values.global.podAnnotations }}
@@ -52,7 +57,9 @@ spec:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext | nindent 12 }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
           {{- if .Values.commander.command }}
@@ -123,14 +130,27 @@ spec:
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: "false"
             {{- end }}
+            {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
-{{- if .Values.commander.volumeMounts }}
-{{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
-{{- end }}
-{{- if .Values.commander.extraContainers }}
-{{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
-{{- end }}
+            - name: commander-home
+              mountPath: /home/commander
+              subPath: home
+            - mountPath: /app/metadata.yaml
+              name: metadata
+              subPath: metadata.yaml
+          {{- if .Values.commander.volumeMounts }}
+          {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
+          {{- end }}
+          {{- if .Values.commander.extraContainers }}
+          {{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
+          {{- end }}
       volumes:
-{{- if .Values.commander.extraVolumes }}
-{{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
+        - name: commander-home
+          emptyDir: {}
+        - configMap:
+            name: {{ .Release.Name }}-commander-metadata
+          name: metadata
+      {{- if .Values.commander.extraVolumes }}
+      {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
+      {{- end }}
 {{- end }}

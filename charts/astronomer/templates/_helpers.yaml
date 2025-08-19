@@ -1,12 +1,19 @@
 {{ define "helm.globals" -}}
   {{- $globals := dict -}}
   {{- $_ := set $globals "baseDomain" (default "" .Values.global.baseDomain) -}}
-  {{- $_ := set $globals "acme" (.Values.global.acme) -}}
   {{- $_ := set $globals "rbacEnabled" .Values.global.rbacEnabled -}}
   {{- $_ := set $globals "releaseName" (print .Release.Name | toString) -}}
   {{- $_ := set $globals "releaseNamespace" (print .Release.Namespace | toString) -}}
   {{- $_ := set $globals "releaseVersion" (print .Chart.Version | toString) -}}
   {{ $globals | toJson | print }}
+{{- end }}
+
+{{ define "defaultXcomSidecarImage" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-alpine:{{ .Values.global.airflow.images.xcom.tag }}
+{{- else -}}
+{{ .Values.global.airflow.images.xcom.repository}}:{{ .Values.global.airflow.images.xcom.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "commander.image" -}}
@@ -143,6 +150,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "commander.jwksServiceAccountName" -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.commander.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{ define "configSyncer.serviceAccountName" -}}
 {{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
@@ -157,6 +172,32 @@
 {{- else -}}
     {{ default "default" .Values.commander.serviceAccount.name }}
 {{- end }}
+{{- end }}
+
+{{ define "commander_metadataEnv" -}}
+- name: COMMANDER_AIRFLOW_CHART_VERSION
+  value: {{ .Values.airflowChartVersion | quote }}
+- name: COMMANDER_DATAPLANE_CHART_VERSION
+  value: "{{ .Chart.Version }}"
+- name: COMMANDER_CLOUD_PROVIDER
+  value: {{ .Values.commander.cloudProvider | default "local" | quote }}
+- name: COMMANDER_REGION
+  value: {{ .Values.commander.region | default "local" | quote }}
+- name: COMMANDER_VERSION
+  value: {{ .Values.images.commander.tag | quote }}
+- name: COMMANDER_DATAPLANE_DATABASE_URL
+  valueFrom:
+    secretKeyRef:
+      name: astronomer-bootstrap
+      key: connection
+- name: COMMANDER_DATAPLANE_ID
+  value: {{ .Values.global.plane.domainSuffix }}
+- name: COMMANDER_BASE_DOMAIN
+  value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+- name: COMMANDER_DATAPLANE_MODE
+  value: {{ .Values.global.plane.mode | quote }}
+- name: COMMANDER_HOUSTON_JWKS_ENDPOINT
+  value: "https://houston.{{ .Values.global.baseDomain }}"
 {{- end }}
 
 {{- define "registry.gcsVolume" }}
@@ -224,7 +265,7 @@ s3:
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
-  value: {{ template "houston.jwtRegistryCertificatePath" . }}
+  value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__ISSUER
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
@@ -256,11 +297,14 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+- name: COMMANDER_WAIT_ENABLED
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
+- name: REGISTRY_WAIT_ENABLED
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
 {{- if .Values.houston.updateRuntimeCheck.enabled }}
 - name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
   value: {{ .Values.houston.updateRuntimeCheck.url }}
 {{- end }}
-
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
@@ -281,13 +325,6 @@ s3:
 - name: houston-jwt-certificate-volume
   mountPath: {{ template "houston.jwtCertificatePath" . }}
   subPath: tls.crt
-{{ if .Values.global.tlsSecret }}
-- name: registry-tls-volume
-  mountPath: {{ template "houston.jwtRegistryCertificatePath" . }}
-- name: registry-tls-volume
-  mountPath: {{ template "houston.tlsRegistryCertificatePath" . }}
-  subPath: tls.crt
-{{- end }}
 {{ if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
 {{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 - name: nats-jetstream-client-tls-volume
@@ -323,11 +360,6 @@ s3:
 - name: houston-jwt-certificate-volume
   secret:
     secretName: {{ template "houston.jwtCertificateSecret" . }}
-{{ if .Values.global.tlsSecret }}
-- name: registry-tls-volume
-  secret:
-    secretName: {{ .Values.global.tlsSecret }}
-{{- end }}
 {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
 {{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 - name: nats-jetstream-client-tls-volume
@@ -458,3 +490,11 @@ tlsEnabled: false
 {{ toYaml .Values.securityContext | indent 16 }}
 {{- end }}
 {{- end }}
+
+{{- define "houston.eventsUrl" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+https://houston.{{ .Values.global.baseDomain }}/v1/registry/events
+{{- else -}}
+http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events
+{{- end }}
+{{- end -}}

@@ -1,6 +1,7 @@
 #######################
 ## Fluentd ConfigMap ##
 #######################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -97,7 +98,7 @@ data:
       @type kubernetes_metadata
     </filter>
 
-    # Filter down by namespace and component (scheduler/webserver/worker/triggerer/git-sync-relay/dag-server/airflow-downgrade)
+    # Filter down by namespace and component (scheduler/webserver/api-server/worker/triggerer/git-sync-relay/dag-server/airflow-downgrade/meta-cleanup/dag-processor)
     <filter kubernetes.**>
       @type grep
       <regexp>
@@ -117,7 +118,7 @@ data:
       </regexp>
       <regexp>
         key $.kubernetes.labels.component
-        pattern ^(scheduler|webserver|worker|triggerer|git-sync-relay|dag-server|airflow-downgrade)$
+        pattern ^(scheduler|webserver|api-server|worker|triggerer|git-sync-relay|dag-server|airflow-downgrade|meta-cleanup|dag-processor)$
       </regexp>
     </filter>
 
@@ -247,3 +248,4 @@ data:
 {{ .Values.extraLogStores | indent 6}}
       {{- end }}
     </match>
+{{- end -}}

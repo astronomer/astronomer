@@ -1,6 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -27,7 +29,7 @@ class TestPrometheusStatefulset:
         doc = docs[0]
 
         self.prometheus_common_tests(doc)
-        assert len(doc["spec"]["template"]["spec"]["containers"]) == 2
+        assert len(doc["spec"]["template"]["spec"]["containers"]) == 3
 
         sc = doc["spec"]["template"]["spec"]["securityContext"]
         assert sc["fsGroup"] == 65534
@@ -44,6 +46,7 @@ class TestPrometheusStatefulset:
             {"mountPath": "/etc/prometheus/config", "name": "prometheus-config-volume"},
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
+            {"mountPath": "/prometheusreloader/airflow", "name": "filesd"},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
@@ -54,6 +57,10 @@ class TestPrometheusStatefulset:
         assert c_by_name["prometheus"]["readinessProbe"]["periodSeconds"] == 5
         assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 3
         assert c_by_name["prometheus"]["readinessProbe"]["timeoutSeconds"] == 1
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
+        assert c_by_name["filesd-reloader"]["image"].startswith("quay.io/astronomer/ap-kuiper-reloader:")
+        assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
 
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(
@@ -65,7 +72,6 @@ class TestPrometheusStatefulset:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        print(c_by_name["prometheus"]["args"])
         assert "--log.level=debug" in c_by_name["prometheus"]["args"]
 
     def test_prometheus_with_multiple_extraFlags(self, kube_version):
@@ -83,7 +89,6 @@ class TestPrometheusStatefulset:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        print(c_by_name["prometheus"]["args"])
         assert "--enable-feature=remote-write-receiver" in c_by_name["prometheus"]["args"]
         assert "--enable-feature=agent" in c_by_name["prometheus"]["args"]
 
@@ -188,9 +193,12 @@ class TestPrometheusStatefulset:
         c_by_name = get_containers_by_name(docs[0])
         env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["filesd-reloader"]["env"]}
         assert env_vars["DATABASE_SCHEMA_NAME"] == "houston$default"
-        assert env_vars["DATABASE_TABLE_NAME"] == "Deployment"
+        assert env_vars["DEPLOYMENT_TABLE_NAME"] == "Deployment"
+        assert env_vars["CLUSTER_TABLE_NAME"] == "Cluster"
         assert env_vars["DATABASE_NAME"] == "release-name_houston"
         assert env_vars["FILESD_FILE_PATH"] == "/prometheusreloader/airflow"
+        assert env_vars["ENABLE_DEPLOYMENT_SCRAPING"] == "False"
+        assert env_vars["ENABLE_CLUSTER_SCRAPING"] == "True"
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
 
     def test_prometheus_filesd_reloader_extraenv_enabled(self, kube_version):
@@ -241,3 +249,17 @@ class TestPrometheusStatefulset:
         assert len(docs) == 2
         assert docs[0]["kind"] == "Role"
         assert docs[1]["kind"] == "RoleBinding"
+
+    def test_prometheus_priorityclass_overrides(self, kube_version):
+        """Test to validate prometheus with priority class configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"prometheus": {"priorityClassName": "prometheus-priority-pod"}},
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        self.prometheus_common_tests(docs[0])
+        spec = doc["spec"]["template"]["spec"]
+        assert "priorityClassName" in spec
+        assert "prometheus-priority-pod" == spec["priorityClassName"]

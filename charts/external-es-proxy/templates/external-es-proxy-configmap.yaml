@@ -1,6 +1,7 @@
 ###################################
 ## Elasticsearch Proxy ConfigMap ##
 ###################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -11,6 +12,7 @@ metadata:
     chart: {{ template "external-es-proxy.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
 data:
   nginx.conf: |
     worker_processes 1;
@@ -77,3 +79,4 @@ data:
         }
       }
     }
+{{- end }}

@@ -1,9 +1,10 @@
-import pytest
 import jmespath
+import pytest
 import yaml
-from tests import get_containers_by_name
+
 from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import get_containers_by_name, get_env_vars_dict
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -31,6 +32,7 @@ class TestHoustonApiDeployment:
         assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
         assert doc["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
         assert doc["spec"]["template"]["metadata"]["labels"].get("release") == "release-name"
+        assert doc["spec"]["template"]["metadata"]["labels"].get("plane") == "unified"
 
         labels = doc["spec"]["template"]["metadata"]["labels"]
         assert {
@@ -38,6 +40,7 @@ class TestHoustonApiDeployment:
             "component": "houston",
             "release": "release-name",
             "app": "houston",
+            "plane": "unified",
         } == {x: labels[x] for x in labels if x != "version"}
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
@@ -47,6 +50,35 @@ class TestHoustonApiDeployment:
         houston_env = c_by_name["houston"]["env"]
         deployments_database_connection_env = next(x for x in houston_env if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION")
         assert deployments_database_connection_env is not None
+        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
+        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"]["secretKeyRef"]
+        assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
+        assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
+
+        env_vars = get_env_vars_dict(c_by_name["wait-for-db"]["env"])
+        assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
+        assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
+
+    def test_houston_api_deployment_control_mode(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}}},
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Deployment"
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+
+        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
+        assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
+        assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
+
+        env_vars = get_env_vars_dict(c_by_name["wait-for-db"]["env"])
+        assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
+        assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
     def test_houston_api_deployment_with_helm_set_database(self, kube_version):
         docs = render_chart(

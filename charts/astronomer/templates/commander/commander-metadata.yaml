@@ -1,0 +1,18 @@
+#################################################
+## Commander JWKS Secret Hooks Job ConfigMap    ##
+#################################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-commander-metadata
+  labels:
+    tier: astronomer
+    component: commander
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+data:
+  metadata.yaml: |-
+{{- end }}

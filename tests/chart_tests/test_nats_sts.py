@@ -1,6 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -244,3 +246,17 @@ class TestNatsStatefulSet:
         assert len(docs) == 1
         doc = docs[0]
         assert "sampleannotation" in doc["spec"]["template"]["metadata"]["annotations"]["app.test.io"]
+
+    def test_nats_disable_with_dataplane_flag(self, kube_version):
+        """Test that nats statefulset is not rendered when dataplane is enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
+            values={
+                "global": {"plane": {"mode": "data"}},
+            },
+        )
+        assert len(docs) == 0

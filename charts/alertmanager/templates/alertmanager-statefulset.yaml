@@ -1,6 +1,7 @@
 ##############################
 ## Alertmanager StatefulSet ##
 ##############################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -11,6 +12,7 @@ metadata:
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
@@ -30,6 +32,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "alertmanager.name" . }}
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/alertmanager-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}
@@ -51,11 +54,35 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
 {{- include "alertmanager.imagePullSecrets" . | indent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          image: {{ template "alertmanager.image" . }}
+          imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext| nindent 12 }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources:
+            limits: {'cpu': '100m', 'memory': '128Mi'}
+            requests: {'cpu': '100m', 'memory': '128Mi'}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
       containers:
         - name: alertmanager
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext| nindent 12 }}
           env:
             {{- if .Values.enableNonRFC1918 }}
             - name: POD_IP
@@ -101,6 +128,8 @@ spec:
           {{- end }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
             - name: config-volume
               mountPath: /etc/config
             - name: data
@@ -148,6 +177,8 @@ spec:
             name: alertmanager-sidecar-conf
         {{- end }}
       volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
         - name: alertmanager-sidecar-conf
           configMap:
@@ -175,9 +206,10 @@ spec:
           {{- toYaml .Values.persistence.annotations | nindent 10 }}
         {{- end }}
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: {{ .Values.persistence.size }}
         {{ include "alertmanager.storageClass" . }}
   {{- end }}
+{{- end }}

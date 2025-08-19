@@ -1,7 +1,7 @@
 import pytest
 
 from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -16,13 +16,11 @@ class TestHoustonInternalAuthorization:
             values={},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
-                "charts/grafana/templates/ingress.yaml",
-                "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 4
+        assert len(docs) == 2
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
@@ -38,13 +36,11 @@ class TestHoustonInternalAuthorization:
             values={"global": {"enableHoustonInternalAuthorization": True}},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
-                "charts/grafana/templates/ingress.yaml",
-                "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 4
+        assert len(docs) == 2
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"

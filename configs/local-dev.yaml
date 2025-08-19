@@ -16,6 +16,9 @@ tags:
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: localtest.me
+  # Mode of the plane, can be 'data', 'unified' or 'local'
+  plane:
+    domainSuffix: "local"
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
@@ -106,16 +109,6 @@ nginx:
       memory: "2048Mi"
 
 #################################
-## Grafana configuration
-#################################
-grafana:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "0m"
-      memory: "0Mi"
-
-#################################
 ## Prometheus configuration
 #################################
 prometheus:
@@ -161,17 +154,6 @@ elasticsearch:
       requests:
         cpu: "0"
         memory: "0Gi"
-
-
-#################################
-## Kibana configuration
-#################################
-kibana:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "0m"
-      memory: "0Mi"
 
 
 #################################

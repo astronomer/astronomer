@@ -1,7 +1,8 @@
 #####################################
 ## Elasticsearch Master NetworkPolicy
 #####################################
-{{- if .Values.global.networkPolicy.enabled }}
+{{- if and .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
@@ -31,4 +33,5 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.common.ports.transport }}
+{{- end }}
 {{- end }}

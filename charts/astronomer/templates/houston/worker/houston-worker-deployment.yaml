@@ -1,7 +1,8 @@
 ####################
 ## Houston Worker ##
 ####################
-{{- if .Values.houston.worker.enabled }}
+{{- if and .Values.houston.worker.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.houston.worker.replicas }}
   selector:
@@ -27,6 +29,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston-worker
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}
@@ -156,4 +159,5 @@ spec:
 {{- end }}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}
 {{- end }}

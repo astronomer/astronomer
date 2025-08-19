@@ -1,7 +1,8 @@
 ##################
 ## STAN Service ##
 ##################
-{{- if not .Values.global.nats.jetStream.enabled }}
+{{- if and (not .Values.global.nats.jetStream.enabled) }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -28,4 +29,5 @@ spec:
   - name: metrics
     port: 7777
     appProtocol: http
+{{- end }}
 {{- end }}

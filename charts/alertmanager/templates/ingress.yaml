@@ -1,7 +1,8 @@
 ##########################
 ## alertmanager Ingress ##
 ##########################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
@@ -20,20 +22,14 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     {{ include "houston.internalauthurl" . | indent 4 }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  {{- if or .Values.global.tlsSecret }}
   tls:
-  {{- if .Values.global.acme }}
-    - secretName: alertmanager-tls
-  {{- end }}
-  {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - {{ template "alertmanager.url" . }}
   {{- end }}
@@ -42,15 +38,6 @@ spec:
       http:
         paths:
           - path: /
-            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
-            backend:
-              serviceName: {{ template "alertmanager.fullname" . }}
-              {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: auth-proxy
-              {{- else }}
-              servicePort: http
-              {{- end }}
-            {{ else -}}
             pathType: Prefix
             backend:
               service:
@@ -61,5 +48,5 @@ spec:
                   {{- else }}
                   name: http
                   {{- end }}
-            {{- end -}}
+{{- end }}
 {{- end }}

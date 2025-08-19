@@ -1,7 +1,8 @@
 #######################################
 ## Elasticsearch Proxy NetworkPolicy ##
 #######################################
-{{- if .Values.global.networkPolicy.enabled }}
+{{- if and .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: {{ template "external-es-proxy.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
@@ -30,23 +32,19 @@ spec:
     {{- if .Values.global.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:
+        matchExpressions:
+        - key: component
+          operator: In
+          values:
+          - dag-server
+          - metacleanup
+          - airflow-downgrade
+          - git-sync-relay
+          - dag-processor
+          - triggerer
+          - worker
+          - scheduler
         matchLabels:
-          component: scheduler
-          tier: airflow
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: worker
-          tier: airflow
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: triggerer
-          tier: airflow
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: git-sync-relay
           tier: airflow
     {{- end }}
     ports:
@@ -67,4 +65,5 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.service.http }}
+{{- end }}
 {{- end }}

@@ -1,7 +1,8 @@
 ###################################
 ## Config Syncer CronJob
 ###################################
-{{- if .Values.configSyncer.enabled }}
+{{- if and .Values.configSyncer.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   schedule: {{ include "configSyncer.schedule" .}}
   # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
@@ -27,6 +29,7 @@ spec:
             release: {{ .Release.Name }}
             app: config-syncer
             version: {{ .Chart.Version }}
+            plane: {{ .Values.global.plane.mode }}
           {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
           annotations:
           {{- if .Values.global.istio.enabled }}
@@ -61,4 +64,11 @@ spec:
               - "--target-namespaces"
               - "{{ join "," .Values.global.features.namespacePools.namespaces.names }}"
               {{- end }}
+              {{- if .Values.configSyncer.readinessProbe }}
+              readinessProbe: {{ tpl (toYaml .Values.configSyncer.readinessProbe) . | nindent 16 }}
+              {{- end }}
+              {{- if .Values.configSyncer.livenessProbe }}
+              livenessProbe: {{ tpl (toYaml .Values.configSyncer.livenessProbe) . | nindent 16 }}
+              {{- end }}
+{{- end }}
 {{- end }}

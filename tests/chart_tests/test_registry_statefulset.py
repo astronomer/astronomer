@@ -1,7 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
 import jmespath
+import pytest
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -52,8 +53,20 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert doc["spec"]["template"]["spec"]["volumes"][2]["name"] == "gcs-keyfile"
-        assert doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][3]["name"] == "gcs-keyfile"
+        assert sorted(x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]) == [
+            "config",
+            "data",
+            "etc-ssl-certs",
+            "gcs-keyfile",
+            "jwks-certificate",
+        ]
+        assert sorted(x["name"] for x in doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]) == [
+            "config",
+            "data",
+            "etc-ssl-certs",
+            "gcs-keyfile",
+            "jwks-certificate",
+        ]
 
     def test_registry_sts_with_registry_persistence_enabled(self, kube_version):
         docs = render_chart(

@@ -1,15 +1,15 @@
 import jmespath
 import pytest
 
-import tests.chart_tests as chart_tests
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import get_all_features
+from tests.utils.chart import render_chart
 
-ignore_list = ["postgresql", "cert-copy", "node-exporter", "cert-copy-and-toml-update"]
+ignore_list = ["postgresql", "cert-copy", "cert-copy-and-toml-update"]
 
 
 def init_test_pod_spec():
     """initialize with all default features and returns pod spec"""
-    chart_values = chart_tests.get_all_features()
+    chart_values = get_all_features()
 
     kubernetes_objects = {
         "StatefulSet": "spec.template.spec",

@@ -3,7 +3,7 @@
 # https://docs.astral.sh/ruff/settings/
 [tool.ruff]
 line-length = 132
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint]
 fixable = ["ALL"]
@@ -18,7 +18,7 @@ select = [
   "F",
   "FLY",
   "FURB",
-#  "I",
+  "I",
 #  "N",
   "PERF",
   "PGH",
@@ -47,6 +47,9 @@ ignore = [
   "S101",
   "S105",
   "S602",
+  ]
+"tests/chart_tests/*" = [
+  "S108",
   ]
 "tests/functional_tests/test_network_security.py" = ["C901"]
 "tests/chart_tests/test_private_registry.py" = ["UP031"]

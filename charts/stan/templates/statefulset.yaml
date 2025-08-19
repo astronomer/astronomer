@@ -2,6 +2,7 @@
 ## STAN Statefulset ##
 ######################
 {{- if not .Values.global.nats.jetStream.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -205,4 +206,5 @@ spec:
       {{ include "stan.storageClass" . }}
   {{- end }}
   {{- end }}
+{{- end }}
 {{- end }}

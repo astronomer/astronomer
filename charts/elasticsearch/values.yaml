@@ -10,23 +10,23 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 8.12.2
+    tag: 8.15.5
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 3.20.5
+    tag: 3.21.3-3
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.17-2
+    tag: 8.0.21-1
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.8.0
+    tag: 1.9.0
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.27.3
+    tag: 1.27.4-3
     pullPolicy: IfNotPresent
 
 common:
@@ -42,6 +42,7 @@ common:
     # The name of the ServiceAccount to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ~
+    sccEnabled: true
 
   env:
     CLUSTER_NAME: "astronomer"
@@ -241,6 +242,9 @@ curator:
     unit: "days"
     unit_count: 10
 
+  livenessProbe: {}
+  readinessProbe: {}
+
 exporter:
   podAnnotations: {}
   # Number of exporter instances
@@ -254,7 +258,6 @@ exporter:
     capabilities:
       drop:
       - ALL
-    readOnlyRootFilesystem: true
 
   resources: {}
   # requests:
@@ -301,6 +304,7 @@ nginx:
   ingressClass: ~
   resources: {}
   securityContext: {}
+  maxBodySize: "100M"
 
 # sysctl init container
 # Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.

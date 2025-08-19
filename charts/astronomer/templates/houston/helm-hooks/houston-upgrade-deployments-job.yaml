@@ -1,7 +1,8 @@
 #######################################
 ## Airflow Post Deployment Upgrade Hook
 #######################################
-{{- if .Values.houston.upgradeDeployments.enabled }}
+{{- if and .Values.houston.upgradeDeployments.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
@@ -30,6 +32,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston-upgrader
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
         {{- if .Values.global.istio.enabled }}
@@ -49,7 +52,6 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: wait-for-db
@@ -62,7 +64,6 @@ spec:
           args:
             - "echo"
             - "DB ready"
-          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -120,7 +121,14 @@ spec:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
             {{- include "houston_environment" . | indent 12 }}
+          {{- if .Values.houston.upgradeDeployments.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.upgradeDeployments.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.livenessProbe) . | nindent 12 }}
+          {{- end }}
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}
 {{- end }}

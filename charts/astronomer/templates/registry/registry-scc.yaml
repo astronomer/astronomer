@@ -2,6 +2,7 @@
 ### Astronomer Registry Scc   ###
 #################################
 {{- if and .Values.registry.serviceAccount.create .Values.registry.serviceAccount.sccEnabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -39,4 +40,5 @@ allowHostPorts: false
 allowPrivilegeEscalation: false
 allowPrivilegedContainer: false
 allowedCapabilities: null
+{{- end }}
 {{- end }}

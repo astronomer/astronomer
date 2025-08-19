@@ -1,9 +1,9 @@
 import pytest
 from deepmerge import always_merger
 
-from tests import supported_k8s_versions, git_root_dir, get_service_account_name_from_doc
-from tests.chart_tests import get_all_features
-from tests.chart_tests.helm_template_generator import render_chart
+from tests import git_root_dir, supported_k8s_versions
+from tests.utils import get_all_features, get_service_account_name_from_doc
+from tests.utils.chart import render_chart
 
 
 def find_all_pod_manager_templates() -> list[str]:
@@ -65,10 +65,7 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
             "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
-            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
             "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
-            "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
-            "prometheus-blackbox-exporter": {"serviceAccount": {"create": "true", "name": "blackbox-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -81,24 +78,18 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/stan/templates/stan-serviceaccount.yaml",
-                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
-                "charts/kibana/templates/kibana-serviceaccount.yaml",
-                "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 11
+        assert len(docs) == 8
         expected_names = {
             "commander-test",
             "registry-test",
             "configsyncer-test",
             "houston-test",
             "astroui-test",
-            "grafana-test",
             "alertmanager-test",
-            "kibana-test",
-            "blackbox-test",
         }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
@@ -122,16 +113,12 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": False}}},
             "stan": {"stan": {"serviceAccount": {"create": False}}},
-            "grafana": {"serviceAccount": {"create": False}},
             "alertmanager": {"serviceAccount": {"create": False}},
-            "kibana": {"serviceAccount": {"create": False}},
-            "prometheus-blackbox-exporter": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
             "pgbouncer": {"serviceAccount": {"create": False}},
             "fluentd": {"serviceAccount": {"create": False}},
-            "prometheus-node-exporter": {"serviceAccount": {"create": False}},
             "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
             "kube-state": {"serviceAccount": {"create": False}},
             "prometheus": {"serviceAccount": {"create": False}},
@@ -170,16 +157,12 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "stan": {"stan": {"serviceAccount": {"create": True, "annotations": annotations}}},
-            "grafana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
-            "kibana": {"serviceAccount": {"create": True, "annotations": annotations}},
-            "prometheus-blackbox-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "pgbouncer": {"serviceAccount": {"create": True, "annotations": annotations}},
             "fluentd": {"serviceAccount": {"create": True, "annotations": annotations}},
-            "prometheus-node-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "nginx": {
                 "serviceAccount": {"create": True, "annotations": annotations},
                 "defaultBackend": {"serviceAccount": {"create": False, "annotations": annotations}},
@@ -200,7 +183,7 @@ class TestServiceAccounts:
         service_account_annotations = [doc["metadata"]["annotations"] for doc in docs if doc["kind"] == "ServiceAccount"]
         assert annotations in service_account_annotations
 
-    def test_serviceaccount_with_overrides_rolebinding(self, kube_version):
+    def test_serviceaccount_with_overrides_rolebinding_controlplane(self, kube_version):
         "Test that if custom SA are added it gets created"
         values = {
             "astronomer": {
@@ -214,7 +197,6 @@ class TestServiceAccounts:
             "fluentd": {"serviceAccount": {"name": "fluentd-test"}},
             "prometheus": {"serviceAccount": {"name": "prometheus-test"}},
             "nginx": {"serviceAccount": {"name": "nginx-test"}},
-            "grafana": {"serviceAccount": {"name": "grafana-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -226,12 +208,11 @@ class TestServiceAccounts:
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
-                "charts/nginx/templates/nginx-rolebinding.yaml",
-                "charts/grafana/templates/grafana-bootstrap-rolebinding.yaml",
+                "charts/nginx/templates/controlplane/nginx-cp-rolebinding.yaml",
             ],
         )
 
-        assert len(docs) == 8
+        assert len(docs) == 7
 
         expected_names = {
             "commander-test",
@@ -240,11 +221,23 @@ class TestServiceAccounts:
             "kube-state-test",
             "fluentd-test",
             "prometheus-test",
-            "nginx-test",
-            "grafana-test",
+            "nginx-test-cp",
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
+
+    def test_serviceaccount_with_overrides_rolebinding_dataplane(self, kube_version):
+        "Test rolebindings for components that only use dataplane mode"
+        values = {
+            "global": {"plane": {"mode": "data"}},
+            "nginx": {"serviceAccount": {"name": "nginx-test"}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/nginx/templates/dataplane/nginx-dp-rolebinding.yaml"],
+        )
+        assert len(docs) == 1
 
 
 @pytest.mark.parametrize(
@@ -255,14 +248,17 @@ def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
     default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
+    if "nginx-dp-deployment" in template_name:
+        default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
     docs = render_chart(show_only=template_name, values=values)
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
-    assert all((sa_name.startswith("release-name-") or sa_name == "default") for sa_name in service_accounts), (
-        f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
+    allowed_prefixes = ["release-name-", "default"]
+    assert all(any(sa_name.startswith(prefix) for prefix in allowed_prefixes) for sa_name in service_accounts), (
+        f"Expected all service accounts to start with a standard prefix but found {service_accounts} in {template_name}"
     )
 
 
@@ -292,6 +288,9 @@ custom_service_account_names = {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deploy-revisions-cronjob.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-cluster-audits-cronjob.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml": {
@@ -337,11 +336,6 @@ custom_service_account_names = {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/kibana/templates/kibana-default-index-cronjob.yaml": {
-        "kibana": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
-    "charts/kibana/templates/kibana-deployment.yaml": {"kibana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/kube-state/templates/kube-state-deployment.yaml": {
         "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
@@ -352,16 +346,15 @@ custom_service_account_names = {
     "charts/nginx/templates/nginx-deployment-default.yaml": {
         "nginx": {"defaultBackend": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/nginx/templates/nginx-deployment.yaml": {"nginx": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml": {
+        "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml": {
+        "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"pgbouncer": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset-slaves.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {
-        "prometheus-blackbox-exporter": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
-    "charts/prometheus-node-exporter/templates/daemonset.yaml": {
-        "prometheus-node-exporter": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
     "charts/prometheus-postgres-exporter/templates/deployment.yaml": {
         "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
@@ -381,12 +374,16 @@ def test_custom_serviceaccount_names(template_name):
 
     values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
+    if "nginx-dp-deployment" in template_name:
+        plane_config = {"global": {"plane": {"mode": "data"}}}
+        values = always_merger.merge(values, plane_config)
     values = always_merger.merge(values, enable_pgsql_sa)
 
     docs = render_chart(show_only=template_name, values=values)
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
-    assert all(sa_name == "prothean" for sa_name in service_accounts), (
+    valid_sa_names = {"prothean", "prothean-cp", "prothean-dp"}
+    assert all(sa_name in valid_sa_names for sa_name in service_accounts), (
         f"Expected all service accounts to be 'prothean' but found {service_accounts} in {template_name}"
     )

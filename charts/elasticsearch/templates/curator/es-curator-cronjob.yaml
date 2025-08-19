@@ -1,7 +1,8 @@
 #####################
 ## Curator CronJob ##
 #####################
-{{- if .Values.curator.enabled }}
+{{- if and .Values.curator.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   schedule: {{ .Values.curator.schedule }}
   jobTemplate:
@@ -20,15 +22,15 @@ spec:
         metadata:
 {{- if or .Values.common.podAnnotations .Values.curator.podAnnotations .Values.global.podAnnotations  }}
           annotations:
-{{- end }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 12 }}
-{{- end }}
-{{- if .Values.common.podAnnotations }}
-{{ toYaml .Values.common.podAnnotations | indent 12 }}
-{{- end }}
-{{- if .Values.curator.podAnnotations }}
-{{ toYaml .Values.curator.podAnnotations | indent 12 }}
+          {{- if .Values.global.podAnnotations }}
+          {{- toYaml .Values.global.podAnnotations | nindent 12 }}
+          {{- end }}
+          {{- if .Values.common.podAnnotations }}
+          {{- toYaml .Values.common.podAnnotations | nindent 12 }}
+          {{- end }}
+          {{- if .Values.curator.podAnnotations }}
+          {{- toYaml .Values.curator.podAnnotations | nindent 12 }}
+          {{- end }}
 {{- end }}
           labels:
             tier: logging
@@ -40,9 +42,9 @@ spec:
             version: {{ .Chart.Version }}
         spec:
           serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
-          nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
-          affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
-          tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
+          nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
+          affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
+          tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
 {{- include "elasticsearch.imagePullSecrets" . | indent 10 }}
           containers:
           - name: curator
@@ -50,14 +52,21 @@ spec:
             imagePullPolicy: {{ .Values.images.curator.pullPolicy }}
             command: ["/bin/sh", "-c"]
             args: ["sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"]
-            securityContext: {{ toYaml .Values.curator.securityContext | nindent 16 }}
-            resources: {{ toYaml .Values.curator.resources | nindent 16 }}
+            securityContext: {{ toYaml .Values.curator.securityContext | nindent 14 }}
+            resources: {{ toYaml .Values.curator.resources | nindent 14 }}
             volumeMounts:
               - name: config-volume
                 mountPath: /etc/config
+            {{- if .Values.curator.readinessProbe }}
+            readinessProbe: {{- tpl (toYaml .Values.curator.readinessProbe) . | nindent 14 }}
+            {{- end }}
+            {{- if .Values.curator.livenessProbe }}
+            livenessProbe: {{- tpl (toYaml .Values.curator.livenessProbe) . | nindent 14 }}
+            {{- end }}
           volumes:
             - name: config-volume
               configMap:
                 name: {{ template "elasticsearch.fullname" . }}-curator-config
           restartPolicy: OnFailure
+{{- end }}
 {{- end }}

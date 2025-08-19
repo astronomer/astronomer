@@ -1,0 +1,35 @@
+###################################
+## NGINX Control Plane ConfigMap ##
+###################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}-ingress-controller
+  labels:
+    tier: {{ template "nginx.name" . }}
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+data:
+  allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
+  add-headers: {{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller-headers
+  proxy-add-original-uri-header: "true"
+  proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}
+  proxy-read-timeout: {{ .Values.proxyReadTimeout | quote }}
+  proxy-send-timeout: {{ .Values.proxySendTimeout | quote }}
+  proxy-body-size: {{ .Values.proxyBodySize | quote }}
+  hsts-include-subdomains: {{ .Values.hstsIncludeSubdomains | quote }}
+  server-name-hash-bucket-size: {{ .Values.serverNameHashBucketSize | quote }}
+  enable-vts-status: "true"
+  server-tokens: "false"
+  log-format-escape-json: "true"
+  log-format-upstream: '{"timestamp": "$time_iso8601", "requestID": "$req_id", "proxyUpstreamName":
+    "$proxy_upstream_name", "proxyAlternativeUpstreamName": "$proxy_alternative_upstream_name","upstreamStatus":
+    "$upstream_status", "upstreamAddr": "$upstream_addr","httpRequest":{"requestMethod":
+    "$request_method", "requestUrl": "$host$request_uri", "status": $status,"requestSize":
+    "$request_length", "responseSize": "$upstream_response_length", "userAgent": "$http_user_agent",
+    "remoteIp": "$remote_addr", "referer": "$http_referer", "latency": "$upstream_response_time
+    s", "protocol":"$server_protocol"}}'
+{{- end }}

@@ -1,6 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
 from subprocess import CalledProcessError
+
+import pytest
+
+from tests.utils.chart import render_chart
 
 
 def test_astronomer_bootstrap_secret_defaults():

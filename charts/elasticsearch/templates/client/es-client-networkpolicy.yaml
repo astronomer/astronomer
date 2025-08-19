@@ -1,7 +1,8 @@
 #####################################
 ## Elasticsearch Client NetworkPolicy
 #####################################
-{{- if .Values.global.networkPolicy.enabled }}
+{{- if and .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -13,6 +14,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: client
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
@@ -37,11 +39,6 @@ spec:
     - podSelector:
         matchLabels:
           tier: logging
-          component: kibana
-          release: {{ .Release.Name }}
-    - podSelector:
-        matchLabels:
-          tier: logging
           component: {{ template "elasticsearch.name" . }}
           release: {{ .Release.Name }}
     - podSelector:
@@ -59,4 +56,5 @@ spec:
       port: {{ .Values.common.ports.http }}
     - protocol: TCP
       port: {{ .Values.common.ports.transport }}
+{{- end }}
 {{- end }}

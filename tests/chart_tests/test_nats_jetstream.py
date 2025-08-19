@@ -1,7 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
 import yaml
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -30,7 +31,11 @@ class TestNatsJetstream:
         assert prod["nats"] == {"jetStreamEnabled": True, "tlsEnabled": False}
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
-        assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test jetstream config with nodeSelector, affinity, and tolerations defaults."""
@@ -185,6 +190,21 @@ class TestNatsJetstream:
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
         values = {
             "nats": {"nats": {"createJetStreamJob": False}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/nats/templates/jetstream-job.yaml",
+            ],
+        )
+
+        assert len(docs) == 0
+
+    def test_jetstream_job_disable_dataplane_flag(self, kube_version):
+        """Test that jetstream job is disabled when dataplane is disabled."""
+        values = {
+            "global": {"controlplane": {"enabled": False}},
         }
         docs = render_chart(
             kube_version=kube_version,

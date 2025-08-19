@@ -6,15 +6,15 @@
 images:
   nats:
     repository: quay.io/astronomer/ap-nats-server
-    tag: 2.10.18-3
+    tag: 2.10.19-1
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.15.0-5
+    tag: 0.16.0-2
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.37.0
+    tag: 0.37.4
     pullPolicy: IfNotPresent
 
 
@@ -255,13 +255,6 @@ gateway:
   #   ca: "ca.crt"
   #   cert: "tls.crt"
   #   key: "tls.key"
-
-# NATS Box
-#
-# https://github.com/nats-io/nats-box
-#
-natsbox:
-  enabled: false
 
 # The NATS config reloader image to use.
 reloader:

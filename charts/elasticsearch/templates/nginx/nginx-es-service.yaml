@@ -1,6 +1,7 @@
 #################################
 ## NGINX Elasticsearch Service ##
 #################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -23,3 +24,4 @@ spec:
       protocol: TCP
       name: http
       appProtocol: http
+{{- end }}

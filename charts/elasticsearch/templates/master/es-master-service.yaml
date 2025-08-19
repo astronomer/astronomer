@@ -1,6 +1,7 @@
 ##################################
 ## Elasticsearch Master Service ##
 ##################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
     role: master
+    plane: {{ .Values.global.plane.mode }}
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
@@ -24,3 +26,4 @@ spec:
     port: {{ .Values.common.ports.transport }}
     protocol: TCP
     appProtocol: tcp
+{{- end }}
