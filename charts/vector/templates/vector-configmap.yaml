@@ -136,7 +136,7 @@ data:
 
     sinks:
       # https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
-      elasticserach:
+      elasticsearch:
         type: elasticsearch
         inputs:
           - transform_remove_fields
