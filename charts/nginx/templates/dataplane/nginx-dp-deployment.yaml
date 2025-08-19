@@ -57,9 +57,15 @@ spec:
             - -c
             - |
               cp -r /etc/nginx/* /etc/nginx_copy
+              mkdir /tmp/nginx
+              mkdir /etc/ingress-controller/auth /etc/ingress-controller/geoip /etc/ingress-controller/ssl /etc/ingress-controller/telemetry
           volumeMounts:
             - name: etc-nginx
               mountPath: /etc/nginx_copy
+            - name: tmp
+              mountPath: /tmp
+            - name: etc-ingress-controller
+              mountPath: /etc/ingress-controller
       containers:
         - name: nginx
           securityContext:
