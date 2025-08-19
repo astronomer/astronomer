@@ -19,7 +19,7 @@ roleRef:
   name: {{ template "vector.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "vector.fullname" . }}
+  name: {{ include "vector.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 {{- end -}}
 {{- end -}}
