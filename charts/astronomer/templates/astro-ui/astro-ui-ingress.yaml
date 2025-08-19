@@ -46,12 +46,10 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-{{- end }}
 ---
 ###############################
 ## Astronomer Common Ingress ##
 ###############################
-{{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
