@@ -7,6 +7,7 @@ ignore_list = [
     "fluentd_fluentd",
     "elasticsearch-exporter_metrics-exporter",
     "elasticsearch-nginx_nginx",
+    "vector_vector",
 ]
 
 
