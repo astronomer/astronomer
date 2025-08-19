@@ -1,7 +1,7 @@
 #################################
 ## Astronomer astro ui Ingress ##
 #################################
-{{- if and .Values.global.baseDomain }}
+{{- if .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -51,7 +51,7 @@ spec:
 ###############################
 ## Astronomer Common Ingress ##
 ###############################
-{{- if and .Values.global.baseDomain }}
+{{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
