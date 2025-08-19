@@ -16,134 +16,113 @@ metadata:
 data:
   vector-config.yaml: |
     log_schema:
-      timestamp_key : "@timestamp"
-    # TODO: revisit this data_dir and see if we can use something better. Sharing a dir with the bare metal machine will allow us to
-    #       persist the checkpoint between pod restarts so we don't have to re-read the logs from the beginning.
+      timestamp_key: "@timestamp"
+
     data_dir: "/var/lib/vector"
+
     sources:
       airflow_log_files:
         type: kubernetes_logs
-        #include:
-        #  - "/var/log/containers/*.log"
         read_from: beginning
         auto_partial_merge: true
-        extra_label_selector: "platform=astronomer"
-        #extra_label_selector: "component=scheduler,component=webserver,component=worker,component=triggerer,component=git-sync-relay,component=dag-server,component=airflow-downgrade"
+        # Remove extra_label_selector to collect all logs like Fluentd does
+        # extra_label_selector: "platform=astronomer"
+
     transforms:
+      # Step 1: Filter by namespace labels (like Fluentd does)
+      filter_by_namespace:
+        type: filter
+        inputs:
+          - airflow_log_files
+        condition:
+          type: "vrl"
+          source: |
+            {{- if and .Values.global.features.namespacePools.enabled (gt (len .Values.global.features.namespacePools.namespaces.names) 0) }}
+            # Multi-namespace support
+            namespaces = [{{ range $i, $ns := .Values.global.features.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
+            includes(namespaces, .kubernetes.pod_namespace)
+            {{- else if or .Values.global.manualNamespaceNamesEnabled .Values.global.disableManageClusterScopedResources }}
+            # Manual namespace mode - accept all valid namespace names
+            match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
+            {{- else }}
+            # Standard mode - filter by namespace platform label
+            .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
+            {{- end }}
+
+      # Step 2: Filter by component (exactly like Fluentd)
+      filter_by_component:
+        type: filter
+        inputs:
+          - filter_by_namespace
+        condition:
+          type: "vrl"
+          source: |
+            component = .kubernetes.pod_labels.component
+            includes(["scheduler", "webserver", "api-server", "worker", "triggerer", "git-sync-relay", "dag-server", "airflow-downgrade", "meta-cleanup", "dag-processor"], component)
+
+      # Step 3: Transform and enrich logs
       transform_airflow_logs:
         type: remap
         inputs:
-          - airflow_log_files
+          - filter_by_component
         source: |
           .component = .kubernetes.pod_labels.component
           .workspace = .kubernetes.pod_labels.workspace
-          .release   = .kubernetes.pod_labels.release
+          .release = .kubernetes.pod_labels.release || "{{ .Release.Name }}"
           .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
 
-      filter_common_logs:
-        type: filter
-        inputs:
-          - transform_airflow_logs
-        condition:
-          type: "vrl"
-          source: '!includes(["worker","scheduler"], .kubernetes.pod_labels.component)'
-
-      filter_scheduler_logs:
-        type: filter
-        inputs:
-          - transform_airflow_logs
-        condition:
-          type: "vrl"
-          source: 'includes(["scheduler"], .kubernetes.pod_labels.component)'
-
-      filter_worker_logs:
-        type: filter
-        inputs:
-          - transform_airflow_logs
-        condition:
-          type: "vrl"
-          source: 'includes(["worker"], .kubernetes.pod_labels.component)'
-
-      filter_gitsyncrelay_logs:
-        type: filter
-        inputs:
-          - transform_airflow_logs
-        condition:
-          type: "vrl"
-          source: 'includes(["git-sync-relay"], .kubernetes.pod_labels.component)'
-
-      filter_dagserver_logs:
-        type: filter
-        inputs:
-          - transform_airflow_logs
-        condition:
-          type: "vrl"
-          source: 'includes(["dag-server"], .kubernetes.pod_labels.component)'
-
-      filter_airflow_downgrade_logs:
-        type: filter
-        inputs:
-          - transform_airflow_logs
-        condition:
-          type: "vrl"
-          source: 'includes(["airflow-downgrade"], .kubernetes.pod_labels.component)'
-
-      transform_task_log:
+      # Step 4: Parse JSON messages
+      parse_json_messages:
         type: remap
         inputs:
-          - filter_worker_logs
-          - filter_scheduler_logs
-        source: |-
-          . = parse_json(.message) ?? .
-          .@timestamp = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%Z") ?? now()
-          .check_log_id = exists(.log_id)
-          if .check_log_id != true {
-          .log_id = join!([to_string!(.dag_id), to_string!(.task_id), to_string!(.execution_date), to_string!(.try_number)], "_")
+          - transform_airflow_logs
+        source: |
+          if is_string(.message) {
+            parsed = parse_json(.message) ?? {}
+            if is_object(parsed) && length(parsed) > 0 {
+              . = merge!(., parsed)
+            }
           }
-          .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
 
-      #final_common_log:
-      #  type: remap
-      #  inputs:
-      #    - filter_common_logs
-      #  source: |
-      #    .component = .kubernetes.pod_labels.component
-      #    .workspace = .kubernetes.pod_labels.workspace
-      #    .release = .kubernetes.pod_labels.release
-      #    .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
-
-      final_task_log:
+      # Step 5: Determine log type and add metadata
+      categorize_logs:
         type: remap
         inputs:
-          - transform_task_log
+          - parse_json_messages
         source: |
-          .component = .kubernetes.pod_labels.component
-          .workspace = .kubernetes.pod_labels.workspace
-          .release = .kubernetes.pod_labels.release
-          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+          # If we have a dag_id, assume it's a task log
+          if exists(.dag_id) {
+            .log_type = "task"
+            # Add log_id for task logs (like Fluentd does)
+            if !exists(.log_id) && exists(.task_id) && exists(.execution_date) && exists(.try_number) {
+              .log_id = join!([to_string!(.dag_id), to_string!(.task_id), to_string!(.execution_date), to_string!(.try_number)], "_")
+            }
+            .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
+          } else {
+            .log_type = "system"
+          }
 
+      # Step 6: Final cleanup
       transform_remove_fields:
         type: remap
         inputs:
-          - final_task_log
-          - filter_common_logs
-          - filter_gitsyncrelay_logs
-          - filter_dagserver_logs
-          - filter_airflow_downgrade_logs
+          - categorize_logs
         source: |
           del(.kubernetes)
           del(.file)
 
     sinks:
-      # https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
       elasticsearch:
         type: elasticsearch
         inputs:
           - transform_remove_fields
         mode: bulk
         compression: none
-        endpoints: ["http://{{.Release.Name}}-elasticsearch:9200"]
+        endpoints: ["http://{{ .Release.Name }}-elasticsearch:9200"]
+        api_version: "v7"
+        healthcheck:
+          enabled: true
         bulk:
-          index: "{{ include "logging.indexNamePrefix" . }}.{{ "{{" }} .release {{ "}}" }}.{{ .Values.indexPattern }}"
+          index: "{{ include "logging.indexNamePrefix" . }}.{{ .Release.Name }}.{{ .Values.indexPattern | default "%Y.%m.%d" }}"
           action: create
 {{- end -}}
