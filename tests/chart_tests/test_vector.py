@@ -331,9 +331,7 @@ class TestVector:
 
     def test_vector_daemonset_probe(self, kube_version):
         """Test the default probes for the vector daemonset."""
-
         values = {"global": {"logging": {"collector": "vector"}}}
-
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -342,6 +340,10 @@ class TestVector:
         doc = docs[0]
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["vector"]["name"] == "vector"
-        assert not c_by_name["vector"].get("livenessProbe")
-        assert not c_by_name["vector"].get("readinessProbe")
-        # TODO: fill in default probes in the daemonset and update this test
+        expected_probe = {
+            'httpGet': {'path': '/health', 'port': 8686}, 
+            'initialDelaySeconds': 30, 
+            'periodSeconds': 10
+        }
+        assert c_by_name["vector"]["livenessProbe"] == expected_probe
+        assert c_by_name["vector"]["readinessProbe"] == expected_probe
