@@ -23,8 +23,10 @@ class TestVector:
 
     def test_vector_defaults(self, kube_version):
         """Test that vector behaves as expected with default values."""
+        values = {"global": {"logging": {"collector": "fluentd"}}}
         docs = render_chart(
             kube_version=kube_version,
+            values=values,
             show_only=all_templates,
         )
         assert len(docs) == 0
