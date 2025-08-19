@@ -45,7 +45,7 @@ spec:
       affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ include "vector.serviceAccountName" . }}
-{{- include "fluentd.imagePullSecrets" . | indent 6 }}
+{{- include "vector.imagePullSecrets" . | indent 6 }}
       securityContext:
 {{ toYaml .Values.podSecurityContext | indent 8 }}
       containers:
