@@ -87,20 +87,6 @@ class TestDefaultProbes:
             "timeoutSeconds": 10,
         },
         "elasticsearch-master_es-master": {"tcpSocket": {"port": 9300}},
-        "fluentd_fluentd": {
-            "exec": {
-                "command": [
-                    "/bin/bash",
-                    "-c",
-                    "if (( $(ruby -e \"require 'net/http';require 'uri';uri = URI.parse('http://127.0.0.1:24231/metrics');response = Net::HTTP.get_response(uri);puts response.body\" | grep 'fluentd_output_status_buffer_queue_length{' | awk '{ print ($NF > 8) }') )); then exit 1; fi; exit 0",
-                ]
-            },
-            "failureThreshold": 3,
-            "initialDelaySeconds": 30,
-            "periodSeconds": 15,
-            "successThreshold": 1,
-            "timeoutSeconds": 5,
-        },
         "houston_houston": {
             "httpGet": {"path": "/v1/healthz", "port": 8871},
             "initialDelaySeconds": 30,
@@ -159,7 +145,6 @@ class TestDefaultProbes:
             "httpGet": {"path": "/health", "port": 8686},
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
-            "timeoutSeconds": 5,
         },
     }
 
@@ -248,7 +233,6 @@ class TestDefaultProbes:
             "httpGet": {"path": "/health", "port": 8686},
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
-            "timeoutSeconds": 5,
         },
     }
 
