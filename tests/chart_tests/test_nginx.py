@@ -296,9 +296,11 @@ def test_nginx_backend_serviceaccount_defaults():
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
 
 
-def test_nginx_defaults():
+@pytest.mark.parametrize("plane_mode", ["unified", "control", "data"])
+def test_nginx_deployment_defaults(plane_mode):
     """Test nginx ingress deployment template defaults."""
     docs = render_chart(
+        values={"global": {"plane": {"mode": plane_mode}}},
         show_only=[
             "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
             "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
