@@ -263,7 +263,7 @@ global:
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
   # Pods in the platformNodePool include alertmanager, commander, houston, kube-replicator, astro-ui,registry,
-  # es-client, es-data, es-exporter, es-master, nginx-es, kibana, kube-state, nginx, nginx-default, prometheus.
+  # es-client, es-data, es-exporter, es-master, nginx-es, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   platformNodePool:
@@ -348,7 +348,7 @@ tags:
   # Enable monitoring stack (prometheus, kube-state)
   monitoring: true
 
-  # Enable logging stack (elasticsearch, fluentd/vector, kibana)
+  # Enable logging stack (elasticsearch, fluentd)
   logging: true
 
   # NATS Streaming
@@ -619,18 +619,6 @@ elasticsearch:
       limits:
         cpu: "100m"
         memory: "256Mi"
-
-#################################
-## Kibana configuration
-#################################
-kibana:
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
 
 #################################
 ## Fluentd configuration

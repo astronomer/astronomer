@@ -22,7 +22,6 @@ read_only_root_pods = [
     "elasticsearch-client",
     "elasticsearch-exporter",
     "jetstream",
-    "kibana",
     "kube-state",
     "nats",
     "prometheus",
