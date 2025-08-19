@@ -155,6 +155,12 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
+        "vector_vector": {
+            "httpGet": {"path": "/health", "port": 8686},
+            "initialDelaySeconds": 30,
+            "periodSeconds": 10,
+            "timeoutSeconds": 5,
+        },
     }
 
     # Expected container readiness probes. This block should contain all of the expected default readiness probes.
@@ -238,6 +244,12 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
+        "vector_vector": {
+            "httpGet": {"path": "/health", "port": 8686},
+            "initialDelaySeconds": 30,
+            "periodSeconds": 10,
+            "timeoutSeconds": 5,
+        },
     }
 
     # liveness probe data and ids
