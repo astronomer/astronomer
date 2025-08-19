@@ -216,7 +216,8 @@ class TestVector:
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-vector"
         assert (
-            'astronomer.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}' in doc["data"]["vector-config.yaml"]
+            'astronomer.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}'
+            in doc["data"]["vector-config.yaml"]
         )
 
         doc = docs[1]
