@@ -235,29 +235,6 @@ class TestAstronomerNamespacePools:
         assert "manualNamespaceNames" not in deployments_config["deployments"]
         assert "preCreatedNamespaces" not in deployments_config["deployments"]
 
-    def test_astronomer_namespace_pools_fluentd_configmap(self, kube_version):
-        """Test that when namespace Pools is enabled, and a list of namespaces
-        is provided, helm render fluentd configmap correctly, with a regex
-        targeting pods in the provided namespaces only."""
-        namespaces = ["my-namespace-1", "my-namespace-2"]
-        doc = render_chart(
-            kube_version=kube_version,
-            values={
-                "global": {
-                    "features": {
-                        "namespacePools": {
-                            "enabled": True,
-                            "namespaces": {"create": True, "names": namespaces},
-                        }
-                    }
-                }
-            },
-            show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
-        )[0]
-
-        expected_rule = f"key $.kubernetes.namespace_name\n    pattern ^({namespaces[0]}|{namespaces[1]})$"
-        assert expected_rule in doc["data"]["output.conf"]
-
     def test_astronomer_namespace_pools_create_rbac_mode_is_disabled(self, kube_version):
         """Test that commander deployment rbac is generating roles and role binding on namespace pools mode."""
 
@@ -284,3 +261,24 @@ class TestAstronomerNamespacePools:
         )
 
         assert len(docs) == 0
+
+        def test_astronomer_namespace_pools_vector_configmap(self, kube_version):
+            """Test that when namespace Pools is enabled, vector runs in namespaces only."""
+            namespaces = ["my-namespace-1", "my-namespace-2"]
+            doc = render_chart(
+                kube_version=kube_version,
+                values={
+                    "global": {
+                        "logging": {"collector": "vector"},  # Enable vector
+                        "features": {
+                            "namespacePools": {
+                                "enabled": True,
+                                "namespaces": {"create": True, "names": namespaces},
+                            }
+                        }
+                    }
+                },
+                show_only=["charts/vector/templates/vector-configmap.yaml"],
+            )[0]
+            expected_filter = f'includes(["{namespaces[0]}", "{namespaces[1]}"], .kubernetes.namespace_name)'
+            assert expected_filter in doc["data"]["vector-config.yaml"]
