@@ -51,7 +51,6 @@ spec:
       containers:
       - name: vector
         securityContext:
-          readOnlyRootFilesystem: true
           {{- if .Values.vector.securityContext }}
 {{ toYaml .Values.vector.securityContext | indent 10 }}
           {{- end }}
