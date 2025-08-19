@@ -107,11 +107,6 @@ class TestDefaultProbes:
             "periodSeconds": 10,
             "failureThreshold": 10,
         },
-        "kibana_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
-        },
         "kube-state_kube-state": {"httpGet": {"path": "/healthz", "port": 8080}, "initialDelaySeconds": 5, "timeoutSeconds": 5},
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "nginx-default-backend_default-backend": {
@@ -208,11 +203,6 @@ class TestDefaultProbes:
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
             "failureThreshold": 10,
-        },
-        "kibana_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
         },
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},

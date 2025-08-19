@@ -129,124 +129,6 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == docs[3]["kind"]
         assert any(x["ports"][1] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
 
-    def test_authSidecar_kibana(self, kube_version):
-        """Test Kibana Service with authSidecar."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True}}},
-            show_only=[
-                "charts/kibana/templates/kibana-deployment.yaml",
-                "charts/kibana/templates/kibana-auth-sidecar-configmap.yaml",
-                "charts/kibana/templates/kibana-service.yaml",
-                "charts/kibana/templates/kibana-networkpolicy.yaml",
-                "charts/kibana/templates/ingress.yaml",
-            ],
-        )
-
-        assert len(docs) == 5
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-kibana"
-        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
-
-        assert "Service" == docs[2]["kind"]
-        assert "release-name-kibana" == docs[2]["metadata"]["name"]
-        assert "ClusterIP" == docs[2]["spec"]["type"]
-        assert {
-            "name": "auth-proxy",
-            "protocol": "TCP",
-            "port": 8084,
-            "appProtocol": "tcp",
-        } in docs[2]["spec"]["ports"]
-
-        assert "NetworkPolicy" == docs[3]["kind"]
-        assert [
-            {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-        ] == docs[3]["spec"]["ingress"][0]["from"]
-        assert any(x["ports"][0] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
-
-    def test_authSidecar_kibana_with_ingress_allowed_namespaces(self, kube_version):
-        """Test Kibana Service with authSidecar and allow some traffic namespaces."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}},
-            show_only=[
-                "charts/kibana/templates/kibana-deployment.yaml",
-                "charts/kibana/templates/kibana-auth-sidecar-configmap.yaml",
-                "charts/kibana/templates/kibana-service.yaml",
-                "charts/kibana/templates/kibana-networkpolicy.yaml",
-                "charts/kibana/templates/ingress.yaml",
-            ],
-        )
-
-        assert len(docs) == 5
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-kibana"
-        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
-
-        assert "Service" == docs[2]["kind"]
-        assert "release-name-kibana" == docs[2]["metadata"]["name"]
-        assert "ClusterIP" == docs[2]["spec"]["type"]
-        assert {
-            "name": "auth-proxy",
-            "protocol": "TCP",
-            "port": 8084,
-            "appProtocol": "tcp",
-        } in docs[2]["spec"]["ports"]
-
-        assert "NetworkPolicy" == docs[3]["kind"]
-        assert [
-            {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-            {
-                "namespaceSelector": {
-                    "matchExpressions": [
-                        {"key": "kubernetes.io/metadata.name", "operator": "In", "values": ["astro", "ingress-namespace"]}
-                    ]
-                }
-            },
-        ] == docs[3]["spec"]["ingress"][0]["from"]
-        assert any(x["ports"][0] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
-
-    def test_authSidecar_kibana_with_ingress_allowed_namespaces_empty(self, kube_version):
-        """Test Kibana Service with authSidecar and set no values in ingressAllowedNamespaces."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
-            show_only=[
-                "charts/kibana/templates/kibana-deployment.yaml",
-                "charts/kibana/templates/kibana-auth-sidecar-configmap.yaml",
-                "charts/kibana/templates/kibana-service.yaml",
-                "charts/kibana/templates/kibana-networkpolicy.yaml",
-                "charts/kibana/templates/ingress.yaml",
-            ],
-        )
-
-        assert len(docs) == 5
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-kibana"
-        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
-
-        assert "Service" == docs[2]["kind"]
-        assert "release-name-kibana" == docs[2]["metadata"]["name"]
-        assert "ClusterIP" == docs[2]["spec"]["type"]
-        assert {
-            "name": "auth-proxy",
-            "protocol": "TCP",
-            "port": 8084,
-            "appProtocol": "tcp",
-        } in docs[2]["spec"]["ports"]
-
-        assert "NetworkPolicy" == docs[3]["kind"]
-        assert [
-            {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-        ] == docs[3]["spec"]["ingress"][0]["from"]
-        assert any(x["ports"][0] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
-
     def test_authSidecar_houston_configmap_without_annotation(self, kube_version):
         """Test Houston Configmap with authSidecar."""
         docs = render_chart(
@@ -404,12 +286,11 @@ class TestAuthSidecar:
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
                 "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
                 "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
-                "charts/kibana/templates/kibana-networkpolicy.yaml",
                 "charts/prometheus/templates/prometheus-networkpolicy.yaml",
             ],
         )
 
-        assert len(docs) == 6
+        assert len(docs) == 5
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]
@@ -428,12 +309,11 @@ class TestAuthSidecar:
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
                 "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
                 "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
-                "charts/kibana/templates/kibana-networkpolicy.yaml",
                 "charts/prometheus/templates/prometheus-networkpolicy.yaml",
             ],
         )
 
-        assert len(docs) == 6
+        assert len(docs) == 5
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]

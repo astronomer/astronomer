@@ -71,7 +71,7 @@ data:
         honor_labels: true
         metrics_path: '/federate'
         scheme: https
-        scrape_interval: 1m
+        scrape_interval: 5s
         params:
           'match[]':
             - '{job=~"astronomer-kube-state|airflow"}'
