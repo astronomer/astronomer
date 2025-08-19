@@ -19,7 +19,7 @@ data:
       timestamp_key : "@timestamp"
     # TODO: revisit this data_dir and see if we can use something better. Sharing a dir with the bare metal machine will allow us to
     #       persist the checkpoint between pod restarts so we don't have to re-read the logs from the beginning.
-    data_dir: "/tmp"
+    data_dir: "/var/lib/vector"
     sources:
       airflow_log_files:
         type: kubernetes_logs
