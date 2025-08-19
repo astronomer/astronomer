@@ -296,9 +296,11 @@ def test_nginx_backend_serviceaccount_defaults():
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
 
 
-def test_nginx_defaults():
+@pytest.mark.parametrize("plane_mode", ["unified", "control", "data"])
+def test_nginx_deployment_defaults(plane_mode):
     """Test nginx ingress deployment template defaults."""
     docs = render_chart(
+        values={"global": {"plane": {"mode": plane_mode}}},
         show_only=[
             "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
             "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
@@ -322,6 +324,12 @@ def test_nginx_defaults():
     assert len(docs) == 1
     doc = docs[0]
     assert doc["kind"] == "Deployment"
+    names = {
+        "unified": "release-name-cp-nginx",
+        "control": "release-name-cp-nginx",
+        "data": "release-name-dp-nginx",
+    }
+    assert doc["metadata"]["name"] == names[plane_mode]
     assert doc["apiVersion"] == "apps/v1"
     assert doc["spec"]["minReadySeconds"] == 0
     assert doc["spec"]["template"]["spec"]["volumes"] == [
