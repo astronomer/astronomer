@@ -324,6 +324,12 @@ def test_nginx_deployment_defaults(plane_mode):
     assert len(docs) == 1
     doc = docs[0]
     assert doc["kind"] == "Deployment"
+    names = {
+        "unified": "release-name-cp-nginx",
+        "control": "release-name-cp-nginx",
+        "data": "release-name-dp-nginx",
+    }
+    assert doc["metadata"]["name"] == names[plane_mode]
     assert doc["apiVersion"] == "apps/v1"
     assert doc["spec"]["minReadySeconds"] == 0
     assert doc["spec"]["template"]["spec"]["volumes"] == [
