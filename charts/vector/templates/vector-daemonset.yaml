@@ -34,15 +34,15 @@ spec:
       nodeSelector: {{ toYaml (.Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
-      serviceAccountName: {{ template "vector.fullname" . }}
+      serviceAccountName: {{ include "vector.serviceAccountName" . }}
+      securityContext:
+{{ toYaml .Values.podSecurityContext | indent 8 }}
       containers:
       - name: vector
         securityContext:
           readOnlyRootFilesystem: true
           {{- if .Values.vector.securityContext }}
 {{ toYaml .Values.vector.securityContext | indent 10 }}
-          {{- else }}
-{{- template "vector.securityContext" . }}
           {{- end }}
         image: {{ template "vector.image" . }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
