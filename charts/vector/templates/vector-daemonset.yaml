@@ -35,6 +35,7 @@ spec:
       affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ include "vector.serviceAccountName" . }}
+{{- include "fluentd.imagePullSecrets" . | indent 6 }}
       securityContext:
 {{ toYaml .Values.podSecurityContext | indent 8 }}
       containers:
@@ -48,9 +49,23 @@ spec:
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         {{- if .Values.vector.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.vector.livenessProbe) . | nindent 10 }}
+        {{- else }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8686
+          initialDelaySeconds: 30
+          periodSeconds: 10
         {{- end }}
         {{- if .Values.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 10 }}
+        {{- else }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8686
+          initialDelaySeconds: 30
+          periodSeconds: 10
         {{- end }}
         env:
         - name: VECTOR_SELF_NODE_NAME
