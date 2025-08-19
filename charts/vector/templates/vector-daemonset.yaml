@@ -12,7 +12,6 @@ metadata:
     chart: {{ template "vector.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-
 spec:
   selector:
     matchLabels:
@@ -36,14 +35,16 @@ spec:
       affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "vector.fullname" . }}
-      {{- include "vector.imagePullSecrets" . | nindent 6 }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
       - name: vector
-        image: {{ template "vector.image" . }}
         securityContext:
           readOnlyRootFilesystem: true
-          {{- toYaml .Values.vector.securityContext | nindent 10 }}
+          {{- if .Values.vector.securityContext }}
+{{ toYaml .Values.vector.securityContext | indent 10 }}
+          {{- else }}
+{{- template "vector.securityContext" . }}
+          {{- end }}
+        image: {{ template "vector.image" . }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         env:
         - name: VECTOR_SELF_NODE_NAME
@@ -76,6 +77,10 @@ spec:
         {{- end }}
 
         volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /var/lib/vector
+          name: vector-data
         {{- if .Values.additionalVolumeMounts }}
         {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}
         {{- end }}
@@ -89,6 +94,10 @@ spec:
         resources: {{ toYaml .Values.vector.resources | nindent 12 }}
       terminationGracePeriodSeconds: 30
       volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: vector-data
+        emptyDir: {}
       {{- if .Values.additionalVolumes }}
       {{- toYaml .Values.additionalVolumes | nindent 6 }}
       {{- end }}
