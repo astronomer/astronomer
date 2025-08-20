@@ -448,8 +448,6 @@ commander:
 registry:
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False
-  # k8s secret name for registry to use to authenticate to houston when sending notifications
-  authHeaderSecretName: ~
   replicas: 1
   resources: {}
   #  limits:
