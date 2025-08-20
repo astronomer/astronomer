@@ -29,7 +29,7 @@ class TestPrometheusStatefulset:
         doc = docs[0]
 
         self.prometheus_common_tests(doc)
-        assert len(doc["spec"]["template"]["spec"]["containers"]) == 4
+        assert len(doc["spec"]["template"]["spec"]["containers"]) == 3
 
         sc = doc["spec"]["template"]["spec"]["securityContext"]
         assert sc["fsGroup"] == 65534

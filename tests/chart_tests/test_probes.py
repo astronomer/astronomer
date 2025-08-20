@@ -146,9 +146,6 @@ class TestDefaultProbes:
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
         },
-        "prometheus_nginx-auth-sidecar": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-        },
         "prometheus_prometheus": {
             "httpGet": {"path": "/-/healthy", "port": 9090},
             "initialDelaySeconds": 10,
@@ -233,11 +230,6 @@ class TestDefaultProbes:
             "periodSeconds": 10,
         },
         "prometheus_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
-        },
-        "prometheus_nginx-auth-sidecar": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
