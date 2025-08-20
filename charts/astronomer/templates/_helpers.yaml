@@ -87,7 +87,7 @@
 {{- end }}
 
 {{ define "registry.authHeaderSecret" -}}
-{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.registry.authHeaderSecretName }}
+{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
 
 {{ define "houston.airflowBackendSecret" -}}

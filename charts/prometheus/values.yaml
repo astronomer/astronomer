@@ -179,6 +179,12 @@ additionalScrapeJobs: {}
 
 federation:
   externalLabels: {}
+  auth:
+    enabled: true
+    replicas: 2
+    resources: {}
+  ingress:
+    annotations: {}
 
 extraFlags:
 - "--enable-feature=auto-config-reload"
