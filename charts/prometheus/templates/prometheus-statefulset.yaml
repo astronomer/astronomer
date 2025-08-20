@@ -56,7 +56,7 @@ spec:
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
-      {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+      {{- if (eq .Values.global.plane.mode "data") }}
         - name: nginx-auth-sidecar
           image: {{ template "authSidecar.image" . }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
@@ -185,7 +185,7 @@ spec:
             name: filesd
         - name: prometheus
           image: {{ include "prometheus.image" . }}
-          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+          {{- if (eq .Values.global.plane.mode "control") }}
           env:
             - name: FEDERATION_AUTH_TOKEN
               valueFrom:
@@ -259,7 +259,7 @@ spec:
           configMap:
             name: {{ template "prometheus.fullname" . }}-nginx-conf
         {{- end }}
-        {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+        {{- if (eq .Values.global.plane.mode "control") }}
         - name: federation-auth
           secret:
             secretName: {{ template "prometheus.federationAuthSecret" . }}
