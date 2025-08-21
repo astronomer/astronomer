@@ -33,12 +33,12 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.houston.podAnnotations }}
-{{ toYaml .Values.houston.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.houston.podAnnotations }}
+        {{- toYaml .Values.houston.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
@@ -51,7 +51,9 @@ spec:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
@@ -69,7 +71,9 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext| nindent 12 }}
           resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           {{- if .Values.houston.bootstrapper.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.readinessProbe) . | nindent 12 }}
@@ -107,7 +111,9 @@ spec:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml (.Values.securityContext)| nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext | nindent 12 }}
           {{- if .Values.houston.worker.command }}
           command:
             {{- toYaml .Values.houston.worker.command | nindent 12 }}

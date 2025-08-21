@@ -42,12 +42,9 @@ spec:
           {{- end }}
         spec:
           serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
-          nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
-          affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
-          tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
+          affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
+          tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
           restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 10 }}
           containers:
@@ -55,8 +52,10 @@ spec:
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               args: ["yarn", "cleanup-deploy-revisions", "--", "--older-than={{ .Values.houston.cleanupDeployRevisions.olderThan }}"]
-              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
-              resources: {{ toYaml .Values.houston.resources | nindent 16 }}
+              securityContext:
+                readOnlyRootFilesystem: true
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              resources: {{- toYaml .Values.houston.resources | nindent 16 }}
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}

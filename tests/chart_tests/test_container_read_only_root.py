@@ -21,7 +21,7 @@ read_only_root_pods = [
     "dp-nginx",
     "elasticsearch-client",
     "elasticsearch-exporter",
-    "release-name-houston",
+    "houston",
     "jetstream",
     "kube-state",
     "nats",
