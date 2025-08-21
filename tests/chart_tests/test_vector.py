@@ -194,7 +194,7 @@ class TestVector:
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-vector"
-        expected_index = 'index: "vector.release-name.%Y.%m.%d"'
+        expected_index = 'index: "fluentd.{{ .release }}.%Y.%m.%d"'
         assert expected_index in doc["data"]["vector-config.yaml"]
 
     @pytest.mark.skip("TODO: revisit this test to see if we need this kind of thing with vector.")
