@@ -547,7 +547,7 @@ ports:
   commanderGRPC: 50051
   astroUIHTTP: 8080
   registryHTTP: 5000
-  registryScrape: 
+  registryScrape: 5001
 
 secrets:
   enabled: false
