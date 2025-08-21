@@ -547,4 +547,22 @@ ports:
   commanderGRPC: 50051
   astroUIHTTP: 8080
   registryHTTP: 5000
-  registryScrape: 5001
+  registryScrape: 
+
+secrets:
+  enabled: false
+  list: {}
+  # - name: astronomer-bootstrap
+  #   value:
+  #     connection: postgres://<username>:<password>:5432
+  # - name: astronomer-smtp
+  #   value:
+  #     connection: smtp://<username>:<password>@<endpoint>/?requireTLS=true
+  # - name: astronomer-tls
+  #   value:
+  #     tls.crt: |
+  #         -----BEGIN CERTIFICATE-----
+  #          -----END CERTIFICATE-----
+  #     tls.key: |
+  #         -----BEGIN RSA PRIVATE KEY-----
+  #         -----END RSA PRIVATE KEY-----
