@@ -63,7 +63,7 @@ data:
         source: |
           .component = .kubernetes.pod_labels.component
           .workspace = .kubernetes.pod_labels.workspace
-          .release = .kubernetes.pod_labels.release || "{{ .Release.Name }}"
+          .release = .kubernetes.pod_labels.release
           .namespace = .kubernetes.pod_namespace
 
       parse_json_messages:
@@ -122,7 +122,7 @@ data:
         healthcheck:
           enabled: true
         bulk:
-          index: "{{ include "logging.indexNamePrefix" . }}.{{ .Release.Name }}.%Y.%m.%d"
+          index: "fluentd.{{ "{{ .release }}" }}.%Y.%m.%d"
           action: create
         batch:
           max_bytes: 10485760
