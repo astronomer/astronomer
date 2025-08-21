@@ -67,8 +67,6 @@ spec:
                 name: {{ template "registry.authHeaderSecret" . }}
                 key: authHeaders
           resources: {{ toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | nindent 12 }}
-          securityContext:
-            readOnlyRootFilesystem: true
           readinessProbe:
             httpGet:
               path: /healthz
