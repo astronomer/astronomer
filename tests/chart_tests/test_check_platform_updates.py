@@ -31,7 +31,7 @@ class TestHoustonCronJobPlatformUpdates:
             "--",
             " --url=https://updates.astronomer.io/astronomer-platform",
         ]
-        assert job_container_by_name["update-check"]["securityContext"] == {"runAsNonRoot": True}
+        assert job_container_by_name["update-check"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
         assert default_houston_resource_spec == job_container_by_name["update-check"]["resources"]
 
     def test_cronjob_platform_updates_enabled_with_overrides(self, kube_version):
@@ -59,6 +59,7 @@ class TestHoustonCronJobPlatformUpdates:
             " --url=https://updates.astronomer.io/astronomer-platform",
         ]
         assert job_container_by_name["update-check"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
             "allowPriviledgeEscalation": False,
         }
