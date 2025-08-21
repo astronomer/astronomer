@@ -94,13 +94,14 @@ data:
           } else {
             .log_type = "system"
           }
-      
+
       transform_add_timestamp:
         type: remap
         inputs:
           - categorize_logs
         source: |
           .@timestamp = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%3fZ")
+          .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")
       transform_remove_fields:
         type: remap
         inputs:
