@@ -5,6 +5,8 @@ from tests.utils.chart import render_chart
 
 
 class TestPodLabelsDefault:
+    """Test that all pods have all expected labels by default."""
+
     @staticmethod
     def init_test_pod_labels_configs():
         chart_values = get_all_features()
@@ -38,3 +40,21 @@ class TestPodLabelsDefault:
         assert "tier" in pod_labels
         assert "component" in pod_labels
         assert "release" in pod_labels
+
+
+class TestPodLabelsCustom:
+    """Test that we can define one configuration setting to get labels on all pod objects."""
+
+    values = {"global": {"podLabels": {"life-outlook": "sunshine-and-rainbows"}}}
+    docs = render_chart(values=values)
+    pod_templates = [x for x in [get_pod_template(doc) for doc in docs] if x]
+
+    pod_template_labels = [x.get("metadata", {}).get("labels", {}) for x in pod_templates]
+
+    @pytest.mark.parametrize(
+        "template",
+        pod_template_labels,
+        ids=[f"{doc.get('app', 'unknown')}" for doc in pod_template_labels],
+    )
+    def test_global_pod_labels(self, template):
+        assert template.get("life-outlook", "") == "sunshine-and-rainbows", f"Expected 'life-outlook' label in {template}"
