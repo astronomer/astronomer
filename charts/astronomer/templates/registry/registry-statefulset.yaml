@@ -45,6 +45,7 @@ spec:
         app: registry
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
         checksum/jwks-secret: {{ include (print $.Template.BasePath "/registry-auth-secret.yaml") . | sha256sum }}

@@ -35,6 +35,7 @@ spec:
         app: commander
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
 {{- if .Values.global.podAnnotations }}
