@@ -48,6 +48,25 @@ spec:
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
+        - name: etc-ssl-certs-copier
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext| nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
@@ -68,6 +87,9 @@ spec:
           {{- if .Values.houston.waitForDB.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.houston.waitForDB.livenessProbe) . | nindent 12 }}
           {{- end }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -124,14 +146,19 @@ spec:
           args:
             {{- toYaml .Values.houston.worker.args | nindent 12 }}
           {{- end }}
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+            - name: home-houston
+              mountPath: /home/houston
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
-{{- if .Values.houston.worker.volumeMounts }}
-{{- tpl (toYaml .Values.houston.worker.volumeMounts) $ | nindent 12 }}
-{{- end }}
+            {{- if .Values.houston.worker.volumeMounts }}
+            {{- tpl (toYaml .Values.houston.worker.volumeMounts) $ | nindent 12 }}
+            {{- end }}
           {{- if .Values.houston.worker.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.houston.worker.readinessProbe) . | nindent 12 }}
           {{- end }}
@@ -161,6 +188,12 @@ spec:
 {{- tpl (toYaml .Values.houston.worker.extraContainers) $ | nindent 8 }}
 {{- end }}
       volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: home-houston
+          emptyDir: {}
 {{- if .Values.houston.worker.extraVolumes }}
 {{ tpl (toYaml .Values.houston.worker.extraVolumes) $ | indent 8 }}
 {{- end }}
