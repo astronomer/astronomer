@@ -15,7 +15,7 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainSuffix: ""    # cluster-id
 
-  # To implement configurable pod labels across all pods in the Astronomer chart
+  # Labels to add to every pod
   podLabels: {}
 
   # Name of secret containing TLS certificate
