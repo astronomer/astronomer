@@ -27,6 +27,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "elasticsearch.name" . }}-ingress-controller
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx/nginx-es-configmap.yaml") . | sha256sum }}
         {{- if .Values.global.podAnnotations }}

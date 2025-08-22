@@ -82,6 +82,9 @@ data:
         relabel_configs:
           - target_label: federation
             replacement: data-planes
+        authorization:
+          type: Bearer
+          credentials_file: /etc/prometheus/federation-auth/federation-token
       {{- end }}
 
       {{- if $useClusterRoles }}

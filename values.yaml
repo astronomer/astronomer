@@ -4,7 +4,8 @@
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
-
+    # Name of Kubernetes secret containing registry auth token used for cross-plane authentication (registry, federation, etc.)
+  authHeaderSecretName: ~
   # This is to select the mode in which the Astronomer platform will run.
   # The mode can be one of: control, data, unified
   # - control: The Astronomer platform will run in control plane mode, where it is responsible for platform management, orchestration, and user interfaces
@@ -13,6 +14,9 @@ global:
   plane:
     mode: "unified"  # one of: control, data, unified
     domainSuffix: ""    # cluster-id
+
+  # Labels to add to every pod
+  podLabels: {}
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls

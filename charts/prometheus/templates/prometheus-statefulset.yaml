@@ -34,6 +34,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "prometheus.name" . }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
 {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/proxyCPU: "500m"
@@ -56,6 +57,30 @@ spec:
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
+      {{- if (eq .Values.global.plane.mode "data")}}
+        - name: nginx-auth-sidecar
+          image: {{ template "authSidecar.image" . }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          env:
+          - name: REGISTRY_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "registry.authHeaderSecret" . }}
+                key: authHeaders
+          resources: {{ toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+      {{- end }}
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
@@ -159,6 +184,14 @@ spec:
             name: filesd
         - name: prometheus
           image: {{ include "prometheus.image" . }}
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+          env:
+            - name: FEDERATION_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "prometheus.federationAuthSecret" . }}
+                  key: token
+          {{- end }}
           securityContext:
             readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}
@@ -178,6 +211,11 @@ spec:
             - {{ . }}
             {{- end }}
           volumeMounts:
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+            - name: federation-auth
+              mountPath: /etc/prometheus/federation-auth
+              readOnly: true
+          {{- end }}
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
             - name: alert-volume
@@ -221,6 +259,14 @@ spec:
         - name: prometheus-sidecar-conf
           configMap:
             name: {{ template "prometheus.fullname" . }}-nginx-conf
+        {{- end }}
+        {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+        - name: federation-auth
+          secret:
+            secretName: {{ template "prometheus.federationAuthSecret" . }}
+            items:
+            - key: token
+              path: federation-token
         {{- end }}
         - name: prometheus-config-volume
           configMap:

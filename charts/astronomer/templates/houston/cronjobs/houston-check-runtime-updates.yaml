@@ -30,6 +30,7 @@ spec:
             app: houston-update-runtime-check
             version: {{ .Chart.Version }}
             plane: {{ .Values.global.plane.mode }}
+            {{- include "global.podLabels" . | nindent 12 }}
           {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
           annotations:
           {{- if .Values.global.istio.enabled }}
