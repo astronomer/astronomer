@@ -168,13 +168,13 @@ data:
 
       {{- if .Values.global.dagOnlyDeployment.enabled }}
       # enables dag only deployment for airflow deployments
-      {{- $dagOnlyDeployment := include "dagOnlyDeployment.image" . }}
+      {{- $dagDeployRepoTag := include "conforming-repotag" (dict "global" .Values.global "imageConfig" .Values.global.dagOnlyDeployment "defaultImageName" "ap-dag-deploy") | fromYaml }}
       dagDeploy:
         enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
         images:
           dagServer:
-            repository: {{ (splitList ":"  $dagOnlyDeployment ) | first  }}
-            tag: {{ (splitList ":"  $dagOnlyDeployment ) | last  }}
+            repository: {{ $dagDeployRepoTag.repository }}
+            tag: {{ $dagDeployRepoTag.tag }}
         {{- if .Values.global.dagOnlyDeployment.securityContexts }}
         securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
