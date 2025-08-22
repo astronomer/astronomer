@@ -41,7 +41,7 @@ spec:
             pathType: Exact
             backend:
               service:
-                name: {{ template "prometheus.fullname" . }}
+                name: {{ template "prometheus.fullname" . }}-federation-auth
                 port:
                   name: prometheus-data
 {{- end }}
