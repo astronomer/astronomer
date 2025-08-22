@@ -49,6 +49,7 @@ spec:
         release: {{ .Release.Name }}
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        {{- include "global.podLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ template "nats.serviceAccountName" . }}
     {{- include "nats.imagePullSecrets" . | nindent 6 }}

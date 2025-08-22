@@ -22,21 +22,29 @@ def get_service_ports_by_name(doc):
     return {port_config["name"]: port_config for port_config in doc["spec"]["ports"]}
 
 
+def get_pod_template(doc: dict, *, include_init_containers=False) -> dict:
+    """Given a single doc, return the pod spec.
+
+    doc must be a valid spec for a pod manager. (EG: ds, sts, cronjob, etc.)
+    """
+    match doc["kind"]:
+        case "Deployment" | "StatefulSet" | "ReplicaSet" | "DaemonSet" | "Job":
+            return doc["spec"]["template"]
+        case "CronJob":
+            return doc["spec"]["jobTemplate"]["spec"]["template"]
+        case _:
+            return {}
+
+
 def get_containers_by_name(doc: dict, *, include_init_containers=False) -> dict:
     """Given a single doc, return all the containers by name.
 
     doc must be a valid spec for a pod manager. (EG: ds, sts, cronjob, etc.)
     """
 
-    match doc["kind"]:
-        case "Deployment" | "StatefulSet" | "ReplicaSet" | "DaemonSet" | "Job":
-            containers = doc["spec"]["template"]["spec"].get("containers", [])
-            initContainers = doc["spec"]["template"]["spec"].get("initContainers", [])
-        case "CronJob":
-            containers = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers", [])
-            initContainers = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("initContainers", [])
-        case _:
-            raise ValueError(f"Unhandled kind: {doc['kind']}")
+    pod_template = get_pod_template(doc)
+    containers = pod_template.get("spec", {}).get("containers", [])
+    initContainers = pod_template.get("spec", {}).get("initContainers", [])
 
     c_by_name = {c["name"]: c for c in containers}
 
