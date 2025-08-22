@@ -220,18 +220,12 @@ spec:
           subPath: nginx.conf
         - name: tmp
           mountPath: /tmp
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: {{ .Values.global.authSidecar.port | default 80 }}
-          initialDelaySeconds: 10
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: {{ .Values.global.authSidecar.port | default 80 }}
-          initialDelaySeconds: 5
-          periodSeconds: 10
+        {{- if .Values.federation.readinessProbe }}
+        readinessProbe: {{- tpl (toYaml .Values.federation.readinessProbe) . | nindent 14 }}
+        {{- end }}
+        {{- if .Values.federation.livenessProbe }}
+        livenessProbe: {{- tpl (toYaml .Values.federation.livenessProbe) . | nindent 14 }}
+        {{- end }}
         resources: {{- toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | nindent 10 }}
         {{- if .Values.global.authSidecar.securityContext }}
         securityContext: {{- toYaml .Values.global.authSidecar.securityContext | nindent 10 }}
