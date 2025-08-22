@@ -182,11 +182,12 @@ spec:
     metadata:
       labels:
         tier: monitoring
+        app: {{ template "prometheus.name" . }}-federation-auth
         component: {{ template "prometheus.name" . }}-federation-auth
         release: {{ .Release.Name }}
-        plane: {{ .Values.global.plane.mode }}
-        app: {{ template "prometheus.name" . }}-federation-auth
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
       {{- if .Values.global.podAnnotations }}
       {{- toYaml .Values.global.podAnnotations | nindent 8 }}

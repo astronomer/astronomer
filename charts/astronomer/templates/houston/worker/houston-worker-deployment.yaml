@@ -30,6 +30,7 @@ spec:
         app: houston-worker
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

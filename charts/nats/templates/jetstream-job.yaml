@@ -79,6 +79,7 @@ spec:
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
         plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
       {{- if .Values.global.istio.enabled }}
