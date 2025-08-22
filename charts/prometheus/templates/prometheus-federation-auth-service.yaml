@@ -100,12 +100,12 @@ data:
 
                 # Remove the Authorization header before proxying to Prometheus
                 proxy_set_header Authorization "";
-                
+
                 # Proxy to Prometheus backend
                 proxy_pass http://prometheus_backend/federate;
                 proxy_read_timeout 300s;
                 proxy_connect_timeout 75s;
-                
+
                 # Handle large responses
                 proxy_buffering off;
                 proxy_buffer_size 4k;
