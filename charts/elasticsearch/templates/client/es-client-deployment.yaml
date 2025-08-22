@@ -132,11 +132,11 @@ spec:
           value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         - name: "ES_JAVA_OPTS"
           value: "-Xms{{ .Values.client.heapMemory }} -Xmx{{ .Values.client.heapMemory }} -Dlog4j2.formatMsgNoLookups=true"
-        {{- range $key, $value :=  .Values.common.env }}
+        {{- range $key, $value := .Values.common.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
         {{- end }}
-        {{- range $key, $value :=  .Values.client.env }}
+        {{- range $key, $value := .Values.client.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
         {{- end }}

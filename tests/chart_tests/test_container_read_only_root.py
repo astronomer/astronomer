@@ -21,11 +21,13 @@ read_only_root_pods = [
     "dp-nginx",
     "elasticsearch-client",
     "elasticsearch-exporter",
+    "houston",
     "jetstream",
     "kube-state",
     "nats",
     "prometheus",
     "registry",
+    "update-resource-strategy",
 ]
 
 
