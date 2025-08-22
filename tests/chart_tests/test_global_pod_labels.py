@@ -1,9 +1,9 @@
 import jmespath
 import pytest
 
-import tests.chart_tests as chart_tests
 from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import get_all_features
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -61,7 +61,7 @@ class TestGlobalPodLabels:
 
     def init_test_global_pod_labels(self, kube_version):
         """Initialize test data for global pod labels functionality."""
-        chart_values = chart_tests.get_all_features()
+        chart_values = get_all_features()
         chart_values["global"] = {
             "podLabels": {"gatekeeper.policy": "approved", "security.level": "high", "cost-center": "engineering"}
         }
@@ -71,7 +71,7 @@ class TestGlobalPodLabels:
 
     def init_test_global_pod_labels_disabled(self, kube_version):
         """Initialize test data when global pod labels are not configured."""
-        chart_values = chart_tests.get_all_features()
+        chart_values = get_all_features()
         docs = render_chart(values=chart_values, kube_version=kube_version)
         return self._extract_pod_labels_data(docs)
 
@@ -97,7 +97,7 @@ class TestGlobalPodLabels:
 
     def test_global_pod_labels_do_not_affect_non_pod_resources(self, kube_version):
         """Test that global pod labels are not applied to non-pod resources."""
-        chart_values = chart_tests.get_all_features()
+        chart_values = get_all_features()
         chart_values["global"] = {"podLabels": {"should-not-appear": "on-services-or-configmaps"}}
 
         docs = render_chart(values=chart_values, kube_version=kube_version)
@@ -121,7 +121,7 @@ class TestGlobalPodLabels:
 
     def test_global_pod_labels_merge_with_existing_labels(self, kube_version):
         """Test that global pod labels merge correctly with existing component labels."""
-        chart_values = chart_tests.get_all_features()
+        chart_values = get_all_features()
         chart_values["global"] = {"podLabels": {"global-label": "global-value"}}
 
         docs = render_chart(values=chart_values, kube_version=kube_version)

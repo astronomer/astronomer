@@ -9,9 +9,7 @@ class TestPodLabelsDefault:
 
     @staticmethod
     def init_test_pod_labels_configs():
-        chart_values = get_all_features()
-
-        docs = render_chart(values=chart_values)
+        docs = render_chart(values=get_all_features())
 
         pod_docs = [
             {
@@ -45,7 +43,8 @@ class TestPodLabelsDefault:
 class TestPodLabelsCustom:
     """Test that we can define one configuration setting to get labels on all pod objects."""
 
-    values = {"global": {"podLabels": {"life-outlook": "sunshine-and-rainbows"}}}
+    values = get_all_features()
+    values["global"] = {"podLabels": {"life-outlook": "sunshine-and-rainbows"}}
     docs = render_chart(values=values)
     pod_templates = [x for x in [get_pod_template(doc) for doc in docs] if x]
 
