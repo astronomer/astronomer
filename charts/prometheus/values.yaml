@@ -184,6 +184,8 @@ federation:
     resources: {}
   ingress:
     annotations: {}
+  livenessProbe: {}
+  readinessProbe: {}
 
 extraFlags:
 - "--enable-feature=auto-config-reload"

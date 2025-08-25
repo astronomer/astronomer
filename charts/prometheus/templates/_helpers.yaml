@@ -75,6 +75,14 @@ prometheus.{{ .Values.global.baseDomain }}
 {{- end -}}
 {{- end -}}
 
+{{- define "prom-proxy.url" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+prom-proxy.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+prom-proxy.{{ .Values.global.baseDomain }}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Return  the proper Storage Class
 */}}

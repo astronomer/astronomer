@@ -114,4 +114,4 @@ class TestIngress:
         assert paths[0]["pathType"] == "Exact"
 
         backend = paths[0]["backend"]
-        assert backend["service"]["port"]["name"] == "prometheus-data"
+        assert backend["service"]["port"]["name"] == "http"
