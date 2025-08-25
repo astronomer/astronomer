@@ -15,6 +15,8 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   nginx.conf: |
+    pid /tmp/nginx.pid;
+    worker_processes 1;
     events {
         worker_connections 1024;
     }
@@ -27,6 +29,7 @@ data:
         # Upstream to Prometheus service
         upstream prometheus_backend {
             server {{ template "prometheus.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.ports.http }};
+            keepalive 15;
         }
 
         init_by_lua_block {
@@ -54,6 +57,10 @@ data:
 
             # Disable Nginx Server version
             server_tokens off;
+
+            # auth request
+
+            auth_request /auth;
 
             # Proxy settings
             proxy_buffering off;
