@@ -34,14 +34,14 @@ spec:
         - {{ template "prometheus.url" . }}
   {{- end }}
   rules:
-    - host: {{ template "prometheus.url" . }}
+    - host: {{ template "prometheus.url" . }}-prom-proxy
       http:
         paths:
           - path: /federate
             pathType: Exact
             backend:
               service:
-                name: {{ template "prometheus.fullname" . }}-federation-auth
+                name: {{ .Release.Name }}-prom-proxy
                 port:
                   name: prometheus-data
 {{- end }}
