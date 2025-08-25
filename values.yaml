@@ -352,7 +352,7 @@ tags:
   # Enable monitoring stack (prometheus, kube-state)
   monitoring: true
 
-  # Enable logging stack (elasticsearch, fluentd)
+  # Enable logging stack (elasticsearch, vector)
   logging: true
 
   # NATS Streaming
@@ -623,18 +623,6 @@ elasticsearch:
       limits:
         cpu: "100m"
         memory: "256Mi"
-
-#################################
-## Fluentd configuration
-#################################
-fluentd:
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "1000m"
-      memory: "1024Mi"
 
 #################################
 ## Vector configuration
