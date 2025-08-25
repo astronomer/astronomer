@@ -250,9 +250,10 @@ def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
     default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
-    if "nginx-dp-deployment" in template_name:
+match template_name:
+    case _ if "nginx-dp-deployment" in template_name:
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
-    if "fluentd-daemonset" in template_name:
+    case _ if "fluentd-daemonset" in template_name:
         default_serviceaccount_names_overrides["global"]["logging"] = {"collector": "fluentd"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
