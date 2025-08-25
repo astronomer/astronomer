@@ -31,10 +31,10 @@ spec:
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
-        - {{ template "prometheus.url" . }}
+        - {{ template "prom-proxy.url" . }}
   {{- end }}
   rules:
-    - host: {{ template "prometheus.url" . }}-prom-proxy
+    - host: {{ template "prom-proxy.url" . }}
       http:
         paths:
           - path: /federate
