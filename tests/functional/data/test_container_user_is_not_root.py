@@ -6,7 +6,6 @@ from tests.utils.k8s import KUBECONFIG_DATA, get_pod_running_containers
 container_ignore_list = [
     "kube-state",
     "houston",
-    "fluentd",
 ]
 
 

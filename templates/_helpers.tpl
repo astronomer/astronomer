@@ -5,7 +5,7 @@
 {{- if .Values.global.loggingSidecar.enabled  -}}
 vector
 {{- else -}}
-fluentd
+{{ .Values.global.logging.collector}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

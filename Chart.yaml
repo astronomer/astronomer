@@ -43,8 +43,8 @@ dependencies:
     condition: global.elasticsearchEnabled
     tags:
       - logging
-  - name: fluentd
-    condition: global.fluentdEnabled
+  - name: vector
+    condition: global.vectorEnabled
     tags:
       - logging
 

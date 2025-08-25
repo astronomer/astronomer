@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.37.24
+    tag: feature-7200-implement-authorization
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
