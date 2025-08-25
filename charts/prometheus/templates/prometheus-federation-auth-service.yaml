@@ -26,7 +26,7 @@ data:
 
         # Upstream to Prometheus service
         upstream prometheus_backend {
-            server {{ template "prometheus.fullname" . }}.svc.cluster.local:{{ .Values.ports.http }};
+            server {{ template "prometheus.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.ports.http }};
         }
 
         init_by_lua_block {
