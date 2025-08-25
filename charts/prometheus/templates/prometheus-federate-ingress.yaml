@@ -43,5 +43,5 @@ spec:
               service:
                 name: {{ .Release.Name }}-prom-proxy
                 port:
-                  name: prometheus-data
+                  name: http
 {{- end }}
