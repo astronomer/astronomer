@@ -83,5 +83,5 @@ def test_networkpolicy_dag_deploy_enabled(kube_version):
     assert len(docs) == 1
 
     components = [x["podSelector"]["matchLabels"].get("component") for x in docs[0]["spec"]["ingress"][0]["from"]]
-    assert len(components) == 8
+    assert len(components) == 9
     assert "dag-server" in components
