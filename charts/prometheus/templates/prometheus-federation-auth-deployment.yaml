@@ -48,6 +48,9 @@ spec:
       - name: federation-auth
         image: {{ template "authSidecar.image" . }}
         imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+        securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "prometheus.securityContext" . }}
         ports:
         - containerPort: {{ .Values.global.authSidecar.port }}
           name: http
