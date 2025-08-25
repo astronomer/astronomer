@@ -267,15 +267,6 @@ external-es-proxy:
     exec:
       command:
       - /bin/true
-fluentd:
-  livenessProbe:
-    exec:
-      command:
-      - /bin/true
-  readinessProbe:
-    exec:
-      command:
-      - /bin/true
 global:
   airflowOperator:
     enabled: true

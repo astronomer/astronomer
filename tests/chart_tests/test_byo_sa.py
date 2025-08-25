@@ -118,7 +118,6 @@ class TestServiceAccounts:
             "external-es-proxy": {"serviceAccount": {"create": False}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
             "pgbouncer": {"serviceAccount": {"create": False}},
-            "fluentd": {"serviceAccount": {"create": False}},
             "vector": {"serviceAccount": {"create": False}},
             "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
             "kube-state": {"serviceAccount": {"create": False}},

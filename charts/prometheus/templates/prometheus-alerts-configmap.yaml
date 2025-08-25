@@ -897,19 +897,6 @@ data:
               measured on a time window of 5 minutes was higher than 5% of all traffic
               AND more than 5 per minute for the last 10 minutes."
 
-      - name: logging
-        rules:
-        - alert: FluentdQueueLarge
-          expr: sum by (host)( fluentd_status_buffer_queue_length) > 2
-          for: 15m
-          labels:
-            tier: platform
-            component: fluentd
-            severity: critical
-          annotations:
-            summary: {{ printf "%q" "Fluentd buffer queue length is {{ $value }} For {{ $labels.host }} " }}
-            description: "Check on Elastic Search client and try restarting Fluentd pods"
-
         - alert: ElasticSeachUnassignedShards
           expr: elasticsearch_cluster_health_unassigned_shards > 0
           for: 10m

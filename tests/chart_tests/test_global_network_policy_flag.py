@@ -9,7 +9,6 @@ show_only = [
     "charts/postgresql/templates/networkpolicy.yaml",
     # 'charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml',
     # 'charts/prometheus-postgres-exporter/templates/networkpolicy.yaml',
-    "charts/fluentd/templates/fluentd-networkpolicy.yaml",
     "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
     "charts/stan/templates/stan-networkpolicy.yaml",
     "charts/nats/templates/networkpolicy.yaml",
