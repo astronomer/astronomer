@@ -27,6 +27,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "fluentd.name" . }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/fluentd-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"

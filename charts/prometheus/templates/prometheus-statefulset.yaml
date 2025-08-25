@@ -34,6 +34,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "prometheus.name" . }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
 {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/proxyCPU: "500m"
@@ -67,8 +68,6 @@ spec:
                 name: {{ template "registry.authHeaderSecret" . }}
                 key: authHeaders
           resources: {{ toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | nindent 12 }}
-          securityContext:
-            readOnlyRootFilesystem: true
           readinessProbe:
             httpGet:
               path: /healthz

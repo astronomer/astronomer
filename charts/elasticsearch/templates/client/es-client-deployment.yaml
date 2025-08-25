@@ -31,6 +31,7 @@ spec:
         role: client
         app: {{ template "elasticsearch.name" . }}-client
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

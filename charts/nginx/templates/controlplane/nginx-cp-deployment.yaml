@@ -25,11 +25,12 @@ spec:
     metadata:
       labels:
         tier: {{ template "nginx.name" . }}
+        app: {{ template "nginx.name" . }}
         component: cp-ingress-controller
         release: {{ .Release.Name }}
-        app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-cp-configmap.yaml") . | sha256sum }}

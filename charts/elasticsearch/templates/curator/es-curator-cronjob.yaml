@@ -40,6 +40,7 @@ spec:
             heritage: {{ .Release.Service }}
             app: {{ template "elasticsearch.name" . }}-curator
             version: {{ .Chart.Version }}
+            {{- include "global.podLabels" . | nindent 12 }}
         spec:
           serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
           nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
