@@ -110,7 +110,7 @@ class TestIngress:
         assert len(rules) == 1
         paths = rules[0]["http"]["paths"]
         assert len(paths) == 1
-        assert paths[0]["path"] == "/federate"
+        assert paths[0]["path"] == "/(federate|healthz)(/.*)?"
         assert paths[0]["pathType"] == "Exact"
 
         backend = paths[0]["backend"]
