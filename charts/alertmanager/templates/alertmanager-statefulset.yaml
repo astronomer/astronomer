@@ -45,7 +45,7 @@ spec:
     spec:
       serviceAccountName: {{ template "alertmanager.serviceAccountName" . }}
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
