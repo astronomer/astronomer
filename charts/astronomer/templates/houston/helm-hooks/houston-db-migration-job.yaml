@@ -86,6 +86,11 @@ spec:
                   name: astronomer-bootstrap
                   key: connection
             {{- include "houston_environment" . | indent 12 }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -119,6 +124,11 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
       {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
@@ -149,7 +159,13 @@ spec:
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
       volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
 {{- end }}

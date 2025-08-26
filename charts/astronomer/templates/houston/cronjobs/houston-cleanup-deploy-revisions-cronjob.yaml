@@ -80,7 +80,9 @@ spec:
               resources: {{- toYaml .Values.houston.resources | nindent 16 }}
               volumeMounts:
                 - name: etc-ssl-certs
-                  mountPath: /etc/ssl/certs_copy
+                  mountPath: /etc/ssl/certs
+                - name: tmp
+                  mountPath: /tmp
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:

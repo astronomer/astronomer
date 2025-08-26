@@ -50,6 +50,28 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext| nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: post-upgrade-update-resource-strategy
           image: {{ template "houston.image" . }}
@@ -62,6 +84,10 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
@@ -78,6 +104,10 @@ spec:
           livenessProbe: {{ tpl (toYaml .Values.houston.updateResourceStrategy.livenessProbe) . | nindent 12 }}
           {{- end }}
       volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
 {{- end }}

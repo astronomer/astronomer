@@ -90,6 +90,8 @@ spec:
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -128,6 +130,11 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
         {{- end }}
       containers:
         - name: houston
@@ -152,8 +159,6 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
-            - name: home-houston
-              mountPath: /home/houston
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
             {{- if .Values.houston.worker.volumeMounts }}
@@ -191,8 +196,6 @@ spec:
         - name: etc-ssl-certs
           emptyDir: {}
         - name: tmp
-          emptyDir: {}
-        - name: home-houston
           emptyDir: {}
 {{- if .Values.houston.worker.extraVolumes }}
 {{ tpl (toYaml .Values.houston.worker.extraVolumes) $ | indent 8 }}

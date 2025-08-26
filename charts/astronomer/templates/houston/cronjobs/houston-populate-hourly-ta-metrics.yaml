@@ -47,6 +47,26 @@ spec:
           tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
           restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          initContainers:
+            - name: etc-ssl-certs-copier
+              command:
+                - sh
+                - -c
+                - |
+                  if [ -d /etc/ssl/certs ]; then
+                    cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+                  else
+                    echo "No /etc/ssl/certs directory found, skipping copy."
+                  fi
+              volumeMounts:
+                - name: etc-ssl-certs
+                  mountPath: /etc/ssl/certs_copy
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              securityContext:
+                readOnlyRootFilesystem: true
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              resources: {{- toYaml .Values.houston.resources | nindent 16 }}
           containers:
             - name: populate-daily-task-metrics
               image: {{ template "houston.image" . }}
@@ -67,7 +87,16 @@ spec:
               {{- if .Values.houston.taskUsageMetrics.livenessProbe }}
               livenessProbe: {{ tpl (toYaml .Values.houston.taskUsageMetrics.livenessProbe) . | nindent 16 }}
               {{- end }}
+              volumeMounts:
+                - name: etc-ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: tmp
+                  mountPath: /tmp
           volumes:
+            - name: etc-ssl-certs
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
             {{- include "houston_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
 {{- end }}

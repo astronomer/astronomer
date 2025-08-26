@@ -2,7 +2,8 @@ import re
 
 import pytest
 
-from tests.utils import get_all_features, get_containers_by_name
+from tests import git_root_dir
+from tests.utils import get_all_features, get_containers_by_name, get_pod_template
 from tests.utils.chart import render_chart
 
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
@@ -53,3 +54,38 @@ class TestAllContainersReadOnlyRoot:
             else:
                 # This assertion ensures that this test is updated whenever we change this property
                 assert not container.get("securityContext", {}).get("readOnlyRootFilesystem")
+
+
+class TestHoustonPodManagers:
+    chart_values = get_all_features()
+    templates = [str(x.relative_to(git_root_dir)) for x in (git_root_dir / "charts/astronomer/templates/houston").rglob("*.yaml")]
+    docs = render_chart(values=chart_values, show_only=templates)
+    pod_manager_docs = [x for x in docs if x["kind"] in pod_managers]
+
+    @pytest.mark.parametrize(
+        "pod_manager_doc",
+        pod_manager_docs,
+        ids=[f"{x.get('kind', '')}/{x['metadata']['name']}" for x in pod_manager_docs],
+    )
+    def test_houston_pods_read_only_root_filesysystem_settings(self, pod_manager_doc):
+        """Test that Houston pod manager docs have the correct read-only root filesystem settings."""
+        pod_name = pod_manager_doc["metadata"]["name"].removeprefix("release-name-")
+        pod_template = get_pod_template(pod_manager_doc, include_init_containers=True)
+        assert {"emptyDir": {}, "name": "etc-ssl-certs"} in pod_template["spec"]["volumes"]
+        assert {"emptyDir": {}, "name": "tmp"} in pod_template["spec"]["volumes"]
+        for container in pod_template["spec"]["containers"] + pod_template["spec"]["initContainers"]:
+            if container["name"] == "etc-ssl-certs-copier":
+                assert {"mountPath": "/etc/ssl/certs_copy", "name": "etc-ssl-certs"} in container["volumeMounts"], (
+                    f"{pod_name}/{container['name']} missing /etc/ssl/certs_copy mount"
+                )
+            else:
+                if container["name"] != "wait-for-db":
+                    assert {"mountPath": "/tmp", "name": "tmp"} in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} missing /tmp mount"
+                    )
+                assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in container["volumeMounts"], (
+                    f"{pod_name}/{container['name']} missing /etc/ssl/certs mount"
+                )
+                assert container["securityContext"].get("readOnlyRootFilesystem"), (
+                    f"{pod_name}/{container['name']} missing readOnlyRootFilesystem"
+                )

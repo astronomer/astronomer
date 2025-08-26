@@ -47,6 +47,28 @@ spec:
           tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
           restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          initContainers:
+            - name: etc-ssl-certs-copier
+              command:
+                - sh
+                - -c
+                - |
+                  if [ -d /etc/ssl/certs ]; then
+                    cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+                  else
+                    echo "No /etc/ssl/certs directory found, skipping copy."
+                  fi
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              securityContext:
+                readOnlyRootFilesystem: true
+                {{- toYaml .Values.securityContext| nindent 16 }}
+              resources: {{- toYaml .Values.houston.resources | nindent 16 }}
+              volumeMounts:
+                - name: etc-ssl-certs
+                  mountPath: /etc/ssl/certs_copy
+                - name: tmp
+                  mountPath: /tmp
           containers:
             - name: cleanup
               image: {{ template "houston.image" . }}
@@ -57,6 +79,10 @@ spec:
                 {{- toYaml .Values.securityContext | nindent 16 }}
               resources: {{- toYaml .Values.houston.resources | nindent 16 }}
               volumeMounts:
+                - name: etc-ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: tmp
+                  mountPath: /tmp
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
@@ -68,6 +94,10 @@ spec:
               livenessProbe: {{ tpl (toYaml .Values.houston.cleanupClusterAudits.livenessProbe) . | nindent 16 }}
               {{- end }}
           volumes:
+            - name: etc-ssl-certs
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
             {{- include "houston_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
 {{- end }}
