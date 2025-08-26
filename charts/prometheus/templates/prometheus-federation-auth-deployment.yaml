@@ -46,8 +46,8 @@ spec:
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: federation-auth
-        image: {{ template "authSidecar.image" . }}
-        imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+        image: {{ template "promproxy.image" . }}
+        imagePullPolicy: {{ .Values.images.promproxy.pullPolicy }}
         securityContext:
             readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}

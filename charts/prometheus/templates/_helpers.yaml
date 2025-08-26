@@ -150,3 +150,11 @@ imagePullSecrets:
 {{ define "registry.authHeaderSecret" -}}
 {{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
+
+{{ define "promproxy.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-openresty:{{ .Values.images.esproxy.tag }}
+{{- else -}}
+{{ .Values.images.promproxy.repository}}:{{ .Values.images.promproxy.tag }}
+{{- end }}
+{{- end }}
