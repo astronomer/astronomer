@@ -26,6 +26,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "vector.name" . }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/vector-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"

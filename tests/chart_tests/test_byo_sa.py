@@ -251,7 +251,7 @@ def test_default_serviceaccount_names(template_name):
     match template_name:
         case _ if "nginx-dp-deployment" in template_name:
             default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
-        values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
+    values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
     docs = render_chart(show_only=template_name, values=values)
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]

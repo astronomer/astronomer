@@ -130,7 +130,7 @@ class TestPrometheusAlertConfigmap:
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
         assert len(groups) == 15
         assert [x["rules"] for x in groups if x["name"] == section] == [[]]
-        assert len([x["rules"] for x in groups if x["name"] != section]) == 15
+        assert len([x["rules"] for x in groups if x["name"] != section]) == 14
 
     @pytest.mark.parametrize("section", ["airflow", "platform"])
     def test_default_alerts_section_disabled_with_additional_alerts(self, kube_version, section):

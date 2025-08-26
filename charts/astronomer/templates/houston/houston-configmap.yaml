@@ -76,7 +76,7 @@ data:
         operator:
           enabled: {{.Values.global.airflowOperator.enabled}}
       disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
-      fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
+      vectorIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
       namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
