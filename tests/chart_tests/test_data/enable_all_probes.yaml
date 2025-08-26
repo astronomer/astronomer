@@ -428,6 +428,15 @@ prometheus:
       exec:
         command:
         - /bin/true
+  federation:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
   livenessProbe:
     exec:
       command:
