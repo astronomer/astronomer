@@ -41,7 +41,7 @@ spec:
             pathType: Exact
             backend:
               service:
-                name: {{ .Release.Name }}-prom-proxy
+                name: {{ template "prometheus.fullname" . }}-prom-proxy
                 port:
                   name: http
 {{- end }}
