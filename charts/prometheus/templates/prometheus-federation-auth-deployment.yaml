@@ -1,0 +1,84 @@
+###########################################
+## Prometheus Federation Auth Deployment ##
+###########################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prometheus.fullname" . }}-federation-auth
+  labels:
+    tier: monitoring
+    component: {{ template "prometheus.name" . }}-federation-auth
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  replicas: {{ .Values.federation.auth.replicas | default 2 }}
+  selector:
+    matchLabels:
+      component: {{ template "prometheus.name" . }}-federation-auth
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/prom-auth-config: {{ include (print $.Template.BasePath "/prometheus-federation-auth-configmap.yaml") . | sha256sum }}
+      labels:
+        tier: monitoring
+        app: {{ template "prometheus.name" . }}-federation-auth
+        component: {{ template "prometheus.name" . }}-federation-auth
+        release: {{ .Release.Name }}
+        version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      annotations:
+      {{- if .Values.global.podAnnotations }}
+      {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.podannotations }}
+      {{- toYaml .Values.podannotations | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.global.platformNodePool }}
+      nodeSelector: {{- toYaml .Values.global.platformNodePool.nodeSelector | nindent 8 }}
+      affinity: {{- toYaml .Values.global.platformNodePool.affinity | nindent 8 }}
+      tolerations: {{- toYaml .Values.global.platformNodePool.tolerations | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
+      {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
+      containers:
+      - name: federation-auth
+        image: {{ template "promproxy.image" . }}
+        imagePullPolicy: {{ .Values.images.promproxy.pullPolicy }}
+        securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "prometheus.securityContext" . }}
+        ports:
+        - containerPort: {{ .Values.global.authSidecar.port }}
+          name: http
+        env:
+        - name: REGISTRY_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: astronomer-registry-auth-key
+              key: token
+        volumeMounts:
+        - name: config
+          mountPath: /usr/local/openresty/nginx/conf/nginx.conf
+          subPath: nginx.conf
+        - name: tmp
+          mountPath: /tmp
+        {{- if .Values.federation.readinessProbe }}
+        readinessProbe: {{- tpl (toYaml .Values.federation.readinessProbe) . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.federation.livenessProbe }}
+        livenessProbe: {{- tpl (toYaml .Values.federation.livenessProbe) . | nindent 10 }}
+        {{- end }}
+        resources: {{- toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | nindent 10 }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "prometheus.fullname" . }}-federation-auth-config
+      - name: tmp
+        emptyDir: {}
+{{- end }}
