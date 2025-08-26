@@ -57,30 +57,6 @@ spec:
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
-      {{- if (eq .Values.global.plane.mode "data")}}
-        - name: nginx-auth-sidecar
-          image: {{ template "authSidecar.image" . }}
-          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
-          env:
-          - name: REGISTRY_AUTH_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "registry.authHeaderSecret" . }}
-                key: authHeaders
-          resources: {{ toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | nindent 12 }}
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.global.authSidecar.port }}
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.global.authSidecar.port }}
-              scheme: HTTP
-      {{- end }}
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}

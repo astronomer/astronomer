@@ -75,6 +75,14 @@ prometheus.{{ .Values.global.baseDomain }}
 {{- end -}}
 {{- end -}}
 
+{{- define "prom-proxy.url" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+prom-proxy.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+prom-proxy.{{ .Values.global.baseDomain }}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Return  the proper Storage Class
 */}}
@@ -141,4 +149,12 @@ imagePullSecrets:
 
 {{ define "registry.authHeaderSecret" -}}
 {{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
+{{- end }}
+
+{{ define "promproxy.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-openresty:{{ .Values.images.promproxy.tag }}
+{{- else -}}
+{{ .Values.images.promproxy.repository}}:{{ .Values.images.promproxy.tag }}
+{{- end }}
 {{- end }}

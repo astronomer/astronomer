@@ -370,6 +370,9 @@ custom_service_account_names = {
     "charts/prometheus/templates/prometheus-statefulset.yaml": {
         "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
+    "charts/prometheus/templates/prometheus-federation-auth-deployment.yaml": {
+        "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"serviceAccount": {"create": True, "name": "prothean"}}}},
 }
 
