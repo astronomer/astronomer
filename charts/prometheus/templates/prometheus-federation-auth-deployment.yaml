@@ -21,7 +21,7 @@ spec:
       release: {{ .Release.Name }}
   template:
     metadata:
-      annotations: 
+      annotations:
         checksum/prom-auth-config: {{ include (print $.Template.BasePath "/prometheus-federation-auth-configmap.yaml") . | sha256sum }}
       labels:
         tier: monitoring

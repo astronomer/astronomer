@@ -153,7 +153,7 @@ imagePullSecrets:
 
 {{ define "promproxy.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-openresty:{{ .Values.images.esproxy.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-openresty:{{ .Values.images.promproxy.tag }}
 {{- else -}}
 {{ .Values.images.promproxy.repository}}:{{ .Values.images.promproxy.tag }}
 {{- end }}
