@@ -128,7 +128,7 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 14
+        assert len(groups) == 15
         assert [x["rules"] for x in groups if x["name"] == section] == [[]]
         assert len([x["rules"] for x in groups if x["name"] != section]) == 15
 

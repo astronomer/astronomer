@@ -86,7 +86,7 @@ data:
           # If we have a dag_id, assume it's a task log
           if exists(.dag_id) {
             .log_type = "task"
-            # Add log_id for task logs (like Fluentd does)
+            # Add log_id for task logs
             if !exists(.log_id) && exists(.task_id) && exists(.execution_date) && exists(.try_number) {
               .log_id = join!([to_string!(.dag_id), to_string!(.task_id), to_string!(.execution_date), to_string!(.try_number)], "_")
             }

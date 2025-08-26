@@ -91,7 +91,7 @@ global:
 
   prometheusPostgresExporterEnabled: false
 
-  # make fluentd to gather logs from all available namespaces
+  # make vector to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
@@ -149,7 +149,7 @@ global:
 
   logging:
     indexNamePrefix: ~
-    collector: "vector"  # Must be fluentd or vector
+    collector: "vector"
 
   # Sidecar Logging
   loggingSidecar:

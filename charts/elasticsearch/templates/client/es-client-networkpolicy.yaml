@@ -34,7 +34,7 @@ spec:
     - podSelector:
         matchLabels:
           tier: logging
-          component: fluentd
+          component: vector
           release: {{ .Release.Name }}
     - podSelector:
         matchLabels:

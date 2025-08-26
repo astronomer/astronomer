@@ -162,7 +162,6 @@ class TestServiceAccounts:
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "pgbouncer": {"serviceAccount": {"create": True, "annotations": annotations}},
-            "fluentd": {"serviceAccount": {"create": True, "annotations": annotations}},
             "vector": {"serviceAccount": {"create": True, "annotations": annotations}},
             "nginx": {
                 "serviceAccount": {"create": True, "annotations": annotations},
@@ -360,10 +359,6 @@ custom_service_account_names = {
         "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"serviceAccount": {"create": True, "name": "prothean"}}}},
-    "charts/fluentd/templates/fluentd-daemonset.yaml": {
-        "global": {"logging": {"collector": "fluentd"}, "plane": {"mode": "data"}},
-        "fluentd": {"serviceAccount": {"create": True, "name": "prothean"}},
-    },
     "charts/vector/templates/vector-daemonset.yaml": {
         "global": {"logging": {"collector": "vector"}},
         "vector": {"serviceAccount": {"create": True, "name": "prothean"}},
