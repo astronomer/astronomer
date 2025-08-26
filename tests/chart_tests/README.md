@@ -16,7 +16,7 @@ When testing helm, it's easy to run into a firehose of data. To help filter out 
 
 For example:
 ```sh
-helm template . --set global.baseDomain=example.com --kube-version=1.18.0 --show-only charts/astronomer/templates/ingress.yaml
+helm template . --set global.baseDomain=example.com --kube-version=1.18.0 --show-only charts/astronomer/templates/houston/houston-configmap.yaml
 ```
 
 *N.B.: If you see the error `Error: unknown flag: --kube-version` you need to upgrade your helm client to >=3.6.0*
@@ -77,9 +77,9 @@ The `render_chart` function does exactly what you would think, and lets us speci
 Let's write a simple test in the same `tests/chart_tests/test_ingress_example.py` file we created above, below the imports:
 
 ```python
-def test_basic_ingress():
+def test_basic_service():
     docs = render_chart(
-        show_only=["charts/astronomer/templates/ingress.yaml"],
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     assert len(docs) == 1
 ```
@@ -114,7 +114,7 @@ cachedir: .pytest_cache
 rootdir: /Users/danielh/a/astronomer
 plugins: sugar-0.9.4
 collecting ...
- tests/chart_tests/test_ingress_example.py::test_basic_ingress ✓                     100% ██████████
+ tests/chart_tests/test_ingress_example.py::test_basic_service ✓                     100% ██████████
 
 Results (1.02s):
        1 passed
@@ -129,10 +129,10 @@ Using `pytest.parametrize` (notice it's "trize" not "terize") We can test many v
     "kube_version",
     supported_k8s_versions,
 )
-def test_basic_ingress(kube_version):
+def test_basic_service(kube_version):
     docs = render_chart(
         kube_version=kube_version,
-        show_only=["charts/astronomer/templates/ingress.yaml"],
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     assert len(docs) == 1
 ```
@@ -146,11 +146,11 @@ cachedir: .pytest_cache
 rootdir: /Users/danielh/a/astronomer
 plugins: sugar-0.9.4
 collecting ...
- tests/chart_tests/test_ingress_example.py::test_basic_ingress[1.16.0] ✓     20% ██
- tests/chart_tests/test_ingress_example.py::test_basic_ingress[1.17.0] ✓     40% ████
- tests/chart_tests/test_ingress_example.py::test_basic_ingress[1.18.0] ✓     60% ██████
- tests/chart_tests/test_ingress_example.py::test_basic_ingress[1.19.0] ✓     80% ████████
- tests/chart_tests/test_ingress_example.py::test_basic_ingress[1.20.0] ✓    100% ██████████
+ tests/chart_tests/test_service_example.py::test_basic_service[1.16.0] ✓     20% ██
+ tests/chart_tests/test_service_example.py::test_basic_service[1.17.0] ✓     40% ████
+ tests/chart_tests/test_service_example.py::test_basic_service[1.18.0] ✓     60% ██████
+ tests/chart_tests/test_service_example.py::test_basic_service[1.19.0] ✓     80% ████████
+ tests/chart_tests/test_service_example.py::test_basic_service[1.20.0] ✓    100% ██████████
 
 Results (3.45s):
        5 passed
@@ -168,10 +168,10 @@ from tests import supported_k8s_versions
     "kube_version",
     supported_k8s_versions,
 )
-def test_basic_ingress(kube_version):
+def test_basic_service(kube_version):
     docs = render_chart(
         kube_version=kube_version,
-        show_only=["charts/astronomer/templates/ingress.yaml"],
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     assert len(docs) == 1
 
@@ -222,10 +222,10 @@ The python debugger `pdb` can be really useful when things don't go your way. Fo
     "kube_version",
     supported_k8s_versions,
 )
-def test_basic_ingress(kube_version):
+def test_basic_service(kube_version):
     docs = render_chart(
         kube_version=kube_version,
-        show_only=["charts/astronomer/templates/ingress.yaml"],
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     breakpoint()
     assert len(docs) == 1
@@ -240,7 +240,7 @@ rootdir: /Users/danielh/a/astronomer
 plugins: sugar-0.9.4
 collecting ...
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> PDB set_trace >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-> /Users/danielh/a/astronomer/tests/chart_tests/test_ingress_example.py(16)test_basic_ingress()
+> /Users/danielh/a/astronomer/tests/chart_tests/test_ingress_example.py(16)test_basic_service()
 -> assert len(docs) == 1
 (Pdb)
 ```
@@ -253,10 +253,10 @@ This is a standard `pdb` prompt. From here, we can see where we are in the code:
   7          "kube_version",
   8          supported_k8s_versions,
   9      )
- 10      def test_basic_ingress(kube_version):
+ 10      def test_basic_service(kube_version):
  11          docs = render_chart(
  12              kube_version=kube_version,
- 13              show_only=["charts/astronomer/templates/ingress.yaml"],
+ 13              show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
  14          )
  15          breakpoint()
  16  ->        assert len(docs) == 1

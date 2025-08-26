@@ -11,28 +11,6 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestIngress:
-    def test_basic_ingress(self, kube_version):
-        # sourcery skip: extract-duplicate-method
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/astronomer/templates/ingress.yaml"],
-        )
-
-        assert len(docs) == 1
-
-        doc = docs[0]
-
-        assert len(doc["metadata"]["annotations"]) == 3
-
-        assert doc["spec"]["rules"] == json.loads(
-            """
-            [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":
-            "release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},{"host":"app.example.com","http":{"paths":[{"path":"/",
-            "pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},{"host":
-            "registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":
-            "release-name-registry","port":{"name":"registry-http"}}}}]}}]
-            """
-        )
 
     def test_astro_ui_per_host_ingress(self, kube_version):
         docs = render_chart(
@@ -40,19 +18,12 @@ class TestIngress:
             values={"global": {"enablePerHostIngress": True}},
             show_only=[
                 "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
-                "charts/astronomer/templates/ingress.yaml",
             ],
         )
         assert len(docs) == 2
         assert docs[0]["spec"]["rules"] == json.loads(
             """
             [{"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
-            {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
-            """
-        )
-        assert docs[1]["spec"]["rules"] == json.loads(
-            """
-            [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
             {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
             """
         )
@@ -63,7 +34,6 @@ class TestIngress:
             values={"global": {"enablePerHostIngress": True}},
             show_only=[
                 "charts/astronomer/templates/registry/registry-ingress.yaml",
-                "charts/astronomer/templates/ingress.yaml",
             ],
         )
         assert len(docs) == 1
