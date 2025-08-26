@@ -110,8 +110,8 @@ class TestIngress:
         assert len(rules) == 1
         paths = rules[0]["http"]["paths"]
         assert len(paths) == 1
-        assert paths[0]["path"] == "/federate"
-        assert paths[0]["pathType"] == "Exact"
+        assert paths[0]["path"] == "/(federate|healthz)(/.*)?"
+        assert paths[0]["pathType"] == "Prefix"
 
         backend = paths[0]["backend"]
-        assert backend["service"]["port"]["name"] == "prometheus-data"
+        assert backend["service"]["port"]["name"] == "http"
