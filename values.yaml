@@ -149,7 +149,6 @@ global:
 
   logging:
     indexNamePrefix: ~
-    collector: "vector"
 
   # Sidecar Logging
   loggingSidecar:
