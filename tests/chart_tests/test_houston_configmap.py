@@ -249,7 +249,7 @@ def test_houston_configmap_with_vector_index_prefix_defaults():
     common_test_cases(docs)
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert "fluentd" in prod_yaml["deployments"].get("fluentdIndexPrefix")
+    assert "fluentd" in prod_yaml["deployments"].get("vectorIndexPrefix")
 
 
 def test_houston_configmap_with_vector_index_prefix_overrides():
@@ -263,7 +263,7 @@ def test_houston_configmap_with_vector_index_prefix_overrides():
     common_test_cases(docs)
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert "astronomer" in prod_yaml["deployments"].get("fluentdIndexPrefix")
+    assert "astronomer" in prod_yaml["deployments"].get("vectorIndexPrefix")
 
 
 def test_houston_configmap_with_loggingsidecar_enabled():

@@ -1,7 +1,6 @@
 ###########################################################################
 # Vector ClusterRole
 ###########################################################################
-{{- if (eq .Values.global.logging.collector "vector") }}
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -23,5 +22,4 @@ rules:
   verbs:
   - "watch"
   - "list"
-{{- end -}}
 {{- end -}}

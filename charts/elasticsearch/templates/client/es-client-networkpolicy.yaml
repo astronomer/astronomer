@@ -51,13 +51,11 @@ spec:
           tier: elasticsearch
           component: es-ingress-controller
           release: {{ .Release.Name }}
-{{ if (eq .Values.global.logging.collector "vector") }}
     - podSelector:
         matchLabels:
           tier: logging
           component: vector
           release: {{ .Release.Name }}
-{{ end }}
     ports:
     - protocol: TCP
       port: {{ .Values.common.ports.http }}

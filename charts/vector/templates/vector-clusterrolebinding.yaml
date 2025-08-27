@@ -1,7 +1,6 @@
 ###########################################################################
 # Vector ClusterRoleBinding
 ###########################################################################
-{{- if (eq .Values.global.logging.collector "vector") -}}
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -21,5 +20,4 @@ subjects:
 - kind: ServiceAccount
   name: {{ include "vector.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
-{{- end -}}
 {{- end -}}

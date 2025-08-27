@@ -1,7 +1,6 @@
 ###########################################################################
 # Vector ConfigMap
 ###########################################################################
-{{- if (eq .Values.global.logging.collector "vector") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -122,7 +121,7 @@ data:
         healthcheck:
           enabled: true
         bulk:
-          index: "fluentd.{{ "{{ .release }}" }}.%Y.%m.%d"
+          index: "vector.{{ "{{ .release }}" }}.%Y.%m.%d"
           action: create
         batch:
           max_bytes: 10485760
@@ -132,4 +131,3 @@ data:
           retry_initial_backoff_secs: 1
           retry_max_duration_secs: 60
           timeout_secs: 120
-{{- end -}}
