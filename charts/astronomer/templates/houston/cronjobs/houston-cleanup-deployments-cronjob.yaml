@@ -67,8 +67,6 @@ spec:
               volumeMounts:
                 - name: etc-ssl-certs
                   mountPath: /etc/ssl/certs_copy
-                - name: tmp
-                  mountPath: /tmp
           containers:
             - name: cleanup
               image: {{ template "houston.image" . }}
@@ -84,6 +82,8 @@ spec:
                   mountPath: /etc/ssl/certs
                 - name: tmp
                   mountPath: /tmp
+                - name: tmp
+                  mountPath: /houston/node_modules/.cache
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:

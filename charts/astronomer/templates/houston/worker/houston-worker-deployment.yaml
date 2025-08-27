@@ -90,8 +90,6 @@ spec:
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
-            - name: tmp
-              mountPath: /tmp
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -135,6 +133,8 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
+            - name: tmp
+              mountPath: /houston/node_modules/.cache
         {{- end }}
       containers:
         - name: houston
@@ -159,6 +159,8 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
+            - name: tmp
+              mountPath: /houston/node_modules/.cache
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
             {{- if .Values.houston.worker.volumeMounts }}

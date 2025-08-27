@@ -92,6 +92,8 @@ spec:
                   mountPath: /etc/ssl/certs
                 - name: tmp
                   mountPath: /tmp
+                - name: tmp
+                  mountPath: /houston/node_modules/.cache
           volumes:
             - name: etc-ssl-certs
               emptyDir: {}

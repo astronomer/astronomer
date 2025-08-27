@@ -65,8 +65,6 @@ spec:
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
-            - name: tmp
-              mountPath: /tmp
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext:
@@ -95,8 +93,6 @@ spec:
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
-            - name: tmp
-              mountPath: /tmp
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -135,6 +131,8 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
+            - name: tmp
+              mountPath: /houston/node_modules/.cache
       {{- end }}
       containers:
         - name: post-upgrade-job
@@ -167,6 +165,8 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
+            - name: tmp
+              mountPath: /houston/node_modules/.cache
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}

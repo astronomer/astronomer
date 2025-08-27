@@ -74,18 +74,31 @@ class TestHoustonPodManagers:
         assert {"emptyDir": {}, "name": "etc-ssl-certs"} in pod_template["spec"]["volumes"]
         assert {"emptyDir": {}, "name": "tmp"} in pod_template["spec"]["volumes"]
         for container in pod_template["spec"]["containers"] + pod_template["spec"]["initContainers"]:
-            if container["name"] == "etc-ssl-certs-copier":
-                assert {"mountPath": "/etc/ssl/certs_copy", "name": "etc-ssl-certs"} in container["volumeMounts"], (
-                    f"{pod_name}/{container['name']} missing /etc/ssl/certs_copy mount"
-                )
-            else:
-                if container["name"] != "wait-for-db":
-                    assert {"mountPath": "/tmp", "name": "tmp"} in container["volumeMounts"], (
-                        f"{pod_name}/{container['name']} missing /tmp mount"
+            assert container["securityContext"].get("readOnlyRootFilesystem"), (
+                f"{pod_name}/{container['name']} missing readOnlyRootFilesystem"
+            )
+            match container["name"]:
+                case "etc-ssl-certs-copier":
+                    assert container["volumeMounts"] == [{"name": "etc-ssl-certs", "mountPath": "/etc/ssl/certs_copy"}], (
+                        f"{pod_name}/{container['name']} etc-ssl-certs-copier mounts are wrong"
                     )
-                assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in container["volumeMounts"], (
-                    f"{pod_name}/{container['name']} missing /etc/ssl/certs mount"
-                )
-                assert container["securityContext"].get("readOnlyRootFilesystem"), (
-                    f"{pod_name}/{container['name']} missing readOnlyRootFilesystem"
-                )
+                case "wait-for-db":
+                    assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} missing mount: /etc/ssl/certs"
+                    )
+                    assert {"mountPath": "/tmp", "name": "tmp"} not in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} unnecessary mount: /tmp"
+                    )
+                    assert {"mountPath": "/houston/node_modules/.cache", "name": "tmp"} not in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} unnecessary mount: /houston/node_modules/.cache"
+                    )
+                case _:
+                    assert {"mountPath": "/tmp", "name": "tmp"} in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} missing mount: /tmp"
+                    )
+                    assert {"mountPath": "/houston/node_modules/.cache", "name": "tmp"} in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} missing mount: /houston/node_modules/.cache"
+                    )
+                    assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} missing mount: /etc/ssl/certs"
+                    )
