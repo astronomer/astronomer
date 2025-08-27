@@ -28,6 +28,7 @@ spec:
         release: {{ .Release.Name }}
         app: kibana-default-index
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
       {{- if .Values.global.istio.enabled }}
