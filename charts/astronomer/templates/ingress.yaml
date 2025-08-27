@@ -1,6 +1,7 @@
 ########################
 ## Astronomer Ingress ##
 ########################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if and .Values.global.baseDomain  ( not .Values.global.enablePerHostIngress ) }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -67,4 +68,5 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
+{{- end }}
 {{- end }}
