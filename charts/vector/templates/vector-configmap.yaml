@@ -131,3 +131,6 @@ data:
           retry_initial_backoff_secs: 1
           retry_max_duration_secs: 60
           timeout_secs: 120
+      {{- with .Values.extraSinks }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
