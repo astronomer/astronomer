@@ -360,3 +360,24 @@ class TestVector:
         expected_probe = {"httpGet": {"path": "/health", "port": 8686}, "initialDelaySeconds": 30, "periodSeconds": 10}
         assert c_by_name["vector"]["livenessProbe"] == expected_probe
         assert c_by_name["vector"]["readinessProbe"] == expected_probe
+
+    def test_vector_configmap_custom_logging_enabled(self, kube_version):
+        """Test that when global.customLogging.enabled is true, helm renders vector configmap with external-es-proxy endpoint."""
+        values = {
+            "global": {
+                "customLogging": {
+                    "enabled": True
+                }
+            }
+        }
+
+        doc = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )[0]
+
+        config_yaml = doc["data"]["vector-config.yaml"]
+        assert 'endpoints: ["http://{{ include "external-es-proxy.fullname" . }}:9201"]' in config_yaml
+        assert 'api_version: "v8"' in config_yaml
+
