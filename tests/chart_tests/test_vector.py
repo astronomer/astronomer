@@ -362,7 +362,7 @@ class TestVector:
         assert c_by_name["vector"]["readinessProbe"] == expected_probe
 
     def test_vector_configmap_custom_logging_enabled(self, kube_version):
-        """Test that when global.customLogging.enabled is true, helm renders vector configmap with external-es-proxy endpoint."""
+        """Test configmap when global.customLogging.enabled is true."""
         values = {
             "global": {
                 "customLogging": {
