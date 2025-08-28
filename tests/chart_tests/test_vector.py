@@ -256,9 +256,8 @@ class TestVector:
         """Test to validate vector extraEnv configured."""
 
         values = {
-            "global": {"logging": {"collector": "vector"}},
             "vector": {
-                "extraEnv": {"RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR": 1},
+                "extraEnv": {"AIRPLANE_QUOTE": "What's your vector, Victor?"},
             },
         }
 
@@ -272,8 +271,8 @@ class TestVector:
         c_by_name = get_containers_by_name(doc)
         self.vector_common_tests(doc)
         assert {
-            "name": "RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR",
-            "value": "1",
+            "name": "AIRPLANE_QUOTE",
+            "value": "What's your vector, Victor?",
         } in c_by_name["vector"]["env"]
 
     def test_vector_daemonset_probe(self, kube_version):
