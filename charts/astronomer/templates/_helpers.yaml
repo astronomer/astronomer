@@ -531,6 +531,22 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- if (eq .Values.global.plane.mode "data") -}}
 {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
+{{ .Release.Name }}-commander:{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
+{{- end }}
+{{- end -}}
+
+{{- define "commander.baseDomain" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+{{ .Values.global.baseDomain }}
+{{- end }}
+{{- end -}}
+
+{{- define "commander.dataplaneURL" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
 {{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
 {{- end }}
 {{- end -}}
