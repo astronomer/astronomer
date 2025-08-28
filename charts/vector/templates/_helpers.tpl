@@ -86,14 +86,6 @@ Return the elasticsearch hostname
 {{- printf "%s-%s" .Release.Name "elasticsearch" -}}
 {{- end -}}
 
-{{- define "logging.indexNamePrefix" -}}
-{{- if .Values.global.logging.indexNamePrefix -}}
-{{ .Values.global.logging.indexNamePrefix }}
-{{- else -}}
-vector
-{{- end -}}
-{{- end -}}
-
 {{- define "external-es-proxy.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
