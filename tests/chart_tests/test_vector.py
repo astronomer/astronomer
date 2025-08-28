@@ -277,10 +277,8 @@ class TestVector:
 
     def test_vector_daemonset_probe(self, kube_version):
         """Test the default probes for the vector daemonset."""
-        values = {"global": {"logging": {"collector": "vector"}}}
         docs = render_chart(
             kube_version=kube_version,
-            values=values,
             show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
         doc = docs[0]
