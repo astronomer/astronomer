@@ -607,7 +607,7 @@ data:
           elasticsearch:
             enabled: true
             connection:
-              host: elasticsearch.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+              host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
               port: 9200
 
     elasticsearch:
