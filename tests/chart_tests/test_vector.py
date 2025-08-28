@@ -222,11 +222,8 @@ class TestVector:
     def test_vector_priorityclass_defaults(self, kube_version):
         """Test to validate vector with priority class defaults."""
 
-        values = {"global": {"logging": {"collector": "vector"}}}
-
         docs = render_chart(
             kube_version=kube_version,
-            values=values,
             show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
         assert len(docs) == 1
