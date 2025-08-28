@@ -48,16 +48,16 @@ class TestVector:
         env_vars = {env["name"]: env.get("value") for env in vector_container.get("env", [])}
         required_env_vars = [
             "VECTOR_SELF_NODE_NAME",
-            "VECTOR_SELF_POD_NAME", 
+            "VECTOR_SELF_POD_NAME",
             "VECTOR_SELF_POD_NAMESPACE",
             "VECTOR_LOG",
             "ELASTICSEARCH_HOST",
             "ELASTICSEARCH_PORT",
             "VECTOR_CONFIG_YAML",
             "NAMESPACE",
-            "RELEASE"
+            "RELEASE",
         ]
-        
+
         for env_var in required_env_vars:
             assert env_var in env_vars, f"Required environment variable {env_var} not found"
 
@@ -72,7 +72,7 @@ class TestVector:
             "tmp": {"mountPath": "/tmp"},
             "vector-data": {"mountPath": "/var/lib/vector"},
             "varlog": {"mountPath": "/var/log/", "readOnly": True},
-            "config-volume-release-name-vector": {"mountPath": "/etc/vector/config", "readOnly": True}
+            "config-volume-release-name-vector": {"mountPath": "/etc/vector/config", "readOnly": True},
         }
         for mount_name, expected_props in essential_mounts.items():
             assert mount_name in mount_dict, f"Required volume mount {mount_name} not found"
@@ -84,12 +84,7 @@ class TestVector:
         volumes = pod_spec["volumes"]
         volume_dict = {vol["name"]: vol for vol in volumes}
 
-        essential_volumes = [
-            "tmp",
-            "vector-data", 
-            "varlog",
-            "config-volume-release-name-vector"
-        ]
+        essential_volumes = ["tmp", "vector-data", "varlog", "config-volume-release-name-vector"]
         for vol_name in essential_volumes:
             assert vol_name in volume_dict, f"Required volume {vol_name} not found"
 
@@ -97,12 +92,6 @@ class TestVector:
         assert volume_dict["vector-data"]["emptyDir"] == {}
         assert volume_dict["varlog"]["hostPath"]["path"] == "/var/log/"
         assert volume_dict["config-volume-release-name-vector"]["configMap"]["name"] == "release-name-vector"
-
-        expected_probe = {
-            "httpGet": {"path": "/health", "port": 8686}, 
-            "initialDelaySeconds": 30, 
-            "periodSeconds": 10
-        }
 
         if "livenessProbe" in vector_container:
             pass
