@@ -90,6 +90,6 @@ Return the elasticsearch hostname
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{ .Values.global.logging.indexNamePrefix }}
 {{- else -}}
-vector
+fluentd
 {{- end -}}
 {{- end -}}

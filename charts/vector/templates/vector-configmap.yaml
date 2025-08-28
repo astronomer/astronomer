@@ -77,7 +77,7 @@ data:
             }
           }
 
-      categorize_logs:
+      transform_task_logs:
         type: remap
         inputs:
           - parse_json_messages
@@ -97,7 +97,7 @@ data:
       transform_add_timestamp:
         type: remap
         inputs:
-          - categorize_logs
+          - transform_task_logs
         source: |
           .@timestamp = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%3fZ")
           .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")
@@ -116,12 +116,12 @@ data:
           - transform_remove_fields
         mode: bulk
         compression: none
-        endpoints: ["http://{{ .Release.Name }}-elasticsearch:9200"]
-        api_version: "v7"
+        endpoints: ["http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]
+        api_version: "v8"
         healthcheck:
           enabled: true
         bulk:
-          index: "vector.{{ "{{ .release }}" }}.%Y.%m.%d"
+          index: "{{ include "logging.indexNamePrefix" .}}.{{ "{{ .release }}" }}.%Y.%m.%d"
           action: create
         batch:
           max_bytes: 10485760
