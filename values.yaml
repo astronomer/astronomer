@@ -91,7 +91,7 @@ global:
 
   prometheusPostgresExporterEnabled: false
 
-  # make vector to gather logs from all available namespaces
+  # Configure vector to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
