@@ -4,6 +4,7 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
+priorityClassName: ~
 podSecurityContext: {}
 
 vector:
