@@ -107,10 +107,8 @@ class TestVector:
 
     def test_vector_defaults_when_enabled(self, kube_version):
         """Test that vector behaves as expected with default values when it is enabled."""
-        values = {"global": {"logging": {"collector": "vector"}}}
         docs = render_chart(
             kube_version=kube_version,
-            values=values,
             show_only=all_templates,
         )
         assert len(docs) == 6
@@ -121,7 +119,6 @@ class TestVector:
     def test_vector_daemonset_private_ca_certificates(self, kube_version):
         """Test that helm renders a volume mount for private ca certificates for vector daemonset when private-ca-certificates are enabled."""
         values = {
-            "global": {"logging": {"collector": "vector"}},
             "privateCaCerts": ["private-root-ca"],
         }
         docs = render_chart(
@@ -144,7 +141,7 @@ class TestVector:
 
     def test_vector_clusterrolebinding_rbac_enabled(self, kube_version):
         """Test that helm renders a good ClusterRoleBinding template for vector when rbacEnabled=True."""
-        values = {"global": {"rbacEnabled": True, "logging": {"collector": "vector"}}}
+        values = {"global": {"rbacEnabled": True }}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -171,7 +168,6 @@ class TestVector:
         all namespaces."""
         values = {
             "global": {
-                "logging": {"collector": "vector"},
                 "manualNamespaceNamesEnabled": True,
                 "features": {
                     "namespacePools": {
@@ -196,7 +192,6 @@ class TestVector:
         values = {
             "global": {
                 "manualNamespaceNamesEnabled": False,
-                "logging": {"collector": "vector"},
                 "features": {
                     "namespacePools": {
                         "enabled": False,
@@ -216,7 +211,6 @@ class TestVector:
         """Test that helm renders a custom securityContext when securityContext is overridden."""
 
         values = {
-            "global": {"logging": {"collector": "vector"}},
             "vector": {
                 "podSecurityContext": {"happy": "family"},  # pod securityContext
                 "vector": {"securityContext": {"runAsUser": 9999}},  # container securityContext
@@ -254,7 +248,7 @@ class TestVector:
         """Test to validate vector index name prefix defaults in vector configmap."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"logging": {"collector": "vector"}, "rbacEnabled": True}},
+            values={"global": "rbacEnabled": True},
             show_only=[
                 "charts/vector/templates/vector-configmap.yaml",
             ],

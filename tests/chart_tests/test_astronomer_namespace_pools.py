@@ -269,7 +269,6 @@ class TestAstronomerNamespacePools:
                 kube_version=kube_version,
                 values={
                     "global": {
-                        "logging": {"collector": "vector"},  # Enable vector
                         "features": {
                             "namespacePools": {
                                 "enabled": True,

@@ -363,7 +363,6 @@ custom_service_account_names = {
     },
     "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"serviceAccount": {"create": True, "name": "prothean"}}}},
     "charts/vector/templates/vector-daemonset.yaml": {
-        "global": {"logging": {"collector": "vector"}},
         "vector": {"serviceAccount": {"create": True, "name": "prothean"}},
     },
     "charts/kube-state/templates/kube-state-deployment.yaml": {
