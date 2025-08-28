@@ -30,6 +30,7 @@ show_only = [
     "charts/elasticsearch/templates/data/es-data-networkpolicy.yaml",
     "charts/elasticsearch/templates/client/es-client-networkpolicy.yaml",
     "templates/default-deny-network-policy/networkpolicy.yaml",
+    "charts/vector/templates/vector-networkpolicy.yaml",
 ]
 
 
