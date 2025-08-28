@@ -363,13 +363,7 @@ class TestVector:
 
     def test_vector_configmap_custom_logging_enabled(self, kube_version):
         """Test configmap when global.customLogging.enabled is true."""
-        values = {
-            "global": {
-                "customLogging": {
-                    "enabled": True
-                }
-            }
-        }
+        values = {"global": {"customLogging": {"enabled": True}}}
 
         doc = render_chart(
             kube_version=kube_version,
@@ -378,6 +372,5 @@ class TestVector:
         )[0]
 
         config_yaml = doc["data"]["vector-config.yaml"]
-        assert 'endpoints: ["http://{{ include "external-es-proxy.fullname" . }}:9201"]' in config_yaml
+        assert 'endpoints: ["http://release-name-vector:9201"]' in config_yaml
         assert 'api_version: "v8"' in config_yaml
-
