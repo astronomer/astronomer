@@ -157,7 +157,6 @@ class TestVector:
 
         docs = render_chart(
             kube_version=kube_version,
-            values=values,
             show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
 
