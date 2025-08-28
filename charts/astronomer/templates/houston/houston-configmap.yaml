@@ -75,8 +75,8 @@ data:
       mode:
         operator:
           enabled: {{.Values.global.airflowOperator.enabled}}
-      disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources .Values.global.features.namespacePools.enabled ) }}
-      fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
+      disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
+      fluentdIndexPrefix: {{ include "vector.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
       namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
@@ -607,7 +607,7 @@ data:
           elasticsearch:
             enabled: true
             connection:
-              host: elasticsearch.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+              host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
               port: 9200
 
     elasticsearch:

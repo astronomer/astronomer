@@ -1,0 +1,140 @@
+###########################################################################
+# Vector ConfigMap
+###########################################################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "vector.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "vector.name" . }}
+    chart: {{ template "vector.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+
+data:
+  vector-config.yaml: |
+    api:
+      enabled: true
+      address: "0.0.0.0:8686"
+    log_schema:
+      timestamp_key: "@timestamp"
+
+    data_dir: "/var/lib/vector"
+
+    sources:
+      airflow_log_files:
+        type: kubernetes_logs
+        read_from: beginning
+        auto_partial_merge: true
+
+    transforms:
+      filter_by_namespace:
+        type: filter
+        inputs:
+          - airflow_log_files
+        condition:
+          type: "vrl"
+          source: |
+            {{- if and .Values.global.features.namespacePools.enabled (gt (len .Values.global.features.namespacePools.namespaces.names) 0) }}
+            namespaces = [{{ range $i, $ns := .Values.global.features.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
+            includes(namespaces, .kubernetes.pod_namespace)
+            {{- else if or .Values.global.manualNamespaceNamesEnabled .Values.global.disableManageClusterScopedResources }}
+            match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
+            {{- else }}
+            .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
+            {{- end }}
+
+      filter_by_component:
+        type: filter
+        inputs:
+          - filter_by_namespace
+        condition:
+          type: "vrl"
+          source: |
+            component = .kubernetes.pod_labels.component
+            includes(["scheduler", "webserver", "api-server", "worker", "triggerer", "git-sync-relay", "dag-server", "airflow-downgrade", "meta-cleanup", "dag-processor"], component)
+
+      transform_airflow_logs:
+        type: remap
+        inputs:
+          - filter_by_component
+        source: |
+          .component = .kubernetes.pod_labels.component
+          .workspace = .kubernetes.pod_labels.workspace
+          .release = .kubernetes.pod_labels.release
+          .namespace = .kubernetes.pod_namespace
+
+      parse_json_messages:
+        type: remap
+        inputs:
+          - transform_airflow_logs
+        source: |
+          if is_string(.message) {
+            parsed = parse_json(.message) ?? {}
+            if is_object(parsed) {
+              . = merge!(., parsed)
+            }
+          }
+
+      transform_task_logs:
+        type: remap
+        inputs:
+          - parse_json_messages
+        source: |
+          # If we have a dag_id, assume it's a task log
+          if exists(.dag_id) {
+            .log_type = "task"
+            # Add log_id for task logs
+            if !exists(.log_id) && exists(.task_id) && exists(.execution_date) && exists(.try_number) {
+              .log_id = join!([to_string!(.dag_id), to_string!(.task_id), to_string!(.execution_date), to_string!(.try_number)], "_")
+            }
+            .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
+          } else {
+            .log_type = "system"
+          }
+
+      transform_add_timestamp:
+        type: remap
+        inputs:
+          - transform_task_logs
+        source: |
+          .@timestamp = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%3fZ")
+          .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")
+      transform_remove_fields:
+        type: remap
+        inputs:
+          - transform_add_timestamp
+        source: |
+          del(.kubernetes)
+          del(.file)
+
+    sinks:
+      elasticsearch:
+        type: elasticsearch
+        inputs:
+          - transform_remove_fields
+        mode: bulk
+        compression: none
+        {{- if .Values.global.customLogging.enabled }}
+        endpoints: ["http://{{ include "external-es-proxy.fullname" . }}:9201"]
+        {{- else }}
+        endpoints: ["http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]
+        {{- end }}
+        api_version: "v8"
+        healthcheck:
+          enabled: true
+        bulk:
+          index: "{{ include "logging.indexNamePrefix" .}}.{{ "{{ .release }}" }}.%Y.%m.%d"
+          action: create
+        batch:
+          max_bytes: 10485760
+          timeout_secs: 5
+        request:
+          retry_attempts: 5
+          retry_initial_backoff_secs: 1
+          retry_max_duration_secs: 60
+          timeout_secs: 120
+      {{- with .Values.extraSinks }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}

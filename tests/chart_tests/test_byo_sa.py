@@ -118,7 +118,7 @@ class TestServiceAccounts:
             "external-es-proxy": {"serviceAccount": {"create": False}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
             "pgbouncer": {"serviceAccount": {"create": False}},
-            "fluentd": {"serviceAccount": {"create": False}},
+            "vector": {"serviceAccount": {"create": False}},
             "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
             "kube-state": {"serviceAccount": {"create": False}},
             "prometheus": {"serviceAccount": {"create": False}},
@@ -162,7 +162,7 @@ class TestServiceAccounts:
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "pgbouncer": {"serviceAccount": {"create": True, "annotations": annotations}},
-            "fluentd": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "vector": {"serviceAccount": {"create": True, "annotations": annotations}},
             "nginx": {
                 "serviceAccount": {"create": True, "annotations": annotations},
                 "defaultBackend": {"serviceAccount": {"create": False, "annotations": annotations}},
@@ -194,7 +194,7 @@ class TestServiceAccounts:
             "kube-state": {
                 "serviceAccount": {"name": "kube-state-test"},
             },
-            "fluentd": {"serviceAccount": {"name": "fluentd-test"}},
+            "vector": {"serviceAccount": {"create": True, "name": "vector-test"}},
             "prometheus": {"serviceAccount": {"name": "prometheus-test"}},
             "nginx": {"serviceAccount": {"name": "nginx-test"}},
         }
@@ -206,7 +206,7 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-rolebinding.yaml",
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
-                "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
+                "charts/vector/templates/vector-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
                 "charts/nginx/templates/controlplane/nginx-cp-rolebinding.yaml",
             ],
@@ -219,7 +219,7 @@ class TestServiceAccounts:
             "configsyncer-test",
             "houston-test",
             "kube-state-test",
-            "fluentd-test",
+            "vector-test",
             "prometheus-test",
             "nginx-test-cp",
         }
@@ -335,10 +335,6 @@ custom_service_account_names = {
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
-    "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/kube-state/templates/kube-state-deployment.yaml": {
-        "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
     "charts/nats/templates/jetstream-job.yaml": {
         "nats": {"nats": {"jetstream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
     },
@@ -365,6 +361,12 @@ custom_service_account_names = {
         "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"serviceAccount": {"create": True, "name": "prothean"}}}},
+    "charts/vector/templates/vector-daemonset.yaml": {
+        "vector": {"serviceAccount": {"create": True, "name": "prothean"}},
+    },
+    "charts/kube-state/templates/kube-state-deployment.yaml": {
+        "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
 }
 
 

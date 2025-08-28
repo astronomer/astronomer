@@ -1,0 +1,53 @@
+indexPattern: "%Y.%m.%d"
+
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
+priorityClassName: ~
+podSecurityContext: {}
+
+
+nameOverride: ""
+fullnameOverride: ""
+
+vector:
+  securityContext:
+    runAsUser: 0
+  image:
+    repository: quay.io/astronomer/ap-vector
+    tag: 0.47.0-4
+    pullPolicy: IfNotPresent
+  resources: ~
+  livenessProbe: ~
+  readinessProbe: ~
+
+logLevel: ~
+
+imagePullSecrets: []
+
+podAnnotations: {}
+podLabels: {}
+
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: ~
+
+extraVolumes: []
+extraVolumeMounts: []
+extraContainers: []
+extraInitContainers: []
+extraEnv: []
+
+ports:
+  promScrape: 24231
+
+elasticsearch:
+  port: 9200
+  buffer_chunk_limit: 2M
+  buffer_queue_limit: 8
+
+extraSinks: []

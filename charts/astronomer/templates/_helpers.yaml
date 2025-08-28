@@ -440,7 +440,7 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{ define "fluentd.IndexPattern" -}}
+{{ define "vector.IndexPattern" -}}
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{ .Values.global.logging.indexNamePrefix }}
 {{- else -}}

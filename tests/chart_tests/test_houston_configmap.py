@@ -238,7 +238,7 @@ def test_houston_configmap_with_config_syncer_disabled():
     assert not prod_yaml["deployments"].get("loggingSidecar")
 
 
-def test_houston_configmap_with_fluentd_index_prefix_defaults():
+def test_houston_configmap_with_vector_index_prefix_defaults():
     """Validate the houston configmap and its embedded data with configSyncer
     disabled."""
     docs = render_chart(
@@ -252,7 +252,7 @@ def test_houston_configmap_with_fluentd_index_prefix_defaults():
     assert "fluentd" in prod_yaml["deployments"].get("fluentdIndexPrefix")
 
 
-def test_houston_configmap_with_fluentd_index_prefix_overrides():
+def test_houston_configmap_with_vector_index_prefix_overrides():
     """Validate the houston configmap and its embedded data with configSyncer
     disabled."""
     docs = render_chart(
