@@ -191,9 +191,11 @@
       name: astronomer-bootstrap
       key: connection
 - name: COMMANDER_DATAPLANE_ID
-  value: {{ .Values.global.plane.domainSuffix }}
+  value: {{ .Values.global.plane.domainSuffix | default "astronomer" }}
 - name: COMMANDER_BASE_DOMAIN
-  value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+  value: {{ include "commander.baseDomain" . | quote }}
+- name: COMMANDER_DATAPLANE_URL
+  value: {{ include "commander.dataplaneURL" . | quote }}
 - name: COMMANDER_DATAPLANE_MODE
   value: {{ .Values.global.plane.mode | quote }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
@@ -496,5 +498,21 @@ tlsEnabled: false
 https://houston.{{ .Values.global.baseDomain }}/v1/registry/events
 {{- else -}}
 http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events
+{{- end }}
+{{- end -}}
+
+{{- define "commander.dataplaneURL" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+{{ .Release.Name }}-commander:{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
+{{- end }}
+{{- end -}}
+
+{{- define "commander.baseDomain" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+{{ .Values.global.baseDomain }}
 {{- end }}
 {{- end -}}
