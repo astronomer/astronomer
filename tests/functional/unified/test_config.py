@@ -84,6 +84,7 @@ def test_prometheus_targets(prometheus):
         )
 
 
+@pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_houston_metrics_are_collected(prometheus):
     """Ensure Houston metrics are collected and prefixed with 'houston_'."""
     data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=houston_up")

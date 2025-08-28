@@ -228,7 +228,7 @@ spec:
             timeoutSeconds: 1
           {{- end }}
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
