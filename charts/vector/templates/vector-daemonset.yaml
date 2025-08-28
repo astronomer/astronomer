@@ -1,0 +1,140 @@
+###########################################################################
+# Vector DaemonSet
+###########################################################################
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "vector.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "vector.name" . }}
+    chart: {{ template "vector.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "vector.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: logging
+        component: {{ template "vector.name" . }}
+        release: {{ .Release.Name }}
+        app: {{ template "vector.name" . }}
+        version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/vector-configmap.yaml") . | sha256sum }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.ports.promScrape | quote }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+    spec:
+      terminationGracePeriodSeconds: 30
+    {{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+    {{ end }}
+      nodeSelector: {{ toYaml (.Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
+      serviceAccountName: {{ include "vector.serviceAccountName" . }}
+{{- include "vector.imagePullSecrets" . | indent 6 }}
+      securityContext:
+{{ toYaml .Values.podSecurityContext | indent 8 }}
+      containers:
+      - name: vector
+        securityContext:
+          {{- if .Values.vector.securityContext }}
+{{ toYaml .Values.vector.securityContext | indent 10 }}
+          {{- end }}
+        image: {{ template "vector.image" . }}
+        imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
+        {{- if .Values.vector.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.vector.livenessProbe) . | nindent 10 }}
+        {{- else }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8686
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        {{- end }}
+        {{- if .Values.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 10 }}
+        {{- else }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8686
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        {{- end }}
+        env:
+        - name: VECTOR_SELF_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: VECTOR_SELF_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: VECTOR_SELF_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: VECTOR_LOG
+          value: "{{ .Values.logLevel | default "info" }}"
+        - name: ELASTICSEARCH_HOST
+          value: {{ template "elasticsearch.host" . }}
+        - name: ELASTICSEARCH_PORT
+          value: {{ .Values.elasticsearch.port | quote }}
+        - name: VECTOR_CONFIG_YAML
+          value: "/etc/vector/config/vector-config.yaml"
+        - name: NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: RELEASE
+          value: {{ .Release.Name | quote }}
+        {{- range $key, $value :=  .Values.extraEnv }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /var/lib/vector
+          name: vector-data
+        {{- if .Values.additionalVolumeMounts }}
+        {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}
+        {{- end }}
+        {{- include "custom_ca_volume_mounts" . | nindent 8 }}
+        - name: varlog
+          mountPath: /var/log/
+          readOnly: true
+        - name: config-volume-{{ template "vector.fullname" . }}
+          mountPath: /etc/vector/config
+          readOnly: true
+        resources: {{ toYaml .Values.vector.resources | nindent 12 }}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: vector-data
+        emptyDir: {}
+      {{- if .Values.additionalVolumes }}
+      {{- toYaml .Values.additionalVolumes | nindent 6 }}
+      {{- end }}
+      {{- include "custom_ca_volumes" . | nindent 6 }}
+      - name: varlog
+        hostPath:
+          path: /var/log/
+      - name: config-volume-{{ template "vector.fullname" . }}
+        configMap:
+          name: {{ template "vector.fullname" . }}

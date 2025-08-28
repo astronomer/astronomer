@@ -9,7 +9,6 @@ show_only = [
     "charts/postgresql/templates/networkpolicy.yaml",
     # 'charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml',
     # 'charts/prometheus-postgres-exporter/templates/networkpolicy.yaml',
-    "charts/fluentd/templates/fluentd-networkpolicy.yaml",
     "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
     "charts/stan/templates/stan-networkpolicy.yaml",
     "charts/nats/templates/networkpolicy.yaml",
@@ -31,6 +30,7 @@ show_only = [
     "charts/elasticsearch/templates/data/es-data-networkpolicy.yaml",
     "charts/elasticsearch/templates/client/es-client-networkpolicy.yaml",
     "templates/default-deny-network-policy/networkpolicy.yaml",
+    "charts/vector/templates/vector-networkpolicy.yaml",
 ]
 
 

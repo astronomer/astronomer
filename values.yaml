@@ -91,7 +91,7 @@ global:
 
   prometheusPostgresExporterEnabled: false
 
-  # make fluentd to gather logs from all available namespaces
+  # Configure vector to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
@@ -349,7 +349,7 @@ tags:
   # Enable monitoring stack (prometheus, kube-state)
   monitoring: true
 
-  # Enable logging stack (elasticsearch, fluentd)
+  # Enable logging stack (elasticsearch, vector)
   logging: true
 
   # NATS Streaming
@@ -416,7 +416,6 @@ astronomer:
 ## Nginx configuration
 #################################
 nginx:
-  # Configure resources
   resources:
     requests:
       cpu: "500m"
@@ -451,12 +450,10 @@ prometheus:
   # Data retention
   retention: 15d
 
-  # Persistence configuration
   persistence:
     enabled: true
     size: "150Gi"
 
-  # Configure resources
   resources:
     requests:
       cpu: "1000m"
@@ -625,23 +622,22 @@ elasticsearch:
         memory: "256Mi"
 
 #################################
-## Fluentd configuration
+## Vector configuration
 #################################
-fluentd:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "1000m"
-      memory: "1024Mi"
+vector:    # pod
+  vector:  # container
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
 
 #################################
 ## Kube State configuration
 #################################
 kube-state:
-  # Configure resources
   resources:
     requests:
       cpu: "250m"

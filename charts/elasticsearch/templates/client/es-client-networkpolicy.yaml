@@ -34,7 +34,7 @@ spec:
     - podSelector:
         matchLabels:
           tier: logging
-          component: fluentd
+          component: vector
           release: {{ .Release.Name }}
     - podSelector:
         matchLabels:
@@ -50,6 +50,11 @@ spec:
         matchLabels:
           tier: elasticsearch
           component: es-ingress-controller
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: logging
+          component: vector
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP

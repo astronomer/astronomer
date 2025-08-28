@@ -116,7 +116,6 @@ def kind_load_docker_images(cluster: str) -> None:
         ],
         "data": [
             "ap-commander",
-            "ap-fluentd",
             "ap-init",
             "ap-nats-server",
             "ap-nats-streaming",
