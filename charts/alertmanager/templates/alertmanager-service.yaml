@@ -30,5 +30,5 @@ spec:
       protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
       appProtocol: tcp
-    {{- end}}
+    {{- end }}
 {{- end }}

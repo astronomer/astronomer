@@ -32,7 +32,7 @@ class TestHoustonCronjobJob:
             "--canary=false",
         ]
 
-        assert c_by_name["cleanup"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["cleanup"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_houston_cleanup_deployment_cronjob_overrides(self, kube_version):
         """Test cleanup deployments cronjob overrides."""
@@ -68,8 +68,9 @@ class TestHoustonCronjobJob:
         ]
 
         assert c_by_name["cleanup"]["securityContext"] == {
-            "runAsNonRoot": True,
+            "readOnlyRootFilesystem": True,
             "allowPriviledgeEscalation": False,
+            "runAsNonRoot": True,
         }
 
     def test_houston_cleanup_deployment_cronjob_disabled(self, kube_version):
