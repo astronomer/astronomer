@@ -7,6 +7,10 @@ tolerations: []
 priorityClassName: ~
 podSecurityContext: {}
 
+
+nameOverride: ""
+fullnameOverride: ""
+
 vector:
   securityContext:
     runAsUser: 0
