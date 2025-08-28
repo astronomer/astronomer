@@ -16,7 +16,7 @@ all_templates = list(Path("charts/vector/templates").glob("*.yaml"))
 )
 class TestVector:
     @staticmethod
-    def vector_common_tests(doc):
+    def vector_daemonset_common_tests(doc):
         """Test common for vector daemonsets."""
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "release-name-vector"
