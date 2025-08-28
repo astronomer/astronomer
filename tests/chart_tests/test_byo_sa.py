@@ -248,9 +248,8 @@ def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
     default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
-    match template_name:
-        case _ if "nginx-dp-deployment" in template_name:
-            default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
+    if "nginx-dp-deployment" in template_name:
+        default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
     docs = render_chart(show_only=template_name, values=values)
