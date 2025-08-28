@@ -121,7 +121,7 @@ data:
         {{- else }}
         endpoints: ["http://{{ .Release.Name }}-elasticsearch:9200"]
         {{- end }}
-        api_version: "v7"
+        api_version: "v8"
         healthcheck:
           enabled: true
         bulk:
