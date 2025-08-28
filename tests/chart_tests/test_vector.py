@@ -141,7 +141,7 @@ class TestVector:
 
     def test_vector_clusterrolebinding_rbac_enabled(self, kube_version):
         """Test that helm renders a good ClusterRoleBinding template for vector when rbacEnabled=True."""
-        values = {"global": {"rbacEnabled": True }}
+        values = {"global": {"rbacEnabled": True}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -248,7 +248,7 @@ class TestVector:
         """Test to validate vector index name prefix defaults in vector configmap."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": "rbacEnabled": True},
+            values={"global": {"rbacEnabled": True}},
             show_only=[
                 "charts/vector/templates/vector-configmap.yaml",
             ],
