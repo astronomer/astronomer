@@ -238,7 +238,6 @@ class TestVector:
         """Test to validate vector with priority class configured."""
 
         values = {
-            "global": {"logging": {"collector": "vector"}},
             "vector": {"priorityClassName": "vector-priority-pod"},
         }
 
