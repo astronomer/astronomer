@@ -12,52 +12,58 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestHoustonApiDeployment:
-    def test_houston_api_deployment(self, kube_version):
+    def test_houston_api_deployment_defaults(self, kube_version):
+        """Test the default configuration of the Houston API deployment."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert "annotations" not in doc["metadata"]
-        assert {
+        houston_deployment = docs[0]
+        assert houston_deployment["kind"] == "Deployment"
+        assert "annotations" not in houston_deployment["metadata"]
+        assert houston_deployment["spec"]["selector"]["matchLabels"] == {
             "tier": "astronomer",
             "component": "houston",
             "release": "release-name",
-        } == doc["spec"]["selector"]["matchLabels"]
+        }
 
-        assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("release") == "release-name"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("plane") == "unified"
-
-        labels = doc["spec"]["template"]["metadata"]["labels"]
+        # Ensure the first dict is contained within the larger labels dict
         assert {
             "tier": "astronomer",
             "component": "houston",
             "release": "release-name",
             "app": "houston",
             "plane": "unified",
-        } == {x: labels[x] for x in labels if x != "version"}
+        }.items() <= houston_deployment["spec"]["template"]["metadata"]["labels"].items()
 
-        c_by_name = get_containers_by_name(doc, include_init_containers=True)
-        assert c_by_name["houston-bootstrapper"]["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
-        assert c_by_name["houston"]["image"].startswith("quay.io/astronomer/ap-houston-api:")
-        assert c_by_name["wait-for-db"]["image"].startswith("quay.io/astronomer/ap-houston-api:")
-        houston_env = c_by_name["houston"]["env"]
-        deployments_database_connection_env = next(x for x in houston_env if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION")
-        assert deployments_database_connection_env is not None
-        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
-        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"]["secretKeyRef"]
-        assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
-        assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
+        c_by_name = get_containers_by_name(houston_deployment, include_init_containers=True)
+        assert len(c_by_name) == 4
+        houston_container, etc_ssl_certs_copier_container, wait_for_db_container, houston_bootstrapper_container = (
+            c_by_name.values()
+        )
 
-        env_vars = get_env_vars_dict(c_by_name["wait-for-db"]["env"])
-        assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
-        assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
+        assert etc_ssl_certs_copier_container["securityContext"]["readOnlyRootFilesystem"]
+
+        assert houston_bootstrapper_container["securityContext"]["readOnlyRootFilesystem"]
+        assert houston_bootstrapper_container["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
+        assert houston_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
+        assert wait_for_db_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
+
+        assert houston_container["securityContext"]["readOnlyRootFilesystem"]
+        houston_container_env = get_env_vars_dict(houston_container["env"])
+        assert houston_container_env["DEPLOYMENTS__DATABASE__CONNECTION"]["secretKeyRef"]
+        assert houston_container_env["COMMANDER_WAIT_ENABLED"] == "true"
+        assert houston_container_env["REGISTRY_WAIT_ENABLED"] == "true"
+        assert houston_container_env["DEPLOYMENTS__DATABASE__CONNECTION"] == {
+            "secretKeyRef": {"key": "connection", "name": "release-name-houston-backend"}
+        }
+
+        assert wait_for_db_container["securityContext"]["readOnlyRootFilesystem"]
+        wait_for_db_container_env = get_env_vars_dict(wait_for_db_container["env"])
+        assert wait_for_db_container_env["COMMANDER_WAIT_ENABLED"] == "true"
+        assert wait_for_db_container_env["REGISTRY_WAIT_ENABLED"] == "true"
 
     def test_houston_api_deployment_control_mode(self, kube_version):
         docs = render_chart(
@@ -91,10 +97,10 @@ class TestHoustonApiDeployment:
         doc = docs[0]
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
-        houston_env = c_by_name["houston"]["env"]
+        houston_container_env = c_by_name["houston"]["env"]
 
         deployments_database_connection_env = next(
-            (x for x in houston_env if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION"),
+            (x for x in houston_container_env if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION"),
             None,
         )
         assert deployments_database_connection_env is None
@@ -135,12 +141,12 @@ class TestHoustonApiDeployment:
         doc = docs[0]
 
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_env = c_by_name["houston"]["env"]
+        houston_container_env = c_by_name["houston"]["env"]
         expected_runtime_env = {
             "name": "HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL",
             "value": "https://updates.astronomer.io/astronomer-runtime",
         }
-        assert expected_runtime_env in houston_env
+        assert expected_runtime_env in houston_container_env
 
     def test_houston_api_deployment_with_updates_url_overrides(self, kube_version):
         CUSTOM_RUNTIME_URL = "https://test.me.io/astronomer-runtime"
@@ -163,13 +169,13 @@ class TestHoustonApiDeployment:
         doc = docs[0]
 
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_env = c_by_name["houston"]["env"]
+        houston_container_env = c_by_name["houston"]["env"]
 
         expected_runtime_env = {
             "name": "HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL",
             "value": CUSTOM_RUNTIME_URL,
         }
-        assert expected_runtime_env in houston_env
+        assert expected_runtime_env in houston_container_env
 
     def test_houston_api_deployment_passing_in_base_houston_host_in_env(self, kube_version):
         docs = render_chart(
@@ -180,27 +186,24 @@ class TestHoustonApiDeployment:
         doc = docs[0]
 
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_env = c_by_name["houston"]["env"]
+        houston_container_env = c_by_name["houston"]["env"]
 
         expected_env = {
             "name": "HOUSTON__HOST",
             "value": "release-name-houston",
         }
-        assert expected_env in houston_env
+        assert expected_env in houston_container_env
 
     def test_houston_env_custom_release_name(self, kube_version):
-        """Ensure all houston environment __HOST variables use the custom
-        release name."""
+        """Ensure all houston environment __HOST variables use the custom release name."""
         docs = render_chart(
             name="custom-name",
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
         )
-        assert all(
-            env["value"].startswith("custom-name-")
-            for env in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
-            if "__HOST" in env.get("name") and env.get("value")
-        )
+        c_by_name = get_containers_by_name(docs[0])
+        houston_env = get_env_vars_dict(c_by_name["houston"]["env"])
+        assert all(v.startswith("custom-name") for k, v in houston_env.items() if k.endswith("__HOST"))
 
     def test_houston_configmap_with_runtimeReleasesConfig_enabled(self, kube_version):
         """Validate the houston configmap and its embedded data with RuntimeReleasesConfig defined

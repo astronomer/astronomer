@@ -55,7 +55,7 @@ spec:
       serviceAccountName: {{ template "stan.serviceAccountName" . }}
 {{- include "stan.imagePullSecrets" . | indent 6 }}
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}

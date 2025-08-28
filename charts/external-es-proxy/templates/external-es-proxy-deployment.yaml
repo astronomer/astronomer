@@ -89,7 +89,7 @@ spec:
             - name: trust-ca-certs
               mountPath: /etc/ssl/certs/{{ $secretName }}.pem
               subPath: {{ $secretName }}.pem
-            {{- end}}
+            {{- end }}
           ports:
             - name: secure-http
               containerPort: {{ .Values.service.securehttp }}
@@ -160,10 +160,10 @@ spec:
         - name: trust-ca-certs
           secret:
             secretName: {{ $secretName }}
-        {{- end}}
+        {{- end }}
         {{- if .Values.global.customLogging.awsSecretName }}
         - name: awssecret
           secret:
             secretName: {{ .Values.global.customLogging.awsSecretName }}
-        {{- end}}
+        {{- end }}
 {{- end }}

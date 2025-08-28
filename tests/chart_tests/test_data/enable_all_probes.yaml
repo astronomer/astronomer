@@ -267,6 +267,16 @@ external-es-proxy:
     exec:
       command:
       - /bin/true
+vector:
+  vector:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
 global:
   airflowOperator:
     enabled: true
