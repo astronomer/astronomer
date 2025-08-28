@@ -154,7 +154,6 @@ class TestVector:
     def test_vector_securityContext_default(self, kube_version):
         """Test that we have the expected default security context for the vector container."""
 
-
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/vector/templates/vector-daemonset.yaml"],
