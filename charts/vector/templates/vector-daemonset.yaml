@@ -92,6 +92,12 @@ spec:
               fieldPath: metadata.namespace
         - name: VECTOR_LOG
           value: "{{ .Values.logLevel | default "info" }}"
+        {{- if .Values.global.customLogging.enabled }}
+        - name: ELASTICSEARCH_HOST
+          value: {{ printf "%s-external-es-proxy" .Release.Name | quote }}
+        - name: ELASTICSEARCH_PORT
+          value: "9201"
+        {{- else }}
         - name: ELASTICSEARCH_HOST
           value: {{ template "elasticsearch.host" . }}
         - name: ELASTICSEARCH_PORT
