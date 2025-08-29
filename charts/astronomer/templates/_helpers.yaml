@@ -531,7 +531,7 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- if (eq .Values.global.plane.mode "data") -}}
 {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
-{{ .Release.Name }}-commander:{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
+{{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
 {{- end }}
 {{- end -}}
 
