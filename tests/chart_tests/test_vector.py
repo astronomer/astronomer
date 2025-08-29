@@ -91,7 +91,7 @@ class TestVector:
         assert volume_dict["tmp"]["emptyDir"] == {}
         assert volume_dict["vector-data"]["emptyDir"] == {}
         assert volume_dict["varlog"]["hostPath"]["path"] == "/var/log/"
-        assert volume_dict["config-volume-release-name-vector"]["configMap"]["name"] == "release-name-vector"
+        assert volume_dict["config-volume-release-name-vector"]["configMap"]["name"] == "release-name-vector-config"
 
         if "livenessProbe" in vector_container:
             pass
