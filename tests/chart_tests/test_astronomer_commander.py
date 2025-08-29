@@ -58,6 +58,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_DATAPLANE_ID"] == "custom-dp-123"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_BASE_DOMAIN"] == "custom-dp-123.example.com"
+        assert env_vars["COMMANDER_DATAPLANE_URL"] == "custom-dp-123.example.com"
         assert env_vars["COMMANDER_DATAPLANE_MODE"] == "data"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
 

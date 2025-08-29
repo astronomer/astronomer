@@ -1,3 +1,21 @@
+astronomer:
+  houston:
+    cleanupAirflowDb:
+      enabled: true
+    cleanupClusterAudits:
+      enabled: true
+    cleanupDeployRevisions:
+      enabled: true
+    cleanupDeployments:
+      enabled: true
+    updateCheck:
+      enabled: true
+    updateRuntimeCheck:
+      enabled: true
+    upgradeDeployments:
+      enabled: true
+    worker:
+      enabled: true
 global:
   airflowOperator:
     enabled: true
@@ -9,8 +27,11 @@ global:
     enabled: true
   loggingSidecar:
     enabled: true
+  networkPolicy:
+    enabled: true
   pgbouncer:
     enabled: true
+  podDisruptionBudgetsEnabled: true
   postgresqlEnabled: true
   privateCaCertsAddToHost:
     addToContainerd: true
@@ -18,20 +39,12 @@ global:
   prometheusPostgresExporterEnabled: true
   rbacEnabled: true
   taskUsageMetricsEnabled: true
-astronomer:
-  houston:
-    cleanupAirflowDb:
-      enabled: true
-    updateCheck:
-      enabled: true
-kibana:
-  createDefaultIndex: true
 nats:
   nats:
     createJetStreamJob: true
-    reloader:
-      enabled: true
     exporter:
+      enabled: true
+    reloader:
       enabled: true
 postgresql:
   replication:

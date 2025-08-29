@@ -56,7 +56,7 @@ class TestPrometheusAlertConfigmap:
 
         # Validate the contents of an embedded yaml doc
         groups = yaml.safe_load(doc["data"]["alerts"])["groups"]
-        assert len(groups) == 16
+        assert len(groups) == 15
         for group in groups:
             assert isinstance(group.get("name"), str)
             assert isinstance(group.get("rules"), list)
@@ -128,9 +128,9 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 16
+        assert len(groups) == 15
         assert [x["rules"] for x in groups if x["name"] == section] == [[]]
-        assert len([x["rules"] for x in groups if x["name"] != section]) == 15
+        assert len([x["rules"] for x in groups if x["name"] != section]) == 14
 
     @pytest.mark.parametrize("section", ["airflow", "platform"])
     def test_default_alerts_section_disabled_with_additional_alerts(self, kube_version, section):
@@ -159,7 +159,7 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 16
+        assert len(groups) == 15
         assert [x["rules"] for x in groups if x["name"] == section] == [
             [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
         ]

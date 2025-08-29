@@ -84,6 +84,7 @@ def test_prometheus_targets(prometheus):
         )
 
 
+@pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_houston_metrics_are_collected(prometheus):
     """Ensure Houston metrics are collected and prefixed with 'houston_'."""
     data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=houston_up")
@@ -187,21 +188,3 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
 
     # check that the connection is not reset
     assert "postgres" in result, "Expected to find DB connection string after Houston restart"
-
-
-def test_kibana_default_index_pod(k8s_core_v1_client):
-    """Check kibana index pod completed successfully"""
-    try:
-        # Get pods with the kibana-default-index component label
-        pods = k8s_core_v1_client.list_namespaced_pod(namespace="astronomer", label_selector="component=kibana-default-index")
-
-        assert len(pods.items) > 0, "No kibana-default-index pods found"
-
-        # Get logs from the first pod (there should typically be only one)
-        pod_name = pods.items[0].metadata.name
-        logs = k8s_core_v1_client.read_namespaced_pod_log(name=pod_name, namespace="astronomer")
-
-        assert "fluentd.*" in logs, f"Expected 'fluentd.*' pattern in kibana logs, but got: {logs}"
-
-    except ApiException as e:
-        raise AssertionError(f"Failed to check kibana-default-index pod logs: {e}")

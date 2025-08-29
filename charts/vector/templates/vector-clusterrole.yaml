@@ -1,0 +1,25 @@
+###########################################################################
+# Vector ClusterRole
+###########################################################################
+{{- if .Values.global.rbacEnabled }}
+kind: ClusterRole
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ template "vector.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "vector.name" . }}
+    chart: {{ template "vector.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - "namespaces"
+  - "pods"
+  - "nodes"
+  verbs:
+  - "watch"
+  - "list"
+{{- end -}}

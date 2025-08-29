@@ -43,12 +43,8 @@ dependencies:
     condition: global.elasticsearchEnabled
     tags:
       - logging
-  - name: kibana
-    condition: global.kibanaEnabled
-    tags:
-      - logging
-  - name: fluentd
-    condition: global.fluentdEnabled
+  - name: vector
+    condition: global.vectorEnabled
     tags:
       - logging
 

@@ -92,8 +92,8 @@ data:
       key: {{ .Values.nats.jetstream.encryption.key | quote }}
       {{- else if .Values.nats.jetstream.encryption.secret }}
       key: $JS_KEY
-      {{- end}}
-      {{- end}}
+      {{- end }}
+      {{- end }}
 
       {{- if .Values.nats.jetstream.memStorage.enabled }}
       max_mem: {{ .Values.nats.jetstream.memStorage.size }}

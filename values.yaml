@@ -91,7 +91,7 @@ global:
 
   prometheusPostgresExporterEnabled: false
 
-  # make fluentd to gather logs from all available namespaces
+  # Configure vector to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
@@ -266,7 +266,7 @@ global:
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
   # Pods in the platformNodePool include alertmanager, commander, houston, kube-replicator, astro-ui,registry,
-  # es-client, es-data, es-exporter, es-master, nginx-es, kibana, kube-state, nginx, nginx-default, prometheus.
+  # es-client, es-data, es-exporter, es-master, nginx-es, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   platformNodePool:
@@ -351,7 +351,7 @@ tags:
   # Enable monitoring stack (prometheus, kube-state)
   monitoring: true
 
-  # Enable logging stack (elasticsearch, fluentd, kibana)
+  # Enable logging stack (elasticsearch, vector)
   logging: true
 
   # NATS Streaming
@@ -418,7 +418,6 @@ astronomer:
 ## Nginx configuration
 #################################
 nginx:
-  # Configure resources
   resources:
     requests:
       cpu: "500m"
@@ -453,12 +452,10 @@ prometheus:
   # Data retention
   retention: 15d
 
-  # Persistence configuration
   persistence:
     enabled: true
     size: "150Gi"
 
-  # Configure resources
   resources:
     requests:
       cpu: "1000m"
@@ -627,36 +624,22 @@ elasticsearch:
         memory: "256Mi"
 
 #################################
-## Kibana configuration
+## Vector configuration
 #################################
-kibana:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
-
-#################################
-## Fluentd configuration
-#################################
-fluentd:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "1000m"
-      memory: "1024Mi"
+vector:    # pod
+  vector:  # container
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
 
 #################################
 ## Kube State configuration
 #################################
 kube-state:
-  # Configure resources
   resources:
     requests:
       cpu: "250m"

@@ -32,6 +32,10 @@ images:
     repository: quay.io/astronomer/ap-openresty
     tag: 1.27.1-5
     pullPolicy: IfNotPresent
+  promproxy:
+    repository: quay.io/astronomer/ap-openresty
+    tag: 1.27.1-5
+    pullPolicy: IfNotPresent
 
 
 resources: {}
@@ -122,7 +126,6 @@ astroHTTPTargets:
   commander: true
   houston: true
   registry: true
-  kibana: true
   elasticsearch: true
 
 # Enable prometheus lifecycle api

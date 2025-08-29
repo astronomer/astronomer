@@ -66,7 +66,6 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
             "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
             "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
-            "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -80,11 +79,10 @@ class TestServiceAccounts:
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/stan/templates/stan-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
-                "charts/kibana/templates/kibana-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 9
+        assert len(docs) == 8
         expected_names = {
             "commander-test",
             "registry-test",
@@ -92,7 +90,6 @@ class TestServiceAccounts:
             "houston-test",
             "astroui-test",
             "alertmanager-test",
-            "kibana-test",
         }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
@@ -117,12 +114,11 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": False}}},
             "stan": {"stan": {"serviceAccount": {"create": False}}},
             "alertmanager": {"serviceAccount": {"create": False}},
-            "kibana": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
             "pgbouncer": {"serviceAccount": {"create": False}},
-            "fluentd": {"serviceAccount": {"create": False}},
+            "vector": {"serviceAccount": {"create": False}},
             "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
             "kube-state": {"serviceAccount": {"create": False}},
             "prometheus": {"serviceAccount": {"create": False}},
@@ -162,12 +158,11 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "stan": {"stan": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
-            "kibana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "pgbouncer": {"serviceAccount": {"create": True, "annotations": annotations}},
-            "fluentd": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "vector": {"serviceAccount": {"create": True, "annotations": annotations}},
             "nginx": {
                 "serviceAccount": {"create": True, "annotations": annotations},
                 "defaultBackend": {"serviceAccount": {"create": False, "annotations": annotations}},
@@ -199,7 +194,7 @@ class TestServiceAccounts:
             "kube-state": {
                 "serviceAccount": {"name": "kube-state-test"},
             },
-            "fluentd": {"serviceAccount": {"name": "fluentd-test"}},
+            "vector": {"serviceAccount": {"create": True, "name": "vector-test"}},
             "prometheus": {"serviceAccount": {"name": "prometheus-test"}},
             "nginx": {"serviceAccount": {"name": "nginx-test"}},
         }
@@ -211,7 +206,7 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-rolebinding.yaml",
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
-                "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
+                "charts/vector/templates/vector-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
                 "charts/nginx/templates/controlplane/nginx-cp-rolebinding.yaml",
             ],
@@ -224,7 +219,7 @@ class TestServiceAccounts:
             "configsyncer-test",
             "houston-test",
             "kube-state-test",
-            "fluentd-test",
+            "vector-test",
             "prometheus-test",
             "nginx-test-cp",
         }
@@ -340,14 +335,6 @@ custom_service_account_names = {
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
-    "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/kibana/templates/kibana-default-index-cronjob.yaml": {
-        "kibana": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
-    "charts/kibana/templates/kibana-deployment.yaml": {"kibana": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/kube-state/templates/kube-state-deployment.yaml": {
-        "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
     "charts/nats/templates/jetstream-job.yaml": {
         "nats": {"nats": {"jetstream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
     },
@@ -374,6 +361,12 @@ custom_service_account_names = {
         "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"serviceAccount": {"create": True, "name": "prothean"}}}},
+    "charts/vector/templates/vector-daemonset.yaml": {
+        "vector": {"serviceAccount": {"create": True, "name": "prothean"}},
+    },
+    "charts/kube-state/templates/kube-state-deployment.yaml": {
+        "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
 }
 
 

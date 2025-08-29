@@ -87,30 +87,11 @@ class TestDefaultProbes:
             "timeoutSeconds": 10,
         },
         "elasticsearch-master_es-master": {"tcpSocket": {"port": 9300}},
-        "fluentd_fluentd": {
-            "exec": {
-                "command": [
-                    "/bin/bash",
-                    "-c",
-                    "if (( $(ruby -e \"require 'net/http';require 'uri';uri = URI.parse('http://127.0.0.1:24231/metrics');response = Net::HTTP.get_response(uri);puts response.body\" | grep 'fluentd_output_status_buffer_queue_length{' | awk '{ print ($NF > 8) }') )); then exit 1; fi; exit 0",
-                ]
-            },
-            "failureThreshold": 3,
-            "initialDelaySeconds": 30,
-            "periodSeconds": 15,
-            "successThreshold": 1,
-            "timeoutSeconds": 5,
-        },
         "houston_houston": {
             "httpGet": {"path": "/v1/healthz", "port": 8871},
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
             "failureThreshold": 10,
-        },
-        "kibana_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
         },
         "kube-state_kube-state": {"httpGet": {"path": "/healthz", "port": 8080}, "initialDelaySeconds": 5, "timeoutSeconds": 5},
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
@@ -160,6 +141,11 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
+        "vector_vector": {
+            "httpGet": {"path": "/health", "port": 8686},
+            "initialDelaySeconds": 30,
+            "periodSeconds": 10,
+        },
     }
 
     # Expected container readiness probes. This block should contain all of the expected default readiness probes.
@@ -200,11 +186,6 @@ class TestDefaultProbes:
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
             "failureThreshold": 10,
-        },
-        "kibana_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
         },
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},
@@ -248,6 +229,11 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
+        "vector_vector": {
+            "httpGet": {"path": "/health", "port": 8686},
+            "initialDelaySeconds": 30,
+            "periodSeconds": 10,
+        },
     }
 
     # liveness probe data and ids

@@ -4,9 +4,9 @@ from tests import supported_k8s_versions
 from tests.utils import get_all_features, get_chart_containers
 
 ignore_list = [
-    "fluentd_fluentd",
     "elasticsearch-exporter_metrics-exporter",
     "elasticsearch-nginx_nginx",
+    "vector_vector",
 ]
 
 

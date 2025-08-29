@@ -88,6 +88,7 @@
 
 {{ define "registry.authHeaderSecret" -}}
 {{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
+{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
 
 {{ define "houston.airflowBackendSecret" -}}
@@ -195,11 +196,11 @@
 - name: COMMANDER_STATUS
   value: HEALTHY
 - name: COMMANDER_DATAPLANE_ID
-  value: {{ .Values.global.plane.domainSuffix }}
+  value: {{ .Values.global.plane.domainSuffix | default "astronomer" }}
 - name: COMMANDER_BASE_DOMAIN
-  value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+  value: {{ include "commander.baseDomain" . | quote }}
 - name: COMMANDER_DATAPLANE_URL
-  value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+  value: {{ include "commander.dataplaneURL" . | quote }}
 - name: COMMANDER_DATAPLANE_MODE
   value: {{ .Values.global.plane.mode | quote }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
@@ -287,7 +288,7 @@ s3:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
-{{- end}}
+{{- end }}
   # These are set here for Houston's entrypoint script
 - name: HOUSTON__HOST
   value: {{ .Release.Name }}-houston
@@ -320,7 +321,7 @@ s3:
 - name: houston-config-volume
   mountPath: /houston/config/local-production.yaml
   subPath: local-production.yaml
-{{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
+{{- if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
 - name: houston-config-volume
   mountPath: /houston/astro_runtime_releases.json
   subPath: astro_runtime_releases.json
@@ -331,15 +332,15 @@ s3:
 - name: houston-jwt-certificate-volume
   mountPath: {{ template "houston.jwtCertificatePath" . }}
   subPath: tls.crt
-{{ if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
-{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+{{- if and .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+{{- $secretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 - name: nats-jetstream-client-tls-volume
   mountPath: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}
 - name: nats-jetstream-client-tls-volume
   mountPath: /usr/local/share/ca-certificates/{{ $secretName }}.crt
   subPath: ca.crt
 {{- end }}
-{{- if .Values.houston.runtimeReleasesConfigMapName -}}
+{{- if .Values.houston.runtimeReleasesConfigMapName }}
 - mountPath: /houston/astro_runtime_releases.json
   name: runtimeversions
   subPath: astro_runtime_releases.json
@@ -355,7 +356,7 @@ s3:
         path: production.yaml
       - key: local-production.yaml
         path: local-production.yaml
-      {{ if and .Values.houston.RuntimeReleasesConfig (not .Values.houston.runtimeReleasesconfigMapName )}}
+      {{- if and .Values.houston.RuntimeReleasesConfig (not .Values.houston.runtimeReleasesconfigMapName )}}
       - key: astro_runtime_releases.json
         path: astro_runtime_releases.json
       {{- end }}
@@ -366,8 +367,8 @@ s3:
 - name: houston-jwt-certificate-volume
   secret:
     secretName: {{ template "houston.jwtCertificateSecret" . }}
-{{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
-{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+{{- if and .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+{{ $secretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 - name: nats-jetstream-client-tls-volume
   secret:
     secretName: {{ $secretName }}
@@ -380,8 +381,8 @@ s3:
 {{- end }}
 
 {{- define "custom_ca_volume_mounts" }}
-{{ if .Values.global.privateCaCerts }}
-{{ range $secret_name := (.Values.global.privateCaCerts) }}
+{{- if .Values.global.privateCaCerts }}
+{{- range $secret_name := (.Values.global.privateCaCerts) }}
 - name: {{ $secret_name }}
   mountPath: /usr/local/share/ca-certificates/{{ $secret_name }}.pem
   subPath: cert.pem
@@ -390,8 +391,8 @@ s3:
 {{- end }}
 
 {{- define "custom_ca_volumes"}}
-{{ if .Values.global.privateCaCerts }}
-{{ range .Values.global.privateCaCerts }}
+{{- if .Values.global.privateCaCerts }}
+{{- range .Values.global.privateCaCerts }}
 - name: {{ . }}
   secret:
     secretName: {{ . }}
@@ -409,7 +410,7 @@ s3:
 {{- end }}
 
 {{/*
-Return  the proper Storage Class
+Return the proper Storage Class
 */}}
 {{- define "registry.storageClass" -}}
 {{/*
@@ -444,7 +445,7 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{ define "fluentd.IndexPattern" -}}
+{{ define "vector.IndexPattern" -}}
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{ .Values.global.logging.indexNamePrefix }}
 {{- else -}}
@@ -465,13 +466,13 @@ false
 {{- end }}
 
 {{ define "jetstreamTLS" }}
-{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
-{{ if .Values.global.nats.jetStream.tls }}
+{{- $secretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+{{- if .Values.global.nats.jetStream.tls }}
 tlsEnabled: true
 tls:
-  caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/ca.crt
-  certFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/tls.crt
-  keyFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/tls.key
+  caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/ca.crt
+  certFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.crt
+  keyFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.key
 {{- else -}}
 tlsEnabled: false
 {{- end }}
@@ -482,8 +483,8 @@ tlsEnabled: false
 {{- end }}
 
 {{- define "dagOnlyDeployment.securityContexts" -}}
-{{- if or (eq ( toString ( .Values.global.dagOnlyDeployment.securityContexts.pod.fsGroup )) "auto") ( .Values.global.openshiftEnabled )  }}
-{{- omit  .Values.global.dagOnlyDeployment.securityContexts.pod "fsGroup" | toYaml | nindent 10 }}
+{{- if or (eq ( toString ( .Values.global.dagOnlyDeployment.securityContexts.pod.fsGroup )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- omit .Values.global.dagOnlyDeployment.securityContexts.pod "fsGroup" | toYaml | nindent 10 }}
 {{- else }}
 {{- .Values.global.dagOnlyDeployment.securityContexts | toYaml | nindent 10 }}
 {{- end -}}
@@ -502,5 +503,21 @@ tlsEnabled: false
 https://houston.{{ .Values.global.baseDomain }}/v1/registry/events
 {{- else -}}
 http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events
+{{- end }}
+{{- end -}}
+
+{{- define "commander.dataplaneURL" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+{{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
+{{- end }}
+{{- end -}}
+
+{{- define "commander.baseDomain" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+{{ .Values.global.baseDomain }}
 {{- end }}
 {{- end -}}

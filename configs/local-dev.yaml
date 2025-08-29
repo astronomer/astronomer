@@ -155,29 +155,6 @@ elasticsearch:
         cpu: "0"
         memory: "0Gi"
 
-
-#################################
-## Kibana configuration
-#################################
-kibana:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "0m"
-      memory: "0Mi"
-
-
-#################################
-## Fluentd configuration
-#################################
-fluentd:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "0m"
-      memory: "0Mi"
-
-
 #################################
 ## Kube State configuration
 #################################
