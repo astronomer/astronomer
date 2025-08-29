@@ -200,9 +200,9 @@
   value: {{ .Values.global.plane.mode | quote }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
   value: "https://houston.{{ .Values.global.baseDomain }}"
-{{- if .Values.global.features.namespacePools.enabled  }}
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
-  value: {{ .Values.global.features.namespacePools.enabled }}
+  value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled }}
+{{- if .Values.global.features.namespacePools.enabled  }}
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: "{{ .Values.global.features.namespacePools.namespaces.names | join "," }}"
 {{- end }}
