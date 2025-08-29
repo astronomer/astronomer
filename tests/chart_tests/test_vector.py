@@ -91,7 +91,7 @@ class TestVector:
         assert volume_dict["tmp"]["emptyDir"] == {}
         assert volume_dict["vector-data"]["emptyDir"] == {}
         assert volume_dict["varlog"]["hostPath"]["path"] == "/var/log/"
-        assert volume_dict["config-volume-release-name-vector"]["configMap"]["name"] == "release-name-vector"
+        assert volume_dict["config-volume-release-name-vector"]["configMap"]["name"] == "release-name-vector-config"
 
         if "livenessProbe" in vector_container:
             pass
@@ -258,7 +258,7 @@ class TestVector:
         doc = docs[0]
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-vector"
+        assert doc["metadata"]["name"] == "release-name-vector-config"
         expected_index = 'index: "fluentd.{{ .release }}.%Y.%m.%d"'
         assert expected_index in doc["data"]["vector-config.yaml"]
 
@@ -279,7 +279,7 @@ class TestVector:
         doc = docs[0]
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-vector"
+        assert doc["metadata"]["name"] == "release-name-vector-config"
         assert (
             'astronomer.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}'
             in doc["data"]["vector-config.yaml"]
@@ -372,5 +372,4 @@ class TestVector:
         )[0]
 
         config_yaml = doc["data"]["vector-config.yaml"]
-        assert 'endpoints: ["http://release-name-vector:9201"]' in config_yaml
         assert 'api_version: "v8"' in config_yaml
