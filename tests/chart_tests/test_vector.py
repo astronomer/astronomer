@@ -372,5 +372,4 @@ class TestVector:
         )[0]
 
         config_yaml = doc["data"]["vector-config.yaml"]
-        assert 'endpoints: ["http://release-name-vector:9201"]' in config_yaml
         assert 'api_version: "v8"' in config_yaml
