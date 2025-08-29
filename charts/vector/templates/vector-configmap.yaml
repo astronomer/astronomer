@@ -4,7 +4,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: {{ include "vector.fullname" . }}
+  name: {{ include "vector.fullname" . }}-config
   labels:
     tier: logging
     component: {{ template "vector.name" . }}
@@ -116,11 +116,7 @@ data:
           - transform_remove_fields
         mode: bulk
         compression: none
-        {{- if .Values.global.customLogging.enabled }}
-        endpoints: ["http://{{ include "external-es-proxy.fullname" . }}:9201"]
-        {{- else }}
         endpoints: ["http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]
-        {{- end }}
         api_version: "v8"
         healthcheck:
           enabled: true
