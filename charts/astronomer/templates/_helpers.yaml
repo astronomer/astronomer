@@ -204,7 +204,7 @@
   value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
 {{- if .Values.global.features.namespacePools.enabled  }}
 - name: COMMANDER_NAMESPACE_POOLS_LIST
-  value: "{{ .Values.global.features.namespacePools.namespaces.names | join "," }}"
+  value: {{ .Values.global.features.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
 {{- end }}
 
