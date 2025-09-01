@@ -639,3 +639,30 @@ class TestExternalElasticSearch:
         assert len(spec["nodeSelector"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["external-es-proxy"]["tolerations"]
+
+    def test_external_elasticsearch_ingress(self, kube_version):
+        """Test that External ElasticSearch Ingress is rendered when
+        global.plane.mode is 'data'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data", "domainSuffix": "plane"},
+                    "baseDomain": "example.com",
+                    "customLogging": {
+                        "enabled": True,
+                        "secret": secret,
+                        "host": "esdemo.example.com",
+                    },
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-ingress.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Ingress"
+        assert doc["metadata"]["name"] == "release-name-external-es-proxy-ingress"
+        assert doc["spec"]["rules"][0]["host"] == "es-proxy.plane.example.com"
