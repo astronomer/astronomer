@@ -54,6 +54,8 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
 
+        assert env_vars["COMMANDER_HEALTH_STATUS"] == "HEALTHY"
+        assert env_vars["COMMANDER_STATUS"] == "HEALTHY"
         assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "99.88.77"
         assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"] != ""
         assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
