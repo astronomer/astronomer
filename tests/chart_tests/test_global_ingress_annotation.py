@@ -26,3 +26,22 @@ class TestGlobabIngressAnnotation:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert "passthrough" in doc["metadata"]["annotations"]["route.openshift.io/termination"]
             assert len(doc["metadata"]["annotations"]) >= 4
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "extraAnnotations": {"route.openshift.io/termination": "passthrough"},
+                    "plane": {"mode": "data"},
+                    "customLogging": {"enabled": True},
+                },
+                "astronomer": {"ingress": {"enabled": True}},
+            },
+            show_only=["charts/external-es-proxy/templates/external-es-proxy-ingress.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Ingress"
+        assert doc["apiVersion"] == "networking.k8s.io/v1"
+        assert "passthrough" in doc["metadata"]["annotations"]["route.openshift.io/termination"]
+        assert len(doc["metadata"]["annotations"]) >= 4
