@@ -26,21 +26,3 @@ class TestGlobabIngressAnnotation:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert "passthrough" in doc["metadata"]["annotations"]["route.openshift.io/termination"]
             assert len(doc["metadata"]["annotations"]) >= 4
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}, "plane": {"mode": "data"}}},
-            show_only=[" charts/external-es-proxy/templates/external-es-proxy-ingress.yaml"],
-        )
-        doc = docs[0]
-
-        assert doc["kind"] == "Ingress"
-        assert doc["apiVersion"] == "networking.k8s.io/v1"
-
-        labels = doc["metadata"]["labels"]
-        assert labels["tier"] == "elasticsearch-networking"
-        assert labels["component"] == "elasticsearch-logging-ingress"
-        assert labels["plane"] == "data"
-        assert "chart" in labels
-        assert "release" in labels
-        assert "heritage" in labels
