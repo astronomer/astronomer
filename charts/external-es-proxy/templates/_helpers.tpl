@@ -124,3 +124,7 @@ proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogg
 {{- include "external-es-proxy-trustcerts" . }}
 {{- end }}
 {{- end }}
+
+{{- define "es-proxy.url" -}}
+es-proxy.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- end -}}

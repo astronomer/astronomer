@@ -29,9 +29,9 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - {{ template "elasticsearch.url" . }}
+        - {{ template "es-proxy.url" . }}
   rules:
-    - host: {{ template "elasticsearch.url" . }}
+    - host: {{ template "es-proxy.url" . }}
       http:
         paths:
           - path: /
