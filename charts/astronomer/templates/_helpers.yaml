@@ -175,6 +175,17 @@
 {{- end }}
 
 {{ define "commander_metadataEnv" -}}
+- name: COMMANDER_ELASTICSEARCH_ENABLED
+  value: "true"
+- name: COMMANDER_ELASTICSEARCH_LOG_LEVEL
+  value: info
+{{- if eq .Values.global.plane.mode "data" }}
+- name: COMMANDER_ELASTICSEARCH_NODE
+  value: "https://elasticsearch.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}"
+{{- else if eq .Values.global.plane.mode "unified" }}
+- name: COMMANDER_ELASTICSEARCH_NODE
+  value: "http://elasticsearch.{{ .Values.global.baseDomain }}"
+{{- end }}
 - name: COMMANDER_HEALTH_STATUS
   value: HEALTHY
 - name: COMMANDER_STATUS
