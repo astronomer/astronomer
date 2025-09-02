@@ -50,6 +50,7 @@ spec:
       containers:
       - name: vector
         securityContext:
+          readOnlyRootFilesystem: true
           {{- toYaml .Values.vector.securityContext | nindent 10 }}
         image: {{ template "vector.image" . }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
