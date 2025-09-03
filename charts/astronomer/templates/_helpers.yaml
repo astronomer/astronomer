@@ -180,13 +180,8 @@
 - name: COMMANDER_ELASTICSEARCH_LOG_LEVEL
   value: info
 {{- if eq .Values.global.plane.mode "data" }}
-  {{- if .Values.global.customLogging.enabled }}
-- name: COMMANDER_ELASTICSEARCH_NODE
-  value: "https://{{ include "esproxy.url" . }}"
-  {{- else }}
 - name: COMMANDER_ELASTICSEARCH_NODE
   value: "https://{{ include "elasticsearch.url" . }}"
-  {{- end }}
 {{- else if eq .Values.global.plane.mode "unified" }}
   {{- if .Values.global.customLogging.enabled }}
 - name: COMMANDER_ELASTICSEARCH_NODE
