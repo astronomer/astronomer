@@ -72,7 +72,6 @@ common:
     http: 9200
     readiness: 9399
     transport: 9300
-    houstonHTTP: 8871
 
 # Client/ingest nodes can execute pre-processing pipelines, composed of
 # one or more ingest processors. Depending on the type of operations performed
