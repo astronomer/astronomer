@@ -54,7 +54,7 @@ data:
 
         location = /auth {
           internal;
-          proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+          {{ include "houston.proxypass" . | nindent 10}}
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }

@@ -57,11 +57,7 @@ data:
 
         location = /auth {
           internal;
-          {{- if eq .Values.global.plane.mode "unified" }}
-          proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:{{ .Values.common.ports.houstonHTTP }}/v1/elasticsearch;
-          {{- else }}
-          proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
-          {{- end }}
+          {{ include "houston.proxypass" . | nindent 10}}
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }
