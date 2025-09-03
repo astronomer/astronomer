@@ -14,9 +14,6 @@ metadata:
 
 data:
   vector-config.yaml: |
-    api:
-      enabled: true
-      address: "0.0.0.0:8686"
     log_schema:
       timestamp_key: "@timestamp"
 
