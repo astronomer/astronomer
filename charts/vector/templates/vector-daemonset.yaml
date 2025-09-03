@@ -30,30 +30,28 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/vector-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.ports.promScrape | quote }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       terminationGracePeriodSeconds: 30
     {{- if .Values.priorityClassName }}
-      priorityClassName:  {{ .Values.priorityClassName  }}
+      priorityClassName: {{ .Values.priorityClassName }}
     {{ end }}
       nodeSelector: {{ toYaml (.Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ include "vector.serviceAccountName" . }}
-{{- include "vector.imagePullSecrets" . | indent 6 }}
-      securityContext:
-{{ toYaml .Values.podSecurityContext | indent 8 }}
+      {{- include "vector.imagePullSecrets" . | nindent 6 }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
       - name: vector
         securityContext:
-          {{- if .Values.vector.securityContext }}
-{{ toYaml .Values.vector.securityContext | indent 10 }}
-          {{- end }}
+          readOnlyRootFilesystem: true
+          {{- toYaml .Values.vector.securityContext | nindent 10 }}
         image: {{ template "vector.image" . }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         {{- if .Values.vector.livenessProbe }}
@@ -108,7 +106,7 @@ spec:
           value: {{ .Release.Namespace | quote }}
         - name: RELEASE
           value: {{ .Release.Name | quote }}
-        {{- range $key, $value :=  .Values.extraEnv }}
+        {{- range $key, $value := .Values.extraEnv }}
         - name: {{ $key }}
           value: {{ $value | quote }}
         {{- end }}

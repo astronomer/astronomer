@@ -29,6 +29,7 @@ read_only_root_pods = [
     "prometheus",
     "registry",
     "update-resource-strategy",
+    "vector",
 ]
 
 
