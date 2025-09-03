@@ -31,7 +31,7 @@ metadata:
       }
     {{- else }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      location ~ ^/v1/(alerts|elasticsearch|metrics) {
+      location ~ ^/v1/(alerts|metrics) {
         deny all;
         return 403;
       }
