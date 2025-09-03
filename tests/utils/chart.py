@@ -158,7 +158,7 @@ def render_chart(
                 command.extend(["--show-only", str(file)])
 
         if DEBUG:
-            print(f"helm command:\n  {shlex.join(command)}")
+            print(f"helm command:\n\n{shlex.join(command)}\n")
 
         try:
             manifests = subprocess.check_output(command, stderr=subprocess.PIPE).decode("utf-8")

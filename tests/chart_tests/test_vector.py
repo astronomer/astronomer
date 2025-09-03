@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 all_templates = list(Path("charts/vector/templates").glob("*.yaml"))
@@ -20,32 +20,38 @@ class TestVector:
         assert doc["kind"] == "DaemonSet"
         assert doc["apiVersion"] == "apps/v1"
 
-        assert "name" in doc["metadata"]
         assert doc["metadata"]["name"] == "release-name-vector"
-        assert "labels" in doc["metadata"]
         assert doc["metadata"]["labels"]["tier"] == "logging"
-        assert "component" in doc["metadata"]["labels"]
+        assert doc["metadata"]["labels"]["component"] == "vector"
 
-        assert "selector" in doc["spec"]
-        assert "template" in doc["spec"]
         assert doc["spec"]["selector"]["matchLabels"]["tier"] == "logging"
         assert doc["spec"]["selector"]["matchLabels"]["component"] in doc["spec"]["template"]["metadata"]["labels"]["component"]
 
         pod_template = doc["spec"]["template"]
-        assert "labels" in pod_template["metadata"]
         assert pod_template["metadata"]["labels"]["tier"] == "logging"
-        assert "annotations" in pod_template["metadata"]
+        assert pod_template["metadata"]["labels"]["component"] == "vector"
 
         pod_spec = pod_template["spec"]
-        assert "containers" in pod_spec
-        assert "volumes" in pod_spec
+        assert not pod_spec["securityContext"]
+        assert pod_spec["volumes"] == [
+            {"name": "tmp", "emptyDir": {}},
+            {"name": "vector-data", "emptyDir": {}},
+            {"name": "varlog", "hostPath": {"path": "/var/log/"}},
+            {"name": "config-volume-release-name-vector", "configMap": {"name": "release-name-vector-config"}},
+        ]
 
-        containers = pod_spec["containers"]
-        assert len(containers) == 1
-        vector_container = containers[0]
+        assert len(pod_spec["containers"]) == 1
+        vector_container = pod_spec["containers"][0]
         assert vector_container["name"] == "vector"
+        assert vector_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsUser": 0}
+        assert vector_container["volumeMounts"] == [
+            {"mountPath": "/tmp", "name": "tmp"},
+            {"mountPath": "/var/lib/vector", "name": "vector-data"},
+            {"name": "varlog", "mountPath": "/var/log/", "readOnly": True},
+            {"name": "config-volume-release-name-vector", "mountPath": "/etc/vector/config", "readOnly": True},
+        ]
 
-        env_vars = {env["name"]: env.get("value") for env in vector_container.get("env", [])}
+        env_vars = get_env_vars_dict(vector_container.get("env", []))
         required_env_vars = [
             "VECTOR_SELF_NODE_NAME",
             "VECTOR_SELF_POD_NAME",
@@ -62,42 +68,8 @@ class TestVector:
             assert env_var in env_vars, f"Required environment variable {env_var} not found"
 
         assert env_vars["VECTOR_CONFIG_YAML"] == "/etc/vector/config/vector-config.yaml"
-        assert env_vars["NAMESPACE"] == "default"  # default release namespace
-        assert env_vars["RELEASE"] == "release-name"  # default release name
-
-        volume_mounts = vector_container.get("volumeMounts", [])
-        mount_dict = {vm["name"]: vm for vm in volume_mounts}
-
-        essential_mounts = {
-            "tmp": {"mountPath": "/tmp"},
-            "vector-data": {"mountPath": "/var/lib/vector"},
-            "varlog": {"mountPath": "/var/log/", "readOnly": True},
-            "config-volume-release-name-vector": {"mountPath": "/etc/vector/config", "readOnly": True},
-        }
-        for mount_name, expected_props in essential_mounts.items():
-            assert mount_name in mount_dict, f"Required volume mount {mount_name} not found"
-            mount = mount_dict[mount_name]
-            assert mount["mountPath"] == expected_props["mountPath"]
-            if "readOnly" in expected_props:
-                assert mount.get("readOnly") == expected_props["readOnly"]
-
-        volumes = pod_spec["volumes"]
-        volume_dict = {vol["name"]: vol for vol in volumes}
-
-        essential_volumes = ["tmp", "vector-data", "varlog", "config-volume-release-name-vector"]
-        for vol_name in essential_volumes:
-            assert vol_name in volume_dict, f"Required volume {vol_name} not found"
-
-        assert volume_dict["tmp"]["emptyDir"] == {}
-        assert volume_dict["vector-data"]["emptyDir"] == {}
-        assert volume_dict["varlog"]["hostPath"]["path"] == "/var/log/"
-        assert volume_dict["config-volume-release-name-vector"]["configMap"]["name"] == "release-name-vector-config"
-
-        if "livenessProbe" in vector_container:
-            pass
-
-        assert "securityContext" in pod_spec
-        assert "securityContext" in vector_container
+        assert env_vars["NAMESPACE"] == "default"
+        assert env_vars["RELEASE"] == "release-name"
 
     @staticmethod
     def vector_daemonset_common_tests(doc):
@@ -240,9 +212,9 @@ class TestVector:
         assert len(docs) == 1
 
         pod_spec = docs[0]["spec"]["template"]["spec"]
-        assert pod_spec["securityContext"] == {}
+        assert not pod_spec["securityContext"]
         assert len(pod_spec["containers"]) == 1
-        assert pod_spec["containers"][0]["securityContext"] == {"runAsUser": 0}
+        assert pod_spec["containers"][0]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsUser": 0}
 
     def test_vector_index_defaults(self, kube_version):
         """Test to validate vector index name prefix defaults in vector configmap."""
