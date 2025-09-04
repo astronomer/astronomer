@@ -75,4 +75,3 @@ proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/e
 proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
 {{- end -}}
 {{- end }}
-
