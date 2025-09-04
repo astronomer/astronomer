@@ -68,7 +68,7 @@ imagePullSecrets:
 {{- end }}
 {{- end }}
 
-{{- define "houston.proxypass" -}}
+{{- define "houston-proxy" -}}
 {{- if eq .Values.global.plane.mode "unified" -}}
 proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
 {{- else -}}

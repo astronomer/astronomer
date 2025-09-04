@@ -54,7 +54,7 @@ data:
 
         location = /auth {
           internal;
-          {{- include "houston.proxypass" . | nindent 10 }}
+          {{- include "houston-proxy" . | nindent 10 }}
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }
