@@ -28,7 +28,6 @@ read_only_root_pods = [
     "nats",
     "prometheus",
     "registry",
-    "update-resource-strategy",
     "vector",
 ]
 
