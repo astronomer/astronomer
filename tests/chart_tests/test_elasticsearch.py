@@ -50,7 +50,7 @@ class TestElasticSearch:
         assert curator_container["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
-        assert not curator_container["securityContext"]
+        assert curator_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
         # elasticsearch master
         assert master_doc["kind"] == "StatefulSet"
@@ -622,11 +622,13 @@ class TestElasticSearch:
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
-        assert c_by_name["curator"]["args"] == [
+        assert len(c_by_name) == 1
+        curator_container = c_by_name["curator"]
+        assert curator_container["command"] == ["/bin/sh", "-c"]
+        assert curator_container["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
-        assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
+        assert curator_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_elasticsearch_curator_cronjob_subchart_overrides(self, kube_version, global_platform_node_pool_config):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
@@ -657,11 +659,13 @@ class TestElasticSearch:
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["elasticsearch"]["tolerations"]
-        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
-        assert c_by_name["curator"]["args"] == [
+        assert len(c_by_name) == 1
+        curator_container = c_by_name["curator"]
+        assert curator_container["command"] == ["/bin/sh", "-c"]
+        assert curator_container["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
-        assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
+        assert curator_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_elasticsearch_nginx_deployment_defaults(self, kube_version):
         """Test ElasticSearch Nginx deployment default values."""
@@ -672,7 +676,7 @@ class TestElasticSearch:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["nginx"]["securityContext"] == {}
+        assert c_by_name["nginx"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_elasticsearch_nginx_deployment_overrides(self, kube_version):
         """Test ElasticSearch Nginx deployment default overrides."""
@@ -685,7 +689,7 @@ class TestElasticSearch:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["nginx"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["nginx"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_elasticsearch_persistentVolumeClaimRetentionPolicy(self, kube_version):
         test_persistentVolumeClaimRetentionPolicy = {

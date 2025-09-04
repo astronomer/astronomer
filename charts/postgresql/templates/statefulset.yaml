@@ -63,8 +63,9 @@ spec:
       {{- if .Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
-      {{- if .Values.securityContext.enabled }}
       securityContext:
+        readOnlyRootFilesystem: true
+      {{- if .Values.securityContext.enabled }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
@@ -84,6 +85,7 @@ spec:
             find {{ .Values.persistence.mountPath }} -mindepth 0 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
               xargs chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }}
         securityContext:
+          readOnlyRootFilesystem: true
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
           runAsUser: {{ .Values.volumePermissions.securityContext.runAsUser }}
         volumeMounts:
@@ -97,8 +99,9 @@ spec:
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         resources:
 {{ toYaml .Values.resources | indent 10 }}
-        {{- if .Values.securityContext.enabled }}
         securityContext:
+          readOnlyRootFilesystem: true
+        {{- if .Values.securityContext.enabled }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
           runAsUser: {{ .Values.securityContext.runAsUser }}
         {{- end }}
@@ -235,8 +238,9 @@ spec:
       - name: metrics
         image: {{ template "postgresql.metrics.image" . }}
         imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
-       {{- if .Values.metrics.securityContext.enabled }}
         securityContext:
+          readOnlyRootFilesystem: true
+       {{- if .Values.metrics.securityContext.enabled }}
           runAsUser: {{ .Values.metrics.securityContext.runAsUser }}
       {{- end }}
         env:

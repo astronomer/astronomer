@@ -50,7 +50,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 3600
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -90,6 +90,7 @@ spec:
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
         resources: {{ toYaml .Values.data.initResources | nindent 10 }}
         {{- if .Values.sysctlInitContainer.livenessProbe }}
@@ -103,8 +104,9 @@ spec:
       containers:
       - name: es-data
         securityContext:
+          readOnlyRootFilesystem: true
           {{- if .Values.data.securityContext }}
-{{ toYaml .Values.data.securityContext | indent 10 }}
+          {{- toYaml .Values.data.securityContext | nindent 10 }}
           {{- else }}
 {{- template "elasticsearch.securityContext" . }}
           {{- end }}

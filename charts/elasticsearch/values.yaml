@@ -231,7 +231,8 @@ curator:
   podAnnotations: {}
   enabled: true
   schedule: "0 1 * * *"
-  securityContext: {}
+  securityContext:
+    runAsNonRoot: true
   resources: {}
 
   # Allows modification of the default age-based filter. If you require more
@@ -303,7 +304,8 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
-  securityContext: {}
+  securityContext:
+    runAsNonRoot: true
   maxBodySize: "100M"
 
 # sysctl init container
