@@ -218,8 +218,8 @@ class TestAstronomerConfigSyncer:
                 },
                 "astronomer": {
                     "securityContext": {
-                        "runAsNonRoot": True,
-                        "allowPrivilegeEscalation": False,
+                        "snoopy": "dog",
+                        "woodstock": "bird",
                     },
                 },
             },
@@ -232,8 +232,9 @@ class TestAstronomerConfigSyncer:
 
         assert job_container_by_name["config-syncer"]["securityContext"] == {
             "readOnlyRootFilesystem": True,
-            "allowPrivilegeEscalation": False,
             "runAsNonRoot": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
         }
 
     def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(self, kube_version):

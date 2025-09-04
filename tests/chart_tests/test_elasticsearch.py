@@ -165,11 +165,13 @@ class TestElasticSearch:
                 "elasticsearch": {
                     "master": {
                         "securityContext": {
-                            "capabilities": {"add": ["IPC_LOCK"]},
+                            "snoopy": "dog",
+                            "woodstock": "bird",
                         },
                     },
                     "securityContext": {
-                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                        "denver": "colorado",
+                        "detroit": "michigan",
                     },
                 }
             },
@@ -180,7 +182,12 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+        assert pod_data["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "privileged": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_data_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch client with securityContext custom values."""
@@ -190,11 +197,13 @@ class TestElasticSearch:
                 "elasticsearch": {
                     "data": {
                         "securityContext": {
-                            "capabilities": {"add": ["IPC_LOCK"]},
+                            "snoopy": "dog",
+                            "woodstock": "bird",
                         },
                     },
                     "securityContext": {
-                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                        "denver": "colorado",
+                        "detroit": "michigan",
                     },
                 }
             },
@@ -205,7 +214,7 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+        assert pod_data["securityContext"] == {"readOnlyRootFilesystem": True, "snoopy": "dog", "woodstock": "bird"}
 
     def test_elasticsearch_client_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch client with securityContext custom values."""
@@ -215,11 +224,13 @@ class TestElasticSearch:
                 "elasticsearch": {
                     "client": {
                         "securityContext": {
-                            "capabilities": {"add": ["IPC_LOCK"]},
+                            "snoopy": "dog",
+                            "woodstock": "bird",
                         },
                     },
                     "securityContext": {
-                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                        "denver": "colorado",
+                        "detroit": "michigan",
                     },
                 }
             },
@@ -230,7 +241,7 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+        assert pod_data["securityContext"] == {"readOnlyRootFilesystem": True, "snoopy": "dog", "woodstock": "bird"}
 
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch master, data with securityContext custom
@@ -240,9 +251,8 @@ class TestElasticSearch:
             values={
                 "elasticsearch": {
                     "securityContext": {
-                        "capabilities": {"add": ["IPC_LOCK"]},
-                        "runAsNonRoot": True,
-                        "runAsUser": 1001,
+                        "denver": "colorado",
+                        "detroit": "michigan",
                     }
                 }
             },
@@ -253,10 +263,19 @@ class TestElasticSearch:
         )
         assert len(docs) == 2
         for doc in docs:
-            pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-            assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
-            assert pod_data["securityContext"]["runAsNonRoot"] is True
-            assert pod_data["securityContext"]["runAsUser"] == 1001
+            container_data = doc["spec"]["template"]["spec"]["containers"][0]
+            # Assert that container_data["securityContext"] contains at least the listed dict items
+            assert (
+                container_data["securityContext"].items()
+                >= {
+                    "readOnlyRootFilesystem": True,
+                    "capabilities": {"drop": ["ALL"]},
+                    "denver": "colorado",
+                    "detroit": "michigan",
+                    "runAsNonRoot": True,
+                    "runAsUser": 1000,
+                }.items()
+            )
 
     def test_nginx_es_client_network_selector_defaults(self, kube_version):
         """Test Nginx ES Service with NetworkPolicy defaults."""
@@ -470,8 +489,14 @@ class TestElasticSearch:
             values={
                 "elasticsearch": {
                     "exporter": {
-                        "podSecurityContext": {"runAsNonRoot": True},
-                        "securityContext": {"runAsNonRoot": True, "runAsUser": 2000},
+                        "podSecurityContext": {
+                            "denver": "colorado",
+                            "detroit": "michigan",
+                        },
+                        "securityContext": {
+                            "snoopy": "dog",
+                            "woodstock": "bird",
+                        },
                     }
                 }
             },
@@ -480,9 +505,13 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"]["runAsNonRoot"] is True
-        assert pod_data["containers"][0]["securityContext"]["runAsNonRoot"] is True
-        assert pod_data["containers"][0]["securityContext"]["runAsUser"] == 2000
+        assert pod_data["securityContext"] == {"denver": "colorado", "detroit": "michigan"}
+        assert pod_data["containers"][0]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "capabilities": {"drop": ["ALL"]},
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_role_defaults(self, kube_version):
         """Test ElasticSearch master, data and client with default roles"""
@@ -600,7 +629,10 @@ class TestElasticSearch:
             "elasticsearch": {
                 "curator": {
                     "schedule": "0 45 * * *",
-                    "securityContext": {"runAsNonRoot": True},
+                    "securityContext": {
+                        "snoopy": "dog",
+                        "woodstock": "bird",
+                    },
                 }
             },
             "global": {
@@ -628,7 +660,12 @@ class TestElasticSearch:
         assert curator_container["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
-        assert curator_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert curator_container["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_curator_cronjob_subchart_overrides(self, kube_version, global_platform_node_pool_config):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
@@ -637,7 +674,10 @@ class TestElasticSearch:
             "elasticsearch": {
                 "curator": {
                     "schedule": "0 45 * * *",
-                    "securityContext": {"runAsNonRoot": True},
+                    "securityContext": {
+                        "snoopy": "dog",
+                        "woodstock": "bird",
+                    },
                 },
                 "nodeSelector": global_platform_node_pool_config["nodeSelector"],
                 "affinity": global_platform_node_pool_config["affinity"],
@@ -665,7 +705,12 @@ class TestElasticSearch:
         assert curator_container["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
-        assert curator_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert curator_container["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_nginx_deployment_defaults(self, kube_version):
         """Test ElasticSearch Nginx deployment default values."""
@@ -683,13 +728,25 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "elasticsearch": {"nginx": {"securityContext": {"runAsNonRoot": True}}},
+                "elasticsearch": {
+                    "nginx": {
+                        "securityContext": {
+                            "snoopy": "dog",
+                            "woodstock": "bird",
+                        }
+                    }
+                },
             },
             show_only=["charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml"],
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["nginx"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["nginx"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_persistentVolumeClaimRetentionPolicy(self, kube_version):
         test_persistentVolumeClaimRetentionPolicy = {
