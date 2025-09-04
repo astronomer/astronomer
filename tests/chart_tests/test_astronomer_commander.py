@@ -458,3 +458,50 @@ class TestAstronomerCommander:
             "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
         }
         assert not any(rule == expected_rule for rule in doc["rules"])
+
+    @pytest.mark.parametrize(
+        "mode,custom_logging,expected_node",
+        [
+            (
+                "data",
+                False,
+                "https://elasticsearch.custom-dp-123.example.com",
+            ),
+            (
+                "unified",
+                True,
+                "release-name-es-proxy.default.svc.cluster.local:9201",
+            ),
+            (
+                "unified",
+                False,
+                "release-name-elasticsearch.default.svc.cluster.local.:9200",
+            ),
+        ],
+    )
+    def test_commander_elasticsearch_node_variants(self, kube_version, mode, custom_logging, expected_node):
+        """Test COMMANDER_ELASTICSEARCH_NODE is rendered correctly for different
+        plane modes and custom logging configurations."""
+        values = {
+            "astronomer": {
+                "images": {"commander": {"tag": "1.2.3"}},
+            },
+            "global": {
+                "baseDomain": "astronomer.example.com",
+                "plane": {"mode": mode, "domainSuffix": "custom-dp-123"},
+                "customLogging": {"enabled": custom_logging},
+            },
+        }
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc)
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
+
+        assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == expected_node
