@@ -38,21 +38,21 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.common.podAnnotations }}
-{{ toYaml .Values.common.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.master.podAnnotations }}
-{{ toYaml .Values.master.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.common.podAnnotations }}
+        {{- toYaml .Values.common.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.master.podAnnotations }}
+        {{- toYaml .Values.master.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.master.antiAffinity "hard" }}
       affinity:
         podAntiAffinity:
@@ -77,11 +77,10 @@ spec:
                   role: master
       {{- end }}
     {{- if .Values.global.platformNodePool.affinity }}
-{{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
+      {{- toYaml .Values.global.platformNodePool.affinity | nindent 8 }}
     {{- end }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      {{- include "elasticsearch.imagePullSecrets" . | nindent 6 }}
       initContainers:
       {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl
