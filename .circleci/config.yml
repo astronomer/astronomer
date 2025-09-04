@@ -483,14 +483,14 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - release-to-internal:
           context:
             - gcp-astronomer-prod
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
           requires:
             - approve-internal-release
             - scenario-unified-1-29-14
@@ -500,7 +500,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - trigger-upgrade-test:
           requires:
             - release-to-internal
@@ -508,7 +508,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
@@ -518,7 +518,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - release-to-public:
           context:
             - gcp-astronomer-prod
@@ -528,7 +528,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - sign-released-image:
           name: sign-release-image
           context:
@@ -540,7 +540,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
 
   release-bom-workflow:
     jobs:
@@ -577,14 +577,14 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - trigger-feature-stack-release:
           requires:
             - release-to-internal
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
 
 commands:
   push-to-quay-io:
