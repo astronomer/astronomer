@@ -175,6 +175,22 @@
 {{- end }}
 
 {{ define "commander_metadataEnv" -}}
+- name: COMMANDER_ELASTICSEARCH_ENABLED
+  value: "true"
+- name: COMMANDER_ELASTICSEARCH_LOG_LEVEL
+  value: info
+{{- if eq .Values.global.plane.mode "data" }}
+- name: COMMANDER_ELASTICSEARCH_NODE
+  value: "https://{{ include "elasticsearch.url" . }}"
+{{- else if eq .Values.global.plane.mode "unified" }}
+  {{- if .Values.global.customLogging.enabled }}
+- name: COMMANDER_ELASTICSEARCH_NODE
+  value: "{{ include "esproxy.url" . }}"
+  {{- else }}
+- name: COMMANDER_ELASTICSEARCH_NODE
+  value: "{{ include "elasticsearch.url" . }}"
+  {{- end }}
+{{- end }}
 - name: COMMANDER_HEALTH_STATUS
   value: HEALTHY
 - name: COMMANDER_STATUS
@@ -525,4 +541,20 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- else -}}
 {{ .Values.global.baseDomain }}
 {{- end }}
+{{- end -}}
+
+{{- define "esproxy.url" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+es-proxy.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else if eq .Values.global.plane.mode "unified" -}}
+{{ .Release.Name }}-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
+{{- end -}}
+{{- end -}}
+
+{{- define "elasticsearch.url" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+elasticsearch.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else if eq .Values.global.plane.mode "unified" -}}
+{{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local.:9200
+{{- end -}}
 {{- end -}}
