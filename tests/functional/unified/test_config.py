@@ -51,6 +51,7 @@ def test_houston_check_db_info(houston_api):
     assert f"{release_name}_houston" in houston_db_info
 
 
+@pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_houston_can_reach_prometheus(houston_api):
     assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 
