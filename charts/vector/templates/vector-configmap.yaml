@@ -18,7 +18,9 @@ data:
     # api is used for health check
     api:
       enabled: true
-      address: "127.0.0.1:8686"
+      address: "0.0.0.0:8686"
+      graphql: false
+      playground: false
     log_schema:
       timestamp_key: "@timestamp"
 
