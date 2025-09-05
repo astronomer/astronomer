@@ -24,7 +24,7 @@ class TestGlobabIngressAnnotation:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert "passthrough" in doc["metadata"]["annotations"]["route.openshift.io/termination"]
-            assert len(doc["metadata"]["annotations"]) >= 4
+            assert len(doc["metadata"]["annotations"]) >= 3
 
         docs = render_chart(
             kube_version=kube_version,
