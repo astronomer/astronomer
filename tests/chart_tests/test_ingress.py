@@ -11,7 +11,6 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestIngress:
-
     def test_astro_ui_per_host_ingress(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
