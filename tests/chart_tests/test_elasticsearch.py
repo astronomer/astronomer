@@ -85,12 +85,12 @@ class TestElasticSearch:
         assert len(es_client_containers) == 3
         assert vm_max_map_count in es_client_containers["sysctl"]["command"]
         assert es_client_containers["es-client"]["volumeMounts"] == [
-            {"name": "tmp", "mountPath": "/tmp"},
-            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
-            {"name": "tmp", "subPath": "logs", "mountPath": "/usr/share/elasticsearch/logs"},
-            {"name": "es-data", "mountPath": "/usr/share/elasticsearch/data"},
-            {"name": "config", "subPath": "elasticsearch.yml", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml"},
-            {"name": "es-client-logs", "mountPath": "/usr/share/elasticsearch/logs"},
+            {"mountPath": "/tmp", "name": "tmp"},
+            {"mountPath": "/usr/share/elasticsearch/config", "name": "es-config-dir"},
+            {"mountPath": "/usr/share/elasticsearch/data", "name": "es-data"},
+            {"mountPath": "/usr/share/elasticsearch/logs", "name": "es-client-logs"},
+            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
+            {"mountPath": "/usr/share/elasticsearch/logs", "name": "tmp", "subPath": "logs"},
         ]
 
         assert es_client_containers["es-config-dir-copier"]["volumeMounts"] == [

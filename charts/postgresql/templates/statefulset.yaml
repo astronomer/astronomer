@@ -57,9 +57,9 @@ spec:
       schedulerName: "{{ .Values.schedulerName }}"
       {{- end }}
 {{- include "postgresql.imagePullSecrets" . | indent 6 }}
-      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.master.nodeSelector) | nindent 8 }}
-      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.master.affinity) | nindent 8 }}
-      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.master.tolerations) | nindent 8 }}
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.master.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.master.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.master.tolerations) | nindent 8 }}
       {{- if .Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
@@ -69,8 +69,18 @@ spec:
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
-      {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       initContainers:
+      - name: conf-copier
+        command:
+          - bash
+          - -cx
+          - cp -vr /opt/bitnami/postgresql/conf/* /opt/bitnami/postgresql/conf_copy
+        image: {{ template "postgresql.image" . }}
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        volumeMounts:
+        - mountPath: /opt/bitnami/postgresql/conf_copy
+          name: pg-conf
+      {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       - name: init-chmod-data
         image: {{ template "postgresql.volumePermissions.image" . }}
         imagePullPolicy: "{{ .Values.volumePermissions.image.pullPolicy }}"
@@ -78,7 +88,7 @@ spec:
 {{ toYaml .Values.resources | indent 10 }}
         command:
           - sh
-          - -c
+          - -cx
           - |
             mkdir -p {{ .Values.persistence.mountPath }}/data
             chmod 700 {{ .Values.persistence.mountPath }}/data
@@ -206,6 +216,13 @@ spec:
           successThreshold: 1
         {{- end }}
         volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /opt/bitnami/postgresql/tmp
+          name: tmp
+          subPath: pg-tmp
+        - mountPath: /opt/bitnami/postgresql/conf
+          name: pg-conf
         {{- if or (.Files.Glob "files/docker-entrypoint-initdb.d/*.{sh,sql,sql.gz}") .Values.initdbScriptsConfigMap .Values.initdbScripts }}
         - name: custom-init-scripts
           mountPath: /docker-entrypoint-initdb.d/
@@ -295,6 +312,10 @@ spec:
 {{ toYaml .Values.metrics.resources | indent 10 }}
 {{- end }}
       volumes:
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: pg-conf
       {{- if or (.Files.Glob "files/postgresql.conf") (.Files.Glob "files/pg_hba.conf") .Values.postgresqlConfiguration .Values.pgHbaConfiguration .Values.configurationConfigMap}}
       - name: postgresql-config
         configMap:
