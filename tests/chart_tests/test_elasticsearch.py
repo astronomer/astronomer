@@ -54,47 +54,48 @@ class TestElasticSearch:
 
         # elasticsearch master
         assert master_doc["kind"] == "StatefulSet"
-        esm_containers = get_containers_by_name(master_doc, include_init_containers=True)
-        assert len(esm_containers) == 2
-        assert vm_max_map_count in esm_containers["sysctl"]["command"]
+        es_master_containers = get_containers_by_name(master_doc, include_init_containers=True)
+        assert len(es_master_containers) == 3
+        assert vm_max_map_count in es_master_containers["sysctl"]["command"]
         assert "persistentVolumeClaimRetentionPolicy" not in master_doc["spec"]
-        assert esm_containers["es-master"]["volumeMounts"] == [
+        assert es_master_containers["es-master"]["volumeMounts"] == [
             {"name": "tmp", "mountPath": "/tmp"},
-            {"mountPath": "/usr/share/elasticsearch/data", "name": "data"},
-            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
+            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "data", "mountPath": "/usr/share/elasticsearch/data"},
+            {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
         ]
-
         # elasticsearch data
         assert data_doc["kind"] == "StatefulSet"
-        esd_containers = get_containers_by_name(data_doc, include_init_containers=True)
-        assert len(esd_containers) == 2
-        assert vm_max_map_count in esd_containers["sysctl"]["command"]
+        es_data_containers = get_containers_by_name(data_doc, include_init_containers=True)
+        assert len(es_data_containers) == 3
+        assert vm_max_map_count in es_data_containers["sysctl"]["command"]
         assert "persistentVolumeClaimRetentionPolicy" not in data_doc["spec"]
-        assert esd_containers["es-data"]["volumeMounts"] == [
+        assert es_data_containers["es-data"]["volumeMounts"] == [
             {"name": "tmp", "mountPath": "/tmp"},
-            {"mountPath": "/usr/share/elasticsearch/data", "name": "data"},
-            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
+            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "data", "mountPath": "/usr/share/elasticsearch/data"},
+            {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
         ]
 
         # elasticsearch client
         assert client_doc["kind"] == "Deployment"
-        esc_containers = get_containers_by_name(client_doc, include_init_containers=True)
-        assert len(esc_containers) == 3
-        assert vm_max_map_count in esc_containers["sysctl"]["command"]
-        assert esc_containers["es-client"]["volumeMounts"] == [
+        es_client_containers = get_containers_by_name(client_doc, include_init_containers=True)
+        assert len(es_client_containers) == 3
+        assert vm_max_map_count in es_client_containers["sysctl"]["command"]
+        assert es_client_containers["es-client"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
             {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
             {"name": "es-data", "mountPath": "/usr/share/elasticsearch/data"},
-            {"name": "tmp", "mountPath": "/tmp"},
             {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
             {"name": "es-client-logs", "mountPath": "/usr/share/elasticsearch/logs"},
         ]
 
-        assert esc_containers["es-config-dir-copier"]["volumeMounts"] == [
+        assert es_client_containers["es-config-dir-copier"]["volumeMounts"] == [
             {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config_copy"},
         ]
 
-        assert esc_containers["es-config-dir-copier"]["image"] == esc_containers["es-client"]["image"]
-        assert esc_containers["es-client"]["image"].startswith("quay.io/astronomer/ap-elasticsearch:")
+        assert es_client_containers["es-config-dir-copier"]["image"] == es_client_containers["es-client"]["image"]
+        assert es_client_containers["es-client"]["image"].startswith("quay.io/astronomer/ap-elasticsearch:")
 
         # elasticsearch nginx
         assert nginx_doc["kind"] == "Deployment"

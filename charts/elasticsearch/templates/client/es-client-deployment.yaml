@@ -82,9 +82,9 @@ spec:
       - name: es-config-dir-copier
         image: {{ template "elasticsearch.image" . }}
         command:
-        - bash
-        - -xc
-        - cp -vr /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
+          - bash
+          - -xc
+          - cp -vr /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         resources: {{- toYaml .Values.client.initResources | nindent 10 }}
         securityContext:
@@ -179,12 +179,12 @@ spec:
           failureThreshold: 30
           periodSeconds: 10
         volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         - name: es-config-dir
           mountPath: /usr/share/elasticsearch/config
         - name: es-data
           mountPath: /usr/share/elasticsearch/data
-        - name: tmp
-          mountPath: /tmp
         - name: config
           mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml

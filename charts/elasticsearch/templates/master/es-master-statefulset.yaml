@@ -82,6 +82,19 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       {{- include "elasticsearch.imagePullSecrets" . | nindent 6 }}
       initContainers:
+      - name: es-config-dir-copier
+        image: {{ template "elasticsearch.image" . }}
+        command:
+          - bash
+          - -xc
+          - cp -vr /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
+        imagePullPolicy: {{ .Values.images.init.pullPolicy }}
+        resources: {{- toYaml .Values.master.initResources | nindent 10 }}
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+          - name: es-config-dir
+            mountPath: /usr/share/elasticsearch/config_copy
       {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl
         image: {{ template "init.image" . }}
@@ -160,12 +173,16 @@ spec:
         volumeMounts:
         - name: tmp
           mountPath: /tmp
+        - name: es-config-dir
+          mountPath: /usr/share/elasticsearch/config
         - name: data
           mountPath: /usr/share/elasticsearch/data
         - name: config
           mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml
       volumes:
+      - name: es-config-dir
+        emptyDir: {}
       - name: tmp
         emptyDir: {}
       - name: config
