@@ -49,12 +49,11 @@ class TestAstronomerConfigSyncer:
         show_only = ["charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml"]
         docs = render_chart(kube_version=kube_version, show_only=show_only)
         assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "CronJob"
-        assert doc["metadata"]["name"] == "release-name-config-syncer"
-        cronjob_spec = doc["spec"]
-        assert cronjob_spec["concurrencyPolicy"] == "Forbid"
-        c_by_name = get_containers_by_name(doc)
+        cronjob = docs[0]
+        assert cronjob["kind"] == "CronJob"
+        assert cronjob["metadata"]["name"] == "release-name-config-syncer"
+        assert cronjob["spec"]["concurrencyPolicy"] == "Forbid"
+        c_by_name = get_containers_by_name(cronjob)
         assert len(c_by_name) == 1
         job_container = c_by_name["config-syncer"]
         assert job_container["image"].startswith("quay.io/astronomer/ap-commander:")
