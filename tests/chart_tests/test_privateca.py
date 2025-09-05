@@ -18,7 +18,11 @@ class TestPrivateCaDaemonset:
         """Test things common to all daemonsets."""
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "release-name-private-ca"
-        assert doc["spec"]["template"]["spec"]["containers"][0]["name"] == "cert-copy"
+        assert len(doc["spec"]["template"]["spec"]["containers"]) == 1
+        cert_copy_container = doc["spec"]["template"]["spec"]["containers"][0]
+        assert cert_copy_container["name"] == "cert-copy"
+        assert cert_copy_container["securityContext"] == {"readOnlyRootFilesystem": True}
+        assert {"name": "hostcerts", "mountPath": "/host-trust-store"} in cert_copy_container["volumeMounts"]
 
     def test_privateca_daemonset_disabled(self, kube_version):
         """Test that no daemonset is rendered when privateCaCertsAddToHost is
@@ -58,9 +62,8 @@ class TestPrivateCaDaemonset:
 
         assert len(docs) == 1
         self.common_tests_daemonset(docs[0])
-        assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
         cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
-        cert_copier["image"].startswith("alpine:3")
+        assert cert_copier["image"].startswith("quay.io/astronomer/ap-base:")
 
         volmounts = cert_copier["volumeMounts"]
 
@@ -100,7 +103,5 @@ class TestPrivateCaDaemonset:
         assert len(docs) == 1
         doc = docs[0]
         self.common_tests_daemonset(doc)
-        spec = doc["spec"]["template"]["spec"]
-
-        assert len(spec["containers"]) == 1
-        assert spec["containers"][0]["image"] == "snarks:boojums"
+        cert_copy_container = doc["spec"]["template"]["spec"]["containers"][0]
+        assert cert_copy_container["image"] == "snarks:boojums"
