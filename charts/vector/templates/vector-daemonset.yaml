@@ -1,6 +1,7 @@
 ###########################################################################
 # Vector DaemonSet
 ###########################################################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -143,3 +144,4 @@ spec:
       - name: config-volume-{{ template "vector.fullname" . }}
         configMap:
           name: {{ template "vector.fullname" . }}-config
+{{- end -}}

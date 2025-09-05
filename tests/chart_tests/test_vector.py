@@ -345,3 +345,27 @@ class TestVector:
 
         config_yaml = doc["data"]["vector-config.yaml"]
         assert 'api_version: "v8"' in config_yaml
+
+    @pytest.mark.parametrize(
+        "mode,expected_count",
+        [
+            ("data", 6),
+            ("unified", 6),
+            ("control", 0),
+        ],
+    )
+    def test_vector_rendering_by_mode(self, kube_version, mode, expected_count):
+        """Test that Vector is deployed only in data and unified plane modes."""
+        values = {"global": {"plane": {"mode": mode}}}
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=all_templates,
+        )
+
+        assert len(docs) == expected_count
+
+        if expected_count > 0:
+            assert all(doc.get("apiVersion") for doc in docs)
+            assert all(doc.get("kind") for doc in docs)

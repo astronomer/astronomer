@@ -1,6 +1,7 @@
 ###########################################################################
 # Vector NetworkPolicy
 ###########################################################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -30,4 +31,5 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.ports.promScrape }}
+{{- end -}}
 {{- end -}}
