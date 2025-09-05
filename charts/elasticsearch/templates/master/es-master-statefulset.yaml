@@ -175,11 +175,14 @@ spec:
           mountPath: /tmp
         - name: es-config-dir
           mountPath: /usr/share/elasticsearch/config
+        - name: tmp
+          subPath: logs
+          mountPath: /usr/share/elasticsearch/logs
         - name: data
           mountPath: /usr/share/elasticsearch/data
         - name: config
-          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
       volumes:
       - name: es-config-dir
         emptyDir: {}

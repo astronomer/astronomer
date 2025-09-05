@@ -61,8 +61,9 @@ class TestElasticSearch:
         assert es_master_containers["es-master"]["volumeMounts"] == [
             {"name": "tmp", "mountPath": "/tmp"},
             {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "tmp", "subPath": "logs", "mountPath": "/usr/share/elasticsearch/logs"},
             {"name": "data", "mountPath": "/usr/share/elasticsearch/data"},
-            {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
+            {"name": "config", "subPath": "elasticsearch.yml", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml"},
         ]
         # elasticsearch data
         assert data_doc["kind"] == "StatefulSet"
@@ -73,8 +74,9 @@ class TestElasticSearch:
         assert es_data_containers["es-data"]["volumeMounts"] == [
             {"name": "tmp", "mountPath": "/tmp"},
             {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "tmp", "subPath": "logs", "mountPath": "/usr/share/elasticsearch/logs"},
             {"name": "data", "mountPath": "/usr/share/elasticsearch/data"},
-            {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
+            {"name": "config", "subPath": "elasticsearch.yml", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml"},
         ]
 
         # elasticsearch client
@@ -85,8 +87,9 @@ class TestElasticSearch:
         assert es_client_containers["es-client"]["volumeMounts"] == [
             {"name": "tmp", "mountPath": "/tmp"},
             {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "tmp", "subPath": "logs", "mountPath": "/usr/share/elasticsearch/logs"},
             {"name": "es-data", "mountPath": "/usr/share/elasticsearch/data"},
-            {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
+            {"name": "config", "subPath": "elasticsearch.yml", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml"},
             {"name": "es-client-logs", "mountPath": "/usr/share/elasticsearch/logs"},
         ]
 
