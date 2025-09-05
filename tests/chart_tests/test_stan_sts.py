@@ -42,18 +42,19 @@ class TestStanStatefulSet:
         assert not stan_rp.get("failureThreshold")
         assert stan_rp["timeoutSeconds"] == 5
 
-        assert all(c["securityContext"] == {"runAsNonRoot": True} for c in c_by_name.values())
-        spec = doc["spec"]["template"]["spec"]
-        assert spec["nodeSelector"] == {}
-        assert spec["affinity"] == {}
-        assert spec["tolerations"] == []
+        assert all(c["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True} for c in c_by_name.values())
+        sts_spec = doc["spec"]["template"]["spec"]
+        assert sts_spec["nodeSelector"] == {}
+        assert sts_spec["affinity"] == {}
+        assert sts_spec["tolerations"] == []
 
     def test_stan_statefulset_with_security_context_overrides(self, kube_version):
         """Test that stan statefulset renders good metrics exporter."""
 
         securityContextResponse = {
-            "runAsNonRoot": True,
             "allowPrivilegeEscalation": False,
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
         }
         docs = render_chart(
             kube_version=kube_version,

@@ -45,12 +45,14 @@ spec:
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
-{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
+      {{- include "elasticsearch.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: nginx
           image: {{ template "nginx-es.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          securityContext: {{- toYaml .Values.nginx.securityContext | nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.nginx.securityContext | nindent 12 }}
           resources: {{- toYaml .Values.nginx.resources | nindent 12 }}
           volumeMounts:
             - name: tmp

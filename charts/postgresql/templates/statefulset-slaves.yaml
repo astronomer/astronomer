@@ -55,8 +55,9 @@ spec:
       {{- if .Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
-      {{- if .Values.securityContext.enabled }}
       securityContext:
+        readOnlyRootFilesystem: true
+      {{- if .Values.securityContext.enabled }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
@@ -65,8 +66,7 @@ spec:
       - name: init-chmod-data
         image: {{ template "postgresql.volumePermissions.image" . }}
         imagePullPolicy: "{{ .Values.volumePermissions.image.pullPolicy }}"
-        resources:
-{{ toYaml .Values.resources | indent 10 }}
+        resources: {{- toYaml .Values.resources | nindent 10 }}
         command:
           - sh
           - -c
@@ -76,6 +76,7 @@ spec:
             find {{ .Values.persistence.mountPath }} -mindepth 0 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
               xargs chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }}
         securityContext:
+          readOnlyRootFilesystem: true
           runAsUser: {{ .Values.volumePermissions.securityContext.runAsUser }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
         volumeMounts:
@@ -87,10 +88,10 @@ spec:
       - name: {{ template "postgresql.fullname" . }}
         image: {{ template "postgresql.image" . }}
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
-        resources:
-{{ toYaml .Values.resources | indent 10 }}
-        {{- if .Values.securityContext.enabled }}
+        resources: {{- toYaml .Values.resources | nindent 10 }}
         securityContext:
+          readOnlyRootFilesystem: true
+        {{- if .Values.securityContext.enabled }}
           runAsUser: {{ .Values.securityContext.runAsUser }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
         {{- end }}

@@ -38,22 +38,22 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.common.podAnnotations }}
-{{ toYaml .Values.common.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.data.podAnnotations }}
-{{ toYaml .Values.data.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.common.podAnnotations }}
+        {{- toYaml .Values.common.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.data.podAnnotations }}
+        {{- toYaml .Values.data.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       terminationGracePeriodSeconds: 3600
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.data.antiAffinity "hard" }}
       affinity:
         podAntiAffinity:
@@ -78,18 +78,31 @@ spec:
                   role: data
       {{- end }}
     {{- if .Values.global.platformNodePool.affinity }}
-{{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
+      {{- toYaml .Values.global.platformNodePool.affinity | nindent 8 }}
     {{- end }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      {{- include "elasticsearch.imagePullSecrets" . | nindent 6 }}
       initContainers:
+      - name: es-config-dir-copier
+        image: {{ template "elasticsearch.image" . }}
+        command:
+          - bash
+          - -xc
+          - cp -vr /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
+        imagePullPolicy: {{ .Values.images.init.pullPolicy }}
+        resources: {{- toYaml .Values.data.initResources | nindent 10 }}
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+          - name: es-config-dir
+            mountPath: /usr/share/elasticsearch/config_copy
       {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl
         image: {{ template "init.image" . }}
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
         resources: {{ toYaml .Values.data.initResources | nindent 10 }}
         {{- if .Values.sysctlInitContainer.livenessProbe }}
@@ -103,8 +116,9 @@ spec:
       containers:
       - name: es-data
         securityContext:
+          readOnlyRootFilesystem: true
           {{- if .Values.data.securityContext }}
-{{ toYaml .Values.data.securityContext | indent 10 }}
+          {{- toYaml .Values.data.securityContext | nindent 10 }}
           {{- else }}
 {{- template "elasticsearch.securityContext" . }}
           {{- end }}
@@ -151,14 +165,21 @@ spec:
           periodSeconds: 10
         {{- end }}
         volumeMounts:
-        - mountPath: /tmp
-          name: tmp
+        - name: tmp
+          mountPath: /tmp
+        - name: es-config-dir
+          mountPath: /usr/share/elasticsearch/config
+        - name: tmp
+          subPath: logs
+          mountPath: /usr/share/elasticsearch/logs
         - name: data
           mountPath: /usr/share/elasticsearch/data
         - name: config
-          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
       volumes:
+      - name: es-config-dir
+        emptyDir: {}
       - name: tmp
         emptyDir: {}
       - name: config
