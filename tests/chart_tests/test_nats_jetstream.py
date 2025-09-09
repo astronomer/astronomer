@@ -178,16 +178,14 @@ class TestNatsJetstream:
 @pytest.mark.parametrize(
     "scc_enabled,create_jetstream_job,jetstream_enabled,global_jetstream_enabled,expected_docs",
     [
-        (True, True, False, True, 1),
-        (True, True, False, False, 1),
-        (True, True, False, True, 1),
-        (True, True, False, False, 0),
-        (True, False, False, True, 0),
-        (True, False, False, False, 0),
-        (False, True, False, True, 0),
-        (False, False, False, True, 0),
-        (False, True, False, False, 0),
-        (False, False, False, False, 0),
+    (True, True, False, True, 1),
+    (True, True, False, False, 1),
+    (True, False, False, True, 0),
+    (True, False, False, False, 0),
+    (False, True, False, True, 0),
+    (False, False, False, True, 0),
+    (False, True, False, False, 0),
+    (False, False, False, False, 0),
     ],
 )
 def test_jetstream_job_with_scc(
