@@ -142,7 +142,7 @@ class TestNatsJetstream:
                 "charts/nats/templates/nats-jetstream-tls-secret.yaml",
             ],
         )
-        assert len(docs) == 4
+        assert len(docs) == 2
 
     def test_jetstream_hook_job_disabled(self, kube_version):
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""

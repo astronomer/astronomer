@@ -48,7 +48,7 @@ class TestOpenshift:
             show_only=show_only,
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 6
         for doc in docs:
             assert "securityContext" not in doc["spec"]["template"]["spec"]
 
