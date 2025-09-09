@@ -42,6 +42,8 @@ jobs:
           command: |
             echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin docker.io
             echo "$QUAY_PASSWORD" | docker login --username $QUAY_USERNAME --password-stdin quay.io
+            echo "$ACR_PUBLIC_PASSWORD" | docker login --username $ACR_PUBLIC_USERNAME --password-stdin astrocrpublic.azurecr.io
+            echo "$ACR_PASSWORD" | docker login --username $ACR_USERNAME --password-stdin astrocr.azurecr.io
       - run:
           name: Set image tag to sign
           command: |
@@ -535,6 +537,8 @@ workflows:
             - quay.io
             - docker.io
             - software-cosign-keys
+            - acr-public
+            - acr-private
           requires:
             - release-to-public
           filters:
@@ -587,6 +591,91 @@ workflows:
                 - '/^release-\d+\.\d+$/'
 
 commands:
+  push-to-acr-public:
+    description: "Push a Docker image to Azure Container Registry (Public)"
+    parameters:
+      comma_separated_tags:
+        type: string
+        default: latest
+      docker_repository:
+        type: string
+        default: astronomer
+      image_name:
+        type: string
+        default: $CIRCLE_PROJECT_REPONAME
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/<< parameters.image_name >>.tar
+      - run:
+          name: Login to ACR Public
+          command: echo "$ACR_PUBLIC_PASSWORD" | docker login --username "$ACR_PUBLIC_USERNAME" --password-stdin astrocrpublic.azurecr.io
+      - run:
+          name: Push Docker image(s) to ACR Public
+          command: |
+            set -xe
+            function docker_tag_exists() {
+                # ACR API check - you may need to adjust this based on ACR's API
+                curl --silent -f -lSL "https://astrocrpublic.azurecr.io/v2/$1/tags/list" > /dev/null 2>&1 || return 1
+            }
+            function tag_and_push() {
+                docker tag "<< parameters.image_name >>" "astrocrpublic.azurecr.io/<< parameters.docker_repository >>/<< parameters.image_name >>:$1"
+                docker push "astrocrpublic.azurecr.io/<< parameters.docker_repository >>/<< parameters.image_name >>:$1"
+            }
+            for tag in $(echo "<< parameters.comma_separated_tags >>" | sed "s/,/ /g");
+            do
+              # If the tag starts with "v" then a digit, remove the "v"
+              pattern="^(v[0-9].*)"
+              if [[ $tag =~ $pattern ]]; then
+                tag="${tag:1}"
+              fi
+              # Note: ACR tag existence check may need adjustment based on your needs
+              tag_and_push "$tag"
+            done
+  push-to-acr-private:
+    description: "Push a Docker image to Azure Container Registry (Private)"
+    parameters:
+      comma_separated_tags:
+        type: string
+        default: latest
+      docker_repository:
+        type: string
+        default: astronomer
+      image_name:
+        type: string
+        default: $CIRCLE_PROJECT_REPONAME
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/<< parameters.image_name >>.tar
+      - run:
+          name: Login to ACR Private
+          command: echo "$ACR_PASSWORD" | docker login --username "$ACR_USERNAME" --password-stdin astrocr.azurecr.io
+      - run:
+          name: Push Docker image(s) to ACR Private
+          command: |
+            set -xe
+            function tag_and_push() {
+                docker tag "<< parameters.image_name >>" "astrocr.azurecr.io/<< parameters.docker_repository >>/<< parameters.image_name >>:$1"
+                docker push "astrocr.azurecr.io/<< parameters.docker_repository >>/<< parameters.image_name >>:$1"
+            }
+            for tag in $(echo "<< parameters.comma_separated_tags >>" | sed "s/,/ /g");
+            do
+              # If the tag starts with "v" then a digit, remove the "v"
+              pattern="^(v[0-9].*)"
+              if [[ $tag =~ $pattern ]]; then
+                tag="${tag:1}"
+              fi
+              tag_and_push "$tag"
+            done
   push-to-quay-io:
     description: "Push a Docker image to Quay.io"
     parameters:
