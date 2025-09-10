@@ -346,7 +346,7 @@ spec:
           {{ template "nats.securityContext" . }}
       {{ end }}
 
-  {{- if and ( or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
+  {{- if  .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
   volumeClaimTemplates:
   #####################################
   #                                   #
