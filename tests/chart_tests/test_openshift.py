@@ -11,7 +11,7 @@ show_only = [
     "charts/elasticsearch/templates/client/es-client-deployment.yaml",
     "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
     "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
-    "charts/nats/templates/statefulset.yaml"
+    "charts/nats/templates/statefulset.yaml",
 ]
 
 airflow_components_list = [
