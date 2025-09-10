@@ -16,7 +16,7 @@ class TestStatefulSetsAnnotations:
             for doc in render_chart()
             if doc["kind"] == "StatefulSet" and doc["spec"].get("volumeClaimTemplates")
         ]
-        assert len(vcts) == 5
+        assert len(vcts) == 6
         for vct in vcts:
             assert not vct[0]["metadata"].get("annotations")
 
