@@ -199,7 +199,7 @@ spec:
           {{- end }}
           {{- end }}
 
-          {{- if and ( or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled }}
+          {{- if .Values.nats.jetstream.fileStorage.enabled }}
           - name: {{ template "nats.name" . }}-js-pvc
             mountPath: {{ .Values.nats.jetstream.fileStorage.storageDirectory }}
           {{- end }}
@@ -230,7 +230,7 @@ spec:
             mountPath: /etc/nats-certs/gateways/{{ $secretName }}
           {{- end }}
 
-          {{- if and .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+          {{- if .Values.global.nats.tls }}
           {{ $secretName := include "nats.jestreamTLSSecret" . }}
           - name: {{ $secretName }}-server-volume
             mountPath: /etc/nats-certs/server/{{ $secretName }}

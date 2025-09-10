@@ -488,7 +488,7 @@ false
 
 {{ define "jetstreamTLS" }}
 {{- $secretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
-{{- if .Values.global.nats.jetStream.tls }}
+{{- if .Values.global.nats.tls }}
 tlsEnabled: true
 tls:
   caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/ca.crt
