@@ -34,18 +34,18 @@ spec:
         version: {{ .Chart.Version }}
         {{- include "global.podLabels" . | nindent 8 }}
         tier: astronomer
-        {{- range $key, $value :=  .Values.global.pgbouncer.extraLabels }}
+        {{- range $key, $value := .Values.global.pgbouncer.extraLabels }}
         {{ $key | replace "-" "_" }}: {{ $value | quote }}
         {{- end }}
-{{- if or .Values.global.podAnnotations  .Values.podAnnotations }}
+      {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-{{- end }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
@@ -55,15 +55,17 @@ spec:
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer.image" . }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext | nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             {{- include "pgbouncer_environment" . | indent 12 }}
-            {{- range $key, $value :=  .Values.env }}
+            {{- range $key, $value := .Values.env }}
             - name: {{ $key | replace "-" "_" }}
               value: {{ $value | quote }}
             {{- end }}
-            {{- range $key, $value :=  .Values.global.pgbouncer.extraEnv }}
+            {{- range $key, $value := .Values.global.pgbouncer.extraEnv }}
             - name: {{ $key | replace "-" "_" }}
               value: {{ $value | quote }}
             {{- end }}

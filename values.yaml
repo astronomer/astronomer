@@ -624,7 +624,7 @@ elasticsearch:
         memory: "256Mi"
 
 #################################
-## Vector configuration
+## Vector daemonset configuration
 #################################
 vector:    # pod
   vector:  # container
@@ -635,6 +635,8 @@ vector:    # pod
       limits:
         cpu: "1000m"
         memory: "1024Mi"
+    # livenessProbe: {}
+    # readinessProbe: {}
 
 #################################
 ## Kube State configuration

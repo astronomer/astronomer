@@ -15,6 +15,12 @@ metadata:
 
 data:
   vector-config.yaml: |
+    # api is used for health check
+    api:
+      enabled: true
+      address: "0.0.0.0:8686"
+      graphql: false
+      playground: false
     log_schema:
       timestamp_key: "@timestamp"
 

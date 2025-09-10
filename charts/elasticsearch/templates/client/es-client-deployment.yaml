@@ -34,22 +34,22 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.common.podAnnotations }}
-{{ toYaml .Values.common.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.client.podAnnotations }}
-{{ toYaml .Values.client.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.common.podAnnotations }}
+        {{- toYaml .Values.common.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.client.podAnnotations }}
+        {{- toYaml .Values.client.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.client.antiAffinity "hard" }}
       affinity:
         podAntiAffinity:
@@ -74,17 +74,17 @@ spec:
                   role: client
       {{- end }}
     {{- if .Values.global.platformNodePool.affinity }}
-{{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
+      {{- toYaml .Values.global.platformNodePool.affinity | nindent 8 }}
     {{- end }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
-{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
+      {{- include "elasticsearch.imagePullSecrets" . | nindent 6 }}
       initContainers:
       - name: es-config-dir-copier
         image: {{ template "elasticsearch.image" . }}
         command:
-        - bash
-        - -xc
-        - cp -vr /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
+          - bash
+          - -xc
+          - cp -vr /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         resources: {{- toYaml .Values.client.initResources | nindent 10 }}
         securityContext:
@@ -179,17 +179,20 @@ spec:
           failureThreshold: 30
           periodSeconds: 10
         volumeMounts:
-        - name: es-config-dir
-          mountPath: /usr/share/elasticsearch/config
-        - name: es-data
-          mountPath: /usr/share/elasticsearch/data
-        - name: tmp
-          mountPath: /tmp
-        - name: config
-          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /usr/share/elasticsearch/config
+          name: es-config-dir
+        - mountPath: /usr/share/elasticsearch/data
+          name: es-data
+        - mountPath: /usr/share/elasticsearch/logs
+          name: es-client-logs
+        - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          name: config
           subPath: elasticsearch.yml
-        - name: es-client-logs
-          mountPath: /usr/share/elasticsearch/logs
+        - mountPath: /usr/share/elasticsearch/logs
+          name: tmp
+          subPath: logs
       volumes:
       - name: es-config-dir
         emptyDir: {}
