@@ -27,10 +27,6 @@ show_only = [
     "charts/postgresql/templates/serviceaccount.yaml",
     "charts/postgresql/templates/statefulset.yaml",
     "charts/postgresql/templates/svc.yaml",
-    "charts/stan/templates/configmap.yaml",
-    "charts/stan/templates/service.yaml",
-    "charts/stan/templates/stan-networkpolicy.yaml",
-    "charts/stan/templates/statefulset.yaml",
 ]
 
 
@@ -50,9 +46,9 @@ def test_argo_sync_wave():
         )
 
     docs = render_argo_charts(argo_enabled=True)
-    assert len(docs) == 26
-    assert len(jmespath.search('[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs)) == 26
+    assert len(docs) == 22
+    assert len(jmespath.search('[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs)) == 22
 
     docs = render_argo_charts(argo_enabled=False)
-    assert len(docs) == 26
+    assert len(docs) == 22
     assert len(jmespath.search('[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs)) == 0

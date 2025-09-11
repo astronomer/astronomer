@@ -1,6 +1,7 @@
 ###########################################################################
 # Vector DaemonSet
 ###########################################################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -58,21 +59,25 @@ spec:
         livenessProbe: {{ tpl (toYaml .Values.vector.livenessProbe) . | nindent 10 }}
         {{- else }}
         livenessProbe:
+          failureThreshold: 5
           httpGet:
             path: /health
             port: 8686
-          initialDelaySeconds: 30
+          initialDelaySeconds: 15
           periodSeconds: 10
+          timeoutSeconds: 3
         {{- end }}
-        {{- if .Values.readinessProbe }}
-        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 10 }}
+        {{- if .Values.vector.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.vector.readinessProbe) . | nindent 10 }}
         {{- else }}
         readinessProbe:
+          failureThreshold: 5
           httpGet:
             path: /health
             port: 8686
-          initialDelaySeconds: 30
+          initialDelaySeconds: 15
           periodSeconds: 10
+          timeoutSeconds: 3
         {{- end }}
         env:
         - name: VECTOR_SELF_NODE_NAME
@@ -143,3 +148,4 @@ spec:
       - name: config-volume-{{ template "vector.fullname" . }}
         configMap:
           name: {{ template "vector.fullname" . }}-config
+{{- end -}}

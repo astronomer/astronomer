@@ -320,7 +320,7 @@ class TestVector:
             "value": "What's your vector, Victor?",
         } in c_by_name["vector"]["env"]
 
-    def test_vector_daemonset_probe(self, kube_version):
+    def test_vector_daemonset_probe_default(self, kube_version):
         """Test the default probes for the vector daemonset."""
         docs = render_chart(
             kube_version=kube_version,
@@ -329,9 +329,40 @@ class TestVector:
         doc = docs[0]
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["vector"]["name"] == "vector"
-        expected_probe = {"httpGet": {"path": "/health", "port": 8686}, "initialDelaySeconds": 30, "periodSeconds": 10}
-        assert c_by_name["vector"]["livenessProbe"] == expected_probe
-        assert c_by_name["vector"]["readinessProbe"] == expected_probe
+        assert (
+            {
+                "failureThreshold": 5,
+                "httpGet": {"path": "/health", "port": 8686},
+                "initialDelaySeconds": 15,
+                "periodSeconds": 10,
+                "timeoutSeconds": 3,
+            }
+            == c_by_name["vector"]["livenessProbe"]
+            == c_by_name["vector"]["readinessProbe"]
+        )
+
+    def test_vector_daemonset_probe_custom(self, kube_version):
+        """Test custom probes for the vector daemonset."""
+        liveness_probe = {"httpGet": {"path": "/custom_livenessProbe", "port": 1234}}
+        readiness_probe = {"httpGet": {"path": "/custom_readinessProbe", "port": 1234}}
+        values = {
+            "vector": {
+                "vector": {
+                    "livenessProbe": liveness_probe,
+                    "readinessProbe": readiness_probe,
+                }
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
+        )
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc)
+        assert c_by_name["vector"]["name"] == "vector"
+        assert c_by_name["vector"]["livenessProbe"] == liveness_probe
+        assert c_by_name["vector"]["readinessProbe"] == readiness_probe
 
     def test_vector_configmap_custom_logging_enabled(self, kube_version):
         """Test configmap when global.customLogging.enabled is true."""
@@ -345,3 +376,27 @@ class TestVector:
 
         config_yaml = doc["data"]["vector-config.yaml"]
         assert 'api_version: "v8"' in config_yaml
+
+    @pytest.mark.parametrize(
+        "mode,expected_count",
+        [
+            ("data", 6),
+            ("unified", 6),
+            ("control", 0),
+        ],
+    )
+    def test_vector_rendering_by_mode(self, kube_version, mode, expected_count):
+        """Test that Vector is deployed only in data and unified plane modes."""
+        values = {"global": {"plane": {"mode": mode}}}
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=all_templates,
+        )
+
+        assert len(docs) == expected_count
+
+        if expected_count > 0:
+            assert all(doc.get("apiVersion") for doc in docs)
+            assert all(doc.get("kind") for doc in docs)

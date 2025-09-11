@@ -1,6 +1,7 @@
 ###########################################################################
 # Vector ConfigMap
 ###########################################################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -14,6 +15,12 @@ metadata:
 
 data:
   vector-config.yaml: |
+    # api is used for health check
+    api:
+      enabled: true
+      address: "0.0.0.0:8686"
+      graphql: false
+      playground: false
     log_schema:
       timestamp_key: "@timestamp"
 
@@ -131,3 +138,4 @@ data:
       {{- with .Values.extraSinks }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+{{- end -}}

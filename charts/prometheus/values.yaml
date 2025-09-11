@@ -32,10 +32,6 @@ images:
     repository: quay.io/astronomer/ap-openresty
     tag: 1.27.1-5
     pullPolicy: IfNotPresent
-  promproxy:
-    repository: quay.io/astronomer/ap-openresty
-    tag: 1.27.1-5
-    pullPolicy: IfNotPresent
 
 
 resources: {}

@@ -9,29 +9,6 @@ from tests.utils.chart import render_chart
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job"]
 
-# This should contain a list of pod name substrings that have been completed in ticket
-# https://github.com/astronomer/issues/issues/7394
-# This should match tests/functional/unified/test_container_read_only_root.py
-read_only_root_pods = [
-    "alertmanager",
-    "astro-ui",
-    "commander",
-    "configmap-reloader",
-    "cp-nginx",
-    "default-backend",
-    "dp-nginx",
-    "elasticsearch-client",
-    "elasticsearch-exporter",
-    "houston",
-    "jetstream",
-    "kube-state",
-    "nats",
-    "prometheus",
-    "registry",
-    "update-resource-strategy",
-    "vector",
-]
-
 
 class TestAllContainersReadOnlyRoot:
     chart_values = get_all_features()
@@ -50,11 +27,9 @@ class TestAllContainersReadOnlyRoot:
         param_id = request.node.callspec.id
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         for container in c_by_name.values():
-            if any(x in param_id for x in read_only_root_pods):
-                assert container["securityContext"].get("readOnlyRootFilesystem")
-            else:
-                # This assertion ensures that this test is updated whenever we change this property
-                assert not container.get("securityContext", {}).get("readOnlyRootFilesystem")
+            assert container.get("securityContext", {}).get("readOnlyRootFilesystem"), (
+                f"{container['name']} {param_id} does not have RORFS"
+            )
 
 
 class TestHoustonPodManagers:

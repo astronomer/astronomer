@@ -42,19 +42,18 @@ spec:
           {{- end }}
         spec:
           serviceAccountName: {{ template "configSyncer.serviceAccountName" . }}
-          nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
-          affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
-          tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
+          affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
+          tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
           restartPolicy: Never
-{{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          {{- include "astronomer.imagePullSecrets" . | nindent 10 }}
           containers:
             - name: config-syncer
               image: {{ template "commander.image" . }}
               imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
-              securityContext: {{ template "configSyncer.securityContext" .  }}
+              securityContext:
+                readOnlyRootFilesystem: true
+                {{ template "configSyncer.securityContext" . }}
               resources: {{ toYaml .Values.configSyncer.resources | nindent 16 }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args:

@@ -140,11 +140,12 @@ class TestDefaultProbes:
             "periodSeconds": 10,
             "timeoutSeconds": 5,
         },
-        "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "vector_vector": {
+            "failureThreshold": 5,
             "httpGet": {"path": "/health", "port": 8686},
-            "initialDelaySeconds": 30,
+            "initialDelaySeconds": 15,
             "periodSeconds": 10,
+            "timeoutSeconds": 3,
         },
     }
 
@@ -228,11 +229,12 @@ class TestDefaultProbes:
             "periodSeconds": 10,
             "timeoutSeconds": 5,
         },
-        "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "vector_vector": {
+            "failureThreshold": 5,
             "httpGet": {"path": "/health", "port": 8686},
-            "initialDelaySeconds": 30,
+            "initialDelaySeconds": 15,
             "periodSeconds": 10,
+            "timeoutSeconds": 3,
         },
     }
 
