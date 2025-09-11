@@ -99,13 +99,8 @@ global:
     enabled: true
     replicas: 3
     jetStream:
-      enabled: false
+      enabled: true
       tls: false
-
-  # Used to enable nats-streaming
-  stan:
-    enabled: true
-    replicas: 3
 
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true
@@ -354,9 +349,6 @@ tags:
   # Enable logging stack (elasticsearch, vector)
   logging: true
 
-  # NATS Streaming
-  stan: true
-
 #################################
 ## Astronomer configuration
 #################################
@@ -499,23 +491,7 @@ nats:
         cpu: "250m"
         memory: "100Mi"
 
-stan:
-  nodeSelector:
-    <<: *platformNodeSelector
-  affinity:
-    <<: *platformAffinity
-  tolerations: *platformTolerations
-
   init:
-    resources:
-      requests:
-        cpu: "75m"
-        memory: "30Mi"
-      limits:
-        cpu: "250m"
-        memory: "100Mi"
-
-  stan:
     resources:
       requests:
         cpu: "75m"
