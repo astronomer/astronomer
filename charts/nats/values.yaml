@@ -79,7 +79,7 @@ nats:
   regenerateCaEachUpgrade: false
 
   jetstream:
-    enabled: false
+    enabled: true
     serviceAccount:
       create: true
       name: ~

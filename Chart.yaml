@@ -67,12 +67,6 @@ dependencies:
     tags:
       - nats
 
-  # Nats-streaming
-  - name: stan
-    condition: global.stan.enabled
-    tags:
-      - stan
-
   # external-es-proxy
   - name: external-es-proxy
     condition: global.customLogging.enabled

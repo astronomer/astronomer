@@ -64,7 +64,6 @@ class TestServiceAccounts:
                 "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test"}},
             },
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
-            "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
             "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
         }
         docs = render_chart(
@@ -77,12 +76,11 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
-                "charts/stan/templates/stan-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 8
+        assert len(docs) == 7
         expected_names = {
             "commander-test",
             "registry-test",
@@ -112,7 +110,6 @@ class TestServiceAccounts:
                 "astroUI": {"serviceAccount": {"create": False}},
             },
             "nats": {"nats": {"serviceAccount": {"create": False}}},
-            "stan": {"stan": {"serviceAccount": {"create": False}}},
             "alertmanager": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
@@ -156,7 +153,6 @@ class TestServiceAccounts:
                 "astroUI": {"serviceAccount": {"create": True, "annotations": annotations}},
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
-            "stan": {"stan": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -360,7 +356,6 @@ custom_service_account_names = {
     "charts/prometheus/templates/prometheus-federation-auth-deployment.yaml": {
         "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
-    "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"serviceAccount": {"create": True, "name": "prothean"}}}},
     "charts/vector/templates/vector-daemonset.yaml": {
         "vector": {"serviceAccount": {"create": True, "name": "prothean"}},
     },

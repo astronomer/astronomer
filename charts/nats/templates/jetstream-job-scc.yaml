@@ -3,7 +3,7 @@
 ###################################
 {{- if and .Values.global.sccEnabled .Values.nats.createJetStreamJob }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-{{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled .Values.global.stan.enabled }}
+{{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:

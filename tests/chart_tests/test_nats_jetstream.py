@@ -126,44 +126,6 @@ class TestNatsJetstream:
                 "secret": {"secretName": "release-name-jetstream-tls-certificate-client"},
             } in obj_by_name[item]["spec"]["template"]["spec"]["volumes"]
 
-    def test_stan_with_jetstream_enabled(self, kube_version):
-        """Test that stan statefulset is disabled when jetstream is enabled."""
-        values = {
-            "global": {"nats": {"jetStream": {"enabled": True}}},
-            "nats": {"nats": {"createJetStreamJob": True}},
-        }
-        docs = render_chart(
-            kube_version=kube_version,
-            values=values,
-            show_only=[
-                "charts/stan/templates/configmap.yaml",
-                "charts/stan/templates/service.yaml",
-                "charts/stan/templates/statefulset.yaml",
-                "charts/stan/templates/stan-networkpolicy.yaml",
-            ],
-        )
-
-        assert len(docs) == 0
-
-    def test_stan_with_jetstream_disabled(self, kube_version):
-        """Test that stan statefulset is disabled when jetstream is enabled."""
-        values = {
-            "global": {"nats": {"jetStream": {"enabled": False}}},
-            "nats": {"nats": {"createJetStreamJob": True}},
-        }
-        docs = render_chart(
-            kube_version=kube_version,
-            values=values,
-            show_only=[
-                "charts/stan/templates/configmap.yaml",
-                "charts/stan/templates/service.yaml",
-                "charts/stan/templates/statefulset.yaml",
-                "charts/stan/templates/stan-networkpolicy.yaml",
-            ],
-        )
-
-        assert len(docs) == 4
-
     def test_nats_with_jetstream_disabled_with_custom_flag(self, kube_version):
         """Test that jetstream feature  is disabled completely with createJetStreamJob."""
         values = {
@@ -177,14 +139,10 @@ class TestNatsJetstream:
                 "charts/nats/templates/statefulset.yaml",
                 "charts/nats/templates/configmap.yaml",
                 "charts/nats/templates/jetstream-job.yaml",
-                "charts/stan/templates/configmap.yaml",
-                "charts/stan/templates/service.yaml",
-                "charts/stan/templates/statefulset.yaml",
-                "charts/stan/templates/stan-networkpolicy.yaml",
                 "charts/nats/templates/nats-jetstream-tls-secret.yaml",
             ],
         )
-        assert len(docs) == 6
+        assert len(docs) == 2
 
     def test_jetstream_hook_job_disabled(self, kube_version):
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
@@ -218,18 +176,16 @@ class TestNatsJetstream:
 
 
 @pytest.mark.parametrize(
-    "scc_enabled,create_jetstream_job,jetstream_enabled,global_jetstream_enabled,stan_enabled,expected_docs",
+    "scc_enabled,create_jetstream_job,jetstream_enabled,global_jetstream_enabled,expected_docs",
     [
-        (True, True, False, True, False, 1),
-        (True, True, False, False, True, 1),
-        (True, True, False, True, True, 1),
-        (True, True, False, False, False, 0),
-        (True, False, False, True, False, 0),
-        (True, False, False, False, False, 0),
-        (False, True, False, True, False, 0),
-        (False, False, False, True, False, 0),
-        (False, True, False, False, False, 0),
-        (False, False, False, False, False, 0),
+        (True, True, False, True, 1),
+        (True, True, False, False, 1),
+        (True, False, False, True, 0),
+        (True, False, False, False, 0),
+        (False, True, False, True, 0),
+        (False, False, False, True, 0),
+        (False, True, False, False, 0),
+        (False, False, False, False, 0),
     ],
 )
 def test_jetstream_job_with_scc(
@@ -237,7 +193,6 @@ def test_jetstream_job_with_scc(
     create_jetstream_job,
     jetstream_enabled,
     global_jetstream_enabled,
-    stan_enabled,
     expected_docs,
 ):
     """Test that helm renders the nats SCC template only in the right circumstances."""
@@ -248,9 +203,6 @@ def test_jetstream_job_with_scc(
                 "jetStream": {
                     "enabled": global_jetstream_enabled,
                 },
-            },
-            "stan": {
-                "enabled": stan_enabled,
             },
         },
         "nats": {

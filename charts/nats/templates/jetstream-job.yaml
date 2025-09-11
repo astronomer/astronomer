@@ -1,8 +1,8 @@
 ########################################################
 ## Astronomer Platform Namespace label configure Hook ##
 ########################################################
-{{- if and .Values.nats.createJetStreamJob -}}
-{{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled .Values.global.stan.enabled }}
+{{- if .Values.nats.createJetStreamJob -}}
+{{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 ---
 kind: Role
@@ -107,19 +107,10 @@ spec:
         - /bin/sh
         - -c
         - |
-          {{- if and .Values.global.stan.enabled (not .Values.global.nats.jetStream.enabled) }}
-          data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.stanEnabled}'`
-          if [[ "$data" = "" ]] ; then
-            kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
-            kubectl label namespace {{ .Release.Namespace }} stanEnabled=true;
-            kubectl label namespace {{ .Release.Namespace }} jetstreamEnabled-
-          else
-            echo "{{ .Release.Name }}-Nats is already enabled with stan. skipping sts cleanup"
-          fi
-          {{ else }}
+          {{- if .Values.global.nats.jetStream.enabled }}
           data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.jetstreamEnabled}'`
           if [[ "$data" = "" ]] ; then
-            kubectl delete sts {{ .Release.Name }}-nats -n {{ .Release.Namespace }};
+            kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
             kubectl label namespace {{ .Release.Namespace }} jetstreamEnabled=true;
             kubectl label namespace {{ .Release.Namespace }} stanEnabled-
           else
