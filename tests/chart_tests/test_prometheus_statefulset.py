@@ -177,10 +177,21 @@ class TestPrometheusStatefulset:
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["prometheus"]["tolerations"]
 
-    def test_prometheus_filesd_reloader_enabled(self, kube_version):
+    @pytest.mark.parametrize(
+        "plane_mode,expected_cluster_scraping",
+        [
+            ("unified", "True"),
+            ("data", "False"),
+            ("control", "False"),
+        ],
+    )
+    def test_prometheus_filesd_reloader_enabled(self, kube_version, plane_mode, expected_cluster_scraping):
         """Test Prometheus with filesd reloader enabled."""
         values = {
-            "global": {"rbacEnabled": False},
+            "global": {
+                "rbacEnabled": False,
+                "plane": {"mode": plane_mode},
+            },
             "prometheus": {},
         }
         docs = render_chart(
@@ -199,7 +210,8 @@ class TestPrometheusStatefulset:
         assert env_vars["DATABASE_NAME"] == "release-name_houston"
         assert env_vars["FILESD_FILE_PATH"] == "/prometheusreloader/airflow"
         assert env_vars["ENABLE_DEPLOYMENT_SCRAPING"] == "False"
-        assert env_vars["ENABLE_CLUSTER_SCRAPING"] == "True"
+        assert env_vars["ENABLE_CLUSTER_SCRAPING"] == expected_cluster_scraping
+        assert env_vars["PLANE_MODE"] == plane_mode
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
 
     def test_prometheus_filesd_reloader_extraenv_enabled(self, kube_version):
