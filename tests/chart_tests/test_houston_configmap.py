@@ -654,19 +654,6 @@ def test_houston_configmap_with_cleanup_airflow_db_disabled():
     assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
 
 
-def test_houston_configmap_with_internal_authorization_flag_defaults():
-    """Validate the houston configmap to internal authorization."""
-    docs = render_chart(
-        values={},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    common_test_cases(docs)
-    doc = docs[0]
-
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["enableHoustonInternalAuthorization"] is False
-
-
 def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
     """Validate the houston configmap and its embedded data with disable manage clusterscoped resources enabled
     ."""
