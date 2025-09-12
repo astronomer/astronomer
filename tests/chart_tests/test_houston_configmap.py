@@ -666,6 +666,7 @@ def test_houston_configmap_with_internal_authorization_flag_defaults():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["deployments"]["enableHoustonInternalAuthorization"] is False
 
+
 def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
     """Validate the houston configmap and its embedded data with disable manage clusterscoped resources enabled
     ."""
