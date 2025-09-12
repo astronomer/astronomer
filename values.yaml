@@ -117,8 +117,6 @@ global:
 
   deployRollbackEnabled: false
 
-  enableHoustonInternalAuthorization: false
-
   disableManageClusterScopedResources: false
 
   enablePerHostIngress: false

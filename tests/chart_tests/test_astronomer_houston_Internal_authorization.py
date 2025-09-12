@@ -33,7 +33,7 @@ class TestHoustonInternalAuthorization:
         """Test Alertmanager Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"enableHoustonInternalAuthorization": True}},
+            values={},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
