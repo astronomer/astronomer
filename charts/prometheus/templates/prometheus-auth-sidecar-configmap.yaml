@@ -17,7 +17,6 @@ data:
     upstream astro-prometheus {
       server localhost:{{ .Values.ports.http }} ;
     }
-
     server {
       server_name {{ template "prometheus.url" . }} ;
       listen {{ .Values.global.authSidecar.port }}  ;
@@ -31,75 +30,17 @@ data:
         {{ .Values.global.default_nginx_settings }}
 {{.Values.global.authSidecar.default_nginx_settings | indent 8  }}
       }
-
-      location /federate {
-        access_by_lua_block {
-          -- Get registry auth token from environment variable
-          local registry_token = os.getenv("REGISTRY_AUTH_TOKEN") or ""
-
-          if registry_token == "" then
-            ngx.log(ngx.ERR, "REGISTRY_AUTH_TOKEN environment variable not set")
-            ngx.status = 500
-            ngx.header["Content-Type"] = "application/json"
-            ngx.say('{"error": "Server configuration error"}')
-            ngx.exit(500)
-          end
-
-          -- Extract authorization header from request
-          local auth_header = ngx.var.http_authorization
-          if not auth_header then
-            ngx.log(ngx.WARN, "Federation request missing Authorization header")
-            ngx.status = 401
-            ngx.header["Content-Type"] = "application/json"
-            ngx.say('{"error": "Missing Authorization header"}')
-            ngx.exit(401)
-          end
-
-          -- Extract token from different possible formats
-          local provided_token = auth_header:match("^Bearer%s+(.+)$") or
-                                auth_header:match("^%[(.+)%]$") or
-                                auth_header
-
-          -- Validate token against registry token (no hashing, direct comparison)
-          if provided_token ~= registry_token then
-            ngx.log(ngx.WARN, "Federation auth failed for token: ",
-                    string.sub(provided_token or "none", 1, 8), "...")
-            ngx.status = 403
-            ngx.header["Content-Type"] = "application/json"
-            ngx.say('{"error": "Invalid federation token"}')
-            ngx.exit(403)
-          end
-
-          ngx.log(ngx.INFO, "Federation auth successful for token: ",
-                  string.sub(provided_token, 1, 8), "...")
-        }
-
-
-        proxy_pass http://astro-prometheus/federate;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-        # Preserve original request
-        proxy_pass_request_body on;
-        proxy_pass_request_headers on;
-
-        {{ .Values.global.default_nginx_settings }}
-        {{- .Values.global.authSidecar.default_nginx_settings_location | nindent 8 }}
-      }
-
       location @401_auth_error {
         internal;
         add_header Set-Cookie $auth_cookie;
         return 302 https://app.{{ .Values.global.baseDomain }}/login?rd=https://$http_host$request_uri;
       }
-
       location / {
+        # Custom headers to proxied server
         proxy_set_header  Host  {{ template "prometheus.url" . }};
         proxy_pass http://astro-prometheus;
 {{.Values.global.authSidecar.default_nginx_settings_location | indent 8  }}
       }
-
       location /healthz {
         return 200;
       }
