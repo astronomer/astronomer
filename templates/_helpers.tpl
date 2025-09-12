@@ -8,7 +8,7 @@ fluentd
 
 
 {{ define "houston.internalauthurl" -}}
-{{- if eq .Values.global.plane.mode "unified" }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
 {{- else }}
 nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
