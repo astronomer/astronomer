@@ -190,9 +190,6 @@ spec:
         - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           name: config
           subPath: elasticsearch.yml
-        - mountPath: /usr/share/elasticsearch/logs
-          name: tmp
-          subPath: logs
       volumes:
       - name: es-config-dir
         emptyDir: {}
