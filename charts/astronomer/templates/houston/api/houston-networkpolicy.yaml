@@ -79,7 +79,7 @@ spec:
           component: external-es-proxy
           release: {{ .Release.Name }}
     {{- end }}
-    {{- if or .Values.houston.enableHoustonInternalAuthorization .Values.global.enableHoustonInternalAuthorization }}
+    {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
     - namespaceSelector: {}
       podSelector:
         matchLabels:

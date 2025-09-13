@@ -341,7 +341,6 @@ houston:
   # Add custom annotation for houston ingress
   ingress:
     annotation: {}
-  enableHoustonInternalAuthorization: false
 
   updateResourceStrategy:
     readinessProbe: {}
