@@ -1,7 +1,7 @@
 import pytest
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -10,7 +10,8 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestPGBouncerDeployment:
-    def test_pgbouncer_deployment_default_resources(self, kube_version):
+    def test_pgbouncer_deployment_defaults(self, kube_version):
+        """Test pgbouncer deployment defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"pgbouncer": {"enabled": True}}},
@@ -18,36 +19,53 @@ class TestPGBouncerDeployment:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
+        deployment = docs[0]
 
-        assert doc["kind"] == "Deployment"
-        assert doc["metadata"]["name"] == "release-name-pgbouncer"
+        assert deployment["kind"] == "Deployment"
+        assert deployment["metadata"]["name"] == "release-name-pgbouncer"
 
-        c_by_name = get_containers_by_name(doc)
-        assert c_by_name["pgbouncer"]
+        c_by_name = get_containers_by_name(deployment)
+        assert len(c_by_name) == 1
+        assert c_by_name["pgbouncer"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
         assert c_by_name["pgbouncer"]["resources"] == {
             "limits": {"cpu": "250m", "memory": "256Mi"},
             "requests": {"cpu": "250m", "memory": "256Mi"},
         }
-        assert not doc["spec"]["template"]["spec"].get("env")
+        c_env = get_env_vars_dict(c_by_name["pgbouncer"]["env"])
+        assert c_env["ADMIN_USERS"] == "postgres"
+        assert c_env["AUTH_TYPE"] == "plain"
 
-    def test_custom_environment(self, kube_version):
-        doc = render_chart(
+    def test_pgbouncer_deployment_custom_configurations(self, kube_version):
+        """Test pgbouncer deployment with custom configurations."""
+        docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "pgbouncer": {
-                        "enabled": True,
-                    }
+                "global": {"pgbouncer": {"enabled": True}},
+                "pgbouncer": {
+                    "env": {"foo_key": "foo_value", "bar_key": "bar_value"},
+                    "securityContext": {
+                        "snoopy": "dog",
+                        "woodstock": "bird",
+                    },
                 },
-                "pgbouncer": {"env": {"foo_key": "foo_value", "bar_key": "bar_value"}},
             },
             show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
-        )[0]
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert len(c_by_name) == 1
+        assert c_by_name["pgbouncer"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
-        c_env = doc["spec"]["template"]["spec"]["containers"][0]["env"]
-        assert {"name": "bar_key", "value": "bar_value"} in c_env
-        assert {"name": "foo_key", "value": "foo_value"} in c_env
+        c_env = get_env_vars_dict(c_by_name["pgbouncer"]["env"])
+        assert c_env["ADMIN_USERS"] == "postgres"
+        assert c_env["AUTH_TYPE"] == "plain"
+        assert c_env["bar_key"] == "bar_value"
+        assert c_env["foo_key"] == "foo_value"
 
     def test_custom_labels(self, kube_version):
         doc = render_chart(

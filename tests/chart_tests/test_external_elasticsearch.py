@@ -1,11 +1,10 @@
 import base64
 import pathlib
 
-import jmespath
 import pytest
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 secret = base64.b64encode(b"sample-secret").decode()
@@ -31,28 +30,35 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 4
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-external-es-proxy"
+        deployment, env_configmap, configmap, service = docs
+        assert deployment["kind"] == "Deployment"
+        assert deployment["apiVersion"] == "apps/v1"
+        assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
+        assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
+        assert deployment["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
         expected_env = [{"name": "ES_SECRET", "value": secret}]
-        assert expected_env == doc["spec"]["template"]["spec"]["containers"][0]["env"]
+        assert expected_env == deployment["spec"]["template"]["spec"]["containers"][0]["env"]
 
-        assert "Service" == jmespath.search("kind", docs[3])
-        assert "release-name-external-es-proxy" == jmespath.search("metadata.name", docs[3])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[3])
-        assert {
-            "name": "secure-http",
-            "protocol": "TCP",
-            "port": 9200,
-            "appProtocol": "https",
-        } in jmespath.search("spec.ports", docs[3])
-        assert {
-            "name": "http",
-            "protocol": "TCP",
-            "port": 9201,
-            "appProtocol": "http",
-        } in jmespath.search("spec.ports", docs[3])
+        assert service["kind"] == "Service"
+        assert service["metadata"]["name"] == "release-name-external-es-proxy"
+        assert service["spec"]["type"] == "ClusterIP"
+        assert service["spec"]["ports"] == [
+            {
+                "name": "secure-http",
+                "protocol": "TCP",
+                "port": 9200,
+                "appProtocol": "https",
+            },
+            {
+                "name": "http",
+                "protocol": "TCP",
+                "port": 9201,
+                "appProtocol": "http",
+            },
+        ]
 
     def test_externalelasticsearch_with_secretname(self, kube_version):
         """Test External ElasticSearch with secret passed as kubernetes
@@ -69,10 +75,15 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 4
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-external-es-proxy"
+        deployment, env_configmap, configmap, service = docs
+        assert deployment["kind"] == "Deployment"
+        assert deployment["apiVersion"] == "apps/v1"
+        assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
+        assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
+        assert deployment["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
         expected_env = [
             {
                 "name": "ES_SECRET_NAME",
@@ -84,27 +95,28 @@ class TestExternalElasticSearch:
                 },
             }
         ]
-        assert expected_env == doc["spec"]["template"]["spec"]["containers"][0]["env"]
+        assert expected_env == deployment["spec"]["template"]["spec"]["containers"][0]["env"]
 
-        assert "Service" == jmespath.search("kind", docs[3])
-        assert "release-name-external-es-proxy" == jmespath.search("metadata.name", docs[3])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[3])
-        assert {
-            "name": "secure-http",
-            "protocol": "TCP",
-            "port": 9200,
-            "appProtocol": "https",
-        } in jmespath.search("spec.ports", docs[3])
-        assert {
-            "name": "http",
-            "protocol": "TCP",
-            "port": 9201,
-            "appProtocol": "http",
-        } in jmespath.search("spec.ports", docs[3])
+        assert service["kind"] == "Service"
+        assert service["metadata"]["name"] == "release-name-external-es-proxy"
+        assert service["spec"]["type"] == "ClusterIP"
+        assert service["spec"]["ports"] == [
+            {
+                "name": "secure-http",
+                "protocol": "TCP",
+                "port": 9200,
+                "appProtocol": "https",
+            },
+            {
+                "name": "http",
+                "protocol": "TCP",
+                "port": 9201,
+                "appProtocol": "http",
+            },
+        ]
 
     def test_externalelasticsearch_with_awsSecretName(self, kube_version):
-        """Test External ElasticSearch with aws secret passed as kubernetes
-        secret."""
+        """Test External ElasticSearch with aws secret passed as kubernetes secret."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -125,11 +137,21 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 3
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-external-es-proxy"
-        expected_env = [
+        deployment, service, configmap = docs
+        assert deployment["kind"] == "Deployment"
+        assert deployment["apiVersion"] == "apps/v1"
+        assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
+        assert len(deployment["spec"]["template"]["spec"]["containers"]) == 2
+        containers = get_containers_by_name(deployment)
+        assert (
+            {
+                "readOnlyRootFilesystem": True,
+                "runAsNonRoot": True,
+            }
+            == containers["awsproxy"]["securityContext"]
+            == containers["external-es-proxy"]["securityContext"]
+        )
+        assert containers["awsproxy"]["env"] == [
             {
                 "name": "AWS_ACCESS_KEY_ID",
                 "valueFrom": {"secretKeyRef": {"name": "awssecret", "key": "aws_access_key"}},
@@ -140,23 +162,25 @@ class TestExternalElasticSearch:
             },
             {"name": "ENDPOINT", "value": "https://esdemo.example.com"},
         ]
-        assert expected_env == doc["spec"]["template"]["spec"]["containers"][1]["env"]
+        assert not containers["external-es-proxy"].get("env")
 
-        assert "Service" == jmespath.search("kind", docs[1])
-        assert "release-name-external-es-proxy" == jmespath.search("metadata.name", docs[1])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[1])
-        assert {
-            "name": "secure-http",
-            "protocol": "TCP",
-            "port": 9200,
-            "appProtocol": "https",
-        } in jmespath.search("spec.ports", docs[1])
-        assert {
-            "name": "http",
-            "protocol": "TCP",
-            "port": 9201,
-            "appProtocol": "http",
-        } in jmespath.search("spec.ports", docs[1])
+        assert service["kind"] == "Service"
+        assert service["metadata"]["name"] == "release-name-external-es-proxy"
+        assert service["spec"]["type"] == "ClusterIP"
+        assert service["spec"]["ports"] == [
+            {
+                "name": "secure-http",
+                "protocol": "TCP",
+                "port": 9200,
+                "appProtocol": "https",
+            },
+            {
+                "name": "http",
+                "protocol": "TCP",
+                "port": 9201,
+                "appProtocol": "http",
+            },
+        ]
 
         nginx_conf = pathlib.Path("tests/chart_tests/test_data/external-es-nginx-with-aws-secrets.conf").read_text()
         assert nginx_conf in docs[2]["data"]["nginx.conf"]
@@ -183,30 +207,43 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 2
-        doc = docs[0]
-        expected_env = [{"name": "ENDPOINT", "value": "https://esdemo.example.com"}]
+        deployment, service = docs
+        containers = get_containers_by_name(deployment)
+        awsproxy_env_vars = get_env_vars_dict(containers["awsproxy"]["env"])
+        assert awsproxy_env_vars["ENDPOINT"] == "https://esdemo.example.com"
 
-        assert expected_env == doc["spec"]["template"]["spec"]["containers"][1]["env"]
-
-        assert "arn:aws:iam::xxxxxxxx:role/customrole" == jmespath.search(
-            'spec.template.metadata.annotations."iam.amazonaws.com/role"', docs[0]
+        assert (
+            deployment["spec"]["template"]["metadata"]["annotations"]["iam.amazonaws.com/role"]
+            == "arn:aws:iam::xxxxxxxx:role/customrole"
+        )
+        assert len(deployment["spec"]["template"]["spec"]["containers"]) == 2
+        containers = get_containers_by_name(deployment)
+        assert (
+            {
+                "readOnlyRootFilesystem": True,
+                "runAsNonRoot": True,
+            }
+            == containers["awsproxy"]["securityContext"]
+            == containers["external-es-proxy"]["securityContext"]
         )
 
-        assert "Service" == jmespath.search("kind", docs[1])
-        assert "release-name-external-es-proxy" == jmespath.search("metadata.name", docs[1])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[1])
-        assert {
-            "name": "secure-http",
-            "protocol": "TCP",
-            "port": 9200,
-            "appProtocol": "https",
-        } in jmespath.search("spec.ports", docs[1])
-        assert {
-            "name": "http",
-            "protocol": "TCP",
-            "port": 9201,
-            "appProtocol": "http",
-        } in jmespath.search("spec.ports", docs[1])
+        assert service["kind"] == "Service"
+        assert service["metadata"]["name"] == "release-name-external-es-proxy"
+        assert service["spec"]["type"] == "ClusterIP"
+        assert service["spec"]["ports"] == [
+            {
+                "name": "secure-http",
+                "protocol": "TCP",
+                "port": 9200,
+                "appProtocol": "https",
+            },
+            {
+                "name": "http",
+                "protocol": "TCP",
+                "port": 9201,
+                "appProtocol": "http",
+            },
+        ]
 
     def test_externalelasticsearch_with_awsServiceAccountAnnotation(self, kube_version):
         """Test External ElasticSearch with eks iam roles passed as Service
@@ -231,30 +268,40 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 3
-        doc = docs[0]
-        expected_env = [{"name": "ENDPOINT", "value": "https://esdemo.example.com"}]
+        deployment, service_account, service = docs
+        assert deployment["kind"] == "Deployment"
+        assert len(deployment["spec"]["template"]["spec"]["containers"]) == 2
+        containers = get_containers_by_name(deployment)
+        assert (
+            {
+                "readOnlyRootFilesystem": True,
+                "runAsNonRoot": True,
+            }
+            == containers["awsproxy"]["securityContext"]
+            == containers["external-es-proxy"]["securityContext"]
+        )
+        awsproxy_env_vars = get_env_vars_dict(containers["awsproxy"]["env"])
+        assert awsproxy_env_vars["ENDPOINT"] == "https://esdemo.example.com"
 
-        assert expected_env == doc["spec"]["template"]["spec"]["containers"][1]["env"]
+        assert service_account["metadata"]["annotations"]["eks.amazonaws.com/role-arn"] == "arn:aws:iam::xxxxxxxx:role/customrole"
 
-        doc = docs[1]
-
-        assert "arn:aws:iam::xxxxxxxx:role/customrole" == jmespath.search('metadata.annotations."eks.amazonaws.com/role-arn"', doc)
-
-        assert "Service" == jmespath.search("kind", docs[2])
-        assert "release-name-external-es-proxy" == jmespath.search("metadata.name", docs[2])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
-        assert {
-            "name": "secure-http",
-            "protocol": "TCP",
-            "port": 9200,
-            "appProtocol": "https",
-        } in jmespath.search("spec.ports", docs[2])
-        assert {
-            "name": "http",
-            "protocol": "TCP",
-            "port": 9201,
-            "appProtocol": "http",
-        } in jmespath.search("spec.ports", docs[2])
+        assert service["kind"] == "Service"
+        assert service["metadata"]["name"] == "release-name-external-es-proxy"
+        assert service["spec"]["type"] == "ClusterIP"
+        assert service["spec"]["ports"] == [
+            {
+                "name": "secure-http",
+                "protocol": "TCP",
+                "port": 9200,
+                "appProtocol": "https",
+            },
+            {
+                "name": "http",
+                "protocol": "TCP",
+                "port": 9201,
+                "appProtocol": "http",
+            },
+        ]
 
     def test_external_es_network_selector_defaults(self, kube_version):
         """Test External Elasticsearch Service with NetworkPolicies."""
@@ -276,14 +323,14 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "NetworkPolicy"
+        networkpolicy = docs[0]
+        assert networkpolicy["kind"] == "NetworkPolicy"
         assert [
             {
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
-        ] == doc["spec"]["ingress"][0]["from"]
+        ] == networkpolicy["spec"]["ingress"][0]["from"]
 
     def test_external_es_network_selector_with_logging_sidecar_enabled(self, kube_version):
         """Test External Elasticsearch Service with NetworkPolicy Defaults."""
@@ -306,8 +353,8 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "NetworkPolicy"
+        networkpolicy = docs[0]
+        assert networkpolicy["kind"] == "NetworkPolicy"
         assert [
             {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
             {
@@ -332,11 +379,10 @@ class TestExternalElasticSearch:
                     "matchLabels": {"tier": "airflow"},
                 },
             },
-        ] == doc["spec"]["ingress"][0]["from"]
+        ] == networkpolicy["spec"]["ingress"][0]["from"]
 
     def test_external_es_index_pattern_defaults(self, kube_version):
-        """Test External Elasticsearch Service Index Pattern Search
-        defaults."""
+        """Test External Elasticsearch Service Index Pattern Search defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -355,9 +401,9 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        es_index = doc["data"]["nginx.conf"]
-        assert doc["kind"] == "ConfigMap"
+        configmap = docs[0]
+        es_index = configmap["data"]["nginx.conf"]
+        assert configmap["kind"] == "ConfigMap"
         assert "fluentd.$remote_user.*" in es_index
 
     def test_external_es_index_pattern_overrides(self, kube_version):

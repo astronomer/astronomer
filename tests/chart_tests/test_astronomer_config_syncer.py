@@ -44,6 +44,22 @@ cron_test_data = [
     supported_k8s_versions,
 )
 class TestAstronomerConfigSyncer:
+    def test_astronomer_config_syncer_defaults(self, kube_version):
+        """Test the default configurations when configSyncer is enabled."""
+        show_only = ["charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml"]
+        docs = render_chart(kube_version=kube_version, show_only=show_only)
+        assert len(docs) == 1
+        cronjob = docs[0]
+        assert cronjob["kind"] == "CronJob"
+        assert cronjob["metadata"]["name"] == "release-name-config-syncer"
+        assert cronjob["spec"]["concurrencyPolicy"] == "Forbid"
+        c_by_name = get_containers_by_name(cronjob)
+        assert len(c_by_name) == 1
+        job_container = c_by_name["config-syncer"]
+        assert job_container["image"].startswith("quay.io/astronomer/ap-commander:")
+        assert job_container["imagePullPolicy"] == "IfNotPresent"
+        assert job_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+
     def test_astronomer_config_syncer_rbac_namespace_pools_disabled(self, kube_version):
         """Test that if rbacEnabled but namespacePools disabled, helm renders
         ClusterRole and ClusterRoleBinding resources for config syncer."""
@@ -189,10 +205,10 @@ class TestAstronomerConfigSyncer:
         job_container_by_name = get_containers_by_name(doc)
         assert "--target-namespaces" in job_container_by_name["config-syncer"]["args"]
         assert ",".join(namespaces) in job_container_by_name["config-syncer"]["args"]
-        assert {"runAsNonRoot": True} == job_container_by_name["config-syncer"]["securityContext"]
+        assert job_container_by_name["config-syncer"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
-    def test_astronomer_config_syncer_cronjob_security_context_default_overrides(self, kube_version):
-        """Test that  config-syncer's container is allowed to configure security context."""
+    def test_astronomer_config_syncer_cronjob_security_context_overrides(self, kube_version):
+        """Test that config-syncer's container is allowed to configure security context."""
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -201,8 +217,8 @@ class TestAstronomerConfigSyncer:
                 },
                 "astronomer": {
                     "securityContext": {
-                        "runAsNonRoot": True,
-                        "allowPrivilegeEscalation": False,
+                        "snoopy": "dog",
+                        "woodstock": "bird",
                     },
                 },
             },
@@ -213,14 +229,15 @@ class TestAstronomerConfigSyncer:
 
         job_container_by_name = get_containers_by_name(doc)
 
-        assert {
+        assert job_container_by_name["config-syncer"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
-            "allowPrivilegeEscalation": False,
-        } == job_container_by_name["config-syncer"]["securityContext"]
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(self, kube_version):
-        """Test that when namespacePools is disabled, config-syncer cronjob is
-        configured not to target any namespace."""
+        """Test that when namespacePools is disabled, config-syncer cronjob is configured not to target any namespace."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
@@ -247,8 +264,7 @@ class TestAstronomerConfigSyncer:
 
     @pytest.mark.parametrize("test_data", cron_test_data, ids=[x[0] for x in cron_test_data])
     def test_astronomer_config_syncer_cronjob_default_schedule(self, test_data, kube_version):
-        """Test that if no schedule is provided for configSyncer, helm
-        automatically generates a random one."""
+        """Test that if no schedule is provided for configSyncer, helm automatically generates a random one."""
 
         doc = render_chart(
             name=test_data[0],
