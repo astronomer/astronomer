@@ -89,7 +89,7 @@ class TestElasticSearch:
             {"mountPath": "/usr/share/elasticsearch/config", "name": "es-config-dir"},
             {"mountPath": "/usr/share/elasticsearch/data", "name": "es-data"},
             {"mountPath": "/usr/share/elasticsearch/logs", "name": "es-client-logs"},
-            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"}
+            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
         ]
 
         assert es_client_containers["es-config-dir-copier"]["volumeMounts"] == [
