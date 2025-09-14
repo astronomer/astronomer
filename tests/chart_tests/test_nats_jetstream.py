@@ -28,7 +28,7 @@ class TestNatsJetstream:
 
         assert len(docs) == 3
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-        assert prod["nats"] == {"jetStreamEnabled": True, "tlsEnabled": False}
+        assert prod["nats"] == {"tlsEnabled": False}
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
         assert docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
@@ -65,7 +65,6 @@ class TestNatsJetstream:
         jetStreamCertPrefix = "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate"
         prod = yaml.safe_load(obj_by_name["ConfigMap-release-name-houston-config"]["data"]["production.yaml"])
         assert prod["nats"] == {
-            "jetStreamEnabled": True,
             "tlsEnabled": True,
             "tls": {
                 "caFile": f"{jetStreamCertPrefix}-client/ca.crt",

@@ -51,7 +51,6 @@ data:
 
     {{- if .Values.global.nats.jetStream.enabled }}
     nats:
-      jetStreamEnabled: {{ .Values.global.nats.jetStream.enabled }}
       {{- include "jetstreamTLS" . | nindent 6 }}
     {{- end }}
 

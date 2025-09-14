@@ -187,7 +187,6 @@ class TestElasticSearch:
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
         assert pod_data["securityContext"] == {
             "readOnlyRootFilesystem": True,
-            "privileged": True,
             "snoopy": "dog",
             "woodstock": "bird",
         }
