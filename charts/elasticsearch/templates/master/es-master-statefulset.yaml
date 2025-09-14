@@ -116,7 +116,6 @@ spec:
       - name: es-master
         securityContext:
           readOnlyRootFilesystem: true
-          privileged: true
           {{- if .Values.master.securityContext }}
           {{- toYaml .Values.master.securityContext | nindent 10 }}
           {{- else }}
