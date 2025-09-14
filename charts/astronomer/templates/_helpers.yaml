@@ -185,10 +185,10 @@
 {{- else if eq .Values.global.plane.mode "unified" }}
   {{- if .Values.global.customLogging.enabled }}
 - name: COMMANDER_ELASTICSEARCH_NODE
-  value: "{{ include "esproxy.url" . }}"
+  value: "http://{{ include "esproxy.url" . }}"
   {{- else }}
 - name: COMMANDER_ELASTICSEARCH_NODE
-  value: "{{ include "elasticsearch.url" . }}"
+  value: "http://{{ include "elasticsearch.url" . }}"
   {{- end }}
 {{- end }}
 - name: COMMANDER_HEALTH_STATUS

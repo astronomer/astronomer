@@ -470,12 +470,12 @@ class TestAstronomerCommander:
             (
                 "unified",
                 True,
-                "release-name-es-proxy.default.svc.cluster.local:9201",
+                "http://release-name-es-proxy.default.svc.cluster.local:9201",
             ),
             (
                 "unified",
                 False,
-                "release-name-elasticsearch.default.svc.cluster.local.:9200",
+                "http://release-name-elasticsearch.default.svc.cluster.local.:9200",
             ),
         ],
     )
