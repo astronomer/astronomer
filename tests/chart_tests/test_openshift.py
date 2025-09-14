@@ -15,6 +15,7 @@ show_only = [
 ]
 
 airflow_components_list = [
+    "apiServer"
     "flower",
     "webserver",
     "scheduler",
