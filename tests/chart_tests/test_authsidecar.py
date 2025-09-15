@@ -342,3 +342,34 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == doc["kind"]
         namespaceSelectors = doc["spec"]["ingress"][0]["from"]
         assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
+
+    def test_commander_authSidecar_with_ingress_allowed_namespaces(self, kube_version):
+        """Test All Services with authSidecar and allow some traffic namespaces.
+        Only include networkpolicies that have the network.openshift.io/policy-group: ingress label"""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]},
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/commander/commander-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+
+        doc = docs[0]
+        assert "NetworkPolicy" == doc["kind"]
+        namespaceSelectors = doc["spec"]["ingress"][0]["from"]
+        assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
+        assert {
+            "namespaceSelector": {
+                "matchExpressions": [
+                    {"key": "kubernetes.io/metadata.name", "operator": "In", "values": ["astro", "ingress-namespace"]}
+                ]
+            }
+        } in namespaceSelectors
