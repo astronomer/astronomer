@@ -27,6 +27,7 @@ spec:
   policyTypes:
   - Ingress
   ingress:
+  {{- if  (eq .Values.global.plane.mode "data") }}
   - from:
     {{- if .Values.global.authSidecar.enabled }}
     - namespaceSelector:
@@ -45,6 +46,7 @@ spec:
           tier: nginx
           component: ingress-controller
           release: {{ .Release.Name }}
+    {{- end }}
     {{- end }}
     - podSelector:
         matchLabels:
