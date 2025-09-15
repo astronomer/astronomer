@@ -27,8 +27,8 @@ spec:
   policyTypes:
   - Ingress
   ingress:
-  {{- if  (eq .Values.global.plane.mode "data") }}
   - from:
+    {{- if (eq .Values.global.plane.mode "data") }}
     {{- if .Values.global.authSidecar.enabled }}
     - namespaceSelector:
         matchLabels:
