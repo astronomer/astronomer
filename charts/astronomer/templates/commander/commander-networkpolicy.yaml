@@ -86,5 +86,8 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.ports.commanderGRPC }}
+    - protocol: TCP
+      port: {{ .Values.ports.commanderHTTP }}
+
 {{- end }}
 {{- end }}
