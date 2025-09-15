@@ -373,3 +373,27 @@ class TestAuthSidecar:
                 ]
             }
         } in namespaceSelectors
+
+    def test_commander_authSidecar_defaults(self, kube_version):
+        """Test Commander authsidecar defaults"""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/commander/commander-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+
+        doc = docs[0]
+        assert "NetworkPolicy" == doc["kind"]
+        podSelectors = doc["spec"]["ingress"][0]["from"]
+        assert {
+            "podSelector": {"matchLabels": {"component": "ingress-controller", "release": "release-name", "tier": "nginx"}}
+        } in podSelectors
