@@ -337,8 +337,8 @@ class TestAuthSidecar:
         )
 
         assert len(docs) == 1
+        doc = docs[0]
 
-        for doc in docs:
-            assert "NetworkPolicy" == doc["kind"]
-            namespaceSelectors = doc["spec"]["ingress"][0]["from"]
-            assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
+        assert "NetworkPolicy" == doc["kind"]
+        namespaceSelectors = doc["spec"]["ingress"][0]["from"]
+        assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
