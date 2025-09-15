@@ -326,3 +326,19 @@ class TestAuthSidecar:
                     ]
                 }
             } in namespaceSelectors
+
+    def test_commander_authSidecar_with_ingress_allowed_namespaces_empty_when_plane_mode_data(self, kube_version):
+        """Test commander Services with authSidecar and set no values in ingressAllowedNamespaces.
+        Only include networkpolicies that have the network.openshift.io/policy-group: ingress label."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
+            show_only=["charts/astronomer/templates/commander/commander-networkpolicy.yaml"],
+        )
+
+        assert len(docs) == 1
+
+        for doc in docs:
+            assert "NetworkPolicy" == doc["kind"]
+            namespaceSelectors = doc["spec"]["ingress"][0]["from"]
+            assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
