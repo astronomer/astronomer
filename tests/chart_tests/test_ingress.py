@@ -115,4 +115,3 @@ class TestIngress:
 
         backend = paths[0]["backend"]
         assert backend["service"]["port"]["name"] == "http"
-
