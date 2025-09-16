@@ -160,6 +160,10 @@ imagePullSecrets:
 {{- end -}}
 {{- end }}
 
-{{- define "elasticsearch.url" -}}
+{{- define "elasticsearch.ingressurl" -}}
+{{ if eq .Values.global.plane.mode "data" -}}
 elasticsearch.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+elasticsearch.{{ .Values.global.baseDomain }}
+{{- end -}}
 {{- end -}}
