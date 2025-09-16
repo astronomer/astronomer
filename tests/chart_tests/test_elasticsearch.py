@@ -875,7 +875,15 @@ class TestElasticSearch:
         assert len(rules) == 1
         paths = rules[0]["http"]["paths"]
         assert len(paths) == 1
-        assert paths[0]["path"] == "/"
-        assert paths[0]["pathType"] == "Prefix"
-        backend = paths[0]["backend"]
-        assert backend["service"] == {"name": "release-name-elasticsearch", "port": {"number": 9200}}
+        assert rules[0]["http"]["paths"] == [
+            {
+                "path": "/",
+                "pathType": "Prefix",
+                "backend": {
+                    "service": {
+                        "name": "release-name-elasticsearch",
+                        "port": {"number": 9200},
+                    }
+                },
+            }
+        ]
