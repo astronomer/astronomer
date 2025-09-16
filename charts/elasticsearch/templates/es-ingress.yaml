@@ -1,14 +1,14 @@
 ########################################
 ## Elasticsearch Logging Ingress ##
 ########################################
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-ingress
   labels:
-    tier: elasticsearch-networking
-    component: elasticsearch-logging-ingress
+    tier: logging
+    component: {{ template "elasticsearch.name" . }}-logging-ingress
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
