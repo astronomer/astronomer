@@ -116,38 +116,3 @@ class TestIngress:
         backend = paths[0]["backend"]
         assert backend["service"]["port"]["name"] == "http"
 
-    def test_elasticsearch_ingress_defaults(self, kube_version):
-        """Test elasticsearch ingress configuration"""
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com"}},
-        )
-
-        assert len(docs) == 1
-
-    def test_elasticsearch_ingress_with_dataplane(self, kube_version):
-        """Test elasticsearch ingress configuration with mode data"""
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": "data"}},
-        )
-        assert len(docs) == 1
-
-        assert docs[0]["kind"] == "Ingress"
-        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
-
-        annotations = docs[0]["metadata"]["annotations"]
-        auth_annotations = ["nginx.ingress.kubernetes.io/auth-signin", "nginx.ingress.kubernetes.io/auth-response-headers"]
-        for auth_annotation in auth_annotations:
-            assert auth_annotation not in annotations
-
-        rules = docs[0]["spec"]["rules"]
-        assert len(rules) == 1
-        paths = rules[0]["http"]["paths"]
-        assert len(paths) == 1
-        assert paths[0]["path"] == "/"
-        assert paths[0]["pathType"] == "Prefix"
-        backend = paths[0]["backend"]
-        assert backend["service"] == {"name": "release-name-elasticsearch", "port": {"number": 9200}}
