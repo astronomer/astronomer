@@ -15,10 +15,10 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+      {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     {{- if .Values.global.extraAnnotations }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+      {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
