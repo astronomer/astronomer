@@ -116,7 +116,6 @@ class TestIngress:
         backend = paths[0]["backend"]
         assert backend["service"]["port"]["name"] == "http"
 
-
     def test_elasticsearch_ingress_defaults(self, kube_version):
         """Test elasticsearch ingress configuration"""
         docs = render_chart(
@@ -132,13 +131,9 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com"},
-                    "plane": {"mode": "data"}},
+            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": "data"}},
         )
         assert len(docs) == 1
-
-        #federate_ingress = next((doc for doc in docs if "federate-ingress" in doc["metadata"]["name"]), None)
-        #assert federate_ingress is not None
 
         assert docs[0]["kind"] == "Ingress"
         assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
@@ -148,12 +143,11 @@ class TestIngress:
         for auth_annotation in auth_annotations:
             assert auth_annotation not in annotations
 
-        #rules = federate_ingress["spec"]["rules"]
-        #assert len(rules) == 1
-        #paths = rules[0]["http"]["paths"]
-        #assert len(paths) == 1
-        #assert paths[0]["path"] == "/(federate|healthz)(/.*)?"
-        #assert paths[0]["pathType"] == "Prefix"
-
-        #backend = paths[0]["backend"]
-        #assert backend["service"]["port"]["name"] == "http"
+        rules = docs[0]["spec"]["rules"]
+        assert len(rules) == 1
+        paths = rules[0]["http"]["paths"]
+        assert len(paths) == 1
+        assert paths[0]["path"] == "/"
+        assert paths[0]["pathType"] == "Prefix"
+        backend = paths[0]["backend"]
+        assert backend["service"] == {"name": "release-name-elasticsearch", "port": {"number": 9200}}
