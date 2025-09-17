@@ -51,7 +51,6 @@ data:
 
     {{- if .Values.global.nats.jetStream.enabled }}
     nats:
-      jetStreamEnabled: {{ .Values.global.nats.jetStream.enabled }}
       {{- include "jetstreamTLS" . | nindent 6 }}
     {{- end }}
 
@@ -77,7 +76,6 @@ data:
           enabled: {{.Values.global.airflowOperator.enabled}}
       disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
       fluentdIndexPrefix: {{ include "vector.IndexPattern" .}}
-      enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
       namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
       # Airflow chart settings
@@ -296,6 +294,20 @@ data:
               pod:
                 runAsNonRoot: true
             {{ end }}
+          apiServer:
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end }}
+            resources:
+              limits:
+                # XXX: There is an alert configured to trigger when ephemeral storage reaches
+                # 1800000000 bytes (90% of the 2Gi limit). Be aware of this when modifying
+                # ephemeral-storage limits.
+                ephemeral-storage: "2Gi"
+              requests:
+                ephemeral-storage: "1Gi"
           webserver:
             {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
