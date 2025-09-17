@@ -824,31 +824,46 @@ class TestElasticSearch:
         else:
             assert len(docs) == 0, f"Document {doc} should not render in {plane_mode} mode"
 
-    def test_elasticsearch_ingress_default(self, kube_version):
+    def test_elasticsearch_ingress_control_mode_default(self, kube_version):
         """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
-            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
-        )
-        assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "Ingress"
-        assert doc["metadata"]["name"] == "release-name-elasticsearch-ingress"
-        assert doc["metadata"]["labels"]["component"] == "elasticsearch-logging-ingress"
-        assert doc["metadata"]["labels"]["tier"] == "elasticsearch-networking"
-        assert doc["metadata"]["labels"]["plane"] == "data"
-
-    @pytest.mark.parametrize("plane_mode", ["control", "unified"])
-    def test_elasticsearch_ingress_disabled_when_data_mode_is_disabled(self, kube_version, plane_mode):
-        """Test that helm does not render Elasticsearch ingress in control plane mode."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "global": {
-                    "plane": {"mode": plane_mode},
-                }
-            },
+            values={"global": {"plane": {"mode": "control"}}},
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
         )
         assert len(docs) == 0
+
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_elasticsearch_ingress(self, kube_version, plane_mode):
+        """Test elasticsearch ingress configuration"""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
+        )
+
+        print(docs)
+
+        assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
+        assert docs[0]["kind"] == "Ingress"
+        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+        annotations = docs[0]["metadata"]["annotations"]
+        auth_annotations = ["nginx.ingress.kubernetes.io/auth-signin", "nginx.ingress.kubernetes.io/auth-response-headers"]
+        for auth_annotation in auth_annotations:
+            assert auth_annotation not in annotations
+        rules = docs[0]["spec"]["rules"]
+        assert len(rules) == 1
+        paths = rules[0]["http"]["paths"]
+        assert len(paths) == 1
+        assert rules[0]["http"]["paths"] == [
+            {
+                "path": "/",
+                "pathType": "Prefix",
+                "backend": {
+                    "service": {
+                        "name": "release-name-elasticsearch",
+                        "port": {"number": 9200},
+                    }
+                },
+            }
+        ]
