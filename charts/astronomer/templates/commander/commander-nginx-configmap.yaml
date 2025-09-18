@@ -44,17 +44,17 @@ data:
 
         # Upstream for HTTP metadata endpoint
         upstream commander_http {
-            server 127.0.0.1:8880;
+            server 127.0.0.1:{{ .Values.ports.commanderHTTP }};
         }
 
         # Upstream for GRPC endpoint
         upstream commander_grpc {
-            server 127.0.0.1:50051;
+            server 127.0.0.1:{{ .Values.ports.commanderGRPC }};
         }
 
         # HTTP server for metadata endpoint
         server {
-            listen 8080;
+            listen {{ .Values.ports.commanderSidecarHTTP }};
 
             # Health check endpoint
             location /nginx-health {
@@ -64,7 +64,7 @@ data:
             }
 
             location /metadata {
-                proxy_pass http://commander_http/metadata;
+                proxy_pass http://commander_http;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -80,7 +80,7 @@ data:
 
         # GRPC server with HTTP/2 support
         server {
-            listen 9090 http2;
+            listen {{ .Values.ports.commanderSidecarGRPC }} http2;
 
             location / {
                 grpc_pass grpc://commander_grpc;
