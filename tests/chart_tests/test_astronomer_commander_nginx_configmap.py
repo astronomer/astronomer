@@ -1,7 +1,8 @@
 import pytest
+
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -21,9 +22,7 @@ class TestAstronomerCommanderNginxConfigMap:
             ("control", False, False),
         ],
     )
-    def test_conditional_rendering(
-        self, kube_version, plane_mode, auth_sidecar_enabled, should_render_configmap
-    ):
+    def test_conditional_rendering(self, kube_version, plane_mode, auth_sidecar_enabled, should_render_configmap):
         """Test that nginx ConfigMap is only rendered when auth-sidecar is enabled in data plane mode."""
         values = {
             "global": {
@@ -53,10 +52,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "authSidecar": {"enabled": True}
-                },
+                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -80,10 +76,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "authSidecar": {"enabled": True}
-                },
+                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -102,10 +95,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "authSidecar": {"enabled": True}
-                },
+                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -127,10 +117,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "authSidecar": {"enabled": True}
-                },
+                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -156,10 +143,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "authSidecar": {"enabled": True}
-                },
+                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -187,10 +171,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "authSidecar": {"enabled": True}
-                },
+                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -207,7 +188,7 @@ class TestAstronomerCommanderNginxConfigMap:
             "tier": "astronomer",
             "release": "release-name",
             "heritage": "Helm",
-            "plane": "data"
+            "plane": "data",
         }
         for key, value in expected_labels.items():
             assert doc["metadata"]["labels"][key] == value
