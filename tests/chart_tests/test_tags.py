@@ -35,8 +35,13 @@ chart_values = get_all_features()
 def test_tags_monitoring_enabled(template, chart_values=chart_values, kube_version=newest_supported_kube_version):
     """Test that when monitoring is enabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": True}
+    if "auth-sidecar" in template:
+        chart_values["global"] = {"plane": {"mode": "control"}, "authSidecar": {"enabled": True}}
+    elif "prometheus-federate-ingress" in template:
+        chart_values["global"] = {"plane": {"mode": "data"}}
+    else:
+        chart_values["global"] = {"plane": {"mode": "unified"}}
     docs = render_chart(kube_version=kube_version, values=chart_values, show_only=template)
-
     assert len(docs) >= 1
 
 
