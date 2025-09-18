@@ -148,7 +148,7 @@ spec:
           {{- if .Values.commander.extraContainers }}
           {{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
           {{- end }}
-          {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: auth-sidecar
           image: {{ template "authSidecar.image" . }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
