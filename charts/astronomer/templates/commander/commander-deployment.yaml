@@ -147,7 +147,7 @@ spec:
           {{- end }}
           {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: auth-sidecar
-          image: {{ template "authsidecar.image" . }}
+          image: {{ template "authSidecar.image" . }}
           imagePullPolicy: {{ .Values.images.authSidecar.pullPolicy }}
           ports:
             - name: nginx-http
