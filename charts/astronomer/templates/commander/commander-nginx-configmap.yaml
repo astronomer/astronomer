@@ -19,17 +19,17 @@ data:
     events {
         worker_connections 1024;
     }
-    
+
     http {
         # Upstream for HTTP metadata endpoint
         upstream commander_http {
             server 127.0.0.1:8880;
         }
-        
+
         # HTTP server for metadata endpoint
         server {
             listen 80;
-            
+
             location /metadata {
                 proxy_pass http://commander_http;
                 proxy_set_header Host $host;
@@ -40,7 +40,7 @@ data:
                 proxy_buffers 4 16k;
                 proxy_busy_buffers_size 16k;
             }
-            
+
             # Health check endpoint
             location /nginx-health {
                 access_log off;
@@ -49,13 +49,13 @@ data:
             }
         }
     }
-    
+
     stream {
         # Upstream for GRPC endpoint
         upstream commander_grpc {
             server 127.0.0.1:50051;
         }
-        
+
         # GRPC stream server
         server {
             listen 50051;
