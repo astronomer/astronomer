@@ -531,7 +531,7 @@ class TestAstronomerCommander:
                 "enabled": True,
                 "repository": "quay.io/astronomer/ap-auth-sidecar",
                 "tag": "1.27.4-3",
-                "pullPolicy": "IfNotPresent"
+                "pullPolicy": "IfNotPresent",
             }
 
         docs = render_chart(
