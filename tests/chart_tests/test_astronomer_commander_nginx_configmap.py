@@ -107,10 +107,10 @@ class TestAstronomerCommanderNginxConfigMap:
         assert "location /nginx-health {" in nginx_conf
         assert 'return 200 "healthy\\n";' in nginx_conf
         assert "location /metadata {" in nginx_conf
-        assert "proxy_pass http://commander_http/metadata;" in nginx_conf
+        assert "proxy_pass http://commander-http;" in nginx_conf
 
         assert "location / {" in nginx_conf
-        assert "grpc_pass grpc://commander_grpc;" in nginx_conf
+        assert "grpc_pass grpc://commander-grpc;" in nginx_conf
 
     def test_proxy_headers(self, kube_version):
         """Test that nginx ConfigMap includes proper proxy headers."""

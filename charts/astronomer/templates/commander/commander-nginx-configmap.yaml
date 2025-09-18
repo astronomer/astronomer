@@ -43,12 +43,12 @@ data:
         types_hash_max_size 2048;
 
         # Upstream for HTTP metadata endpoint
-        upstream commander_http {
+        upstream commander-http {
             server 127.0.0.1:{{ .Values.ports.commanderHTTP }};
         }
 
         # Upstream for GRPC endpoint
-        upstream commander_grpc {
+        upstream commander-grpc {
             server 127.0.0.1:{{ .Values.ports.commanderGRPC }};
         }
 
@@ -64,7 +64,7 @@ data:
             }
 
             location /metadata {
-                proxy_pass http://commander_http;
+                proxy_pass http://-http;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -83,7 +83,7 @@ data:
             listen {{ .Values.ports.commanderSidecarGRPC }} http2;
 
             location / {
-                grpc_pass grpc://commander_grpc;
+                grpc_pass grpc://commander-grpc;
                 grpc_set_header Host $host;
                 grpc_set_header X-Real-IP $remote_addr;
                 grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
