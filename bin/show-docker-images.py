@@ -63,10 +63,11 @@ def get_images_from_houston_configmap(doc, args):
     """Return a list of images used in the houston configmap."""
     houston_config = yaml.safe_load(doc["data"]["production.yaml"])
     keepers = ("authSideCar", "loggingSidecar")
-    items = {k: v for k, v in houston_config["deployments"].items() if k in keepers}
-    auth_sidecar_image = f"{items['authSideCar']['repository']}:{items['authSideCar']['tag']}"
-    logging_sidecar_image = f"{items['loggingSidecar']['image']}"
-    images = [auth_sidecar_image, logging_sidecar_image]
+    deployment_items = {k: v for k, v in houston_config["deployments"].items() if k in keepers}
+    auth_sidecar_image = f"{deployment_items['authSideCar']['repository']}:{deployment_items['authSideCar']['tag']}"
+    logging_sidecar_image = f"{deployment_items['loggingSidecar']['image']}"
+    dag_server_image = f"{houston_config['deployments']['dagDeploy']['images']['dagServer']['repository']}:{houston_config['deployments']['dagDeploy']['images']['dagServer']['tag']}"
+    images = [auth_sidecar_image, dag_server_image, logging_sidecar_image]
     if args.verbose and any("quay.io" in x for x in images):
         print(
             "Houston configmap uses quay.io instead of private registry",
