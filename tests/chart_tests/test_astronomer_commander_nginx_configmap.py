@@ -85,9 +85,9 @@ class TestAstronomerCommanderNginxConfigMap:
         doc = docs[0]
         nginx_conf = doc["data"]["nginx.conf"]
 
-        assert "upstream commander_http {" in nginx_conf
+        assert "upstream commander-http {" in nginx_conf
         assert "server 127.0.0.1:8880;" in nginx_conf
-        assert "upstream commander_grpc {" in nginx_conf
+        assert "upstream commander-grpc {" in nginx_conf
         assert "server 127.0.0.1:50051;" in nginx_conf
 
     def test_location_blocks(self, kube_version):
