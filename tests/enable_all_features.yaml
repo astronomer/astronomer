@@ -25,6 +25,8 @@ global:
   customLogging:
     awsSecretName: dummy
     enabled: true
+  dagOnlyDeployment:
+    enabled: true
   loggingSidecar:
     enabled: true
   networkPolicy:

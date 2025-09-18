@@ -104,10 +104,17 @@ spec:
           release: {{ .Release.Name }}
           component: houston-cleanup-airflow-db
     ports:
+    {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+    - protocol: TCP
+      port: {{ .Values.ports.commanderSidecarHTTP }}
+    - protocol: TCP
+      port: {{ .Values.ports.commanderSidecarGRPC }}
+    {{- else }}
     - protocol: TCP
       port: {{ .Values.ports.commanderGRPC }}
     - protocol: TCP
       port: {{ .Values.ports.commanderHTTP }}
+    {{- end }}
 
 {{- end }}
 {{- end }}
