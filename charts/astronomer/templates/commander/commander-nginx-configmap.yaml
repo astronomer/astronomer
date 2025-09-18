@@ -80,7 +80,8 @@ data:
 
         # GRPC server with HTTP/2 support
         server {
-            listen {{ .Values.ports.commanderSidecarGRPC }} http2;
+            listen {{ .Values.ports.commanderSidecarGRPC }};
+            http2 on;
 
             location / {
                 grpc_pass grpc://commander-grpc;
