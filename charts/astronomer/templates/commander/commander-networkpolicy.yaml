@@ -106,9 +106,9 @@ spec:
     ports:
     {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
     - protocol: TCP
-      port: 8080
+      port: {{ .Values.ports.commanderSidecarHTTP }}
     - protocol: TCP
-      port: 9090
+      port: {{ .Values.ports.commanderSidecarGRPC }}
     {{- else }}
     - protocol: TCP
       port: {{ .Values.ports.commanderGRPC }}
