@@ -151,10 +151,10 @@ spec:
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           ports:
             - name: nginx-http
-              containerPort: 8080
+              containerPort: {{ .Values.ports.commanderSidecarHTTP }}
               protocol: TCP
             - name: nginx-grpc
-              containerPort: 9090
+              containerPort: {{ .Values.ports.commanderSidecarGRPC }}
               protocol: TCP
           volumeMounts:
             - name: nginx-conf
@@ -165,13 +165,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /nginx-health
-              port: 8080
+              port: {{ .Values.ports.commanderSidecarHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /nginx-health
-              port: 8080
+              port: {{ .Values.ports.commanderSidecarHTTP }}
             initialDelaySeconds: 5
             periodSeconds: 5
         {{- end }}
