@@ -16,30 +16,41 @@ metadata:
   {{- end }}
 data:
   nginx.conf: |
+    # Run nginx as non-root user for OpenShift
+    pid /tmp/nginx.pid;
+
     events {
         worker_connections 1024;
     }
 
     http {
+        # Temporary directories that are writable by non-root user
+        client_body_temp_path /tmp/client_temp;
+        proxy_temp_path       /tmp/proxy_temp_path;
+        fastcgi_temp_path     /tmp/fastcgi_temp;
+        uwsgi_temp_path       /tmp/uwsgi_temp;
+        scgi_temp_path        /tmp/scgi_temp;
+
+        # Basic HTTP settings
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+
         # Upstream for HTTP metadata endpoint
         upstream commander_http {
             server 127.0.0.1:8880;
         }
 
+        # Upstream for GRPC endpoint
+        upstream commander_grpc {
+            server 127.0.0.1:50051;
+        }
+
         # HTTP server for metadata endpoint
         server {
-            listen 80;
-
-            location /metadata {
-                proxy_pass http://commander_http;
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-                proxy_buffer_size 16k;
-                proxy_buffers 4 16k;
-                proxy_busy_buffers_size 16k;
-            }
+            listen 8080;
 
             # Health check endpoint
             location /nginx-health {
@@ -47,22 +58,41 @@ data:
                 return 200 "healthy\n";
                 add_header Content-Type text/plain;
             }
-        }
-    }
 
-    stream {
-        # Upstream for GRPC endpoint
-        upstream commander_grpc {
-            server 127.0.0.1:50051;
+            location /metadata {
+                proxy_pass http://commander_http/metadata;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_buffer_size 16k;
+                proxy_buffers 4 16k;
+                proxy_busy_buffers_size 16k;
+                proxy_connect_timeout 30s;
+                proxy_send_timeout 30s;
+                proxy_read_timeout 30s;
+            }
         }
 
-        # GRPC stream server
+        # GRPC server with HTTP/2 support
         server {
-            listen 50051;
-            proxy_pass commander_grpc;
-            proxy_timeout 1s;
-            proxy_responses 1;
-            proxy_bind $remote_addr transparent;
+            listen 9090 http2;
+
+            location / {
+                grpc_pass grpc://commander_grpc;
+                grpc_set_header Host $host;
+                grpc_set_header X-Real-IP $remote_addr;
+                grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                grpc_set_header X-Forwarded-Proto $scheme;
+
+                # GRPC timeouts
+                grpc_read_timeout 300s;
+                grpc_send_timeout 300s;
+                client_body_timeout 300s;
+
+                # Buffer settings for GRPC
+                grpc_buffer_size 16k;
+            }
         }
     }
 {{- end }}

@@ -26,21 +26,19 @@ spec:
   ports:
     - name: commander-http
       protocol: TCP
+      port: {{ .Values.ports.commanderHTTP }}
       {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
-      port: {{ .Values.ports.commanderHTTP }}
-      targetPort: 80
+      targetPort: 8080
       {{- else }}
-      port: {{ .Values.ports.commanderHTTP }}
       targetPort: {{ .Values.ports.commanderHTTP }}
       {{- end }}
       appProtocol: http
     - name: commander-grpc
       protocol: TCP
+      port: {{ .Values.ports.commanderGRPC }}
       {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
-      port: {{ .Values.ports.commanderGRPC }}
-      targetPort: 50051
+      targetPort: 9090
       {{- else }}
-      port: {{ .Values.ports.commanderGRPC }}
       targetPort: {{ .Values.ports.commanderGRPC }}
       {{- end }}
       appProtocol: grpc
