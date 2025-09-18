@@ -69,7 +69,7 @@ class TestAstronomerCommanderNginxConfigMap:
         assert "scgi_temp_path        /tmp/scgi_temp;" in nginx_conf
 
         assert "listen 8080;" in nginx_conf
-        assert "listen 9090 http2;" in nginx_conf
+        assert "listen 9090;" in nginx_conf
 
     def test_upstream_configuration(self, kube_version):
         """Test that nginx ConfigMap contains correct upstream configurations."""
