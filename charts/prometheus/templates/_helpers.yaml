@@ -158,3 +158,31 @@ imagePullSecrets:
 {{ .Values.images.promproxy.repository}}:{{ .Values.images.promproxy.tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Define filesd-reloader environment variables
+*/}}
+{{- define "prometheus.filesdReloader.env" -}}
+- name: DATABASE_URL
+  valueFrom:
+    secretKeyRef:
+      name: astronomer-bootstrap
+      key: connection
+- name: DATABASE_SCHEMA_NAME
+  value: "houston$default"
+- name: CLUSTER_TABLE_NAME
+  value: Cluster
+- name: DEPLOYMENT_TABLE_NAME
+  value: Deployment
+- name: DATABASE_NAME
+  value: {{ .Release.Name }}_houston
+- name: FILESD_FILE_PATH
+  value: /prometheusreloader/airflow
+- name: ENABLE_CLUSTER_SCRAPING
+  value: {{ if eq .Values.global.plane.mode "unified" }}"True"{{ else }}"False"{{ end }}
+- name: PLANE_MODE
+  value: {{ .Values.global.plane.mode | quote }}
+{{- if .Values.filesdReloader.extraEnv }}
+{{ toYaml .Values.filesdReloader.extraEnv }}
+{{- end }}
+{{- end -}}

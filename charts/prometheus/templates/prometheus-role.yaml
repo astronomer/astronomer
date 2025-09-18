@@ -26,6 +26,9 @@ rules:
       - "nodes"
       - "nodes/proxy"
       {{- end }}
+      {{- if and (eq .Values.rbac.role.kind "Role") (eq .Values.global.plane.mode "data") }}
+      - configmap
+      {{- end }}
     verbs:
       - "get"
       - "list"
