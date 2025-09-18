@@ -145,7 +145,43 @@ spec:
           {{- if .Values.commander.extraContainers }}
           {{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
           {{- end }}
+          {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        - name: auth-sidecar
+          image: {{ template "authsidecar.image" . }}
+          imagePullPolicy: {{ .Values.images.authSidecar.pullPolicy }}
+          ports:
+            - name: nginx-http
+              containerPort: 80
+              protocol: TCP
+            - name: nginx-grpc
+              containerPort: 50051
+              protocol: TCP
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+          resources:
+{{ toYaml (default .Values.commander.authSidecar.resources .Values.global.authSidecar.resources) | indent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        {{- end }}
       volumes:
+        {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        - name: nginx-conf
+          configMap:
+            name: {{ .Release.Name }}-commander-nginx-conf
+        {{- end }}
         - name: commander-home
           emptyDir: {}
         - configMap:
