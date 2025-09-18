@@ -78,7 +78,7 @@ class TestIngress:
     def test_single_ingress_per_host(self, kube_version):
         default_docs = render_chart(values={"global": {"enablePerHostIngress": True}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
-        assert len(ingresses) == 8
+        assert len(ingresses) == 7
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
         assert all(len(doc["spec"]["tls"][0]["hosts"]) == 1 for doc in ingresses)
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)
@@ -90,7 +90,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/prometheus/templates/ingress.yaml", "charts/prometheus/templates/prometheus-federate-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com"}},
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
         )
 
         assert len(docs) == 2
