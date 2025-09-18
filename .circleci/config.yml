@@ -415,7 +415,7 @@ workflows:
                 - quay.io/astronomer/ap-commander:1.0.4
                 - quay.io/astronomer/ap-configmap-reloader:0.14.0
                 - quay.io/astronomer/ap-curator:8.0.21-1
-                - quay.io/astronomer/ap-dag-deploy:0.6.5
+                - quay.io/astronomer/ap-dag-deploy:0.7.0
                 - quay.io/astronomer/ap-db-bootstrapper:0.37.4
                 - quay.io/astronomer/ap-default-backend:0.28.30
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0
