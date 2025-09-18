@@ -505,3 +505,62 @@ class TestAstronomerCommander:
         env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
 
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == expected_node
+
+    @pytest.mark.parametrize(
+        "plane_mode,auth_sidecar_enabled,should_render_deployment,expected_containers",
+        [
+            ("data", False, True, ["commander"]),
+            ("data", True, True, ["commander", "auth-sidecar"]),
+            ("unified", False, True, ["commander"]),
+            ("unified", True, True, ["commander"]),
+            ("control", False, False, []),
+            ("control", True, False, []),
+        ],
+    )
+    def test_astronomer_commander_auth_sidecar_conditional_rendering(
+        self, kube_version, plane_mode, auth_sidecar_enabled, should_render_deployment, expected_containers
+    ):
+        """Test that auth-sidecar is only included in data plane mode when enabled, and deployment only renders for data/unified modes."""
+        values = {
+            "global": {
+                "plane": {"mode": plane_mode},
+            },
+        }
+        if auth_sidecar_enabled:
+            values["global"]["authSidecar"] = {
+                "enabled": True,
+                "repository": "quay.io/astronomer/ap-auth-sidecar",
+                "tag": "1.27.4-3",
+                "pullPolicy": "IfNotPresent"
+            }
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        if not should_render_deployment:
+            assert len(docs) == 0
+            return
+
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc)
+
+        assert len(c_by_name) == len(expected_containers)
+
+        for container_name in expected_containers:
+            assert container_name in c_by_name
+
+        if "auth-sidecar" in expected_containers:
+            auth_sidecar = c_by_name["auth-sidecar"]
+            assert auth_sidecar["image"] == "quay.io/astronomer/ap-auth-sidecar:1.27.4-3"
+            assert auth_sidecar["imagePullPolicy"] == "IfNotPresent"
+
+            ports = {port["name"]: port["containerPort"] for port in auth_sidecar["ports"]}
+            assert ports["nginx-http"] == 8080
+            assert ports["nginx-grpc"] == 9090
+
+            assert auth_sidecar["livenessProbe"]["httpGet"]["port"] == 8080
+            assert auth_sidecar["readinessProbe"]["httpGet"]["port"] == 8080
