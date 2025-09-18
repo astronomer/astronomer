@@ -148,7 +148,7 @@ spec:
           {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: auth-sidecar
           image: {{ template "authSidecar.image" . }}
-          imagePullPolicy: {{ .Values.images.authSidecar.pullPolicy }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           ports:
             - name: nginx-http
               containerPort: 80
@@ -161,8 +161,7 @@ spec:
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
               readOnly: true
-          resources:
-{{ toYaml (default .Values.commander.authSidecar.resources .Values.global.authSidecar.resources) | indent 12 }}
+          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
           livenessProbe:
             httpGet:
               path: /nginx-health
