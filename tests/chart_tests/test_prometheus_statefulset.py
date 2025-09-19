@@ -43,7 +43,6 @@ class TestPrometheusStatefulset:
         assert c_by_name["prometheus"]["image"].startswith("quay.io/astronomer/ap-prometheus:")
         assert c_by_name["prometheus"]["ports"] == [{"containerPort": 9090, "name": "prometheus-data"}]
         assert c_by_name["prometheus"]["volumeMounts"] == [
-            {"mountPath": "/etc/prometheus/federation-auth", "name": "federation-auth", "readOnly": True},
             {"mountPath": "/etc/prometheus/config", "name": "prometheus-config-volume"},
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
