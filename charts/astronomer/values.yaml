@@ -547,3 +547,5 @@ ports:
   astroUIHTTP: 8080
   registryHTTP: 5000
   registryScrape: 5001
+  commanderSidecarHTTP: 8080
+  commanderSidecarGRPC: 9090
