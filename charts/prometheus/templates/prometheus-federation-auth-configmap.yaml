@@ -61,10 +61,49 @@ data:
                 proxy_buffer_size 4k;
             }
 
-            # Auth endpoint for external ingress controllers (if still needed)
+            # Auth endpoint for external ingress controllers and federation tokens
             location = /auth {
                 internal;
                 content_by_lua_block {
+                    {{- if .Values.global.authSidecar.enabled }}
+                    -- Check for authsidecar authentication first
+                    local authsidecar_user = ngx.var.http_x_forwarded_user or 
+                                            ngx.var.http_x_auth_user or
+                                            ngx.var.http_x_remote_user
+                    
+                    local authsidecar_session = ngx.var.cookie_session or
+                                               ngx.var.cookie_auth_session or
+                                               ngx.var.cookie_astronomer_session
+                    
+                    local authsidecar_groups = ngx.var.http_x_forwarded_groups or
+                                              ngx.var.http_x_auth_groups
+                    
+                    -- Check for any authsidecar authentication indicators
+                    if authsidecar_user or authsidecar_session then
+                        ngx.log(ngx.INFO, "AuthSidecar authentication detected for user: ", 
+                                authsidecar_user or "session-based")
+                        if authsidecar_groups then
+                            ngx.log(ngx.INFO, "AuthSidecar groups: ", authsidecar_groups)
+                        end
+                        return -- Allow access when authsidecar is authenticated
+                    end
+                    
+                    -- Check for authsidecar JWT tokens
+                    local auth_header = ngx.var.http_authorization
+                    if auth_header then
+                        local jwt_token = auth_header:match("^Bearer%s+(.+)$")
+                        if jwt_token and (jwt_token:match("^ey[A-Za-z0-9%-_]+%.") or 
+                                         string.len(jwt_token) > 100) then
+                            -- This looks like a JWT token from authsidecar
+                            ngx.log(ngx.INFO, "AuthSidecar JWT token detected, allowing access")
+                            return
+                        end
+                    end
+                    
+                    ngx.log(ngx.INFO, "No valid authsidecar authentication found, checking federation token")
+                    {{- end }}
+                    
+                    -- Fall back to federation token authentication
                     local auth_header = ngx.var.http_authorization
                     local registry_auth_token = os.getenv("REGISTRY_AUTH_TOKEN")
 
@@ -72,6 +111,9 @@ data:
                         ngx.log(ngx.WARN, "Federation auth: Missing Authorization header")
                         ngx.status = 401
                         ngx.header["X-Auth-Error"] = "Missing Authorization header"
+                        {{- if .Values.global.authSidecar.enabled }}
+                        ngx.header["X-Auth-Error"] = "Missing Authorization header. Provide either valid authsidecar authentication or federation token."
+                        {{- end }}
                         ngx.exit(401)
                     end
 
@@ -92,11 +134,15 @@ data:
                         ngx.log(ngx.WARN, "Federation auth failed for token prefix: ",
                                 string.sub(provided_token, 1, 8))
                         ngx.status = 403
+                        {{- if .Values.global.authSidecar.enabled }}
+                        ngx.header["X-Auth-Error"] = "Invalid federation token. Ensure you're authenticated via authsidecar or provide a valid federation token."
+                        {{- else }}
                         ngx.header["X-Auth-Error"] = "Invalid federation token"
+                        {{- end }}
                         ngx.exit(403)
                     end
 
-                    ngx.log(ngx.INFO, "Federation auth successful, proxying to Prometheus")
+                    ngx.log(ngx.INFO, "Federation token authentication successful, proxying to Prometheus")
                 }
             }
 
