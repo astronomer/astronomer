@@ -34,10 +34,10 @@ spec:
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
-        - commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+        - commander.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
-  - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+  - host: commander.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /

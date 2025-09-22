@@ -33,10 +33,10 @@ spec:
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
-        - {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+        - {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
-  - host: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+  - host: {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /metadata

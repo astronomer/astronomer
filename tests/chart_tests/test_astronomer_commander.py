@@ -32,7 +32,7 @@ class TestAstronomerCommander:
                 },
                 "images": {"commander": {"tag": "88.77.66"}},
             },
-            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainSuffix": "custom-dp-123"}},
+            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainPrefix": "custom-dp-123"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -488,7 +488,7 @@ class TestAstronomerCommander:
             },
             "global": {
                 "baseDomain": "astronomer.example.com",
-                "plane": {"mode": mode, "domainSuffix": "custom-dp-123"},
+                "plane": {"mode": mode, "domainPrefix": "custom-dp-123"},
                 "customLogging": {"enabled": custom_logging},
             },
         }

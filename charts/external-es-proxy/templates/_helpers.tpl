@@ -126,5 +126,5 @@ proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogg
 {{- end }}
 
 {{- define "es-proxy.url" -}}
-es-proxy.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+es-proxy.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- end -}}

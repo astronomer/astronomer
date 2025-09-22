@@ -21,7 +21,7 @@ data:
       external_labels:
         release: {{ .Release.Name }}
         {{- if eq .Values.global.plane.mode "data" }}
-        clusterid: {{ .Values.global.plane.domainSuffix }}
+        clusterid: {{ .Values.global.plane.domainPrefix }}
         {{- end }}
         {{- if .Values.external_labels }}
         {{- toYaml .Values.external_labels | nindent 8 }}
