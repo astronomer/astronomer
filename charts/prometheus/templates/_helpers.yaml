@@ -69,7 +69,7 @@ Create chart name and version as used by the chart label.
 
 {{- define "prometheus.url" -}}
 {{- if eq .Values.global.plane.mode "data" -}}
-prometheus.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+prometheus.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 prometheus.{{ .Values.global.baseDomain }}
 {{- end -}}
@@ -77,7 +77,7 @@ prometheus.{{ .Values.global.baseDomain }}
 
 {{- define "prom-proxy.url" -}}
 {{- if eq .Values.global.plane.mode "data" -}}
-prom-proxy.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+prom-proxy.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 prom-proxy.{{ .Values.global.baseDomain }}
 {{- end -}}
