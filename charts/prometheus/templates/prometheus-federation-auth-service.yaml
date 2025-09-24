@@ -1,7 +1,7 @@
 ########################################
 ## Prometheus Federation Auth Service ##
 ########################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq .Values.global.plane.mode "data" }}
 apiVersion: v1
 kind: Service
 metadata:

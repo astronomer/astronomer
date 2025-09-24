@@ -13,7 +13,7 @@ global:
   # - unified: The Astronomer platform will run with both the data plane and control plane in the same cluster and namespace. This is the behavior found in Astronomer 0.x.
   plane:
     mode: "unified"  # one of: control, data, unified
-    domainSuffix: ""    # cluster-id
+    domainPrefix: ""    # cluster-id
 
   # Labels to add to every pod
   podLabels: {}

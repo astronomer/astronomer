@@ -693,7 +693,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "plane": {"mode": "data", "domainSuffix": "plane"},
+                    "plane": {"mode": "data", "domainPrefix": "plane"},
                     "baseDomain": "example.com",
                     "customLogging": {
                         "enabled": True,

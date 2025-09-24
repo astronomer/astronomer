@@ -215,7 +215,7 @@
 - name: COMMANDER_STATUS
   value: HEALTHY
 - name: COMMANDER_DATAPLANE_ID
-  value: {{ .Values.global.plane.domainSuffix | default "astronomer" }}
+  value: {{ .Values.global.plane.domainPrefix | default "astronomer" }}
 - name: COMMANDER_BASE_DOMAIN
   value: {{ include "commander.baseDomain" . | quote }}
 - name: COMMANDER_DATAPLANE_URL
@@ -525,7 +525,7 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 
 {{- define "commander.dataplaneURL" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
-{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 {{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
 {{- end }}
@@ -533,7 +533,7 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 
 {{- define "commander.baseDomain" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
-{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 {{ .Values.global.baseDomain }}
 {{- end }}
@@ -541,7 +541,7 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 
 {{- define "esproxy.url" -}}
 {{- if eq .Values.global.plane.mode "data" -}}
-es-proxy.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+es-proxy.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else if eq .Values.global.plane.mode "unified" -}}
 {{ .Release.Name }}-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
 {{- end -}}
@@ -549,7 +549,7 @@ es-proxy.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
 
 {{- define "elasticsearch.url" -}}
 {{- if eq .Values.global.plane.mode "data" -}}
-elasticsearch.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else if eq .Values.global.plane.mode "unified" -}}
 {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local.:9200
 {{- end -}}

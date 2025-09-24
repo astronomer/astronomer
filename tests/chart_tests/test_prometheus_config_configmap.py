@@ -98,7 +98,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             values={
-                "global": {"plane": {"domainSuffix": "abc01"}},
+                "global": {"plane": {"domainPrefix": "abc01"}},
                 "prometheus": {
                     "external_labels": expected_labels,
                 },

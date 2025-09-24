@@ -18,7 +18,7 @@ global:
   baseDomain: localtest.me
   # Mode of the plane, can be 'data', 'unified' or 'local'
   plane:
-    domainSuffix: "local"
+    domainPrefix: "local"
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls

@@ -2,7 +2,7 @@ Thank you for installing Astronomer!
 Your release is named {{ .Release.Name }}.
 
 {{- $planeMode := .Values.global.plane.mode }}
-{{- $domainSuffix := .Values.global.plane.domainsuffix }}
+{{- $domainPrefix := .Values.global.plane.domainsuffix }}
 Astronomer has been installed in {{ $planeMode }} plane mode.
 
 {{- if .Values.global.baseDomain }}
@@ -20,9 +20,9 @@ You can access the control plane at:
 The control plane is responsible for platform management, orchestration, and user interfaces.
 
 {{- else if eq $planeMode "data" }}
-{{- if $domainSuffix }}
+{{- if $domainPrefix }}
 You can access the data plane at:
-- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://{{ $domainSuffix }}.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://{{ $domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 {{- end }}
 
 The data plane is responsible for executing and monitoring Airflow workloads.
