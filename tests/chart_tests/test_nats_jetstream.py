@@ -26,7 +26,7 @@ class TestNatsJetstream:
             ],
         )
 
-        assert len(docs) == 3
+        assert len(docs) == 7
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["nats"] == {"tlsEnabled": False}
         nats_cm = docs[2]["data"]["nats.conf"]
@@ -161,7 +161,7 @@ class TestNatsJetstream:
     def test_jetstream_job_disable_dataplane_flag(self, kube_version):
         """Test that jetstream job is disabled when dataplane is disabled."""
         values = {
-            "global": {"controlplane": {"enabled": False}},
+            "global": {"plane": {"mode": "data"}},
         }
         docs = render_chart(
             kube_version=kube_version,
