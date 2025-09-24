@@ -102,6 +102,12 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
           {{ template "nats.securityContext" . }}
+        {{- if .Values.nats.readinessProbe }}
+        readinessProbe: {{- tpl (toYaml .Values.nats.readinessProbe) . | nindent 10 }}
+        {{- end }}
+        {{ if .Values.nats.livenessProbe }}
+        livenessProbe: {{- tpl (toYaml .Values.nats.livenessProbe) . | nindent 10 }}
+        {{- end }}
         resources: {{ toYaml .Values.nats.resources | nindent 10 }}
         command:
         - /bin/sh
