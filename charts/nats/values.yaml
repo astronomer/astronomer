@@ -19,8 +19,6 @@ images:
 
 
 nats:
-  createJetStreamJob: true
-
   # In case both external access and advertise are enabled
   # then a service account would be required to be able to
   # gather the public ip from a node.
