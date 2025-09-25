@@ -136,12 +136,14 @@ spec:
             {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
+            {{- if .Values.commander.airGapped.enabled }}
             - name: helm-workspace
               mountPath: /tmp/helm-cache
             - name: helm-config
               mountPath: /tmp/helm-config
             - name: helm-data
               mountPath: /tmp/helm-data
+            {{- end }}
             - name: commander-home
               mountPath: /home/commander
               subPath: home
