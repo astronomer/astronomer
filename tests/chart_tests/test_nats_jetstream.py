@@ -39,10 +39,7 @@ class TestNatsJetstream:
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test jetstream config with nodeSelector, affinity, and tolerations defaults."""
-        values = {
-            "global": {"nats": {"jetStream": {"enabled": True, "tls": True}}},
-            "nats": {"nats": {"createJetStreamJob": True}},
-        }
+        values = {"global": {"nats": {"jetStream": {"enabled": True, "tls": True}}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -127,10 +124,7 @@ class TestNatsJetstream:
 
     def test_nats_with_jetstream_disabled_with_custom_flag(self, kube_version):
         """Test that jetstream feature  is disabled completely with createJetStreamJob."""
-        values = {
-            "global": {"nats": {"jetStream": {"enabled": False}}},
-            "nats": {"nats": {"createJetStreamJob": False}},
-        }
+        values = {"global": {"nats": {"jetStream": {"enabled": False}}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -145,12 +139,8 @@ class TestNatsJetstream:
 
     def test_jetstream_hook_job_disabled(self, kube_version):
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
-        values = {
-            "nats": {"nats": {"createJetStreamJob": False}},
-        }
         docs = render_chart(
             kube_version=kube_version,
-            values=values,
             show_only=[
                 "charts/nats/templates/jetstream-job.yaml",
             ],

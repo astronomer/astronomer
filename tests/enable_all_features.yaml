@@ -43,7 +43,6 @@ global:
   taskUsageMetricsEnabled: true
 nats:
   nats:
-    createJetStreamJob: true
     exporter:
       enabled: true
     reloader:
