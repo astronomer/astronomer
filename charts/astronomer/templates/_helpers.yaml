@@ -550,3 +550,19 @@ elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDoma
 {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local.:9200
 {{- end -}}
 {{- end -}}
+
+{{/*
+Generate JetStream TLS checksum annotation
+*/}}
+{{- define "houston.jetStreamTLSChecksum" -}}
+{{- if and .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+{{- $jetStreamTLSSecretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+{{- $secretObj := (lookup "v1" "Secret" .Release.Namespace $jetStreamTLSSecretName) | default dict }}
+{{- $secretData := (get $secretObj "data") | default dict }}
+{{- if $secretData }}
+checksum/jetstream-tls-cert: {{ sha256sum (b64dec (get $secretData "tls.crt")) }}
+{{- else }}
+checksum/jetstream-tls-cert: {{ printf "template-checksum-%s" $jetStreamTLSSecretName | sha256sum }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -32,17 +32,7 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
-        checksum/houston-backend-secret: {{ include (print $.Template.BasePath "/houston/api/houston-backend-secret.yaml") . | sha256sum }}
-        {{- if and .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
-        {{- $jetStreamTLSSecretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
-        {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace $jetStreamTLSSecretName) | default dict }}
-        {{- $secretData := (get $secretObj "data") | default dict }}
-        {{- if $secretData }}
-        checksum/jetstream-tls-cert: {{ sha256sum (b64dec (get $secretData "tls.crt")) }}
-        {{- else }}
-        checksum/jetstream-tls-cert: {{ printf "template-checksum-%s-%t-%t" $jetStreamTLSSecretName | sha256sum }}
-        {{- end }}
-        {{- end }}
+        {{- include "houston.jetStreamTLSChecksum" . | nindent 8 }}
         {{- if .Values.global.podAnnotations }}
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
         {{- end }}
