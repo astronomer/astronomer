@@ -136,6 +136,12 @@ spec:
             {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
+            - name: helm-workspace
+              mountPath: /tmp/helm-cache
+            - name: helm-config
+              mountPath: /tmp/helm-config
+            - name: helm-data
+              mountPath: /tmp/helm-data
             - name: commander-home
               mountPath: /home/commander
               subPath: home
@@ -179,6 +185,14 @@ spec:
             periodSeconds: 5
         {{- end }}
       volumes:
+      {{- if .Values.commander.airGapped.enabled }}
+        - name: helm-workspace
+          emptyDir: {}
+        - name: helm-config
+          emptyDir: {}
+        - name: helm-data
+          emptyDir: {}
+        {{- end }}
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: nginx-conf
           configMap:
