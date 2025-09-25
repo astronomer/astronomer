@@ -39,6 +39,8 @@ spec:
         {{- $secretData := (get $secretObj "data") | default dict }}
         {{- if $secretData }}
         checksum/jetstream-tls-cert: {{ sha256sum (b64dec (get $secretData "tls.crt")) }}
+        {{- else }}
+        checksum/jetstream-tls-cert: {{ printf "template-checksum-%s-%t-%t" $jetStreamTLSSecretName | sha256sum }}
         {{- end }}
         {{- end }}
         {{- if .Values.global.podAnnotations }}
