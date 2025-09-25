@@ -33,6 +33,9 @@ spec:
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
         checksum/houston-backend-secret: {{ include (print $.Template.BasePath "/houston/api/houston-backend-secret.yaml") . | sha256sum }}
+        {{- if .Values.global.ssl.enabled }}
+        checksum/jetstream-tls-cert: {{ include (print $.Template.BasePath "/secret-nats-jetstream-tls.yaml") . | sha256sum }}
+        {{- end }}
         {{- if .Values.global.podAnnotations }}
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
         {{- end }}
