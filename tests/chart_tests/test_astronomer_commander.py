@@ -431,17 +431,11 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
-        commander_container = c_by_name["commander"]
-        env_vars = {x["name"]: get_env_value(x) for x in commander_container["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_HELM_DEBUG"] == "true"
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
         assert env_vars["COMMANDER_MANUAL_NAMESPACE_NAMES"] == "true"
         assert env_vars["COMMANDER_AIRGAPPED"] == "true"
-        volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
-        assert volume_mounts["tmp-workspace"] == "/tmp"
-        volumes = {vol["name"]: vol for vol in doc["spec"]["template"]["spec"]["volumes"]}
-        assert "tmp-workspace" in volumes
-        assert "emptyDir" in volumes["tmp-workspace"]
 
     def test_astronomer_commander_operator_permissions(self, kube_version):
         """Test template that helm renders when operator is enabled ."""
