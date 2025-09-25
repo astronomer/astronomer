@@ -1,7 +1,7 @@
 ########################################################
 ## Astronomer Platform Namespace label configure Hook ##
 ########################################################
-{{- if .Values.nats.createJetStreamJob -}}
+{{- if .Values.global.clusterRoles -}}
 {{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 ---

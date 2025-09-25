@@ -1,7 +1,7 @@
 ###################################
 ### Astronomer Jetstrem Job SCC ###
 ###################################
-{{- if and .Values.global.sccEnabled .Values.nats.createJetStreamJob }}
+{{- if and .Values.global.sccEnabled .Values.global.clusterRoles }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled }}
 apiVersion: security.openshift.io/v1
