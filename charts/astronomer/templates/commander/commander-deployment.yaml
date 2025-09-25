@@ -108,6 +108,14 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
+            - name: HELM_CACHE_HOME
+              value: /tmp/helm-cache
+            - name: HELM_CONFIG_HOME
+              value: /tmp/helm-config
+            - name: HELM_DATA_HOME
+              value: /tmp/helm-data
+            - name: HELM_REPOSITORY_CACHE
+              value: /tmp/helm-cache/repository
             - name: COMMANDER_HTTP_PORT
               value: "8880"
             - name: COMMANDER_GRPC_PORT
@@ -136,10 +144,8 @@ spec:
             {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
-            {{- if .Values.commander.airGapped.enabled }}
             - name: tmp-workspace
               mountPath: /tmp
-            {{- end }}
             - name: commander-home
               mountPath: /home/commander
               subPath: home
@@ -183,10 +189,8 @@ spec:
             periodSeconds: 5
         {{- end }}
       volumes:
-        {{- if .Values.commander.airGapped.enabled }}
         - name: tmp-workspace
           emptyDir: {}
-        {{- end }}
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: nginx-conf
           configMap:
