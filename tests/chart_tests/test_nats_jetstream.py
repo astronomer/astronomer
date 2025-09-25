@@ -124,7 +124,7 @@ class TestNatsJetstream:
 
     def test_nats_with_jetstream_disabled_with_custom_flag(self, kube_version):
         """Test that jetstream feature  is disabled completely with createJetStreamJob."""
-        values = {"global": {"nats": {"jetStream": {"enabled": False}}}}
+        values = {"global": {"nats": {"jetStream": {"enabled": False}}}, "clusterRoles": False}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -135,12 +135,14 @@ class TestNatsJetstream:
                 "charts/nats/templates/nats-jetstream-tls-secret.yaml",
             ],
         )
-        assert len(docs) == 2
+        assert len(docs) == 6
 
     def test_jetstream_hook_job_disabled(self, kube_version):
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
+        values = { "global": {"clusterRoles": True}}
         docs = render_chart(
             kube_version=kube_version,
+            values=values,
             show_only=[
                 "charts/nats/templates/jetstream-job.yaml",
             ],
@@ -167,19 +169,18 @@ class TestNatsJetstream:
 @pytest.mark.parametrize(
     "scc_enabled,create_jetstream_job,jetstream_enabled,global_jetstream_enabled,expected_docs",
     [
-        (True, True, False, True, 1),
-        (True, True, False, False, 1),
-        (True, False, False, True, 0),
-        (True, False, False, False, 0),
-        (False, True, False, True, 0),
-        (False, False, False, True, 0),
-        (False, True, False, False, 0),
-        (False, False, False, False, 0),
+        (True, False, True, 1),
+        (True, False, False, 1),
+        (True, False, True, 0),
+        (True, False, False, 0),
+        (False, False, True, 0),
+        (False, False, True, 0),
+        (False, False, False, 0),
+        (False, False, False, 0),
     ],
 )
 def test_jetstream_job_with_scc(
     scc_enabled,
-    create_jetstream_job,
     jetstream_enabled,
     global_jetstream_enabled,
     expected_docs,
