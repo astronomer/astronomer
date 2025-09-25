@@ -12,6 +12,9 @@
   {{- $namespaces = list .Release.Namespace}}
 {{- else  }}
   {{- $namespaces = append $namespaces .Release.Namespace }}
+  {{- if .Values.extraNamespaceList  -}}
+    {{- $namespaces = concat $namespaces .Values.extraNamespaceList }}
+  {{- end }}
 {{- end }}
 
 {{- range $i, $namespaceName := $namespaces }}
