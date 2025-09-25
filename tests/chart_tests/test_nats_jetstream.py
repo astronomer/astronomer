@@ -124,6 +124,12 @@ class TestNatsJetstream:
                 "name": "nats-jetstream-client-tls-volume",
                 "secret": {"secretName": "release-name-jetstream-tls-certificate-client"},
             } in obj_by_name[item]["spec"]["template"]["spec"]["volumes"]
+            for item in ["Deployment-release-name-houston", "Deployment-release-name-houston-worker"]:
+                annotations = obj_by_name[item]["spec"]["template"]["metadata"]["annotations"]
+                # Check that the jetstream TLS checksum annotation exists when TLS is enabled
+                assert "checksum/jetstream-tls-cert" in annotations
+                # Verify it's not empty
+                assert annotations["checksum/jetstream-tls-cert"] != ""
 
     def test_nats_with_jetstream_disabled_with_custom_flag(self, kube_version):
         """Test that jetstream feature  is disabled completely with createJetStreamJob."""
