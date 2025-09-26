@@ -395,5 +395,5 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == doc["kind"]
         podSelectors = doc["spec"]["ingress"][0]["from"]
         assert {
-            "podSelector": {"matchLabels": {"component": "ingress-controller", "release": "release-name", "tier": "nginx"}}
+            "podSelector": {"matchLabels": {"component": "dp-ingress-controller", "release": "release-name", "tier": "nginx"}}
         } in podSelectors
