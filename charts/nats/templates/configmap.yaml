@@ -83,34 +83,34 @@ data:
     {{- if or .Values.global.nats.jetStream.enabled  .Values.nats.jetStream.enabled }}
     ###################################
     #                                 #
-    # NATS JetStream                  #
+    # NATS jetStream                  #
     #                                 #
     ###################################
-    jetstream {
-      {{- if .Values.nats.jetstream.encryption }}
-      {{- if .Values.nats.jetstream.encryption.key }}
-      key: {{ .Values.nats.jetstream.encryption.key | quote }}
-      {{- else if .Values.nats.jetstream.encryption.secret }}
+    jetStream {
+      {{- if .Values.nats.jetStream.encryption }}
+      {{- if .Values.nats.jetStream.encryption.key }}
+      key: {{ .Values.nats.jetStream.encryption.key | quote }}
+      {{- else if .Values.nats.jetStream.encryption.secret }}
       key: $JS_KEY
       {{- end }}
       {{- end }}
 
-      {{- if .Values.nats.jetstream.memStorage.enabled }}
-      max_mem: {{ .Values.nats.jetstream.memStorage.size }}
+      {{- if .Values.nats.jetStream.memStorage.enabled }}
+      max_mem: {{ .Values.nats.jetStream.memStorage.size }}
       {{- end }}
 
-      {{- if .Values.nats.jetstream.domain }}
-      domain: {{ .Values.nats.jetstream.domain }}
+      {{- if .Values.nats.jetStream.domain }}
+      domain: {{ .Values.nats.jetStream.domain }}
       {{- end }}
 
-      {{- if .Values.nats.jetstream.fileStorage.enabled }}
-      store_dir: {{ .Values.nats.jetstream.fileStorage.storageDirectory }}
+      {{- if .Values.nats.jetStream.fileStorage.enabled }}
+      store_dir: {{ .Values.nats.jetStream.fileStorage.storageDirectory }}
 
       max_file:
-      {{- if .Values.nats.jetstream.fileStorage.existingClaim }}
-      {{- .Values.nats.jetstream.fileStorage.claimStorageSize  }}
+      {{- if .Values.nats.jetStream.fileStorage.existingClaim }}
+      {{- .Values.nats.jetStream.fileStorage.claimStorageSize  }}
       {{- else }}
-      {{- .Values.nats.jetstream.fileStorage.size }}
+      {{- .Values.nats.jetStream.fileStorage.size }}
       {{- end }}
       {{- end }}
     }
