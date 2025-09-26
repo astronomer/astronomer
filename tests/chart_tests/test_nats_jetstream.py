@@ -139,7 +139,10 @@ class TestNatsJetstream:
 
     def test_jetstream_hook_job_disabled(self, kube_version):
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
-        values = {"global": {"nats": {"jetStream": {"enabled": False }}, "clusterRoles": False }, "nats": {"jetStream": { "enabled" : False }}}
+        values = {
+            "global": {"nats": {"jetStream": {"enabled": False}}, "clusterRoles": False},
+            "nats": {"jetStream": {"enabled": False}},
+        }
         docs = render_chart(
             kube_version=kube_version,
             values=values,
