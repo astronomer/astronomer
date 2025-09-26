@@ -41,6 +41,10 @@ class TestExternalElasticSearch:
         }
         expected_env = [{"name": "ES_SECRET", "value": secret}]
         assert expected_env == deployment["spec"]["template"]["spec"]["containers"][0]["env"]
+        container_mounts = deployment["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
+        assert {"name": "tmp", "mountPath": "/tmp"} in container_mounts
+        volumes = deployment["spec"]["template"]["spec"]["volumes"]
+        assert {"name": "tmp", "emptyDir": {}} in volumes
 
         assert service["kind"] == "Service"
         assert service["metadata"]["name"] == "release-name-external-es-proxy"
