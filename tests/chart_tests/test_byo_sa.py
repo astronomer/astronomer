@@ -330,7 +330,7 @@ custom_service_account_names = {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/nats/templates/jetstream-job.yaml": {
-        "nats": {"nats": {"jetstream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
+        "nats": {"nats": {"jetStream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
     },
     "charts/nats/templates/statefulset.yaml": {"nats": {"nats": {"serviceAccount": {"create": True, "name": "prothean"}}}},
     "charts/nginx/templates/nginx-deployment-default.yaml": {
