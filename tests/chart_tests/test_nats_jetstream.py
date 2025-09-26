@@ -195,12 +195,12 @@ def test_jetstream_job_with_scc(
             },
         },
         "nats": {
-        "nats": {
-            "jetStream": {
-                "enabled": global_jetstream_enabled,
+            "nats": {
+                "jetStream": {
+                    "enabled": global_jetstream_enabled,
+                }
             }
-        }
-        }
+        },
     }
 
     docs = render_chart(
