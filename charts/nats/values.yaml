@@ -76,7 +76,7 @@ nats:
 
   regenerateCaEachUpgrade: false
 
-  jetstream:
+  jetStream:
     enabled: true
     serviceAccount:
       create: true
