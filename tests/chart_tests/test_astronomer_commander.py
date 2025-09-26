@@ -46,7 +46,9 @@ class TestAstronomerCommander:
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
         assert c_by_name["commander"]["resources"]["limits"]["memory"] == "2Gi"
         assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
-        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
+
+        commander_container = c_by_name["commander"]
+        env_vars = {x["name"]: get_env_value(x) for x in commander_container["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
 
@@ -66,6 +68,18 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_DATAPLANE_URL"] == "custom-dp-123.example.com"
         assert env_vars["COMMANDER_DATAPLANE_MODE"] == "data"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
+
+        assert env_vars["HELM_CACHE_HOME"] == "/tmp/helm-cache"
+        assert env_vars["HELM_CONFIG_HOME"] == "/tmp/helm-config"
+        assert env_vars["HELM_DATA_HOME"] == "/tmp/helm-data"
+        assert env_vars["HELM_REPOSITORY_CACHE"] == "/tmp/helm-cache/repository"
+
+        volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
+        assert volume_mounts["tmp-workspace"] == "/tmp"
+
+        volumes = {vol["name"]: vol for vol in doc["spec"]["template"]["spec"]["volumes"]}
+        assert "tmp-workspace" in volumes
+        assert "emptyDir" in volumes["tmp-workspace"]
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
