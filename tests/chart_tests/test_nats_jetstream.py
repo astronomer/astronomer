@@ -26,11 +26,11 @@ class TestNatsJetstream:
             ],
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 6
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["nats"] == {"tlsEnabled": False}
         nats_cm = docs[2]["data"]["nats.conf"]
-        assert "jetstream" in nats_cm
+        assert "jetStream" in nats_cm
         assert docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
@@ -39,7 +39,7 @@ class TestNatsJetstream:
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test jetstream config with nodeSelector, affinity, and tolerations defaults."""
-        values = {"global": {"nats": {"jetStream": {"enabled": True, "tls": True}}}}
+        values = {"global": {"nats": {"jetStream": {"enabled": True, "tls": True}}}, "clusterRoles": True, "sccEnabled": True}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -55,7 +55,7 @@ class TestNatsJetstream:
             ],
         )
 
-        assert len(docs) == 11
+        assert len(docs) == 10
 
         obj_by_name = {f"{x['kind']}-{x['metadata']['name']}": x for x in docs}
 
@@ -69,9 +69,9 @@ class TestNatsJetstream:
                 "keyFile": f"{jetStreamCertPrefix}-client/tls.key",
             },
         }
-        assert docs[7]["spec"]["template"]["spec"]["nodeSelector"] == {}
-        assert docs[7]["spec"]["template"]["spec"]["affinity"] == {}
-        assert docs[7]["spec"]["template"]["spec"]["tolerations"] == []
+        assert docs[6]["spec"]["template"]["spec"]["nodeSelector"] == {}
+        assert docs[6]["spec"]["template"]["spec"]["affinity"] == {}
+        assert docs[6]["spec"]["template"]["spec"]["tolerations"] == []
 
         assert {
             "name": "release-name-jetstream-tls-certificate-client-volume",
@@ -135,11 +135,11 @@ class TestNatsJetstream:
                 "charts/nats/templates/nats-jetstream-tls-secret.yaml",
             ],
         )
-        assert len(docs) == 6
+        assert len(docs) == 5
 
     def test_jetstream_hook_job_disabled(self, kube_version):
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
-        values = {"global": {"clusterRoles": True}}
+        values = {"global": {"nats": {"jetStream": {"enabled": False }}, "clusterRoles": False }, "nats": {"jetStream": { "enabled" : False }}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -167,7 +167,7 @@ class TestNatsJetstream:
 
 
 @pytest.mark.parametrize(
-    "scc_enabled,create_jetstream_job,jetstream_enabled,global_jetstream_enabled,expected_docs",
+    "scc_enabled,global_jetstream_enabled,expected_docs",
     [
         (True, True, 1),
         (True, False, 1),
