@@ -47,6 +47,8 @@ nats:
       enabled: true
     reloader:
       enabled: true
+    jetStream:
+      enabled: true
 postgresql:
   replication:
     enabled: true

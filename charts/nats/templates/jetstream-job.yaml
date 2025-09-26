@@ -41,7 +41,7 @@ roleRef:
   kind: Role
   name: {{ .Release.Name }}-jetstream-role
   apiGroup: ""
-{{- if .Values.nats.serviceAccount.create }}
+{{- if .Values.nats.jetStream.serviceAccount.create }}
 ---
 kind: ServiceAccount
 apiVersion: v1
