@@ -199,7 +199,7 @@ spec:
           {{- end }}
           {{- end }}
 
-          {{- if and ( or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled }}
+          {{- if and ( or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled }}
           - name: {{ template "nats.name" . }}-js-pvc
             mountPath: {{ .Values.nats.jetstream.fileStorage.storageDirectory }}
           {{- end }}
@@ -327,7 +327,7 @@ spec:
           - -varz
           - -prefix=gnatsd
           - -use_internal_server_id
-        {{- if .Values.nats.jetstream.enabled }}
+        {{- if .Values.nats.jetStream.enabled }}
           - -jsz=all
         {{- end }}
           - http://localhost:8222/
@@ -346,7 +346,7 @@ spec:
           {{ template "nats.securityContext" . }}
       {{ end }}
 
-  {{- if and ( or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
+  {{- if and ( or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
   volumeClaimTemplates:
   #####################################
   #                                   #

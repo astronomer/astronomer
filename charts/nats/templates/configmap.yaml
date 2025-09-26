@@ -80,7 +80,7 @@ data:
     {{- end }}
     {{- end }}
 
-    {{- if or .Values.global.nats.jetStream.enabled  .Values.nats.jetstream.enabled }}
+    {{- if or .Values.global.nats.jetStream.enabled  .Values.nats.jetStream.enabled }}
     ###################################
     #                                 #
     # NATS JetStream                  #
