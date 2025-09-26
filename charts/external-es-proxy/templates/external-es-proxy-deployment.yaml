@@ -85,6 +85,8 @@ spec:
             - name: nginx-env-volume
               mountPath: /usr/local/openresty/nginx/conf/setenv.lua
               subPath: setenv.lua
+            - name: tmp
+              mountPath: /tmp
 
             {{- if .Values.global.customLogging.trustCaCerts -}}
             {{ $secretName := .Values.global.customLogging.trustCaCerts }}
@@ -147,6 +149,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: nginx-config-volume
           configMap:
             name: {{ .Release.Name }}-{{ template "external-es-proxy.name" . }}
