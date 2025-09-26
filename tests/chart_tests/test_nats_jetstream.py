@@ -129,7 +129,7 @@ class TestNatsJetstream:
                 # Check that the jetstream TLS checksum annotation exists when TLS is enabled
                 assert "checksum/jetstream-tls-cert" in annotations
                 # Verify it's not empty
-                assert annotations["checksum/jetstream-tls-cert"] != ""
+                assert annotations["checksum/jetstream-tls-cert"]
 
     def test_nats_with_jetstream_disabled_with_custom_flag(self, kube_version):
         """Test that jetstream feature  is disabled completely with createJetStreamJob."""
