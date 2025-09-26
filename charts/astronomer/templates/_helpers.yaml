@@ -560,7 +560,6 @@ Generate JetStream TLS checksum annotation
 {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace $jetStreamTLSSecretName) | default dict }}
 {{- $secretData := (get $secretObj "data") | default dict }}
 {{- $actualCert := (get $secretData "tls.crt") | b64dec | sha256sum }}
-{{- $fallbackChecksum := printf "template-checksum-%s" $jetStreamTLSSecretName | sha256sum }}
-checksum/jetstream-tls-cert: {{ $actualCert | default $fallbackChecksum }}
+checksum/jetstream-tls-cert: {{ $actualCert }}
 {{- end }}
 {{- end }}
