@@ -99,7 +99,7 @@ spec:
     - podSelector:
         matchLabels:
           tier: nginx
-          component: cp-ingress-controller
+          component: {{ ternary "cp-ingress-controller" "dp-ingress-controller" (eq .Values.global.plane.mode "unified") }}
           release: {{ .Release.Name }}
     {{- end }}
     ports:
