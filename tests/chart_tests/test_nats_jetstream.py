@@ -139,7 +139,7 @@ class TestNatsJetstream:
 
     def test_jetstream_hook_job_disabled(self, kube_version):
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
-        values = { "global": {"clusterRoles": True}}
+        values = {"global": {"clusterRoles": True}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -169,19 +169,18 @@ class TestNatsJetstream:
 @pytest.mark.parametrize(
     "scc_enabled,create_jetstream_job,jetstream_enabled,global_jetstream_enabled,expected_docs",
     [
-        (True, False, True, 1),
-        (True, False, False, 1),
-        (True, False, True, 0),
-        (True, False, False, 0),
-        (False, False, True, 0),
-        (False, False, True, 0),
-        (False, False, False, 0),
-        (False, False, False, 0),
+        (True, True, 1),
+        (True, False, 1),
+        (True, True, 0),
+        (True, False, 0),
+        (False, True, 0),
+        (False, True, 0),
+        (False, False, 0),
+        (False, False, 0),
     ],
 )
 def test_jetstream_job_with_scc(
     scc_enabled,
-    jetstream_enabled,
     global_jetstream_enabled,
     expected_docs,
 ):
@@ -194,15 +193,7 @@ def test_jetstream_job_with_scc(
                     "enabled": global_jetstream_enabled,
                 },
             },
-        },
-        "nats": {
-            "nats": {
-                "createJetStreamJob": create_jetstream_job,
-                "jetStream": {
-                    "enabled": jetstream_enabled,
-                },
-            },
-        },
+        }
     }
 
     docs = render_chart(
