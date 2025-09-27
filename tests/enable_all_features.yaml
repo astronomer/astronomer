@@ -43,10 +43,11 @@ global:
   taskUsageMetricsEnabled: true
 nats:
   nats:
-    createJetStreamJob: true
     exporter:
       enabled: true
     reloader:
+      enabled: true
+    jetStream:
       enabled: true
 postgresql:
   replication:
