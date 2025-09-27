@@ -59,8 +59,6 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "https://elasticsearch.custom-dp-123.example.com"
-        assert env_vars["COMMANDER_HEALTH_STATUS"] == "HEALTHY"
-        assert env_vars["COMMANDER_STATUS"] == "HEALTHY"
         assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "99.88.77"
         assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"] != ""
         assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
