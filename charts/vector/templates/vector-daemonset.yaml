@@ -132,7 +132,6 @@ spec:
           mountPath: /etc/vector/config
           readOnly: true
         resources: {{ toYaml .Values.vector.resources | nindent 12 }}
-      terminationGracePeriodSeconds: 30
       volumes:
       - name: tmp
         emptyDir: {}
