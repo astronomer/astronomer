@@ -65,7 +65,7 @@ imagePullSecrets:
 {{- end -}}
 
 {{ define "nats.jestreamTLSSecret" -}}
-{{ default (printf "%s-jetstream-tls-certificate" .Release.Name)}}
+{{ default (printf "%s-jetStream-tls-certificate" .Release.Name)}}
 {{- end }}
 
 {{- define "nats.securityContext" -}}
@@ -86,9 +86,9 @@ imagePullSecrets:
 {{- end }}
 
 {{ define "jetStream.serviceAccountName" -}}
-{{- if and .Values.nats.jetstream.serviceAccount.create .Values.global.rbacEnabled -}}
-{{ default (printf "%s-jetstream-sa" .Release.Name) .Values.nats.jetstream.serviceAccount.name }}
+{{- if and .Values.nats.jetStream.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-jetstream-sa" .Release.Name) .Values.nats.jetStream.serviceAccount.name }}
 {{- else -}}
-{{ default "default" .Values.nats.jetstream.serviceAccount.name }}
+{{ default "default" .Values.nats.jetStream.serviceAccount.name }}
 {{- end }}
 {{- end }}
