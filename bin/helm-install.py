@@ -215,7 +215,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
                 "get",
                 "pods",
                 "-o",
-                "custom-columns=NAME:.metadata.name,STATUS:.status.phase",
+                "custom-columns=NAME:.metadata.name,STATUS:.status.phase,OWNER:.metadata.ownerReferences[0].kind",
             ],
             capture_output=True,
             text=True,
@@ -228,7 +228,13 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
         lines = output.stdout.splitlines()[1:]  # Skip the header line
         unhealthy_pods = []
         for line in lines:
-            name, status = line.split()
+            parts = line.split()
+            if len(parts) < 3:
+                continue
+            name, status, owner_kind = parts[0], parts[1], parts[2]
+            if status == "Failed" and owner_kind == "Job":
+                debug_print(f"Ignoring failed Job pod: {name}")
+                continue
             if status not in ["Running", "Succeeded"]:
                 unhealthy_pods.append(name)
                 if ignore_substrings and any(substring in name for substring in ignore_substrings):
