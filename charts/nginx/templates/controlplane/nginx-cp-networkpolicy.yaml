@@ -19,11 +19,10 @@ spec:
     matchLabels:
       component: cp-ingress-controller
       tier: nginx
-      plane: control
+      plane: {{ .Values.global.plane.mode }}
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
-  - Egress
   ingress:
   - from:
     - ipBlock:
@@ -35,21 +34,5 @@ spec:
       port: {{ .Values.ports.https }}
     - protocol: TCP
       port: {{ .Values.ports.defaultBackendHTTP }}
-  egress:
-  - to:
-    # Allow traffic to Data Plane components
-    - podSelector:
-        matchLabels:
-          plane: {{ .Values.global.plane.mode }}
-          component: webserver
-    - podSelector:
-        matchLabels:
-          plane: {{ .Values.global.plane.mode }}
-          component: cp-ingress-controller
-    ports:
-    - protocol: TCP
-      port: 80
-    - protocol: TCP
-      port: 443
 {{- end }}
 {{- end }}
