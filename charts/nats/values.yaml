@@ -19,8 +19,6 @@ images:
 
 
 nats:
-  createJetStreamJob: false
-
   # In case both external access and advertise are enabled
   # then a service account would be required to be able to
   # gather the public ip from a node.
@@ -78,7 +76,7 @@ nats:
 
   regenerateCaEachUpgrade: false
 
-  jetstream:
+  jetStream:
     enabled: true
     serviceAccount:
       create: true

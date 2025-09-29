@@ -17,7 +17,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      component: ingress-controller
+      component: dp-ingress-controller
       tier: nginx
       plane: data
       release: {{ .Release.Name }}
@@ -30,7 +30,7 @@ spec:
     - podSelector:
         matchLabels:
           plane: {{ .Values.global.plane.mode }}
-          component: ingress-controller
+          component: dp-ingress-controller
     - podSelector:
         matchLabels:
           plane: {{ .Values.global.plane.mode }}

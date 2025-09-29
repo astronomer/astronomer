@@ -17,7 +17,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      component: ingress-controller
+      component: cp-ingress-controller
       tier: nginx
       plane: control
       release: {{ .Release.Name }}
@@ -45,7 +45,7 @@ spec:
     - podSelector:
         matchLabels:
           plane: {{ .Values.global.plane.mode }}
-          component: ingress-controller
+          component: cp-ingress-controller
     ports:
     - protocol: TCP
       port: 80

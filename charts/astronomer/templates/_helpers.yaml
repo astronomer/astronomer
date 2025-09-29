@@ -191,10 +191,6 @@
   value: "http://{{ include "elasticsearch.url" . }}"
   {{- end }}
 {{- end }}
-- name: COMMANDER_HEALTH_STATUS
-  value: HEALTHY
-- name: COMMANDER_STATUS
-  value: HEALTHY
 - name: COMMANDER_AIRFLOW_CHART_VERSION
   value: {{ .Values.airflowChartVersion | quote }}
 - name: COMMANDER_DATAPLANE_CHART_VERSION
