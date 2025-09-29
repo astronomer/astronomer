@@ -48,6 +48,7 @@ spec:
           release: {{ .Release.Name }}
     {{- end }}
     {{- end }}
+    {{- if or (eq .Values.global.plane.mode "unified") (eq .Values.global.plane.mode "control") }}
     - podSelector:
         matchLabels:
           tier: astronomer
@@ -103,6 +104,7 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-cleanup-airflow-db
+    {{- end }}
     ports:
     {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
     - protocol: TCP

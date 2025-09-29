@@ -26,28 +26,14 @@ spec:
   ingress:
   # Allow traffic from Control Plane
   - from:
-    - podSelector:
-        matchLabels:
-          plane: {{ .Values.global.plane.mode }}
-          component: dp-ingress-controller
-    - podSelector:
-        matchLabels:
-          plane: {{ .Values.global.plane.mode }}
-          component: houston
+    - ipBlock:
+        cidr: 0.0.0.0/0
     ports:
     - protocol: TCP
       port: {{ .Values.ports.http }}
     - protocol: TCP
       port: {{ .Values.ports.https }}
-  # Allow internal Airflow component communication
-  - from:
-    - podSelector:
-        matchLabels:
-          plane: data
-    ports:
     - protocol: TCP
-      port: {{ .Values.ports.http }}
-    - protocol: TCP
-      port: {{ .Values.ports.https }}
+      port: {{ .Values.ports.defaultBackendHTTP }}
 {{- end }}
 {{- end }}
