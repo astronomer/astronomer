@@ -69,9 +69,12 @@ class TestHoustonHookJob:
         assert c_by_name["houston-db-migrations-job"]["args"] == ["yarn", "migrate"]
 
         assert c_by_name["houston-db-migrations-job"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert {'name': 'houston-config-volume', 'mountPath': '/houston/config/production.yaml', 'subPath': 'production.yaml'} in c_by_name["houston-db-migrations-job"]["volumeMounts"]
+        assert {'name': 'houston-config-volume', 'mountPath': '/houston/config/local-production.yaml', 'subPath': 'local-production.yaml'} in c_by_name["houston-db-migrations-job"]["volumeMounts"]
         assert "resources" in c_by_name["wait-for-db"]
         assert "resources" in c_by_name["houston-bootstrapper"]
         assert "resources" in c_by_name["houston-db-migrations-job"]
+        assert False
 
     def test_db_migration_job_custom_resources(self, kube_version):
         """Test Db Migration Job with customer resources."""
