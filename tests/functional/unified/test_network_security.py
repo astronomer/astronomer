@@ -461,7 +461,9 @@ def test_network_security(k8s_core_v1_client):
         "service/kube-dns",  # DNS service
         "service/kubernetes",  # Kubernetes API server
         "service/astronomer-nginx",  # Astronomer ingress service
+        "service/astronomer-cp-nginx",  # Astronomer CP ingress service
         "pod/astronomer-nginx",  # Astronomer ingress pods
+        "pod/astronomer-cp-nginx",  # Astronomer cp ingress pods
     ]
 
     # Validate scan results - fail if any non-allowlisted services have open ports
