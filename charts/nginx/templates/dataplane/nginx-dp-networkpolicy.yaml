@@ -23,7 +23,6 @@ spec:
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
-  - Egress
   ingress:
   # Allow traffic from Control Plane
   - from:
@@ -50,13 +49,5 @@ spec:
       port: {{ .Values.ports.http }}
     - protocol: TCP
       port: {{ .Values.ports.https }}
-  egress:
-  - to:
-    # Allow traffic to Airflow components
-    - podSelector:
-        matchLabels:
-          plane: data
-    ports:
-    - protocol: TCP  # Allowing all ports for internal communication
 {{- end }}
 {{- end }}
