@@ -82,7 +82,6 @@ class TestHoustonHookJob:
         assert "resources" in c_by_name["wait-for-db"]
         assert "resources" in c_by_name["houston-bootstrapper"]
         assert "resources" in c_by_name["houston-db-migrations-job"]
-        assert False
 
     def test_db_migration_job_custom_resources(self, kube_version):
         """Test Db Migration Job with customer resources."""
