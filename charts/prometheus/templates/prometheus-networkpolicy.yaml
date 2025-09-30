@@ -27,6 +27,13 @@ spec:
           tier: astronomer
           component: houston
           release: {{ .Release.Name }}
+    {{- if (eq .Values.global.plane.mode "data") }}
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: {{ template "prometheus.name" . }}-federation-auth
+          release: {{ .Release.Name }}
+    {{- end }}
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:
