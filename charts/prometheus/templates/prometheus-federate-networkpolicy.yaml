@@ -41,7 +41,7 @@ spec:
           component: dp-ingress-controller
           release: {{ .Release.Name }}
     {{- end }}
-    # It is sometimes useful to whitelist other pods,
+    # It is sometimes useful to allow other pods,
     # for example admin Airflow tasks.
     {{- range .Values.ingressNetworkPolicyExtraSelectors }}
     -
