@@ -26,11 +26,33 @@ spec:
   - Ingress
   ingress:
   - from:
+    {{- if (eq .Values.global.plane.mode "data") }}
+    {{- if .Values.global.authSidecar.enabled }}
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+    {{- end }}
+    {{- else }}
+    - podSelector:
+        matchLabels:
+          tier: nginx
+          component: dp-ingress-controller
+          release: {{ .Release.Name }}
+    {{- end }}
+    {{- end }}
+    {{- if (eq .Values.global.plane.mode "unified") }}
     - podSelector:
         matchLabels:
           tier: astronomer
           component: houston
           release: {{ .Release.Name }}
+    {{- end }}
     - podSelector:
         matchLabels:
           tier: logging
@@ -50,11 +72,6 @@ spec:
         matchLabels:
           tier: elasticsearch
           component: es-ingress-controller
-          release: {{ .Release.Name }}
-    - podSelector:
-        matchLabels:
-          tier: logging
-          component: vector
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP
