@@ -19,6 +19,7 @@ templates_to_exclude = [
     "charts/prometheus-postgres-exporter/templates",
     "charts/prometheus-postgres-exporter/templates/secret.yaml",
     "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
+    "charts/prometheus/templates/prometheus-federate-networkpolicy.yaml",
 ]
 
 show_only = [
