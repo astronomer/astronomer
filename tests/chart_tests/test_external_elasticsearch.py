@@ -590,6 +590,9 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
+                    "loggingSidecar": {
+                        "enabled": False
+                    },
                     "customLogging": {
                         "enabled": True,
                         "secret": secret,
