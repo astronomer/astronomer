@@ -26,6 +26,26 @@ spec:
   - Ingress
   ingress:
   - from:
+    {{- if (eq .Values.global.plane.mode "data") }}
+    {{- if .Values.global.authSidecar.enabled }}
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+    {{- end }}
+    {{- else }}
+    - podSelector:
+        matchLabels:
+          tier: nginx
+          component: dp-ingress-controller
+          release: {{ .Release.Name }}
+    {{- end }}
+    {{- end }}
     - podSelector:
         matchLabels:
           tier: astronomer
