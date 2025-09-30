@@ -867,3 +867,28 @@ class TestElasticSearch:
                 },
             }
         ]
+
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_elasticsearch_client_network_policy(self, kube_version, plane_mode):
+        """Test elasticsearch ingress configuration"""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/client/es-client-networkpolicy.yaml"],
+            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
+        )
+
+        print(docs)
+
+        assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
+        assert docs[0]["kind"] == "NetworkPolicy"
+        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+        podSelector = docs[0]["spec"]["podSelector"]
+        assert podSelector == {
+            "matchLabels":{
+               "tier":"logging",
+               "component":"elasticsearch",
+               "release":"release-name",
+               "role":"client"
+            }
+         }
+        assert docs[0]["spec"]["policyTypes"] == ["Ingress"]
