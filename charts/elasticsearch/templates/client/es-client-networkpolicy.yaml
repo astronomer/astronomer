@@ -46,7 +46,7 @@ spec:
           release: {{ .Release.Name }}
     {{- end }}
     {{- end }}
-    {{- if (eq .Values.global.plane.mode "data") }}
+    {{- if (eq .Values.global.plane.mode "unified") }}
     - podSelector:
         matchLabels:
           tier: astronomer
