@@ -517,7 +517,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "fluentd.$remote_user.*" in es_index
+        assert "vector.$remote_user.*" in es_index
 
     def test_external_es_with_private_registry_enabled(self, kube_version):
         """Test External Elasticsearch Service with Private Registry
