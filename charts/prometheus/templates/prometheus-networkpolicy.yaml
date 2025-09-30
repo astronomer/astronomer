@@ -22,11 +22,20 @@ spec:
   - Ingress
   ingress:
   - from:
+    {{- if or (eq .Values.global.plane.mode "unified") (eq .Values.global.plane.mode "control") }}
     - podSelector:
         matchLabels:
           tier: astronomer
           component: houston
           release: {{ .Release.Name }}
+    {{- end }}
+    {{- if (eq .Values.global.plane.mode "data") }}
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: {{ template "prometheus.name" . }}-federation-auth
+          release: {{ .Release.Name }}
+    {{- end }}
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:
