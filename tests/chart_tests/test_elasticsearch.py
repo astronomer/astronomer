@@ -876,9 +876,6 @@ class TestElasticSearch:
             show_only=["charts/elasticsearch/templates/client/es-client-networkpolicy.yaml"],
             values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
         )
-
-        print(docs)
-
         assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
         assert docs[0]["kind"] == "NetworkPolicy"
         assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
