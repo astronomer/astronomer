@@ -881,11 +881,6 @@ class TestElasticSearch:
         assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
         podSelector = docs[0]["spec"]["podSelector"]
         assert podSelector == {
-            "matchLabels":{
-               "tier":"logging",
-               "component":"elasticsearch",
-               "release":"release-name",
-               "role":"client"
-            }
-         }
+            "matchLabels": {"tier": "logging", "component": "elasticsearch", "release": "release-name", "role": "client"}
+        }
         assert docs[0]["spec"]["policyTypes"] == ["Ingress"]
