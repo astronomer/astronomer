@@ -59,6 +59,33 @@ def job_template_spec_parser(doc, args):
     return item_containers
 
 
+def get_images_from_values_yaml():
+    """Load values.yaml and all the images defined in it."""
+    GIT_ROOT = next(
+        iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+        None,
+    )
+    with open(GIT_ROOT / "values.yaml") as f:
+        values = yaml.safe_load(f)
+    af_images = values["global"]["airflow"]["images"]
+    images = [f"{i['repository']}:{i['tag']}" for i in af_images.values()]
+    images.extend(f"{image['repository']}:{image['tag']}" for image in af_images.values())
+    images.append(f"{values['global']['authSidecar']['repository']}:{values['global']['authSidecar']['tag']}")
+    images.append(f"{values['global']['dagOnlyDeployment']['repository']}:{values['global']['dagOnlyDeployment']['tag']}")
+    images.append(
+        f"{values['global']['gitSyncRelay']['images']['gitDaemon']['repository']}:{values['global']['gitSyncRelay']['images']['gitDaemon']['tag']}"
+    )
+    images.append(
+        f"{values['global']['gitSyncRelay']['images']['gitSync']['repository']}:{values['global']['gitSyncRelay']['images']['gitSync']['tag']}"
+    )
+    images.append(f"{values['global']['loggingSidecar']['repository']}:{values['global']['loggingSidecar']['tag']}")
+    images.append(
+        f"{values['global']['privateCaCertsAddToHost']['certCopier']['repository']}:{values['global']['privateCaCertsAddToHost']['certCopier']['tag']}"
+    )
+
+    return images
+
+
 def get_images_from_houston_configmap(doc, args):
     """Return a list of images used in the houston configmap."""
     houston_config = yaml.safe_load(doc["data"]["production.yaml"])
@@ -135,6 +162,8 @@ def main():
     docs = helm_template(args)
 
     containers = set()
+
+    containers.update(get_images_from_values_yaml())
 
     for doc in docs:
         if doc is None:
