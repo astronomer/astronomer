@@ -125,7 +125,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2025-10
     steps:
       - checkout
       - run:
@@ -139,7 +139,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2025-07
+      - image: quay.io/astronomer/ci-pre-commit:2025-10
     resource_class: small
     steps:
       - checkout
@@ -164,7 +164,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2025-10
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -200,7 +200,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2025-10
     parameters:
       qa_release:
         type: boolean
@@ -219,7 +219,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2025-10
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -258,7 +258,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2025-10
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -424,6 +424,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.1.11
                 - quay.io/astronomer/ap-git-sync:4.4.0-1
                 - quay.io/astronomer/ap-houston-api:1.0.20
+                - quay.io/astronomer/ap-init:3.21.3-5
                 - quay.io/astronomer/ap-kube-state:2.15.0
                 - quay.io/astronomer/ap-kuiper-reloader:0.1.9
                 - quay.io/astronomer/ap-nats-exporter:0.16.0-2

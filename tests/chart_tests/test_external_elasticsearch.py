@@ -30,7 +30,7 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 4
-        deployment, env_configmap, configmap, service = docs
+        deployment, _env_configmap, _configmap, service = docs
         assert deployment["kind"] == "Deployment"
         assert deployment["apiVersion"] == "apps/v1"
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
@@ -79,7 +79,7 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 4
-        deployment, env_configmap, configmap, service = docs
+        deployment, _env_configmap, _configmap, service = docs
         assert deployment["kind"] == "Deployment"
         assert deployment["apiVersion"] == "apps/v1"
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
@@ -141,7 +141,7 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 3
-        deployment, service, configmap = docs
+        deployment, service, _configmap = docs
         assert deployment["kind"] == "Deployment"
         assert deployment["apiVersion"] == "apps/v1"
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
