@@ -92,3 +92,7 @@ imagePullSecrets:
 {{ default "default" .Values.nats.jetStream.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "jetStream.storageClass" -}}
+storageClassName: {{ or .Values.nats.storageClassName .Values.global.storageClass | default "" }}
+{{- end -}}
