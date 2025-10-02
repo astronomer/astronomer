@@ -128,7 +128,7 @@ def load_chart(chart_path, values=None):
                 subchart_path = download_chart(dep_name, dep_version, dep_repository)
 
             # Recursively load and merge the subchart values
-            subchart_name, subchart_values = load_chart(subchart_path, values.get(dep_name, {}))
+            _subchart_name, subchart_values = load_chart(subchart_path, values.get(dep_name, {}))
             if dep_name in values:
                 values[dep_name] = deep_merge(subchart_values, values[dep_name])
             else:

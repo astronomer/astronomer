@@ -9,9 +9,9 @@
 *.tmproj
 *~
 .*_cache
+.DS_Store
 .bzr/
 .bzrignore
-.DS_Store
 .git/
 .gitignore
 .hg/
@@ -25,12 +25,12 @@
 /.github
 /.pre-commit-config.yaml
 /.unittest-requirements
+/CODEOWNERS
+/Makefile
 /bin
 /certs
-/CODEOWNERS
 /configs
 /docs
-/Makefile
 /repository
 /requirements
 /secrets
