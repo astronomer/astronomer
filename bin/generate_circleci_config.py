@@ -12,7 +12,7 @@ git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".
 metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
-ci_runner_version = "2025-07"  # This should be the current YYYY-MM
+ci_runner_version = "2025-10"  # This should be the current YYYY-MM
 machine_image_version = "ubuntu-2404:2024.11.1"  # https://circleci.com/developer/machine/image/ubuntu-2204
 
 
