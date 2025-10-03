@@ -1,5 +1,5 @@
 #################################
-## Astronomer astro ui Ingress ##
+## Astronomer Astro UI Ingress ##
 #################################
 {{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
@@ -46,12 +46,10 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-{{- end }}
 ---
 ###############################
 ## Astronomer Common Ingress ##
 ###############################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
