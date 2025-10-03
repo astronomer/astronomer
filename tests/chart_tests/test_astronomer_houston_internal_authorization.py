@@ -25,7 +25,7 @@ class TestHoustonInternalAuthorization:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert (
-                "http://release-name-houston.default.svc.cluster.local:8871/v1/authorization"
+                "http://release-name-houston.astronomer.svc.cluster.local:8871/v1/authorization"
                 in doc["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"]
             )
 
@@ -44,7 +44,7 @@ class TestHoustonInternalAuthorization:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert (
-                "http://release-name-houston.default.svc.cluster.local:8871/v1/authorization"
+                "http://release-name-houston.astronomer.svc.cluster.local:8871/v1/authorization"
                 in doc["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"]
             )
 
