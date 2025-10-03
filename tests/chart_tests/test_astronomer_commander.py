@@ -293,7 +293,7 @@ class TestAstronomerCommander:
 
         assert len(docs) == 6
 
-        expected_namespaces = [*namespaces, "astronomer"]
+        expected_namespaces = [*namespaces, "default"]
 
         cluster_role = docs[0]
         expected_rule = {
