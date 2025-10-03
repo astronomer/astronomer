@@ -76,9 +76,6 @@ spec:
                 {{- toYaml .Values.securityContext | nindent 16 }}
               resources: {{- toYaml .Values.houston.resources | nindent 16 }}
               args: ["yarn", "populate-hourly-task-audit-metrics"]
-              volumeMounts:
-                {{- include "houston_volume_mounts" . | indent 16 }}
-                {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
               {{- if .Values.houston.taskUsageMetrics.readinessProbe }}
@@ -88,6 +85,8 @@ spec:
               livenessProbe: {{ tpl (toYaml .Values.houston.taskUsageMetrics.livenessProbe) . | nindent 16 }}
               {{- end }}
               volumeMounts:
+              {{- include "houston_volume_mounts" . | indent 16 }}
+              {{- include "custom_ca_volume_mounts" . | indent 16 }}
                 - name: etc-ssl-certs
                   mountPath: /etc/ssl/certs
                 - name: tmp
