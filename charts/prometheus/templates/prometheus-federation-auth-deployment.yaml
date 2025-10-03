@@ -59,7 +59,7 @@ spec:
         - name: REGISTRY_AUTH_TOKEN
           valueFrom:
             secretKeyRef:
-              name: astronomer-registry-auth-key
+              name: {{ template "registry.authHeaderSecret" . }}
               key: token
         volumeMounts:
         - name: config

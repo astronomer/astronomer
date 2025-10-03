@@ -77,9 +77,6 @@ spec:
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args: ["yarn", "check-platform-updates", "--", " --url={{ .Values.houston.updateCheck.url }}"]
-              volumeMounts:
-                {{- include "houston_volume_mounts" . | indent 16 }}
-                {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
               {{- if .Values.houston.updateCheck.readinessProbe }}
@@ -95,6 +92,8 @@ spec:
                   mountPath: /tmp
                 - name: tmp
                   mountPath: /houston/node_modules/.cache
+              {{- include "houston_volume_mounts" . | indent 16 }}
+              {{- include "custom_ca_volume_mounts" . | indent 16 }}
           volumes:
             - name: etc-ssl-certs
               emptyDir: {}

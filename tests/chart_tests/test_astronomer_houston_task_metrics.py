@@ -91,6 +91,16 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
         }
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/production.yaml",
+            "subPath": "production.yaml",
+        } in job_container_by_name["populate-daily-task-metrics"]["volumeMounts"]
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/local-production.yaml",
+            "subPath": "local-production.yaml",
+        } in job_container_by_name["populate-daily-task-metrics"]["volumeMounts"]
 
     def test_astronomer_populate_hourly_task_audit_metrics_cron_custom_schedule(self, kube_version):
         docs = render_chart(
