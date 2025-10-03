@@ -11,11 +11,13 @@ The platform components may take a few minutes to spin up.
 {{- $astronomerEnabled := hasKey .Values.global "astronomerEnabled" | ternary .Values.global.astronomerEnabled true }}
 {{- $platformEnabled := hasKey .Values.tags "platform" | ternary .Values.tags.platform true }}
 {{- $monitoringEnabled := hasKey .Values.tags "monitoring" | ternary .Values.tags.monitoring true }}
+{{- $kibanaEnabled := hasKey .Values.global "kibanaEnabled" | ternary .Values.global.kibanaEnabled true }}
 {{- $loggingEnabled := hasKey .Values.tags "logging" | ternary .Values.tags.logging true }}
 
 {{- if eq $planeMode "control" }}
 You can access the control plane at:
 - Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Kibana dashboard:            {{ if and $kibanaEnabled $loggingEnabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
 The control plane is responsible for platform management, orchestration, and user interfaces.
 
@@ -30,6 +32,7 @@ The data plane is responsible for executing and monitoring Airflow workloads.
 {{- else if eq $planeMode "unified" }}
 You can access the cluster at:
 - Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Kibana dashboard:            {{ if and $kibanaEnabled $loggingEnabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
 The unified mode runs both the data plane and control plane in the same cluster and namespace.
 {{- end }}

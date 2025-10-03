@@ -156,6 +156,16 @@ elasticsearch:
         memory: "0Gi"
 
 #################################
+## Kibana configuration
+#################################
+kibana:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Mi"
+
+#################################
 ## Kube State configuration
 #################################
 kubeState:

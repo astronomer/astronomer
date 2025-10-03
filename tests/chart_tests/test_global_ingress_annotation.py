@@ -20,7 +20,8 @@ class TestGlobabIngressAnnotation:
             show_only=sorted(always_rendered_ingress),
         )
 
-        assert len(docs) == 5
+        assert len(docs) == 6
+
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
