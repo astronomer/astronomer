@@ -33,6 +33,16 @@ class TestHoustonCronJobPlatformUpdates:
         ]
         assert job_container_by_name["update-check"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
         assert default_houston_resource_spec == job_container_by_name["update-check"]["resources"]
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/production.yaml",
+            "subPath": "production.yaml",
+        } in job_container_by_name["update-check"]["volumeMounts"]
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/local-production.yaml",
+            "subPath": "local-production.yaml",
+        } in job_container_by_name["update-check"]["volumeMounts"]
 
     def test_cronjob_platform_updates_enabled_with_overrides(self, kube_version):
         docs = render_chart(
