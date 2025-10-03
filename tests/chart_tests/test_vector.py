@@ -68,7 +68,7 @@ class TestVector:
             assert env_var in env_vars, f"Required environment variable {env_var} not found"
 
         assert env_vars["VECTOR_CONFIG_YAML"] == "/etc/vector/config/vector-config.yaml"
-        assert env_vars["NAMESPACE"] == "default"
+        assert env_vars["NAMESPACE"] == "astronomer"
         assert env_vars["RELEASE"] == "release-name"
 
     @staticmethod
