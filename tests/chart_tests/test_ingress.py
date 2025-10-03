@@ -115,3 +115,51 @@ class TestIngress:
 
         backend = paths[0]["backend"]
         assert backend["service"]["port"]["name"] == "http"
+
+    def test_registry_ingress_control_vs_unified_plane(self, kube_version):
+        """Test that registry.baseDomain is only exposed in unified plane mode"""
+        # Test control plane mode - registry should NOT be present
+        control_docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}}},
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(control_docs) == 1
+        control_doc = control_docs[0]
+
+        # Assert registry is NOT in the rules
+        hosts = [rule["host"] for rule in control_doc["spec"]["rules"]]
+        assert "registry.example.com" not in hosts
+        assert "example.com" in hosts
+        assert "app.example.com" in hosts
+
+        # Assert registry is NOT in TLS hosts
+        tls_hosts = control_doc["spec"]["tls"][0]["hosts"]
+        assert "registry.example.com" not in tls_hosts
+        assert "example.com" in tls_hosts
+        assert "app.example.com" in tls_hosts
+        assert "install.example.com" in tls_hosts
+
+        # Test unified plane mode - registry SHOULD be present
+        unified_docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "unified"}}},
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(unified_docs) == 1
+        unified_doc = unified_docs[0]
+
+        # Assert registry IS in the rules
+        hosts = [rule["host"] for rule in unified_doc["spec"]["rules"]]
+        assert "registry.example.com" in hosts
+        assert "example.com" in hosts
+        assert "app.example.com" in hosts
+
+        # Assert registry IS in TLS hosts
+        tls_hosts = unified_doc["spec"]["tls"][0]["hosts"]
+        assert "registry.example.com" in tls_hosts
+        assert "example.com" in tls_hosts
+        assert "app.example.com" in tls_hosts
+        assert "install.example.com" in tls_hosts
