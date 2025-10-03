@@ -40,7 +40,7 @@ class TestAstronomerNamespacePools:
 
         assert len(docs) == 6
 
-        expected_namespaces = [*namespaces, "default"]
+        expected_namespaces = [*namespaces, "astronomer"]
 
         # assertions on Role objects
         for i in range(0, 3):
