@@ -1,0 +1,130 @@
+#######################
+## Kibana Deployment ##
+#######################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kibana.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "kibana.name" . }}
+    chart: {{ template "kibana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "kibana.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: logging
+        component: {{ template "kibana.name" . }}
+        release: {{ .Release.Name }}
+        app: {{ template "kibana.name" . }}
+        version: {{ .Chart.Version }}
+{{- if or .Values.global.podAnnotations .Values.podAnnotations }}
+      annotations:
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+{{- end }}
+    spec:
+      serviceAccountName: {{ template "kibana.serviceAccountName" . }}
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+{{- include "kibana.imagePullSecrets" . | indent 6 }}
+      containers:
+        - name: kibana
+          image: {{ template "kibana.image" . }}
+          imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "kibana.securityContext" . }}
+          env:
+          {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+          {{- end }}
+            - name: CLUSTER_NAME
+              value: {{ .Values.clusterName }}
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://{{ .Release.Name }}-elasticsearch:9200"
+            - name: ELASTICSEARCH_REQUESTTIMEOUT
+              value: "60000"
+          {{- if .Values.global.baseDomain }}
+            - name: SERVER_PUBLICBASEURL
+              value: https://{{ template "kibana.name" . }}.{{ .Values.global.baseDomain }}
+          {{- end }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.ports.http }}
+              name: kibana-ui
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /usr/share/kibana/data
+              name: kibana-data
+      {{- if .Values.global.authSidecar.enabled }}
+        - name: auth-proxy
+          image: {{ include "authSidecar.image" . }}
+          securityContext: {{ template "kibana.securityContext" . }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          {{- if .Values.global.authSidecar.resources }}
+          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.global.authSidecar.port }}
+              name: auth-proxy
+              protocol: TCP
+          {{- if .Values.global.authSidecar.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          {{- if .Values.global.authSidecar.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.global.authSidecar.livenessProbe) . | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d/
+              name: kibana-sidecar-conf
+      {{- end }}
+      volumes:
+        - name: kibana-data
+          emptyDir: {}
+      {{- if .Values.global.authSidecar.enabled }}
+        - name: kibana-sidecar-conf
+          configMap:
+            name: {{ template "kibana.fullname" . }}-nginx-conf
+      {{- end }}
+{{- end }}

@@ -324,6 +324,16 @@ grafana:
       exec:
         command:
         - /bin/true
+kibana:
+  defaultIndexJob:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
   livenessProbe:
     exec:
       command:
