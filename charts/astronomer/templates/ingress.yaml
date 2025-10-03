@@ -3,6 +3,7 @@
 ########################
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if and .Values.global.baseDomain  ( not .Values.global.enablePerHostIngress ) }}
+{{- $planeUnifiedMode := eq .Values.global.plane.mode "unified" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -34,7 +35,7 @@ spec:
       hosts:
         - {{ .Values.global.baseDomain }}
         - app.{{ .Values.global.baseDomain }}
-      {{- if eq .Values.global.plane.mode "unified" }}
+      {{- if $planeUnifiedMode }}
         - registry.{{ .Values.global.baseDomain }}
       {{- end }}
         - install.{{ .Values.global.baseDomain }}
@@ -60,7 +61,7 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-{{- if (eq .Values.global.plane.mode "unified") }}
+{{- if $planeUnifiedMode }}
   - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:
