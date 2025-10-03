@@ -144,9 +144,6 @@ spec:
             readOnlyRootFilesystem: true
             {{- toYaml .Values.securityContext | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
-          volumeMounts:
-            {{- include "houston_volume_mounts" . | indent 12 }}
-            {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -167,6 +164,8 @@ spec:
               mountPath: /tmp
             - name: tmp
               mountPath: /houston/node_modules/.cache
+          {{- include "houston_volume_mounts" . | indent 12 }}
+          {{- include "custom_ca_volume_mounts" . | indent 12 }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
