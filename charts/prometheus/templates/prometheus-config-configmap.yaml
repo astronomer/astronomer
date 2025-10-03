@@ -74,7 +74,7 @@ data:
         scrape_interval: 5s
         params:
           'match[]':
-            - '{job=~"astronomer-kube-state|airflow"}'
+            - '{job=~".*-kube-state$|airflow"}'
         file_sd_configs:
           - files:
             - /prometheusreloader/airflow/clusters.json
