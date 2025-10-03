@@ -34,28 +34,35 @@ class TestIngress:
             """
         )
 
-    def test_astro_ui_per_host_ingress(self, kube_version):
+    @pytest.mark.parametrize(
+        ("mode", "expected"),
+        [("control", True), ("data", False), ("unified", True)],
+    )
+    def test_astro_ui_per_host_ingress(self, mode, expected, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"enablePerHostIngress": True}},
+            values={"global": {"enablePerHostIngress": True, "plane": {"mode": mode}}},
             show_only=[
                 "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
                 "charts/astronomer/templates/ingress.yaml",
             ],
         )
-        assert len(docs) == 2
-        assert docs[0]["spec"]["rules"] == json.loads(
-            """
-            [{"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
-            {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
-            """
-        )
-        assert docs[1]["spec"]["rules"] == json.loads(
-            """
-            [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
-            {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
-            """
-        )
+        if expected:
+            assert len(docs) == 2
+            assert docs[0]["spec"]["rules"] == json.loads(
+                """
+                [{"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
+                """
+            )
+            assert docs[1]["spec"]["rules"] == json.loads(
+                """
+                [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
+                """
+            )
+        else:
+            assert not docs
 
     def test_registry_per_host_ingress(self, kube_version):
         docs = render_chart(
