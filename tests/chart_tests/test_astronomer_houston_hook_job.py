@@ -36,6 +36,16 @@ class TestHoustonHookJob:
         ]
 
         assert c_by_name["post-upgrade-job"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/production.yaml",
+            "subPath": "production.yaml",
+        } in c_by_name["post-upgrade-job"]["volumeMounts"]
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/local-production.yaml",
+            "subPath": "local-production.yaml",
+        } in c_by_name["post-upgrade-job"]["volumeMounts"]
 
     def test_upgrade_deployments_job_disabled(self, kube_version):
         """Test Upgrade Deployments Job when disabled."""
