@@ -334,6 +334,10 @@ class TestExternalElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}},
+            },
         ] == networkpolicy["spec"]["ingress"][0]["from"]
 
     def test_external_es_network_selector_with_logging_sidecar_enabled(self, kube_version):
@@ -361,6 +365,7 @@ class TestExternalElasticSearch:
         assert networkpolicy["kind"] == "NetworkPolicy"
         assert [
             {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}}},
             {
                 "namespaceSelector": {},
                 "podSelector": {
