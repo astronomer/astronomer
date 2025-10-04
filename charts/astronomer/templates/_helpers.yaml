@@ -211,7 +211,7 @@
 - name: COMMANDER_DATAPLANE_MODE
   value: {{ .Values.global.plane.mode | quote }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
-  value: "https://houston.{{ .Values.global.baseDomain }}"
+  value: "{{ include "houston.authServiceURL" . }}"
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
   value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
 {{- if .Values.global.features.namespacePools.enabled  }}
@@ -555,3 +555,11 @@ Generate JetStream TLS checksum annotation
 checksum/jetstream-tls-cert: {{ $actualCert }}
 {{- end }}
 {{- end }}
+
+{{- define "houston.authServiceURL" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+https://houston.{{ .Values.global.baseDomain }}
+{{- else -}}
+http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}:{{ .Values.ports.houstonHTTP }}
+{{- end }}
+{{- end -}}

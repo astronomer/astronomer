@@ -223,6 +223,6 @@ spec:
       {{- if .Values.houston.extraVolumes }}
       {{- tpl (toYaml .Values.houston.extraVolumes) $ | nindent 8 }}
       {{- end }}
-              {{- include "houston_volumes" . | nindent 8 }}
-              {{- include "custom_ca_volumes" . | indent 8 }}
-      {{- end }}
+        {{- include "houston_volumes" . | nindent 8 }}
+        {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}
