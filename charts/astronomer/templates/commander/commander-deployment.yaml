@@ -74,8 +74,7 @@ spec:
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
           resources:
-            limits: {'cpu': '100m', 'memory': '128Mi'}
-            requests: {'cpu': '100m', 'memory': '128Mi'}
+            {{ toYaml .Values.certCopier.resources | nindent 12 }}
           securityContext:
             readOnlyRootFilesystem: true
             {{ toYaml .Values.securityContext | nindent 12 }}
