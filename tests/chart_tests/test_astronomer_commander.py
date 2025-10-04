@@ -100,7 +100,7 @@ class TestAstronomerCommander:
                 },
                 "images": {"commander": {"tag": "88.77.66"}},
             },
-            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "unified"}},
+            "global": {"baseDomain": "example.com", "plane": {"mode": "unified"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -128,8 +128,8 @@ class TestAstronomerCommander:
         assert "COMMANDER_DATAPLANE_DATABASE_URL" in env_vars
         assert env_vars["COMMANDER_DATAPLANE_ID"] == "astronomer"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
-        assert env_vars["COMMANDER_BASE_DOMAIN"] == "astronomer.example.com"
-        assert env_vars["COMMANDER_DATAPLANE_URL"] == "astronomer.example.com"
+        assert env_vars["COMMANDER_BASE_DOMAIN"] == "example.com"
+        assert env_vars["COMMANDER_DATAPLANE_URL"] == "release-name-commander.astronomer.svc.cluster.local.:8880"
         assert env_vars["COMMANDER_DATAPLANE_MODE"] == "unified"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
 
