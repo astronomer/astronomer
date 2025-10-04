@@ -73,20 +73,18 @@ spec:
               else
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
-          resources:
-            {{ toYaml .Values.certCopier.resources | nindent 12 }}
+          resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           securityContext:
             readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext | nindent 12 }}
+            {{- toYaml .Values.securityContext | nindent 12 }}
       containers:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           securityContext:
             readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext | nindent 12 }}
-          resources:
-{{ toYaml .Values.commander.resources | indent 12 }}
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           {{- if .Values.commander.command }}
           command:
             {{- toYaml .Values.commander.command | nindent 12 }}
