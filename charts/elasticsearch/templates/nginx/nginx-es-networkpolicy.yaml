@@ -29,6 +29,11 @@ spec:
         matchLabels:
           tier: airflow
           component: webserver
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          tier: airflow
+          component: api-server
     {{- if .Values.global.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:
