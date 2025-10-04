@@ -129,7 +129,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_DATAPLANE_ID"] == "astronomer"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_BASE_DOMAIN"] == "example.com"
-        assert env_vars["COMMANDER_DATAPLANE_URL"] == "release-name-commander.default..svc.cluster.local.:8880"
+        assert env_vars["COMMANDER_DATAPLANE_URL"] == "release-name-commander.default.svc.cluster.local.:8880"
         assert env_vars["COMMANDER_DATAPLANE_MODE"] == "unified"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
 
