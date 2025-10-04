@@ -120,7 +120,7 @@ class TestAstronomerCommander:
 
         assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
-        assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.astronomer.svc.cluster.local.:9200"
+        assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.default.svc.cluster.local.:9200"
         assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "99.88.77"
         assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"] != ""
         assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
@@ -131,7 +131,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_BASE_DOMAIN"] == "custom-dp-123.example.com"
         assert env_vars["COMMANDER_DATAPLANE_URL"] == "custom-dp-123.example.com"
         assert env_vars["COMMANDER_DATAPLANE_MODE"] == "unified"
-        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.astronomer:8871"
+        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
