@@ -85,6 +85,11 @@ spec:
         matchLabels:
           component: webserver
           tier: airflow
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: api-server
+          tier: airflow
     {{- end }}
     {{- if .Values.global.dagOnlyDeployment.enabled }}
     - namespaceSelector: {}
