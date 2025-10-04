@@ -57,6 +57,28 @@ spec:
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
       restartPolicy: Always
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          image: {{ template "commander.image" . }}
+          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources:
+            limits: {'cpu': '100m', 'memory': '128Mi'}
+            requests: {'cpu': '100m', 'memory': '128Mi'}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext | nindent 12 }}
       containers:
         - name: commander
           image: {{ template "commander.image" . }}
@@ -144,6 +166,8 @@ spec:
             {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
             - name: tmp-workspace
               mountPath: /tmp
             - name: commander-home
@@ -152,6 +176,7 @@ spec:
             - mountPath: /app/metadata.yaml
               name: metadata
               subPath: metadata.yaml
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
           {{- if .Values.commander.volumeMounts }}
           {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
           {{- end }}
@@ -189,6 +214,8 @@ spec:
             periodSeconds: 5
         {{- end }}
       volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
         - name: tmp-workspace
           emptyDir: {}
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
@@ -201,6 +228,7 @@ spec:
         - configMap:
             name: {{ .Release.Name }}-commander-metadata
           name: metadata
+        {{- include "custom_ca_volumes" . | nindent 8 }}
       {{- if .Values.commander.extraVolumes }}
       {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
       {{- end }}
