@@ -126,10 +126,10 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
         assert env_vars["COMMANDER_VERSION"] == "88.77.66"
         assert "COMMANDER_DATAPLANE_DATABASE_URL" in env_vars
-        assert env_vars["COMMANDER_DATAPLANE_ID"] == "custom-dp-123"
+        assert env_vars["COMMANDER_DATAPLANE_ID"] == "astronomer"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
-        assert env_vars["COMMANDER_BASE_DOMAIN"] == "custom-dp-123.example.com"
-        assert env_vars["COMMANDER_DATAPLANE_URL"] == "custom-dp-123.example.com"
+        assert env_vars["COMMANDER_BASE_DOMAIN"] == "astronomer.example.com"
+        assert env_vars["COMMANDER_DATAPLANE_URL"] == "astronomer.example.com"
         assert env_vars["COMMANDER_DATAPLANE_MODE"] == "unified"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
 
