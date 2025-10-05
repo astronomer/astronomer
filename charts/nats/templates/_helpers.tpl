@@ -94,5 +94,5 @@ imagePullSecrets:
 {{- end }}
 
 {{- define "jetStream.storageClass" -}}
-storageClassName: {{ or .Values.nats.storageClassName .Values.global.storageClass | default "" }}
+storageClassName: {{ or .Values.nats.jetStream.fileStorage.storageClassName .Values.global.storageClass | default "" }}
 {{- end -}}
