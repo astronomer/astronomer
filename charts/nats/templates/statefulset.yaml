@@ -369,8 +369,8 @@ spec:
         resources:
           requests:
             storage: {{ .Values.nats.jetStream.fileStorage.size }}
-        {{- if .Values.nats.jetStream.fileStorage.storageClassName }}
-        storageClassName: {{ .Values.nats.jetStream.fileStorage.storageClassName | quote }}
+        {{- if or .Values.nats.jetStream.fileStorage.storageClassName .Values.global.storageClass }}
+        {{ include "jetStream.storageClass" . }}
         {{- end }}
   {{- end }}
 {{- end }}
