@@ -12,8 +12,23 @@ from tests.utils.chart import render_chart
 class TestNatsStatefulSet:
     def test_nats_statefulset_defaults(self, kube_version):
         """Test that nats statefulset is good with defaults."""
+        values={
+            "nats": {
+            "nats": {
+                "jetStream": {
+                    "enabled": True,
+                    "fileStorage": {
+                        "enabled": True,
+                        "storageClassName": "fast-ssd",
+                        "size": "10Gi",
+                    },
+                },
+            },
+        }
+        }
         docs = render_chart(
             kube_version=kube_version,
+            values=values,
             show_only=[
                 "charts/nats/templates/jetstream-job-scc.yaml",
                 "charts/nats/templates/statefulset.yaml",
@@ -43,6 +58,7 @@ class TestNatsStatefulSet:
         assert spec["nodeSelector"] == {}
         assert spec["affinity"] == {}
         assert spec["tolerations"] == []
+        assert doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"] == "fast-ssd"
 
     def test_nats_statefulset_with_metrics_and_resources(self, kube_version):
         """Test that nats statefulset renders good metrics exporter."""
