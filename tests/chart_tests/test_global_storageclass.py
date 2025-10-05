@@ -9,6 +9,7 @@ parametrization_data = (
     ("charts/elasticsearch/templates/data/es-data-statefulset.yaml", "astrosc"),
     ("charts/prometheus/templates/prometheus-statefulset.yaml", "astrosc"),
     ("charts/astronomer/templates/registry/registry-statefulset.yaml", None),  # Registry should use direct access
+    ("charts/nats/templates/statefulset.yaml", "astrosc")
 )
 
 
@@ -35,13 +36,23 @@ def test_component_storageclass_precendence():
         "elasticsearch": {"common": {"persistence": {"storageClassName": "gp2"}}},
         "prometheus": {"persistence": {"storageClassName": "gp2"}},
         "astronomer": {"registry": {"persistence": {"storageClassName": "gp2"}}},
+        "nats": {
+            "jetStream": {
+                "enabled": True,
+                "fileStorage": {
+                    "enabled": True,
+                    "storageClassName": "gp2",
+                    "size": "10Gi",
+                },
+            },
+        },
     }
 
     docs = render_chart(
         values=values,
         show_only=[chart_file for chart_file, _ in parametrization_data],
     )
-    assert len(docs) == 5
+    assert len(docs) == 6
 
     for chart_file, doc in zip([x[0] for x in parametrization_data], docs):
         doc = doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
