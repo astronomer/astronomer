@@ -127,3 +127,50 @@ class TestCommanderJWKSHookJob:
 
         assert env_vars["CUSTOM_SOMETHING1"] == "RANDOM_VALUE1"
         assert env_vars["CUSTOM_SOMETHING2"] == "RANDOM_VALUE2"
+
+    def test_jwks_hook_job_with_extra_ca_certs(self, kube_version):
+        """Test JWKS Hook Job with extra CA certs."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "privateCaCerts": [
+                        "private-ca-cert-foo",
+                        "private-ca-cert-bar",
+                    ],
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/jwks-hooks/commander-jwks-hooks.yaml"],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "Job"
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        assert docs[0]["kind"] == "Job"
+        assert docs[0]["metadata"]["name"] == "release-name-commander-jwks-hook"
+
+        volumemounts = c_by_name["commander-jwks-hook"]["volumeMounts"]
+        volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
+
+        expected_volumes = [
+            {"name": "jwks-script", "configMap": {"name": "release-name-commander-jwks-hook-config", "defaultMode": 493}},
+            {"name": "private-ca-cert-foo", "secret": {"secretName": "private-ca-cert-foo"}},
+            {"name": "private-ca-cert-bar", "secret": {"secretName": "private-ca-cert-bar"}},
+        ]
+
+        expected_volumemounts = [
+            {"name": "jwks-script", "mountPath": "/scripts"},
+            {
+                "name": "private-ca-cert-foo",
+                "mountPath": "/usr/local/share/ca-certificates/private-ca-cert-foo.pem",
+                "subPath": "cert.pem",
+            },
+            {
+                "name": "private-ca-cert-bar",
+                "mountPath": "/usr/local/share/ca-certificates/private-ca-cert-bar.pem",
+                "subPath": "cert.pem",
+            },
+        ]
+
+        assert volumemounts == expected_volumemounts
+        assert volumes == expected_volumes
