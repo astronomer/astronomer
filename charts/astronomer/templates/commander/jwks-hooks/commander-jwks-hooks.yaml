@@ -75,9 +75,11 @@ spec:
           volumeMounts:
             - name: jwks-script
               mountPath: /scripts
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
       volumes:
         - name: jwks-script
           configMap:
             name: {{ .Release.Name }}-commander-jwks-hook-config
             defaultMode: 0755
+        {{- include "custom_ca_volumes" . | nindent 8 }}
 {{- end }}

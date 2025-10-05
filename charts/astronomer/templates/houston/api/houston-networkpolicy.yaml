@@ -72,6 +72,11 @@ spec:
           tier: elasticsearch
           component: es-ingress-controller
           release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: {{ .Release.Name }}
+          component: commander
+          release: {{ .Release.Name }}
     {{- if .Values.global.customLogging.enabled }}
     - podSelector:
         matchLabels:
