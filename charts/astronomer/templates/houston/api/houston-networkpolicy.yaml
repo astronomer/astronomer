@@ -74,7 +74,7 @@ spec:
           release: {{ .Release.Name }}
     - podSelector:
         matchLabels:
-          tier: {{ .Release.Name }}
+          tier: astronomer
           component: commander
           release: {{ .Release.Name }}
     {{- if .Values.global.customLogging.enabled }}
