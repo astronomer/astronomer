@@ -55,6 +55,10 @@ class TestCommanderJWKSHookJob:
 
         container = c_by_name["commander-jwks-hook"]
         assert container["command"] == ["/bin/sh", "-c", "update-ca-certificates;python3 /scripts/commander-jwks.py"]
+        assert container["resources"] == {
+            "requests": {"cpu": "250m", "memory": "1Gi"},
+            "limits": {"cpu": "500m", "memory": "2Gi"},
+        }
 
         env_vars = get_env_vars_dict(container["env"])
         assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com"
