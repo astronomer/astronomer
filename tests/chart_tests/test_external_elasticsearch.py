@@ -36,13 +36,6 @@ class TestExternalElasticSearch:
             {"name": "nginx-uwsgi-temp", "mountPath": "/usr/local/openresty/nginx/uwsgi_temp"},
             {"name": "nginx-scgi-temp", "mountPath": "/usr/local/openresty/nginx/scgi_temp"},
         ]
-        expected_nginx_volumes = [
-            {"name": "nginx-client-body-temp", "emptyDir": {}},
-            {"name": "nginx-proxy-temp", "emptyDir": {}},
-            {"name": "nginx-fastcgi-temp", "emptyDir": {}},
-            {"name": "nginx-uwsgi-temp", "emptyDir": {}},
-            {"name": "nginx-scgi-temp", "emptyDir": {}},
-        ]
         assert len(docs) == 4
         deployment, _env_configmap, _configmap, service = docs
         assert deployment["kind"] == "Deployment"
