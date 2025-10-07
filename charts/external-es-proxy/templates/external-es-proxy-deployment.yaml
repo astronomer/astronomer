@@ -164,16 +164,6 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-        - name: nginx-client-body-temp
-          emptyDir: {}
-        - name: nginx-proxy-temp
-          emptyDir: {}
-        - name: nginx-fastcgi-temp
-          emptyDir: {}
-        - name: nginx-uwsgi-temp
-          emptyDir: {}
-        - name: nginx-scgi-temp
-          emptyDir: {}
         - name: tmp
           emptyDir: {}
         - name: nginx-config-volume
