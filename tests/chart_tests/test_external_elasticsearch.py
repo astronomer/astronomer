@@ -29,6 +29,13 @@ class TestExternalElasticSearch:
             ],
         )
 
+        expected_nginx_mounts = [
+        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/client_body_temp"},
+        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/proxy_temp"},
+        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/fastcgi_temp"},
+        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/uwsgi_temp"},
+        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/scgi_temp"},
+        ]
         assert len(docs) == 4
         deployment, _env_configmap, _configmap, service = docs
         assert deployment["kind"] == "Deployment"
@@ -43,8 +50,11 @@ class TestExternalElasticSearch:
         assert expected_env == deployment["spec"]["template"]["spec"]["containers"][0]["env"]
         container_mounts = deployment["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
         assert {"name": "tmp", "mountPath": "/tmp"} in container_mounts
+        for mount in expected_nginx_mounts:
+            assert mount in container_mounts, f"Missing mount {mount}"
         volumes = deployment["spec"]["template"]["spec"]["volumes"]
         assert {"name": "tmp", "emptyDir": {}} in volumes
+        assert {"name": "nginx-cache", "emptyDir": {}} in volumes
 
         assert service["kind"] == "Service"
         assert service["metadata"]["name"] == "release-name-external-es-proxy"
