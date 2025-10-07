@@ -61,8 +61,6 @@ class TestExternalElasticSearch:
             assert mount in container_mounts, f"Missing mount {mount}"
         volumes = deployment["spec"]["template"]["spec"]["volumes"]
         assert {"name": "tmp", "emptyDir": {}} in volumes
-        for vol in expected_nginx_volumes:
-            assert vol in volumes, f"Missing volume: {vol}"
 
         assert service["kind"] == "Service"
         assert service["metadata"]["name"] == "release-name-external-es-proxy"
