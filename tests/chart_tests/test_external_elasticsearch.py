@@ -30,11 +30,18 @@ class TestExternalElasticSearch:
         )
 
         expected_nginx_mounts = [
-            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/client_body_temp"},
-            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/proxy_temp"},
-            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/fastcgi_temp"},
-            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/uwsgi_temp"},
-            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/scgi_temp"},
+            {"name": "nginx-client-body-temp", "mountPath": "/usr/local/openresty/nginx/client_body_temp"},
+            {"name": "nginx-proxy-temp", "mountPath": "/usr/local/openresty/nginx/proxy_temp"},
+            {"name": "nginx-fastcgi-temp", "mountPath": "/usr/local/openresty/nginx/fastcgi_temp"},
+            {"name": "nginx-uwsgi-temp", "mountPath": "/usr/local/openresty/nginx/uwsgi_temp"},
+            {"name": "nginx-scgi-temp", "mountPath": "/usr/local/openresty/nginx/scgi_temp"},
+        ]
+        expected_nginx_volumes = [
+            {"name": "nginx-client-body-temp", "emptyDir": {}},
+            {"name": "nginx-proxy-temp", "emptyDir": {}},
+            {"name": "nginx-fastcgi-temp", "emptyDir": {}},
+            {"name": "nginx-uwsgi-temp", "emptyDir": {}},
+            {"name": "nginx-scgi-temp", "emptyDir": {}},
         ]
         assert len(docs) == 4
         deployment, _env_configmap, _configmap, service = docs
@@ -54,7 +61,8 @@ class TestExternalElasticSearch:
             assert mount in container_mounts, f"Missing mount {mount}"
         volumes = deployment["spec"]["template"]["spec"]["volumes"]
         assert {"name": "tmp", "emptyDir": {}} in volumes
-        assert {"name": "nginx-cache", "emptyDir": {}} in volumes
+        for vol in expected_nginx_volumes:
+            assert vol in volumes, f"Missing volume: {vol}"
 
         assert service["kind"] == "Service"
         assert service["metadata"]["name"] == "release-name-external-es-proxy"
