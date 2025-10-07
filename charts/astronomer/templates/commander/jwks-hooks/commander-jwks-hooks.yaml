@@ -62,6 +62,7 @@ spec:
               else
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
+          resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
@@ -71,6 +72,7 @@ spec:
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           command: ["/bin/sh", "-c", "update-ca-certificates;python3 /scripts/commander-jwks.py"]
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           env:
             - name: CONTROL_PLANE_ENDPOINT
               value: "https://houston.{{ .Values.global.baseDomain }}"
