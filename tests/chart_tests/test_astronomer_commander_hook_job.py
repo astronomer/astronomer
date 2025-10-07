@@ -54,8 +54,7 @@ class TestCommanderJWKSHookJob:
         assert "commander-jwks-hook" in c_by_name
 
         container = c_by_name["commander-jwks-hook"]
-        assert container["command"] == ["python3"]
-        assert container["args"] == ["/scripts/commander-jwks.py"]
+        assert container["command"] == ["/bin/sh", "-c", "update-ca-certificates;python3 /scripts/commander-jwks.py"]
 
         env_vars = get_env_vars_dict(container["env"])
         assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com"
