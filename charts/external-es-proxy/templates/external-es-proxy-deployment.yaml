@@ -87,15 +87,15 @@ spec:
               subPath: setenv.lua
             - name: tmp
               mountPath: /tmp
-            - name: nginx-cache
+            - name: nginx-client-body-temp
               mountPath: /usr/local/openresty/nginx/client_body_temp
-            - name: nginx-cache
+            - name: nginx-proxy-temp
               mountPath: /usr/local/openresty/nginx/proxy_temp
-            - name: nginx-cache
+            - name: nginx-fastcgi-temp
               mountPath: /usr/local/openresty/nginx/fastcgi_temp
-            - name: nginx-cache
+            - name: nginx-uwsgi-temp
               mountPath: /usr/local/openresty/nginx/uwsgi_temp
-            - name: nginx-cache
+            - name: nginx-scgi-temp
               mountPath: /usr/local/openresty/nginx/scgi_temp
 
             {{- if .Values.global.customLogging.trustCaCerts -}}
@@ -159,7 +159,15 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-        - name: nginx-cache
+        - name: nginx-client-body-temp
+          emptyDir: {}
+        - name: nginx-proxy-temp
+          emptyDir: {}
+        - name: nginx-fastcgi-temp
+          emptyDir: {}
+        - name: nginx-uwsgi-temp
+          emptyDir: {}
+        - name: nginx-scgi-temp
           emptyDir: {}
         - name: tmp
           emptyDir: {}
