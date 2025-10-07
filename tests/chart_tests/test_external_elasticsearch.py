@@ -30,11 +30,11 @@ class TestExternalElasticSearch:
         )
 
         expected_nginx_mounts = [
-        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/client_body_temp"},
-        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/proxy_temp"},
-        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/fastcgi_temp"},
-        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/uwsgi_temp"},
-        {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/scgi_temp"},
+            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/client_body_temp"},
+            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/proxy_temp"},
+            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/fastcgi_temp"},
+            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/uwsgi_temp"},
+            {"name": "nginx-cache", "mountPath": "/usr/local/openresty/nginx/scgi_temp"},
         ]
         assert len(docs) == 4
         deployment, _env_configmap, _configmap, service = docs
