@@ -30,11 +30,16 @@ class TestExternalElasticSearch:
         )
 
         expected_nginx_mounts = [
-            {"name": "nginx-client-body-temp", "mountPath": "/usr/local/openresty/nginx/client_body_temp"},
-            {"name": "nginx-proxy-temp", "mountPath": "/usr/local/openresty/nginx/proxy_temp"},
-            {"name": "nginx-fastcgi-temp", "mountPath": "/usr/local/openresty/nginx/fastcgi_temp"},
-            {"name": "nginx-uwsgi-temp", "mountPath": "/usr/local/openresty/nginx/uwsgi_temp"},
-            {"name": "nginx-scgi-temp", "mountPath": "/usr/local/openresty/nginx/scgi_temp"},
+            {"name": "tmp", "mountPath": "/tmp"},
+            {
+                "name": "tmp",
+                "mountPath": "/usr/local/openresty/nginx/client_body_temp",
+                "subPath": "openresty/nginx/client_body_temp",
+            },
+            {"name": "tmp", "mountPath": "/usr/local/openresty/nginx/proxy_temp", "subPath": "openresty/nginx/proxy_temp"},
+            {"name": "tmp", "mountPath": "/usr/local/openresty/nginx/fastcgi_temp", "subPath": "openresty/nginx/fastcgi_temp"},
+            {"name": "tmp", "mountPath": "/usr/local/openresty/nginx/uwsgi_temp", "subPath": "openresty/nginx/uwsgi_temp"},
+            {"name": "tmp", "mountPath": "/usr/local/openresty/nginx/scgi_temp", "subPath": "openresty/nginx/scgi_temp"},
         ]
         assert len(docs) == 4
         deployment, _env_configmap, _configmap, service = docs
