@@ -152,6 +152,7 @@ class TestCommanderJWKSHookJob:
         assert docs[0]["kind"] == "Job"
         assert docs[0]["metadata"]["name"] == "release-name-commander-jwks-hook"
 
+        volumemounts = c_by_name["commander-jwks-hook"]["volumeMounts"]
         c_by_name["commander-jwks-hook"]["volumeMounts"]
         volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
 
@@ -162,5 +163,19 @@ class TestCommanderJWKSHookJob:
             {"name": "private-ca-cert-bar", "secret": {"secretName": "private-ca-cert-bar"}},
         ]
 
-        # assert volumemounts == expected_volumemounts
+        expected_volumemounts = [
+            {"name": "jwks-script", "mountPath": "/scripts"},
+            {
+                "name": "private-ca-cert-foo",
+                "mountPath": "/usr/local/share/ca-certificates/private-ca-cert-foo.pem",
+                "subPath": "cert.pem",
+            },
+            {
+                "name": "private-ca-cert-bar",
+                "mountPath": "/usr/local/share/ca-certificates/private-ca-cert-bar.pem",
+                "subPath": "cert.pem",
+            },
+        ]
+
+        assert volumemounts == expected_volumemounts
         assert volumes == expected_volumes
