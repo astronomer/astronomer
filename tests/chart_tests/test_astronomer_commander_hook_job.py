@@ -166,6 +166,10 @@ class TestCommanderJWKSHookJob:
         expected_volumemounts = [
             {"name": "jwks-script", "mountPath": "/scripts"},
             {
+                "mountPath": "/etc/ssl/certs",
+                "name": "etc-ssl-certs",
+            },
+            {
                 "name": "private-ca-cert-foo",
                 "mountPath": "/usr/local/share/ca-certificates/private-ca-cert-foo.pem",
                 "subPath": "cert.pem",
