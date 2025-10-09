@@ -102,6 +102,7 @@ spec:
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
+          runAsUser: 0
           readOnlyRootFilesystem: true
           privileged: true
         resources: {{ toYaml .Values.data.initResources | nindent 10 }}
