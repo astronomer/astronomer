@@ -37,7 +37,7 @@ spec:
     - host: {{ template "prom-proxy.url" . }}
       http:
         paths:
-          - path: /(federate|healthz)(/.*)?
+          - path: /
             pathType: Prefix
             backend:
               service:
