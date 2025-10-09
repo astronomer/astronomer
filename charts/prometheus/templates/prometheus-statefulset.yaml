@@ -2,7 +2,7 @@
 ## Prometheus StatefulSet ##
 ############################
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
-{{- $sanitizedReleaseName := .Release.Name | replace "-" "_"  }}
+{{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -164,7 +164,7 @@ spec:
             - name: DEPLOYMENT_TABLE_NAME
               value: Deployment
             - name: DATABASE_NAME
-              value: {{ $sanitizedReleaseName }}_houston
+              value: {{ $dbName }}_houston
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
             - name: ENABLE_DEPLOYMENT_SCRAPING
