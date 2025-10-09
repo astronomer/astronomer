@@ -62,6 +62,12 @@ class TestPrometheusStatefulset:
         assert c_by_name["filesd-reloader"]["image"].startswith("quay.io/astronomer/ap-kuiper-reloader:")
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
 
+        assert "env" in c_by_name["prometheus"]
+        env_vars = c_by_name["prometheus"]["env"]
+        fed_auth_token = next((e for e in env_vars if e["name"] == "FEDERATION_AUTH_TOKEN"), None)
+        assert fed_auth_token is not None
+        assert fed_auth_token["valueFrom"]["secretKeyRef"]["key"] == "token"
+
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
