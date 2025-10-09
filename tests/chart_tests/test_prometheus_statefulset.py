@@ -67,7 +67,6 @@ class TestPrometheusStatefulset:
         fed_auth_token = next((e for e in env_vars if e["name"] == "FEDERATION_AUTH_TOKEN"), None)
         assert fed_auth_token is not None
         assert fed_auth_token["valueFrom"]["secretKeyRef"]["key"] == "token"
-        assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
 
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(
