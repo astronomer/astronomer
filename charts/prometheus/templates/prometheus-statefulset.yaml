@@ -60,6 +60,7 @@ spec:
       initContainers:
         - name: etc-ssl-certs-copier
           image: {{ include "prometheus.image" . }}
+          imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           command:
             - sh
             - -c
