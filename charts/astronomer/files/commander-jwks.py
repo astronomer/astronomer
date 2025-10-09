@@ -10,7 +10,6 @@ import base64
 import json
 import logging
 import os
-import ssl
 import subprocess
 import sys
 import textwrap
@@ -55,7 +54,6 @@ def fetch_jwks_from_endpoint(endpoint, retry_attempts, retry_delay):
     logger.info(f"Fetching JWKS from: {jwks_url}")
 
     validate_url_scheme(jwks_url)
-    ctx = ssl._create_unverified_context()  # noqa: S323
 
     for attempt in range(1, retry_attempts + 1):
         logger.info(f"Attempt {attempt} of {retry_attempts}")
@@ -65,7 +63,7 @@ def fetch_jwks_from_endpoint(endpoint, retry_attempts, retry_delay):
             request.add_header("Accept", "application/json")
             request.add_header("User-Agent", "Astronomer-Registry-JWKS-Hook/1.0")
 
-            with urlopen(request, timeout=30, context=ctx) as response:  # noqa: S310 - URL scheme validated above
+            with urlopen(request, timeout=30) as response:  # noqa: S310 - URL scheme validated above
                 if response.status == 200:
                     jwks_data = response.read().decode("utf-8")
                     logger.info("Successfully fetched JWKS")
