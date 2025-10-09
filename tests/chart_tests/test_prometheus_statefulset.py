@@ -34,7 +34,7 @@ class TestPrometheusStatefulset:
         sc = doc["spec"]["template"]["spec"]["securityContext"]
         assert sc["fsGroup"] == 65534
 
-        c_by_name = get_containers_by_name(doc)
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert c_by_name["configmap-reloader"]["image"].startswith("quay.io/astronomer/ap-configmap-reloader:")
         assert c_by_name["configmap-reloader"]["volumeMounts"] == [
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
@@ -52,6 +52,7 @@ class TestPrometheusStatefulset:
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
             {"mountPath": "/prometheusreloader/airflow", "name": "filesd"},
+            {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
@@ -66,6 +67,12 @@ class TestPrometheusStatefulset:
 
         assert c_by_name["filesd-reloader"]["image"].startswith("quay.io/astronomer/ap-kuiper-reloader:")
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
+
+        assert c_by_name["etc-ssl-certs-copier"]["resources"] == {
+            "limits": {"cpu": "2000m", "memory": "8Gi"},
+            "requests": {"cpu": "1000m", "memory": "4Gi"},
+        }
+        assert c_by_name["etc-ssl-certs-copier"]["volumeMounts"] == [{"name": "etc-ssl-certs", "mountPath": "/etc/ssl/certs_copy"}]
 
         assert "env" in c_by_name["prometheus"]
         env_vars = c_by_name["prometheus"]["env"]
@@ -206,7 +213,7 @@ class TestPrometheusStatefulset:
         assert env_vars["DATABASE_SCHEMA_NAME"] == "houston$default"
         assert env_vars["DEPLOYMENT_TABLE_NAME"] == "Deployment"
         assert env_vars["CLUSTER_TABLE_NAME"] == "Cluster"
-        assert env_vars["DATABASE_NAME"] == "release-name_houston"
+        assert env_vars["DATABASE_NAME"] == "release_name_houston"
         assert env_vars["FILESD_FILE_PATH"] == "/prometheusreloader/airflow"
         assert env_vars["ENABLE_DEPLOYMENT_SCRAPING"] == "False"
         assert env_vars["ENABLE_CLUSTER_SCRAPING"] == "True"
