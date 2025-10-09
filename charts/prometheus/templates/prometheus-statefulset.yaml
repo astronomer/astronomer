@@ -56,6 +56,25 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          image: {{ include "prometheus.image" . }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "prometheus.securityContext" . }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
@@ -158,7 +177,7 @@ spec:
             name: filesd
         - name: prometheus
           image: {{ include "prometheus.image" . }}
-          {{- if eq .Values.global.plane.mode "control" }}
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
           env:
             - name: FEDERATION_AUTH_TOKEN
               valueFrom:
@@ -185,7 +204,7 @@ spec:
             - {{ . }}
             {{- end }}
           volumeMounts:
-          {{- if eq .Values.global.plane.mode "control" }}
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
             - name: federation-auth
               mountPath: /etc/prometheus/federation-auth
               readOnly: true
@@ -198,6 +217,9 @@ spec:
               mountPath: {{ .Values.dataDir }}
             - name: filesd
               mountPath: /prometheusreloader/airflow
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
@@ -234,7 +256,7 @@ spec:
           configMap:
             name: {{ template "prometheus.fullname" . }}-nginx-conf
         {{- end }}
-        {{- if eq .Values.global.plane.mode "control" }}
+        {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
         - name: federation-auth
           secret:
             secretName: {{ template "prometheus.federationAuthSecret" . }}
@@ -256,6 +278,9 @@ spec:
                 path: alerts.yaml
         - name: filesd
           emptyDir: {}
+        - name: etc-ssl-certs
+          emptyDir: {}
+        {{- include "custom_ca_volumes" . | nindent 8 }}
   {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
