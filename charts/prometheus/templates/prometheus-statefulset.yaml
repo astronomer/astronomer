@@ -2,7 +2,7 @@
 ## Prometheus StatefulSet ##
 ############################
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
-{{- $releaseFormatConversion := .Release.Name | replace "-" "_"  }}
+{{- $sanitizedReleaseName := .Release.Name | replace "-" "_"  }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
