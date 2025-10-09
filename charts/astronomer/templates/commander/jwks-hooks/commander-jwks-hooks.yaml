@@ -50,13 +50,34 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          image: {{ template "dbBootstrapper.image" . }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources: {{ toYaml .Values.commander.resources | nindent 12 }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext | nindent 12 }}
       containers:
         - name: commander-jwks-hook
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          command: ["python3"]
-          args: ["/scripts/commander-jwks.py"]
-          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          command: ["/bin/sh", "-c", "update-ca-certificates;python3 /scripts/commander-jwks.py"]
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           env:
             - name: CONTROL_PLANE_ENDPOINT
               value: "https://houston.{{ .Values.global.baseDomain }}"
@@ -75,11 +96,15 @@ spec:
           volumeMounts:
             - name: jwks-script
               mountPath: /scripts
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
       volumes:
         - name: jwks-script
           configMap:
             name: {{ .Release.Name }}-commander-jwks-hook-config
             defaultMode: 0755
+        - name: etc-ssl-certs
+          emptyDir: {}
         {{- include "custom_ca_volumes" . | nindent 8 }}
 {{- end }}
