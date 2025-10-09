@@ -163,7 +163,7 @@ spec:
             - name: DEPLOYMENT_TABLE_NAME
               value: Deployment
             - name: DATABASE_NAME
-              value: {{ $releaseFormatConversion }}_houston
+              value: {{ $sanitizedReleaseName }}_houston
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
             - name: ENABLE_DEPLOYMENT_SCRAPING
