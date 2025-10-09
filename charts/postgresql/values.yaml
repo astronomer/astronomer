@@ -10,7 +10,7 @@ global:
 #   storageClass: myStorageClass
 
 ## Bitnami PostgreSQL image version
-## ref: https://hub.docker.com/r/bitnami/postgresql/tags/
+## ref: https://hub.docker.com/r/bitnamilegacy/postgresql/tags
 ##
 image:
   registry: quay.io
