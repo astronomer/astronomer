@@ -409,7 +409,7 @@ workflows:
                 - quay.io/astronomer/airflow-operator-controller:1.5.2
                 - quay.io/astronomer/ap-alertmanager:0.28.1
                 - quay.io/astronomer/ap-astro-ui:1.0.19
-                - quay.io/astronomer/ap-auth-sidecar:1.27.4-3
+                - quay.io/astronomer/ap-auth-sidecar:1.29.1-1
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-18
                 - quay.io/astronomer/ap-base:3.21.3-6
                 - quay.io/astronomer/ap-commander:1.0.12
