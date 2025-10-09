@@ -47,6 +47,7 @@ class TestPrometheusStatefulset:
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
             {"mountPath": "/prometheusreloader/airflow", "name": "filesd"},
+            {"mountPath": "/etc/prometheus/federation-auth", "name": "federation-auth", "readOnly": True},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
