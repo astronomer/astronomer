@@ -164,7 +164,7 @@ spec:
             - name: DEPLOYMENT_TABLE_NAME
               value: Deployment
             - name: DATABASE_NAME
-              value: {{ $dbName }}_houston
+              value: {{ $dbName }}
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
             - name: ENABLE_DEPLOYMENT_SCRAPING
