@@ -2,6 +2,7 @@
 ## Prometheus StatefulSet ##
 ############################
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
+{{- $releaseFormatConversion := .Release.Name | replace "-" "_"  }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -162,7 +163,7 @@ spec:
             - name: DEPLOYMENT_TABLE_NAME
               value: Deployment
             - name: DATABASE_NAME
-              value: {{ .Release.Name }}_houston
+              value: {{ $releaseFormatConversion }}_houston
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
             - name: ENABLE_DEPLOYMENT_SCRAPING

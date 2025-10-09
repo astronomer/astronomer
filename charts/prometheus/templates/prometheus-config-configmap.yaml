@@ -71,8 +71,6 @@ data:
         honor_labels: true
         metrics_path: '/federate'
         scheme: https
-        tls_config:
-          insecure_skip_verify: true
         scrape_interval: 5s
         params:
           'match[]':
