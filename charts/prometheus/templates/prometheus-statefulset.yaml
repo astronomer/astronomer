@@ -185,7 +185,7 @@ spec:
             - {{ . }}
             {{- end }}
           volumeMounts:
-          {{- if eq .Values.global.plane.mode "control" }}
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
             - name: federation-auth
               mountPath: /etc/prometheus/federation-auth
               readOnly: true
