@@ -52,7 +52,7 @@ class TestPrometheusStatefulset:
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
             {"mountPath": "/prometheusreloader/airflow", "name": "filesd"},
-            {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"}
+            {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
@@ -70,7 +70,7 @@ class TestPrometheusStatefulset:
 
         assert c_by_name["etc-ssl-certs-copier"]["resources"] == {
             "limits": {"cpu": "2000m", "memory": "8Gi"},
-            "requests": {"cpu": "1000m", "memory": "4Gi"}
+            "requests": {"cpu": "1000m", "memory": "4Gi"},
         }
         assert c_by_name["etc-ssl-certs-copier"]["volumeMounts"] == [{"name": "etc-ssl-certs", "mountPath": "/etc/ssl/certs_copy"}]
 
