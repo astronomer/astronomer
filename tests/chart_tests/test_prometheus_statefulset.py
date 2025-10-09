@@ -213,7 +213,7 @@ class TestPrometheusStatefulset:
         assert env_vars["DATABASE_SCHEMA_NAME"] == "houston$default"
         assert env_vars["DEPLOYMENT_TABLE_NAME"] == "Deployment"
         assert env_vars["CLUSTER_TABLE_NAME"] == "Cluster"
-        assert env_vars["DATABASE_NAME"] == "release-name_houston"
+        assert env_vars["DATABASE_NAME"] == "release_name_houston"
         assert env_vars["FILESD_FILE_PATH"] == "/prometheusreloader/airflow"
         assert env_vars["ENABLE_DEPLOYMENT_SCRAPING"] == "False"
         assert env_vars["ENABLE_CLUSTER_SCRAPING"] == "True"
