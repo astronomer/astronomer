@@ -463,61 +463,106 @@ data:
                   container.command = ["tini", "--", "/entrypoint"]
                   pod.spec.containers[0] = container
       {{ if .Values.global.loggingSidecar.enabled }}
-                  # For sidecar logging we override the default entrypoint to redirect logs to
-                  # files that are consumed by the sidecar container. The command ends by creating
-                  # the file /var/log/sidecar-log-consumer/finished, which signals the sidecar log
-                  # consumer to exit.
-                  from textwrap import dedent
-                  import shlex
-                  cmd_init = dedent(
-                      r"""
-                      echo '
-                      import signal
-                      import sys
-                      import subprocess
-                      import time
-                      from pathlib import Path
-                      process = subprocess.Popen(sys.argv[1:])
-                      def handler(signum, frame):
-                          process.kill()
-                          print("Process killed")
-                      signal.signal(signal.SIGINT, handler)
-                      while True:
-                          time.sleep(5)
-                          with open("/var/log/sidecar-log-consumer/heartbeat", "w") as f:
-                              f.write(f"{time.time()}\n")
-                          if process.poll() is not None:
-                              break
-                      print("Process exited")
-                      Path("/var/log/sidecar-log-consumer/finished").touch()
-                      ' | python3 - """
-                  )
-                  log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "
-                  if container.args[0:3] == ["airflow", "tasks", "run"]:
-                      container.command = ["tini", "--"]
-                      new_args = ["bash", "-c"]
-                      command_str = (
-                          cmd_init
-                          + " /entrypoint "
-                          + shlex.join([str(arg) for arg in container.args])
-                          + log_cmd
-                      )
-                      new_args.append(command_str)
-                      container.args = new_args
+              # For sidecar logging we override the default entrypoint to redirect logs to
+              # files that are consumed by the sidecar container. The command ends by creating
+              # the file /var/log/sidecar-log-consumer/finished, which signals the sidecar log
+              # consumer to exit.
+              from textwrap import dedent
+              import shlex
+              
+              {{ if semverCompare ">=3.0.0" .Values.airflowVersion }}
+              # Airflow 3.x: Add logs volume for sidecar log consumer
+              from kubernetes.client import models as k8s
+              
+              logs_volume = k8s.V1Volume(
+                  name="logs",
+                  empty_dir=k8s.V1EmptyDirVolumeSource()
+              )
+              if not any(v.name == "logs" for v in (pod.spec.volumes or [])):
+                  if pod.spec.volumes is None:
+                      pod.spec.volumes = []
+                  pod.spec.volumes.append(logs_volume)
+              
+              # Add logs volume mount to container
+              logs_mount = k8s.V1VolumeMount(
+                  name="logs",
+                  mount_path="/usr/local/airflow/logs"
+              )
+              if not any(vm.name == "logs" for vm in (container.volume_mounts or [])):
+                  if container.volume_mounts is None:
+                      container.volume_mounts = []
+                  container.volume_mounts.append(logs_mount)
+              {{ else }}
+              # Airflow 2.x: Add sidecar-log-consumer volume
+              sidecar_volume = {
+                  "name": "sidecar-log-consumer",
+                  "emptyDir": {}
+              }
+              if not any(v.get("name") == "sidecar-log-consumer" for v in (pod.spec.volumes or [])):
+                  if pod.spec.volumes is None:
+                      pod.spec.volumes = []
+                  pod.spec.volumes.append(sidecar_volume)
+              
+              # Add sidecar-log-consumer volume mount to container
+              sidecar_mount = {
+                  "name": "sidecar-log-consumer",
+                  "mountPath": "/var/log/sidecar-log-consumer"
+              }
+              if not any(vm.get("name") == "sidecar-log-consumer" for vm in (container.volume_mounts or [])):
+                  if container.volume_mounts is None:
+                      container.volume_mounts = []
+                  container.volume_mounts.append(sidecar_mount)
+              {{ end }}
+              
+                    cmd_init = dedent(
+                        r"""
+                        echo '
+                        import signal
+                        import sys
+                        import subprocess
+                        import time
+                        from pathlib import Path
+                        process = subprocess.Popen(sys.argv[1:])
+                        def handler(signum, frame):
+                            process.kill()
+                            print("Process killed")
+                        signal.signal(signal.SIGINT, handler)
+                        while True:
+                            time.sleep(5)
+                            with open("/var/log/sidecar-log-consumer/heartbeat", "w") as f:
+                                f.write(f"{time.time()}\n")
+                            if process.poll() is not None:
+                                break
+                        print("Process exited")
+                        Path("/var/log/sidecar-log-consumer/finished").touch()
+                        ' | python3 - """
+                    )
+                    log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "
+                    if container.args[0:3] == ["airflow", "tasks", "run"]:
+                        container.command = ["tini", "--"]
+                        new_args = ["bash", "-c"]
+                        command_str = (
+                            cmd_init
+                            + " /entrypoint "
+                            + shlex.join([str(arg) for arg in container.args])
+                            + log_cmd
+                        )
+                        new_args.append(command_str)
+                        container.args = new_args
       {{ end }}
-              else:
-                  # In the case of KPO, we allow Airflow to overwrite the entrypoint
-                  # because we do not know what the container will be (and it's probably
-                  # not a container vendored by Astronomer, and it's definitely not
-                  # an Airflow container).
-                  extra_labels["kubernetes-pod-operator"] = "True"
-                  extra_labels["kubernetes-executor"] = "False"
-              pod.metadata.labels.update(extra_labels)
-            def pod_mutation_hook(pod):
-              try:
-                pod_mutation_hook_new(pod)
-              except Exception as e:
-                pod_mutation_hook_deprecated(pod)
+                else:
+                    # In the case of KPO, we allow Airflow to overwrite the entrypoint
+                    # because we do not know what the container will be (and it's probably
+                    # not a container vendored by Astronomer, and it's definitely not
+                    # an Airflow container).
+                    extra_labels["kubernetes-pod-operator"] = "True"
+                    extra_labels["kubernetes-executor"] = "False"
+                pod.metadata.labels.update(extra_labels)
+              def pod_mutation_hook(pod):
+                try:
+                  pod_mutation_hook_new(pod)
+                except Exception as e:
+                  pod_mutation_hook_deprecated(pod)
 
 
           # Redis settings
