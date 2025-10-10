@@ -81,9 +81,7 @@ spec:
             - --configmap={{ .Release.Namespace }}/{{ .Release.Name }}-dp-{{ template "nginx.name" . }}-ingress-controller
             - --ingress-class={{ template "nginx.ingress.class" . }}
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
-            {{- if .Values.enableAnnotationValidations }}
             - --enable-annotation-validation=true
-            {{- end }}
             {{- if .Values.disableLeaderElection }}
             - --disable-leader-election=true
             {{- end }}
