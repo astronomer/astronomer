@@ -75,7 +75,6 @@ spec:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
           securityContext:
-            readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
@@ -114,8 +113,10 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
-          - mountPath: /etc/nginx/conf.d/
-            name: prometheus-sidecar-conf
+            - name: tmp
+              mountPath: /tmp
+            - mountPath: /etc/nginx/conf.d/
+              name: prometheus-sidecar-conf
         {{- end }}
         - name: configmap-reloader
           args:
@@ -125,7 +126,6 @@ spec:
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
           {{- if .Values.configMapReloader.livenessProbe }}
@@ -135,10 +135,10 @@ spec:
           readinessProbe: {{ tpl (toYaml .Values.configMapReloader.readinessProbe) . | nindent 12 }}
           {{- end }}
           volumeMounts:
-          - name: alert-volume
-            mountPath: /etc/prometheus/alerts.d
-          - name: prometheus-config-volume
-            mountPath: /etc/prometheus/config
+            - name: alert-volume
+              mountPath: /etc/prometheus/alerts.d
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus/config
         - name: filesd-reloader
           image: {{ include "filesdReloader.image" . }}
           imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
@@ -192,7 +192,6 @@ spec:
               value: "true"
           {{- end }}
           securityContext:
-            readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}

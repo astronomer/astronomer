@@ -49,8 +49,8 @@ spec:
           image: {{ template "nginx.defaultBackend.image" . }}
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           {{- if .Values.defaultBackend.readinessProbe }}
           readinessProbe: {{ toYaml .Values.defaultBackend.readinessProbe | nindent 12 }}
           {{- end }}

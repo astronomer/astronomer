@@ -104,7 +104,8 @@ imagePullSecrets:
 {{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled )  }}
 {{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
 {{- else }}
-{{- .Values.securityContext | toYaml | nindent 12 }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
 {{- end -}}
 {{- end }}
 

@@ -12,8 +12,6 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job"]
 
 class TestAllContainersReadOnlyRoot:
     chart_values = get_all_features()
-    # We disable authSidecar during development of #7394 until that feature is supported
-    chart_values["global"]["authSidecar"] = {"enabled": False}
     default_docs = render_chart(values=chart_values)
     pod_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_managers]
 
