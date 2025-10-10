@@ -5,30 +5,30 @@ from tests.utils.chart import render_chart
 
 
 def test_nginx_service_basics():
-    docs = render_chart(
+    nginx_cp_service_docs = render_chart(
         show_only=[
             "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
         ],
     )
 
-    assert len(docs) == 1
+    assert len(nginx_cp_service_docs) == 1
     expected_names = ["release-name-cp-nginx"]
-    for doc in docs:
+    for doc in nginx_cp_service_docs:
         assert doc["kind"] == "Service"
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] in expected_names
         assert "loadBalancerIP" not in doc["spec"]
         assert "loadBalancerSourceRanges" not in doc["spec"]
 
-    docs = render_chart(
+    nginx_dp_service_docs = render_chart(
         show_only=[
             "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
         ],
         values={"global": {"plane": {"mode": "data"}}},
     )
-    assert len(docs) == 1
+    assert len(nginx_dp_service_docs) == 1
     expected_names = ["release-name-dp-nginx"]
-    for doc in docs:
+    for doc in nginx_dp_service_docs:
         assert doc["kind"] == "Service"
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] in expected_names
@@ -272,19 +272,7 @@ def test_nginx_allowSnippetAnnotations_defaults():
     )
     for doc in docs:
         assert doc["data"]["allow-snippet-annotations"] == "true"
-
-
-def test_nginx_enableAnnotationValidations_overrides():
-    docs = render_chart(
-        values={"nginx": {"enableAnnotationValidations": True}},
-        show_only=[
-            "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
-            "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
-        ],
-    )
-    annotationValidation = "--enable-annotation-validation=true"
-    for doc in docs:
-        assert annotationValidation in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        assert doc["data"]["annotations-risk-level"] == "Critical"
 
 
 def test_nginx_backend_serviceaccount_defaults():
@@ -351,10 +339,10 @@ def test_nginx_deployment_defaults(plane_mode):
 
     assert c_by_name["nginx"]["image"] == c_by_name["etc-nginx-copier"]["image"]
     assert c_by_name["nginx"]["securityContext"] == c_by_name["etc-nginx-copier"]["securityContext"]
-
     assert c_by_name["nginx"]["securityContext"] == expected_security_context
     assert c_by_name["nginx"]["image"].startswith("quay.io/astronomer/ap-nginx:")
     assert "--election-id=ingress-controller-leader-release-name-nginx" in c_by_name["nginx"]["args"]
+    assert "--enable-annotation-validation=true" in c_by_name["nginx"]["args"]
     for arg in forbidden_args:
         assert arg not in c_by_name["nginx"]["args"]
     assert c_by_name["nginx"]["volumeMounts"] == [
