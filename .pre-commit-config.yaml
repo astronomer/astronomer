@@ -23,7 +23,7 @@ repos:
         args: ["bin/show-docker-images.py", "--private-registry", "--with-houston", "-c"]
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
-      - id: refuse-authsidecar-fiels
+      - id: refuse-authsidecar-files
         language: python
         name: Refuse files that include authsidecar
         entry: bin/refuse-filename-strings.py
