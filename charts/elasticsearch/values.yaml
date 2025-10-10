@@ -18,7 +18,7 @@ images:
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.21-1
+    tag: 8.0.21-6
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
