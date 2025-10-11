@@ -50,12 +50,15 @@ class TestCommanderJWKSHookJob:
         assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation,hook-succeeded,hook-failed"
         assert annotations["astronomer.io/commander-sync"] == "platform-release=release-name"
 
-        c_by_name = get_containers_by_name(job_doc)
+        c_by_name = get_containers_by_name(job_doc, include_init_containers=True)
         assert "commander-jwks-hook" in c_by_name
 
         container = c_by_name["commander-jwks-hook"]
-        assert container["command"] == ["python3"]
-        assert container["args"] == ["/scripts/commander-jwks.py"]
+        assert container["command"] == ["/bin/sh", "-c", "update-ca-certificates;python3 /scripts/commander-jwks.py"]
+        assert container["resources"] == {
+            "requests": {"cpu": "250m", "memory": "1Gi"},
+            "limits": {"cpu": "500m", "memory": "2Gi"},
+        }
 
         env_vars = get_env_vars_dict(container["env"])
         assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com"
@@ -150,16 +153,22 @@ class TestCommanderJWKSHookJob:
         assert docs[0]["metadata"]["name"] == "release-name-commander-jwks-hook"
 
         volumemounts = c_by_name["commander-jwks-hook"]["volumeMounts"]
+        c_by_name["commander-jwks-hook"]["volumeMounts"]
         volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
 
         expected_volumes = [
             {"name": "jwks-script", "configMap": {"name": "release-name-commander-jwks-hook-config", "defaultMode": 493}},
+            {"name": "etc-ssl-certs", "emptyDir": {}},
             {"name": "private-ca-cert-foo", "secret": {"secretName": "private-ca-cert-foo"}},
             {"name": "private-ca-cert-bar", "secret": {"secretName": "private-ca-cert-bar"}},
         ]
 
         expected_volumemounts = [
             {"name": "jwks-script", "mountPath": "/scripts"},
+            {
+                "mountPath": "/etc/ssl/certs",
+                "name": "etc-ssl-certs",
+            },
             {
                 "name": "private-ca-cert-foo",
                 "mountPath": "/usr/local/share/ca-certificates/private-ca-cert-foo.pem",

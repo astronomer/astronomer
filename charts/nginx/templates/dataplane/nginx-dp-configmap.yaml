@@ -14,6 +14,7 @@ metadata:
 data:
   allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
   add-headers: {{ .Release.Namespace }}/{{ .Release.Name }}-dp-{{ template "nginx.name" . }}-ingress-controller-headers
+  annotations-risk-level: Critical
   proxy-add-original-uri-header: "true"
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}
   proxy-read-timeout: {{ .Values.proxyReadTimeout | quote }}

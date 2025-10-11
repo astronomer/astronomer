@@ -10,12 +10,12 @@ global:
 #   storageClass: myStorageClass
 
 ## Bitnami PostgreSQL image version
-## ref: https://hub.docker.com/r/bitnami/postgresql/tags/
+## ref: https://hub.docker.com/r/bitnamilegacy/postgresql/tags
 ##
 image:
   registry: quay.io
   repository: astronomer/ap-postgresql
-  tag: 17.4.0
+  tag: 17.6.0
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
