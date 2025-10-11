@@ -13,7 +13,7 @@ images:
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.30
+    tag: 0.28.33
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -106,9 +106,6 @@ ports:
 
 # Election ID to use for status update
 electionId: ingress-controller-leader
-
-# Enables the annotation validation feature
-enableAnnotationValidations: false
 
 # This must be used together with service annotation service.kubernetes.io/topology-mode="auto"
 enableTopologyAwareRouting: false
