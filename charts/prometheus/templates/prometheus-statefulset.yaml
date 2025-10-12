@@ -257,6 +257,8 @@ spec:
 {{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
+        - name: tmp
+          emptyDir: {}
         - name: prometheus-sidecar-conf
           configMap:
             name: {{ template "prometheus.fullname" . }}-nginx-conf
