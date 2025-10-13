@@ -455,15 +455,6 @@ prometheus:
     exec:
       command:
       - /bin/true
-prometheus-blackbox-exporter:
-  livenessProbe:
-    exec:
-      command:
-      - /bin/true
-  readinessProbe:
-    exec:
-      command:
-      - /bin/true
 prometheus-postgres-exporter:
   livenessProbe:
     exec:

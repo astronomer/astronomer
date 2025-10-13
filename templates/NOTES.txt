@@ -10,26 +10,30 @@ The platform components may take a few minutes to spin up.
 
 {{- $astronomerEnabled := hasKey .Values.global "astronomerEnabled" | ternary .Values.global.astronomerEnabled true }}
 {{- $platformEnabled := hasKey .Values.tags "platform" | ternary .Values.tags.platform true }}
+{{- $grafanaEnabled := hasKey .Values.global "grafanaEnabled" | ternary .Values.global.grafanaEnabled true }}
 {{- $monitoringEnabled := hasKey .Values.tags "monitoring" | ternary .Values.tags.monitoring true }}
 {{- $loggingEnabled := hasKey .Values.tags "logging" | ternary .Values.tags.logging true }}
 
 {{- if eq $planeMode "control" }}
 You can access the control plane at:
-- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Astronomer dashboard:   {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Grafana dashboard:      {{ if and $grafanaEnabled $monitoringEnabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
 The control plane is responsible for platform management, orchestration, and user interfaces.
 
 {{- else if eq $planeMode "data" }}
 {{- if $domainPrefix }}
 You can access the data plane at:
-- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://{{ $domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Astronomer dashboard:   {{ if and $astronomerEnabled $platformEnabled }}https://{{ $domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Grafana dashboard:      {{ if and $grafanaEnabled $monitoringEnabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 {{- end }}
 
 The data plane is responsible for executing and monitoring Airflow workloads.
 
 {{- else if eq $planeMode "unified" }}
 You can access the cluster at:
-- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Astronomer dashboard:   {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Grafana dashboard:      {{ if and $grafanaEnabled $monitoringEnabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
 The unified mode runs both the data plane and control plane in the same cluster and namespace.
 {{- end }}
