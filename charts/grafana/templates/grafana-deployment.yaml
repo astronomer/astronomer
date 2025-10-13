@@ -26,6 +26,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "grafana.name" . }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
 {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
 {{- if .Values.global.podAnnotations }}
@@ -52,7 +53,9 @@ spec:
             - "DB ready"
           image: {{ template "grafana.image" . }}
           imagePullPolicy: IfNotPresent
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           {{- if .Values.waitForDB.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.waitForDB.readinessProbe) . | nindent 12 }}
@@ -69,7 +72,9 @@ spec:
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           {{- if .Values.bootstrapper.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.bootstrapper.readinessProbe) . | nindent 12 }}
@@ -100,7 +105,9 @@ spec:
         - name: grafana
           image: {{ template "grafana.image" . }}
           imagePullPolicy: {{ .Values.images.grafana.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           ports:
             - name: grafana-ui
@@ -158,7 +165,9 @@ spec:
         {{- if .Values.global.authSidecar.enabled }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources:

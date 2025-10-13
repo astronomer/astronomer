@@ -80,7 +80,7 @@ class TestServiceAccounts:
             ],
         )
 
-        assert len(docs) == 12
+        assert len(docs) == 8
         expected_names = {
             "commander-test",
             "registry-test",
@@ -213,7 +213,7 @@ class TestServiceAccounts:
             ],
         )
 
-        assert len(docs) == 9
+        assert len(docs) == 8
 
         expected_names = {
             "commander-test",

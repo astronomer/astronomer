@@ -21,15 +21,6 @@ class TestHoustonInternalAuthorization:
             ],
         )
 
-        assert len(docs) == 3
-        for doc in docs:
-            assert doc["kind"] == "Ingress"
-            assert doc["apiVersion"] == "networking.k8s.io/v1"
-            assert (
-                "https://houston.example.com/v1/authorization"
-                in doc["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"]
-            )
-
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"

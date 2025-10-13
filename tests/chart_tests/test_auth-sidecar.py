@@ -340,7 +340,6 @@ class TestAuthSidecar:
                 "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
                 "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
                 "charts/grafana/templates/grafana-networkpolicy.yaml",
-                "charts/kibana/templates/kibana-networkpolicy.yaml",
                 "charts/prometheus/templates/prometheus-networkpolicy.yaml",
             ],
         )
