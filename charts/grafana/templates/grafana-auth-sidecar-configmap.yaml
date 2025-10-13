@@ -1,7 +1,7 @@
 #################################
 ## Grafana auth sidecar ConfigMap
 #################################
-{{- if .Values.global.authSidecar.enabled  }}
+{{- if .Values.global.authSidecar.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -19,15 +19,15 @@ data:
     }
     server {
       server_name {{ template "grafana.url" . }} ;
-      listen {{ .Values.global.authSidecar.port }}  ;
+      listen {{ .Values.global.authSidecar.port }} ;
 
       # Disable Nginx Server version
       server_tokens off;
 
-      location  = /auth {
+      location = /auth {
         proxy_set_header Host houston.{{ .Values.global.baseDomain }};
-        proxy_pass  https://houston.{{ .Values.global.baseDomain }}/v1/authorization;
-{{.Values.global.authSidecar.default_nginx_settings | indent 8  }}
+        proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/authorization;
+{{.Values.global.authSidecar.default_nginx_settings | indent 8 }}
       }
       location @401_auth_error {
         internal;
@@ -36,9 +36,9 @@ data:
       }
       location / {
         # Custom headers to proxied server
-        proxy_set_header  Host  {{ template "grafana.url" . }};
+        proxy_set_header Host {{ template "grafana.url" . }};
         proxy_pass http://astro-grafana;
-{{ .Values.global.authSidecar.default_nginx_settings_location  |  indent 8 }}
+{{ .Values.global.authSidecar.default_nginx_settings_location | indent 8 }}
       }
 
       location /healthz {
