@@ -894,3 +894,42 @@ def test_houston_configmap_with_plane_mode():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod_yaml["plane"]["mode"] == "unified"
+
+
+def test_houston_configmap_pod_mutation_hook_airflow_compatibility():
+    """Test that pod mutation hook supports both Airflow 2.x and 3.x task execution patterns with logging sidecar."""
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    airflow_local_settings = prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+
+    # Check that both Airflow 2.x and 3.x patterns are supported
+    airflow2_pattern = 'container.args[0:3] == ["airflow", "tasks", "run"]'
+    airflow3_pattern = 'container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]'
+    version_check = "int(version.split('.')[0]) >= 3"
+
+    assert airflow2_pattern in airflow_local_settings, "Airflow 2.x task execution pattern should be supported"
+    assert airflow3_pattern in airflow_local_settings, "Airflow 3.x task execution pattern should be supported"
+    assert version_check in airflow_local_settings, "Version comparison logic should be present"
+
+    # Check that the complete condition includes both patterns
+    complete_condition = 'if container.args[0:3] == ["airflow", "tasks", "run"] or (int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]):'
+    assert complete_condition in airflow_local_settings, "Complete condition should include both Airflow 2.x and 3.x patterns"
+
+    # Check that the logging command is present
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
+    assert log_cmd in airflow_local_settings, "Logging command should be present"
+
+    # Validate the Python code is syntactically correct
+    ast.parse(airflow_local_settings.encode())
