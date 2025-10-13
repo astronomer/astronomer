@@ -75,9 +75,9 @@ class TestGrafanaDeployment:
         doc = docs[0]
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert doc["kind"] == "Deployment"
-        assert c_by_name["grafana"]["securityContext"] == {"runAsNonRoot": True}
-        assert c_by_name["wait-for-db"]["securityContext"] == {"runAsNonRoot": True}
-        assert c_by_name["bootstrapper"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["grafana"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["wait-for-db"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["bootstrapper"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_deployment_with_securitycontext_overrides(self, kube_version):
         """Test that the grafana-deployment renders with the expected securityContext."""
@@ -94,15 +94,18 @@ class TestGrafanaDeployment:
         assert c_by_name["grafana"]["securityContext"] == {
             "runAsNonRoot": True,
             "runAsUser": 467,
+            "readOnlyRootFilesystem": True,
         }
 
         assert c_by_name["wait-for-db"]["securityContext"] == {
             "runAsNonRoot": True,
             "runAsUser": 467,
+            "readOnlyRootFilesystem": True,
         }
         assert c_by_name["bootstrapper"]["securityContext"] == {
             "runAsNonRoot": True,
             "runAsUser": 467,
+            "readOnlyRootFilesystem": True,
         }
 
     def test_grafana_init_containers_disabled_with_custom_secret_name(self, kube_version):
