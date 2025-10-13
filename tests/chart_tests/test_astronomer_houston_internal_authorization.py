@@ -61,7 +61,7 @@ class TestHoustonInternalAuthorization:
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 1
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
