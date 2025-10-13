@@ -56,7 +56,7 @@ def dp_nginx(k8s_core_v1_client):
 
 
 @pytest.fixture(scope="function")
-def grafana(core_v1_client):
+def grafana(k8s_core_v1_client):
     """Fixture for accessing the grafana pod."""
 
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
