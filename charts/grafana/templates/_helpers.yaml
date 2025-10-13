@@ -64,7 +64,7 @@ default:
 
 {{ define "grafana.dashboards" -}}
 {{- if .Values.dashboards -}}
-{{merge .Values.dashboards (fromYaml (include "velero.dashboard" .))  | toYaml}}
+{{merge .Values.dashboards (fromYaml (include "velero.dashboard" .)) | toYaml}}
 {{- else -}}
 {{ template "velero.dashboard" . }}
 {{- end }}

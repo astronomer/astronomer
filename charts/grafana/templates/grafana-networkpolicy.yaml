@@ -22,7 +22,7 @@ spec:
   - Ingress
   ingress:
   - from:
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
@@ -41,7 +41,7 @@ spec:
           release: {{ .Release.Name }}
     {{- end }}
     ports:
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled }}
     - protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
     {{- else }}

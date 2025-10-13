@@ -13,11 +13,11 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    {{- if .Values.global.authSidecar.enabled  }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- if .Values.global.authSidecar.enabled }}
+    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     {{- if .Values.global.extraAnnotations }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
@@ -42,24 +42,14 @@ spec:
       http:
         paths:
           - path: /
-            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
-            backend:
-              serviceName: {{ template "grafana.fullname" . }}
-              {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: auth-proxy
-              {{- else }}
-              servicePort: grafana-ui
-              {{- end }}
-            {{- else -}}
             pathType: Prefix
             backend:
               service:
-                name:  {{ template "grafana.fullname" . }}
+                name: {{ template "grafana.fullname" . }}
                 port:
-                  {{- if .Values.global.authSidecar.enabled  }}
+                  {{- if .Values.global.authSidecar.enabled }}
                   name: auth-proxy
                   {{- else }}
                   name: grafana-ui
                   {{- end }}
-            {{- end -}}
 {{- end }}
