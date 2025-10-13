@@ -203,7 +203,7 @@ def main():
         logger.info(f"  Target Secret Name: {secret_name}")
         validate_jwks_structure(jwks_data)
 
-        #create_kubernetes_secret(signed_public_cert, control_plane_endpoint, namespace, release_name, secret_name)
+        create_kubernetes_secret(signed_public_cert, control_plane_endpoint, namespace, release_name, secret_name)
         logger.info("JWKS hook completed successfully!")
         logger.info("Registry components can now use the 'commander-jwt-secret' for JWT validation")
     except (RuntimeError, ValueError, subprocess.CalledProcessError) as e:
