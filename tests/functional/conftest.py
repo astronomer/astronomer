@@ -56,6 +56,15 @@ def dp_nginx(k8s_core_v1_client):
 
 
 @pytest.fixture(scope="function")
+def grafana(core_v1_client):
+    """Fixture for accessing the grafana pod."""
+
+    kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
+    pod = get_pod_by_label_selector("astronomer", "component=grafana", kubeconfig_file)
+    yield testinfra.get_host(f"kubectl://{pod}?container=grafana&namespace=astronomer", kubeconfig=kubeconfig_file)
+
+
+@pytest.fixture(scope="function")
 def houston_api(k8s_core_v1_client):
     """Fixture for accessing the houston-api pod."""
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
