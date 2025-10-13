@@ -9,6 +9,7 @@ from tests.utils.chart import render_chart
 
 component_paths = [
     "charts/alertmanager/templates",
+    "charts/grafana/templates",
     "charts/kube-state/templates",
     "charts/prometheus/templates",
 ]

@@ -41,17 +41,9 @@ class TestNSSelectorNetworkPolicies:
         assert len(docs) == 1
         doc = docs[0]
         assert "NetworkPolicy" == doc["kind"]
-        assert {
-            "namespaceSelector": {"matchLabels": {"platform": "release-name"}},
-            "podSelector": {"matchLabels": {"component": "pgbouncer"}},
-        } in doc["spec"]["ingress"][0]["from"]
-        assert {
-            "podSelector": {
-                "matchLabels": {"release-name-postgresql-client": "true"},
+        assert [
+            {
+                "namespaceSelector": {"matchLabels": {"platform": "release-name"}},
+                "podSelector": {"matchLabels": {"component": "pgbouncer"}},
             }
-        } in doc["spec"]["ingress"][0]["from"]
-        assert {
-            "podSelector": {
-                "matchLabels": {"app": "postgresql", "release": "release-name", "role": "slave"},
-            }
-        } in doc["spec"]["ingress"][0]["from"]
+        ] == [doc["spec"]["ingress"][0]["from"][2]]

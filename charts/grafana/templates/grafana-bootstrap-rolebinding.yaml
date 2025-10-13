@@ -1,0 +1,22 @@
+####################################
+## Grafana Bootstrap Role Binding ##
+####################################
+{{- if and .Values.global.rbacEnabled (and (not .Values.backendSecretName) (not .Values.backendConnection)) }}
+kind: RoleBinding
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ template "grafana.fullname" . }}-bootstrapper
+  labels:
+    tier: grafana
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "grafana.fullname" . }}-bootstrapper
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "grafana.bootstrapper.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

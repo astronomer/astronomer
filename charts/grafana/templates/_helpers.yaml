@@ -1,0 +1,81 @@
+{{/* vim: set filetype=mustache: */}}
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "grafana.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "grafana.fullname" -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "grafana.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{ define "grafana.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-grafana:{{ .Values.images.grafana.tag }}
+{{- else -}}
+{{ .Values.images.grafana.repository }}:{{ .Values.images.grafana.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "grafana.bootstrapper.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}
+{{- else -}}
+{{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "grafana.url" -}}
+grafana.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{ define "grafana.backend.secret" -}}
+{{ default (printf "%s-grafana-backend" .Release.Name) .Values.backendSecretName }}
+{{- end }}
+
+{{ define "grafana.bootstrapper.serviceAccountName" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled (not .Values.backendSecretName) (not .Values.backendConnection) -}}
+{{- default (printf "%s-grafana-bootstrapper" .Release.Name ) .Values.serviceAccount.name }}
+{{- else -}}
+{{ default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "velero.dashboard" -}}
+{{- if .Values.global.veleroEnabled -}}
+default:
+  velero:
+    file: dashboards/velero.json
+{{- end }}
+{{- end }}
+
+{{ define "grafana.dashboards" -}}
+{{- if .Values.dashboards -}}
+{{merge .Values.dashboards (fromYaml (include "velero.dashboard" .))  | toYaml}}
+{{- else -}}
+{{ template "velero.dashboard" . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "grafana.imagePullSecrets" -}}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}

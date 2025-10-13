@@ -1,0 +1,31 @@
+#####################
+## Grafana Service ##
+#####################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "grafana.fullname" . }}
+  labels:
+    tier: monitoring
+    component: grafana
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    tier: monitoring
+    component: grafana
+    release: {{ .Release.Name }}
+  ports:
+    - name: grafana-ui
+      protocol: TCP
+      port: {{ .Values.ports.http }}
+      targetPort: {{ .Values.ports.http }}
+      appProtocol: http
+    {{- if .Values.global.authSidecar.enabled  }}
+    - name: auth-proxy
+      protocol: TCP
+      port: {{ .Values.global.authSidecar.port }}
+      appProtocol: tcp
+    {{- end}}

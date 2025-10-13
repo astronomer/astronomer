@@ -1,0 +1,65 @@
+#####################
+## Grafana Ingress ##
+#####################
+{{- if .Values.global.baseDomain }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ template "grafana.fullname" . }}-ingress
+  labels:
+    tier: grafana-networking
+    component: grafana-ingress
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    {{- include "houston.internalauthurl" . | indent 4}}
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: grafana-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - {{ template "grafana.url" . }}
+  {{- end }}
+  rules:
+    - host: {{ template "grafana.url" . }}
+      http:
+        paths:
+          - path: /
+            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
+            backend:
+              serviceName: {{ template "grafana.fullname" . }}
+              {{- if .Values.global.authSidecar.enabled  }}
+              servicePort: auth-proxy
+              {{- else }}
+              servicePort: grafana-ui
+              {{- end }}
+            {{- else -}}
+            pathType: Prefix
+            backend:
+              service:
+                name:  {{ template "grafana.fullname" . }}
+                port:
+                  {{- if .Values.global.authSidecar.enabled  }}
+                  name: auth-proxy
+                  {{- else }}
+                  name: grafana-ui
+                  {{- end }}
+            {{- end -}}
+{{- end }}

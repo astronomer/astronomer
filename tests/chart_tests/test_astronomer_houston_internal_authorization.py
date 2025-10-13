@@ -16,11 +16,20 @@ class TestHoustonInternalAuthorization:
             values={},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
+                "charts/grafana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 3
+        for doc in docs:
+            assert doc["kind"] == "Ingress"
+            assert doc["apiVersion"] == "networking.k8s.io/v1"
+            assert (
+                "https://houston.example.com/v1/authorization"
+                in doc["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"]
+            )
+
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
@@ -36,10 +45,11 @@ class TestHoustonInternalAuthorization:
             values={"global": {"plane": {"mode": "control"}}},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
+                "charts/grafana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
-        assert len(docs) == 2
+        assert len(docs) == 3
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
@@ -55,11 +65,12 @@ class TestHoustonInternalAuthorization:
             values={"global": {"plane": {"mode": "data"}}},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
+                "charts/grafana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 2
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"

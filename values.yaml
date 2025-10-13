@@ -259,7 +259,7 @@ global:
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
   # Pods in the platformNodePool include alertmanager, commander, houston, kube-replicator, astro-ui,registry,
-  # es-client, es-data, es-exporter, es-master, nginx-es, kube-state, nginx, nginx-default, prometheus.
+  # es-client, es-data, es-exporter, es-master, nginx-es, grafana, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   platformNodePool:
@@ -279,6 +279,11 @@ global:
   ssl:
     enabled: false
     mode: "prefer"
+    # we need separate mode for grafana:
+    # grafana starting from (7.5.0) only supports sslmodes: disable/require/verify-ca/verify-full
+    # https://github.com/grafana/grafana/blob/master/CHANGELOG.md#750-beta1-2021-03-04 (Postgres: SSL certification)
+    grafana:
+      sslmode: "require"
 
   # Storage class for persistent volumes. If you have multiple storage classes available this will force all charts with persistent
   # volumes to use the one specified here.
@@ -341,7 +346,7 @@ tags:
   # Enable platform components by default (nginx, astronomer)
   platform: true
 
-  # Enable monitoring stack (prometheus, kube-state)
+  # Enable monitoring stack (prometheus, kube-state, grafana)
   monitoring: true
 
   # Enable logging stack (elasticsearch, vector)
@@ -433,6 +438,41 @@ nginx:
       limits:
         cpu: "120m"
         memory: "100Mi"
+
+#################################
+## Grafana configuration
+#################################
+grafana:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+
+  dashboards:
+    {}
+    # default:
+    #   velero:
+    #     file: dashboards/velero.json
+
+  # provide extra configurations to grafana via environment variables
+  extraEnvVars:
+    []
+    # - name: GF_SMTP_ENABLED
+    #   value: "true"
+    # - name: GF_SMTP_HOST
+    #   value: smtp.astronomer.io
+    # - name: GF_SMTP_USER
+    #   value: grafana
+    # - name: GF_SMTP_PASSWORD
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: grafana-smtp-secret
+    #       key: smtp_password
+
 
 #################################
 ## Prometheus configuration

@@ -1,0 +1,51 @@
+################################
+## Grafana NetworkPolicy
+################################
+{{- if .Values.global.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "grafana.fullname" . }}-policy
+  labels:
+    tier: monitoring
+    component: grafana-policy
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: monitoring
+      component: grafana
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    {{- if .Values.global.authSidecar.enabled  }}
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+    {{- end }}
+    {{- else }}
+    - podSelector:
+        matchLabels:
+          tier: nginx
+          component: ingress-controller
+          release: {{ .Release.Name }}
+    {{- end }}
+    ports:
+    {{- if .Values.global.authSidecar.enabled  }}
+    - protocol: TCP
+      port: {{ .Values.global.authSidecar.port }}
+    {{- else }}
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+    {{- end }}
+{{- end }}

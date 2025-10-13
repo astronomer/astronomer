@@ -51,6 +51,16 @@ def test_houston_check_db_info(houston_api):
     assert f"{release_name}_houston" in houston_db_info
 
 
+def test_grafana_check_db_info(grafana):
+    """Make assertions about Houston's configuration."""
+    if not (release_name := getenv("RELEASE_NAME")):
+        print("No release_name env var, using release_name=astronomer")
+        release_name = "astronomer"
+
+    grafana_db_info = grafana.check_output("env | grep GF_DATABASE_URL")
+    assert f"{release_name}_grafana" in grafana_db_info
+
+
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_houston_can_reach_prometheus(houston_api):
     assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")

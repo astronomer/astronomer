@@ -1,0 +1,24 @@
+############################
+## Grafana Bootstrap Role ##
+############################
+{{- if and .Values.global.rbacEnabled (and (not .Values.backendSecretName) (not .Values.backendConnection)) }}
+kind: Role
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ template "grafana.fullname" . }}-bootstrapper
+  labels:
+    tier: grafana
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - list
+      - get
+      - create
+      - patch
+{{- end }}
