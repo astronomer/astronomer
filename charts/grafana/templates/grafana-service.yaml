@@ -1,6 +1,7 @@
 #####################
 ## Grafana Service ##
 #####################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -29,3 +30,4 @@ spec:
       port: {{ .Values.global.authSidecar.port }}
       appProtocol: tcp
     {{- end}}
+{{- end }}

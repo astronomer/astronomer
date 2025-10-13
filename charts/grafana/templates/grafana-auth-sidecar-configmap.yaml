@@ -1,6 +1,7 @@
 #################################
 ## Grafana auth sidecar ConfigMap
 #################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if .Values.global.authSidecar.enabled }}
 kind: ConfigMap
 apiVersion: v1
@@ -45,4 +46,5 @@ data:
           return 200;
       }
     }
+{{- end }}
 {{- end }}
