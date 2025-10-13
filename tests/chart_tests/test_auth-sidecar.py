@@ -42,6 +42,18 @@ class TestAuthSidecar:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-alertmanager"
         assert doc["spec"]["template"]["spec"]["containers"][1]["name"] == "auth-proxy"
+        assert doc["spec"]["template"]["spec"]["volumes"] == [
+            {"name": "etc-ssl-certs", "emptyDir": {}},
+            {"name": "tmp", "emptyDir": {}},
+            {"name": "alertmanager-sidecar-conf", "configMap": {"name": "release-name-alertmanager-nginx-conf"}},
+            {
+                "name": "config-volume",
+                "configMap": {
+                    "name": "release-name-alertmanager",
+                    "items": [{"key": "alertmanager.yaml", "path": "alertmanager.yaml"}],
+                },
+            },
+        ]
 
         assert "Service" == docs[2]["kind"]
         assert "release-name-alertmanager" == docs[2]["metadata"]["name"]
@@ -114,6 +126,24 @@ class TestAuthSidecar:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-prometheus"
+        assert doc["spec"]["template"]["spec"]["volumes"] == [
+            {"name": "tmp", "emptyDir": {}},
+            {"name": "prometheus-sidecar-conf", "configMap": {"name": "release-name-prometheus-nginx-conf"}},
+            {
+                "name": "federation-auth",
+                "secret": {"secretName": "release-name-registry-auth-key", "items": [{"key": "token", "path": "federation-token"}]},
+            },
+            {
+                "name": "prometheus-config-volume",
+                "configMap": {"name": "release-name-prometheus-config", "items": [{"key": "config", "path": "prometheus.yaml"}]},
+            },
+            {
+                "name": "alert-volume",
+                "configMap": {"name": "release-name-prometheus-alerts", "items": [{"key": "alerts", "path": "alerts.yaml"}]},
+            },
+            {"name": "filesd", "emptyDir": {}},
+            {"name": "etc-ssl-certs", "emptyDir": {}},
+        ]
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][0]["name"]
 
         assert "Service" == docs[2]["kind"]

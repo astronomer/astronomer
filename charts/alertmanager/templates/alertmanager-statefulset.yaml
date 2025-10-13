@@ -185,6 +185,8 @@ spec:
         - name: etc-ssl-certs
           emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
+        - name: tmp
+          emptyDir: {}
         - name: alertmanager-sidecar-conf
           configMap:
             name: {{ template "alertmanager.fullname" . }}-nginx-conf

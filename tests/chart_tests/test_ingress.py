@@ -170,3 +170,45 @@ class TestIngress:
         assert "example.com" in tls_hosts
         assert "app.example.com" in tls_hosts
         assert "install.example.com" in tls_hosts
+
+    @pytest.mark.parametrize(
+        ("mode", "expected_astro_ui", "expected_registry", "expected_rule_count", "expected_hosts"),
+        [
+            ("control", True, False, 2, ["example.com", "app.example.com"]),
+            ("data", False, True, 1, ["registry.example.com"]),
+            ("unified", True, True, 3, ["example.com", "app.example.com", "registry.example.com"]),
+        ],
+    )
+    def test_ingress_per_plane_mode(
+        self, mode, expected_astro_ui, expected_registry, expected_rule_count, expected_hosts, kube_version
+    ):
+        """Test ingress configuration for all plane modes"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": mode}}},
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 1, f"Expected 1 ingress for {mode} mode"
+        doc = docs[0]
+
+        # Check rule count
+        assert len(doc["spec"]["rules"]) == expected_rule_count, f"Expected {expected_rule_count} rules for {mode} mode"
+
+        # Check hosts in rules
+        hosts = [rule["host"] for rule in doc["spec"]["rules"]]
+        assert set(hosts) == set(expected_hosts), f"Expected hosts {expected_hosts} for {mode} mode, got {hosts}"
+
+        # Check TLS hosts
+        tls_hosts = doc["spec"]["tls"][0]["hosts"]
+        for expected_host in expected_hosts:
+            assert expected_host in tls_hosts, f"Expected {expected_host} in TLS hosts for {mode} mode"
+
+        # install.example.com should always be in TLS
+        assert "install.example.com" in tls_hosts
+
+        # Check nginx configuration snippet (should be present in control/unified, not needed in data)
+        annotations = doc["metadata"]["annotations"]
+        if expected_astro_ui:
+            assert "nginx.ingress.kubernetes.io/configuration-snippet" in annotations
+            assert "app.example.com" in annotations["nginx.ingress.kubernetes.io/configuration-snippet"]

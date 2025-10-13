@@ -18,6 +18,9 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+
 
 def setup_logger():
     """Setup logger with timestamp and prefix"""
@@ -171,8 +174,7 @@ def main():
 
     control_plane_endpoint = os.getenv("CONTROL_PLANE_ENDPOINT")
     namespace = os.getenv("NAMESPACE")
-    release_name = os.getenv("RELEASE_NAME", "astronomer")
-    secret_name = os.getenv("SECRET_NAME", f"{release_name}-commander-jwt-secret")
+    secret_name_suffix = os.getenv("SECRET_NAME", "commander-jwt-secret")
     retry_attempts = int(os.getenv("RETRY_ATTEMPTS", "5"))
     retry_delay = int(os.getenv("RETRY_DELAY", "10"))
 
@@ -187,13 +189,18 @@ def main():
     logger.info("Configuration:")
     logger.info(f"  Control Plane: {control_plane_endpoint}")
     logger.info(f"  JWKS Endpoint: {control_plane_endpoint}/v1/.well-known/jwks.json")
-    logger.info(f"  Target Secret: {secret_name}")
+    logger.info(f"  Secret Name Suffix: {secret_name_suffix}")
     logger.info(f"  Target Namespace: {namespace}")
-    logger.info(f"  Release Name: {release_name}")
 
     try:
         jwks_data = fetch_jwks_from_endpoint(control_plane_endpoint, retry_attempts, retry_delay)
         signed_public_cert = get_base64_pem_from_jwks(jwks_data)
+        pem_cert_bytes = base64.b64decode(signed_public_cert)
+        cert = x509.load_pem_x509_certificate(pem_cert_bytes, default_backend())
+        release_name = cert.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)[0].value
+        logger.info(f"  Release Name: {release_name}")
+        secret_name = f"{release_name}-{secret_name_suffix}"
+        logger.info(f"  Target Secret Name: {secret_name}")
         validate_jwks_structure(jwks_data)
 
         create_kubernetes_secret(signed_public_cert, control_plane_endpoint, namespace, release_name, secret_name)

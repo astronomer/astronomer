@@ -82,7 +82,7 @@ spec:
             - name: CONTROL_PLANE_ENDPOINT
               value: "https://houston.{{ .Values.global.baseDomain }}"
             - name: SECRET_NAME
-              value: "{{ .Release.Name }}-houston-jwt-signing-certificate"
+              value: "jwt-signing-certificate"
             - name: NAMESPACE
               value: {{ .Release.Namespace | quote }}
             - name: RETRY_ATTEMPTS
