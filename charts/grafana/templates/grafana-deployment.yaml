@@ -29,12 +29,12 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
 {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-{{- end }}
+      {{- if .Values.global.podAnnotations }}
+      {{- toYaml .Values.global.podAnnotations | nindent 8 -}}
+      {{- end }}
+      {{- if .Values.podAnnotations }}
+      {{- toYaml .Values.podAnnotations | nindent 8 -}}
+      {{- end }}
 {{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
@@ -42,9 +42,24 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "grafana.bootstrapper.serviceAccountName" . }}
-{{- include "grafana.imagePullSecrets" . | indent 6 }}
+      {{- include "grafana.imagePullSecrets" . | nindent 6 }}
     {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
       initContainers:
+        - name: var-lib-grafana-copier
+          image: {{ template "grafana.image" . }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              cp -rv /var/lib/grafana/. /var_lib_grafana_copy
+          volumeMounts:
+            - name: var-lib-grafana
+              mountPath: /var_lib_grafana_copy
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
         - name: wait-for-db
           command:
             - "/wait-for-db.sh"
@@ -133,6 +148,8 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
+            - name: var-lib-grafana
+              mountPath: /var/lib/grafana
             - name: grafana-datasource-volume
               mountPath: /etc/grafana/provisioning/datasources
             {{- $grafanadashboards := fromYaml (include "grafana.dashboards" .) }}
@@ -159,9 +176,9 @@ spec:
             {{- end }}
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
-{{- if .Values.extraEnvVars}}
-{{ toYaml .Values.extraEnvVars | indent 12 }}
-{{- end }}
+          {{- if .Values.extraEnvVars}}
+            {{- toYaml .Values.extraEnvVars | nindent 12 -}}
+          {{- end }}
         {{- if .Values.global.authSidecar.enabled }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
@@ -204,6 +221,8 @@ spec:
             name: grafana-sidecar-conf
         {{- end }}
       volumes:
+        - name: var-lib-grafana
+          emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
         - name: grafana-sidecar-conf
           configMap:
