@@ -16,7 +16,7 @@ class TestHoustonInternalAuthorization:
             values={},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
-                "charts/grafana/templates/ingress.yaml",
+                "charts/grafana/templates/grafana-ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
@@ -36,7 +36,7 @@ class TestHoustonInternalAuthorization:
             values={"global": {"plane": {"mode": "control"}}},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
-                "charts/grafana/templates/ingress.yaml",
+                "charts/grafana/templates/grafana-ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
@@ -56,7 +56,7 @@ class TestHoustonInternalAuthorization:
             values={"global": {"plane": {"mode": "data"}}},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
-                "charts/grafana/templates/ingress.yaml",
+                "charts/grafana/templates/grafana-ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
