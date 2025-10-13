@@ -1,0 +1,246 @@
+########################
+## Grafana Deployment ##
+########################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ template "grafana.fullname" . }}
+  labels:
+    tier: monitoring
+    component: grafana
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      tier: monitoring
+      component: grafana
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: monitoring
+        component: grafana
+        release: {{ .Release.Name }}
+        app: {{ template "grafana.name" . }}
+        version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
+{{- if or .Values.global.podAnnotations .Values.podAnnotations }}
+      annotations:
+      {{- if .Values.global.podAnnotations }}
+      {{- toYaml .Values.global.podAnnotations | nindent 8 -}}
+      {{- end }}
+      {{- if .Values.podAnnotations }}
+      {{- toYaml .Values.podAnnotations | nindent 8 -}}
+      {{- end }}
+{{- end }}
+    spec:
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      restartPolicy: Always
+      serviceAccountName: {{ template "grafana.bootstrapper.serviceAccountName" . }}
+      {{- include "grafana.imagePullSecrets" . | nindent 6 }}
+    {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
+      initContainers:
+        - name: var-lib-grafana-copier
+          image: {{ template "grafana.image" . }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              cp -rv /var/lib/grafana/. /var_lib_grafana_copy
+          volumeMounts:
+            - name: var-lib-grafana
+              mountPath: /var_lib_grafana_copy
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+        - name: wait-for-db
+          command:
+            - "/wait-for-db.sh"
+          args:
+            - "echo"
+            - "DB ready"
+          image: {{ template "grafana.image" . }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.waitForDB.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.waitForDB.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.waitForDB.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.waitForDB.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: GF_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+        - name: bootstrapper
+          image: {{ template "grafana.bootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.bootstrapper.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.bootstrapper.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.bootstrapper.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.bootstrapper.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: DB_NAME
+              value: {{ .Release.Name }}-grafana
+            {{ if .Values.global.ssl.enabled }}
+            - name: SSLMODE
+              value: {{ .Values.global.ssl.grafana.sslmode }}
+            {{- end }}
+            - name: SECRET_NAME
+              value: {{ template "grafana.backend.secret" . }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+      {{- end }}
+      containers:
+        - name: grafana
+          image: {{ template "grafana.image" . }}
+          imagePullPolicy: {{ .Values.images.grafana.pullPolicy }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          ports:
+            - name: grafana-ui
+              containerPort: {{ .Values.ports.http }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.ports.http }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.ports.http }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          volumeMounts:
+            - name: var-lib-grafana
+              mountPath: /var/lib/grafana
+            - name: grafana-datasource-volume
+              mountPath: /etc/grafana/provisioning/datasources
+            {{- $grafanadashboards := fromYaml (include "grafana.dashboards" .) }}
+            {{- if $grafanadashboards }}
+            {{- range $provider, $dashboards := $grafanadashboards }}
+            {{- range $key, $value := $dashboards }}
+            {{- if (or (hasKey $value "json") (hasKey $value "file")) }}
+            - name: dashboards-{{ $provider }}
+              mountPath: "/var/lib/grafana/dashboards/{{ $provider }}/{{ $key }}.json"
+              subPath: "{{ $key }}.json"
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          env:
+            - name: GF_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "grafana.backend.secret" . }}
+                  key: connection
+            {{ if .Values.global.ssl.enabled }}
+            - name: GF_DATABASE_SSL_MODE
+              value: {{ .Values.global.ssl.grafana.sslmode }}
+            {{- end }}
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+          {{- if .Values.extraEnvVars}}
+            {{- toYaml .Values.extraEnvVars | nindent 12 -}}
+          {{- end }}
+        {{- if .Values.global.authSidecar.enabled }}
+        - name: auth-proxy
+          image: {{ include "authSidecar.image" . }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          {{- if .Values.global.authSidecar.resources }}
+          resources:
+{{ toYaml .Values.global.authSidecar.resources | nindent 12 }}
+          {{- end }}
+          ports:
+          - containerPort: {{ .Values.global.authSidecar.port }}
+            name: auth-proxy
+            protocol: TCP
+          {{- if .Values.global.authSidecar.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          {{- if .Values.global.authSidecar.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.global.authSidecar.livenessProbe) . | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          volumeMounts:
+          - mountPath: /etc/nginx/conf.d/
+            name: grafana-sidecar-conf
+        {{- end }}
+      volumes:
+        - name: var-lib-grafana
+          emptyDir: {}
+        {{- if .Values.global.authSidecar.enabled }}
+        - name: grafana-sidecar-conf
+          configMap:
+            name: {{ template "grafana.fullname" . }}-nginx-conf
+        {{- end }}
+        - name: grafana-datasource-volume
+          configMap:
+            name: {{ template "grafana.fullname" . }}-datasource
+            items:
+              - key: datasource.yaml
+                path: datasource.yaml
+        {{- $grafanadashboards := fromYaml (include "grafana.dashboards" .) }}
+        {{- if $grafanadashboards }}
+          {{- range keys $grafanadashboards }}
+        - name: dashboards-{{ . }}
+          configMap:
+            name: {{ template "grafana.fullname" $ }}-dashboards-{{ . }}
+          {{- end }}
+        {{- end }}
+{{- end }}

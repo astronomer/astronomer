@@ -85,7 +85,7 @@ class TestIngress:
     def test_single_ingress_per_host(self, kube_version):
         default_docs = render_chart(values={"global": {"enablePerHostIngress": True}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
-        assert len(ingresses) == 7
+        assert len(ingresses) == 8
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
         assert all(len(doc["spec"]["tls"][0]["hosts"]) == 1 for doc in ingresses)
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)

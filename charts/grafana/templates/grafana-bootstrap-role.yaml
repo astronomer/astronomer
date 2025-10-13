@@ -1,0 +1,26 @@
+############################
+## Grafana Bootstrap Role ##
+############################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if and .Values.global.rbacEnabled (and (not .Values.backendSecretName) (not .Values.backendConnection)) }}
+kind: Role
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ template "grafana.fullname" . }}-bootstrapper
+  labels:
+    tier: grafana
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - list
+      - get
+      - create
+      - patch
+{{- end }}
+{{- end }}

@@ -36,6 +36,11 @@ spec:
           component: {{ template "prometheus.name" . }}-federation-auth
           release: {{ .Release.Name }}
     {{- end }}
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: grafana
+          release: {{ .Release.Name }}
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:

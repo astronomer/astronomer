@@ -566,7 +566,7 @@ class TestAstronomerCommander:
         "plane_mode,auth_sidecar_enabled,should_render_deployment,expected_containers",
         [
             ("data", False, True, ["commander"]),
-            ("data", True, True, ["commander", "auth-sidecar"]),
+            ("data", True, True, ["commander", "auth-proxy"]),
             ("unified", False, True, ["commander"]),
             ("unified", True, True, ["commander"]),
             ("control", False, False, []),
