@@ -11,7 +11,7 @@ replicas: 1
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 10.4.17
+    tag: 12.2.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
