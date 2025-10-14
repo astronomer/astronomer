@@ -220,6 +220,8 @@ spec:
           volumeMounts:
           - mountPath: /etc/nginx/conf.d/
             name: grafana-sidecar-conf
+          - name: tmp
+            mountPath: /tmp
         {{- end }}
       volumes:
         - name: var-lib-grafana
@@ -228,6 +230,8 @@ spec:
         - name: grafana-sidecar-conf
           configMap:
             name: {{ template "grafana.fullname" . }}-nginx-conf
+        - name: tmp
+          emptyDir: {}
         {{- end }}
         - name: grafana-datasource-volume
           configMap:
