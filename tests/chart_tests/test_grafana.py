@@ -154,19 +154,14 @@ def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
     # Test with auth sidecar enabled
     docs = render_chart(
         kube_version=kube_version,
-        values={
-            "global": {
-                "plane": {"mode": plane_mode},
-                "authSidecar": {"enabled": True}
-            }
-        },
+        values={"global": {"plane": {"mode": plane_mode}, "authSidecar": {"enabled": True}}},
         show_only=[DEPLOYMENT_FILE],
     )
-    
+
     assert len(docs) == 1
     doc = docs[0]
     assert doc["kind"] == "Deployment"
-    
+
     # Check that auth-proxy container exists and has correct volume mounts
     containers = doc["spec"]["template"]["spec"]["containers"]
     auth_proxy_container = next(
@@ -174,23 +169,29 @@ def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
         None,
     )
     assert auth_proxy_container is not None
-    
+
     # Verify volume mounts structure
     expected_volume_mounts = [
         {"mountPath": "/etc/nginx/conf.d/", "name": "grafana-sidecar-conf"},
-        {"name": "tmp", "mountPath": "/tmp"}
+        {"name": "tmp", "mountPath": "/tmp"},
     ]
     assert auth_proxy_container["volumeMounts"] == expected_volume_mounts
-    
+
     # Check volumes
     volumes = doc["spec"]["template"]["spec"]["volumes"]
     expected_volumes = [
         {"name": "var-lib-grafana", "emptyDir": {}},
         {"name": "grafana-sidecar-conf", "configMap": {"name": "release-name-grafana-nginx-conf"}},
         {"name": "tmp", "emptyDir": {}},
-        {"name": "grafana-datasource-volume", "configMap": {"name": "release-name-grafana-datasource", "items": [{"key": "datasource.yaml", "path": "datasource.yaml"}]}}
+        {
+            "name": "grafana-datasource-volume",
+            "configMap": {
+                "name": "release-name-grafana-datasource",
+                "items": [{"key": "datasource.yaml", "path": "datasource.yaml"}],
+            },
+        },
     ]
-    
+
     # Check that all expected volumes are present
     for expected_volume in expected_volumes:
         assert expected_volume in volumes, f"Expected volume {expected_volume} not found in volumes"
@@ -202,19 +203,14 @@ def test_grafana_auth_sidecar_disabled_no_sidecar_volumes(kube_version, plane_mo
     """Test that when auth sidecar is disabled, auth-proxy container and tmp volume are not present."""
     docs = render_chart(
         kube_version=kube_version,
-        values={
-            "global": {
-                "plane": {"mode": plane_mode},
-                "authSidecar": {"enabled": False}
-            }
-        },
+        values={"global": {"plane": {"mode": plane_mode}, "authSidecar": {"enabled": False}}},
         show_only=[DEPLOYMENT_FILE],
     )
-    
+
     assert len(docs) == 1
     doc = docs[0]
     assert doc["kind"] == "Deployment"
-    
+
     # Check that auth-proxy container does not exist
     containers = doc["spec"]["template"]["spec"]["containers"]
     auth_proxy_container = next(
@@ -222,7 +218,7 @@ def test_grafana_auth_sidecar_disabled_no_sidecar_volumes(kube_version, plane_mo
         None,
     )
     assert auth_proxy_container is None
-    
+
     # Check that tmp volume is not present when auth sidecar is disabled
     volumes = doc["spec"]["template"]["spec"]["volumes"]
     tmp_volume = next(
