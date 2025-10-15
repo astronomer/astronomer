@@ -215,7 +215,7 @@ class TestPrometheusStatefulset:
         assert env_vars["CLUSTER_TABLE_NAME"] == "Cluster"
         assert env_vars["DATABASE_NAME"] == "release_name_houston"
         assert env_vars["FILESD_FILE_PATH"] == "/prometheusreloader/airflow"
-        assert env_vars["ENABLE_DEPLOYMENT_SCRAPING"] == "False"
+        assert env_vars["ENABLE_DEPLOYMENT_SCRAPING"] == "True"
         assert env_vars["ENABLE_CLUSTER_SCRAPING"] == "True"
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
 
