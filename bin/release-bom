@@ -2,6 +2,8 @@
 # shellcheck disable=SC1090,SC1091
 set -euo pipefail
 
+BOM_GENERATOR_VERSION=v0.10.0
+
 help() {
   echo "Description:"
   echo "    Generate and publish a BOM JSON file for the given version and update the index.html"
@@ -27,17 +29,15 @@ if [[ "${#@}" -eq 0 ]] ; then
   exit 1
 fi
 
-command -v bom-generator >/dev/null 2>&1 || {
-  echo "ERROR: bom-generator is not installed. Please install it first. https://github.com/astronomer/astronomer-bom-generator"
-  exit 1
-}
-
 version="${1#v}"
 shift
 repo_url="https://updates.astronomer.io/astronomer-software/releases"
 bucket_path="gs://updates.astronomer.io/astronomer-software/releases"
 json_file_name="astronomer-${version}.json"
 max_age="300"
+
+# Install bom-generator
+pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${BOM_GENERATOR_VERSION}"
 
 # Generate bom file and indexes
 bom-generator --version "${version}"
