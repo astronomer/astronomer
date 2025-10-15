@@ -323,12 +323,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-31-9:
+  scenario-unified-1-31-12:
     machine:
       image: ubuntu-2404:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.9
+      KUBE_VERSION: v1.31.12
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -350,12 +350,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-32-5:
+  scenario-unified-1-32-8:
     machine:
       image: ubuntu-2404:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.32.5
+      KUBE_VERSION: v1.32.8
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -471,12 +471,12 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 
-      - scenario-unified-1-31-9:
+      - scenario-unified-1-31-12:
           requires:
             - build-artifact
             - approve-test-all-platforms
 
-      - scenario-unified-1-32-5:
+      - scenario-unified-1-32-8:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -495,7 +495,7 @@ workflows:
           requires:
             - approve-internal-release
             - scenario-unified-1-29-14
-            - scenario-unified-1-32-5
+            - scenario-unified-1-32-8
       - approve-upgrade-test:
           type: approval
           filters:
@@ -515,7 +515,7 @@ workflows:
           requires:
             - release-to-internal
             - scenario-unified-1-30-13
-            - scenario-unified-1-31-9
+            - scenario-unified-1-31-12
           filters:
             branches:
               only:
