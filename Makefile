@@ -96,6 +96,7 @@ cache-docker-images: ## Cache all docker images used in the base helm chart
 uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.
 	uv lock --upgrade
 
+.PHONY: uv-lock-upgrade-and-sync
 uv-lock-upgrade-and-sync: uv-lock-upgrade ## Upgrade uv lockfile dependencies and sync venv
 	uv sync
 
