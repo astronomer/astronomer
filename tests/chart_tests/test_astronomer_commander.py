@@ -58,8 +58,7 @@ class TestAstronomerCommander:
         commander_container = c_by_name["commander"]
         env_vars = {x["name"]: get_env_value(x) for x in commander_container["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
-        assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
-
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
         assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "https://elasticsearch.custom-dp-123.example.com"
