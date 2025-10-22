@@ -1,4 +1,4 @@
-{{- if and .Values.autoscaling.enabled }}
+{{- if .Values.autoscaling.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
