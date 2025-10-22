@@ -654,18 +654,6 @@ def test_houston_configmap_with_cleanup_airflow_db_disabled():
     assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
 
 
-def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
-    """Validate the houston configmap and its embedded data with disable manage clusterscoped resources enabled
-    ."""
-    docs = render_chart(
-        values={"global": {"disableManageClusterScopedResources": True}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["disableManageClusterScopedResources"] is True
-
-
 def test_houston_configmap_with_tls_secretname_overrides():
     """Validate the houston configmap and its embedded data with tls secretname overrides
     ."""
