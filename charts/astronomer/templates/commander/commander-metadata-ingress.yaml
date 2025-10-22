@@ -29,7 +29,7 @@ metadata:
     {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret }}
+  {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:

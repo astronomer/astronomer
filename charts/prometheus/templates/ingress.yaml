@@ -25,7 +25,7 @@ metadata:
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret }}
+  {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
