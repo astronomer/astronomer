@@ -29,7 +29,7 @@ metadata:
       }
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret }}
+  {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:

@@ -1,7 +1,7 @@
 #####################################
 ## NGINX Control Plane Config Role ##
 #####################################
-{{- if and .Values.global.rbacEnabled }}
+{{- if .Values.global.rbacEnabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
