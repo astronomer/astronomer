@@ -1,7 +1,7 @@
 ###########################################################
 ## Astronomer Elasticsearch Client Pod Disruption Budget ##
 ###########################################################
-{{- if and .Values.global.podDisruptionBudgetsEnabled }}
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
