@@ -25,7 +25,7 @@ metadata:
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret }}
+  {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:

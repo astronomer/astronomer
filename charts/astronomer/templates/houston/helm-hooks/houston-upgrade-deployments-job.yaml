@@ -1,7 +1,7 @@
 #######################################
 ## Airflow Post Deployment Upgrade Hook
 #######################################
-{{- if and .Values.houston.upgradeDeployments.enabled }}
+{{- if .Values.houston.upgradeDeployments.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
