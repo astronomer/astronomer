@@ -22,7 +22,7 @@ def common_test_cases(docs):
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
-    assert prod["deployments"]["disableManageClusterScopedResources"] is False
+    assert "disableManageClusterScopedResources" not in prod["deployments"]
     assert prod["helm"]["tlsSecretName"] == "astronomer-tls"
     airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["strategy"]
