@@ -1,7 +1,7 @@
 #####################################
 ## Astronomer Registry StatefulSet ##
 #####################################
-{{- if and .Values.global.baseDomain }}
+{{- if .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- if or .Values.registry.gcs.enabled .Values.registry.azure.enabled .Values.registry.s3.enabled }}
 kind: Deployment
