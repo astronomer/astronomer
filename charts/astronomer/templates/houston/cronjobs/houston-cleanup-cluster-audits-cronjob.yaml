@@ -1,7 +1,7 @@
 ###############################################
 ## Houston Cleanup Cluster Audits CronJob
 ###############################################
-{{- if and .Values.houston.cleanupClusterAudits.enabled }}
+{{- if .Values.houston.cleanupClusterAudits.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
