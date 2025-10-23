@@ -129,10 +129,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install bom-generator
-          command: |
-            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
-      - run:
           name: Run Release BOM Script
           command: |
             bin/release-bom -x ${CIRCLE_TAG}
@@ -269,12 +265,12 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  scenario-unified-1-29-14:
+  scenario-unified-1-31-12:
     machine:
       image: ubuntu-2404:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.29.14
+      KUBE_VERSION: v1.31.12
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -296,12 +292,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-30-13:
+  scenario-unified-1-32-8:
     machine:
       image: ubuntu-2404:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.30.13
+      KUBE_VERSION: v1.32.8
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -323,12 +319,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-31-9:
+  scenario-unified-1-33-4:
     machine:
       image: ubuntu-2404:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.9
+      KUBE_VERSION: v1.33.4
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -350,12 +346,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-32-5:
+  scenario-unified-1-34-0:
     machine:
       image: ubuntu-2404:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.32.5
+      KUBE_VERSION: v1.34.0
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -424,7 +420,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.2.2
                 - quay.io/astronomer/ap-git-sync:4.4.1-3
                 - quay.io/astronomer/ap-grafana:12.2.0
-                - quay.io/astronomer/ap-houston-api:1.0.36
+                - quay.io/astronomer/ap-houston-api:1.0.38
                 - quay.io/astronomer/ap-init:3.21.3-5
                 - quay.io/astronomer/ap-kube-state:2.15.0
                 - quay.io/astronomer/ap-kuiper-reloader:0.1.9
@@ -463,20 +459,20 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - scenario-unified-1-29-14:
+      - scenario-unified-1-31-12:
           requires:
             - build-artifact
-      - scenario-unified-1-30-13:
-          requires:
-            - build-artifact
-            - approve-test-all-platforms
-
-      - scenario-unified-1-31-9:
+      - scenario-unified-1-32-8:
           requires:
             - build-artifact
             - approve-test-all-platforms
 
-      - scenario-unified-1-32-5:
+      - scenario-unified-1-33-4:
+          requires:
+            - build-artifact
+            - approve-test-all-platforms
+
+      - scenario-unified-1-34-0:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -498,8 +494,8 @@ workflows:
                 - master
           requires:
             - approve-internal-release
-            - scenario-unified-1-29-14
-            - scenario-unified-1-32-5
+            - scenario-unified-1-31-12
+            - scenario-unified-1-34-0
       - approve-upgrade-test:
           type: approval
           filters:
@@ -518,8 +514,8 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - scenario-unified-1-30-13
-            - scenario-unified-1-31-9
+            - scenario-unified-1-32-8
+            - scenario-unified-1-33-4
           filters:
             branches:
               only:

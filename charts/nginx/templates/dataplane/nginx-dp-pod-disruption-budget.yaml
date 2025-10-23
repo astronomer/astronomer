@@ -1,7 +1,7 @@
 #######################################################
 ## Astronomer Data Plane Nginx Pod Disruption Budget ##
 #######################################################
-{{- if and .Values.global.podDisruptionBudgetsEnabled }}
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget

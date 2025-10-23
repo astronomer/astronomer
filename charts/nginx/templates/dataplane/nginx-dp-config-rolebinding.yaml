@@ -1,7 +1,7 @@
 ##########################################
 ## NGINX Data Plane Config Role Binding ##
 ##########################################
-{{- if and .Values.global.rbacEnabled }}
+{{- if .Values.global.rbacEnabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}

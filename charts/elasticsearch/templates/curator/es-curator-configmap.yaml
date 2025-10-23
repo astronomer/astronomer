@@ -1,7 +1,7 @@
 #######################
 ## Curator ConfigMap ##
 #######################
-{{- if and .Values.curator.enabled }}
+{{- if .Values.curator.enabled }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap

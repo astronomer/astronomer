@@ -1,7 +1,7 @@
 #####################
 ## Houston Ingress ##
 #####################
-{{- if and .Values.global.baseDomain }}
+{{- if .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -43,7 +43,7 @@ metadata:
     {{- toYaml .Values.houston.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret }}
+  {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:

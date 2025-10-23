@@ -3,7 +3,7 @@
 
 [ "$CIRCLECI" == true ] || { echo "ERROR: not running in CircleCI" ; exit 1 ; }
 
-STERN_VERSION=1.32.0 # https://github.com/stern/stern/releases
+STERN_VERSION=1.33.0 # https://github.com/stern/stern/releases
 NAMESPACE="${NAMESPACE:-astronomer}"
 
 cat >> "$HOME/.bashrc" <<EOF

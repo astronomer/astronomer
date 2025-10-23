@@ -127,10 +127,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install bom-generator
-          command: |
-            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
-      - run:
           name: Run Release BOM Script
           command: |
             bin/release-bom -x ${CIRCLE_TAG}

@@ -78,10 +78,8 @@ repos:
         args: ["--pytest-test-first"]
         exclude: "^tests/utils/.*$"
       - id: requirements-txt-fixer
-        args: [
-            "tests/requirements.in",
-            "tests/requirements.txt",
-          ]
+        args:
+          - "tests/requirements.txt"
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py
