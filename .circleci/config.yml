@@ -265,60 +265,6 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  scenario-unified-1-29-14:
-    machine:
-      image: ubuntu-2404:2024.11.1
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.29.14
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: Create venv-cache-key.txt
-          command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
-      - restore_cache:
-          keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
-      - run:
-          name: Install uv
-          command: curl -fsSL https://astral.sh/uv/install.sh | sh
-      - run:
-          name: "Test scenario: unified"
-          command: |
-            make test-functional-unified
-      - store_test_results:
-          path: test-results
-  scenario-unified-1-30-13:
-    machine:
-      image: ubuntu-2404:2024.11.1
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.30.13
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: Create venv-cache-key.txt
-          command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
-      - restore_cache:
-          keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
-      - run:
-          name: Install uv
-          command: curl -fsSL https://astral.sh/uv/install.sh | sh
-      - run:
-          name: "Test scenario: unified"
-          command: |
-            make test-functional-unified
-      - store_test_results:
-          path: test-results
   scenario-unified-1-31-12:
     machine:
       image: ubuntu-2404:2024.11.1
@@ -513,19 +459,9 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - scenario-unified-1-29-14:
-          requires:
-            - build-artifact
-      - scenario-unified-1-30-13:
-          requires:
-            - build-artifact
-            - approve-test-all-platforms
-
       - scenario-unified-1-31-12:
           requires:
             - build-artifact
-            - approve-test-all-platforms
-
       - scenario-unified-1-32-8:
           requires:
             - build-artifact
@@ -554,7 +490,7 @@ workflows:
                 - '/^release-\d+\.\d+$/'
           requires:
             - approve-internal-release
-            - scenario-unified-1-29-14
+            - scenario-unified-1-31-12
             - scenario-unified-1-34-0
       - approve-upgrade-test:
           type: approval
@@ -574,8 +510,6 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - scenario-unified-1-30-13
-            - scenario-unified-1-31-12
             - scenario-unified-1-32-8
             - scenario-unified-1-33-4
           filters:
