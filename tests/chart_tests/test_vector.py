@@ -114,13 +114,7 @@ class TestVector:
     def test_vector_clusterrole_rbac_enabled(self, kube_version):
         """Test that helm renders a good ClusterRole template for vector when all conditions are met."""
         # Test data plane mode
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": True,
-                "plane": {"mode": "data"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": True, "plane": {"mode": "data"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -135,7 +129,7 @@ class TestVector:
         assert doc["metadata"]["labels"]["tier"] == "logging"
         assert doc["metadata"]["labels"]["component"] == "vector"
         assert len(doc["rules"]) > 0
-        
+
         # Verify the rules contain expected permissions
         rule = doc["rules"][0]
         assert "namespaces" in rule["resources"]
@@ -157,13 +151,7 @@ class TestVector:
     def test_vector_clusterrole_disabled_conditions(self, kube_version):
         """Test that vector ClusterRole is not rendered when required conditions are not met."""
         # Test with rbacEnabled=False
-        values = {
-            "global": {
-                "rbacEnabled": False,
-                "clusterRoles": True,
-                "plane": {"mode": "data"}
-            }
-        }
+        values = {"global": {"rbacEnabled": False, "clusterRoles": True, "plane": {"mode": "data"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -172,13 +160,7 @@ class TestVector:
         assert len(docs) == 0
 
         # Test with clusterRoles=False
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": False,
-                "plane": {"mode": "data"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": False, "plane": {"mode": "data"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -187,13 +169,7 @@ class TestVector:
         assert len(docs) == 0
 
         # Test with control plane mode (should not render)
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": True,
-                "plane": {"mode": "control"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": True, "plane": {"mode": "control"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
