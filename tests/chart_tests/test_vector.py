@@ -111,6 +111,96 @@ class TestVector:
         ]
         assert pod_spec["containers"][0]["volumeMounts"] == volume_mounts
 
+    def test_vector_clusterrole_rbac_enabled(self, kube_version):
+        """Test that helm renders a good ClusterRole template for vector when all conditions are met."""
+        # Test data plane mode
+        values = {
+            "global": {
+                "rbacEnabled": True,
+                "clusterRoles": True,
+                "plane": {"mode": "data"}
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/vector/templates/vector-clusterrole.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ClusterRole"
+        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
+        assert doc["metadata"]["name"] == "release-name-vector"
+        assert doc["metadata"]["labels"]["tier"] == "logging"
+        assert doc["metadata"]["labels"]["component"] == "vector"
+        assert len(doc["rules"]) > 0
+        
+        # Verify the rules contain expected permissions
+        rule = doc["rules"][0]
+        assert "namespaces" in rule["resources"]
+        assert "pods" in rule["resources"]
+        assert "nodes" in rule["resources"]
+        assert "watch" in rule["verbs"]
+        assert "list" in rule["verbs"]
+
+        # Test unified plane mode
+        values["global"]["plane"]["mode"] = "unified"
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/vector/templates/vector-clusterrole.yaml"],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "ClusterRole"
+
+    def test_vector_clusterrole_disabled_conditions(self, kube_version):
+        """Test that vector ClusterRole is not rendered when required conditions are not met."""
+        # Test with rbacEnabled=False
+        values = {
+            "global": {
+                "rbacEnabled": False,
+                "clusterRoles": True,
+                "plane": {"mode": "data"}
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/vector/templates/vector-clusterrole.yaml"],
+        )
+        assert len(docs) == 0
+
+        # Test with clusterRoles=False
+        values = {
+            "global": {
+                "rbacEnabled": True,
+                "clusterRoles": False,
+                "plane": {"mode": "data"}
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/vector/templates/vector-clusterrole.yaml"],
+        )
+        assert len(docs) == 0
+
+        # Test with control plane mode (should not render)
+        values = {
+            "global": {
+                "rbacEnabled": True,
+                "clusterRoles": True,
+                "plane": {"mode": "control"}
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/vector/templates/vector-clusterrole.yaml"],
+        )
+        assert len(docs) == 0
+
     def test_vector_clusterrolebinding_rbac_enabled(self, kube_version):
         """Test that helm renders a good ClusterRoleBinding template for vector when rbacEnabled=True."""
         values = {"global": {"rbacEnabled": True}}
