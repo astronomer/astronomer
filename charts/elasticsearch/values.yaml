@@ -307,6 +307,18 @@ nginx:
   securityContext: {}
   podSecurityContext: {}
   maxBodySize: "100M"
+  # Auth request caching configuration
+  authCache:
+    enabled: true
+    # Cache storage settings
+    path: "/tmp/nginx-auth-cache"
+    levels: "1:2"
+    keysZone: "auth_cache:10m"
+    maxSize: "100m"
+    inactive: "5m"
+    # Cache TTL settings
+    validSuccess: "5m"      # Cache successful auth (200) responses
+    validFailure: "1m"      # Cache auth failures (401, 403) responses
 
 
 # sysctl init container
