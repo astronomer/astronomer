@@ -23,6 +23,10 @@ data:
     http {
       access_log /dev/stdout;
       client_max_body_size 1024M;
+      {{- if .Values.authCache.enabled }}
+
+      proxy_cache_path /tmp/nginx-auth-cache levels={{ .Values.authCache.levels }} keys_zone={{ .Values.authCache.keysZone }} max_size={{ .Values.authCache.maxSize }} inactive={{ .Values.authCache.inactive }};
+      {{- end }}
 
       server {
         listen {{ .Values.service.securehttp }};
@@ -52,7 +56,16 @@ data:
 
         location = /auth {
           internal;
+          {{- if .Values.authCache.enabled }}
+          proxy_cache auth_cache;
+          proxy_cache_key "$http_authorization";
+          proxy_cache_valid 200 {{ .Values.authCache.validSuccess }};
+          proxy_cache_valid 401 403 {{ .Values.authCache.validFailure }};
+          proxy_ignore_headers Cache-Control Expires;
+          add_header X-Auth-Cache-Status $upstream_cache_status always;
+          {{- end }}
           proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+          proxy_pass_request_body off;
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }

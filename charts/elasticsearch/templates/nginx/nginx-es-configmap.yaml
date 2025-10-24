@@ -23,7 +23,7 @@ data:
       client_max_body_size {{ .Values.nginx.maxBodySize }};
       {{- if .Values.nginx.authCache.enabled }}
 
-      proxy_cache_path {{ .Values.nginx.authCache.path }} levels={{ .Values.nginx.authCache.levels }} keys_zone={{ .Values.nginx.authCache.keysZone }} max_size={{ .Values.nginx.authCache.maxSize }} inactive={{ .Values.nginx.authCache.inactive }};
+      proxy_cache_path /tmp/nginx-auth-cache levels={{ .Values.nginx.authCache.levels }} keys_zone={{ .Values.nginx.authCache.keysZone }} max_size={{ .Values.nginx.authCache.maxSize }} inactive={{ .Values.nginx.authCache.inactive }};
       {{- end }}
 
       upstream elasticsearch {
@@ -69,6 +69,7 @@ data:
           add_header X-Auth-Cache-Status $upstream_cache_status always;
           {{- end }}
           proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+          proxy_pass_request_body off;
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }

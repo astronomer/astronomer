@@ -736,6 +736,9 @@ class TestElasticSearch:
         assert "proxy_ignore_headers Cache-Control Expires" in nginx_config
         assert "add_header X-Auth-Cache-Status $upstream_cache_status always" in nginx_config
 
+        # Verify proxy_pass_request_body optimization is present
+        assert "proxy_pass_request_body off" in nginx_config
+
     def test_elasticsearch_nginx_auth_cache_disabled(self, kube_version):
         """Test that auth caching can be disabled in nginx-es configmap."""
         docs = render_chart(
@@ -768,7 +771,6 @@ class TestElasticSearch:
                     "nginx": {
                         "authCache": {
                             "enabled": True,
-                            "path": "/custom/cache/path",
                             "levels": "2:2",
                             "keysZone": "custom_cache:20m",
                             "maxSize": "200m",
@@ -790,8 +792,8 @@ class TestElasticSearch:
 
         nginx_config = doc["data"]["nginx.conf"]
 
-        # Verify custom cache path settings
-        assert "proxy_cache_path /custom/cache/path" in nginx_config
+        # Verify custom cache storage settings (path is always /tmp/nginx-auth-cache)
+        assert "proxy_cache_path /tmp/nginx-auth-cache" in nginx_config
         assert "levels=2:2" in nginx_config
         assert "keys_zone=custom_cache:20m" in nginx_config
         assert "max_size=200m" in nginx_config

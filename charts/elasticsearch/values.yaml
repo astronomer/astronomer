@@ -310,8 +310,7 @@ nginx:
   # Auth request caching configuration
   authCache:
     enabled: true
-    # Cache storage settings
-    path: "/tmp/nginx-auth-cache"
+    # Cache storage settings (path is hardcoded to /tmp/nginx-auth-cache for readOnlyRootFilesystem compatibility)
     levels: "1:2"
     keysZone: "auth_cache:10m"
     maxSize: "100m"
