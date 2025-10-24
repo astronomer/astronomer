@@ -19,7 +19,15 @@ data:
     error_log /dev/stdout info;
 
     http {
+      {{- if .Values.nginx.authCache.enabled }}
+      log_format cache_status '$remote_addr - $remote_user [$time_local] '
+                              '"$request" $status $body_bytes_sent '
+                              '"$http_referer" "$http_user_agent" '
+                              'cache:$upstream_cache_status';
+      access_log /dev/stdout cache_status;
+      {{- else }}
       access_log /dev/stdout;
+      {{- end }}
       client_max_body_size {{ .Values.nginx.maxBodySize }};
       {{- if .Values.nginx.authCache.enabled }}
 

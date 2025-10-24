@@ -21,7 +21,15 @@ data:
     env ES_SECRET_NAME;
 
     http {
+      {{- if .Values.authCache.enabled }}
+      log_format cache_status '$remote_addr - $remote_user [$time_local] '
+                              '"$request" $status $body_bytes_sent '
+                              '"$http_referer" "$http_user_agent" '
+                              'cache:$upstream_cache_status';
+      access_log /dev/stdout cache_status;
+      {{- else }}
       access_log /dev/stdout;
+      {{- end }}
       client_max_body_size 1024M;
       {{- if .Values.authCache.enabled }}
 
