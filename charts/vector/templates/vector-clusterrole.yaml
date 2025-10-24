@@ -1,8 +1,9 @@
 ###########################################################################
 # Vector ClusterRole
 ###########################################################################
-{{- if and .Values.global.rbacEnabled .Values.global.clusterRoles (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- if .Values.global.rbacEnabled }}
+{{- if .Values.global.clusterRoles }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -23,5 +24,6 @@ rules:
   verbs:
   - "watch"
   - "list"
+{{- end -}}
 {{- end -}}
 {{- end -}}
