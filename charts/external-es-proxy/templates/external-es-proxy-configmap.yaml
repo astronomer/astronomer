@@ -25,7 +25,7 @@ data:
       log_format cache_status '$remote_addr - $remote_user [$time_local] '
                               '"$request" $status $body_bytes_sent '
                               '"$http_referer" "$http_user_agent" '
-                              'cache:$upstream_cache_status';
+                              'cache=$auth_cache_status';
       access_log /dev/stdout cache_status;
       {{- else }}
       access_log /dev/stdout;
@@ -39,6 +39,9 @@ data:
       server {
         listen {{ .Values.service.securehttp }};
         auth_request /auth;
+        {{- if .Values.authCache.enabled }}
+        auth_request_set $auth_cache_status $upstream_cache_status;
+        {{- end }}
         proxy_http_version 1.1;
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
