@@ -188,7 +188,7 @@ class TestPrometheusStatefulset:
         env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["filesd-reloader"]["env"]}
         assert env_vars["DATABASE_SCHEMA_NAME"] == "houston$default"
         assert env_vars["DEPLOYMENT_TABLE_NAME"] == "Deployment"
-        assert env_vars["DATABASE_NAME"] == "release_name_houston"
+        assert env_vars["DATABASE_NAME"] == "release-name_houston"
         assert env_vars["FILESD_FILE_PATH"] == "/prometheusreloader/airflow"
         assert env_vars["ENABLE_DEPLOYMENT_SCRAPING"] == "true"
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
