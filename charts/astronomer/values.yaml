@@ -446,7 +446,8 @@ registry:
     # periodSeconds: 10
     # timeoutSeconds: 5
 
-  podSecurityContext: {}
+  podSecurityContext:
+    fsGroup: 1000
   extraEnv: []
 
   serviceAccount:
