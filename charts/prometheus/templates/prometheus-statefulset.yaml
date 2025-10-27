@@ -2,8 +2,8 @@
 ## Prometheus StatefulSet ##
 ############################
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
-
 {{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
+
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
