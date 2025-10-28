@@ -652,3 +652,103 @@ class TestExternalElasticSearch:
         assert len(spec["nodeSelector"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["external-es-proxy"]["tolerations"]
+
+    def test_external_es_proxy_auth_cache_enabled_by_default(self, kube_version):
+        """Test that auth caching is enabled by default in external-es-proxy configmap."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"customLogging": {"enabled": True, "secret": secret}}},
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+
+        nginx_config = doc["data"]["nginx.conf"]
+
+        # Verify cache path is configured
+        assert "proxy_cache_path /tmp/nginx-auth-cache" in nginx_config
+        assert "levels=1:2" in nginx_config
+        assert "keys_zone=auth_cache:10m" in nginx_config
+        assert "max_size=100m" in nginx_config
+        assert "inactive=5m" in nginx_config
+
+        # Verify cache directives in /auth location
+        assert "proxy_cache auth_cache" in nginx_config
+        assert 'proxy_cache_key "$http_authorization"' in nginx_config
+        assert "proxy_cache_valid 200 5m" in nginx_config
+        assert "proxy_cache_valid 401 403 1m" in nginx_config
+        assert "proxy_ignore_headers Cache-Control Expires" in nginx_config
+        assert "add_header X-Auth-Cache-Status $upstream_cache_status always" in nginx_config
+
+        # Verify proxy_pass_request_body optimization is present
+        assert "proxy_pass_request_body off" in nginx_config
+
+    def test_external_es_proxy_auth_cache_disabled(self, kube_version):
+        """Test that auth caching can be disabled in external-es-proxy configmap."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"customLogging": {"enabled": True, "secret": secret}},
+                "external-es-proxy": {"authCache": {"enabled": False}},
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+
+        nginx_config = doc["data"]["nginx.conf"]
+
+        # Verify cache directives are NOT present when disabled
+        assert "proxy_cache_path" not in nginx_config
+        assert "proxy_cache auth_cache" not in nginx_config
+        assert "proxy_cache_key" not in nginx_config
+        assert "proxy_cache_valid" not in nginx_config
+        assert "X-Auth-Cache-Status" not in nginx_config
+
+    def test_external_es_proxy_auth_cache_custom_settings(self, kube_version):
+        """Test that custom auth cache settings are properly rendered."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"customLogging": {"enabled": True, "secret": secret}},
+                "external-es-proxy": {
+                    "authCache": {
+                        "enabled": True,
+                        "levels": "2:2",
+                        "keysZone": "custom_cache:20m",
+                        "maxSize": "200m",
+                        "inactive": "10m",
+                        "validSuccess": "10m",
+                        "validFailure": "2m",
+                    }
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+
+        nginx_config = doc["data"]["nginx.conf"]
+
+        # Verify custom cache storage settings (path is always /tmp/nginx-auth-cache)
+        assert "proxy_cache_path /tmp/nginx-auth-cache" in nginx_config
+        assert "levels=2:2" in nginx_config
+        assert "keys_zone=custom_cache:20m" in nginx_config
+        assert "max_size=200m" in nginx_config
+        assert "inactive=10m" in nginx_config
+
+        # Verify custom TTL settings
+        assert "proxy_cache_valid 200 10m" in nginx_config
+        assert "proxy_cache_valid 401 403 2m" in nginx_config
