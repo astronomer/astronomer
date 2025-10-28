@@ -74,6 +74,20 @@ def test_houston_configmap_defaults():
     assert prod["deployments"]["helm"]["sccEnabled"] is False
 
 
+def test_houston_configmap_has_hook_annotations():
+    """ConfigMap must be a pre-install/pre-upgrade hook with weight -1."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    annotations = doc["metadata"].get("annotations", {})
+    assert annotations.get("helm.sh/hook") == "pre-install,pre-upgrade"
+    assert annotations.get("helm.sh/hook-weight") == "-1"
+    assert annotations.get("helm.sh/hook-delete-policy") == "before-hook-creation"
+
+
 def test_houston_configmap_with_custom_images():
     """Validate the houston configmap contains images that are customized through helm values."""
     values = {
