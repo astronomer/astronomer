@@ -75,7 +75,7 @@ def test_houston_configmap_defaults():
 
 
 def test_houston_configmap_has_hook_annotations():
-    """ConfigMap must be a pre-install/pre-upgrade hook with weight -1."""
+    """ConfigMap must be a pre-install/pre-upgrade hook with weight -1, and keep policy."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -86,6 +86,7 @@ def test_houston_configmap_has_hook_annotations():
     assert annotations.get("helm.sh/hook") == "pre-install,pre-upgrade"
     assert annotations.get("helm.sh/hook-weight") == "-1"
     assert annotations.get("helm.sh/hook-delete-policy") == "before-hook-creation"
+    assert annotations.get("helm.sh/resource-policy") == "keep"
 
 
 def test_houston_configmap_with_custom_images():
