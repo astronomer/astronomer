@@ -12,7 +12,7 @@ def test_nginx_service_basics():
     )
 
     assert len(nginx_cp_service_docs) == 1
-    expected_names = ["release-name-cp-nginx"]
+    expected_names = ["release-name-nginx"]
     for doc in nginx_cp_service_docs:
         assert doc["kind"] == "Service"
         assert doc["apiVersion"] == "v1"
