@@ -1,7 +1,7 @@
 #######################################
 ## Elasticsearch Proxy NetworkPolicy ##
 #######################################
-{{- if and .Values.global.networkPolicy.enabled }}
+{{- if .Values.global.networkPolicy.enabled }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -29,6 +29,11 @@ spec:
         matchLabels:
           tier: airflow
           component: webserver
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          tier: airflow
+          component: api-server
     {{- if .Values.global.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:

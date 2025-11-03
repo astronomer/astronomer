@@ -2,6 +2,9 @@
 ## Prometheus StatefulSet ##
 ############################
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
+{{- $planeMode := and (eq .Values.global.plane.mode "unified")  ( not $useClusterRoles ) }}
+
+{{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -56,6 +59,25 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          image: {{ include "prometheus.image" . }}
+          imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          securityContext:
+            {{ template "prometheus.securityContext" . }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
@@ -93,8 +115,10 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
-          - mountPath: /etc/nginx/conf.d/
-            name: prometheus-sidecar-conf
+            - name: tmp
+              mountPath: /tmp
+            - mountPath: /etc/nginx/conf.d/
+              name: prometheus-sidecar-conf
         {{- end }}
         - name: configmap-reloader
           args:
@@ -104,7 +128,6 @@ spec:
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
           {{- if .Values.configMapReloader.livenessProbe }}
@@ -114,10 +137,10 @@ spec:
           readinessProbe: {{ tpl (toYaml .Values.configMapReloader.readinessProbe) . | nindent 12 }}
           {{- end }}
           volumeMounts:
-          - name: alert-volume
-            mountPath: /etc/prometheus/alerts.d
-          - name: prometheus-config-volume
-            mountPath: /etc/prometheus/config
+            - name: alert-volume
+              mountPath: /etc/prometheus/alerts.d
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus/config
         - name: filesd-reloader
           image: {{ include "filesdReloader.image" . }}
           imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
@@ -143,11 +166,11 @@ spec:
             - name: DEPLOYMENT_TABLE_NAME
               value: Deployment
             - name: DATABASE_NAME
-              value: {{ .Release.Name }}_houston
+              value: {{ $dbName }}
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
             - name: ENABLE_DEPLOYMENT_SCRAPING
-              value: {{ if $useClusterRoles }}"True"{{ else }}"False"{{ end }}
+              value: {{ if $planeMode}}"True"{{ else }}"False"{{ end }}
             - name: ENABLE_CLUSTER_SCRAPING
               value: "True"
 {{- if .Values.filesdReloader.extraEnv }}
@@ -158,16 +181,19 @@ spec:
             name: filesd
         - name: prometheus
           image: {{ include "prometheus.image" . }}
-          {{- if eq .Values.global.plane.mode "control" }}
           env:
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
             - name: FEDERATION_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ template "prometheus.federationAuthSecret" . }}
                   key: token
           {{- end }}
+          {{- if .Values.global.privateCaCerts }}
+            - name: UPDATE_CA_CERTS
+              value: "true"
+          {{- end }}
           securityContext:
-            readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
@@ -185,7 +211,7 @@ spec:
             - {{ . }}
             {{- end }}
           volumeMounts:
-          {{- if eq .Values.global.plane.mode "control" }}
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
             - name: federation-auth
               mountPath: /etc/prometheus/federation-auth
               readOnly: true
@@ -198,6 +224,9 @@ spec:
               mountPath: {{ .Values.dataDir }}
             - name: filesd
               mountPath: /prometheusreloader/airflow
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
@@ -230,11 +259,13 @@ spec:
 {{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
+        - name: tmp
+          emptyDir: {}
         - name: prometheus-sidecar-conf
           configMap:
             name: {{ template "prometheus.fullname" . }}-nginx-conf
         {{- end }}
-        {{- if eq .Values.global.plane.mode "control" }}
+        {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
         - name: federation-auth
           secret:
             secretName: {{ template "prometheus.federationAuthSecret" . }}
@@ -256,6 +287,9 @@ spec:
                 path: alerts.yaml
         - name: filesd
           emptyDir: {}
+        - name: etc-ssl-certs
+          emptyDir: {}
+        {{- include "custom_ca_volumes" . | nindent 8 }}
   {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}

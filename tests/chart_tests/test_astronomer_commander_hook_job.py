@@ -50,16 +50,19 @@ class TestCommanderJWKSHookJob:
         assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation,hook-succeeded,hook-failed"
         assert annotations["astronomer.io/commander-sync"] == "platform-release=release-name"
 
-        c_by_name = get_containers_by_name(job_doc)
+        c_by_name = get_containers_by_name(job_doc, include_init_containers=True)
         assert "commander-jwks-hook" in c_by_name
 
         container = c_by_name["commander-jwks-hook"]
-        assert container["command"] == ["python3"]
-        assert container["args"] == ["/scripts/commander-jwks.py"]
+        assert container["command"] == ["/bin/sh", "-c", "update-ca-certificates;python3 /scripts/commander-jwks.py"]
+        assert container["resources"] == {
+            "requests": {"cpu": "250m", "memory": "1Gi"},
+            "limits": {"cpu": "500m", "memory": "2Gi"},
+        }
 
         env_vars = get_env_vars_dict(container["env"])
         assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com"
-        assert env_vars["SECRET_NAME"] == "release-name-houston-jwt-signing-certificate"
+        assert env_vars["SECRET_NAME"] == "jwt-signing-certificate"
         assert env_vars["RETRY_ATTEMPTS"] == "2"
         assert env_vars["RETRY_DELAY"] == "10"
 
@@ -121,9 +124,62 @@ class TestCommanderJWKSHookJob:
         container = c_by_name["commander-jwks-hook"]
         env_vars = get_env_vars_dict(container["env"])
         assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com"
-        assert env_vars["SECRET_NAME"] == "release-name-houston-jwt-signing-certificate"
+        assert env_vars["SECRET_NAME"] == "jwt-signing-certificate"
         assert env_vars["RETRY_ATTEMPTS"] == "2"
         assert env_vars["RETRY_DELAY"] == "10"
 
         assert env_vars["CUSTOM_SOMETHING1"] == "RANDOM_VALUE1"
         assert env_vars["CUSTOM_SOMETHING2"] == "RANDOM_VALUE2"
+
+    def test_jwks_hook_job_with_extra_ca_certs(self, kube_version):
+        """Test JWKS Hook Job with extra CA certs."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "privateCaCerts": [
+                        "private-ca-cert-foo",
+                        "private-ca-cert-bar",
+                    ],
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/jwks-hooks/commander-jwks-hooks.yaml"],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "Job"
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        assert docs[0]["kind"] == "Job"
+        assert docs[0]["metadata"]["name"] == "release-name-commander-jwks-hook"
+
+        volumemounts = c_by_name["commander-jwks-hook"]["volumeMounts"]
+        c_by_name["commander-jwks-hook"]["volumeMounts"]
+        volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
+
+        expected_volumes = [
+            {"name": "jwks-script", "configMap": {"name": "release-name-commander-jwks-hook-config", "defaultMode": 493}},
+            {"name": "etc-ssl-certs", "emptyDir": {}},
+            {"name": "private-ca-cert-foo", "secret": {"secretName": "private-ca-cert-foo"}},
+            {"name": "private-ca-cert-bar", "secret": {"secretName": "private-ca-cert-bar"}},
+        ]
+
+        expected_volumemounts = [
+            {"name": "jwks-script", "mountPath": "/scripts"},
+            {
+                "mountPath": "/etc/ssl/certs",
+                "name": "etc-ssl-certs",
+            },
+            {
+                "name": "private-ca-cert-foo",
+                "mountPath": "/usr/local/share/ca-certificates/private-ca-cert-foo.pem",
+                "subPath": "cert.pem",
+            },
+            {
+                "name": "private-ca-cert-bar",
+                "mountPath": "/usr/local/share/ca-certificates/private-ca-cert-bar.pem",
+                "subPath": "cert.pem",
+            },
+        ]
+
+        assert volumemounts == expected_volumemounts
+        assert volumes == expected_volumes

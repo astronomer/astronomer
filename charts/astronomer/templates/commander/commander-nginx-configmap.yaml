@@ -1,7 +1,6 @@
 ###############################
 ## Commander Nginx Configmap ##
 ###############################
-
 {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
 apiVersion: v1
 kind: ConfigMap

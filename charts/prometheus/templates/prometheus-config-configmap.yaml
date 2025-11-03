@@ -289,7 +289,7 @@ data:
         {{- if not $useClusterRoles }}
         file_sd_configs:
           - files:
-            - /prometheusreloader/airflow/airflow.json
+            - /prometheusreloader/airflow/airflow-*.json
         {{ else }}
         kubernetes_sd_configs:
           - role: service

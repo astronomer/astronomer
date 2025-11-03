@@ -87,6 +87,21 @@ spec:
               subPath: setenv.lua
             - name: tmp
               mountPath: /tmp
+            - name: tmp
+              subPath: openresty/nginx/client_body_temp
+              mountPath: /usr/local/openresty/nginx/client_body_temp
+            - name: tmp
+              subPath: openresty/nginx/proxy_temp
+              mountPath: /usr/local/openresty/nginx/proxy_temp
+            - name: tmp
+              subPath: openresty/nginx/fastcgi_temp
+              mountPath: /usr/local/openresty/nginx/fastcgi_temp
+            - name: tmp
+              subPath: openresty/nginx/uwsgi_temp
+              mountPath: /usr/local/openresty/nginx/uwsgi_temp
+            - name: tmp
+              subPath: openresty/nginx/scgi_temp
+              mountPath: /usr/local/openresty/nginx/scgi_temp
 
             {{- if .Values.global.customLogging.trustCaCerts -}}
             {{ $secretName := .Values.global.customLogging.trustCaCerts }}

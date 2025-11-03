@@ -23,6 +23,10 @@ repos:
         args: ["bin/show-docker-images.py", "--private-registry", "--with-houston", "-c"]
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
+      - id: refuse-authsidecar-files
+        language: python
+        name: Refuse files that include authsidecar
+        entry: bin/refuse-filename-strings.py
       - id: circle-config-yaml
         language: python
         additional_dependencies: ["jinja2", "PyYAML"]
@@ -74,10 +78,8 @@ repos:
         args: ["--pytest-test-first"]
         exclude: "^tests/utils/.*$"
       - id: requirements-txt-fixer
-        args: [
-            "tests/requirements.in",
-            "tests/requirements.txt",
-          ]
+        args:
+          - "tests/requirements.txt"
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py

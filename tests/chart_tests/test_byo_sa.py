@@ -62,6 +62,7 @@ class TestServiceAccounts:
                 "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test"}},
             },
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
+            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
             "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
             "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
         }
@@ -75,18 +76,20 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
+                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
                 "charts/kibana/templates/kibana-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 9
+        assert len(docs) == 8
         expected_names = {
             "commander-test",
             "registry-test",
             "configsyncer-test",
             "houston-test",
             "astroui-test",
+            "grafana-test",
             "alertmanager-test",
             "kibana-test",
         }
@@ -111,6 +114,7 @@ class TestServiceAccounts:
                 "astroUI": {"serviceAccount": {"create": False}},
             },
             "nats": {"nats": {"serviceAccount": {"create": False}}},
+            "grafana": {"serviceAccount": {"create": False}},
             "alertmanager": {"serviceAccount": {"create": False}},
             "kibana": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
@@ -155,6 +159,7 @@ class TestServiceAccounts:
                 "astroUI": {"serviceAccount": {"create": True, "annotations": annotations}},
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
+            "grafana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
             "kibana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -196,6 +201,7 @@ class TestServiceAccounts:
             "vector": {"serviceAccount": {"create": True, "name": "vector-test"}},
             "prometheus": {"serviceAccount": {"name": "prometheus-test"}},
             "nginx": {"serviceAccount": {"name": "nginx-test"}},
+            "grafana": {"serviceAccount": {"name": "grafana-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -208,10 +214,11 @@ class TestServiceAccounts:
                 "charts/vector/templates/vector-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
                 "charts/nginx/templates/controlplane/nginx-cp-rolebinding.yaml",
+                "charts/grafana/templates/grafana-bootstrap-rolebinding.yaml",
             ],
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 8
 
         expected_names = {
             "commander-test",
@@ -221,6 +228,7 @@ class TestServiceAccounts:
             "vector-test",
             "prometheus-test",
             "nginx-test-cp",
+            "grafana-test",
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
@@ -334,6 +342,7 @@ custom_service_account_names = {
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
+    "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/kibana/templates/kibana-default-index-cronjob.yaml": {
         "kibana": {"serviceAccount": {"create": True, "name": "prothean"}}
     },

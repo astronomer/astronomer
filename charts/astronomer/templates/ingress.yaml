@@ -1,9 +1,9 @@
 ########################
 ## Astronomer Ingress ##
 ########################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-{{- if and .Values.global.baseDomain  ( not .Values.global.enablePerHostIngress ) }}
-{{- $planeUnifiedMode := eq .Values.global.plane.mode "unified" }}
+{{- if and .Values.global.baseDomain ( not .Values.global.enablePerHostIngress ) }}
+{{- $planeDataMode := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -29,18 +29,21 @@ metadata:
       }
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret }}
+  {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
+      {{- if $planeControlMode }}
         - {{ .Values.global.baseDomain }}
         - app.{{ .Values.global.baseDomain }}
-      {{- if $planeUnifiedMode }}
+      {{- end }}
+      {{- if $planeDataMode }}
         - registry.{{ .Values.global.baseDomain }}
       {{- end }}
         - install.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
+{{- if $planeControlMode }}
   - host: {{ .Values.global.baseDomain }}
     http:
       paths:
@@ -61,7 +64,8 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-{{- if $planeUnifiedMode }}
+{{- end }}
+{{- if $planeDataMode }}
   - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:
@@ -72,6 +76,5 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
-{{- end }}
 {{- end }}
 {{- end }}

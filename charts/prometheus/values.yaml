@@ -18,7 +18,7 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.53.4
+    tag: 3.5.0-2
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
@@ -26,11 +26,11 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.9
+    tag: 0.1.12
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.27.1-5
+    tag: 1.27.1-7
     pullPolicy: IfNotPresent
 
 
@@ -122,6 +122,7 @@ astroHTTPTargets:
   commander: true
   houston: true
   registry: true
+  grafana: true
   kibana: true
   elasticsearch: true
 

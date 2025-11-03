@@ -1,7 +1,7 @@
 ##################################
 ## NGINX Data Plane Config Role ##
 ##################################
-{{- if and .Values.global.rbacEnabled }}
+{{- if .Values.global.rbacEnabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}

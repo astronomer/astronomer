@@ -1,7 +1,7 @@
 #####################################
 ## Astronomer Registry StatefulSet ##
 #####################################
-{{- if and .Values.global.baseDomain }}
+{{- if .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- if or .Values.registry.gcs.enabled .Values.registry.azure.enabled .Values.registry.s3.enabled }}
 kind: Deployment
@@ -84,9 +84,7 @@ spec:
               else
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
-          resources:
-            limits: {'cpu': '100m', 'memory': '128Mi'}
-            requests: {'cpu': '100m', 'memory': '128Mi'}
+          resources: {{- toYaml .Values.registry.resources | nindent 12 }}
           securityContext:
             readOnlyRootFilesystem: true
             {{ toYaml .Values.securityContext | nindent 12 }}

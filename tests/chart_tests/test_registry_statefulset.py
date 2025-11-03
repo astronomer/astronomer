@@ -2,6 +2,7 @@ import jmespath
 import pytest
 
 from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
 
@@ -35,6 +36,12 @@ class TestRegistryStatefulset:
             },
         }
         assert expected_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        assert c_by_name["etc-ssl-certs-copier"]["name"] == "etc-ssl-certs-copier"
+        assert c_by_name["etc-ssl-certs-copier"]["resources"] == {
+            "limits": {"cpu": "500m", "memory": "1024Mi"},
+            "requests": {"cpu": "250m", "memory": "512Mi"},
+        }
 
     def test_registry_sts_use_keyfile(self, kube_version):
         """Test some things that should apply to all cases."""

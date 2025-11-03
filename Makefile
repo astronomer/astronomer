@@ -5,15 +5,16 @@ help: ## Print Makefile help.
 	@grep -Eh '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1;36m%-41s\033[0m %s\n", $$1, $$2}'
 
 # List of charts to build
-CHARTS := astronomer nginx prometheus alertmanager elasticsearch kibana vector kube-state postgresql
+CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana vector kube-state postgresql
+
 TEMPDIR := /tmp/astro-temp
 PATH := ${HOME}/.local/share/astronomer-software/bin:$(PATH)
 
 .PHONY: venv
 venv: .venv  ## Setup venv required for testing
 .venv:
-	[ -d .venv ] || { uv venv -p 3.13 --seed || python3 -m venv .venv -p python3 ; }
-	.venv/bin/pip install -r tests/requirements.txt
+	{ uv venv -p 3.13 --seed && uv sync ; } || \
+	{ python3 -m venv .venv -p python3 && .venv/bin/pip install -r tests/requirements.txt ; }
 
 .PHONY: test-functional-control
 test-functional-control: export TEST_SCENARIO=control
@@ -68,11 +69,6 @@ clean: ## Clean build and test artifacts
 build: ## Build the Astronomer helm chart
 	bin/build-helm-chart.sh
 
-.PHONY: update-requirements
-update-requirements: ## Update all requirements.txt files
-	uv pip compile --quiet --upgrade tests/requirements.in --output-file tests/requirements.txt
-	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
-
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
 	@bin/show-docker-images.py --with-houston
@@ -95,3 +91,16 @@ show-test-helper-files: ## Show all the test helper files downloaded and created
 .PHONY: cache-docker-images
 cache-docker-images: ## Cache all docker images used in the base helm chart
 	bin/show-docker-images.py --no-enable-all-features | cut -w -f2 | xargs -t -r -n1 docker pull
+
+.PHONY: uv-lock-upgrade
+uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.
+	uv lock --upgrade
+
+.PHONY: uv-lock-upgrade-and-sync
+uv-lock-upgrade-and-sync: uv-lock-upgrade ## Upgrade uv lockfile dependencies and sync venv
+	uv sync
+
+.PHONY: update-requirements
+update-requirements: uv-lock-upgrade ## Update requirements.txt file
+	uv export --format requirements-txt > tests/requirements.txt
+	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure

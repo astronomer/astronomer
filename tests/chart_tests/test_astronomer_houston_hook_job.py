@@ -93,6 +93,22 @@ class TestHoustonHookJob:
         assert "resources" in c_by_name["houston-bootstrapper"]
         assert "resources" in c_by_name["houston-db-migrations-job"]
 
+    def test_db_migration_job_has_hook_weight(self, kube_version):
+        """Db Migration Job must have explicit hook weight 0 and correct hooks."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        annotations = doc["metadata"].get("annotations", {})
+        assert annotations.get("helm.sh/hook") == "pre-upgrade,post-install"
+        assert annotations.get("helm.sh/hook-weight") == "0"
+        assert annotations.get("helm.sh/hook-delete-policy") == "before-hook-creation"
+
     def test_db_migration_job_custom_resources(self, kube_version):
         """Test Db Migration Job with customer resources."""
 

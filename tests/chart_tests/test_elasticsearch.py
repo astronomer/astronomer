@@ -297,6 +297,10 @@ class TestElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}},
+            },
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(self, kube_version):
@@ -314,6 +318,7 @@ class TestElasticSearch:
         assert "NetworkPolicy" == doc["kind"]
         assert [
             {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}}},
             {
                 "namespaceSelector": {},
                 "podSelector": {
@@ -841,8 +846,6 @@ class TestElasticSearch:
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
             values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
         )
-
-        print(docs)
 
         assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
         assert docs[0]["kind"] == "Ingress"

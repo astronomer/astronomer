@@ -6,6 +6,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-houston-config
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/resource-policy": keep
   labels:
     component: houston
     tier: astronomer
@@ -74,7 +79,6 @@ data:
       mode:
         operator:
           enabled: {{.Values.global.airflowOperator.enabled}}
-      disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
       fluentdIndexPrefix: {{ include "vector.IndexPattern" .}}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
       namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
@@ -498,7 +502,7 @@ data:
                       ' | python3 - """
                   )
                   log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "
-                  if container.args[0:3] == ["airflow", "tasks", "run"]:
+                  if container.args[0:3] == ["airflow", "tasks", "run"] or (int(version.split('.')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]):
                       container.command = ["tini", "--"]
                       new_args = ["bash", "-c"]
                       command_str = (

@@ -142,7 +142,9 @@ spec:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -174,13 +176,17 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
-          - mountPath: /etc/nginx/conf.d/
-            name: alertmanager-sidecar-conf
+            - name: tmp
+              mountPath: /tmp
+            - mountPath: /etc/nginx/conf.d/
+              name: alertmanager-sidecar-conf
         {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
+        - name: tmp
+          emptyDir: {}
         - name: alertmanager-sidecar-conf
           configMap:
             name: {{ template "alertmanager.fullname" . }}-nginx-conf

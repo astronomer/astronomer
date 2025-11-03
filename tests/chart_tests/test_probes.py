@@ -87,6 +87,12 @@ class TestDefaultProbes:
             "timeoutSeconds": 10,
         },
         "elasticsearch-master_es-master": {"tcpSocket": {"port": 9300}},
+        "grafana_auth-proxy": {
+            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
+            "initialDelaySeconds": 10,
+            "periodSeconds": 10,
+        },
+        "grafana_grafana": {"httpGet": {"path": "/api/health", "port": 3000}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "houston_houston": {
             "httpGet": {"path": "/v1/healthz", "port": 8871},
             "initialDelaySeconds": 30,
@@ -187,6 +193,12 @@ class TestDefaultProbes:
             "httpGet": {"path": "/_cluster/health?local=true", "port": 9200},
             "initialDelaySeconds": 5,
         },
+        "grafana_auth-proxy": {
+            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
+            "initialDelaySeconds": 10,
+            "periodSeconds": 10,
+        },
+        "grafana_grafana": {"httpGet": {"path": "/api/health", "port": 3000}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "houston_houston": {
             "httpGet": {"path": "/v1/healthz", "port": 8871},
             "initialDelaySeconds": 30,

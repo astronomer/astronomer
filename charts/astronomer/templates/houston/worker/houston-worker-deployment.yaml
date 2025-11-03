@@ -1,7 +1,7 @@
 ####################
 ## Houston Worker ##
 ####################
-{{- if and .Values.houston.worker.enabled }}
+{{- if .Values.houston.worker.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1

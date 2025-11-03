@@ -16,12 +16,13 @@ class TestHoustonInternalAuthorization:
             values={},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
+                "charts/grafana/templates/grafana-ingress.yaml",
                 "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 3
+        assert len(docs) == 4
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
@@ -37,13 +38,12 @@ class TestHoustonInternalAuthorization:
             values={"global": {"plane": {"mode": "control"}}},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
+                "charts/grafana/templates/grafana-ingress.yaml",
                 "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
-
-        assert len(docs) == 3
-
+        assert len(docs) == 4
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
@@ -59,6 +59,7 @@ class TestHoustonInternalAuthorization:
             values={"global": {"plane": {"mode": "data"}}},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
+                "charts/grafana/templates/grafana-ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )

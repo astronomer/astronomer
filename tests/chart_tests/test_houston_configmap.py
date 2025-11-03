@@ -22,7 +22,7 @@ def common_test_cases(docs):
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
-    assert prod["deployments"]["disableManageClusterScopedResources"] is False
+    assert "disableManageClusterScopedResources" not in prod["deployments"]
     assert prod["helm"]["tlsSecretName"] == "astronomer-tls"
     airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["strategy"]
@@ -72,6 +72,21 @@ def test_houston_configmap_defaults():
     assert git_sync_images["gitDaemon"]["repository"] == "quay.io/astronomer/ap-git-daemon"
     assert git_sync_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync-relay"
     assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+
+def test_houston_configmap_has_hook_annotations():
+    """ConfigMap must be a pre-install/pre-upgrade hook with weight -1, and keep policy."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    annotations = doc["metadata"].get("annotations", {})
+    assert annotations.get("helm.sh/hook") == "pre-install,pre-upgrade"
+    assert annotations.get("helm.sh/hook-weight") == "-1"
+    assert annotations.get("helm.sh/hook-delete-policy") == "before-hook-creation"
+    assert annotations.get("helm.sh/resource-policy") == "keep"
 
 
 def test_houston_configmap_with_custom_images():
@@ -654,18 +669,6 @@ def test_houston_configmap_with_cleanup_airflow_db_disabled():
     assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
 
 
-def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
-    """Validate the houston configmap and its embedded data with disable manage clusterscoped resources enabled
-    ."""
-    docs = render_chart(
-        values={"global": {"disableManageClusterScopedResources": True}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["disableManageClusterScopedResources"] is True
-
-
 def test_houston_configmap_with_tls_secretname_overrides():
     """Validate the houston configmap and its embedded data with tls secretname overrides
     ."""
@@ -894,3 +897,42 @@ def test_houston_configmap_with_plane_mode():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod_yaml["plane"]["mode"] == "unified"
+
+
+def test_houston_configmap_pod_mutation_hook_airflow_compatibility():
+    """Test that pod mutation hook supports both Airflow 2.x and 3.x task execution patterns with logging sidecar."""
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    airflow_local_settings = prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+
+    # Check that both Airflow 2.x and 3.x patterns are supported
+    airflow2_pattern = 'container.args[0:3] == ["airflow", "tasks", "run"]'
+    airflow3_pattern = 'container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]'
+    version_check = "int(version.split('.')[0]) >= 3"
+
+    assert airflow2_pattern in airflow_local_settings, "Airflow 2.x task execution pattern should be supported"
+    assert airflow3_pattern in airflow_local_settings, "Airflow 3.x task execution pattern should be supported"
+    assert version_check in airflow_local_settings, "Version comparison logic should be present"
+
+    # Check that the complete condition includes both patterns
+    complete_condition = 'if container.args[0:3] == ["airflow", "tasks", "run"] or (int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]):'
+    assert complete_condition in airflow_local_settings, "Complete condition should include both Airflow 2.x and 3.x patterns"
+
+    # Check that the logging command is present
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
+    assert log_cmd in airflow_local_settings, "Logging command should be present"
+
+    # Validate the Python code is syntactically correct
+    ast.parse(airflow_local_settings.encode())

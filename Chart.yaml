@@ -1,7 +1,7 @@
 apiVersion: v2
 name: astronomer
-version: 1.0.0-rc4
-appVersion: 1.0.0-rc4
+version: 1.0.0
+appVersion: 1.0.0
 description: Helm chart to deploy the Astronomer Platform
 icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
 keywords:
@@ -23,6 +23,10 @@ dependencies:
   # Monitoring stack
   - name: alertmanager
     condition: global.alertmanagerEnabled
+    tags:
+      - monitoring
+  - name: grafana
+    condition: global.grafanaEnabled
     tags:
       - monitoring
   - name: kube-state

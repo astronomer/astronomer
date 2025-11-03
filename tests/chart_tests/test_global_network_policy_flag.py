@@ -11,6 +11,7 @@ show_only = [
     # 'charts/prometheus-postgres-exporter/templates/networkpolicy.yaml',
     "charts/kibana/templates/kibana-networkpolicy.yaml",
     "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
+    "charts/grafana/templates/grafana-networkpolicy.yaml",
     "charts/nats/templates/networkpolicy.yaml",
     "charts/astronomer/templates/commander/commander-networkpolicy.yaml",
     "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
@@ -83,5 +84,5 @@ def test_networkpolicy_dag_deploy_enabled(kube_version):
     assert len(docs) == 1
 
     components = [x["podSelector"]["matchLabels"].get("component") for x in docs[0]["spec"]["ingress"][0]["from"]]
-    assert len(components) == 9
+    assert len(components) == 12
     assert "dag-server" in components
