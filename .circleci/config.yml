@@ -295,24 +295,6 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-29-14:
-    machine:
-      image: ubuntu-2204:2024.11.1
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.29.14
-    steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
-  platform-1-30-13:
-    machine:
-      image: ubuntu-2204:2024.11.1
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.30.13
-    steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
   platform-1-31-12:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -485,19 +467,9 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - platform-1-29-14:
-          requires:
-            - build-artifact
-      - platform-1-30-13:
-          requires:
-            - approve-test-all-platforms
-            - build-artifact
-
       - platform-1-31-12:
           requires:
-            - approve-test-all-platforms
             - build-artifact
-
       - platform-1-32-8:
           requires:
             - approve-test-all-platforms
@@ -526,7 +498,7 @@ workflows:
                 - '/^release-0\.\d+$/'
           requires:
             - approve-internal-release
-            - platform-1-29-14
+            - platform-1-31-12
             - platform-1-34-0
       - approve-upgrade-test:
           type: approval
@@ -546,8 +518,6 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-30-13
-            - platform-1-31-12
             - platform-1-32-8
             - platform-1-33-4
           filters:
