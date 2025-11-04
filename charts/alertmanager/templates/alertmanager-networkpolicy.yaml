@@ -44,7 +44,7 @@ spec:
     - podSelector:
         matchLabels:
           tier: nginx
-          component: cp-ingress-controller
+          component: ingress-controller
           release: {{ .Release.Name }}
     {{- end }}
     ports:

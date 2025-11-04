@@ -17,7 +17,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      component: cp-ingress-controller
+      component: ingress-controller
       tier: nginx
       plane: {{ .Values.global.plane.mode }}
       release: {{ .Release.Name }}

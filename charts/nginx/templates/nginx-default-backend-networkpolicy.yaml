@@ -25,7 +25,7 @@ spec:
     - podSelector:
         matchLabels:
           tier: {{ template "nginx.name" . }}
-          component: cp-ingress-controller
+          component: ingress-controller
           release: {{ .Release.Name }}
     - podSelector:
         matchLabels:

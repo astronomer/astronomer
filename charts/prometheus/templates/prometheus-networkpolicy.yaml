@@ -56,7 +56,7 @@ spec:
     - podSelector:
         matchLabels:
           tier: nginx
-          component: {{ ternary "dp-ingress-controller" "cp-ingress-controller" (eq .Values.global.plane.mode "data") }}
+          component: {{ ternary "dp-ingress-controller" "ingress-controller" (eq .Values.global.plane.mode "data") }}
           release: {{ .Release.Name }}
     {{- end }}
     # It is sometimes useful to whitelist other pods,

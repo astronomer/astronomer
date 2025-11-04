@@ -43,7 +43,7 @@ def k8s_apps_v1_client() -> client.AppsV1Api:
 def cp_nginx(k8s_core_v1_client):
     """Fixture for accessing the cp-nginx pod."""
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
-    pod = get_pod_by_label_selector("astronomer", "component=cp-ingress-controller", kubeconfig_file)
+    pod = get_pod_by_label_selector("astronomer", "component=ingress-controller", kubeconfig_file)
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 

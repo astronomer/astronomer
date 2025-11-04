@@ -8,7 +8,7 @@ metadata:
   name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}-metrics
   labels:
     tier: {{ template "nginx.name" . }}
-    component: cp-ingress-controller
+    component: ingress-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -17,7 +17,7 @@ spec:
   type: ClusterIP
   selector:
     tier: {{ template "nginx.name" . }}
-    component: cp-ingress-controller
+    component: ingress-controller
     release: {{ .Release.Name }}
   ports:
     - port: {{ .Values.ports.metrics }}
