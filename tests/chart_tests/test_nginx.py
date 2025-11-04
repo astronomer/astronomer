@@ -313,8 +313,8 @@ def test_nginx_deployment_defaults(plane_mode):
     doc = docs[0]
     assert doc["kind"] == "Deployment"
     names = {
-        "unified": "release-name-cp-nginx",
-        "control": "release-name-cp-nginx",
+        "unified": "release-name-nginx",
+        "control": "release-name-nginx",
         "data": "release-name-dp-nginx",
     }
     assert doc["metadata"]["name"] == names[plane_mode]
