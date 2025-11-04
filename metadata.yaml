@@ -1,8 +1,6 @@
 # When adding a new version, look up the most recent patch version on Dockerhub
 # https://hub.docker.com/r/kindest/node/tags
 test_k8s_versions:
-  - 1.29.14
-  - 1.30.13
   - 1.31.12
   - 1.32.8
   - 1.33.4

@@ -32,18 +32,18 @@ chart_values = chart_tests.get_all_features()
 
 
 @pytest.mark.parametrize("template", show_only)
-def test_tags_monitoring_enabled(template, chart_values=chart_values, kube_version="1.30.0"):
+def test_tags_monitoring_enabled(template, chart_values=chart_values):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": True}
-    docs = render_chart(kube_version=kube_version, values=chart_values, show_only=template)
+    docs = render_chart(values=chart_values, show_only=template)
 
     assert len(docs) >= 1
 
 
 @pytest.mark.parametrize("template", show_only)
-def test_tags_monitoring_disabled(template, chart_values=chart_values, kube_version="1.30.0"):
+def test_tags_monitoring_disabled(template, chart_values=chart_values):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": False}
 
     with pytest.raises(subprocess.CalledProcessError):
-        render_chart(kube_version=kube_version, values=chart_values, show_only=template)
+        render_chart(values=chart_values, show_only=template)
