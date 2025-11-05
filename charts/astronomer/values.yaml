@@ -322,6 +322,18 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+  # Sync dataplane clusters in Houston
+  # This runs as a CronJob
+  syncDataplaneClusters:
+    # Enable sync dataplane clusters CronJob
+    enabled: true
+
+    # Default here is to run at the top of every hour https://crontab.guru/#0_*_*_*_*
+    schedule: "0 * * * *"
+
+    readinessProbe: {}
+    livenessProbe: {}
+
   runtimeReleasesConfigMapName: ~
   runtimeReleasesConfig:
     # example of usage:
