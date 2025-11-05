@@ -78,6 +78,7 @@ class TestAstronomerCommander:
         assert env_vars["HELM_CONFIG_HOME"] == "/tmp/helm-config"
         assert env_vars["HELM_DATA_HOME"] == "/tmp/helm-data"
         assert env_vars["HELM_REPOSITORY_CACHE"] == "/tmp/helm-cache/repository"
+        assert env_vars["UPDATE_CA_CERTS"] == "false"
 
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
         assert volume_mounts["tmp-workspace"] == "/tmp"
