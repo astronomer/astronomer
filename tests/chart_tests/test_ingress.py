@@ -92,6 +92,18 @@ class TestIngress:
         assert all(doc["kind"] == "Ingress" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
 
+    def test_kibana_custom_ingress_annotation(self, kube_version):
+        """validate kibana to add custom ingress annotation to ingress objects"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kibana": {"ingressAnnotations": {"kubernetes.io/software-enable": "enabled"}}},
+            show_only=[
+                "charts/kibana/templates/ingress.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["metadata"]["annotations"]["kubernetes.io/software-enable"] == "enabled"
+
     def test_prometheus_federate_ingress(self, kube_version):
         """Test prometheus federate ingress configuration"""
         docs = render_chart(

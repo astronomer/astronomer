@@ -41,6 +41,8 @@ global:
   prometheusPostgresExporterEnabled: true
   rbacEnabled: true
   taskUsageMetricsEnabled: true
+kibana:
+  createDefaultIndex: true
 nats:
   nats:
     exporter:

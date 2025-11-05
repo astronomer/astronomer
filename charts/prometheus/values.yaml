@@ -123,6 +123,7 @@ astroHTTPTargets:
   houston: true
   registry: true
   grafana: true
+  kibana: true
   elasticsearch: true
 
 # Enable prometheus lifecycle api
