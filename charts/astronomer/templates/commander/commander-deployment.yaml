@@ -159,6 +159,10 @@ spec:
             {{- end }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: "false"
+            {{- if .Values.global.privateCaCerts }}
+            - name: UPDATE_CA_CERTS
+              value: "true"
+            {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
