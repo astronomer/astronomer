@@ -18,9 +18,6 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-
 
 def setup_logger():
     """Setup logger with timestamp and prefix"""
