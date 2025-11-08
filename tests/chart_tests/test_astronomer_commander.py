@@ -1,3 +1,4 @@
+import jmespath
 import pytest
 
 from tests import supported_k8s_versions
@@ -586,3 +587,33 @@ class TestAstronomerCommander:
 
             assert auth_sidecar["livenessProbe"]["httpGet"]["port"] == 8080
             assert auth_sidecar["readinessProbe"]["httpGet"]["port"] == 8080
+
+    def test_commander_privateca_enabled(self, kube_version):
+        """Test Commander with privateCA feature enabled  with update ca certs utility."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"privateCaCerts": ["private-root-ca"]}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
+            docs[0],
+        )
+        volume_search_result = jmespath.search(
+            "spec.template.spec.volumes[?name == 'private-root-ca']",
+            docs[0],
+        )
+        expected_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/usr/local/share/ca-certificates/private-root-ca.pem",
+                    "name": "private-root-ca",
+                    "subPath": "cert.pem",
+                }
+            ]
+        ]
+        expected_volume_result = [{"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}]
+        assert docs[0]["kind"] == "Deployment"
+        assert volume_mount_search_result == expected_volume_mounts_result
+        assert volume_search_result == expected_volume_result
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]

@@ -1,0 +1,104 @@
+###############################################
+## Houston Sync Dataplane Clusters CronJob
+###############################################
+{{- if .Values.houston.syncDataplaneClusters.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-houston-sync-dataplane-clusters
+  labels:
+    tier: astronomer
+    component: houston-sync-dataplane-clusters
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  schedule: {{ .Values.houston.syncDataplaneClusters.schedule }}
+  # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: houston-sync-dataplane-clusters
+            release: {{ .Release.Name }}
+            app: houston-sync-dataplane-clusters
+            version: {{ .Chart.Version }}
+            plane: {{ .Values.global.plane.mode }}
+            {{- include "global.podLabels" . | nindent 12 }}
+          {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
+          annotations:
+          {{- if .Values.global.istio.enabled }}
+            sidecar.istio.io/inject: "false"
+          {{- end }}
+          {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 12 }}
+          {{- end }}
+          {{- end }}
+        spec:
+          serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+          nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
+          affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
+          tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
+          restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          initContainers:
+            - name: etc-ssl-certs-copier
+              command:
+                - sh
+                - -c
+                - |
+                  if [ -d /etc/ssl/certs ]; then
+                    cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+                  else
+                    echo "No /etc/ssl/certs directory found, skipping copy."
+                  fi
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              securityContext:
+                readOnlyRootFilesystem: true
+                {{- toYaml .Values.securityContext| nindent 16 }}
+              resources: {{- toYaml .Values.houston.resources | nindent 16 }}
+              volumeMounts:
+                - name: etc-ssl-certs
+                  mountPath: /etc/ssl/certs_copy
+          containers:
+            - name: sync-dataplane-clusters
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              args: ["yarn", "sync-dataplane-clusters"]
+              securityContext:
+                readOnlyRootFilesystem: true
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              resources: {{- toYaml .Values.houston.resources | nindent 16 }}
+              volumeMounts:
+                - name: etc-ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: tmp
+                  mountPath: /tmp
+                - name: tmp
+                  mountPath: /houston/node_modules/.cache
+                {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
+              env:
+                {{- include "houston_environment" . | indent 16 }}
+              {{- if .Values.houston.syncDataplaneClusters.readinessProbe }}
+              readinessProbe: {{ tpl (toYaml .Values.houston.syncDataplaneClusters.readinessProbe) . | nindent 16 }}
+              {{- end }}
+              {{- if .Values.houston.syncDataplaneClusters.livenessProbe }}
+              livenessProbe: {{ tpl (toYaml .Values.houston.syncDataplaneClusters.livenessProbe) . | nindent 16 }}
+              {{- end }}
+          volumes:
+            - name: etc-ssl-certs
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+            {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
+{{- end }}

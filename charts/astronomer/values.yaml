@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 1.0.19
+    tag: 1.0.20
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -24,7 +24,7 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 1.0.38
+    tag: 1.0.39
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -318,6 +318,18 @@ houston:
   populateHourlyTaskAuditMetrics:
     # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
     schedule: "57 * * * *"
+
+    readinessProbe: {}
+    livenessProbe: {}
+
+  # Sync dataplane clusters in Houston
+  # This runs as a CronJob
+  syncDataplaneClusters:
+    # Enable sync dataplane clusters CronJob
+    enabled: true
+
+    # Default here is to run at the top of every hour https://crontab.guru/#0_*_*_*_*
+    schedule: "0 * * * *"
 
     readinessProbe: {}
     livenessProbe: {}
