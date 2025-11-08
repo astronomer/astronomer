@@ -62,7 +62,7 @@ class TestCommanderJWKSHookJob:
 
         env_vars = get_env_vars_dict(container["env"])
         assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com"
-        assert env_vars["SECRET_NAME"] == "jwt-signing-certificate"
+        assert env_vars["SECRET_NAME"] == "release-name-houston-jwt-signing-certificate"
         assert env_vars["RETRY_ATTEMPTS"] == "2"
         assert env_vars["RETRY_DELAY"] == "10"
 
@@ -124,7 +124,7 @@ class TestCommanderJWKSHookJob:
         container = c_by_name["commander-jwks-hook"]
         env_vars = get_env_vars_dict(container["env"])
         assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com"
-        assert env_vars["SECRET_NAME"] == "jwt-signing-certificate"
+        assert env_vars["SECRET_NAME"] == "release-name-houston-jwt-signing-certificate"
         assert env_vars["RETRY_ATTEMPTS"] == "2"
         assert env_vars["RETRY_DELAY"] == "10"
 
