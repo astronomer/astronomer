@@ -313,18 +313,6 @@ data:
               requests:
                 ephemeral-storage: "1Gi"
           webserver:
-            {{ if .Values.configSyncer.enabled }}
-            extraVolumeMounts:
-              - name: signing-certificate
-                mountPath: /etc/airflow/tls
-                readOnly: true
-            extraVolumes:
-              - name: signing-certificate
-                secret:
-                  # This is the name of the secret that gets copied from the platform namespace
-                  # to the airflow namespaces.
-                  secretName: {{ template "houston.jwtCertificateSecret" . }}
-            {{ end }}
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:

@@ -211,32 +211,6 @@ def test_houston_configmap_with_azure_enabled():
     assert livenessProbe["periodSeconds"] == 10
 
 
-def test_houston_configmap_with_config_syncer_enabled():
-    """Validate the houston configmap and its embedded data with configSyncer
-    enabled."""
-    docs = render_chart(
-        values={"astronomer": {"configSyncer": {"enabled": True}}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-
-    common_test_cases(docs)
-    doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["helm"]["airflow"]["webserver"]["extraVolumeMounts"] == [
-        {
-            "name": "signing-certificate",
-            "mountPath": "/etc/airflow/tls",
-            "readOnly": True,
-        }
-    ]
-    assert prod["deployments"]["helm"]["airflow"]["webserver"]["extraVolumes"] == [
-        {
-            "name": "signing-certificate",
-            "secret": {"secretName": "release-name-houston-jwt-signing-certificate"},
-        }
-    ]
-
-
 def test_houston_configmap_with_config_syncer_disabled():
     """Validate the houston configmap and its embedded data with configSyncer
     disabled."""
