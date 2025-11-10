@@ -495,13 +495,7 @@ class TestNginxClusterRoles:
     def test_nginx_cp_clusterrole_rbac_enabled(self, kube_version):
         """Test that helm renders nginx control plane ClusterRole when all conditions are met."""
         # Test control plane mode
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": True,
-                "plane": {"mode": "control"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": True, "plane": {"mode": "control"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -516,7 +510,7 @@ class TestNginxClusterRoles:
         assert doc["metadata"]["labels"]["tier"] == "nginx"
         assert doc["metadata"]["labels"]["plane"] == "control"
         assert len(doc["rules"]) > 0
-        
+
         # Test unified plane mode (should also work for control plane template)
         values["global"]["plane"]["mode"] = "unified"
         docs = render_chart(
@@ -530,13 +524,7 @@ class TestNginxClusterRoles:
 
     def test_nginx_dp_clusterrole_rbac_enabled(self, kube_version):
         """Test that helm renders nginx data plane ClusterRole when all conditions are met."""
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": True,
-                "plane": {"mode": "data"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": True, "plane": {"mode": "data"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -554,13 +542,7 @@ class TestNginxClusterRoles:
     def test_nginx_clusterrole_disabled_conditions(self, kube_version):
         """Test that nginx ClusterRoles are not rendered when required conditions are not met."""
         # Test with rbacEnabled=False (control plane)
-        values = {
-            "global": {
-                "rbacEnabled": False,
-                "clusterRoles": True,
-                "plane": {"mode": "control"}
-            }
-        }
+        values = {"global": {"rbacEnabled": False, "clusterRoles": True, "plane": {"mode": "control"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -569,13 +551,7 @@ class TestNginxClusterRoles:
         assert len(docs) == 0
 
         # Test with clusterRoles=False (control plane)
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": False,
-                "plane": {"mode": "control"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": False, "plane": {"mode": "control"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -584,13 +560,7 @@ class TestNginxClusterRoles:
         assert len(docs) == 0
 
         # Test with data plane mode for control plane template (should not render)
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": True,
-                "plane": {"mode": "data"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": True, "plane": {"mode": "data"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -599,13 +569,7 @@ class TestNginxClusterRoles:
         assert len(docs) == 0
 
         # Test data plane template with wrong plane mode (unified/control should not render)
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": True,
-                "plane": {"mode": "control"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": True, "plane": {"mode": "control"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -614,13 +578,7 @@ class TestNginxClusterRoles:
         assert len(docs) == 0
 
         # Test data plane template with rbacEnabled=False
-        values = {
-            "global": {
-                "rbacEnabled": False,
-                "clusterRoles": True,
-                "plane": {"mode": "data"}
-            }
-        }
+        values = {"global": {"rbacEnabled": False, "clusterRoles": True, "plane": {"mode": "data"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -629,13 +587,7 @@ class TestNginxClusterRoles:
         assert len(docs) == 0
 
         # Test data plane template with clusterRoles=False
-        values = {
-            "global": {
-                "rbacEnabled": True,
-                "clusterRoles": False,
-                "plane": {"mode": "data"}
-            }
-        }
+        values = {"global": {"rbacEnabled": True, "clusterRoles": False, "plane": {"mode": "data"}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
