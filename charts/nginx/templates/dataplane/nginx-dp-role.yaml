@@ -4,6 +4,7 @@
 {{- if eq .Values.global.plane.mode "data" }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
+{{- if .Values.global.clusterRoles }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -97,5 +98,6 @@ rules:
       - update
       - patch
       - delete
+{{- end }}
 {{- end }}
 {{- end }}
