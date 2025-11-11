@@ -86,26 +86,16 @@ spec:
     {{- end }}
     - namespaceSelector: {}
       podSelector:
+        matchExpressions:
+        - key: component
+          operator: In
+          values:
+          - webserver
+          - api-server
+          - flower
+          - dag-server
         matchLabels:
-          component: webserver
           tier: airflow
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: api-server
-          tier: airflow
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: flower
-          tier: airflow
-    {{- if .Values.global.dagOnlyDeployment.enabled }}
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: dag-server
-          tier: airflow
-    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.houstonHTTP }}
