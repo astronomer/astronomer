@@ -90,10 +90,10 @@ spec:
         - key: component
           operator: In
           values:
-          - dag-server
           - webserver
           - api-server
           - flower
+          - dag-server
         matchLabels:
           tier: airflow
     ports:
