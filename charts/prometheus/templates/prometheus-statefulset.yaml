@@ -42,7 +42,7 @@ spec:
         sidecar.istio.io/proxyCPU: "500m"
         sidecar.istio.io/proxyMemory: "400Mi"
 {{- end }}
-        checksum/jwks-secret: {{ include (print $.Template.BasePath "../../../templates/registry-auth-secret.yaml" | sha256sum }}
+        checksum/jwks-secret: {{ include "registry-auth-secret" . | sha256sum }}
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
 {{- end }}

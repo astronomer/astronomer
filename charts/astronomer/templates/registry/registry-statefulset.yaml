@@ -48,7 +48,7 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
-        checksum/jwks-secret: {{ include (print $.Template.BasePath "../../../templates/registry-auth-secret.yaml" | sha256sum }}
+        checksum/jwks-secret: {{ include "registry-auth-secret" . | sha256sum }}
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
 {{- end }}
