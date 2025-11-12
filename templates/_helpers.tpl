@@ -81,5 +81,5 @@ proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
 {{- end }}
 
 {{ define "registry.authHeaderSecret" -}}
-{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
+{{ default (printf "%s-registry-auth" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
