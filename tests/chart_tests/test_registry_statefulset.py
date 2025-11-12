@@ -30,7 +30,7 @@ class TestRegistryStatefulset:
             "name": "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS",
             "valueFrom": {
                 "secretKeyRef": {
-                    "name": "release-name-registry-auth",
+                    "name": "release-name-registry-auth-key",
                     "key": "authHeaders",
                 }
             },

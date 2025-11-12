@@ -119,7 +119,7 @@
 {{- end }}
 
 {{ define "registry.authSecret" -}}
-{{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
+{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.registry.auth.secretName }}
 {{- end }}
 
 {{ define "registry.serviceAccountName" -}}

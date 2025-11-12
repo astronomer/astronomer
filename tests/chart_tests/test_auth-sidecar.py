@@ -131,7 +131,7 @@ class TestAuthSidecar:
             {"name": "prometheus-sidecar-conf", "configMap": {"name": "release-name-prometheus-nginx-conf"}},
             {
                 "name": "federation-auth",
-                "secret": {"secretName": "release-name-registry-auth", "items": [{"key": "token", "path": "federation-token"}]},
+                "secret": {"secretName": "release-name-registry-auth-key", "items": [{"key": "token", "path": "federation-token"}]},
             },
             {
                 "name": "prometheus-config-volume",
