@@ -68,7 +68,7 @@ def test_networkpolicy_enabled(np_enabled, num_of_docs):
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
-def test_networkpolicy_dag_deploy_enabled(kube_version):
+def test_networkpolicy_for_airflow_components(kube_version):
     """Test that the dagOnlyDeployment flag configures a NetworkPolicy for its traffic."""
     docs = render_chart(
         show_only="charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
@@ -81,7 +81,17 @@ def test_networkpolicy_dag_deploy_enabled(kube_version):
     )
 
     assert len(docs) == 1
+    ingress_from = docs[0]["spec"]["ingress"][0]["from"]
 
-    components = [x["podSelector"]["matchLabels"].get("component") for x in docs[0]["spec"]["ingress"][0]["from"]]
-    assert len(components) == 12
+    for from_rule in ingress_from:
+        if "podSelector" in from_rule and "matchExpressions" in from_rule.get("podSelector", {}):
+            for expr in from_rule["podSelector"]["matchExpressions"]:
+                if expr.get("key") == "component":
+                    components = expr.get("values", [])
+                    break
+
+    assert len(components) == 4
     assert "dag-server" in components
+    assert "webserver" in components
+    assert "api-server" in components
+    assert "flower" in components
