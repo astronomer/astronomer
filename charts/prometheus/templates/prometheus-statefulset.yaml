@@ -3,6 +3,7 @@
 ############################
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 {{- $planeMode := and (eq .Values.global.plane.mode "unified")  ( not $useClusterRoles ) }}
+{{- $planeCPMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
 kind: StatefulSet
 apiVersion: apps/v1
@@ -171,7 +172,7 @@ spec:
             - name: ENABLE_DEPLOYMENT_SCRAPING
               value: {{ if $planeMode}}"True"{{ else }}"False"{{ end }}
             - name: ENABLE_CLUSTER_SCRAPING
-              value: "True"
+              value: {{ if $planeCPMode}}"True"{{ else }}"False"{{ end }}
 {{- if .Values.filesdReloader.extraEnv }}
 {{ toYaml .Values.filesdReloader.extraEnv | indent 12 }}
 {{- end }}
