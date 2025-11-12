@@ -195,7 +195,7 @@ def show_pod_status() -> None:
     print(pod_status)
 
 
-def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=90) -> None:
+def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=120) -> None:
     """
     Wait for all pods in the 'astronomer' namespace to be in a healthy state.
     """
