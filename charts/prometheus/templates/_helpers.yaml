@@ -149,7 +149,7 @@ imagePullSecrets:
 {{- end }}
 
 {{ define "registry.authHeaderSecret" -}}
-{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
+{{ default (printf "%s-registry-auth" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
 
 {{ define "promproxy.image" -}}
