@@ -64,7 +64,7 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{ define "prometheus.federationAuthSecret" -}}
-{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
+{{ default (printf "%s-registry-auth" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
 
 {{- define "prometheus.url" -}}
@@ -146,10 +146,6 @@ imagePullSecrets:
 - source_labels: [__name__]
   regex: 'airflow_dag_processing_last_duration_.*_sum'
   action: drop
-{{- end }}
-
-{{ define "registry.authHeaderSecret" -}}
-{{ default (printf "%s-registry-auth" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
 
 {{ define "promproxy.image" -}}
