@@ -422,7 +422,7 @@ workflows:
                 - quay.io/astronomer/ap-grafana:12.2.1
                 - quay.io/astronomer/ap-houston-api:1.0.41
                 - quay.io/astronomer/ap-init:2025.11.3
-                - quay.io/astronomer/ap-kube-state:2.15.0
+                - quay.io/astronomer/ap-kube-state:2.16.0
                 - quay.io/astronomer/ap-kuiper-reloader:0.1.13
                 - quay.io/astronomer/ap-nats-exporter:0.16.0-6
                 - quay.io/astronomer/ap-nats-server:2.12.1
