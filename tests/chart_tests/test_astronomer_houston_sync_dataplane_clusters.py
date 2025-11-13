@@ -45,7 +45,7 @@ class TestAstronomerHoustonSyncDataplaneClustersCronJobs:
 
         # Verify container args
         c_by_name = get_containers_by_name(doc)
-        assert c_by_name["sync-dataplane-clusters"]["args"] == ["yarn", "sync-dataplane-clusters"]
+        assert c_by_name["sync-dataplane-clusters"]["args"] == ["yarn", "reconcile-cluster-metadata"]
 
     def test_astronomer_sync_dataplane_clusters_cron_custom_schedule(self, kube_version):
         """Test that custom schedule is respected."""
