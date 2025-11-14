@@ -71,7 +71,7 @@ spec:
             - name: sync-dataplane-clusters
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              args: ["yarn", "sync-dataplane-clusters"]
+              args: ["yarn", "reconcile-cluster-metadata"]
               securityContext:
                 readOnlyRootFilesystem: true
                 {{- toYaml .Values.securityContext | nindent 16 }}
