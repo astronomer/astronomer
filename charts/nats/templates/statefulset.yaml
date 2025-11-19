@@ -160,8 +160,6 @@ spec:
           name: cluster
         - containerPort: 8222
           name: monitor
-        - containerPort: 7777
-          name: metrics
         command:
         - "nats-server"
         - "--config"
