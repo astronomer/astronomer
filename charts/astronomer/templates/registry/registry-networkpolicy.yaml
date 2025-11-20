@@ -28,6 +28,7 @@ spec:
   - Ingress
   ingress:
   - from:
+    {{- if (eq .Values.global.plane.mode "unified") }}
     - podSelector:
         matchLabels:
           tier: astronomer
@@ -88,7 +89,7 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-sync-dataplane-clusters
-
+    {{- end }}
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:
