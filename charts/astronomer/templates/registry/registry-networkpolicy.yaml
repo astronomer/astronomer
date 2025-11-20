@@ -83,6 +83,11 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-cleanup-airflow-db
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-sync-dataplane-clusters
 
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
