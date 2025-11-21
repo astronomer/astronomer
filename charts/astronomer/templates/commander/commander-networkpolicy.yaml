@@ -104,6 +104,11 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-cleanup-airflow-db
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-sync-dataplane-clusters
     {{- end }}
     ports:
     {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
