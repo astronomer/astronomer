@@ -195,7 +195,7 @@ def show_pod_status() -> None:
     print(pod_status)
 
 
-def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=90) -> None:
+def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=120) -> None:
     """
     Wait for all pods in the 'astronomer' namespace to be in a healthy state.
     """
@@ -246,6 +246,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
             show_pod_status()
             return
         date_print(f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}")
+        show_pod_status()
         time.sleep(5)
 
         print(f"Retrying... {int(end_time - time.time())} seconds left until timeout.")

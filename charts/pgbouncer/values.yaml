@@ -3,7 +3,7 @@
 #############################
 image:
   repository: quay.io/astronomer/ap-pgbouncer-krb
-  tag: 1.17.0-20
+  tag: 1.17.0-23
   pullPolicy: IfNotPresent
 
 securityContext:

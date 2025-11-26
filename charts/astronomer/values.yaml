@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.17.13
+airflowChartVersion: 1.17.14
 
 nodeSelector: {}
 affinity: {}
@@ -15,24 +15,24 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 1.0.19
+    tag: 1.0.21
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.0.0-1
+    tag: 3.0.0-4
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 1.0.38
+    tag: 1.0.42
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 1.0.25
+    tag: 1.0.27
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 1.0.1
+    tag: 1.0.2
     pullPolicy: IfNotPresent
 
 
@@ -318,6 +318,18 @@ houston:
   populateHourlyTaskAuditMetrics:
     # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
     schedule: "57 * * * *"
+
+    readinessProbe: {}
+    livenessProbe: {}
+
+  # Sync dataplane clusters in Houston
+  # This runs as a CronJob
+  syncDataplaneClusters:
+    # Enable sync dataplane clusters CronJob
+    enabled: true
+
+    # Default here is to run at the top of every hour https://crontab.guru/#0_*_*_*_*
+    schedule: "0 * * * *"
 
     readinessProbe: {}
     livenessProbe: {}

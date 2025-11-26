@@ -149,6 +149,15 @@ astronomer:
         exec:
           command:
           - /bin/true
+    syncDataplaneClusters:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
     upgradeDeployments:
       livenessProbe:
         exec:
