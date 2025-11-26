@@ -1,0 +1,18 @@
+##################################
+## Kibana Pod Disruption Budget ##
+##################################
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-kibana-pdb
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "kibana.name" . }}
+      release: {{ .Release.Name }}
+{{- end }}
+{{- end }}
