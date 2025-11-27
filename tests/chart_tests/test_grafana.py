@@ -174,6 +174,7 @@ def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
     expected_volume_mounts = [
         {"mountPath": "/etc/nginx/conf.d/", "name": "grafana-sidecar-conf"},
         {"name": "tmp", "mountPath": "/tmp"},
+        {"mountPath": "/var/lib/nginx/tmp", "name": "nginx-write-dir"},
     ]
     assert auth_proxy_container["volumeMounts"] == expected_volume_mounts
 
