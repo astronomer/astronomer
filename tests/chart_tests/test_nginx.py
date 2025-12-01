@@ -458,12 +458,21 @@ def test_nginx_default_backend_default():
     doc = docs[0]
     assert doc["kind"] == "Deployment"
     assert doc["apiVersion"] == "apps/v1"
-    assert doc["spec"]["template"]["spec"]["volumes"] == [{"name": "tmp", "emptyDir": {}}]
+
+    volumes = doc["spec"]["template"]["spec"]["volumes"]
+    assert len(volumes) == 2
+    assert {"name": "logs", "emptyDir": {}} in volumes
+    assert {"name": "tmp", "emptyDir": {}} in volumes
+
     assert len(doc["spec"]["template"]["spec"]["containers"]) == 1
     container = doc["spec"]["template"]["spec"]["containers"][0]
     assert container["image"].startswith("quay.io/astronomer/ap-default-backend:")
     assert container["imagePullPolicy"] == "IfNotPresent"
-    assert container["volumeMounts"] == [{"name": "tmp", "mountPath": "/tmp"}]
+
+    volume_mounts = container["volumeMounts"]
+    assert len(volume_mounts) == 2
+    assert {"name": "logs", "mountPath": "/var/lib/nginx/logs"} in volume_mounts
+    assert {"name": "tmp", "mountPath": "/tmp"} in volume_mounts
 
 
 def test_nginx_backend_overrides():
