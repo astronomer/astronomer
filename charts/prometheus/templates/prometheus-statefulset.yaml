@@ -116,8 +116,8 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
-            - name: tmp
-              mountPath: /tmp
+            - name: nginx-write-dir
+              mountPath: /var/lib/nginx/tmp
             - mountPath: /etc/nginx/conf.d/
               name: prometheus-sidecar-conf
         {{- end }}
@@ -260,7 +260,7 @@ spec:
 {{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
-        - name: tmp
+        - name: nginx-write-dir
           emptyDir: {}
         - name: prometheus-sidecar-conf
           configMap:
