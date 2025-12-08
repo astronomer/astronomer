@@ -19,7 +19,9 @@ class TestGlobabIngressAnnotation:
             values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
             show_only=sorted(always_rendered_ingress),
         )
+
         assert len(docs) == 6
+
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"

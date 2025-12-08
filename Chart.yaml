@@ -47,8 +47,14 @@ dependencies:
     condition: global.elasticsearchEnabled
     tags:
       - logging
+
   - name: vector
     condition: global.vectorEnabled
+    tags:
+      - logging
+
+  - name: kibana
+    condition: global.kibanaEnabled
     tags:
       - logging
 

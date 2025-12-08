@@ -1,0 +1,56 @@
+####################
+## Kibana Ingress ##
+####################
+{{- if .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ template "kibana.fullname" . }}-ingress
+  labels:
+    tier: kibana-networking
+    component: kibana-ingress
+    release: {{ .Release.Name }}
+    chart: {{ template "kibana.chart" . }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- include "houston.internalauthurl" . | indent 4 }}
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Content-Security-Policy: script-src 'self'";
+    {{- end }}
+    {{- if .Values.ingressAnnotations }}
+{{- toYaml .Values.ingressAnnotations| nindent 4 }}
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret }}
+  tls:
+    - secretName: {{ .Values.global.tlsSecret }}
+      hosts:
+        - {{- include "kibana.url" . | indent 1 }}
+  {{- end }}
+  rules:
+    - host: {{- include "kibana.url" . | indent 1 }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "kibana.fullname" . }}
+                port:
+                  {{- if .Values.global.authSidecar.enabled  }}
+                  name: auth-proxy
+                  {{- else }}
+                  name: kibana-ui
+                  {{- end }}
+{{- end }}
+{{- end }}

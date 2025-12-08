@@ -64,6 +64,7 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
             "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
             "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
+            "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -77,6 +78,7 @@ class TestServiceAccounts:
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
+                "charts/kibana/templates/kibana-serviceaccount.yaml",
             ],
         )
 
@@ -89,6 +91,7 @@ class TestServiceAccounts:
             "astroui-test",
             "grafana-test",
             "alertmanager-test",
+            "kibana-test",
         }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
@@ -113,6 +116,7 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": False}}},
             "grafana": {"serviceAccount": {"create": False}},
             "alertmanager": {"serviceAccount": {"create": False}},
+            "kibana": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
@@ -157,6 +161,7 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "grafana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "kibana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -341,6 +346,10 @@ custom_service_account_names = {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/kibana/templates/kibana-default-index-cronjob.yaml": {
+        "kibana": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/kibana/templates/kibana-deployment.yaml": {"kibana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/nats/templates/jetstream-job.yaml": {
         "nats": {"nats": {"jetStream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
     },
