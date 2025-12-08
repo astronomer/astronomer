@@ -69,9 +69,13 @@ spec:
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}
           volumeMounts:
+            - name: logs
+              mountPath: /var/lib/nginx/logs
             - name: tmp
               mountPath: /tmp
       volumes:
+        - name: logs
+          emptyDir: {}
         - name: tmp
           emptyDir: {}
 {{ end }}
