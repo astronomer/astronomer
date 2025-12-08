@@ -173,7 +173,7 @@ def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
     # Verify volume mounts structure
     expected_volume_mounts = [
         {"mountPath": "/etc/nginx/conf.d/", "name": "grafana-sidecar-conf"},
-        {"name": "tmp", "mountPath": "/tmp"},
+        {"mountPath": "/var/lib/nginx/tmp", "name": "nginx-write-dir"},
     ]
     assert auth_proxy_container["volumeMounts"] == expected_volume_mounts
 
@@ -182,7 +182,6 @@ def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
     expected_volumes = [
         {"name": "var-lib-grafana", "emptyDir": {}},
         {"name": "grafana-sidecar-conf", "configMap": {"name": "release-name-grafana-nginx-conf"}},
-        {"name": "tmp", "emptyDir": {}},
         {
             "name": "grafana-datasource-volume",
             "configMap": {

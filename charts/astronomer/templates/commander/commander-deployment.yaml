@@ -194,6 +194,8 @@ spec:
               containerPort: {{ .Values.ports.commanderSidecarGRPC }}
               protocol: TCP
           volumeMounts:
+            - name: nginx-write-dir
+              mountPath: /var/lib/nginx/tmp
             - name: nginx-conf
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
@@ -213,6 +215,8 @@ spec:
             periodSeconds: 5
         {{- end }}
       volumes:
+        - name: nginx-write-dir
+          emptyDir: {}
         - name: etc-ssl-certs
           emptyDir: {}
         - name: tmp-workspace
