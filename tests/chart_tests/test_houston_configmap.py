@@ -921,3 +921,98 @@ def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod_yaml["deployments"]["authSideCar"].get("ingressAllowedNamespaces") == ["astronomer", "ingress-namespace"]
+
+
+def test_houston_configmap_with_kerberos_enabled():
+    """Validate the houston configmap and its embedded data with kerberos enabled."""
+    docs = render_chart(
+        values={
+            "global": {
+                "deployments": {
+                    "kerberos": {
+                        "enabled": True,
+                        "realm": "APC.ASTRONOMER.IO",
+                        "service": "postgres",
+                        "serverSpnOverride": None,
+                        "principalUser": "astro_user",
+                        "metadataHost": None,
+                        "resultBackendHost": None,
+                        "port": 5432,
+                    }
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["deployments"]["kerberos"] == {
+        "enabled": True,
+        "realm": "APC.ASTRONOMER.IO",
+        "service": "postgres",
+        "serverSpnOverride": None,
+        "principalUser": "astro_user",
+        "metadataHost": None,
+        "resultBackendHost": None,
+        "port": 5432,
+    }
+
+
+def test_houston_configmap_with_kerberos_enabled_with_custom_values():
+    """Validate the houston configmap and its embedded data with kerberos enabled with custom values."""
+    docs = render_chart(
+        values={
+            "global": {
+                "deployments": {
+                    "kerberos": {
+                        "enabled": True,
+                        "realm": "CUSTOM.REALM.IO",
+                        "service": "custom-service",
+                        "serverSpnOverride": "custom/spn",
+                        "principalUser": "custom_user",
+                        "metadataHost": "metadata.example.com",
+                        "resultBackendHost": "backend.example.com",
+                        "port": 3306,
+                    }
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["deployments"]["kerberos"] == {
+        "enabled": True,
+        "realm": "CUSTOM.REALM.IO",
+        "service": "custom-service",
+        "serverSpnOverride": "custom/spn",
+        "principalUser": "custom_user",
+        "metadataHost": "metadata.example.com",
+        "resultBackendHost": "backend.example.com",
+        "port": 3306,
+    }
+
+
+def test_houston_configmap_with_kerberos_disabled():
+    """Validate the houston configmap and its embedded data with kerberos disabled."""
+    docs = render_chart(
+        values={
+            "global": {
+                "deployments": {
+                    "kerberos": {
+                        "enabled": False,
+                    }
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "kerberos" not in prod_yaml["deployments"]

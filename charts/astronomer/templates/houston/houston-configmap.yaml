@@ -170,6 +170,31 @@ data:
         {{- end }}
       {{- end }}
 
+      {{- if .Values.global.deployments.kerberos.enabled }}
+      # Kerberos authentication configuration for deployments
+      kerberos:
+        enabled: true
+        realm: {{ .Values.global.deployments.kerberos.realm | quote }}
+        service: {{ .Values.global.deployments.kerberos.service | quote }}
+        {{- if .Values.global.deployments.kerberos.serverSpnOverride }}
+        serverSpnOverride: {{ .Values.global.deployments.kerberos.serverSpnOverride | quote }}
+        {{- else }}
+        serverSpnOverride: ~
+        {{- end }}
+        principalUser: {{ .Values.global.deployments.kerberos.principalUser | quote }}
+        {{- if .Values.global.deployments.kerberos.metadataHost }}
+        metadataHost: {{ .Values.global.deployments.kerberos.metadataHost | quote }}
+        {{- else }}
+        metadataHost: ~
+        {{- end }}
+        {{- if .Values.global.deployments.kerberos.resultBackendHost }}
+        resultBackendHost: {{ .Values.global.deployments.kerberos.resultBackendHost | quote }}
+        {{- else }}
+        resultBackendHost: ~
+        {{- end }}
+        port: {{ .Values.global.deployments.kerberos.port }}
+      {{- end }}
+
       {{- if .Values.global.dagOnlyDeployment.enabled }}
       # enables dag only deployment for airflow deployments
       {{- $dagOnlyDeployment := include "dagOnlyDeployment.image" . }}
