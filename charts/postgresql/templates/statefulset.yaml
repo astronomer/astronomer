@@ -70,19 +70,6 @@ spec:
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
       initContainers:
-      - name: conf-copier
-        command:
-          - bash
-          - -cx
-          - cp -vr /opt/bitnami/postgresql/conf/* /opt/bitnami/postgresql/conf_copy
-        image: {{ template "postgresql.image" . }}
-        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
-        securityContext:
-          readOnlyRootFilesystem: true
-        resources: {{- toYaml .Values.resources | nindent 10 }}
-        volumeMounts:
-        - mountPath: /opt/bitnami/postgresql/conf_copy
-          name: pg-conf
       {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       - name: init-chmod-data
         image: {{ template "postgresql.volumePermissions.image" . }}
