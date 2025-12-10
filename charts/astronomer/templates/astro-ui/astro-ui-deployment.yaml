@@ -98,7 +98,7 @@ spec:
           volumeMounts:
           - name: tmp
             mountPath: /tmp
-          - name: var-run
+          - name: var-cache-nginx
             mountPath: /var/run
 
 {{- if .Values.astroUI.volumeMounts }}
