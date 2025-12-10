@@ -32,8 +32,6 @@ class TestPostgresql:
         containers = get_containers_by_name(doc=sts, include_init_containers=True)
         assert containers["release-name-postgresql"]["volumeMounts"] == [
             {"mountPath": "/tmp", "name": "tmp"},
-            {"mountPath": "/opt/bitnami/postgresql/tmp", "name": "tmp", "subPath": "pg-tmp"},
-            {"mountPath": "/opt/bitnami/postgresql/conf", "name": "pg-conf"},
             {"name": "data", "mountPath": "/bitnami/postgresql", "subPath": None},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in sts["spec"]
