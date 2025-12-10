@@ -231,7 +231,7 @@ spec:
           failureThreshold: 6
           successThreshold: 1
         {{- end }}
-        volumeMounts:
+        volumeMounts: []
         ports:
         - name: metrics
           containerPort: 9187
