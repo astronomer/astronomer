@@ -69,8 +69,8 @@ spec:
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
-      initContainers:
       {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
+      initContainers:
       - name: init-chmod-data
         image: {{ template "postgresql.volumePermissions.image" . }}
         imagePullPolicy: "{{ .Values.volumePermissions.image.pullPolicy }}"
