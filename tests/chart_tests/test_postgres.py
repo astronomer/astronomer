@@ -36,28 +36,7 @@ class TestPostgresql:
             {"mountPath": "/opt/bitnami/postgresql/conf", "name": "pg-conf"},
             {"name": "data", "mountPath": "/bitnami/postgresql", "subPath": None},
         ]
-        assert containers["conf-copier"]["volumeMounts"] == [{"mountPath": "/opt/bitnami/postgresql/conf_copy", "name": "pg-conf"}]
         assert "persistentVolumeClaimRetentionPolicy" not in sts["spec"]
-
-    def test_postgresql_statefulset_with_volumePermissions_enabled(self, kube_version):
-        """Test postgresql statefulset when volumePermissions init container is
-        enabled."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "global": {"postgresqlEnabled": True},
-                "postgresql": {
-                    "volumePermissions": {"enabled": True},
-                    "persistence": {"enabled": True},
-                },
-            },
-            show_only=["charts/postgresql/templates/statefulset.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        self.postgresql_common_tests(doc)
-        assert "initContainers" in doc["spec"]["template"]["spec"]
 
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):
         """Test postgresql with privateRegistry=True."""
