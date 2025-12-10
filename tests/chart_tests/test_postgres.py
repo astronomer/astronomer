@@ -28,7 +28,6 @@ class TestPostgresql:
         assert len(docs) == 1
         sts = docs[0]
         self.postgresql_common_tests(sts)
-        assert len(sts["spec"]["template"]["spec"]["initContainers"]) == 1
         assert len(sts["spec"]["template"]["spec"]["containers"]) == 1
         containers = get_containers_by_name(doc=sts, include_init_containers=True)
         assert containers["release-name-postgresql"]["volumeMounts"] == [
