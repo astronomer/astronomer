@@ -69,29 +69,6 @@ spec:
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
-      {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
-      initContainers:
-      - name: init-chmod-data
-        image: {{ template "postgresql.volumePermissions.image" . }}
-        imagePullPolicy: "{{ .Values.volumePermissions.image.pullPolicy }}"
-        resources: {{- toYaml .Values.resources | nindent 10 }}
-        command:
-          - sh
-          - -cx
-          - |
-            mkdir -p {{ .Values.persistence.mountPath }}/data
-            chmod 700 {{ .Values.persistence.mountPath }}/data
-            find {{ .Values.persistence.mountPath }} -mindepth 0 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
-              xargs chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }}
-        securityContext:
-          readOnlyRootFilesystem: true
-          runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
-          runAsUser: {{ .Values.volumePermissions.securityContext.runAsUser }}
-        volumeMounts:
-        - name: data
-          mountPath: {{ .Values.persistence.mountPath }}
-          subPath: {{ .Values.persistence.subPath }}
-      {{- end }}
       containers:
       - name: {{ template "postgresql.fullname" . }}
         image: {{ template "postgresql.image" . }}
