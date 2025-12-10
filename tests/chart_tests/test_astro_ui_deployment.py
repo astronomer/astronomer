@@ -72,7 +72,7 @@ class TestAstroUIDeployment:
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in astro_ui_container["volumeMounts"]}
         assert "tmp" in volume_mounts
         assert volume_mounts["tmp"] == "/tmp"
-        assert "var-run" in volume_mounts
+        assert "var-cache-nginx" in volume_mounts
         assert volume_mounts["var-cache-nginx"] == "/var/run"
 
         volumes = {vol["name"]: vol for vol in doc["spec"]["template"]["spec"]["volumes"]}
