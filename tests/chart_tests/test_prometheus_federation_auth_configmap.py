@@ -1,5 +1,6 @@
-import pytest
 import re
+
+import pytest
 
 from tests import supported_k8s_versions
 from tests.utils.chart import render_chart
@@ -78,8 +79,8 @@ class TestPrometheusFederationAuthConfigMap:
 
         # Verify Lua setup
         assert "lua_package_path" in nginx_conf
-        assert 'lua_shared_dict federation_auth_cache 10m;' in nginx_conf
-        assert 'content_by_lua_block {' in nginx_conf
+        assert "lua_shared_dict federation_auth_cache 10m;" in nginx_conf
+        assert "content_by_lua_block {" in nginx_conf
 
     def test_prometheus_federation_auth_configmap_upstream_configuration(self, kube_version):
         """Test the upstream Prometheus backend configuration."""
@@ -130,7 +131,7 @@ class TestPrometheusFederationAuthConfigMap:
 
         # Default port should be in the config
         # Extract the port from listen directive
-        match = re.search(r'listen\s+(\d+);', nginx_conf)
+        match = re.search(r"listen\s+(\d+);", nginx_conf)
         assert match is not None
         port = int(match.group(1))
         assert port > 0
@@ -149,9 +150,9 @@ class TestPrometheusFederationAuthConfigMap:
         # Verify /federate location
         assert "location = /federate {" in nginx_conf
         assert "auth_request /auth;" in nginx_conf
-        assert 'proxy_pass http://prometheus_backend/federate;' in nginx_conf
-        assert 'proxy_read_timeout 300s;' in nginx_conf
-        assert 'proxy_connect_timeout 75s;' in nginx_conf
+        assert "proxy_pass http://prometheus_backend/federate;" in nginx_conf
+        assert "proxy_read_timeout 300s;" in nginx_conf
+        assert "proxy_connect_timeout 75s;" in nginx_conf
         assert 'proxy_set_header Authorization "";' in nginx_conf
 
     def test_prometheus_federation_auth_configmap_auth_endpoint(self, kube_version):
@@ -169,7 +170,7 @@ class TestPrometheusFederationAuthConfigMap:
         assert "location = /auth {" in nginx_conf
         assert "internal;" in nginx_conf
         assert "ngx.var.http_authorization" in nginx_conf
-        assert "os.getenv(\"REGISTRY_AUTH_TOKEN\")" in nginx_conf
+        assert 'os.getenv("REGISTRY_AUTH_TOKEN")' in nginx_conf
         assert "Missing Authorization header" in nginx_conf
         assert "Invalid Authorization format" in nginx_conf
         assert "Invalid federation token" in nginx_conf
