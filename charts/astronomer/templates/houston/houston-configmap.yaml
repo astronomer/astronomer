@@ -170,29 +170,23 @@ data:
         {{- end }}
       {{- end }}
 
-      {{- if .Values.global.deployments.kerberos.enabled }}
+      {{- $kerberos := .Values.global.kerberos }}
+      {{- if $kerberos.enabled }}
       # Kerberos authentication configuration for deployments
       kerberos:
         enabled: true
-        realm: {{ .Values.global.deployments.kerberos.realm | quote }}
-        service: {{ .Values.global.deployments.kerberos.service | quote }}
-        {{- if .Values.global.deployments.kerberos.serverSpnOverride }}
-        serverSpnOverride: {{ .Values.global.deployments.kerberos.serverSpnOverride | quote }}
-        {{- else }}
-        serverSpnOverride: ~
-        {{- end }}
-        principalUser: {{ .Values.global.deployments.kerberos.principalUser | quote }}
-        {{- if .Values.global.deployments.kerberos.metadataHost }}
-        metadataHost: {{ .Values.global.deployments.kerberos.metadataHost | quote }}
+        realm: {{ $kerberos.realm | quote }}
+        service: {{ $kerberos.service | quote }}
+        serverSpnOverride: {{ $kerberos.serverSpnOverride | toJson }}
+        principalUser: {{ $kerberos.principalUser | quote }}
+        {{- if $kerberos.databaseHost }}
+        metadataHost: {{ $kerberos.databaseHost | quote }}
+        resultBackendHost: {{ $kerberos.databaseHost | quote }}
         {{- else }}
         metadataHost: ~
-        {{- end }}
-        {{- if .Values.global.deployments.kerberos.resultBackendHost }}
-        resultBackendHost: {{ .Values.global.deployments.kerberos.resultBackendHost | quote }}
-        {{- else }}
         resultBackendHost: ~
         {{- end }}
-        port: {{ .Values.global.deployments.kerberos.port }}
+        port: {{ $kerberos.port }}
       {{- end }}
 
       {{- if .Values.global.dagOnlyDeployment.enabled }}
