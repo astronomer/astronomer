@@ -1,4 +1,3 @@
-import jmespath
 import pytest
 
 from tests import supported_k8s_versions
