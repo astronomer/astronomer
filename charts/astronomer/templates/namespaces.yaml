@@ -1,5 +1,6 @@
 # Namespace Pools - create user-defined namespaces to host Airflow deployments
 {{- if and .Values.global.features.namespacePools.enabled .Values.global.features.namespacePools.namespaces.create }}
+{{- $namespaceLabels := .Values.global.namespaceLabels }}
 {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
 ---
 apiVersion: v1
@@ -9,5 +10,9 @@ metadata:
   annotations:
     # Keep namespaces if user disable namespace pools later on
     "helm.sh/resource-policy": keep
-{{ end }}
-{{ end }}
+  {{- if $namespaceLabels }}
+  labels:
+    {{- $namespaceLabels | toYaml | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
