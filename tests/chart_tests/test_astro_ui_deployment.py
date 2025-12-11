@@ -11,13 +11,6 @@ def get_containers_by_name(doc):
     return {container["name"]: container for container in containers}
 
 
-def get_env_value(env_var):
-    """Helper function to get environment variable value."""
-    if "value" in env_var:
-        return env_var["value"]
-    return None
-
-
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
