@@ -64,6 +64,12 @@ global:
         # if create is enabled, this helm chart will create the provided k8s namespaces
         create: false
         names: []
+
+  # namespaceLabels is a map of Kubernetes labels that will be applied to airflow deployment namespaces
+  namespaceLabels: {}
+    # To enforce PSA baseline policy, use the following values:
+    # pod-security.kubernetes.io/enforce: baseline
+
   namespaceFreeFormEntry: false
   # Use kube-lego
   acme: false
