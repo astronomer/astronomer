@@ -36,7 +36,6 @@
 /secrets
 /test
 /tests
-/tiller-rbac
 /values.schema.json.example
 __pycache__
 prof
