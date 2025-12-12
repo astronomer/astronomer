@@ -11,7 +11,7 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestAstronomerCommander:
-    def commander_common_tests(self, doc):
+    def commander_deployment_common_tests(self, doc):
         """Common validation tests for Commander Deployment."""
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
@@ -39,7 +39,7 @@ class TestAstronomerCommander:
 
         assert len(docs) == 1
         doc = docs[0]
-        self.commander_common_tests(doc)
+        self.commander_deployment_common_tests(doc)
         c_by_name = get_containers_by_name(doc)
         assert len(c_by_name) == 1
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
@@ -99,7 +99,7 @@ class TestAstronomerCommander:
 
         assert len(docs) == 1
         doc = docs[0]
-        self.commander_common_tests(doc)
+        self.commander_deployment_common_tests(doc)
         c_by_name = get_containers_by_name(doc)
         assert len(c_by_name) == 1
         commander_container = c_by_name["commander"]
@@ -131,7 +131,7 @@ class TestAstronomerCommander:
 
         assert len(docs) == 1
         doc = docs[0]
-        self.commander_common_tests(doc)
+        self.commander_deployment_common_tests(doc)
         c_by_name = get_containers_by_name(doc)
         assert len(c_by_name) == 1
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
