@@ -2,7 +2,7 @@ import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -43,7 +43,7 @@ class TestAstronomerNamespacePools:
         expected_namespaces = [*namespaces, "default"]
 
         # assertions on Role objects
-        for i in range(0, 3):
+        for i in range(3):
             role = docs[i]
 
             assert role["kind"] == "Role"
@@ -90,7 +90,7 @@ class TestAstronomerNamespacePools:
         )
 
         assert len(docs) == 2
-        for i in range(0, 2):
+        for i in range(2):
             namespace = docs[i]
             assert namespace["metadata"]["name"] == namespaces[i]
             assert namespace["kind"] == "Namespace"
@@ -130,8 +130,7 @@ class TestAstronomerNamespacePools:
         assert len(docs) == 0
 
     def test_astronomer_namespace_pools_commander_deployment_configuration(self, kube_version):
-        """Test that commander deployment is configured properly when enabling
-        namespace pools."""
+        """Test that commander deployment is configured properly when enabling namespace pools."""
 
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
@@ -153,12 +152,8 @@ class TestAstronomerNamespacePools:
         # is configured properly
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
 
-        manual_ns_env_found = False
-        for env in c_by_name["commander"]["env"]:
-            if env["name"] == "COMMANDER_MANUAL_NAMESPACE_NAMES" and env["value"] == "true":
-                manual_ns_env_found = True
-
-        assert manual_ns_env_found
+        commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert commander_env.get("COMMANDER_MANUAL_NAMESPACE_NAMES") == "true"
 
         # If namespacePools is disabled, we should not add the Manual Namespace Names environment variable in commander
         doc = render_chart(
@@ -180,12 +175,8 @@ class TestAstronomerNamespacePools:
         # is configured properly
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
 
-        manual_ns_env_found = False
-        for env in c_by_name["commander"]["env"]:
-            if env["name"] == "COMMANDER_MANUAL_NAMESPACE_NAMES" and env["value"] == "true":
-                manual_ns_env_found = True
-
-        assert not manual_ns_env_found
+        commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert commander_env.get("COMMANDER_MANUAL_NAMESPACE_NAMES") != "true"
 
     def test_astronomer_namespace_pools_houston_configmap(self, kube_version):
         """Test that Houston production.yaml configuration parameters are

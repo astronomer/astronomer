@@ -125,7 +125,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-10
+      - image: quay.io/astronomer/ci-helm-release:2025-12
     steps:
       - checkout
       - run:
@@ -135,7 +135,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2025-10
+      - image: quay.io/astronomer/ci-pre-commit:2025-12
     resource_class: small
     steps:
       - checkout
@@ -160,7 +160,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-10
+      - image: quay.io/astronomer/ci-helm-release:2025-12
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -196,7 +196,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-10
+      - image: quay.io/astronomer/ci-helm-release:2025-12
     parameters:
       qa_release:
         type: boolean
@@ -215,7 +215,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-10
+      - image: quay.io/astronomer/ci-helm-release:2025-12
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -254,7 +254,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-10
+      - image: quay.io/astronomer/ci-helm-release:2025-12
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -267,7 +267,7 @@ jobs:
 
   scenario-unified-1-31-12:
     machine:
-      image: ubuntu-2404:2024.11.1
+      image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.31.12
@@ -294,7 +294,7 @@ jobs:
           path: test-results
   scenario-unified-1-32-8:
     machine:
-      image: ubuntu-2404:2024.11.1
+      image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.32.8
@@ -321,7 +321,7 @@ jobs:
           path: test-results
   scenario-unified-1-33-4:
     machine:
-      image: ubuntu-2404:2024.11.1
+      image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.33.4
@@ -348,7 +348,7 @@ jobs:
           path: test-results
   scenario-unified-1-34-0:
     machine:
-      image: ubuntu-2404:2024.11.1
+      image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.34.0
@@ -420,7 +420,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.2.2
                 - quay.io/astronomer/ap-git-sync:2025.11.3
                 - quay.io/astronomer/ap-grafana:12.2.1
-                - quay.io/astronomer/ap-houston-api:1.0.42
+                - quay.io/astronomer/ap-houston-api:1.0.43
                 - quay.io/astronomer/ap-init:2025.11.3
                 - quay.io/astronomer/ap-kube-state:2.16.0
                 - quay.io/astronomer/ap-kuiper-reloader:0.1.14
