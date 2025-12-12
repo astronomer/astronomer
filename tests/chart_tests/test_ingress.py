@@ -173,7 +173,7 @@ class TestIngress:
         ("mode", "expected_astro_ui", "expected_registry", "expected_rule_count", "expected_hosts"),
         [
             ("control", True, False, 2, ["example.com", "app.example.com"]),
-            ("data", False, True, 1, ["registry.example.com"]),
+            ("data", False, True, 1, ["registry.dp01.example.com"]),
             ("unified", True, True, 3, ["example.com", "app.example.com", "registry.example.com"]),
         ],
     )
@@ -183,7 +183,7 @@ class TestIngress:
         """Test ingress configuration for all plane modes"""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": mode}}},
+            values={"global": {"plane": {"mode": mode, "domainPrefix": "dp01"}}},
             show_only=["charts/astronomer/templates/ingress.yaml"],
         )
 
