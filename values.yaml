@@ -243,6 +243,17 @@ global:
         cpu: "1000m"
         memory: "1024Mi"
 
+  # Kerberos authentication configuration shared across deployments
+  kerberos:
+    enabled: false
+    realm: "APC.ASTRONOMER.IO"
+    service: "postgres"
+    serverSpnOverride: ~
+    principalUser: "astro_user"
+    # databaseHost is used for both metadata and result backend connections
+    databaseHost: ~
+    port: 5432
+
   # External ES logging
   customLogging:
     enabled: false
