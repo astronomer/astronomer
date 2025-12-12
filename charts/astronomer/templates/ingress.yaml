@@ -38,7 +38,7 @@ spec:
         - app.{{ .Values.global.baseDomain }}
       {{- end }}
       {{- if $planeDataMode }}
-        - registry.{{ .Values.global.baseDomain }}
+        - {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
       {{- end }}
   {{- end }}
   rules:
