@@ -922,6 +922,7 @@ def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod_yaml["deployments"]["authSideCar"].get("ingressAllowedNamespaces") == ["astronomer", "ingress-namespace"]
 
+
 def test_houston_configmap_with_kerberos_enabled():
     """Validate the houston configmap and its embedded data with kerberos enabled."""
     kerberos_config = {
@@ -942,6 +943,7 @@ def test_houston_configmap_with_kerberos_enabled():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod_yaml["deployments"]["kerberos"] == kerberos_config
+
 
 def test_houston_configmap_with_kerberos_disabled():
     """Validate the houston configmap and its embedded data with kerberos disabled."""
