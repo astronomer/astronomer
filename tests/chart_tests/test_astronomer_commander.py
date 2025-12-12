@@ -17,7 +17,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
 
-    def test_commander_deployment_default(self, kube_version):
+    def test_astronomer_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
         values = {
             "astronomer": {
