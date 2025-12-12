@@ -2,7 +2,7 @@
 ## Astronomer Ingress ##
 ########################
 {{- if and .Values.global.baseDomain ( not .Values.global.enablePerHostIngress ) }}
-{{- $planeDataMode := (eq .Values.global.plane.mode "data") }}
+{{- $planeDataMode := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -64,7 +64,8 @@ spec:
               port:
                 name: astro-ui-http
 {{- end }}
-  - host: {{ if $planeDataMode }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+{{- if $planeDataMode }}
+  - host: {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
     http:
       paths:
         - path: /
@@ -74,4 +75,5 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
+{{- end }}
 {{- end }}
