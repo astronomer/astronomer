@@ -12,6 +12,7 @@ from tests.utils.chart import render_chart
 )
 class TestIngress:
     labels = {"type": "apps"}
+
     def test_basic_ingress(self, kube_version):
         # sourcery skip: extract-duplicate-method
         docs = render_chart(
@@ -47,7 +48,6 @@ class TestIngress:
         doc = docs[0]
         assert self.labels.items() <= doc["metadata"]["labels"].items()
 
-
     @pytest.mark.parametrize(
         ("mode", "expected"),
         [("control", True), ("data", False), ("unified", True)],
@@ -55,7 +55,7 @@ class TestIngress:
     def test_astro_ui_per_host_ingress(self, mode, expected, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"enablePerHostIngress": True, "plane": {"mode": mode},"podLabels": self.labels}},
+            values={"global": {"enablePerHostIngress": True, "plane": {"mode": mode}, "podLabels": self.labels}},
             show_only=[
                 "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
                 "charts/astronomer/templates/ingress.yaml",
@@ -99,7 +99,7 @@ class TestIngress:
         assert docs[0]["spec"]["rules"] == expected_rules_v1
 
     def test_single_ingress_per_host(self, kube_version):
-        default_docs = render_chart(values={"global": {"enablePerHostIngress": True,"podLabels": self.labels}})
+        default_docs = render_chart(values={"global": {"enablePerHostIngress": True, "podLabels": self.labels}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
         assert len(ingresses) == 8
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
