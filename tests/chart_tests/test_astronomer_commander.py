@@ -18,8 +18,7 @@ class TestAstronomerCommander:
         assert doc["metadata"]["name"] == "release-name-commander"
 
     def test_astronomer_commander_deployment_default(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/commander."""
+        """Test that helm renders a good deployment template for astronomer/commander."""
         values = {
             "astronomer": {
                 "airflowChartVersion": "99.88.77",
@@ -79,8 +78,7 @@ class TestAstronomerCommander:
         assert "emptyDir" in volumes["tmp-workspace"]
 
     def test_astronomer_commander_deployment_unified_defaults(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/commander."""
+        """Test that helm renders a good deployment template for astronomer/commander."""
         values = {
             "astronomer": {
                 "airflowChartVersion": "99.88.77",
@@ -124,11 +122,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/commander.
-
-        when upgrade timeout is set
-        """
+        """Test that helm renders a good deployment template for astronomer/commander when upgrade timeout is set."""
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"commander": {"upgradeTimeout": 997}}},
@@ -146,8 +140,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
     def test_astronomer_commander_rbac_cluster_role_enabled(self, kube_version):
-        """Test that if rbacEnabled and clusterRoles are enabled but
-        namespacePools disabled, helm renders ClusterRole and
+        """Test that if rbacEnabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
         ClusterRoleBinding resources."""
 
         # First rbacEnabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
@@ -213,8 +206,7 @@ class TestAstronomerCommander:
         assert len(docs) == 0
 
     def test_astronomer_commander_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled, namespacePools and clusterRoles are
-        disabled, we do not create any RBAC resources."""
+        """Test that if rbacEnabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -255,9 +247,8 @@ class TestAstronomerCommander:
         assert len(docs) == 0
 
     def test_astronomer_commander_rbac_multinamespace_mode_disabled(self, kube_version):
-        """Test that if Houston's Airflow chart sub-configuration has
-        multiNamespaceMode disabled, the rendered commander role doesn't have
-        permissions to manage Cluster-level RBAC resources."""
+        """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode disabled, the rendered commander role
+        doesn't have permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"houston": {"config": {"deployments": {"helm": {"airflow": {"multiNamespaceMode": False}}}}}}},
@@ -272,9 +263,8 @@ class TestAstronomerCommander:
             assert resource not in cluster_resources
 
     def test_astronomer_commander_rbac_multinamespace_mode_undefined(self, kube_version):
-        """Test that if Houston's configuration for Airflow chart is not
-        defined, the rendered commander role doesn't have permissions to manage
-        Cluster-level RBAC resources."""
+        """Test that if Houston's configuration for Airflow chart is not defined, the rendered commander role doesn't have
+        permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={},
@@ -289,9 +279,8 @@ class TestAstronomerCommander:
             assert resource not in cluster_resources
 
     def test_astronomer_commander_rbac_multinamespace_mode_enabled(self, kube_version):
-        """Test that if Houston's Airflow chart sub-configuration has
-        multiNamespaceMode enabled, the rendered commander role has permissions
-        to manage Cluster-level RBAC resources."""
+        """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode enabled, the rendered commander role has
+        permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"houston": {"config": {"deployments": {"helm": {"airflow": {"multiNamespaceMode": True}}}}}}},
@@ -306,8 +295,7 @@ class TestAstronomerCommander:
             assert resource in generated_resources
 
     def test_astronomer_commander_rbac_scc_enabled_ns_pools(self, kube_version):
-        """Test that if a sccEnabled and namespacePools are enabled, we add
-        Cluster permissions for scc resources."""
+        """Test that if a sccEnabled and namespacePools are enabled, we add Cluster permissions for scc resources."""
         namespaces = ["test"]
         docs = render_chart(
             kube_version=kube_version,
@@ -424,8 +412,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["roleRef"] == expected_cluster_role
 
     def test_astronomer_commander_disable_manage_clusterscopedresources_defaults(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/commander."""
+        """Test that helm renders a good deployment template for astronomer/commander."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -498,8 +485,7 @@ class TestAstronomerCommander:
         ],
     )
     def test_commander_elasticsearch_node_variants(self, kube_version, mode, custom_logging, expected_node):
-        """Test COMMANDER_ELASTICSEARCH_NODE is rendered correctly for different
-        plane modes and custom logging configurations."""
+        """Test COMMANDER_ELASTICSEARCH_NODE is rendered correctly for different plane modes and custom logging configurations."""
         values = {
             "astronomer": {
                 "images": {"commander": {"tag": "1.2.3"}},
