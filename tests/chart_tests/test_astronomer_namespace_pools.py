@@ -12,8 +12,7 @@ from tests.utils.chart import render_chart
 )
 class TestAstronomerNamespacePools:
     def test_astronomer_namespace_pools_rbac(self, kube_version):
-        """Test that helm renders astronomer/commander RBAC resources properly
-        when working with namespace pools."""
+        """Test that helm renders astronomer/commander RBAC resources properly when working with namespace pools."""
 
         # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
         # and ignore the cluster role configuration
@@ -70,8 +69,7 @@ class TestAstronomerNamespacePools:
             assert role_binding["subjects"][0] == expected_subject
 
     def test_astronomer_namespace_pools_namespaces(self, kube_version):
-        """Test that Namespaces resources are rendered properly when using
-        namespacePools feature."""
+        """Test that Namespaces resources are rendered properly when using namespacePools feature."""
         # If namespace Pools creation enabled -> create the namespaces
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
@@ -179,8 +177,7 @@ class TestAstronomerNamespacePools:
         assert commander_env.get("COMMANDER_MANUAL_NAMESPACE_NAMES") != "true"
 
     def test_astronomer_namespace_pools_houston_configmap(self, kube_version):
-        """Test that Houston production.yaml configuration parameters are
-        configured properly when using namespacePools feature."""
+        """Test that Houston production.yaml configuration parameters are configured properly when using namespacePools feature."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
@@ -253,22 +250,22 @@ class TestAstronomerNamespacePools:
 
         assert len(docs) == 0
 
-        def test_astronomer_namespace_pools_vector_configmap(self, kube_version):
-            """Test that when namespace Pools is enabled, vector runs in namespaces only."""
-            namespaces = ["my-namespace-1", "my-namespace-2"]
-            doc = render_chart(
-                kube_version=kube_version,
-                values={
-                    "global": {
-                        "features": {
-                            "namespacePools": {
-                                "enabled": True,
-                                "namespaces": {"create": True, "names": namespaces},
-                            }
-                        },
-                    }
-                },
-                show_only=["charts/vector/templates/vector-configmap.yaml"],
-            )[0]
-            expected_filter = f'includes(["{namespaces[0]}", "{namespaces[1]}"], .kubernetes.namespace_name)'
-            assert expected_filter in doc["data"]["vector-config.yaml"]
+    def test_astronomer_namespace_pools_vector_configmap(self, kube_version):
+        """Test that when namespace Pools is enabled, vector runs in namespaces only."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "features": {
+                        "namespacePools": {
+                            "enabled": True,
+                            "namespaces": {"create": True, "names": namespaces},
+                        }
+                    },
+                }
+            },
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )[0]
+        expected_filter = f'namespaces = ["{namespaces[0]}", "{namespaces[1]}"]'
+        assert expected_filter in doc["data"]["vector-config.yaml"]
