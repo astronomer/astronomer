@@ -202,6 +202,9 @@ class TestIngress:
         for expected_host in expected_hosts:
             assert expected_host in tls_hosts, f"Expected {expected_host} in TLS hosts for {mode} mode"
 
+        # install.example.com should never be in TLS #6611
+        assert "install.example.com" not in tls_hosts
+
         # Check nginx configuration snippet (should be present in control/unified, not needed in data)
         annotations = doc["metadata"]["annotations"]
         if expected_astro_ui:
