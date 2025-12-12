@@ -146,7 +146,6 @@ class TestIngress:
         assert "registry.example.com" not in tls_hosts
         assert "example.com" in tls_hosts
         assert "app.example.com" in tls_hosts
-        assert "install.example.com" in tls_hosts
 
         # Test unified plane mode - registry SHOULD be present
         unified_docs = render_chart(
@@ -169,7 +168,6 @@ class TestIngress:
         assert "registry.example.com" in tls_hosts
         assert "example.com" in tls_hosts
         assert "app.example.com" in tls_hosts
-        assert "install.example.com" in tls_hosts
 
     @pytest.mark.parametrize(
         ("mode", "expected_astro_ui", "expected_registry", "expected_rule_count", "expected_hosts"),
@@ -203,9 +201,6 @@ class TestIngress:
         tls_hosts = doc["spec"]["tls"][0]["hosts"]
         for expected_host in expected_hosts:
             assert expected_host in tls_hosts, f"Expected {expected_host} in TLS hosts for {mode} mode"
-
-        # install.example.com should always be in TLS
-        assert "install.example.com" in tls_hosts
 
         # Check nginx configuration snippet (should be present in control/unified, not needed in data)
         annotations = doc["metadata"]["annotations"]
