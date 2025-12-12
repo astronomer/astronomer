@@ -1,5 +1,6 @@
 import jmespath
 import pytest
+import yaml
 
 from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name, get_env_vars_dict
@@ -16,6 +17,22 @@ class TestAstronomerCommander:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
+
+    def test_commander_metadata_yaml(self, kube_version):
+        """Test that helm renders a good metadata.yaml template for astronomer/commander."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+
+        metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
+        assert metadata_file_contents == {}
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
