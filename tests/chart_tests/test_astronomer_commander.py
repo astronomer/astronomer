@@ -17,7 +17,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
 
-    def test_astronomer_commander_deployment_default(self, kube_version):
+    def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
         values = {
             "astronomer": {
@@ -77,7 +77,7 @@ class TestAstronomerCommander:
         assert "tmp-workspace" in volumes
         assert "emptyDir" in volumes["tmp-workspace"]
 
-    def test_astronomer_commander_deployment_unified_defaults(self, kube_version):
+    def test_commander_deployment_unified_defaults(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
         values = {
             "astronomer": {
@@ -121,7 +121,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert env_vars["COMMANDER_VERSION"] == "88.77.66"
 
-    def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
+    def test_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander when upgrade timeout is set."""
         docs = render_chart(
             kube_version=kube_version,
@@ -139,7 +139,7 @@ class TestAstronomerCommander:
         env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
-    def test_astronomer_commander_rbac_cluster_role_enabled(self, kube_version):
+    def test_commander_rbac_cluster_role_enabled(self, kube_version):
         """Test that if rbacEnabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
         ClusterRoleBinding resources."""
 
@@ -184,7 +184,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["roleRef"] == expected_role_ref
         assert cluster_role_binding["subjects"] == expected_subjects
 
-    def test_astronomer_commander_rbac_cluster_roles_disabled_rbac_enabled(self, kube_version):
+    def test_commander_rbac_cluster_roles_disabled_rbac_enabled(self, kube_version):
         """Test that if rbacEnabled set to true, but clusterRoles and
         namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
@@ -205,7 +205,7 @@ class TestAstronomerCommander:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_rbac_all_disabled(self, kube_version):
+    def test_commander_rbac_all_disabled(self, kube_version):
         """Test that if rbacEnabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
@@ -225,7 +225,7 @@ class TestAstronomerCommander:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_rbac_cluster_role_disabled(self, kube_version):
+    def test_commander_rbac_cluster_role_disabled(self, kube_version):
         """Test that if clusterRoles and namespacePools are disabled but
         rbacEnabled is enabled, helm does not render RBAC resources."""
         docs = render_chart(
@@ -246,7 +246,7 @@ class TestAstronomerCommander:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_rbac_multinamespace_mode_disabled(self, kube_version):
+    def test_commander_rbac_multinamespace_mode_disabled(self, kube_version):
         """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode disabled, the rendered commander role
         doesn't have permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
@@ -262,7 +262,7 @@ class TestAstronomerCommander:
         for resource in generated_resources:
             assert resource not in cluster_resources
 
-    def test_astronomer_commander_rbac_multinamespace_mode_undefined(self, kube_version):
+    def test_commander_rbac_multinamespace_mode_undefined(self, kube_version):
         """Test that if Houston's configuration for Airflow chart is not defined, the rendered commander role doesn't have
         permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
@@ -278,7 +278,7 @@ class TestAstronomerCommander:
         for resource in generated_resources:
             assert resource not in cluster_resources
 
-    def test_astronomer_commander_rbac_multinamespace_mode_enabled(self, kube_version):
+    def test_commander_rbac_multinamespace_mode_enabled(self, kube_version):
         """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode enabled, the rendered commander role has
         permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
@@ -294,7 +294,7 @@ class TestAstronomerCommander:
         for resource in cluster_resources:
             assert resource in generated_resources
 
-    def test_astronomer_commander_rbac_scc_enabled_namespace_pools(self, kube_version):
+    def test_commander_rbac_scc_enabled_namespace_pools(self, kube_version):
         """Test that if a sccEnabled and namespacePools are enabled, we add Cluster permissions for scc resources."""
         namespaces = ["test"]
         docs = render_chart(
@@ -368,7 +368,7 @@ class TestAstronomerCommander:
             assert role_binding["roleRef"] == expected_role
             assert role_binding["subjects"][0] == expected_subject
 
-    def test_astronomer_commander_rbac_scc_cluster_roles(self, kube_version):
+    def test_commander_rbac_scc_cluster_roles(self, kube_version):
         """Test that if scc is enabled but namespace pools is disabled, scc
         permissions are rendered once in ClusterRole and ClusterRoleBinding
         objects."""
@@ -411,7 +411,7 @@ class TestAstronomerCommander:
 
         assert cluster_role_binding["roleRef"] == expected_cluster_role
 
-    def test_astronomer_commander_disable_manage_clusterscopedresources_defaults(self, kube_version):
+    def test_commander_disable_manage_clusterscopedresources_defaults(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
         docs = render_chart(
             kube_version=kube_version,
@@ -428,7 +428,7 @@ class TestAstronomerCommander:
         env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
 
-    def test_astronomer_commander_operator_permissions(self, kube_version):
+    def test_commander_operator_permissions(self, kube_version):
         """Test template that helm renders when operator is enabled ."""
         doc = render_chart(
             kube_version=kube_version,
@@ -446,7 +446,7 @@ class TestAstronomerCommander:
         }
         assert any(rule == expected_rule for rule in doc["rules"])
 
-    def test_astronomer_commander_operator_permissions_disabled(self, kube_version):
+    def test_commander_operator_permissions_disabled(self, kube_version):
         """Test template that helm renders when operator is enabled ."""
         doc = render_chart(
             kube_version=kube_version,
@@ -521,7 +521,7 @@ class TestAstronomerCommander:
             ("control", True, False, []),
         ],
     )
-    def test_astronomer_commander_auth_sidecar_conditional_rendering(
+    def test_commander_auth_sidecar_conditional_rendering(
         self, kube_version, plane_mode, auth_sidecar_enabled, should_render_deployment, expected_containers
     ):
         """Test that auth-sidecar is only included in data plane mode when enabled, and deployment only renders for data/unified modes."""
