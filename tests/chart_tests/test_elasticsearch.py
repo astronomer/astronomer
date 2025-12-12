@@ -107,6 +107,7 @@ class TestElasticSearch:
             {"name": "tmp", "mountPath": "/tmp"},
             {"name": "var-cache-nginx", "mountPath": "/var/cache/nginx"},
             {"name": "nginx-config-volume", "mountPath": "/etc/nginx"},
+            {"name": "var-lib", "mountPath": "/var/lib/nginx/tmp"},
         ]
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):

@@ -176,8 +176,8 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
-            - name: tmp
-              mountPath: /tmp
+            - name: nginx-write-dir
+              mountPath: /var/lib/nginx/tmp
             - mountPath: /etc/nginx/conf.d/
               name: alertmanager-sidecar-conf
         {{- end }}
@@ -185,7 +185,7 @@ spec:
         - name: etc-ssl-certs
           emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
-        - name: tmp
+        - name: nginx-write-dir
           emptyDir: {}
         - name: alertmanager-sidecar-conf
           configMap:

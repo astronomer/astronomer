@@ -61,6 +61,8 @@ spec:
               mountPath: /var/cache/nginx
             - name: nginx-config-volume
               mountPath: /etc/nginx
+            - name: var-lib
+              mountPath: /var/lib/nginx/tmp
           ports:
             - name: http
               containerPort: {{ .Values.common.ports.http }}
@@ -72,6 +74,8 @@ spec:
           {{- end }}
       volumes:
         - name: tmp
+          emptyDir: {}
+        - name: var-lib
           emptyDir: {}
         - name: var-cache-nginx
           emptyDir: {}

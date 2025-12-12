@@ -98,6 +98,9 @@ spec:
           volumeMounts:
           - name: tmp
             mountPath: /tmp
+          - name: var-cache-nginx
+            mountPath: /var/run
+
 {{- if .Values.astroUI.volumeMounts }}
 {{- tpl (toYaml .Values.astroUI.volumeMounts) $ | nindent 12 }}
 {{- end }}
@@ -106,6 +109,8 @@ spec:
 {{- end }}
       volumes:
         - name: tmp
+          emptyDir: {}
+        - name: var-cache-nginx
           emptyDir: {}
 {{- if .Values.astroUI.extraVolumes }}
 {{- tpl (toYaml .Values.astroUI.extraVolumes) $ | nindent 8 }}
