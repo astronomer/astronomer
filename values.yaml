@@ -131,6 +131,11 @@ global:
 
   disableManageClusterScopedResources: false
 
+  manualConnectionStrings:
+    enabled: false
+
+  upsertExtraIniAllowed: false
+
   enablePerHostIngress: false
 
   dagOnlyDeployment:

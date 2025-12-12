@@ -79,6 +79,9 @@ data:
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
       namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
+      manualConnectionStrings:
+        enabled: {{ default false .Values.global.manualConnectionStrings.enabled }}
+      upsertExtraIniAllowed: {{ default false .Values.global.upsertExtraIniAllowed }}
       # Airflow chart settings
       # Static helm configurations for this chart are found below.
       chart:
