@@ -6,6 +6,7 @@ from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_running_containers
 container_ignore_list = [
     "kube-state",
     "houston",
+    "astro-ui"
 ]
 
 
