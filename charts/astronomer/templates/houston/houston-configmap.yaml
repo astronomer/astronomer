@@ -179,13 +179,7 @@ data:
         service: {{ $kerberos.service | quote }}
         serverSpnOverride: {{ $kerberos.serverSpnOverride | toJson }}
         principalUser: {{ $kerberos.principalUser | quote }}
-        {{- if $kerberos.databaseHost }}
-        metadataHost: {{ $kerberos.databaseHost | quote }}
-        resultBackendHost: {{ $kerberos.databaseHost | quote }}
-        {{- else }}
-        metadataHost: ~
-        resultBackendHost: ~
-        {{- end }}
+        databaseHost: {{ $kerberos.databaseHost | toJson }}
         port: {{ $kerberos.port }}
       {{- end }}
 
