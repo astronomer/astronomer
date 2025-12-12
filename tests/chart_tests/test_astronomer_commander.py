@@ -294,7 +294,7 @@ class TestAstronomerCommander:
         for resource in cluster_resources:
             assert resource in generated_resources
 
-    def test_astronomer_commander_rbac_scc_enabled_ns_pools(self, kube_version):
+    def test_astronomer_commander_rbac_scc_enabled_namespace_pools(self, kube_version):
         """Test that if a sccEnabled and namespacePools are enabled, we add Cluster permissions for scc resources."""
         namespaces = ["test"]
         docs = render_chart(
