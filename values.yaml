@@ -1,7 +1,6 @@
 ##################################
 ## Astronomer global configuration
 ##################################
-forceIncompatibleKubernetes: true
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
