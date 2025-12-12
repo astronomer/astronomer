@@ -65,22 +65,29 @@ class TestAstronomerNamespacePools:
             assert doc["roleRef"] == expected_role
             assert doc["subjects"][0] == expected_subject
 
-    def test_astronomer_namespace_pools_namespaces(self, kube_version):
+    @pytest.mark.parametrize(
+        "namespace_labels", [{}, {"foo": "FOO", "bar": "BAR"}], ids=["empty-namespaceLabels", "with-namespaceLabels"]
+    )
+    def test_astronomer_namespace_pools_namespaces(self, kube_version, namespace_labels):
         """Test that Namespaces resources are rendered properly when using namespacePools feature."""
         # If namespace Pools creation enabled -> create the namespaces
         namespaces = ["my-namespace-1", "my-namespace-2"]
+        values = {
+            "global": {
+                "features": {
+                    "namespacePools": {
+                        "enabled": True,
+                        "namespaces": {"create": True, "names": namespaces},
+                    }
+                },
+            }
+        }
+        if namespace_labels:
+            values["global"]["namespaceLabels"] = namespace_labels
+
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "features": {
-                        "namespacePools": {
-                            "enabled": True,
-                            "namespaces": {"create": True, "names": namespaces},
-                        }
-                    }
-                }
-            },
+            values=values,
             show_only=["charts/astronomer/templates/namespaces.yaml"],
         )
 
@@ -88,6 +95,10 @@ class TestAstronomerNamespacePools:
         for i, doc in enumerate(docs):
             assert doc["metadata"]["name"] == namespaces[i]
             assert doc["kind"] == "Namespace"
+            if namespace_labels:
+                assert doc["metadata"]["labels"] == namespace_labels
+            else:
+                assert not doc["metadata"].get("labels")
 
         # If namespace Pools disabled -> should not create the namespaces
         docs = render_chart(
