@@ -475,7 +475,7 @@ class TestAstronomerCommander:
             "resources": ["airflows"],
             "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
         }
-        assert not any(rule == expected_rule for rule in doc["rules"])
+        assert all(rule != expected_rule for rule in doc["rules"])
 
     @pytest.mark.parametrize(
         "mode,custom_logging,expected_node",
