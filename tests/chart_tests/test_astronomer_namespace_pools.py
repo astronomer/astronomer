@@ -41,17 +41,14 @@ class TestAstronomerNamespacePools:
 
         expected_namespaces = [*namespaces, "default"]
 
-        # assertions on Role objects
-        for i in range(3):
-            role = docs[i]
+        roles = docs[:3]
+        for i, doc in enumerate(roles):
+            assert doc["kind"] == "Role"
+            assert len(doc["rules"]) > 0
+            assert doc["metadata"]["namespace"] == expected_namespaces[i]
 
-            assert role["kind"] == "Role"
-            assert len(role["rules"]) > 0
-            assert role["metadata"]["namespace"] == expected_namespaces[i]
-
-        for i in range(3, 6):
-            role_binding = docs[i]
-
+        role_bindings = docs[3:]
+        for i, doc in enumerate(role_bindings):
             expected_subject = {
                 "kind": "ServiceAccount",
                 "name": "release-name-commander",
@@ -63,10 +60,10 @@ class TestAstronomerNamespacePools:
                 "name": "release-name-commander",
             }
 
-            assert role_binding["kind"] == "RoleBinding"
-            assert role_binding["metadata"]["namespace"] == expected_namespaces[i - 3]
-            assert role_binding["roleRef"] == expected_role
-            assert role_binding["subjects"][0] == expected_subject
+            assert doc["kind"] == "RoleBinding"
+            assert doc["metadata"]["namespace"] == expected_namespaces[i]
+            assert doc["roleRef"] == expected_role
+            assert doc["subjects"][0] == expected_subject
 
     def test_astronomer_namespace_pools_namespaces(self, kube_version):
         """Test that Namespaces resources are rendered properly when using namespacePools feature."""
@@ -88,10 +85,9 @@ class TestAstronomerNamespacePools:
         )
 
         assert len(docs) == 2
-        for i in range(2):
-            namespace = docs[i]
-            assert namespace["metadata"]["name"] == namespaces[i]
-            assert namespace["kind"] == "Namespace"
+        for i, doc in enumerate(docs):
+            assert doc["metadata"]["name"] == namespaces[i]
+            assert doc["kind"] == "Namespace"
 
         # If namespace Pools disabled -> should not create the namespaces
         docs = render_chart(
