@@ -40,7 +40,6 @@ spec:
       {{- if $planeDataMode }}
         - registry.{{ .Values.global.baseDomain }}
       {{- end }}
-        - install.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
 {{- if $planeControlMode }}
