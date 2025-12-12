@@ -38,9 +38,8 @@ spec:
         - app.{{ .Values.global.baseDomain }}
       {{- end }}
       {{- if $planeDataMode }}
-        - registry.{{ .Values.global.baseDomain }}
+        - {{ include "registry.ingressURL" . }}
       {{- end }}
-        - install.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
 {{- if $planeControlMode }}
@@ -66,7 +65,7 @@ spec:
                 name: astro-ui-http
 {{- end }}
 {{- if $planeDataMode }}
-  - host: registry.{{ .Values.global.baseDomain }}
+  - host: {{ include "registry.ingressURL" . }}
     http:
       paths:
         - path: /

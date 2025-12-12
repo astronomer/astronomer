@@ -49,7 +49,6 @@ spec:
         - app.example.com
         - houston.example.com
         - registry.example.com
-        - install.example.com
   rules:
   - host: example.com
     http:
