@@ -3,7 +3,7 @@
 ########################
 {{- if and .Values.global.baseDomain ( not .Values.global.enablePerHostIngress ) }}
 {{- $planeDataMode := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
-{{- $planeControlMode := (eq .Values.global.plane.mode "control") }}
+{{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
