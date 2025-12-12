@@ -80,7 +80,7 @@ spec:
 {{- end }}
           volumeMounts:
             - name: nginx-config-volume
-              mountPath: /usr/local/openresty/nginx/conf/nginx.conf
+              mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
             - name: nginx-env-volume
               mountPath: /usr/local/openresty/nginx/conf/setenv.lua
@@ -102,6 +102,8 @@ spec:
             - name: tmp
               subPath: openresty/nginx/scgi_temp
               mountPath: /usr/local/openresty/nginx/scgi_temp
+            - name: var-run
+              mountPath: /var/run/openresty
 
             {{- if .Values.global.customLogging.trustCaCerts -}}
             {{ $secretName := .Values.global.customLogging.trustCaCerts }}
@@ -165,6 +167,8 @@ spec:
       {{- end }}
       volumes:
         - name: tmp
+          emptyDir: {}
+        - name: var-run
           emptyDir: {}
         - name: nginx-config-volume
           configMap:

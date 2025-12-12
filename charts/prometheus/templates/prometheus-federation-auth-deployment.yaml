@@ -63,8 +63,10 @@ spec:
               key: token
         volumeMounts:
         - name: config
-          mountPath: /usr/local/openresty/nginx/conf/nginx.conf
+          mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
+        - name: var-run
+          mountPath: /var/run/openresty
         - name: tmp
           mountPath: /tmp
         {{- if .Values.federation.readinessProbe }}
@@ -79,5 +81,7 @@ spec:
         configMap:
           name: {{ template "prometheus.fullname" . }}-federation-auth-config
       - name: tmp
+        emptyDir: {}
+      - name: var-run
         emptyDir: {}
 {{- end }}
