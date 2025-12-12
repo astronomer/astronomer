@@ -38,7 +38,7 @@ spec:
         - app.{{ .Values.global.baseDomain }}
       {{- end }}
       {{- if $planeDataMode }}
-        - {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+        - {{ include "registry.ingressURL" . }}
       {{- end }}
   {{- end }}
   rules:
@@ -65,7 +65,7 @@ spec:
                 name: astro-ui-http
 {{- end }}
 {{- if $planeDataMode }}
-  - host: {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+  - host: {{ include "registry.ingressURL" . }}
     http:
       paths:
         - path: /
