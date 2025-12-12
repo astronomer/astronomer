@@ -8,12 +8,20 @@
 
 
 {{ define "pgbouncer.image" -}}
+{{- $kerbRepo := .Values.kerberosImage.repository -}}
+{{- $kerbTag := .Values.kerberosImage.tag -}}
+{{- $repo := .Values.image.repository -}}
+{{- $tag := .Values.image.tag -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-pgbouncer-krb:{{ .Values.image.tag }}
+{{- $kerbRepo = printf "%s/ap-pgbouncer-krb" .Values.global.privateRegistry.repository -}}
+{{- $repo = printf "%s/ap-pgbouncer" .Values.global.privateRegistry.repository -}}
+{{- end -}}
+{{- if .Values.global.kerberos.enabled -}}
+{{- printf "%s:%s" $kerbRepo $kerbTag -}}
 {{- else -}}
-{{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
-{{- end }}
-{{- end }}
+{{- printf "%s:%s" $repo $tag -}}
+{{- end -}}
+{{- end -}}
 
 {{ define "pgbouncer_host" -}}
 {{ printf "%s-pgbouncer" .Release.Name }}
@@ -42,17 +50,29 @@
 
 {{- define "pgbouncer_environment" }}
 - name: DB_USER
-  value: postgres
+  valueFrom:
+    secretKeyRef:
+      name: {{ default "astronomer-db" .Values.global.pgbouncer.credentialsSecret.name }}
+      key: {{ default "username" .Values.global.pgbouncer.credentialsSecret.usernameKey }}
+      optional: false
 - name: DB_PASSWORD
-  value: postgres
+  valueFrom:
+    secretKeyRef:
+      name: {{ default "astronomer-db" .Values.global.pgbouncer.credentialsSecret.name }}
+      key: {{ default "password" .Values.global.pgbouncer.credentialsSecret.passwordKey }}
+      optional: false
 - name: DB_HOST
-  value: "astronomer-postgresql.astronomer.svc.cluster.local"
+  value: {{ default "astronomer-postgresql.astronomer.svc.cluster.local" .Values.global.pgbouncer.host | quote }}
 - name: DB_PORT
-  value: "5432"
+  value: {{ default "5432" (toString .Values.global.pgbouncer.servicePort) | quote }}
 - name: POOL_MODE
   value: session
 - name: ADMIN_USERS
-  value: postgres
+  valueFrom:
+    secretKeyRef:
+      name: {{ default "astronomer-db" .Values.global.pgbouncer.credentialsSecret.name }}
+      key: {{ default "username" .Values.global.pgbouncer.credentialsSecret.usernameKey }}
+      optional: false
 - name: AUTH_TYPE
   value: plain
 - name: LOG_DISCONNECTIONS

@@ -55,7 +55,7 @@ spec:
       serviceAccountName: {{ template "pgbouncer.serviceAccountName" . }}
       containers:
         - name: pgbouncer
-          image: {{ template "pgbouncer.image" . }}
+          image: {{ include "pgbouncer.image" . | trim }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
@@ -91,4 +91,31 @@ spec:
               exec:
                 # Allow existing queries clients to complete within 120 seconds
                 command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
+          volumeMounts:
+            - name: pgbouncer-config
+              mountPath: /etc/pgbouncer
+              readOnly: true
+            {{- if .Values.global.kerberos.enabled }}
+            - name: krb
+              mountPath: /krb
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: pgbouncer-config
+          secret:
+            secretName: {{ template "pgbouncer_config_secret" . }}
+            items:
+              - key: pgbouncer.ini
+                path: pgbouncer.ini
+              - key: users.txt
+                path: users.txt
+        {{- if .Values.global.kerberos.enabled }}
+        - name: krb
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
 {{- end }}

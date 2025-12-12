@@ -7,6 +7,8 @@ global:
   customLogging:
     awsSecretName: dummy
     enabled: true
+  kerberos:
+    enabled: true
   loggingSidecar:
     enabled: true
   pgbouncer:

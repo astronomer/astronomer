@@ -344,16 +344,24 @@ global:
     enabled: false
     gssSupport: true
     krb5ConfSecretName: krb5.conf
+    host: astronomer-postgresql.astronomer.svc.cluster.local
     # we use it only for in cluster postgresql
     # so we can override astronomer-bootstrap secret
     username: postgres
     password: postgres
     servicePort: "5432"
+    credentialsSecret:
+      name: astronomer-db
+      usernameKey: username
+      passwordKey: password
     extraEnv: []
       # some: thing
       # another: thing
     extraLabels: []
       # do-funky-injection: maybe
+
+kerberos:
+  enabled: false
 
 #################################
 ## Default tagged groups enabled

@@ -6,6 +6,15 @@ image:
   tag: 1.17.0-22
   pullPolicy: IfNotPresent
 
+kerberosImage:
+  repository: quay.io/astronomer/ap-pgbouncer-krb
+  tag: 1.17.0-22
+
+credentialsSecret:
+  name: astronomer-db
+  usernameKey: username
+  passwordKey: password
+
 securityContext:
   runAsNonRoot: true
 

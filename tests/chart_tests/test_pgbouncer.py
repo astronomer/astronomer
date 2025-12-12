@@ -12,7 +12,7 @@ class TestPGBouncerDeployment:
     def test_pgbouncer_deployment_default_resources(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"pgbouncer": {"enabled": True}}},
+            values={"global": {"pgbouncer": {"enabled": True}, "kerberos": {"enabled": False}}},
             show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
         )
 
@@ -37,7 +37,8 @@ class TestPGBouncerDeployment:
                 "global": {
                     "pgbouncer": {
                         "enabled": True,
-                    }
+                    },
+                    "kerberos": {"enabled": False}
                 },
                 "pgbouncer": {"env": {"foo_key": "foo_value", "bar_key": "bar_value"}},
             },
@@ -56,7 +57,8 @@ class TestPGBouncerDeployment:
                     "pgbouncer": {
                         "enabled": True,
                         "extraLabels": {"test_label": "test_label1"},
-                    }
+                    },
+                    "kerberos": {"enabled": False}
                 },
             },
             show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
@@ -78,6 +80,7 @@ class TestPGBouncerDeployment:
                         "enabled": True,
                         "repository": private_registry,
                     },
+                    "kerberos": {"enabled": False},
                     "pgbouncer": {"enabled": True},
                 }
             },
@@ -95,3 +98,79 @@ class TestPGBouncerDeployment:
             assert container["image"].startswith(private_registry), (
                 f"Container named '{name}' does not use registry '{private_registry}': {container}"
             )
+
+    def test_kerberos_image_switch(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+            values={
+                "global": {
+                    "kerberos": {"enabled": True},
+                    "pgbouncer": {"enabled": True},
+                },
+                "pgbouncer": {
+                    "image": {"repository": "quay.io/astronomer/ap-pgbouncer", "tag": "1.24.1-2"},
+                    "kerberosImage": {"repository": "quay.io/astronomer/ap-pgbouncer-krb", "tag": "1.17.0-22"},
+                },
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+        assert "ap-pgbouncer-krb" in c_by_name["pgbouncer"]["image"]
+
+    def test_env_from_credentials_secret(self, kube_version):
+        secret_name = "astronomer-db"
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+            values={
+                "global": {
+                    "pgbouncer": {
+                        "enabled": True,
+                        "credentialsSecret": {
+                            "name": secret_name,
+                            "usernameKey": "user",
+                            "passwordKey": "pass",
+                        },
+                    },
+                    "kerberos": {"enabled": False},
+                }
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        env = get_containers_by_name(doc)["pgbouncer"]["env"]
+        db_user = next(item for item in env if item["name"] == "DB_USER")
+        db_password = next(item for item in env if item["name"] == "DB_PASSWORD")
+
+        assert db_user["valueFrom"]["secretKeyRef"]["name"] == secret_name
+        assert db_user["valueFrom"]["secretKeyRef"]["key"] == "user"
+        assert db_password["valueFrom"]["secretKeyRef"]["key"] == "pass"
+
+    def test_kerberos_volume_mount(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+            values={
+                "global": {
+                    "pgbouncer": {"enabled": True},
+                    "kerberos": {"enabled": True},
+                }
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c = get_containers_by_name(doc)["pgbouncer"]
+        mounts = c["volumeMounts"]
+        assert {"name": "krb", "mountPath": "/krb"} in mounts
+
+        vols = doc["spec"]["template"]["spec"]["volumes"]
+        krb_vol = next(v for v in vols if v["name"] == "krb")
+        assert krb_vol.get("emptyDir") == {}
