@@ -297,7 +297,7 @@ def test_nginx_deployment_defaults(plane_mode):
     expected_security_context = {
         "runAsUser": 101,
         "runAsNonRoot": True,
-        "capabilities": {"drop": ["ALL"]},
+        "capabilities": {"add": ["NET_BIND_SERVICE"], "drop": ["ALL"]},
         "allowPrivilegeEscalation": False,
         "readOnlyRootFilesystem": True,
     }

@@ -70,7 +70,6 @@ spec:
       containers:
         - name: nginx
           securityContext:
-            readOnlyRootFilesystem: true
             {{ toYaml .Values.securityContext| nindent 12 }}
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
