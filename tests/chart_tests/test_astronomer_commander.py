@@ -32,7 +32,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "v1"
 
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
-        assert metadata_file_contents == {}
+        assert metadata_file_contents == {"namespaceLabels": {}}
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""

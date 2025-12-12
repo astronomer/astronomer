@@ -15,5 +15,5 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   metadata.yaml: |-
-    {{- .Values.global.namespaceLabels | toYaml | nindent 4 }}
+    namespaceLabels: {{- .Values.global.namespaceLabels | toYaml | nindent 6 }}
 {{- end }}

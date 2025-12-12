@@ -68,7 +68,7 @@ class TestAstronomerNamespacePools:
     @pytest.mark.parametrize(
         "namespace_labels", [{}, {"foo": "FOO", "bar": "BAR"}], ids=["empty-namespaceLabels", "with-namespaceLabels"]
     )
-    def test_namespace_pools_enabled(self, kube_version, namespace_labels):
+    def test_namespaces_namespace_pools_enabled_create_true(self, kube_version, namespace_labels):
         """Test that namespaces resources are rendered properly when namespacePools feature is enabled."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         values = {
@@ -87,19 +87,25 @@ class TestAstronomerNamespacePools:
         docs = render_chart(
             kube_version=kube_version,
             values=values,
-            show_only=["charts/astronomer/templates/namespaces.yaml"],
+            show_only=[
+                "charts/astronomer/templates/namespaces.yaml",
+                "charts/astronomer/templates/commander/commander-metadata.yaml",
+            ],
         )
 
-        assert len(docs) == 2
-        for i, doc in enumerate(docs):
+        assert len(docs) == 3
+        commander_metadata_yaml = yaml.safe_load(docs[2]["data"]["metadata.yaml"])
+        for i, doc in enumerate(docs[:2]):
             assert doc["metadata"]["name"] == namespaces[i]
             assert doc["kind"] == "Namespace"
             if namespace_labels:
                 assert doc["metadata"]["labels"] == namespace_labels
+                assert commander_metadata_yaml["namespaceLabels"] == namespace_labels
             else:
                 assert not doc["metadata"].get("labels")
+                assert commander_metadata_yaml["namespaceLabels"] == {}
 
-    def test_namespace_pools_disabled(self, kube_version):
+    def test_namespaces_namespace_pools_disabled_create_true(self, kube_version):
         """Test that no namespaces resources are rendered when namespacePools feature is disabled."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
@@ -114,11 +120,16 @@ class TestAstronomerNamespacePools:
                     }
                 }
             },
-            show_only=["charts/astronomer/templates/namespaces.yaml"],
+            show_only=[
+                "charts/astronomer/templates/namespaces.yaml",
+                "charts/astronomer/templates/commander/commander-metadata.yaml",
+            ],
         )
-        assert len(docs) == 0
+        assert len(docs) == 1
+        commander_metadata_yaml = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert commander_metadata_yaml["namespaceLabels"] == {}
 
-    def test_namespace_pools_enabled_create_false(self, kube_version):
+    def test_namespaces_namespace_pools_enabled_create_false(self, kube_version):
         """Test that no namespaces resources are rendered when namespacePools feature is enabled but namespaces creation is disabled."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
@@ -133,9 +144,14 @@ class TestAstronomerNamespacePools:
                     }
                 }
             },
-            show_only=["charts/astronomer/templates/namespaces.yaml"],
+            show_only=[
+                "charts/astronomer/templates/namespaces.yaml",
+                "charts/astronomer/templates/commander/commander-metadata.yaml",
+            ],
         )
-        assert len(docs) == 0
+        assert len(docs) == 1
+        commander_metadata_yaml = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert commander_metadata_yaml["namespaceLabels"] == {}
 
     def test_commander_deployment_namespace_pools_enabled_create_false(self, kube_version):
         """Test that commander deployment is configured properly when enabling namespace pools."""
