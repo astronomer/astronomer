@@ -183,7 +183,7 @@ class TestIngress:
         """Test ingress configuration for all plane modes"""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": mode}}},
+            values={"global": {"plane": {"mode": mode, "domainPrefix": "dp01"}}},
             show_only=["charts/astronomer/templates/ingress.yaml"],
         )
 
