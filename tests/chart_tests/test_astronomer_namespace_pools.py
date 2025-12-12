@@ -11,7 +11,7 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestAstronomerNamespacePools:
-    def test_astronomer_namespace_pools_rbac(self, kube_version):
+    def test_namespace_pools_rbac(self, kube_version):
         """Test that helm renders astronomer/commander RBAC resources properly when working with namespace pools."""
 
         # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
@@ -68,9 +68,8 @@ class TestAstronomerNamespacePools:
     @pytest.mark.parametrize(
         "namespace_labels", [{}, {"foo": "FOO", "bar": "BAR"}], ids=["empty-namespaceLabels", "with-namespaceLabels"]
     )
-    def test_astronomer_namespace_pools_namespaces(self, kube_version, namespace_labels):
-        """Test that Namespaces resources are rendered properly when using namespacePools feature."""
-        # If namespace Pools creation enabled -> create the namespaces
+    def test_namespace_pools_enabled(self, kube_version, namespace_labels):
+        """Test that namespaces resources are rendered properly when namespacePools feature is enabled."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         values = {
             "global": {
@@ -100,7 +99,9 @@ class TestAstronomerNamespacePools:
             else:
                 assert not doc["metadata"].get("labels")
 
-        # If namespace Pools disabled -> should not create the namespaces
+    def test_namespace_pools_disabled(self, kube_version):
+        """Test that no namespaces resources are rendered when namespacePools feature is disabled."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -117,7 +118,9 @@ class TestAstronomerNamespacePools:
         )
         assert len(docs) == 0
 
-        # If namespace pools enabled but namespaces creation disabled -> should not create the namespaces
+    def test_namespace_pools_enabled_create_false(self, kube_version):
+        """Test that no namespaces resources are rendered when namespacePools feature is enabled but namespaces creation is disabled."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -134,7 +137,7 @@ class TestAstronomerNamespacePools:
         )
         assert len(docs) == 0
 
-    def test_astronomer_namespace_pools_commander_deployment_configuration(self, kube_version):
+    def test_commander_deployment_namespace_pools_enabled_create_false(self, kube_version):
         """Test that commander deployment is configured properly when enabling namespace pools."""
 
         namespaces = ["my-namespace-1", "my-namespace-2"]
@@ -160,7 +163,9 @@ class TestAstronomerNamespacePools:
         commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
         assert commander_env.get("COMMANDER_MANUAL_NAMESPACE_NAMES") == "true"
 
-        # If namespacePools is disabled, we should not add the Manual Namespace Names environment variable in commander
+    def test_commander_deployment_namespace_pools_disabled_create_true(self, kube_version):
+        """Test that commander deployment is configured properly when disabling namespace pools."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -183,8 +188,8 @@ class TestAstronomerNamespacePools:
         commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
         assert commander_env.get("COMMANDER_MANUAL_NAMESPACE_NAMES") != "true"
 
-    def test_astronomer_namespace_pools_houston_configmap(self, kube_version):
-        """Test that Houston production.yaml configuration parameters are configured properly when using namespacePools feature."""
+    def test_houston_configmap_namespace_pools_enabled_create_true(self, kube_version):
+        """Test that Houston production.yaml configuration parameters are configured properly when namespacePools is enabled."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
@@ -208,7 +213,9 @@ class TestAstronomerNamespacePools:
         assert deployments_config["deployments"]["preCreatedNamespaces"] == [{"name": namespace} for namespace in namespaces]
         assert "disableManageClusterScopedResources" not in deployments_config["deployments"]
 
-        # test configuration when namespacePools is disabled -> should not add configuration parameters
+    def test_houston_configmap_namespace_pools_disabled_create_true(self, kube_version):
+        """Test that Houston production.yaml configuration parameters are configured properly when namespacePools is disabled."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -230,7 +237,7 @@ class TestAstronomerNamespacePools:
         assert "manualNamespaceNames" not in deployments_config["deployments"]
         assert "preCreatedNamespaces" not in deployments_config["deployments"]
 
-    def test_astronomer_namespace_pools_create_rbac_mode_is_disabled(self, kube_version):
+    def test_namespace_pools_enabled_create_rbac_false(self, kube_version):
         """Test that commander deployment rbac is generating roles and role binding on namespace pools mode."""
 
         docs = render_chart(
@@ -257,7 +264,7 @@ class TestAstronomerNamespacePools:
 
         assert len(docs) == 0
 
-    def test_astronomer_namespace_pools_vector_configmap(self, kube_version):
+    def test_namespace_pools_vector_configmap(self, kube_version):
         """Test that when namespace Pools is enabled, vector runs in namespaces only."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
