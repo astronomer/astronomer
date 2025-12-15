@@ -2,7 +2,7 @@ import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -12,8 +12,7 @@ from tests.utils.chart import render_chart
 )
 class TestAstronomerNamespacePools:
     def test_astronomer_namespace_pools_rbac(self, kube_version):
-        """Test that helm renders astronomer/commander RBAC resources properly
-        when working with namespace pools."""
+        """Test that helm renders astronomer/commander RBAC resources properly when working with namespace pools."""
 
         # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
         # and ignore the cluster role configuration
@@ -43,7 +42,7 @@ class TestAstronomerNamespacePools:
         expected_namespaces = [*namespaces, "default"]
 
         # assertions on Role objects
-        for i in range(0, 3):
+        for i in range(3):
             role = docs[i]
 
             assert role["kind"] == "Role"
@@ -70,8 +69,7 @@ class TestAstronomerNamespacePools:
             assert role_binding["subjects"][0] == expected_subject
 
     def test_astronomer_namespace_pools_namespaces(self, kube_version):
-        """Test that Namespaces resources are rendered properly when using
-        namespacePools feature."""
+        """Test that Namespaces resources are rendered properly when using namespacePools feature."""
         # If namespace Pools creation enabled -> create the namespaces
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
@@ -90,7 +88,7 @@ class TestAstronomerNamespacePools:
         )
 
         assert len(docs) == 2
-        for i in range(0, 2):
+        for i in range(2):
             namespace = docs[i]
             assert namespace["metadata"]["name"] == namespaces[i]
             assert namespace["kind"] == "Namespace"
@@ -130,8 +128,7 @@ class TestAstronomerNamespacePools:
         assert len(docs) == 0
 
     def test_astronomer_namespace_pools_commander_deployment_configuration(self, kube_version):
-        """Test that commander deployment is configured properly when enabling
-        namespace pools."""
+        """Test that commander deployment is configured properly when enabling namespace pools."""
 
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
@@ -153,12 +150,8 @@ class TestAstronomerNamespacePools:
         # is configured properly
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
 
-        manual_ns_env_found = False
-        for env in c_by_name["commander"]["env"]:
-            if env["name"] == "COMMANDER_MANUAL_NAMESPACE_NAMES" and env["value"] == "true":
-                manual_ns_env_found = True
-
-        assert manual_ns_env_found
+        commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert commander_env.get("COMMANDER_MANUAL_NAMESPACE_NAMES") == "true"
 
         # If namespacePools is disabled, we should not add the Manual Namespace Names environment variable in commander
         doc = render_chart(
@@ -180,16 +173,11 @@ class TestAstronomerNamespacePools:
         # is configured properly
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
 
-        manual_ns_env_found = False
-        for env in c_by_name["commander"]["env"]:
-            if env["name"] == "COMMANDER_MANUAL_NAMESPACE_NAMES" and env["value"] == "true":
-                manual_ns_env_found = True
-
-        assert not manual_ns_env_found
+        commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert commander_env.get("COMMANDER_MANUAL_NAMESPACE_NAMES") != "true"
 
     def test_astronomer_namespace_pools_houston_configmap(self, kube_version):
-        """Test that Houston production.yaml configuration parameters are
-        configured properly when using namespacePools feature."""
+        """Test that Houston production.yaml configuration parameters are configured properly when using namespacePools feature."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
@@ -262,22 +250,22 @@ class TestAstronomerNamespacePools:
 
         assert len(docs) == 0
 
-        def test_astronomer_namespace_pools_vector_configmap(self, kube_version):
-            """Test that when namespace Pools is enabled, vector runs in namespaces only."""
-            namespaces = ["my-namespace-1", "my-namespace-2"]
-            doc = render_chart(
-                kube_version=kube_version,
-                values={
-                    "global": {
-                        "features": {
-                            "namespacePools": {
-                                "enabled": True,
-                                "namespaces": {"create": True, "names": namespaces},
-                            }
-                        },
-                    }
-                },
-                show_only=["charts/vector/templates/vector-configmap.yaml"],
-            )[0]
-            expected_filter = f'includes(["{namespaces[0]}", "{namespaces[1]}"], .kubernetes.namespace_name)'
-            assert expected_filter in doc["data"]["vector-config.yaml"]
+    def test_astronomer_namespace_pools_vector_configmap(self, kube_version):
+        """Test that when namespace Pools is enabled, vector runs in namespaces only."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "features": {
+                        "namespacePools": {
+                            "enabled": True,
+                            "namespaces": {"create": True, "names": namespaces},
+                        }
+                    },
+                }
+            },
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )[0]
+        expected_filter = f'namespaces = ["{namespaces[0]}", "{namespaces[1]}"]'
+        assert expected_filter in doc["data"]["vector-config.yaml"]

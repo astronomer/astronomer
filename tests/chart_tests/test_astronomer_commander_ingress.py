@@ -9,7 +9,7 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestAstronomerCommanderIngress:
-    def test_astronomer_commander_grpc_ingress_default(self, kube_version):
+    def test_commander_grpc_ingress_default(self, kube_version):
         """Test that helm renders a correct GRPC ingress template for astronomer/commander in data plane mode."""
         docs = render_chart(
             kube_version=kube_version,
@@ -30,7 +30,7 @@ class TestAstronomerCommanderIngress:
         assert annotations["nginx.ingress.kubernetes.io/custom-http-errors"] == "404"
         assert annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] == "16k"
 
-    def test_astronomer_commander_grpc_ingress_unified_mode(self, kube_version):
+    def test_commander_grpc_ingress_unified_mode(self, kube_version):
         """Test that helm renders GRPC ingress template for unified plane mode."""
         docs = render_chart(
             kube_version=kube_version,
@@ -39,7 +39,7 @@ class TestAstronomerCommanderIngress:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_grpc_ingress_control_plane_mode(self, kube_version):
+    def test_commander_grpc_ingress_control_plane_mode(self, kube_version):
         """Test that helm does not render GRPC ingress template for control plane mode."""
         docs = render_chart(
             kube_version=kube_version,
@@ -48,7 +48,7 @@ class TestAstronomerCommanderIngress:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_grpc_ingress_with_custom_annotations(self, kube_version):
+    def test_commander_grpc_ingress_with_custom_annotations(self, kube_version):
         """Test that helm renders GRPC ingress with custom annotations."""
         custom_annotations = {"nginx.ingress.kubernetes.io/rate-limit": "100", "custom.annotation/test": "value"}
         docs = render_chart(
@@ -65,7 +65,7 @@ class TestAstronomerCommanderIngress:
         assert annotations["nginx.ingress.kubernetes.io/rate-limit"] == "100"
         assert annotations["custom.annotation/test"] == "value"
 
-    def test_astronomer_commander_metadata_ingress_default(self, kube_version):
+    def test_commander_metadata_ingress_default(self, kube_version):
         """Test that helm renders a good metadata ingress template for astronomer/commander in data plane mode."""
         docs = render_chart(
             kube_version=kube_version,
@@ -85,7 +85,7 @@ class TestAstronomerCommanderIngress:
         assert annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] == "16k"
         assert annotations["nginx.ingress.kubernetes.io/rewrite-target"] == "/metadata"
 
-    def test_astronomer_commander_metadata_ingress_unified_mode(self, kube_version):
+    def test_commander_metadata_ingress_unified_mode(self, kube_version):
         """Test that helm renders metadata ingress template for unified plane mode."""
         docs = render_chart(
             kube_version=kube_version,
@@ -94,7 +94,7 @@ class TestAstronomerCommanderIngress:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_metadata_ingress_control_plane_mode(self, kube_version):
+    def test_commander_metadata_ingress_control_plane_mode(self, kube_version):
         """Test that helm does not render metadata ingress template for control plane mode."""
         docs = render_chart(
             kube_version=kube_version,
@@ -103,7 +103,7 @@ class TestAstronomerCommanderIngress:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_metadata_ingress_with_custom_annotations(self, kube_version):
+    def test_commander_metadata_ingress_with_custom_annotations(self, kube_version):
         """Test that helm renders metadata ingress with custom annotations."""
         custom_annotations = {"nginx.ingress.kubernetes.io/rate-limit": "200", "custom.metadata/test": "metadata-value"}
         docs = render_chart(

@@ -563,3 +563,11 @@ https://houston.{{ .Values.global.baseDomain }}
 http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}:{{ .Values.ports.houstonHTTP }}
 {{- end }}
 {{- end -}}
+
+{{- define "registry.ingressURL" -}}
+{{- if (eq .Values.global.plane.mode "data") -}}
+registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+registry.{{ .Values.global.baseDomain }}
+{{- end }}
+{{- end -}}
