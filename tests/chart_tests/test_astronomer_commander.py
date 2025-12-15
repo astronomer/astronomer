@@ -18,11 +18,21 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
 
-    def test_commander_metadata_yaml(self, kube_version):
+    @pytest.mark.parametrize("rbac_enabled", [True, False], ids=["rbac_enabled", "rbac_disabled"])
+    @pytest.mark.parametrize(
+        "namespace_labels", [None, {}, {"env": "prod", "team": "data"}], ids=["no_labels", "empty_labels", "with_labels"]
+    )
+    def test_commander_metadata_yaml(self, kube_version, rbac_enabled, namespace_labels):
         """Test that helm renders a good metadata.yaml template for astronomer/commander."""
+        values = {
+            "global": {
+                "rbacEnabled": rbac_enabled,
+                "namespaceLabels": namespace_labels,
+            }
+        }
         docs = render_chart(
             kube_version=kube_version,
-            values={},
+            values=values,
             show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
         )
 
@@ -32,7 +42,10 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "v1"
 
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
-        assert metadata_file_contents == {"namespaceLabels": {}}
+        if namespace_labels and rbac_enabled:
+            assert metadata_file_contents == {"namespaceLabels": namespace_labels}
+        else:
+            assert metadata_file_contents == {"namespaceLabels": {}}
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
