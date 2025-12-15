@@ -46,7 +46,13 @@ class TestAstronomerCommander:
                 },
                 "images": {"commander": {"tag": "88.77.66"}},
             },
-            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainPrefix": "custom-dp-123"}},
+            "global": {
+                "baseDomain": "astronomer.example.com",
+                "plane": {
+                    "mode": "data",
+                    "domainPrefix": "custom-dp-123",
+                },
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -77,7 +83,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "https://elasticsearch.custom-dp-123.example.com"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
-        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert env_vars["COMMANDER_VERSION"] == "88.77.66"
@@ -133,7 +139,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.default.svc.cluster.local.:9200"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
-        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert env_vars["COMMANDER_VERSION"] == "88.77.66"
@@ -201,7 +207,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["roleRef"] == expected_role_ref
         assert cluster_role_binding["subjects"] == expected_subjects
 
-    def test_commander_rbac_cluster_roles_disabled_rbac_enabled(self, kube_version):
+    def test_commander_rbac_cluster_roles_enabled_rbac_disabled(self, kube_version):
         """Test that if rbacEnabled set to true, but clusterRoles and
         namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
@@ -443,7 +449,7 @@ class TestAstronomerCommander:
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
         env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
-        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
 
     def test_commander_operator_permissions(self, kube_version):
         """Test template that helm renders when operator is enabled ."""
