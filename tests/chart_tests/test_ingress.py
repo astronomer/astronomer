@@ -146,7 +146,6 @@ class TestIngress:
         assert "registry.example.com" not in tls_hosts
         assert "example.com" in tls_hosts
         assert "app.example.com" in tls_hosts
-        assert "install.example.com" in tls_hosts
 
         # Test unified plane mode - registry SHOULD be present
         unified_docs = render_chart(
@@ -169,13 +168,12 @@ class TestIngress:
         assert "registry.example.com" in tls_hosts
         assert "example.com" in tls_hosts
         assert "app.example.com" in tls_hosts
-        assert "install.example.com" in tls_hosts
 
     @pytest.mark.parametrize(
         ("mode", "expected_astro_ui", "expected_registry", "expected_rule_count", "expected_hosts"),
         [
             ("control", True, False, 2, ["example.com", "app.example.com"]),
-            ("data", False, True, 1, ["registry.example.com"]),
+            ("data", False, True, 1, ["registry.dp01.example.com"]),
             ("unified", True, True, 3, ["example.com", "app.example.com", "registry.example.com"]),
         ],
     )
@@ -185,7 +183,7 @@ class TestIngress:
         """Test ingress configuration for all plane modes"""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": mode}}},
+            values={"global": {"plane": {"mode": mode, "domainPrefix": "dp01"}}},
             show_only=["charts/astronomer/templates/ingress.yaml"],
         )
 
@@ -204,8 +202,8 @@ class TestIngress:
         for expected_host in expected_hosts:
             assert expected_host in tls_hosts, f"Expected {expected_host} in TLS hosts for {mode} mode"
 
-        # install.example.com should always be in TLS
-        assert "install.example.com" in tls_hosts
+        # install.example.com should never be in TLS #6611
+        assert "install.example.com" not in tls_hosts
 
         # Check nginx configuration snippet (should be present in control/unified, not needed in data)
         annotations = doc["metadata"]["annotations"]
