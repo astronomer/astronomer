@@ -8,7 +8,7 @@ image:
 
 kerberosImage:
   repository: quay.io/astronomer/ap-pgbouncer-krb
-  tag: 1.17.0-22
+  tag: 1.25.0-1
 
 securityContext:
   runAsNonRoot: true
