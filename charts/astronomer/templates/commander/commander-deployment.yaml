@@ -20,6 +20,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:
+  {{- if .Values.commander.hostAliases }}
+  hostAliases: {{- toYaml .Values.commander.hostAliases | nindent 4 }}
+  {{- end }}
   replicas: {{ .Values.commander.replicas }}
   selector:
     matchLabels:

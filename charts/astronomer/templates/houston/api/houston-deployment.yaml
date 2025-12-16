@@ -15,7 +15,7 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 spec:
   {{- if .Values.houston.hostAliases }}
-  hostAliases: {{- toYaml .Values.workers.hostAliases | nindent 4 }}
+  hostAliases: {{- toYaml .Values.houston.hostAliases | nindent 4 }}
   {{- end }}
   replicas: {{ .Values.houston.replicas }}
   selector:
