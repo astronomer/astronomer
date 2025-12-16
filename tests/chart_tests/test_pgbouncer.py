@@ -38,7 +38,7 @@ class TestPGBouncerDeployment:
                     "pgbouncer": {
                         "enabled": True,
                     },
-                    "kerberos": {"enabled": False}
+                    "kerberos": {"enabled": False},
                 },
                 "pgbouncer": {"env": {"foo_key": "foo_value", "bar_key": "bar_value"}},
             },
@@ -58,7 +58,7 @@ class TestPGBouncerDeployment:
                         "enabled": True,
                         "extraLabels": {"test_label": "test_label1"},
                     },
-                    "kerberos": {"enabled": False}
+                    "kerberos": {"enabled": False},
                 },
             },
             show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
@@ -120,37 +120,6 @@ class TestPGBouncerDeployment:
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert "ap-pgbouncer-krb" in c_by_name["pgbouncer"]["image"]
-
-    def test_env_from_credentials_secret(self, kube_version):
-        secret_name = "astronomer-db"
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
-            values={
-                "global": {
-                    "pgbouncer": {
-                        "enabled": True,
-                        "credentialsSecret": {
-                            "name": secret_name,
-                            "usernameKey": "user",
-                            "passwordKey": "pass",
-                        },
-                    },
-                    "kerberos": {"enabled": False},
-                }
-            },
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-
-        env = get_containers_by_name(doc)["pgbouncer"]["env"]
-        db_user = next(item for item in env if item["name"] == "DB_USER")
-        db_password = next(item for item in env if item["name"] == "DB_PASSWORD")
-
-        assert db_user["valueFrom"]["secretKeyRef"]["name"] == secret_name
-        assert db_user["valueFrom"]["secretKeyRef"]["key"] == "user"
-        assert db_password["valueFrom"]["secretKeyRef"]["key"] == "pass"
 
     def test_kerberos_volume_mount(self, kube_version):
         docs = render_chart(

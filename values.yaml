@@ -355,10 +355,6 @@ global:
     username: postgres
     password: postgres
     servicePort: "5432"
-    credentialsSecret:
-      name: astronomer-db
-      usernameKey: username
-      passwordKey: password
     extraEnv: []
       # some: thing
       # another: thing

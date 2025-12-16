@@ -50,29 +50,17 @@
 
 {{- define "pgbouncer_environment" }}
 - name: DB_USER
-  valueFrom:
-    secretKeyRef:
-      name: {{ default "astronomer-db" .Values.global.pgbouncer.credentialsSecret.name }}
-      key: {{ default "username" .Values.global.pgbouncer.credentialsSecret.usernameKey }}
-      optional: false
+  value: postgres
 - name: DB_PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: {{ default "astronomer-db" .Values.global.pgbouncer.credentialsSecret.name }}
-      key: {{ default "password" .Values.global.pgbouncer.credentialsSecret.passwordKey }}
-      optional: false
+  value: postgres
 - name: DB_HOST
-  value: {{ default "astronomer-postgresql.astronomer.svc.cluster.local" .Values.global.pgbouncer.host | quote }}
+  value: "astronomer-postgresql.astronomer.svc.cluster.local"
 - name: DB_PORT
-  value: {{ default "5432" (toString .Values.global.pgbouncer.servicePort) | quote }}
+  value: "5432"
 - name: POOL_MODE
   value: session
 - name: ADMIN_USERS
-  valueFrom:
-    secretKeyRef:
-      name: {{ default "astronomer-db" .Values.global.pgbouncer.credentialsSecret.name }}
-      key: {{ default "username" .Values.global.pgbouncer.credentialsSecret.usernameKey }}
-      optional: false
+  value: postgres
 - name: AUTH_TYPE
   value: plain
 - name: LOG_DISCONNECTIONS
