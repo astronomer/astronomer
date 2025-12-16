@@ -258,6 +258,8 @@ global:
     enabled: true
   pgbouncer:
     enabled: true
+  kerberos:
+    enabled: true
   postgresqlEnabled: true
   prometheusPostgresExporterEnabled: true
 grafana:

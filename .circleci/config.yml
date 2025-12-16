@@ -379,7 +379,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.2.1
                 - quay.io/astronomer/ap-git-sync:4.4.1-2
                 - quay.io/astronomer/ap-grafana:10.4.19
-                - quay.io/astronomer/ap-houston-api:0.37.54
+                - quay.io/astronomer/ap-houston-api:0.37.55
                 - quay.io/astronomer/ap-init:3.21.3-5
                 - quay.io/astronomer/ap-kibana:8.18.2
                 - quay.io/astronomer/ap-kube-state:2.15.0-1
@@ -391,7 +391,7 @@ workflows:
                 - quay.io/astronomer/ap-node-exporter:1.9.1
                 - quay.io/astronomer/ap-openresty:1.27.1-6
                 - quay.io/astronomer/ap-pgbouncer-exporter:0.19.0-3
-                - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-22
+                - quay.io/astronomer/ap-pgbouncer-krb:1.25.0-1
                 - quay.io/astronomer/ap-pgbouncer:1.24.1-2
                 - quay.io/astronomer/ap-postgres-exporter:0.17.1-2
                 - quay.io/astronomer/ap-postgresql:17.4.0
@@ -426,7 +426,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.2.1
                 - quay.io/astronomer/ap-git-sync:4.4.1-2
                 - quay.io/astronomer/ap-grafana:10.4.19
-                - quay.io/astronomer/ap-houston-api:0.37.54
+                - quay.io/astronomer/ap-houston-api:0.37.55
                 - quay.io/astronomer/ap-init:3.21.3-5
                 - quay.io/astronomer/ap-kibana:8.18.2
                 - quay.io/astronomer/ap-kube-state:2.15.0-1
@@ -438,7 +438,7 @@ workflows:
                 - quay.io/astronomer/ap-node-exporter:1.9.1
                 - quay.io/astronomer/ap-openresty:1.27.1-6
                 - quay.io/astronomer/ap-pgbouncer-exporter:0.19.0-3
-                - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-22
+                - quay.io/astronomer/ap-pgbouncer-krb:1.25.0-1
                 - quay.io/astronomer/ap-pgbouncer:1.24.1-2
                 - quay.io/astronomer/ap-postgres-exporter:0.17.1-2
                 - quay.io/astronomer/ap-postgresql:17.4.0

@@ -21,6 +21,8 @@ def common_test_cases(docs):
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
     assert prod["deployments"]["disableManageClusterScopedResources"] is False
+    assert prod["deployments"]["manualConnectionStrings"]["enabled"] is False
+    assert prod["deployments"]["upsertExtraIniAllowed"] is False
     assert prod["helm"]["tlsSecretName"] == "astronomer-tls"
     airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["strategy"]
@@ -85,6 +87,23 @@ def test_houston_configmap_has_hook_annotations():
     assert annotations.get("helm.sh/hook-weight") == "-1"
     assert annotations.get("helm.sh/hook-delete-policy") == "before-hook-creation"
     assert annotations.get("helm.sh/resource-policy") == "keep"
+
+
+def test_houston_configmap_deployments_manual_connection_strings_override():
+    """Validate manualConnectionStrings/upsertExtraIniAllowed can be configured via global values."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        values={
+            "global": {
+                "manualConnectionStrings": {"enabled": True},
+                "upsertExtraIniAllowed": False,
+            }
+        },
+    )
+
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    assert prod["deployments"]["manualConnectionStrings"]["enabled"] is True
+    assert prod["deployments"]["upsertExtraIniAllowed"] is False
 
 
 def test_houston_configmap_with_custom_images():

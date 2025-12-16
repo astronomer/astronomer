@@ -131,6 +131,11 @@ global:
 
   disableManageClusterScopedResources: false
 
+  manualConnectionStrings:
+    enabled: false
+
+  upsertExtraIniAllowed: false
+
   enablePerHostIngress: false
 
   dagOnlyDeployment:
@@ -365,6 +370,9 @@ global:
       # another: thing
     extraLabels: []
       # do-funky-injection: maybe
+
+kerberos:
+  enabled: false
 
 #################################
 ## Default tagged groups enabled

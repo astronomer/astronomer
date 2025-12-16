@@ -8,12 +8,20 @@
 
 
 {{ define "pgbouncer.image" -}}
+{{- $kerbRepo := .Values.kerberosImage.repository -}}
+{{- $kerbTag := .Values.kerberosImage.tag -}}
+{{- $repo := .Values.image.repository -}}
+{{- $tag := .Values.image.tag -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-pgbouncer-krb:{{ .Values.image.tag }}
+{{- $kerbRepo = printf "%s/ap-pgbouncer-krb" .Values.global.privateRegistry.repository -}}
+{{- $repo = printf "%s/ap-pgbouncer" .Values.global.privateRegistry.repository -}}
+{{- end -}}
+{{- if .Values.global.kerberos.enabled -}}
+{{- printf "%s:%s" $kerbRepo $kerbTag -}}
 {{- else -}}
-{{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
-{{- end }}
-{{- end }}
+{{- printf "%s:%s" $repo $tag -}}
+{{- end -}}
+{{- end -}}
 
 {{ define "pgbouncer_host" -}}
 {{ printf "%s-pgbouncer" .Release.Name }}
