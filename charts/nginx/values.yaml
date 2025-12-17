@@ -17,7 +17,6 @@ images:
     pullPolicy: IfNotPresent
 
 securityContext:
-  readOnlyRootFilesystem: true
   runAsUser: 101
   runAsNonRoot: true
   capabilities:
