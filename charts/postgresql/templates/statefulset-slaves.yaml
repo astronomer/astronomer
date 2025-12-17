@@ -96,8 +96,6 @@ spec:
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
         {{- end }}
         env:
-        - name: BITNAMI_DEBUG
-          value: {{ ternary "true" "false" .Values.image.debug | quote }}
         - name: POSTGRESQL_VOLUME_DIR
           value: "{{ .Values.persistence.mountPath }}"
         - name: POSTGRESQL_PORT_NUMBER
@@ -110,32 +108,22 @@ spec:
           value: "slave"
         - name: POSTGRES_REPLICATION_USER
           value: {{ include "postgresql.replication.username" . | quote }}
-        {{- if .Values.usePasswordFile }}
-        - name: POSTGRES_REPLICATION_PASSWORD_FILE
-          value: "/opt/bitnami/postgresql/secrets/postgresql-replication-password"
-        {{- else }}
         - name: POSTGRES_REPLICATION_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ template "postgresql.secretName" . }}
               key: postgresql-replication-password
-        {{- end }}
         - name: POSTGRES_CLUSTER_APP_NAME
           value: {{ .Values.replication.applicationName }}
         - name: POSTGRES_MASTER_HOST
           value: {{ template "postgresql.fullname" . }}
         - name: POSTGRES_MASTER_PORT_NUMBER
           value: {{ include "postgresql.port" . | quote }}
-        {{- if .Values.usePasswordFile }}
-        - name: POSTGRES_PASSWORD_FILE
-          value: "/opt/bitnami/postgresql/secrets/postgresql-password"
-        {{- else }}
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ template "postgresql.secretName" . }}
               key: postgresql-password
-        {{- end }}
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
@@ -175,23 +163,11 @@ spec:
           successThreshold: 1
         {{- end }}
         volumeMounts:
-        {{- if .Values.usePasswordFile }}
-        - name: postgresql-password
-          mountPath: /opt/bitnami/postgresql/secrets/
-        {{- end }}
         {{- if .Values.persistence.enabled }}
         - name: data
           mountPath: {{ .Values.persistence.mountPath }}
           subPath: {{ .Values.persistence.subPath }}
         {{ end }}
-        {{- if or (.Files.Glob "files/conf.d/*.conf") .Values.postgresqlExtendedConf .Values.extendedConfConfigMap }}
-        - name: postgresql-extended-config
-          mountPath: /bitnami/postgresql/conf/conf.d/
-        {{- end }}
-        {{- if or (.Files.Glob "files/postgresql.conf") (.Files.Glob "files/pg_hba.conf") .Values.postgresqlConfiguration .Values.pgHbaConfiguration .Values.configurationConfigMap }}
-        - name: postgresql-config
-          mountPath: /bitnami/postgresql/conf
-        {{- end }}
         {{- if .Values.slave.extraVolumeMounts }}
         {{- toYaml .Values.slave.extraVolumeMounts | nindent 8 }}
         {{- end }}
