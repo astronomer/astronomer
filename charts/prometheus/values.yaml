@@ -30,7 +30,7 @@ images:
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.27.1-7
+    tag: 1.27.1-8
     pullPolicy: IfNotPresent
 
 
