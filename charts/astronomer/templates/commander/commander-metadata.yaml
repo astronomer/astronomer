@@ -15,4 +15,5 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   metadata.yaml: |-
+    namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
 {{- end }}
