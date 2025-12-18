@@ -318,7 +318,7 @@ global:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2025.11.3
+        tag: 2025.11.3-1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.2.2
