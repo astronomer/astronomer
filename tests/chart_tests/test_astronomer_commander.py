@@ -1,5 +1,6 @@
 import jmespath
 import pytest
+import yaml
 
 from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name, get_env_vars_dict
@@ -17,6 +18,35 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
 
+    @pytest.mark.parametrize("rbac_enabled", [True, False], ids=["rbac_enabled", "rbac_disabled"])
+    @pytest.mark.parametrize(
+        "namespace_labels", [None, {}, {"env": "prod", "team": "data"}], ids=["no_labels", "empty_labels", "with_labels"]
+    )
+    def test_commander_metadata_yaml(self, kube_version, rbac_enabled, namespace_labels):
+        """Test that helm renders a good metadata.yaml template for astronomer/commander."""
+        values = {
+            "global": {
+                "rbacEnabled": rbac_enabled,
+                "namespaceLabels": namespace_labels,
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+
+        metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
+        if namespace_labels and rbac_enabled:
+            assert metadata_file_contents == {"namespaceLabels": namespace_labels}
+        else:
+            assert metadata_file_contents == {"namespaceLabels": {}}
+
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
         values = {
@@ -25,7 +55,13 @@ class TestAstronomerCommander:
                 "commander": {"cloudProvider": "aws", "region": "us-west-2"},
                 "images": {"commander": {"tag": "88.77.66"}},
             },
-            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainPrefix": "custom-dp-123"}},
+            "global": {
+                "baseDomain": "astronomer.example.com",
+                "plane": {
+                    "mode": "data",
+                    "domainPrefix": "custom-dp-123",
+                },
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -56,7 +92,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "https://elasticsearch.custom-dp-123.example.com"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
-        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert env_vars["COMMANDER_VERSION"] == "88.77.66"
@@ -112,7 +148,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.default.svc.cluster.local.:9200"
         assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
-        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert env_vars["COMMANDER_VERSION"] == "88.77.66"
@@ -180,7 +216,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["roleRef"] == expected_role_ref
         assert cluster_role_binding["subjects"] == expected_subjects
 
-    def test_commander_rbac_cluster_roles_disabled_rbac_enabled(self, kube_version):
+    def test_commander_rbac_cluster_roles_enabled_rbac_disabled(self, kube_version):
         """Test that if rbacEnabled set to true, but clusterRoles and
         namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
@@ -422,7 +458,7 @@ class TestAstronomerCommander:
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
         env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
-        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
 
     def test_commander_operator_permissions(self, kube_version):
         """Test template that helm renders when operator is enabled ."""

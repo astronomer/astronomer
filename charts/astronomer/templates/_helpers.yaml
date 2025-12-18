@@ -16,6 +16,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "commander.metadata.namespaceLabels" }}
+{{- if .Values.global.rbacEnabled -}}
+{{ .Values.global.namespaceLabels | toYaml | nindent 6 -}}
+{{- else -}}
+{}
+{{- end }}
+{{- end }}
+
 {{ define "commander.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-commander:{{ .Values.images.commander.tag }}

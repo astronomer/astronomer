@@ -1,6 +1,7 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
+
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
@@ -38,6 +39,7 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
+        checksum/metadata-config: {{ include (print $.Template.BasePath "/commander/commander-metadata.yaml") . | sha256sum }}
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         checksum/configmap: {{ include (print $.Template.BasePath "/commander/commander-nginx-configmap.yaml") . | sha256sum }}
         {{- end }}
@@ -158,7 +160,7 @@ spec:
               value: "true"
             {{- end }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
-              value: "false"
+              value: {{ if .Values.global.rbacEnabled }}"true"{{ else }}"false"{{ end }}
             {{- if .Values.global.privateCaCerts }}
             - name: UPDATE_CA_CERTS
               value: "true"
