@@ -39,6 +39,7 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
+        checksum/metadata-config: {{ include (print $.Template.BasePath "/commander/commander-metadata.yaml") . | sha256sum }}
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         checksum/configmap: {{ include (print $.Template.BasePath "/commander/commander-nginx-configmap.yaml") . | sha256sum }}
         {{- end }}
