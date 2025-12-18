@@ -408,7 +408,7 @@ workflows:
                 - quay.io/astronomer/ap-auth-sidecar:1.29.3
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-20
                 - quay.io/astronomer/ap-base:2025.12.03
-                - quay.io/astronomer/ap-commander:1.0.24
+                - quay.io/astronomer/ap-commander:1.0.25
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0-1
                 - quay.io/astronomer/ap-curator:8.0.21-7
                 - quay.io/astronomer/ap-dag-deploy:0.7.4
@@ -420,7 +420,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.2.2
                 - quay.io/astronomer/ap-git-sync:2025.11.3
                 - quay.io/astronomer/ap-grafana:12.2.2
-                - quay.io/astronomer/ap-houston-api:1.0.43
+                - quay.io/astronomer/ap-houston-api:1.0.44
                 - quay.io/astronomer/ap-init:2025.11.3
                 - quay.io/astronomer/ap-kube-state:2.17.0-1
                 - quay.io/astronomer/ap-kuiper-reloader:0.1.14
