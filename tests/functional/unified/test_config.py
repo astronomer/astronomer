@@ -67,7 +67,7 @@ def test_houston_can_reach_prometheus(houston_api):
 
 
 def test_nginx_can_reach_default_backend(cp_nginx):
-    assert cp_nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
+    assert cp_nginx.check_output("wget --timeout=5 -qO- http://astronomer-nginx-default-backend:8080")
 
 
 def test_nginx_ssl_cache(cp_nginx):
