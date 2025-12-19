@@ -20,8 +20,21 @@ data:
     error_log /dev/stdout info;
 
     http {
+      {{- if .Values.nginx.authCache.enabled }}
+      log_format cache_status '$remote_addr - $remote_user [$time_local] '
+                              '"$request" $status $body_bytes_sent '
+                              '"$http_referer" "$http_user_agent" '
+                              'cache=$auth_cache_status';
+      access_log /dev/stdout cache_status;
+      {{- else }}
       access_log /dev/stdout;
+      {{- end }}
+
       client_max_body_size {{ .Values.nginx.maxBodySize }};
+      {{- if .Values.nginx.authCache.enabled }}
+
+      proxy_cache_path /tmp/nginx-auth-cache levels={{ .Values.nginx.authCache.levels }} keys_zone={{ .Values.nginx.authCache.keysZone }} max_size={{ .Values.nginx.authCache.maxSize }} inactive={{ .Values.nginx.authCache.inactive }};
+      {{- end }}
 
       upstream elasticsearch {
         server {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}:{{ .Values.common.ports.http }};
@@ -31,6 +44,9 @@ data:
       server {
         listen {{ .Values.common.ports.http }};
         auth_request /auth;
+        {{- if .Values.nginx.authCache.enabled }}
+        auth_request_set $auth_cache_status $upstream_cache_status;
+        {{- end }}
         proxy_http_version 1.1;
         {{- if not .Values.global.istio.enabled }}
         proxy_set_header Host $host;
@@ -57,7 +73,16 @@ data:
 
         location = /auth {
           internal;
+          {{- if .Values.nginx.authCache.enabled }}
+          proxy_cache auth_cache;
+          proxy_cache_key "$http_authorization";
+          proxy_cache_valid 200 {{ .Values.nginx.authCache.validSuccess }};
+          proxy_cache_valid 401 403 {{ .Values.nginx.authCache.validFailure }};
+          proxy_ignore_headers Cache-Control Expires;
+          add_header X-Auth-Cache-Status $upstream_cache_status always;
+          {{- end }}
           {{- include "houston-proxy" . | nindent 10 }}
+          proxy_pass_request_body off;
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }
