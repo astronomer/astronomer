@@ -2,6 +2,7 @@
 ## NGINX Elasticsearch ConfigMap ##
 ###################################
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $authCacheEnabled := .Values.nginx.authCache.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -20,7 +21,7 @@ data:
     error_log /dev/stdout info;
 
     http {
-      {{- if .Values.nginx.authCache.enabled }}
+      {{- if $authCacheEnabled }}
       log_format cache_status '$remote_addr - $remote_user [$time_local] '
                               '"$request" $status $body_bytes_sent '
                               '"$http_referer" "$http_user_agent" '
@@ -31,7 +32,7 @@ data:
       {{- end }}
 
       client_max_body_size {{ .Values.nginx.maxBodySize }};
-      {{- if .Values.nginx.authCache.enabled }}
+      {{- if $authCacheEnabled }}
 
       proxy_cache_path /tmp/nginx-auth-cache levels={{ .Values.nginx.authCache.levels }} keys_zone={{ .Values.nginx.authCache.keysZone }} max_size={{ .Values.nginx.authCache.maxSize }} inactive={{ .Values.nginx.authCache.inactive }};
       {{- end }}
@@ -44,7 +45,7 @@ data:
       server {
         listen {{ .Values.common.ports.http }};
         auth_request /auth;
-        {{- if .Values.nginx.authCache.enabled }}
+        {{- if $authCacheEnabled }}
         auth_request_set $auth_cache_status $upstream_cache_status;
         {{- end }}
         proxy_http_version 1.1;
@@ -73,7 +74,7 @@ data:
 
         location = /auth {
           internal;
-          {{- if .Values.nginx.authCache.enabled }}
+          {{- if $authCacheEnabled }}
           proxy_cache auth_cache;
           proxy_cache_key "$http_authorization";
           proxy_cache_valid 200 {{ .Values.nginx.authCache.validSuccess }};
