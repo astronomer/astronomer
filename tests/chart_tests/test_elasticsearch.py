@@ -893,7 +893,6 @@ class TestElasticSearch:
         """Test that auth caching is enabled by default in nginx-es configmap."""
         docs = render_chart(
             kube_version=kube_version,
-            values={},
             show_only=[
                 "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
             ],
