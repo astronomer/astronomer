@@ -151,12 +151,15 @@ houston:
     nats:
       ackWait: 600000
 
+  hostAliases: []
+
   # Worker to connect to NATS
   worker:
     enabled: true
     replicas: 2
     readinessProbe: {}
     livenessProbe: {}
+    hostAliases: []
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
@@ -440,6 +443,7 @@ commander:
     # If not set and create is true, a name is generated using the fullname template
     name: ""
 
+  hostAliases: []
 
   # Add extra containers to your commander deployment.
   extraContainers: []
@@ -551,6 +555,8 @@ registry:
   logLevel: info
 
   podAnnotations: {}
+
+  hostAliases: []
 
 ports:
   houstonHTTP: 8871
