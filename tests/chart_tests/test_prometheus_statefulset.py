@@ -29,10 +29,13 @@ class TestPrometheusStatefulset:
         doc = docs[0]
 
         self.prometheus_common_tests(doc)
-        assert len(doc["spec"]["template"]["spec"]["containers"]) == 3
+        spec = doc["spec"]["template"]["spec"]
+        assert len(spec["containers"]) == 3
 
-        sc = doc["spec"]["template"]["spec"]["securityContext"]
+        sc = spec["securityContext"]
         assert sc["fsGroup"] == 65534
+
+        assert "hostAliases" not in spec
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert c_by_name["configmap-reloader"]["image"].startswith("quay.io/astronomer/ap-configmap-reloader:")
@@ -54,7 +57,7 @@ class TestPrometheusStatefulset:
             {"mountPath": "/prometheusreloader/airflow", "name": "filesd"},
             {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"},
         ]
-        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
+        assert "persistentVolumeClaimRetentionPolicy" not in spec
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
         assert c_by_name["prometheus"]["livenessProbe"]["periodSeconds"] == 5
         assert c_by_name["prometheus"]["livenessProbe"]["failureThreshold"] == 3
@@ -63,7 +66,7 @@ class TestPrometheusStatefulset:
         assert c_by_name["prometheus"]["readinessProbe"]["periodSeconds"] == 5
         assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 3
         assert c_by_name["prometheus"]["readinessProbe"]["timeoutSeconds"] == 1
-        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+        assert "priorityClassName" not in spec
 
         assert c_by_name["filesd-reloader"]["image"].startswith("quay.io/astronomer/ap-kuiper-reloader:")
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
@@ -281,3 +284,16 @@ class TestPrometheusStatefulset:
         spec = doc["spec"]["template"]["spec"]
         assert "priorityClassName" in spec
         assert "prometheus-priority-pod" == spec["priorityClassName"]
+
+    def test_prometheus_hostAliases_overrides(self, kube_version):
+        hostAliasSpec = [{"ip": "127.0.0.1", "hostnames": ["test.hostname.one"]}]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "prometheus": {"hostAliases": hostAliasSpec},
+            },
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["hostAliases"] == hostAliasSpec
