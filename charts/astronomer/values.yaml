@@ -556,6 +556,8 @@ registry:
 
   podAnnotations: {}
 
+  hostAliases: []
+
 ports:
   houstonHTTP: 8871
   commanderHTTP: 8880
