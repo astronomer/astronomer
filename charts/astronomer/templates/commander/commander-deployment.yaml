@@ -56,12 +56,10 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      {{- if .Values.commander.hostAliases }}
-      hostAliases: {{- toYaml .Values.commander.hostAliases | nindent 8 }}
-      {{- end }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
       restartPolicy: Always
-{{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
+      {{- include "commander.hostAliases" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
           volumeMounts:

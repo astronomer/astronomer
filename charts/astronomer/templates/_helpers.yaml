@@ -579,3 +579,17 @@ registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 registry.{{ .Values.global.baseDomain }}
 {{- end }}
 {{- end -}}
+
+{{- define "houston.hostAliases" -}}
+{{- if .Values.houston.hostAliases }}
+hostAliases:
+{{ toYaml .Values.houston.hostAliases }}
+{{- end }}
+{{- end -}}
+
+{{- define "commander.hostAliases" -}}
+{{- if .Values.commander.hostAliases }}
+hostAliases:
+{{ toYaml .Values.commander.hostAliases }}
+{{- end }}
+{{- end -}}
