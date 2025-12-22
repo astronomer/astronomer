@@ -587,6 +587,13 @@ hostAliases:
 {{- end }}
 {{- end -}}
 
+{{- define "houston.worker.hostAliases" -}}
+{{- if .Values.houston.worker.hostAliases }}
+hostAliases:
+{{ toYaml .Values.houston.worker.hostAliases }}
+{{- end }}
+{{- end -}}
+
 {{- define "commander.hostAliases" -}}
 {{- if .Values.commander.hostAliases }}
 hostAliases:
