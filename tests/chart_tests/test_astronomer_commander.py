@@ -637,20 +637,13 @@ class TestAstronomerCommander:
         assert volume_search_result == expected_volume_result
         assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
 
-
     def test_commander_hostAliases_overrides(self, kube_version):
         """Test Commander with hostAliases overrides."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"commander": {
-                "hostAliases": 
-                [
-                    {"ip": "127.0.0.2","hostnames":["test.hostname.one"]
-                     }
-                     ]}}}
-                ,
+            values={"astronomer": {"commander": {"hostAliases": [{"ip": "127.0.0.2", "hostnames": ["test.hostname.one"]}]}}},
             show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
         assert docs[0]["kind"] == "Deployment"
         spec = docs[0]["spec"]["template"]["spec"]
-        assert spec["hostAliases"] == [{"ip": "127.0.0.2","hostnames":["test.hostname.one"]}]
+        assert spec["hostAliases"] == [{"ip": "127.0.0.2", "hostnames": ["test.hostname.one"]}]
