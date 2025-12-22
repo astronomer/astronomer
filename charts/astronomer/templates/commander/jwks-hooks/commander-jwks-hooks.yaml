@@ -50,6 +50,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
+{{- include "commander.hostAliases" . | indent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
           image: {{ template "dbBootstrapper.image" . }}

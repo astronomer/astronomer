@@ -105,9 +105,11 @@ class TestAstronomerCommander:
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
         assert volume_mounts["tmp-workspace"] == "/tmp"
 
-        volumes = {vol["name"]: vol for vol in doc["spec"]["template"]["spec"]["volumes"]}
+        spec = doc["spec"]["template"]["spec"]
+        volumes = {vol["name"]: vol for vol in spec["volumes"]}
         assert "tmp-workspace" in volumes
         assert "emptyDir" in volumes["tmp-workspace"]
+        assert "hostAliases" not in spec
 
     def test_commander_deployment_unified_defaults(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
@@ -630,3 +632,15 @@ class TestAstronomerCommander:
         assert volume_mount_search_result == expected_volume_mounts_result
         assert volume_search_result == expected_volume_result
         assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
+
+    def test_commander_hostAliases_overrides(self, kube_version):
+        """Test Commander with hostAliases overrides."""
+        hostAliasSpec = [{"ip": "127.0.0.1", "hostnames": ["commander.hostname.one"]}]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"commander": {"hostAliases": hostAliasSpec}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert docs[0]["kind"] == "Deployment"
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["hostAliases"] == hostAliasSpec

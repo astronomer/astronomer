@@ -187,3 +187,16 @@ class TestRegistryStatefulset:
         assert volume_mount_search_result == expected_volume_mounts_result
         assert volume_search_result == expected_volume_result
         assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
+
+    def test_registry_hostAliases_overrides(self, kube_version):
+        hostAliasSpec = [{"ip": "127.0.0.1", "hostnames": ["registry.hostname.one"]}]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"registry": {"hostAliases": hostAliasSpec}},
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["hostAliases"] == hostAliasSpec

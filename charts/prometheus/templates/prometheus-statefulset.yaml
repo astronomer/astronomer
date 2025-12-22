@@ -60,6 +60,7 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
+      {{- include "prometheus.hostAliases" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
           image: {{ include "prometheus.image" . }}
