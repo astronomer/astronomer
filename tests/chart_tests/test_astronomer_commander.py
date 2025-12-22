@@ -639,11 +639,12 @@ class TestAstronomerCommander:
 
     def test_commander_hostAliases_overrides(self, kube_version):
         """Test Commander with hostAliases overrides."""
+        hostAliasSpec = [{"ip": "127.0.0.1", "hostnames": ["commander.hostname.one"]}]
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"commander": {"hostAliases": [{"ip": "127.0.0.2", "hostnames": ["test.hostname.one"]}]}}},
+            values={"astronomer": {"commander": {"hostAliases": hostAliasSpec}}},
             show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
         assert docs[0]["kind"] == "Deployment"
         spec = docs[0]["spec"]["template"]["spec"]
-        assert spec["hostAliases"] == [{"ip": "127.0.0.2", "hostnames": ["test.hostname.one"]}]
+        assert spec["hostAliases"] == hostAliasSpec
