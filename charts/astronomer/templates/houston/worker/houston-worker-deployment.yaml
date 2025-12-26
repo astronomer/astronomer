@@ -15,9 +15,6 @@ metadata:
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
 spec:
-  {{- if .Values.houston.hostAliases }}
-  hostAliases: {{- toYaml .Values.workers.hostAliases | nindent 4 }}
-  {{- end }}
   replicas: {{ .Values.houston.worker.replicas }}
   selector:
     matchLabels:
@@ -47,6 +44,7 @@ spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      {{- include "houston.worker.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}

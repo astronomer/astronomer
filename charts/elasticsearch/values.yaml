@@ -14,7 +14,7 @@ images:
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 3.21.3-6
+    tag: 2025.12.03
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.29.2
+    tag: 1.29.3
     pullPolicy: IfNotPresent
 
 common:
@@ -307,6 +307,17 @@ nginx:
   securityContext:
     runAsNonRoot: true
   maxBodySize: "100M"
+
+  authCache:
+    enabled: true
+    # Cache storage settings (path is hardcoded to /tmp/nginx-auth-cache for readOnlyRootFilesystem compatibility)
+    levels: "1:2"
+    keysZone: "auth_cache:10m"
+    maxSize: "100m"
+    inactive: "5m"
+    # Cache TTL settings
+    validSuccess: "5m"      # Cache successful auth (200) responses
+    validFailure: "1m"      # Cache auth failures (401, 403) responses
 
 # sysctl init container
 # Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.

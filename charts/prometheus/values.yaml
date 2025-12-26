@@ -22,7 +22,7 @@ images:
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.14.0
+    tag: 0.15.0-1
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
@@ -30,7 +30,7 @@ images:
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.27.1-7
+    tag: 1.27.1-8
     pullPolicy: IfNotPresent
 
 

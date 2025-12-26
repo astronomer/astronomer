@@ -155,3 +155,10 @@ imagePullSecrets:
 {{ .Values.images.promproxy.repository}}:{{ .Values.images.promproxy.tag }}
 {{- end }}
 {{- end }}
+
+{{- define "prometheus.hostAliases" -}}
+{{- if .Values.hostAliases }}
+hostAliases:
+{{ toYaml .Values.hostAliases }}
+{{- end }}
+{{- end -}}
