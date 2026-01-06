@@ -417,7 +417,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0-1
                 - quay.io/astronomer/ap-elasticsearch:8.18.6-2
                 - quay.io/astronomer/ap-git-daemon:2025.12.24
-                - quay.io/astronomer/ap-git-sync-relay:0.2.2
+                - quay.io/astronomer/ap-git-sync-relay:0.2.3
                 - quay.io/astronomer/ap-git-sync:2025.12.24
                 - quay.io/astronomer/ap-grafana:12.2.3
                 - quay.io/astronomer/ap-houston-api:1.0.44
