@@ -130,7 +130,7 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.7.4
+    tag: 0.7.5
     securityContexts:
       pod:
         fsGroup: 50000
@@ -327,7 +327,7 @@ global:
         tag: 2025.11.3-1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.2
+        tag: 0.2.3
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
