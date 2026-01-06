@@ -66,7 +66,6 @@ def test_houston_can_reach_prometheus(houston_api):
     assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 
 
-@pytest.mark.skip(reason="curl not available in distroless nginx image")
 def test_nginx_can_reach_default_backend(cp_nginx):
     assert cp_nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
 
@@ -76,7 +75,6 @@ def test_nginx_ssl_cache(cp_nginx):
     assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("grep ssl_session_cache nginx.conf").replace("\t", "")
 
 
-@pytest.mark.skip(reason="getcap not available in distroless chainguard nginx image")
 def test_nginx_capabilities(cp_nginx):
     """Ensure nginx has no getcap capabilities"""
     assert cp_nginx.check_output("getcap /nginx-ingress-controller").replace("\t", "") == "/nginx-ingress-controller ="
