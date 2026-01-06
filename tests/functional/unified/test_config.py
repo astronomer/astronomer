@@ -74,6 +74,7 @@ def test_nginx_ssl_cache(cp_nginx):
     """Ensure nginx default ssl cache size is 10m."""
     assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("grep ssl_session_cache nginx.conf").replace("\t", "")
 
+
 @pytest.mark.skip(reason="getcap not available in distroless chainguard nginx image")
 def test_nginx_capabilities(cp_nginx):
     """Ensure nginx has no getcap capabilities"""
