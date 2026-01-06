@@ -65,6 +65,7 @@ def test_grafana_check_db_info(grafana):
 def test_houston_can_reach_prometheus(houston_api):
     assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 
+
 @pytest.mark.skip(reason="curl not available in distroless nginx image")
 def test_nginx_can_reach_default_backend(cp_nginx):
     assert cp_nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
