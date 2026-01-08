@@ -31,7 +31,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.21.3-5
+      tag: 2025.12.24
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -136,7 +136,7 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.7.2
+    tag: 0.7.5
     securityContexts:
       pod:
         fsGroup: 50000
@@ -160,7 +160,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.47.0-4
+    tag: 0.52.0
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -179,7 +179,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.29.0
+    tag: 1.29.3
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -310,22 +310,22 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.28.0-2
+        tag: 0.28.0-3
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 7.4.3
+        tag: 8.0.3-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-2
+        tag: 1.24.1-4
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.19.0-3
+        tag: 0.20.0
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
         tag: 4.4.1-2
       xcom:
         repository: quay.io/astronomer/ap-alpine
-        tag: 3.22.1
+        tag: 3.23.2
   gitSyncRelay:
     images:
       gitDaemon:
