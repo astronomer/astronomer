@@ -113,7 +113,7 @@ class TestPGBouncerDeployment:
                 "items": [
                     {"key": "pgbouncer.ini", "path": "pgbouncer.ini"},
                     {"key": "users.txt", "path": "users.txt"},
-                ]
+                ],
             },
         } in pod_spec["volumes"]
 
