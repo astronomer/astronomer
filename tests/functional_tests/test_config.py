@@ -214,6 +214,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # check that the connection is not reset
     assert "postgres" in result, "Expected to find DB connection string after Houston restart"
 
+
 def test_kibana_index_pod(kibana_index_pod_client):
     """Check kibana index pod completed successfully"""
     command = ["kubectl -n astronomer logs -f  -lcomponent=kibana-default-index"]
