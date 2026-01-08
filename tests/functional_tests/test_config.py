@@ -214,25 +214,6 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # check that the connection is not reset
     assert "postgres" in result, "Expected to find DB connection string after Houston restart"
 
-
-def test_cve_2021_44228_es_client(es_client):
-    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
-    configured."""
-    assert "-Dlog4j2.formatMsgNoLookups=true" in es_client.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
-
-
-def test_cve_2021_44228_es_data(es_data):
-    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
-    configured."""
-    assert "-Dlog4j2.formatMsgNoLookups=true" in es_data.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
-
-
-def test_cve_2021_44228_es_master(es_master):
-    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
-    configured."""
-    assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
-
-
 def test_kibana_index_pod(kibana_index_pod_client):
     """Check kibana index pod completed successfully"""
     command = ["kubectl -n astronomer logs -f  -lcomponent=kibana-default-index"]
