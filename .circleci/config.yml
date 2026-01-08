@@ -370,7 +370,7 @@ workflows:
                 - quay.io/astronomer/ap-commander:0.37.28
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0
                 - quay.io/astronomer/ap-curator:8.0.21-4
-                - quay.io/astronomer/ap-db-bootstrapper:0.37.5
+                - quay.io/astronomer/ap-db-bootstrapper:0.37.6
                 - quay.io/astronomer/ap-default-backend:0.28.32
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0
                 - quay.io/astronomer/ap-elasticsearch:8.18.2
@@ -417,7 +417,7 @@ workflows:
                 - quay.io/astronomer/ap-commander:0.37.28
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0
                 - quay.io/astronomer/ap-curator:8.0.21-4
-                - quay.io/astronomer/ap-db-bootstrapper:0.37.5
+                - quay.io/astronomer/ap-db-bootstrapper:0.37.6
                 - quay.io/astronomer/ap-default-backend:0.28.32
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0
                 - quay.io/astronomer/ap-elasticsearch:8.18.2
