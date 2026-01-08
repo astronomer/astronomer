@@ -96,6 +96,7 @@ def test_networkpolicy_for_airflow_components(kube_version):
     assert "api-server" in components
     assert "flower" in components
 
+
 @pytest.mark.parametrize(
     "kube_version, pgbouncer_enabled",
     [(kube_version, pgbouncer_enabled) for kube_version in supported_k8s_versions for pgbouncer_enabled in (True, False)],
