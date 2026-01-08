@@ -15,7 +15,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.37.5
+    tag: 0.37.6
     pullPolicy: IfNotPresent
 
 securityContext:
