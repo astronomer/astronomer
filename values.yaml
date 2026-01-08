@@ -313,18 +313,18 @@ global:
         tag: 1.25.0-1
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.20.0
+        tag: 0.20.0-1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2025.11.3
+        tag: 2025.12.24
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2025.11.3
+        tag: 2025.12.24
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2025.11.3-1
+        tag: 2025.12.24
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.2.3
@@ -333,12 +333,12 @@ global:
   pgbouncer:
     enabled: false
     gssSupport: true
-    krb5ConfSecretName: krb5.conf
+    secretName: astronomer-pgbouncer-config
     # we use it only for in cluster postgresql
     # so we can override astronomer-bootstrap secret
     username: postgres
     password: postgres
-    servicePort: "5432"
+    servicePort: "6543"
     extraEnv: []
       # some: thing
       # another: thing

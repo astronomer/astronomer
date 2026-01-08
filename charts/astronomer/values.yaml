@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 1.0.25
+    tag: 1.0.26
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -24,7 +24,7 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 1.0.44
+    tag: 1.0.46
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -151,12 +151,15 @@ houston:
     nats:
       ackWait: 600000
 
+  hostAliases: []
+
   # Worker to connect to NATS
   worker:
     enabled: true
     replicas: 2
     readinessProbe: {}
     livenessProbe: {}
+    hostAliases: []
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
@@ -440,6 +443,7 @@ commander:
     # If not set and create is true, a name is generated using the fullname template
     name: ""
 
+  hostAliases: []
 
   # Add extra containers to your commander deployment.
   extraContainers: []
@@ -551,6 +555,8 @@ registry:
   logLevel: info
 
   podAnnotations: {}
+
+  hostAliases: []
 
 ports:
   houstonHTTP: 8871

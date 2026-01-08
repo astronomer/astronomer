@@ -37,6 +37,7 @@ class TestHoustonApiDeployment:
             "app": "houston",
             "plane": "unified",
         }.items() <= houston_deployment["spec"]["template"]["metadata"]["labels"].items()
+        assert "hostAliases" not in houston_deployment["spec"]["template"]["spec"]
 
         c_by_name = get_containers_by_name(houston_deployment, include_init_containers=True)
         assert len(c_by_name) == 4
@@ -313,3 +314,17 @@ class TestHoustonApiDeployment:
         assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "afwbackend", "key": "connection"}}
+
+    def test_prometheus_hostAliases_overrides(self, kube_version):
+        """Test prometheus StatefulSet hostAliases Support when passed as helm values."""
+        hostAliasSpec = [{"ip": "127.0.0.1", "hostnames": ["test.hostname.one"]}]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"houston": {"hostAliases": hostAliasSpec}},
+            },
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["hostAliases"] == hostAliasSpec
