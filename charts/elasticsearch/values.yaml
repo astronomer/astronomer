@@ -14,19 +14,19 @@ images:
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 3.21.3-5
+    tag: 2025.12.24
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.21-4
+    tag: 8.0.21-8
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.9.0
+    tag: 1.9.0-1
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.29.0
+    tag: 1.29.3
     pullPolicy: IfNotPresent
 
 common:

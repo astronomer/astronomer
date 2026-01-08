@@ -9,7 +9,7 @@ images:
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.21.3-5
+    tag: 2025.12.24
     pullPolicy: IfNotPresent
 
 securityContext:
