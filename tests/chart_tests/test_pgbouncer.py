@@ -31,16 +31,14 @@ class TestPGBouncerDeployment:
             "limits": {"cpu": "250m", "memory": "256Mi"},
             "requests": {"cpu": "250m", "memory": "256Mi"},
         }
-        c_env = get_env_vars_dict(c_by_name["pgbouncer"]["env"])
-        assert c_env["ADMIN_USERS"] == "postgres"
-        assert c_env["AUTH_TYPE"] == "plain"
+        assert c_by_name["pgbouncer"]["env"] is None
 
     def test_pgbouncer_deployment_custom_configurations(self, kube_version):
         """Test pgbouncer deployment with custom configurations."""
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"pgbouncer": {"enabled": True}},
+                "global": {"pgbouncer": {"enabled": True, "extraEnv": {"red": "blue"}}},
                 "pgbouncer": {
                     "env": {"foo_key": "foo_value", "bar_key": "bar_value"},
                     "securityContext": {
@@ -62,8 +60,7 @@ class TestPGBouncerDeployment:
         }
 
         c_env = get_env_vars_dict(c_by_name["pgbouncer"]["env"])
-        assert c_env["ADMIN_USERS"] == "postgres"
-        assert c_env["AUTH_TYPE"] == "plain"
+        assert c_env["red"] == "blue"
         assert c_env["bar_key"] == "bar_value"
         assert c_env["foo_key"] == "foo_value"
 
@@ -114,3 +111,31 @@ class TestPGBouncerDeployment:
             assert container["image"].startswith(private_registry), (
                 f"Container named '{name}' does not use registry '{private_registry}': {container}"
             )
+
+    def test_pgbouncer_deployment_mounts_config_secret(self, kube_version):
+        """Test that the pgbouncer deployment mounts the configured secret to /etc/pgbouncer."""
+        secret_name = "astronomer-pgbouncer-config"
+        doc = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pgbouncer": {"enabled": True, "secretName": secret_name}}},
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )[0]
+
+        pod_spec = doc["spec"]["template"]["spec"]
+        assert {
+            "name": "pgbouncer-config",
+            "secret": {
+                "secretName": secret_name,
+                "items": [
+                    {"key": "pgbouncer.ini", "path": "pgbouncer.ini"},
+                    {"key": "users.txt", "path": "users.txt"},
+                ],
+            },
+        } in pod_spec["volumes"]
+
+        c_by_name = get_containers_by_name(doc)
+        assert {
+            "name": "pgbouncer-config",
+            "readOnly": True,
+            "mountPath": "/etc/pgbouncer",
+        } in c_by_name["pgbouncer"]["volumeMounts"]

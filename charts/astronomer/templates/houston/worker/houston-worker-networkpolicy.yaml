@@ -2,7 +2,6 @@
 ## Houston Worker NetworkPolicy
 ###############################
 {{- if .Values.global.networkPolicy.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -13,13 +12,23 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
       tier: astronomer
       component: houston-worker
       release: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+  {{- if .Values.global.pgbouncer.enabled }}
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: astronomer
+              component: pgbouncer
+              release: {{ .Release.Name }}
+  {{- else }}
   ingress: []
-{{- end }}
+  {{- end }}
 {{- end }}
