@@ -18,6 +18,9 @@ global:
   # Labels to add to every pod
   podLabels: {}
 
+  # Labels to add on all components
+  lables: {}
+
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
 
