@@ -113,7 +113,7 @@ nginx_nginx:
   timeoutSeconds: 5
 pgbouncer_pgbouncer:
   tcpSocket:
-    port: 5432
+    port: 6543
 postgresql-master_release-name-postgresql:
   exec:
     command:

@@ -95,3 +95,31 @@ class TestPGBouncerDeployment:
             assert container["image"].startswith(private_registry), (
                 f"Container named '{name}' does not use registry '{private_registry}': {container}"
             )
+
+    def test_pgbouncer_deployment_mounts_config_secret(self, kube_version):
+        """Test that the pgbouncer deployment mounts the configured secret to /etc/pgbouncer."""
+        secret_name = "astronomer-pgbouncer-config"
+        doc = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pgbouncer": {"enabled": True, "secretName": secret_name}}},
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )[0]
+
+        pod_spec = doc["spec"]["template"]["spec"]
+        assert {
+            "name": "pgbouncer-config",
+            "secret": {
+                "secretName": secret_name,
+                "items": [
+                    {"key": "pgbouncer.ini", "path": "pgbouncer.ini"},
+                    {"key": "users.txt", "path": "users.txt"},
+                ],
+            },
+        } in pod_spec["volumes"]
+
+        c_by_name = get_containers_by_name(doc)
+        assert {
+            "name": "pgbouncer-config",
+            "readOnly": True,
+            "mountPath": "/etc/pgbouncer",
+        } in c_by_name["pgbouncer"]["volumeMounts"]

@@ -170,19 +170,6 @@ data:
         {{- end }}
       {{- end }}
 
-      {{- $kerberos := .Values.global.kerberos }}
-      {{- if $kerberos.enabled }}
-      # Kerberos authentication configuration for deployments
-      kerberos:
-        enabled: true
-        realm: {{ $kerberos.realm | quote }}
-        service: {{ $kerberos.service | quote }}
-        serverSpnOverride: {{ $kerberos.serverSpnOverride | toJson }}
-        principalUser: {{ $kerberos.principalUser | quote }}
-        databaseHost: {{ $kerberos.databaseHost | toJson }}
-        port: {{ $kerberos.port }}
-      {{- end }}
-
       {{- if .Values.global.dagOnlyDeployment.enabled }}
       # enables dag only deployment for airflow deployments
       {{- $dagOnlyDeployment := include "dagOnlyDeployment.image" . }}
