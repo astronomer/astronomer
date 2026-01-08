@@ -91,6 +91,13 @@ spec:
           component: dag-server
           tier: airflow
     {{- end }}
+    {{- if .Values.global.pgbouncer.enabled }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: pgbouncer
+          release: {{ .Release.Name }}
+    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.houstonHTTP }}
