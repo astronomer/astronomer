@@ -85,6 +85,7 @@ spec:
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
           privileged: true
+          runAsUser: 0
         resources: {{ toYaml .Values.client.initResources | nindent 10 }}
   {{- end }}
       containers:
