@@ -95,3 +95,75 @@ def test_networkpolicy_for_airflow_components(kube_version):
     assert "webserver" in components
     assert "api-server" in components
     assert "flower" in components
+
+
+@pytest.mark.parametrize(
+    "kube_version, pgbouncer_enabled",
+    [(kube_version, pgbouncer_enabled) for kube_version in supported_k8s_versions for pgbouncer_enabled in (True, False)],
+)
+def test_houston_networkpolicy_pgbouncer_ingress_rule(kube_version: str, pgbouncer_enabled: bool) -> None:
+    """Test that the Houston NetworkPolicy includes the pgbouncer ingress rule only when pgbouncer is enabled."""
+    docs = render_chart(
+        kube_version=kube_version,
+        show_only="charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
+        values={
+            "global": {
+                "networkPolicy": {"enabled": True},
+                "pgbouncer": {"enabled": pgbouncer_enabled},
+            }
+        },
+    )
+
+    assert len(docs) == 1
+    from_entries = docs[0]["spec"]["ingress"][0]["from"]
+
+    expected_pgbouncer_peer = {
+        "podSelector": {
+            "matchLabels": {
+                "tier": "astronomer",
+                "component": "pgbouncer",
+                "release": "release-name",
+            }
+        }
+    }
+
+    if pgbouncer_enabled:
+        assert expected_pgbouncer_peer in from_entries
+    else:
+        assert expected_pgbouncer_peer not in from_entries
+
+
+@pytest.mark.parametrize(
+    "kube_version, pgbouncer_enabled",
+    [(kube_version, pgbouncer_enabled) for kube_version in supported_k8s_versions for pgbouncer_enabled in (True, False)],
+)
+def test_houston_worker_networkpolicy_pgbouncer_ingress_shape(kube_version: str, pgbouncer_enabled: bool) -> None:
+    """Test that the Houston Worker NetworkPolicy renders a valid ingress shape based on pgbouncer enablement."""
+    docs = render_chart(
+        kube_version=kube_version,
+        show_only="charts/astronomer/templates/houston/worker/houston-worker-networkpolicy.yaml",
+        values={
+            "global": {
+                "networkPolicy": {"enabled": True},
+                "pgbouncer": {"enabled": pgbouncer_enabled},
+            }
+        },
+    )
+
+    assert len(docs) == 1
+
+    if not pgbouncer_enabled:
+        # Explicit deny-by-default: Ingress list exists but is empty.
+        assert docs[0]["spec"]["ingress"] == []
+        return
+
+    expected_from_entry = {
+        "podSelector": {
+            "matchLabels": {
+                "tier": "astronomer",
+                "component": "pgbouncer",
+                "release": "release-name",
+            }
+        }
+    }
+    assert docs[0]["spec"]["ingress"][0]["from"] == [expected_from_entry]
