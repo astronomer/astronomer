@@ -12,6 +12,7 @@ metadata:
     chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    {{- include "global.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.global.authSidecar.enabled }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
