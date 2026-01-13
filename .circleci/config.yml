@@ -408,7 +408,7 @@ workflows:
                 - quay.io/astronomer/ap-auth-sidecar:1.29.3
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-22
                 - quay.io/astronomer/ap-base:2025.12.03
-                - quay.io/astronomer/ap-commander:1.0.26
+                - quay.io/astronomer/ap-commander:1.0.27
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0-1
                 - quay.io/astronomer/ap-curator:8.0.21-8
                 - quay.io/astronomer/ap-dag-deploy:0.8.1
