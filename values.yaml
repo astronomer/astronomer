@@ -310,7 +310,7 @@ global:
         tag: 8.0.3-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-4
+        tag: 1.25.0-1
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
         tag: 0.20.0-1
