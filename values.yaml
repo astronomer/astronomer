@@ -3,7 +3,7 @@
 ##################################
 global:
   # Base domain for all subdomains exposed through ingress
-  baseDomain: ~
+  baseDomain: xyz.com
     # Name of Kubernetes secret containing registry auth token used for cross-plane authentication (registry, federation, etc.)
   authHeaderSecretName: ~
   # This is to select the mode in which the Astronomer platform will run.
@@ -17,6 +17,9 @@ global:
 
   # Labels to add to every pod
   podLabels: {}
+
+  # Labels to add on all components
+  labels: {}
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
