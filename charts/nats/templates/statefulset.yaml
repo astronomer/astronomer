@@ -2,6 +2,7 @@
 ## Nats StatefulSet ##
 ######################
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $natsSecurityContext := (include "nats.securityContext" . | fromYaml) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -147,8 +148,8 @@ spec:
         image: {{ include "nats.image" . }}
         imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
         securityContext:
-          readOnlyRootFilesystem: true
-          {{ template "nats.securityContext" . }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- toYaml (merge $required $natsSecurityContext) | nindent 10 }}
         ports:
         - containerPort: 4222
           name: client
@@ -307,8 +308,8 @@ spec:
         readinessProbe: {{ tpl (toYaml .Values.reloader.readinessProbe) . | nindent 10 }}
         {{- end }}
         securityContext:
-          readOnlyRootFilesystem: true
-          {{ template "nats.securityContext" . }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- toYaml (merge $required $natsSecurityContext) | nindent 10 }}
       {{ end }}
 
       ##############################
@@ -340,8 +341,8 @@ spec:
         readinessProbe: {{ tpl (toYaml .Values.exporter.readinessProbe) . | nindent 10 }}
         {{- end }}
         securityContext:
-          readOnlyRootFilesystem: true
-          {{ template "nats.securityContext" . }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- toYaml (merge $required $natsSecurityContext) | nindent 10 }}
       {{ end }}
 
   {{- if and ( or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetStream.fileStorage.enabled (not .Values.nats.jetStream.fileStorage.existingClaim) }}
