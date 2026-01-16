@@ -193,9 +193,9 @@ spec:
         imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
         securityContext:
           readOnlyRootFilesystem: true
-       {{- if .Values.metrics.securityContext.enabled }}
+        {{- if .Values.metrics.securityContext.enabled }}
           runAsUser: {{ .Values.metrics.securityContext.runAsUser }}
-      {{- end }}
+        {{- end }}
         env:
         {{- $database := required "In order to enable metrics you need to specify a database (.Values.postgresqlDatabase or .Values.global.postgresql.postgresqlDatabase)" (include "postgresql.database" .) }}
         - name: DATA_SOURCE_URI

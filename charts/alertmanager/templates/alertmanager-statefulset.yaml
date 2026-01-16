@@ -60,8 +60,8 @@ spec:
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext| nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           command:
             - sh
             - -c
@@ -82,8 +82,8 @@ spec:
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext| nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           env:
             {{- if .Values.enableNonRFC1918 }}
             - name: POD_IP

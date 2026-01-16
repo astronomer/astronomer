@@ -50,8 +50,8 @@ spec:
         image: {{ template "promproxy.image" . }}
         imagePullPolicy: {{ .Values.images.promproxy.pullPolicy }}
         securityContext:
-            readOnlyRootFilesystem: true
-            {{ template "prometheus.securityContext" . }}
+          readOnlyRootFilesystem: true
+          {{ template "prometheus.securityContext" . }}
         ports:
         - containerPort: {{ .Values.global.authSidecar.port }}
           name: http

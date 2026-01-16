@@ -51,8 +51,8 @@ spec:
           image: {{ template "nginx-es.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.nginx.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.nginx.securityContext ) | nindent 12 }}
           resources: {{- toYaml .Values.nginx.resources | nindent 12 }}
           volumeMounts:
             - name: tmp

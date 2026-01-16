@@ -68,16 +68,16 @@ spec:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
       containers:
         - name: commander-jwks-hook
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           command: ["/bin/sh", "-c", "update-ca-certificates;python3 /scripts/commander-jwks.py"]
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
           resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           env:
             - name: CONTROL_PLANE_ENDPOINT
