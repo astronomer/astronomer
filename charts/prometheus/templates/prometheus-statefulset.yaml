@@ -81,14 +81,14 @@ spec:
               mountPath: /etc/ssl/certs_copy
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required $prometheusSecurityContext) | nindent 12 }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required $prometheusSecurityContext) | nindent 12 }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -134,7 +134,7 @@ spec:
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required $prometheusSecurityContext) | nindent 12 }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
           {{- if .Values.configMapReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
@@ -201,7 +201,7 @@ spec:
           {{- end }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required $prometheusSecurityContext) | nindent 12 }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           args:

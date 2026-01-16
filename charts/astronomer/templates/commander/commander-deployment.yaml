@@ -79,14 +79,14 @@ spec:
           resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
       containers:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           {{- if .Values.commander.command }}
           command:

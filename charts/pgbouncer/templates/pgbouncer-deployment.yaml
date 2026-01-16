@@ -68,7 +68,7 @@ spec:
           image: {{ template "pgbouncer.image" . }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- if .Values.global.pgbouncer.secretName }}
           volumeMounts:

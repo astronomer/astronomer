@@ -71,7 +71,7 @@ spec:
 
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.exporter.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.exporter.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.exporter.resources | nindent 12 }}
           ports:
             - containerPort: {{ .Values.exporter.service.httpPort }}

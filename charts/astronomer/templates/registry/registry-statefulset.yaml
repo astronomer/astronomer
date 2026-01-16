@@ -90,7 +90,7 @@ spec:
           resources: {{- toYaml .Values.registry.resources | nindent 12 }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           env:
           {{- if .Values.registry.extraEnv }}
             {{- toYaml .Values.registry.extraEnv | nindent 12 }}
@@ -100,7 +100,7 @@ spec:
           image: {{ template "registry.image" . }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
             - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS

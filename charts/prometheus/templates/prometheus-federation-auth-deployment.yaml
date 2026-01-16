@@ -53,7 +53,7 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
           {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- toYaml (merge $required $prometheusSecurityContext) | nindent 10 }}
+          {{- merge $required $prometheusSecurityContext | toYaml | nindent 10 }}
         ports:
         - containerPort: {{ .Values.global.authSidecar.port }}
           name: http

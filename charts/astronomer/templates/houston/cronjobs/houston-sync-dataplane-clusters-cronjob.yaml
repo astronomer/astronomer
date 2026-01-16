@@ -62,7 +62,7 @@ spec:
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               securityContext:
                 {{- $required := dict "readOnlyRootFilesystem" true }}
-                {{- toYaml (merge $required .Values.securityContext ) | nindent 16 }}
+                {{- merge $required .Values.securityContext | toYaml | nindent 16 }}
               resources: {{- toYaml .Values.houston.resources | nindent 16 }}
               volumeMounts:
                 - name: etc-ssl-certs
@@ -74,7 +74,7 @@ spec:
               args: ["yarn", "reconcile-cluster-metadata"]
               securityContext:
                 {{- $required := dict "readOnlyRootFilesystem" true }}
-                {{- toYaml (merge $required .Values.securityContext ) | nindent 16 }}
+                {{- merge $required .Values.securityContext | toYaml | nindent 16 }}
               resources: {{- toYaml .Values.houston.resources | nindent 16 }}
               volumeMounts:
                 - name: etc-ssl-certs

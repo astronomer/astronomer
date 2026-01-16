@@ -66,14 +66,14 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
@@ -100,7 +100,7 @@ spec:
           image: {{ template "dbBootstrapper.image" . }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           {{- if .Values.houston.bootstrapper.readinessProbe }}
@@ -149,7 +149,7 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           volumeMounts:
             - name: etc-ssl-certs

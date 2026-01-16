@@ -149,7 +149,7 @@ spec:
         imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
         securityContext:
           {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- toYaml (merge $required $natsSecurityContext) | nindent 10 }}
+          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
         ports:
         - containerPort: 4222
           name: client
@@ -309,7 +309,7 @@ spec:
         {{- end }}
         securityContext:
           {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- toYaml (merge $required $natsSecurityContext) | nindent 10 }}
+          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
       {{ end }}
 
       ##############################
@@ -342,7 +342,7 @@ spec:
         {{- end }}
         securityContext:
           {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- toYaml (merge $required $natsSecurityContext) | nindent 10 }}
+          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
       {{ end }}
 
   {{- if and ( or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetStream.fileStorage.enabled (not .Values.nats.jetStream.fileStorage.existingClaim) }}

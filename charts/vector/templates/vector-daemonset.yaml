@@ -52,7 +52,7 @@ spec:
       - name: vector
         securityContext:
           {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- toYaml (merge $required .Values.vector.securityContext ) | nindent 10 }}
+          {{- merge $required .Values.vector.securityContext | toYaml | nindent 10 }}
         image: {{ template "vector.image" . }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         {{- if .Values.vector.livenessProbe }}

@@ -51,7 +51,7 @@ spec:
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           command:
             - /bin/sh
@@ -71,7 +71,7 @@ spec:
         - name: nginx
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}

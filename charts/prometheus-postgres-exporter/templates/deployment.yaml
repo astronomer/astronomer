@@ -50,7 +50,7 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           args:
           - "--extend.query-path=/etc/config.yaml"
           {{- if .Values.config.disableDefaultMetrics }}

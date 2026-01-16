@@ -85,7 +85,7 @@ service:
   resources: {{- toYaml .Values.manager.resources | nindent 4 }}
   securityContext:
     {{- $required := dict "readOnlyRootFilesystem" true }}
-    {{- toYaml (merge $required .Values.securityContext ) | nindent 4 }}
+    {{- merge $required .Values.securityContext | toYaml | nindent 4 }}
   volumeMounts: {{- include "manager.volumeMounts" . | nindent 2 }}
   {{- if .Values.livenessProbe }}
   livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 4 }}

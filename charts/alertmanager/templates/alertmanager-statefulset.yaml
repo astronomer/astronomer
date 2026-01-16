@@ -61,7 +61,7 @@ spec:
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           command:
             - sh
             - -c
@@ -83,7 +83,7 @@ spec:
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           env:
             {{- if .Values.enableNonRFC1918 }}
             - name: POD_IP
@@ -144,7 +144,7 @@ spec:
           image: {{ include "authSidecar.image" . }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
