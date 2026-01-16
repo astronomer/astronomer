@@ -121,7 +121,7 @@ spec:
           {{- if .Values.data.securityContext }}
           {{- toYaml .Values.data.securityContext | nindent 10 }}
           {{- else }}
-{{- template "elasticsearch.securityContext" . }}
+          {{- include "elasticsearch.securityContext" . | nindent 10 }}
           {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
