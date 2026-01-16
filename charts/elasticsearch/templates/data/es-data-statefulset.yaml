@@ -117,9 +117,9 @@ spec:
       containers:
       - name: es-data
         securityContext:
-          readOnlyRootFilesystem: true
           {{- if .Values.data.securityContext }}
-          {{- toYaml .Values.data.securityContext | nindent 10 }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required .Values.data.securityContext | toYaml | nindent 10 }}
           {{- else }}
           {{- include "elasticsearch.securityContext" . | nindent 10 }}
           {{- end }}

@@ -51,7 +51,6 @@ spec:
         image: {{ template "promproxy.image" . }}
         imagePullPolicy: {{ .Values.images.promproxy.pullPolicy }}
         securityContext:
-          readOnlyRootFilesystem: true
           {{- $required := dict "readOnlyRootFilesystem" true }}
           {{- merge $required $prometheusSecurityContext | toYaml | nindent 10 }}
         ports:
