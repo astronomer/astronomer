@@ -52,8 +52,7 @@ spec:
               image: {{ template "commander.image" . }}
               imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
               securityContext:
-                readOnlyRootFilesystem: true
-                {{ template "configSyncer.securityContext" . }}
+                {{ include "configSyncer.securityContext" . | nindent 16 }}
               resources: {{ toYaml .Values.configSyncer.resources | nindent 16 }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args:
