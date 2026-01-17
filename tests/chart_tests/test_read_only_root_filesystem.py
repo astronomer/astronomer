@@ -1,6 +1,7 @@
 import re
 
 import pytest
+import yaml
 from deepmerge import always_merger
 
 from tests import git_root_dir
@@ -35,104 +36,9 @@ class TestAllContainersReadOnlyRoot:
         "StatefulSet/release-name-prometheus",
     ]
 
-    overrides = {
-        "airflow-operator": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "alertmanager": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "astronomer": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "elasticsearch": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "external-es-proxy": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "global": {
-            "loggingSidecar": {
-                "securityContext": {
-                    "readOnlyRootFilesystem": False,
-                    "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-                }
-            }
-        },
-        "grafana": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "kube-state": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "nats": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "nginx": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "pgbouncer": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "postgresql": {
-            "volumePermissions": {
-                "securityContext": {
-                    "readOnlyRootFilesystem": False,
-                    "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-                }
-            }
-        },
-        "prometheus": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "prometheus-postgres-exporter": {
-            "securityContext": {
-                "readOnlyRootFilesystem": False,
-                "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-            }
-        },
-        "vector": {
-            "vector": {
-                "securityContext": {
-                    "readOnlyRootFilesystem": False,
-                    "WindowsSecurityContextOptions": {"gmsaCredentialSpec": "dummy_value"},
-                }
-            }
-        },
-    }
+    overrides = yaml.safe_load(
+        ((git_root_dir) / "tests" / "chart_tests" / "test_data" / "secrity_context_overrides.yaml").read_text()
+    )
 
     chart_values = always_merger.merge(get_all_features(), overrides)
 

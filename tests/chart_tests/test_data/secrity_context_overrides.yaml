@@ -1,0 +1,78 @@
+airflow-operator:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+alertmanager:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+astronomer:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+elasticsearch:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+external-es-proxy:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+global:
+  loggingSidecar:
+    securityContext:
+      WindowsSecurityContextOptions:
+        gmsaCredentialSpec: dummy_value
+      readOnlyRootFilesystem: false
+grafana:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+kube-state:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+nats:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+nginx:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+pgbouncer:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+postgresql:
+  volumePermissions:
+    securityContext:
+      WindowsSecurityContextOptions:
+        gmsaCredentialSpec: dummy_value
+      readOnlyRootFilesystem: false
+prometheus:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+prometheus-postgres-exporter:
+  securityContext:
+    WindowsSecurityContextOptions:
+      gmsaCredentialSpec: dummy_value
+    readOnlyRootFilesystem: false
+vector:
+  vector:
+    securityContext:
+      WindowsSecurityContextOptions:
+        gmsaCredentialSpec: dummy_value
+      readOnlyRootFilesystem: false
