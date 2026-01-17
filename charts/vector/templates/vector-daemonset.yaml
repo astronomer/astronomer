@@ -51,8 +51,8 @@ spec:
       containers:
       - name: vector
         securityContext:
-          readOnlyRootFilesystem: true
-          {{- toYaml .Values.vector.securityContext | nindent 10 }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required .Values.vector.securityContext | toYaml | nindent 10 }}
         image: {{ template "vector.image" . }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         {{- if .Values.vector.livenessProbe }}

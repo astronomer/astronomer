@@ -1,0 +1,63 @@
+airflow-operator:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+alertmanager:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+astronomer:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+elasticsearch:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+external-es-proxy:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+global:
+  loggingSidecar:
+    securityContext:
+      dummy_key: dummy_value
+      readOnlyRootFilesystem: false
+grafana:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+kube-state:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+nats:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+nginx:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+pgbouncer:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+postgresql:
+  volumePermissions:
+    securityContext:
+      dummy_key: dummy_value
+      readOnlyRootFilesystem: false
+prometheus:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+prometheus-postgres-exporter:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+vector:
+  vector:
+    securityContext:
+      dummy_key: dummy_value
+      readOnlyRootFilesystem: false

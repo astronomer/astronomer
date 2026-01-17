@@ -1,6 +1,8 @@
 import re
 
 import pytest
+import yaml
+from deepmerge import always_merger
 
 from tests import git_root_dir
 from tests.utils import get_all_features, get_containers_by_name, get_pod_template
@@ -11,7 +13,32 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job"]
 
 
 class TestAllContainersReadOnlyRoot:
-    chart_values = get_all_features()
+    """Set up a test scenario that ensures all containers have a custom configuration with readOnlyRootFilesystem: False, but the
+    result is that readOnlyRootFilesystem is still true.
+
+    Some containers do not allow overriding securityContext, so we exclude those explicitly.
+    """
+
+    containers_without_security_context_overrides = [
+        "CronJob/release-name-elasticsearch-curator",
+        "DaemonSet/release-name-containerd-ca-update",
+        "DaemonSet/release-name-private-ca",
+        "Deployment/release-name-elasticsearch-client",
+        "Deployment/release-name-elasticsearch-exporter",
+        "Deployment/release-name-elasticsearch-nginx",
+        "StatefulSet/release-name-elasticsearch-data",
+        "StatefulSet/release-name-elasticsearch-master",
+        "StatefulSet/release-name-postgresql-master",
+        "StatefulSet/release-name-postgresql-slave",
+        "StatefulSet/release-name-prometheus",
+    ]
+
+    overrides = yaml.safe_load(
+        ((git_root_dir) / "tests" / "chart_tests" / "test_data" / "secrity_context_overrides.yaml").read_text()
+    )
+
+    chart_values = always_merger.merge(get_all_features(), overrides)
+
     default_docs = render_chart(values=chart_values)
     pod_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_managers]
 
@@ -28,6 +55,9 @@ class TestAllContainersReadOnlyRoot:
             assert container.get("securityContext", {}).get("readOnlyRootFilesystem"), (
                 f"{container['name']} {param_id} does not have RORFS"
             )
+
+            if f"{doc['kind']}/{doc['metadata']['name']}" not in self.containers_without_security_context_overrides:
+                assert container.get("securityContext").get("dummy_key") == "dummy_value"
 
 
 class TestHoustonPodManagers:

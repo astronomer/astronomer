@@ -65,8 +65,8 @@ spec:
         {{- end }}
           image: {{ include "kube-state.image" . }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
           ports:
             - name: scrape

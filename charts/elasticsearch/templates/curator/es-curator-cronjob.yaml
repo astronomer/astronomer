@@ -54,8 +54,8 @@ spec:
             command: ["/bin/sh", "-c"]
             args: ["sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"]
             securityContext:
-              readOnlyRootFilesystem: true
-              {{- toYaml .Values.curator.securityContext | nindent 14 }}
+              {{- $required := dict "readOnlyRootFilesystem" true }}
+              {{- merge $required .Values.curator.securityContext | toYaml | nindent 14 }}
             resources: {{ toYaml .Values.curator.resources | nindent 14 }}
             volumeMounts:
               - name: config-volume

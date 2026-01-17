@@ -50,7 +50,7 @@ spec:
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           {{- if .Values.defaultBackend.readinessProbe }}
           readinessProbe: {{ toYaml .Values.defaultBackend.readinessProbe | nindent 12 }}
           {{- end }}

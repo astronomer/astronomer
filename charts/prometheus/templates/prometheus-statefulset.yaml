@@ -5,6 +5,7 @@
 {{- $planeMode := and (eq .Values.global.plane.mode "unified")  ( not $useClusterRoles ) }}
 {{- $planeCPMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
+{{- $prometheusSecurityContext := (include "prometheus.securityContext" . | fromYaml) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -79,13 +80,15 @@ spec:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
           securityContext:
-            {{ template "prometheus.securityContext" . }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
           securityContext:
-            {{ template "prometheus.securityContext" . }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -130,7 +133,8 @@ spec:
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           securityContext:
-            {{ template "prometheus.securityContext" . }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
           {{- if .Values.configMapReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
@@ -196,7 +200,8 @@ spec:
               value: "true"
           {{- end }}
           securityContext:
-            {{ template "prometheus.securityContext" . }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           args:

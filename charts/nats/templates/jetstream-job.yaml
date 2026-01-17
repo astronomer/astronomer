@@ -4,6 +4,7 @@
 {{- if .Values.global.clusterRoles -}}
 {{- if or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $natsSecurityContext := (include "nats.securityContext" . | fromYaml) }}
 {{- if .Values.global.rbacEnabled }}
 ---
 kind: Role
@@ -104,8 +105,8 @@ spec:
       - name: jetstream-template-fixer
         image: {{ template "dbBootstrapper.image" . }}
         securityContext:
-          readOnlyRootFilesystem: true
-          {{ template "nats.securityContext" . }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
         {{- if .Values.nats.readinessProbe }}
         readinessProbe: {{- tpl (toYaml .Values.nats.readinessProbe) . | nindent 10 }}
         {{- end }}
