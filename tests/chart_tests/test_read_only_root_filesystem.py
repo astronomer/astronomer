@@ -16,9 +16,6 @@ class TestAllContainersReadOnlyRoot:
     """Set up a test scenario that ensures all containers have a custom configuration with readOnlyRootFilesystem: False, but the
     result is that readOnlyRootFilesystem is still true.
 
-    We use "WindowsSecurityContextOptions" to ensure that every container has a default configuration. It is a valid option, but
-    is something we would never actually use in the chart, so we would never accidentally have the expected result.
-
     Some containers do not allow overriding securityContext, so we exclude those explicitly.
     """
 
@@ -60,9 +57,7 @@ class TestAllContainersReadOnlyRoot:
             )
 
             if f"{doc['kind']}/{doc['metadata']['name']}" not in self.containers_without_security_context_overrides:
-                assert container.get("securityContext").get("WindowsSecurityContextOptions") == {
-                    "gmsaCredentialSpec": "dummy_value"
-                }
+                assert container.get("securityContext").get("dummy_key") == "dummy_value"
 
 
 class TestHoustonPodManagers:
