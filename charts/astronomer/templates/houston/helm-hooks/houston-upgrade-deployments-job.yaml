@@ -68,15 +68,15 @@ spec:
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext| nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
@@ -97,8 +97,8 @@ spec:
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: BOOTSTRAP_DB
@@ -141,8 +141,8 @@ spec:
           # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
           args: ["yarn", "upgrade-deployments", "--", "--canary={{ .Values.houston.upgradeDeployments.canary }}"]
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: DATABASE_URL

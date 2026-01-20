@@ -54,8 +54,8 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext| nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           image: {{ template "esproxy.image" . }}
           imagePullPolicy: {{ .Values.images.esproxy.pullPolicy }}
           {{- if .Values.livenessProbe }}
@@ -126,8 +126,8 @@ spec:
           command: ["/bin/sh", "-c"]
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
           {{- if .Values.awsproxy.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.awsproxy.livenessProbe) . | nindent 12 }}
