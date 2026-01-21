@@ -202,23 +202,9 @@ data:
         inputs:
           - parse_airflowV3_path
         source: |
-          if exists(.kubernetes.pod_labels.release) {
-            .release = .kubernetes.pod_labels.release
-          } else {
-            .release = "unknown"
-          }
-
-          if exists(.kubernetes.pod_labels.workspace) {
-            .workspace = .kubernetes.pod_labels.workspace
-          } else {
-            .workspace = "unknown"
-          }
-
-          if exists(.kubernetes.pod_namespace) {
-            .namespace = .kubernetes.pod_namespace
-          } else {
-            .namespace = "unknown"
-          }
+          .release = .kubernetes.pod_labels.release
+          .workspace = .kubernetes.pod_labels.workspace
+          .namespace = .kubernetes.pod_namespace
 
       transform_task_log:
         type: remap
