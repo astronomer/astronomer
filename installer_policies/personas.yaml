@@ -1,0 +1,172 @@
+###
+### Roles - that may be granted to various installing personas who need to run helm
+###
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: astronomer-installer-essential
+rules:
+  # must be able to manage secrets to run helm
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  # roles
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  # rolebindings
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["rolebindings"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  # services
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  # deployments
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  # statefulsets
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  # cronjobs
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  # jobs
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  # ingresses
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+---
+###
+### ClusterRoles - that may be granted to various installing personas who need to run helm
+###
+---
+# role needed if creating clusterroles
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: astronomer-installer-clusterrole-management
+rules:
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterroles"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterrolebindings"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: astronomer-installer-namespace-management
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "update", "patch"]
+---
+###
+### PERSONAS - aka Users - that will be granted access to various roles and clusterroles
+###
+---
+### START PERSONA: superadmin
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: astronomer-installer-persona-superadmin
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: astronomer-installer-persona-superadmin-clusterrole-management
+subjects:
+  - kind: User
+    namespace: <astronomer-platform-namespace>
+    name: astronomer-installer-persona-superadmin
+roleRef:
+  kind: ClusterRole
+  name: astronomer-installer-clusterrole-management
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: astronomer-installer-persona-superadmin-namespace-management
+subjects:
+  - kind: User
+    namespace: <astronomer-platform-namespace>
+    name: astronomer-installer-persona-superadmin
+roleRef:
+  kind: ClusterRole
+  name: astronomer-installer-namespace-management
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: astronomer-installer-persona-superadmin-daemonset-management
+subjects:
+  - kind: User
+    namespace: <astronomer-platform-namespace>
+    name: astronomer-installer-persona-superadmin
+roleRef:
+  kind: ClusterRole
+  name: astronomer-installer-daemonset-management
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: astronomer-installer-persona-superadmin-essential
+subjects:
+  - kind: User
+    name: astronomer-installer-persona-superadmin
+roleRef:
+  kind: Role
+  name: astronomer-installer-essential
+  apiGroup: rbac.authorization.k8s.io
+---
+### END PERSONA: superadmin
+---
+
+---
+### START PERSONA: lowbie
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: astronomer-installer-persona-lowbie
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: astronomer-installer-persona-lowbie-essential
+subjects:
+  - kind: User
+    name: astronomer-installer-persona-lowbie
+roleRef:
+  kind: Role
+  name: astronomer-installer-essential
+  apiGroup: rbac.authorization.k8s.io
+---
+### END PERSONA: lowbie
+---
+
