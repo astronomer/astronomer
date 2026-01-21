@@ -142,7 +142,24 @@ data:
               . = merge!(., parsed)
             }
           }
-          .log_source = "airflowV3_file"
+          .log_source = "airflow_3_file"
+
+      enrich_k8s_logs:
+        type: remap
+        inputs:
+          - airflow2_log_files
+        source: |
+          # airflow2_log_files source automatically populates pod labels
+          if exists(.kubernetes.pod_labels.component) {
+            .component = .kubernetes.pod_labels.component
+          }
+          # Parse JSON messages
+          if is_string(.message) {
+            parsed = parse_json(.message) ?? {}
+            if is_object(parsed) {
+              . = merge!(., parsed)
+            }
+          }
 
       parse_airflowV3_path:
         type: remap
