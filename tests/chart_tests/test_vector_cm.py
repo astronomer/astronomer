@@ -17,8 +17,8 @@ from tests.utils.chart import render_chart
 class TestVectorConfigmap:
     """Test suite for Airflow 2 and Airflow 3 log processing pipelines."""
 
-    def test_vector_configmap_has_airflowV3_file_logs_source(self, kube_version):
-        """Test that vector configmap includes airflowV3_file_logs source for kubelet directory."""
+    def test_vector_configmap_has_airflow_3_task_logs_source(self, kube_version):
+        """Test that vector configmap includes airflow_3_task_logs source for kubelet directory."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/vector/templates/vector-configmap.yaml"],
@@ -28,7 +28,7 @@ class TestVectorConfigmap:
         doc = docs[0]
         config_yaml = doc["data"]["vector-config.yaml"]
 
-        assert "airflowV3_file_logs:" in config_yaml
+        assert "airflow_3_task_logs:" in config_yaml
         assert "type: file" in config_yaml
         assert "/var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs/**/*.log" in config_yaml
         assert "read_from: beginning" in config_yaml
@@ -36,7 +36,7 @@ class TestVectorConfigmap:
         assert "max_line_bytes: 102400" in config_yaml
 
     def test_vector_configmap_has_airflowV2_kubernetes_logs_source(self, kube_version):
-        """Test that vector configmap includes airflowV2_log_files source for kubernetes_logs."""
+        """Test that vector configmap includes airflow_k8s_logs source for kubernetes_logs."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/vector/templates/vector-configmap.yaml"],
@@ -46,7 +46,7 @@ class TestVectorConfigmap:
         doc = docs[0]
         config_yaml = doc["data"]["vector-config.yaml"]
 
-        assert "airflowV2_log_files:" in config_yaml
+        assert "airflow_k8s_logs:" in config_yaml
         assert "type: kubernetes_logs" in config_yaml
         assert "auto_partial_merge: true" in config_yaml
 
@@ -63,7 +63,7 @@ class TestVectorConfigmap:
 
         assert "enrich_file_logs:" in config_yaml
         assert "type: remap" in config_yaml
-        assert "airflowV3_file_logs" in config_yaml
+        assert "airflow_3_task_logs" in config_yaml
 
         assert ".kubernetes.pod_uid = pod_uid" in config_yaml
         assert ".pod_uid_for_lookup = pod_uid" in config_yaml
