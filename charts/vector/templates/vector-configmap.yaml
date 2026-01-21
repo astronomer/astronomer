@@ -27,7 +27,7 @@ data:
     data_dir: "/var/lib/vector"
 
     sources:
-      airflowV3_file_logs:
+      airflow_3_task_logs:
         type: file
         include:
           - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs/**/*.log
@@ -38,7 +38,7 @@ data:
           strategy: "checksum"
         max_line_bytes: 102400
 
-      airflowV2_log_files:
+      airflow_k8s_logs:
         type: kubernetes_logs
         read_from: beginning
         auto_partial_merge: true
@@ -47,7 +47,7 @@ data:
       filter_by_namespace:
         type: filter
         inputs:
-          - airflowV2_log_files
+          - airflow_k8s_logs
         condition:
           type: "vrl"
           source: |
@@ -120,7 +120,7 @@ data:
       enrich_file_logs:
         type: remap
         inputs:
-          - airflowV3_file_logs
+          - airflow_3_task_logs
         source: |
           file_str = to_string!(.file)
           parts = split!(file_str, "/")
