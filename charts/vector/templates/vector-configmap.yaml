@@ -27,7 +27,7 @@ data:
     data_dir: "/var/lib/vector"
 
     sources:
-      airflow3_file_logs:
+      airflowV3_file_logs:
         type: file
         include:
           - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs/**/*.log
@@ -38,7 +38,7 @@ data:
           strategy: "checksum"
         max_line_bytes: 102400
 
-      airflow2_log_files:
+      airflowV2_log_files:
         type: kubernetes_logs
         read_from: beginning
         auto_partial_merge: true
@@ -47,7 +47,7 @@ data:
       filter_by_namespace:
         type: filter
         inputs:
-          - airflow2_log_files
+          - airflowV2_log_files
         condition:
           type: "vrl"
           source: |
@@ -120,7 +120,7 @@ data:
       enrich_file_logs:
         type: remap
         inputs:
-          - airflow3_file_logs
+          - airflowV3_file_logs
         source: |
           file_str = to_string!(.file)
           parts = split!(file_str, "/")
@@ -142,9 +142,9 @@ data:
               . = merge!(., parsed)
             }
           }
-          .log_source = "airflow3_file"
+          .log_source = "airflowV3_file"
 
-      parse_airflow3_path:
+      parse_airflowV3_path:
         type: remap
         inputs:
           - merge_logs
@@ -200,7 +200,7 @@ data:
       extract_release:
         type: remap
         inputs:
-          - parse_airflow3_path
+          - parse_airflowV3_path
         source: |
           if exists(.kubernetes.pod_labels.release) {
             .release = .kubernetes.pod_labels.release
