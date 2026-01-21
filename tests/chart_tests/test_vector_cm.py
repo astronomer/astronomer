@@ -1,8 +1,3 @@
-"""
-Test suite for Vector ConfigMap Airflow 2 and Airflow 3 log pipelines.
-Tests for the re-added Kubernetes enrichment and unified log processing.
-"""
-
 import pytest
 import yaml
 
