@@ -62,7 +62,7 @@ class TestVectorConfigmap:
 
         assert ".kubernetes.pod_uid = pod_uid" in config_yaml
         assert ".pod_uid_for_lookup = pod_uid" in config_yaml
-        assert '.log_source = "airflowV3_file"' in config_yaml
+        assert '.log_source = "airflow_3_file"' in config_yaml
 
         assert "parsed = parse_json(.message)" in config_yaml
 
