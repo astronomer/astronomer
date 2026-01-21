@@ -124,7 +124,7 @@ data:
         source: |
           file_str = to_string!(.file)
           parts = split!(file_str, "/")
-          
+
           # Extract pod UID from file path: /var/lib/kubelet/pods/{pod_uid}/...
           if length(parts) > 5 && parts[4] == "pods" {
             pod_uid = parts[5]
@@ -134,7 +134,7 @@ data:
           } else {
             .kubernetes.pod_uid = "unknown"
           }
-          
+
           # Parse the log message to extract Airflow metadata
           if is_string(.message) {
             parsed = parse_json(.message) ?? {}
@@ -143,25 +143,25 @@ data:
             }
           }
           .log_source = "airflow3_file"
-      
+
       parse_airflow3_path:
         type: remap
         inputs:
           - merge_logs
         source: |
           file_str = to_string!(.file)
-          
+
           # Try task execution logs: /dag_id=xxx/run_id=yyy/task_id=zzz/attempt=n.log
           task_parsed, task_err = parse_regex(file_str, r'/dag_id=(?P<dag_id>[a-zA-Z0-9_-]+)/run_id=(?P<run_id>[^/]+)/task_id=(?P<task_id>[a-zA-Z0-9_-]+)/(?:map_index=(?P<map_index>-?[0-9]+)/)?attempt=(?P<attempt>[0-9]+)\.log$')
-          
+
           # Try DAG parse logs: /component/YYYY-MM-DD/dag_file_path.log
           dag_parsed, dag_err = parse_regex(file_str, r'/(?:scheduler|dag_processor|dag_processor_manager)/(?P<date>\d{4}-\d{2}-\d{2})/(?P<dag_file>.+)\.log$')
-          
+
           if task_err == null {
             # Successfully extracted task execution metadata from path
             . = merge(., task_parsed)
             .log_type = "task"
-            
+
             # Create log_id for consistency
             map_index = get(., ["map_index"]) ?? "-1"
             if is_null(map_index) {
@@ -207,13 +207,13 @@ data:
           } else {
             .release = "unknown"
           }
-          
+
           if exists(.kubernetes.pod_labels.workspace) {
             .workspace = .kubernetes.pod_labels.workspace
           } else {
             .workspace = "unknown"
           }
-          
+
           if exists(.kubernetes.pod_namespace) {
             .namespace = .kubernetes.pod_namespace
           } else {
@@ -228,7 +228,7 @@ data:
           if !exists(.@timestamp) {
             .@timestamp = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%Z") ?? now()
           }
-          
+
           .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
           .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
 
