@@ -3,11 +3,17 @@ Test suite for Vector ConfigMap Airflow 2 and Airflow 3 log pipelines.
 Tests for the re-added Kubernetes enrichment and unified log processing.
 """
 
+import pytest
 import yaml
 
+from tests import supported_k8s_versions
 from tests.utils.chart import render_chart
 
 
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
 class TestVectorConfigmap:
     """Test suite for Airflow 2 and Airflow 3 log processing pipelines."""
 
@@ -85,7 +91,7 @@ class TestVectorConfigmap:
         merge_logs_inputs = config_dict["transforms"]["merge_logs"]["inputs"]
 
         assert "enrich_file_logs" in merge_logs_inputs, "AF3 file logs should feed into merge_logs"
-        assert "transform_add_timestamp" in merge_logs_inputs, "AF2 processed logs should feed into merge_logs"
+        assert "enrich_k8s_logs" in merge_logs_inputs, "AF2 processed logs should feed into merge_logs"
 
     def test_vector_configmap_filter_by_component_keeps_airflow_components(self, kube_version):
         """Test that filter_by_component keeps only Airflow components."""
@@ -133,7 +139,7 @@ class TestVectorConfigmap:
         # Verify Elasticsearch sink
         assert "elasticsearch:" in config_yaml
         assert "type: elasticsearch" in config_yaml
-        assert 'endpoints: ["http://astrodev-elasticsearch:9200"]' in config_yaml
+        assert 'endpoints: ["http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]' in config_yaml
 
         # Verify index pattern includes release
         assert 'index: "fluentd.{{ .release }}.%Y.%m.%d"' in config_yaml
