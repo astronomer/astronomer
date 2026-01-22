@@ -52,8 +52,8 @@ spec:
           image: {{ include "astroUI.image" . }}
           imagePullPolicy: {{ .Values.images.astroUI.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml (.Values.securityContext) | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.astroUI.resources | nindent 12 }}
           {{- if .Values.astroUI.command }}
           command: {{- toYaml .Values.astroUI.command | nindent 12 }}
