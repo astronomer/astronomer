@@ -62,6 +62,8 @@ spec:
                 path: pgbouncer.ini
               - key: users.txt
                 path: users.txt
+        - name: tmp-workspace
+          emptyDir: {}
       {{- end }}
       containers:
         - name: pgbouncer
@@ -69,9 +71,11 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
             {{- toYaml .Values.securityContext | nindent 12 }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.global.pgbouncer.secretName }}
+          imagePullPolicy: {{ .Values.image.  pullPolicy }}
           volumeMounts:
+            - name: tmp-workspace
+              mountPath: /tmp
+          {{- if .Values.global.pgbouncer.secretName }}
             - name: pgbouncer-config
               readOnly: true
               mountPath: /etc/pgbouncer
