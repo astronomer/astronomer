@@ -53,10 +53,8 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "pgbouncer.serviceAccountName" . }}
-      volumes:
-        - name: tmp-workspace
-          emptyDir: {}
       {{- if .Values.global.pgbouncer.secretName }}
+      volumes:
         - name: pgbouncer-config
           secret:
             secretName: {{ .Values.global.pgbouncer.secretName }}
@@ -71,10 +69,8 @@ spec:
           image: {{ template "pgbouncer.image" . }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          volumeMounts:
-            - name: tmp-workspace
-              mountPath: /tmp
           {{- if .Values.global.pgbouncer.secretName }}
+          volumeMounts:
             - name: pgbouncer-config
               readOnly: true
               mountPath: /etc/pgbouncer

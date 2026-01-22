@@ -97,7 +97,7 @@ class TestPGBouncerDeployment:
             )
 
     def test_pgbouncer_deployment_mounts_config_secret(self, kube_version):
-        """Test that the pgbouncer deployment mounts the configured secret and tmp-workspace volumes."""
+        """Test that the pgbouncer deployment mounts the configured secret to /etc/pgbouncer."""
         secret_name = "astronomer-pgbouncer-config"
         doc = render_chart(
             kube_version=kube_version,
@@ -106,8 +106,6 @@ class TestPGBouncerDeployment:
         )[0]
 
         pod_spec = doc["spec"]["template"]["spec"]
-
-        # Check pgbouncer-config secret volume
         assert {
             "name": "pgbouncer-config",
             "secret": {
@@ -119,22 +117,11 @@ class TestPGBouncerDeployment:
             },
         } in pod_spec["volumes"]
 
-        # Check tmp-workspace emptyDir volume
-        assert {"name": "tmp-workspace", "emptyDir": {}} in pod_spec["volumes"]
-
         c_by_name = get_containers_by_name(doc)
-
-        # Check pgbouncer-config volume mount
         assert {
             "name": "pgbouncer-config",
             "readOnly": True,
             "mountPath": "/etc/pgbouncer",
-        } in c_by_name["pgbouncer"]["volumeMounts"]
-
-        # Check tmp-workspace volume mount
-        assert {
-            "name": "tmp-workspace",
-            "mountPath": "/tmp",
         } in c_by_name["pgbouncer"]["volumeMounts"]
 
     def test_pgbouncer_deployment_not_created_when_disabled(self, kube_version):
@@ -166,20 +153,11 @@ class TestPGBouncerDeployment:
         volume_names = [vol.get("name") for vol in pod_spec.get("volumes", [])]
         assert "pgbouncer-config" not in volume_names
 
-        # Check that tmp-workspace volume is present (it should always be there)
-        assert {"name": "tmp-workspace", "emptyDir": {}} in pod_spec["volumes"]
-
         c_by_name = get_containers_by_name(doc)
 
         # Check that pgbouncer-config volume mount is not present
         volume_mount_names = [vm.get("name") for vm in c_by_name["pgbouncer"].get("volumeMounts", [])]
         assert "pgbouncer-config" not in volume_mount_names
-
-        # Check that tmp-workspace volume mount is present
-        assert {
-            "name": "tmp-workspace",
-            "mountPath": "/tmp",
-        } in c_by_name["pgbouncer"]["volumeMounts"]
 
     def test_pgbouncer_deployment_custom_probes(self, kube_version):
         """Test pgbouncer deployment with custom liveness and readiness probes."""
