@@ -52,8 +52,10 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "pgbouncer.serviceAccountName" . }}
-      {{- if .Values.global.pgbouncer.secretName }}
       volumes:
+        - name: tmp-workspace
+          emptyDir: {}
+      {{- if .Values.global.pgbouncer.secretName }}
         - name: pgbouncer-config
           secret:
             secretName: {{ .Values.global.pgbouncer.secretName }}
@@ -62,8 +64,6 @@ spec:
                 path: pgbouncer.ini
               - key: users.txt
                 path: users.txt
-        - name: tmp-workspace
-          emptyDir: {}
       {{- end }}
       containers:
         - name: pgbouncer

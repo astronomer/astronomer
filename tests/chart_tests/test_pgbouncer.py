@@ -153,6 +153,50 @@ class TestPGBouncerDeployment:
             "mountPath": "/tmp",
         } in c_by_name["pgbouncer"]["volumeMounts"]
 
+    def test_pgbouncer_deployment_not_created_when_disabled(self, kube_version):
+        """Test that pgbouncer deployment is not created when pgbouncer is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pgbouncer": {"enabled": False}}},
+        )
+
+        # Verify that no pgbouncer deployment exists in the rendered templates
+        pgbouncer_deployments = [
+            doc for doc in docs if doc["kind"] == "Deployment" and doc["metadata"]["name"] == "release-name-pgbouncer"
+        ]
+        assert len(pgbouncer_deployments) == 0
+
+    def test_pgbouncer_deployment_without_secret_name(self, kube_version):
+        """Test that pgbouncer deployment does not mount pgbouncer-config volumes when secretName is explicitly empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pgbouncer": {"enabled": True, "secretName": ""}}},
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        pod_spec = doc["spec"]["template"]["spec"]
+
+        # Check that pgbouncer-config volume is not present
+        volume_names = [vol.get("name") for vol in pod_spec.get("volumes", [])]
+        assert "pgbouncer-config" not in volume_names
+
+        # Check that tmp-workspace volume is present (it should always be there)
+        assert {"name": "tmp-workspace", "emptyDir": {}} in pod_spec["volumes"]
+
+        c_by_name = get_containers_by_name(doc)
+
+        # Check that pgbouncer-config volume mount is not present
+        volume_mount_names = [vm.get("name") for vm in c_by_name["pgbouncer"].get("volumeMounts", [])]
+        assert "pgbouncer-config" not in volume_mount_names
+
+        # Check that tmp-workspace volume mount is present
+        assert {
+            "name": "tmp-workspace",
+            "mountPath": "/tmp",
+        } in c_by_name["pgbouncer"]["volumeMounts"]
+
     def test_pgbouncer_deployment_custom_probes(self, kube_version):
         """Test pgbouncer deployment with custom liveness and readiness probes."""
         custom_liveness_probe = {
@@ -263,7 +307,7 @@ class TestPGBouncerNetworkPolicy:
         assert monitoring_peer in ingress["from"]
 
     def test_pgbouncer_networkpolicy_disabled(self, kube_version):
-        """Test that pgbouncer network policy is not created when disabled."""
+        """Test that pgbouncer network policy is not created when networkPolicies is disabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -274,3 +318,19 @@ class TestPGBouncerNetworkPolicy:
         )
 
         assert len(docs) == 0
+
+    def test_pgbouncer_networkpolicy_not_created_when_pgbouncer_disabled(self, kube_version):
+        """Test that pgbouncer network policy is not created when pgbouncer is globally disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"pgbouncer": {"enabled": False}},
+                "pgbouncer": {"networkPolicies": {"enabled": True}},
+            },
+        )
+
+        # Verify that no pgbouncer network policy exists in the rendered templates
+        pgbouncer_policies = [
+            doc for doc in docs if doc["kind"] == "NetworkPolicy" and doc["metadata"]["name"] == "release-name-pgbouncer-policy"
+        ]
+        assert len(pgbouncer_policies) == 0
