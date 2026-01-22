@@ -41,6 +41,13 @@ spec:
           tier: monitoring
           component: grafana
           release: {{ .Release.Name }}
+    {{- if .Values.global.pgbouncer.enabled }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: pgbouncer
+          release: {{ .Release.Name }}
+    {{- end }}
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:
