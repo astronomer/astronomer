@@ -508,10 +508,11 @@ tlsEnabled: false
 {{- end }}
 
 {{- define "configSyncer.securityContext" -}}
+{{- $required := dict "readOnlyRootFilesystem" true }}
 {{- if .Values.configSyncer.securityContext }}
-{{ toYaml .Values.configSyncer.securityContext | indent 16 }}
+{{- merge $required .Values.configSyncer.securityContext | toYaml }}
 {{- else }}
-{{ toYaml .Values.securityContext | indent 16 }}
+{{- merge $required .Values.securityContext | toYaml }}
 {{- end }}
 {{- end }}
 
