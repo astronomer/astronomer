@@ -147,9 +147,9 @@ data:
       enrich_k8s_logs:
         type: remap
         inputs:
-          - airflow2_log_files
+          - airflow_k8s_logs
         source: |
-          # airflow2_log_files source automatically populates pod labels
+          # airflow_k8s_logs source automatically populates pod labels
           if exists(.kubernetes.pod_labels.component) {
             .component = .kubernetes.pod_labels.component
           }
@@ -219,9 +219,23 @@ data:
         inputs:
           - parse_airflowV3_path
         source: |
-          .release = .kubernetes.pod_labels.release
-          .workspace = .kubernetes.pod_labels.workspace
-          .namespace = .kubernetes.pod_namespace
+          if exists(.kubernetes.pod_labels.release) {
+            .release = .kubernetes.pod_labels.release
+          } else {
+            .release = "unknown"
+          }
+
+          if exists(.kubernetes.pod_labels.workspace) {
+            .workspace = .kubernetes.pod_labels.workspace
+          } else {
+            .workspace = "unknown"
+          }
+
+          if exists(.kubernetes.pod_namespace) {
+            .namespace = .kubernetes.pod_namespace
+          } else {
+            .namespace = "unknown"
+          }
 
       transform_task_log:
         type: remap
