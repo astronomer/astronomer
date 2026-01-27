@@ -13,7 +13,7 @@ metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
 ci_runner_version = "2026-02"  # This should be the current YYYY-MM
-machine_image_version = "ubuntu-2404:2025.09.1"  # https://circleci.com/developer/machine/image/ubuntu-2204
+machine_image_version = "ubuntu-2404:2025.09.1"  # https://circleci.com/developer/machine/image/ubuntu-2404
 
 
 def list_docker_images():
