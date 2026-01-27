@@ -224,13 +224,13 @@ data:
           } else {
             .release = "unknown"
           }
-          
+
           if exists(.kubernetes.pod_labels.workspace) {
             .workspace = .kubernetes.pod_labels.workspace
           } else {
             .workspace = "unknown"
           }
-          
+
           if exists(.kubernetes.pod_namespace) {
             .namespace = .kubernetes.pod_namespace
           } else {
