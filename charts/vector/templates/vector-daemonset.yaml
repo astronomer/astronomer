@@ -127,6 +127,9 @@ spec:
         {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}
         {{- end }}
         {{- include "custom_ca_volume_mounts" . | nindent 8 }}
+        - name: var-lib-kubelet
+          mountPath: /var/lib/kubelet
+          readOnly: true
         - name: varlog
           mountPath: /var/log/
           readOnly: true
@@ -147,6 +150,9 @@ spec:
       {{- toYaml .Values.additionalVolumes | nindent 6 }}
       {{- end }}
       {{- include "custom_ca_volumes" . | nindent 6 }}
+      - name: var-lib-kubelet
+        hostPath:
+          path: /var/lib/kubelet/
       - name: varlog
         hostPath:
           path: /var/log/

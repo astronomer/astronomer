@@ -27,7 +27,7 @@ data:
     data_dir: "/var/lib/vector"
 
     sources:
-      airflow_3_task_logs:
+      af3_task_logs:
         type: file
         include:
           - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs/**/*.log
@@ -38,16 +38,16 @@ data:
           strategy: "checksum"
         max_line_bytes: 102400
 
-      airflow_k8s_logs:
+      k8s_airflow_logs:
         type: kubernetes_logs
         read_from: beginning
         auto_partial_merge: true
 
     transforms:
-      filter_by_namespace:
+      k8s_filter_by_namespace:
         type: filter
         inputs:
-          - airflow_k8s_logs
+          - k8s_map_component
         condition:
           type: "vrl"
           source: |
@@ -60,30 +60,49 @@ data:
             .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
             {{- end }}
 
-      filter_by_component:
+      k8s_filter_by_component:
         type: filter
         inputs:
-          - filter_by_namespace
+          - k8s_filter_by_namespace
         condition:
           type: "vrl"
           source: |
             component = .kubernetes.pod_labels.component
             includes(["scheduler", "webserver", "api-server", "worker", "triggerer", "git-sync-relay", "dag-server", "airflow-downgrade", "meta-cleanup", "dag-processor"], component)
 
-      transform_airflow_logs:
+      k8s_enrich_airflow_logs:
         type: remap
         inputs:
-          - filter_by_component
+          - k8s_filter_by_component
         source: |
-          .component = .kubernetes.pod_labels.component
-          .workspace = .kubernetes.pod_labels.workspace
-          .release = .kubernetes.pod_labels.release
-          .namespace = .kubernetes.pod_namespace
+          if exists(.kubernetes.pod_labels.component) {
+            .component = .kubernetes.pod_labels.component
+          } else {
+            .component = "unknown"
+          }
+
+          if exists(.kubernetes.pod_namespace) {
+            .namespace = .kubernetes.pod_namespace
+          } else {
+            .namespace = "unknown"
+          }
+
+          if exists(.kubernetes.pod_labels.release) {
+            .release = .kubernetes.pod_labels.release
+          } else {
+            .release = "unknown"
+          }
+
+          if exists(.kubernetes.pod_labels.workspace) {
+            .workspace = .kubernetes.pod_labels.workspace
+          } else {
+            .workspace = "unknown"
+          }
 
       parse_json_messages:
         type: remap
         inputs:
-          - transform_airflow_logs
+          - k8s_transform_airflow_logs
         source: |
           if is_string(.message) {
             parsed = parse_json(.message) ?? {}
@@ -117,10 +136,11 @@ data:
           .@timestamp = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%3fZ")
           .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")
 
-      enrich_file_logs:
+      # Parse kubernetes metadata from the filesystem path
+      af3_enrich_file_logs:
         type: remap
         inputs:
-          - airflow_3_task_logs
+          - af3_task_logs
         source: |
           file_str = to_string!(.file)
           parts = split!(file_str, "/")
@@ -135,36 +155,13 @@ data:
             .kubernetes.pod_uid = "unknown"
           }
 
-          # Parse the log message to extract Airflow metadata
-          if is_string(.message) {
-            parsed = parse_json(.message) ?? {}
-            if is_object(parsed) {
-              . = merge!(., parsed)
-            }
-          }
-          .log_source = "airflow_3_file"
+          .log_source = "af3_file"
 
-      enrich_k8s_logs:
+      # Parse kubernetes metadata from the filesystem path
+      af3_parse_path:
         type: remap
         inputs:
-          - airflow_k8s_logs
-        source: |
-          # airflow_k8s_logs source automatically populates pod labels
-          if exists(.kubernetes.pod_labels.component) {
-            .component = .kubernetes.pod_labels.component
-          }
-          # Parse JSON messages
-          if is_string(.message) {
-            parsed = parse_json(.message) ?? {}
-            if is_object(parsed) {
-              . = merge!(., parsed)
-            }
-          }
-
-      parse_airflowV3_path:
-        type: remap
-        inputs:
-          - merge_logs
+          - af3_enrich_file_logs
         source: |
           file_str = to_string!(.file)
 
@@ -203,44 +200,10 @@ data:
             .log_type = "component"
           }
 
-      merge_logs:
+      af3_transform_task_log:
         type: remap
         inputs:
-          - enrich_file_logs
-          - enrich_k8s_logs
-        source: |
-          # Component from k8s labels if we have it
-          if !exists(.component) && exists(.kubernetes.pod_labels.component) {
-            .component = .kubernetes.pod_labels.component
-          }
-
-      extract_release:
-        type: remap
-        inputs:
-          - parse_airflowV3_path
-        source: |
-          if exists(.kubernetes.pod_labels.release) {
-            .release = .kubernetes.pod_labels.release
-          } else {
-            .release = "unknown"
-          }
-
-          if exists(.kubernetes.pod_labels.workspace) {
-            .workspace = .kubernetes.pod_labels.workspace
-          } else {
-            .workspace = "unknown"
-          }
-
-          if exists(.kubernetes.pod_namespace) {
-            .namespace = .kubernetes.pod_namespace
-          } else {
-            .namespace = "unknown"
-          }
-
-      transform_task_log:
-        type: remap
-        inputs:
-          - extract_release
+          - af3_extract_release
         source: |
           if !exists(.@timestamp) {
             .@timestamp = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%Z") ?? now()
@@ -249,10 +212,10 @@ data:
           .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
           .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
 
-      map_log_level:
+      af3_map_log_level:
         type: remap
         inputs:
-          - transform_task_log
+          - af3_transform_task_log
         source: |
           if exists(.level) && is_string(.level) {
             level_lower = downcase!(.level)
@@ -268,10 +231,10 @@ data:
             .level_numeric = get(level_map, [level_lower]) ?? 20
           }
 
-      create_event_field:
+      af3_create_event_field:
         type: remap
         inputs:
-          - map_log_level
+          - af3_map_log_level
         source: |
           if exists(.message) && is_string(.message) {
             .event = .message
@@ -280,10 +243,10 @@ data:
           }
 
 
-      handle_error_details:
+      af3_handle_error_details:
         type: remap
         inputs:
-          - create_event_field
+          - af3_create_event_field
         source: |
           if exists(.error_detail) {
             error_detail_str = encode_json(.error_detail, pretty: true)
@@ -292,16 +255,16 @@ data:
             }
           }
 
-      filter_task_logs_only:
+      af3_filter_task_logs_only:
         type: filter
         inputs:
-          - handle_error_details
+          - af3_handle_error_details
         condition: '.log_type == "task"'
 
       transform_remove_fields:
         type: remap
         inputs:
-          - filter_task_logs_only
+          - af3_filter_task_logs_only
           - transform_add_timestamp
         source: |
           del(.host)

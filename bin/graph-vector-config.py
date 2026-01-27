@@ -1,5 +1,10 @@
 #!/usr/bin/env -S uv run --script
-"""Generate a mermaid flowchart from a Vector configuration file."""
+"""Generate a mermaid flowchart from a Vector configuration file.
+
+Example:
+    grep -v '{{' charts/vector/templates/vector-configmap.yaml | yq -r '.data.["vector-config.yaml"]' > vector-config-sample.yaml
+    bin/graph-vector-config.py vector-config-sample.yaml
+"""
 
 # /// script
 # requires-python = ">=3.13"

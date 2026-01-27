@@ -4,6 +4,7 @@
 *.pem
 *.swp
 *.tgz
+*sample.yaml
 .DS_Store
 /.idea/
 /.python-version
