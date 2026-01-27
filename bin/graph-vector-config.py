@@ -4,6 +4,8 @@
 Example:
     grep -v '{{' charts/vector/templates/vector-configmap.yaml | yq -r '.data.["vector-config.yaml"]' > vector-config-sample.yaml
     bin/graph-vector-config.py vector-config-sample.yaml
+
+    # In the above example, yq is https://github.com/kislyuk/yq
 """
 
 # /// script
