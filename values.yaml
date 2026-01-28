@@ -130,7 +130,7 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.8.1
+    tag: 0.9.0
     securityContexts:
       pod:
         fsGroup: 50000
