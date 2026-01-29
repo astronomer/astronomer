@@ -123,11 +123,15 @@ class TestAstronomerNamespacePools:
             show_only=[
                 "charts/astronomer/templates/namespaces.yaml",
                 "charts/astronomer/templates/commander/commander-metadata.yaml",
+                "charts/astronomer/templates/commander/commander-deployment.yaml",
             ],
         )
-        assert len(docs) == 1
+        assert len(docs) == 2
         commander_metadata_yaml = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
         assert commander_metadata_yaml["namespaceLabels"] == {}
+        c_by_name = get_containers_by_name(docs[1], include_init_containers=False)
+        commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert commander_env.get("COMMANDER_MANUAL_NAMESPACE_NAMES") == "false"
 
     def test_namespaces_namespace_pools_enabled_create_false(self, kube_version):
         """Test that no namespaces resources are rendered when namespacePools feature is enabled but namespaces creation is disabled."""
