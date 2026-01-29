@@ -123,7 +123,7 @@ class TestAstronomerNamespacePools:
             show_only=[
                 "charts/astronomer/templates/namespaces.yaml",
                 "charts/astronomer/templates/commander/commander-metadata.yaml",
-                "charts/astronomer/templates/commander/commander-deployment.yaml"
+                "charts/astronomer/templates/commander/commander-deployment.yaml",
             ],
         )
         assert len(docs) == 2
