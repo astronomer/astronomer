@@ -36,6 +36,7 @@ class TestVector:
         assert pod_spec["volumes"] == [
             {"name": "tmp", "emptyDir": {}},
             {"name": "vector-data", "emptyDir": {}},
+            {"name": "kubelet-pods", "hostPath": {"path": "/var/lib/kubelet/pods", "type": ""}},
             {"name": "varlog", "hostPath": {"path": "/var/log/"}},
             {"name": "config-volume-release-name-vector", "configMap": {"name": "release-name-vector-config"}},
         ]
@@ -45,6 +46,7 @@ class TestVector:
         assert vector_container["name"] == "vector"
         assert vector_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsUser": 0}
         assert vector_container["volumeMounts"] == [
+            {"mountPath": "/var/lib/kubelet/pods", "name": "kubelet-pods"},
             {"mountPath": "/tmp", "name": "tmp"},
             {"mountPath": "/var/lib/vector", "name": "vector-data"},
             {"name": "varlog", "mountPath": "/var/log/", "readOnly": True},
