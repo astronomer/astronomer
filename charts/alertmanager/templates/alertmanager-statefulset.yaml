@@ -180,12 +180,16 @@ spec:
               mountPath: /var/lib/nginx/tmp
             - mountPath: /etc/nginx/conf.d/
               name: alertmanager-sidecar-conf
+            - name: nginx-run-dir
+              mountPath: /run
         {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
         - name: nginx-write-dir
+          emptyDir: {}
+        - name: nginx-run-dir
           emptyDir: {}
         - name: alertmanager-sidecar-conf
           configMap:
