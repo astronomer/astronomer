@@ -56,7 +56,7 @@ spec:
     - protocol: TCP
       port: {{ .Values.service.securehttp }}
   - from:
-        {{- if (eq .Values.global.plane.mode "data") }}
+    {{- if (eq .Values.global.plane.mode "data") }}
     {{- if .Values.global.authSidecar.enabled }}
     - namespaceSelector:
         matchLabels:
