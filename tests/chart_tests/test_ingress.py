@@ -11,6 +11,8 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestIngress:
+    labels = {"type": "apps"}
+
     def test_basic_ingress(self, kube_version):
         # sourcery skip: extract-duplicate-method
         docs = render_chart(
@@ -34,6 +36,18 @@ class TestIngress:
             """
         )
 
+    def test_basic_ingress_with_labels(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+            values={"global": {"podLabels": self.labels}},
+        )
+
+        assert len(docs) == 1
+
+        doc = docs[0]
+        assert self.labels.items() <= doc["metadata"]["labels"].items()
+
     @pytest.mark.parametrize(
         ("mode", "expected"),
         [("control", True), ("data", False), ("unified", True)],
@@ -41,7 +55,7 @@ class TestIngress:
     def test_astro_ui_per_host_ingress(self, mode, expected, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"enablePerHostIngress": True, "plane": {"mode": mode}}},
+            values={"global": {"enablePerHostIngress": True, "plane": {"mode": mode}, "podLabels": self.labels}},
             show_only=[
                 "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
                 "charts/astronomer/templates/ingress.yaml",
@@ -55,12 +69,14 @@ class TestIngress:
                 {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
                 """
             )
+            assert self.labels.items() <= docs[0]["metadata"]["labels"].items()
             assert docs[1]["spec"]["rules"] == json.loads(
                 """
                 [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
                 {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
                 """
             )
+            assert self.labels.items() <= docs[1]["metadata"]["labels"].items()
         else:
             assert not docs
 
@@ -83,7 +99,7 @@ class TestIngress:
         assert docs[0]["spec"]["rules"] == expected_rules_v1
 
     def test_single_ingress_per_host(self, kube_version):
-        default_docs = render_chart(values={"global": {"enablePerHostIngress": True}})
+        default_docs = render_chart(values={"global": {"enablePerHostIngress": True, "podLabels": self.labels}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
         assert len(ingresses) == 8
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
@@ -91,6 +107,7 @@ class TestIngress:
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)
         assert all(doc["kind"] == "Ingress" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
+        assert all(self.labels.items() <= doc["metadata"]["labels"].items() for doc in ingresses if doc["metadata"].get("labels"))
 
     def test_prometheus_federate_ingress(self, kube_version):
         """Test prometheus federate ingress configuration"""
