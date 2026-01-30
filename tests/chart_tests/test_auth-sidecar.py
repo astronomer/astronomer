@@ -45,6 +45,7 @@ class TestAuthSidecar:
         assert doc["spec"]["template"]["spec"]["volumes"] == [
             {"name": "etc-ssl-certs", "emptyDir": {}},
             {"name": "nginx-write-dir", "emptyDir": {}},
+            {"name": "nginx-run-dir", "emptyDir": {}},
             {"name": "alertmanager-sidecar-conf", "configMap": {"name": "release-name-alertmanager-nginx-conf"}},
             {
                 "name": "config-volume",
@@ -128,6 +129,7 @@ class TestAuthSidecar:
         assert doc["metadata"]["name"] == "release-name-prometheus"
         assert doc["spec"]["template"]["spec"]["volumes"] == [
             {"name": "nginx-write-dir", "emptyDir": {}},
+            {"name": "nginx-run-dir", "emptyDir": {}},
             {"name": "prometheus-sidecar-conf", "configMap": {"name": "release-name-prometheus-nginx-conf"}},
             {
                 "name": "federation-auth",
