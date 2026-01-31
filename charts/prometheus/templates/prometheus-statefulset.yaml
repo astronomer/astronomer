@@ -124,6 +124,8 @@ spec:
               mountPath: /var/lib/nginx/tmp
             - mountPath: /etc/nginx/conf.d/
               name: prometheus-sidecar-conf
+            - name: nginx-run-dir
+              mountPath: /run
         {{- end }}
         - name: configmap-reloader
           args:
@@ -267,6 +269,8 @@ spec:
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
         - name: nginx-write-dir
+          emptyDir: {}
+        - name: nginx-run-dir
           emptyDir: {}
         - name: prometheus-sidecar-conf
           configMap:

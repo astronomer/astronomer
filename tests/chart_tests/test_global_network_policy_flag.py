@@ -167,3 +167,39 @@ def test_houston_worker_networkpolicy_pgbouncer_ingress_shape(kube_version: str,
         }
     }
     assert docs[0]["spec"]["ingress"][0]["from"] == [expected_from_entry]
+
+
+@pytest.mark.parametrize(
+    "kube_version, pgbouncer_enabled",
+    [(kube_version, pgbouncer_enabled) for kube_version in supported_k8s_versions for pgbouncer_enabled in (True, False)],
+)
+def test_prometheus_networkpolicy_pgbouncer_ingress_rule(kube_version: str, pgbouncer_enabled: bool) -> None:
+    """Test that the Prometheus NetworkPolicy includes the pgbouncer ingress rule only when pgbouncer is enabled."""
+    docs = render_chart(
+        kube_version=kube_version,
+        show_only="charts/prometheus/templates/prometheus-networkpolicy.yaml",
+        values={
+            "global": {
+                "networkPolicy": {"enabled": True},
+                "pgbouncer": {"enabled": pgbouncer_enabled},
+            }
+        },
+    )
+
+    assert len(docs) == 1
+    from_entries = docs[0]["spec"]["ingress"][0]["from"]
+
+    expected_pgbouncer_peer = {
+        "podSelector": {
+            "matchLabels": {
+                "tier": "astronomer",
+                "component": "pgbouncer",
+                "release": "release-name",
+            }
+        }
+    }
+
+    if pgbouncer_enabled:
+        assert expected_pgbouncer_peer in from_entries
+    else:
+        assert expected_pgbouncer_peer not in from_entries
