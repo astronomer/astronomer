@@ -51,8 +51,8 @@ spec:
       containers:
       - name: vector
         securityContext:
-          readOnlyRootFilesystem: true
-          {{- toYaml .Values.vector.securityContext | nindent 10 }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required .Values.vector.securityContext | toYaml | nindent 10 }}
         image: {{ template "vector.image" . }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         {{- if .Values.vector.livenessProbe }}
@@ -117,6 +117,8 @@ spec:
         {{- end }}
 
         volumeMounts:
+        - mountPath: /var/lib/kubelet/pods
+          name: kubelet-pods
         - mountPath: /tmp
           name: tmp
         - mountPath: /var/lib/vector
@@ -137,6 +139,10 @@ spec:
         emptyDir: {}
       - name: vector-data
         emptyDir: {}
+      - name: kubelet-pods
+        hostPath:
+          path: /var/lib/kubelet/pods
+          type: ""
       {{- if .Values.additionalVolumes }}
       {{- toYaml .Values.additionalVolumes | nindent 6 }}
       {{- end }}

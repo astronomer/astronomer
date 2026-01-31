@@ -60,8 +60,8 @@ spec:
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext| nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           command:
             - sh
             - -c
@@ -82,8 +82,8 @@ spec:
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext| nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           env:
             {{- if .Values.enableNonRFC1918 }}
             - name: POD_IP
@@ -144,7 +144,7 @@ spec:
           image: {{ include "authSidecar.image" . }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -180,12 +180,16 @@ spec:
               mountPath: /var/lib/nginx/tmp
             - mountPath: /etc/nginx/conf.d/
               name: alertmanager-sidecar-conf
+            - name: nginx-run-dir
+              mountPath: /run
         {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
         - name: nginx-write-dir
+          emptyDir: {}
+        - name: nginx-run-dir
           emptyDir: {}
         - name: alertmanager-sidecar-conf
           configMap:

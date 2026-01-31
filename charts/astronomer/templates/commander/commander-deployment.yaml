@@ -78,15 +78,15 @@ spec:
               fi
           resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
       containers:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           {{- if .Values.commander.command }}
           command:
@@ -152,14 +152,10 @@ spec:
             - name: COMMANDER_UPGRADE_TIMEOUT
               value: {{ .Values.commander.upgradeTimeout | quote }}
             {{- end }}
-            {{- if .Values.commander.airGapped.enabled }}
             - name: COMMANDER_AIRGAPPED
-              value: "true"
-            {{- end }}
-            {{ if and .Values.global.features.namespacePools.enabled -}}
+              value: {{ ternary "true" "false" .Values.commander.airGapped.enabled | quote  }}
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
-              value: "true"
-            {{- end }}
+              value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: {{ if .Values.global.rbacEnabled }}"true"{{ else }}"false"{{ end }}
             {{- if .Values.global.privateCaCerts }}
