@@ -30,6 +30,7 @@ data:
       airflow_3_task_logs:
         type: file
         include:
+          - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs-*/**/*.log
           - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs/**/*.log
         exclude:
           - "**/latest/**"
@@ -219,10 +220,14 @@ data:
         inputs:
           - parse_airflowV3_path
         source: |
-          if exists(.kubernetes.pod_labels.release) {
-            .release = .kubernetes.pod_labels.release
-          } else {
-            .release = "unknown"
+          if !exists(.release) && exists(.file) {
+            file_str = to_string!(.file)
+            parsed, err = parse_regex(file_str, r'logs-(?P<release>[^/]+)')
+            if err == null {
+              .release = parsed.release
+            } else {
+              .release = "unknown"
+            }
           }
 
           if exists(.kubernetes.pod_labels.workspace) {
@@ -247,7 +252,7 @@ data:
           }
 
           .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
-          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+          .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")
 
       map_log_level:
         type: remap
