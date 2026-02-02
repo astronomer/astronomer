@@ -56,7 +56,7 @@ fi
 echo "${GCP_TOKEN}" > /tmp/gcs_token.json
 gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
 
-if gsutil -q stat "gs://${target_repo}/${helm_chart_path##*/}" ; then
+if gcloud storage objects describe "gs://${target_repo}/${helm_chart_path##*/}" >/dev/null 2>&1 ; then
   echo "ABORT: destination file ${helm_chart_path##*/} already exists. Did you forget to bump the chart version number in both Chart.yaml and charts/astronomer/Chart.yaml?"
   exit 1
 fi
@@ -94,12 +94,12 @@ process_and_release_chart_file() {
   echo "Releasing chart..."
 
   set -x
-  # Set up the index.html file
-  wget "https://${target_repo}/index.yaml" -O /tmp/index.yaml.current
+  # Set up the index.yaml file
+  gcloud storage cp "gs://${target_repo}/index.yaml" /tmp/index.yaml.current
   helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
 
-  gsutil cp "$helm_chart_path" "gs://${target_repo}"
-  gsutil -h "Cache-Control: public, max-age=${max_age}" cp ./index.yaml "gs://${target_repo}"
+  gcloud storage cp "$helm_chart_path" "gs://${target_repo}"
+  gcloud storage cp --cache-control "public, max-age=${max_age}" ./index.yaml "gs://${target_repo}"
 
   set +x
   hr
