@@ -863,7 +863,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         assert doc["kind"] == "Ingress"
         assert doc["metadata"]["name"] == "release-name-external-es-proxy-ingress"
-        assert doc["spec"]["rules"][0]["host"] == "es-proxy.plane.example.com"
+        assert doc["spec"]["rules"][0]["host"] == "elasticsearch.plane.example.com"
 
     def test_external_es_proxy_auth_cache_enabled_by_default(self, kube_version):
         """Test that auth caching is enabled by default in external-es-proxy configmap."""
