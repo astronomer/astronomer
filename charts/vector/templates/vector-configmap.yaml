@@ -30,6 +30,7 @@ data:
       airflow_3_task_logs:
         type: file
         include:
+          - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs-*/**/*.log
           - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs/**/*.log
         exclude:
           - "**/latest/**"
@@ -147,11 +148,20 @@ data:
       enrich_k8s_logs:
         type: remap
         inputs:
-          - airflow_k8s_logs
+          - filter_by_component
         source: |
           # airflow_k8s_logs source automatically populates pod labels
           if exists(.kubernetes.pod_labels.component) {
             .component = .kubernetes.pod_labels.component
+          }
+          if exists(.kubernetes.pod_labels.release) {
+            .release = .kubernetes.pod_labels.release
+          }
+          if exists(.kubernetes.pod_labels.workspace) {
+            .workspace = .kubernetes.pod_labels.workspace
+          }
+          if exists(.kubernetes.pod_namespace) {
+            .namespace = .kubernetes.pod_namespace
           }
           # Parse JSON messages
           if is_string(.message) {
@@ -160,6 +170,8 @@ data:
               . = merge!(., parsed)
             }
           }
+          .log_source = "kubernetes_logs"
+
 
       parse_airflowV3_path:
         type: remap
@@ -199,8 +211,12 @@ data:
             parts = split!(dag_file_str, "/")
             .dag_file = parts[-1]
           } else {
-            # Component log
-            .log_type = "component"
+            # For k8s logs, check if dag_id exists (task log from stdout)
+            if exists(.dag_id) {
+              .log_type = "task"
+            } else {
+              .log_type = "component"
+            }
           }
 
       merge_logs:
@@ -219,10 +235,14 @@ data:
         inputs:
           - parse_airflowV3_path
         source: |
-          if exists(.kubernetes.pod_labels.release) {
-            .release = .kubernetes.pod_labels.release
-          } else {
-            .release = "unknown"
+          if !exists(.release) && exists(.file) {
+            file_str = to_string!(.file)
+            parsed, err = parse_regex(file_str, r'logs-(?P<release>[^/]+)')
+            if err == null {
+              .release = parsed.release
+            } else {
+              .release = "unknown"
+            }
           }
 
           if exists(.kubernetes.pod_labels.workspace) {
@@ -242,12 +262,15 @@ data:
         inputs:
           - extract_release
         source: |
-          if !exists(.@timestamp) {
-            .@timestamp = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%Z") ?? now()
+          # Parse timestamp with flexible format - handle both with and without milliseconds
+          if !exists(.@timestamp) && exists(.timestamp) {
+            .@timestamp = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%.fZ") ?? now()
+          } else if !exists(.@timestamp) {
+            .@timestamp = now()
           }
 
           .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
-          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+          .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")
 
       map_log_level:
         type: remap
