@@ -1,7 +1,7 @@
 apiVersion: v2
 name: astronomer
-version: 1.1.0-rc9
-appVersion: 1.1.0-rc9
+version: 1.1.0-rc10
+appVersion: 1.1.0-rc10
 description: Helm chart to deploy the Astronomer Platform
 icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
 keywords:
