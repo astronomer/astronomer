@@ -354,8 +354,132 @@ class TestExternalElasticSearch:
             },
         ] == networkpolicy["spec"]["ingress"][0]["from"]
 
+    def test_external_es_network_selector_plane_mode_data(self, kube_version):
+        """Test External Elasticsearch Service with NetworkPolicies."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        networkpolicy = docs[0]
+        assert networkpolicy["kind"] == "NetworkPolicy"
+        assert networkpolicy["spec"]["ingress"] == [
+            {
+                "from": [
+                    {"namespaceSelector": {}, "podSelector": {"matchLabels": {"component": "webserver", "tier": "airflow"}}},
+                    {"namespaceSelector": {}, "podSelector": {"matchLabels": {"component": "api-server", "tier": "airflow"}}},
+                ],
+                "ports": [{"port": 9200, "protocol": "TCP"}],
+            },
+            {
+                "from": [
+                    {
+                        "podSelector": {
+                            "matchLabels": {"component": "dp-ingress-controller", "release": "release-name", "tier": "nginx"}
+                        }
+                    },
+                    {"podSelector": {"matchLabels": {"component": "vector", "release": "release-name", "tier": "logging"}}},
+                    {"podSelector": {"matchLabels": {"component": "houston", "release": "release-name", "tier": "astronomer"}}},
+                ],
+                "ports": [{"port": 9201, "protocol": "TCP"}],
+            },
+        ]
+
+    def test_external_es_network_selector_with_auth_sidecar_enabled(self, kube_version):
+        """Test External Elasticsearch Service with authSidecar enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {"enabled": True},
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                    "networkPolicy": {"enabled": True},
+                    "plane": {"mode": "data"},
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        networkpolicy = docs[0]
+        assert networkpolicy["kind"] == "NetworkPolicy"
+        assert [
+            ingress_rule_item
+            for rule in networkpolicy["spec"]["ingress"]
+            for ingress_rule_item in rule.get("from")
+            if ingress_rule_item.get("namespaceSelector")
+        ] == [{"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}}]
+
+    def test_external_es_network_selector_with_auth_sidecar_enabled_with_ingress_allowed_namespaces(self, kube_version):
+        """Test External Elasticsearch Service with authSidecar enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "ingressAllowedNamespaces": [
+                            "test-namespace-1",
+                            "test-namespace-2",
+                        ],
+                    },
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                    "networkPolicy": {"enabled": True},
+                    "plane": {"mode": "data"},
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        networkpolicy = docs[0]
+        assert networkpolicy["kind"] == "NetworkPolicy"
+        assert [
+            ingress_rule_item
+            for rule in networkpolicy["spec"]["ingress"]
+            for ingress_rule_item in rule.get("from")
+            if ingress_rule_item.get("namespaceSelector")
+        ] == [
+            {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
+            {
+                "namespaceSelector": {
+                    "matchExpressions": [
+                        {"key": "kubernetes.io/metadata.name", "operator": "In", "values": ["test-namespace-1", "test-namespace-2"]}
+                    ]
+                }
+            },
+        ]
+
     def test_external_es_network_selector_with_logging_sidecar_enabled(self, kube_version):
-        """Test External Elasticsearch Service with NetworkPolicy Defaults."""
+        """Test External Elasticsearch Service with loggingSidecar enabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -377,6 +501,12 @@ class TestExternalElasticSearch:
         assert len(docs) == 1
         networkpolicy = docs[0]
         assert networkpolicy["kind"] == "NetworkPolicy"
+        assert not [
+            ingress_rule_item
+            for rule in networkpolicy["spec"]["ingress"]
+            for ingress_rule_item in rule.get("from")
+            if ingress_rule_item.get("namespaceSelector")
+        ]
         assert [
             {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
             {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}}},
@@ -709,9 +839,8 @@ class TestExternalElasticSearch:
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["external-es-proxy"]["tolerations"]
 
-    def test_external_elasticsearch_ingress(self, kube_version):
-        """Test that External ElasticSearch Ingress is rendered when
-        global.plane.mode is 'data'."""
+    def test_external_elasticsearch_ingress_plane_mode_data(self, kube_version):
+        """Test that External ElasticSearch Ingress is rendered when global.plane.mode is 'data'."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -734,7 +863,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         assert doc["kind"] == "Ingress"
         assert doc["metadata"]["name"] == "release-name-external-es-proxy-ingress"
-        assert doc["spec"]["rules"][0]["host"] == "es-proxy.plane.example.com"
+        assert doc["spec"]["rules"][0]["host"] == "elasticsearch.plane.example.com"
 
     def test_external_es_proxy_auth_cache_enabled_by_default(self, kube_version):
         """Test that auth caching is enabled by default in external-es-proxy configmap."""
