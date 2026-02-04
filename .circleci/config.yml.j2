@@ -457,10 +457,6 @@ workflows:
       - trigger-feature-stack-release:
           requires:
             - release-to-internal
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
 
 commands:
   push-to-quay-io:

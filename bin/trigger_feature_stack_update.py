@@ -73,7 +73,8 @@ def main(circleci_token: str, astro_path: str, branch: str):
         "astro_version": astro_version,
         "workflow_gen": True,
         "workflow_name": "feature_stack",
-        "workflow_extra_params_json": json.dumps({"release": branch}),
+        "workflow_extra_params_json": json.dumps({"release": "sudarshanrampuria/pla-89-add-option-to-run-software-automation-test-cases-in-feature"}),
+        "run_automation_tests": True
     }
 
     print("INFO: Printing parameters")
