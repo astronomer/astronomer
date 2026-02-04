@@ -15,7 +15,7 @@ CHECK_PIPELINE_STATUES_TIMER_MIN = 5
 GITHUB_ORG = "astronomer"
 CIRCLECI_URL = "circleci.com"
 REPO = "terraform-aws-astronomer"
-REPO_BRANCH = "master"
+REPO_BRANCH = "sudarshanrampuria/pla-89-add-option-to-run-software-automation-test-cases-in-feature"
 
 parent_directory = Path(__file__).parent.parent
 circleci_directory = parent_directory / ".circleci"
@@ -75,7 +75,7 @@ def main(circleci_token: str, astro_path: str, branch: str):
         "astro_version": astro_version,
         "workflow_gen": True,
         "workflow_name": "feature_stack",
-        "workflow_extra_params_json": json.dumps({"release": "sudarshanrampuria/pla-89-add-option-to-run-software-automation-test-cases-in-feature"}),
+        "workflow_extra_params_json": json.dumps({"release": "release-1.0"}),
         "run_automation_tests": True
     }
 
