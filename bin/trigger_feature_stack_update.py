@@ -7,7 +7,6 @@ import argparse
 import http.client
 import json
 import os
-import re
 import time
 from pathlib import Path
 
@@ -52,7 +51,7 @@ def get_job_state(circleci_token: str, pipeline_id: str):
 
 def main(circleci_token: str, astro_path: str, branch: str):
     # Getting Astronomer Helm Chart - FileName
-    file_list = os.listdir(astro_path)
+    os.listdir(astro_path)
 
     # astro_version = None
     # for file_name in file_list:
@@ -76,7 +75,7 @@ def main(circleci_token: str, astro_path: str, branch: str):
         "workflow_gen": True,
         "workflow_name": "feature_stack",
         "workflow_extra_params_json": json.dumps({"release": "release-1.0"}),
-        "run_automation_tests": True
+        "run_automation_tests": True,
     }
 
     print("INFO: Printing parameters")

@@ -560,28 +560,7 @@ workflows:
       - run_pre_commit
       - test-unit
       - check-commander-airflow-version
-      - build-artifact:
-          qa_release: true
-          requires:
-            - check-commander-airflow-version
-            - run_pre_commit
-            - test-unit
-      - release-to-internal:
-          context:
-            - gcp-astronomer-prod
-          requires:
-            - build-artifact
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
-      - trigger-feature-stack-release:
-          requires:
-            - release-to-internal
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
+      - trigger-feature-stack-release
 
 commands:
   push-to-quay-io:
