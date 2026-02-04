@@ -54,20 +54,22 @@ def main(circleci_token: str, astro_path: str, branch: str):
     # Getting Astronomer Helm Chart - FileName
     file_list = os.listdir(astro_path)
 
-    astro_version = None
-    for file_name in file_list:
-        x = re.search("astronomer-.*.tgz", file_name)
-        if x is not None and astro_version is None:
-            print(f"INFO: Found file {file_name}")
-            astro_version = file_name
+    # astro_version = None
+    # for file_name in file_list:
+    #     x = re.search("astronomer-.*.tgz", file_name)
+    #     if x is not None and astro_version is None:
+    #         print(f"INFO: Found file {file_name}")
+    #         astro_version = file_name
 
-    if astro_version is None:
-        print(f"INFO: Skipping calling workflow as no valid version. Below files are found at path: {astro_path}.")
-        print(json.dumps(file_list))
-        raise SystemExit(0)
+    # if astro_version is None:
+    #     print(f"INFO: Skipping calling workflow as no valid version. Below files are found at path: {astro_path}.")
+    #     print(json.dumps(file_list))
+    #     raise SystemExit(0)
 
-    astro_version = astro_version.removeprefix("astronomer-")
-    astro_version = astro_version.removesuffix(".tgz")
+    # astro_version = astro_version.removeprefix("astronomer-")
+    # astro_version = astro_version.removesuffix(".tgz")
+
+    astro_version = "1.1.0"
 
     parameters = {
         "astro_version": astro_version,
