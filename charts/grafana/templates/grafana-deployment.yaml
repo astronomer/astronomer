@@ -59,7 +59,7 @@ spec:
               mountPath: /var_lib_grafana_copy
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
         - name: wait-for-db
           command:
@@ -71,7 +71,7 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           {{- if .Values.waitForDB.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.waitForDB.readinessProbe) . | nindent 12 }}
@@ -90,7 +90,7 @@ spec:
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           {{- if .Values.bootstrapper.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.bootstrapper.readinessProbe) . | nindent 12 }}
@@ -123,7 +123,7 @@ spec:
           imagePullPolicy: {{ .Values.images.grafana.pullPolicy }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           ports:
             - name: grafana-ui
@@ -185,7 +185,7 @@ spec:
           image: {{ include "authSidecar.image" . }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- toYaml (merge $required .Values.securityContext ) | nindent 12 }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources:
@@ -222,6 +222,8 @@ spec:
             name: grafana-sidecar-conf
           - name: nginx-write-dir
             mountPath: /var/lib/nginx/tmp
+          - name: nginx-run-dir
+            mountPath: /run
         {{- end }}
       volumes:
         - name: var-lib-grafana
@@ -231,6 +233,8 @@ spec:
           configMap:
             name: {{ template "grafana.fullname" . }}-nginx-conf
         - name: nginx-write-dir
+          emptyDir: {}
+        - name: nginx-run-dir
           emptyDir: {}
         {{- end }}
         - name: grafana-datasource-volume

@@ -31,16 +31,14 @@ class TestPGBouncerDeployment:
             "limits": {"cpu": "250m", "memory": "256Mi"},
             "requests": {"cpu": "250m", "memory": "256Mi"},
         }
-        c_env = get_env_vars_dict(c_by_name["pgbouncer"]["env"])
-        assert c_env["ADMIN_USERS"] == "postgres"
-        assert c_env["AUTH_TYPE"] == "plain"
+        assert c_by_name["pgbouncer"]["env"] is None
 
     def test_pgbouncer_deployment_custom_configurations(self, kube_version):
         """Test pgbouncer deployment with custom configurations."""
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"pgbouncer": {"enabled": True}},
+                "global": {"pgbouncer": {"enabled": True, "extraEnv": {"red": "blue"}}},
                 "pgbouncer": {
                     "env": {"foo_key": "foo_value", "bar_key": "bar_value"},
                     "securityContext": {
@@ -62,8 +60,7 @@ class TestPGBouncerDeployment:
         }
 
         c_env = get_env_vars_dict(c_by_name["pgbouncer"]["env"])
-        assert c_env["ADMIN_USERS"] == "postgres"
-        assert c_env["AUTH_TYPE"] == "plain"
+        assert c_env["red"] == "blue"
         assert c_env["bar_key"] == "bar_value"
         assert c_env["foo_key"] == "foo_value"
 
@@ -114,3 +111,226 @@ class TestPGBouncerDeployment:
             assert container["image"].startswith(private_registry), (
                 f"Container named '{name}' does not use registry '{private_registry}': {container}"
             )
+
+    def test_pgbouncer_deployment_mounts_config_secret(self, kube_version):
+        """Test that the pgbouncer deployment mounts the configured secret and tmp-workspace volumes."""
+        secret_name = "astronomer-pgbouncer-config"
+        doc = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pgbouncer": {"enabled": True, "secretName": secret_name}}},
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )[0]
+
+        pod_spec = doc["spec"]["template"]["spec"]
+
+        # Check pgbouncer-config secret volume
+        assert {
+            "name": "pgbouncer-config",
+            "secret": {
+                "secretName": secret_name,
+                "items": [
+                    {"key": "pgbouncer.ini", "path": "pgbouncer.ini"},
+                    {"key": "users.txt", "path": "users.txt"},
+                ],
+            },
+        } in pod_spec["volumes"]
+
+        # Check tmp-workspace emptyDir volume
+        assert {"name": "tmp-workspace", "emptyDir": {}} in pod_spec["volumes"]
+
+        c_by_name = get_containers_by_name(doc)
+
+        # Check pgbouncer-config volume mount
+        assert {
+            "name": "pgbouncer-config",
+            "readOnly": True,
+            "mountPath": "/etc/pgbouncer",
+        } in c_by_name["pgbouncer"]["volumeMounts"]
+
+        # Check tmp-workspace volume mount
+        assert {
+            "name": "tmp-workspace",
+            "mountPath": "/tmp",
+        } in c_by_name["pgbouncer"]["volumeMounts"]
+
+    def test_pgbouncer_deployment_not_created_when_disabled(self, kube_version):
+        """Test that pgbouncer deployment is not created when pgbouncer is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pgbouncer": {"enabled": False}}},
+        )
+
+        # Verify that no pgbouncer deployment exists in the rendered templates
+        pgbouncer_deployments = [
+            doc for doc in docs if doc["kind"] == "Deployment" and doc["metadata"]["name"] == "release-name-pgbouncer"
+        ]
+        assert len(pgbouncer_deployments) == 0
+
+    def test_pgbouncer_deployment_without_secret_name(self, kube_version):
+        """Test that pgbouncer deployment does not mount pgbouncer-config volumes when secretName is explicitly empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pgbouncer": {"enabled": True, "secretName": ""}}},
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        pod_spec = doc["spec"]["template"]["spec"]
+
+        # Check that pgbouncer-config volume is not present
+        volume_names = [vol.get("name") for vol in pod_spec.get("volumes", [])]
+        assert "pgbouncer-config" not in volume_names
+
+        # Check that tmp-workspace volume is present (it should always be there)
+        assert {"name": "tmp-workspace", "emptyDir": {}} in pod_spec["volumes"]
+
+        c_by_name = get_containers_by_name(doc)
+
+        # Check that pgbouncer-config volume mount is not present
+        volume_mount_names = [vm.get("name") for vm in c_by_name["pgbouncer"].get("volumeMounts", [])]
+        assert "pgbouncer-config" not in volume_mount_names
+
+        # Check that tmp-workspace volume mount is present
+        assert {
+            "name": "tmp-workspace",
+            "mountPath": "/tmp",
+        } in c_by_name["pgbouncer"]["volumeMounts"]
+
+    def test_pgbouncer_deployment_custom_probes(self, kube_version):
+        """Test pgbouncer deployment with custom liveness and readiness probes."""
+        custom_liveness_probe = {
+            "httpGet": {"path": "/health", "port": 8080},
+            "initialDelaySeconds": 30,
+            "periodSeconds": 20,
+        }
+        custom_readiness_probe = {
+            "httpGet": {"path": "/ready", "port": 8080},
+            "initialDelaySeconds": 15,
+            "periodSeconds": 10,
+        }
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"pgbouncer": {"enabled": True}},
+                "pgbouncer": {
+                    "livenessProbe": custom_liveness_probe,
+                    "readinessProbe": custom_readiness_probe,
+                },
+            },
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert len(c_by_name) == 1
+
+        assert c_by_name["pgbouncer"]["livenessProbe"] == custom_liveness_probe
+        assert c_by_name["pgbouncer"]["readinessProbe"] == custom_readiness_probe
+
+    def test_pgbouncer_deployment_default_probes(self, kube_version):
+        """Test pgbouncer deployment uses default tcpSocket probes when not customized."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pgbouncer": {"enabled": True}}},
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert len(c_by_name) == 1
+
+        # Default probes should be tcpSocket on port 6543
+        assert c_by_name["pgbouncer"]["livenessProbe"] == {"tcpSocket": {"port": 6543}}
+        assert c_by_name["pgbouncer"]["readinessProbe"] == {"tcpSocket": {"port": 6543}}
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+class TestPGBouncerNetworkPolicy:
+    def test_pgbouncer_networkpolicy_enabled(self, kube_version):
+        """Test that pgbouncer network policy is created when enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"pgbouncer": {"enabled": True}},
+                "pgbouncer": {"networkPolicies": {"enabled": True}},
+            },
+            show_only=["charts/pgbouncer/templates/pgbouncer-networkpolicy.yaml"],
+        )
+
+        assert len(docs) == 1
+        policy = docs[0]
+
+        assert policy["kind"] == "NetworkPolicy"
+        assert policy["apiVersion"] == "networking.k8s.io/v1"
+        assert policy["metadata"]["name"] == "release-name-pgbouncer-policy"
+
+        # Check podSelector
+        assert policy["spec"]["podSelector"]["matchLabels"]["app"] == "pgbouncer"
+        assert policy["spec"]["podSelector"]["matchLabels"]["release"] == "release-name"
+
+        # Check ingress rules
+        assert len(policy["spec"]["ingress"]) == 1
+        ingress = policy["spec"]["ingress"][0]
+
+        # Check port
+        assert len(ingress["ports"]) == 1
+        assert ingress["ports"][0]["port"] == 6543
+
+        # Check from rules - should allow astronomer and monitoring tiers
+        assert len(ingress["from"]) == 2
+
+        # Check for astronomer tier
+        astronomer_peer = {
+            "podSelector": {
+                "matchLabels": {
+                    "release": "release-name",
+                    "tier": "astronomer",
+                }
+            }
+        }
+        assert astronomer_peer in ingress["from"]
+
+        # Check for monitoring tier
+        monitoring_peer = {
+            "podSelector": {
+                "matchLabels": {
+                    "release": "release-name",
+                    "tier": "monitoring",
+                }
+            }
+        }
+        assert monitoring_peer in ingress["from"]
+
+    def test_pgbouncer_networkpolicy_disabled(self, kube_version):
+        """Test that pgbouncer network policy is not created when networkPolicies is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"pgbouncer": {"enabled": True}},
+                "pgbouncer": {"networkPolicies": {"enabled": False}},
+            },
+            show_only=["charts/pgbouncer/templates/pgbouncer-networkpolicy.yaml"],
+        )
+
+        assert len(docs) == 0
+
+    def test_pgbouncer_networkpolicy_not_created_when_pgbouncer_disabled(self, kube_version):
+        """Test that pgbouncer network policy is not created when pgbouncer is globally disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"pgbouncer": {"enabled": False}},
+                "pgbouncer": {"networkPolicies": {"enabled": True}},
+            },
+        )
+
+        # Verify that no pgbouncer network policy exists in the rendered templates
+        pgbouncer_policies = [
+            doc for doc in docs if doc["kind"] == "NetworkPolicy" and doc["metadata"]["name"] == "release-name-pgbouncer-policy"
+        ]
+        assert len(pgbouncer_policies) == 0

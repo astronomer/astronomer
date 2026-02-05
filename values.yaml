@@ -44,7 +44,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 2025.12.03
+      tag: 2025.12.24
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -133,7 +133,7 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.7.5
+    tag: 0.9.2
     securityContexts:
       pod:
         fsGroup: 50000
@@ -157,7 +157,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.51.0
+    tag: 0.52.0
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -313,7 +313,7 @@ global:
         tag: 8.0.3-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.25.0-1
+        tag: 1.24.1-4
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
         tag: 0.20.0-1
@@ -336,12 +336,12 @@ global:
   pgbouncer:
     enabled: false
     gssSupport: true
-    krb5ConfSecretName: krb5.conf
+    secretName: astronomer-pgbouncer-config
     # we use it only for in cluster postgresql
     # so we can override astronomer-bootstrap secret
     username: postgres
     password: postgres
-    servicePort: "5432"
+    servicePort: "6543"
     extraEnv: []
       # some: thing
       # another: thing
