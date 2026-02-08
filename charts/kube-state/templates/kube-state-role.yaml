@@ -1,8 +1,9 @@
 #################################
 ## Kube State Role/ClusterRole ##
 #################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $namespacepoolsRBACresources:= and .Values.global.features.namespacePools.createRbac .Values.global.features.namespacePools.enabled }}
-{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $useRoles := .Values.global.features.namespacePools.enabled }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not $useRoles )}}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
 {{- if $shouldCreateResources }}
@@ -13,7 +14,7 @@
   {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- end }}
 
-{{- range $i, $namespaceName := $namespaces -}}
+{{- range $i, $namespaceName := $namespaces }}
 ---
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
@@ -26,8 +27,9 @@ metadata:
     tier: monitoring
     component: {{ $.Chart.Name }}
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
-    release:  {{ $.Release.Name }}
+    release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
+    plane: {{ $.Values.global.plane.mode }}
 rules:
 {{ if has "certificatesigningrequests" $.Values.collectors }}
 - apiGroups: ["certificates.k8s.io"]
@@ -54,7 +56,7 @@ rules:
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "deployments" $.Values.collectors }}
-- apiGroups: ["extensions", "apps"]
+- apiGroups: ["apps"]
   resources:
   - deployments
   verbs: ["list", "watch"]
@@ -108,7 +110,7 @@ rules:
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "replicasets" $.Values.collectors }}
-- apiGroups: ["extensions", "apps"]
+- apiGroups: ["apps"]
   resources:
   - replicasets
   verbs: ["list", "watch"]
@@ -187,17 +189,18 @@ rules:
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "ingresses" $.Values.collectors }}
-- apiGroups: ["extensions", "networking.k8s.io"]
+- apiGroups: ["networking.k8s.io"]
   resources:
   - ingresses
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "daemonsets" $.Values.collectors }}
-- apiGroups: ["extensions", "apps"]
+- apiGroups: ["apps"]
   resources:
   - daemonsets
   verbs: ["list", "watch"]
 {{ end -}}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

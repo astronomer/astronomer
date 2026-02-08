@@ -1,6 +1,7 @@
 ####################################
 ## Elasticsearch Exporter Service ##
 ####################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: exporter
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.exporter.service.httpPort | quote }}
@@ -26,3 +28,4 @@ spec:
     component: {{ template "elasticsearch.name" . }}-exporter
     release: {{ .Release.Name }}
     role: exporter
+{{- end }}

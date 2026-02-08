@@ -1,0 +1,22 @@
+#######################################################
+## Astronomer Data Plane Nginx Pod Disruption Budget ##
+#######################################################
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if eq .Values.global.plane.mode "data" }}
+apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-dp-nginx-pdb
+spec:
+  {{- if lt ( .Values.replicas | int ) 4 }}
+  maxUnavailable: 1
+  {{- else }}
+  maxUnavailable: {{ .Values.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      tier: {{ template "nginx.name" . }}
+      component: dp-ingress-controller
+      release: {{ .Release.Name }}
+{{- end }}
+{{- end }}

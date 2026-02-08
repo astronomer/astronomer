@@ -1,0 +1,26 @@
+########################################################
+## NGINX Control Plane RoleBinding/ClusterRoleBinding ##
+########################################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $singleNamespace := .Values.global.singleNamespace }}
+{{- if .Values.global.rbacEnabled }}
+kind: ClusterRoleBinding
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}
+  labels:
+    tier: {{ template "nginx.name" . }}
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "nginx.serviceAccountName" . }}-cp
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}

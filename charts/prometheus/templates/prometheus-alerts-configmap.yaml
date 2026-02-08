@@ -28,13 +28,13 @@ data:
         rules:
         {{- if and (not .Values.additionalAlerts.airflow) (not .Values.defaultAlerts.airflow.enabled) }}
           []
-        {{ end }}
+        {{- end }}
         {{- if .Values.additionalAlerts.airflow }}
         {{- tpl .Values.additionalAlerts.airflow $ | nindent 8 }}
         {{- end }}
         {{- if .Values.defaultAlerts.airflow.enabled }}
         - alert: AirflowDeploymentUnhealthy
-          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
+          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|api-server|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
           for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
           labels:
             tier: airflow
@@ -45,7 +45,6 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
             description: {{ printf "%q" "The {{ $labels.release }} deployment is not completely available." }}
-
 
         # This alert depends on the scheduler_heartbeat metric being a counter.
         # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
@@ -75,18 +74,6 @@ data:
             summary: {{ printf "%q" "{{ $labels.release }} is near its pod quota" }}
             description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
 
-        - alert: AirflowEphemeralStorageLimit
-          expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 8500000000
-          for: 10m
-          labels:
-            tier: airflow
-            component: {{ printf "%q" "{{ $labels.component_name }}" }}
-            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
-          annotations:
-            summary: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} is experiencing high ephemeral storage usage" }}
-            description: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} has been using >=8.5GB of its ephemeral storage for over 10 minutes." }}
-
         - alert: AirflowTasksPendingIncreasing
           expr: (max_over_time(airflow_scheduler_tasks_pending[5m]) - max_over_time(airflow_scheduler_tasks_pending[5m] offset 5m)) > 0
           for: 30m
@@ -97,34 +84,6 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $labels.deployment }} is creating tasks faster than it's clearing them." }}
             description: {{ printf "%q" "{{ $labels.deployment }}: the number of pending tasks has been increasing for 30 minutes" }}
-
-        - alert: ContainerMemoryNearTheLimitInDeployment
-          expr: |
-            (container_memory_working_set_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)", container_name!~"POD|istio-proxy"} /
-            container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)", container_name!~"POD|istio-proxy"}) * 100 > 95 < +Inf
-          for: 1h
-          labels:
-            tier: airflow
-            component: container
-            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
-            severity: warning
-          annotations:
-            summary: "A container is using more than 95% of the memory limit"
-            description: {{ printf "%q" "container {{ $labels.container }} in pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
-
-        - alert: CpuThrottlingInDeployment
-          expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m]) / increase(container_cpu_cfs_periods_total{namespace!="{{ .Release.Name }}", namespace != "kube-system", container_name!~".*worker.*|()"}[5m])) > 75
-          for: 5m
-          labels:
-            silence: cre
-            #tier: airflow
-            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
-            severity: warning
-          annotations:
-            summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) in namespace {{ $labels.namespace }} is getting throttled {{ $value }}% of the time" }}
-            description: "In the past 5 minutes, one or more components in the deployment are experiencing CPU throttling."
         {{- end }}
 
       - name: platform
@@ -137,7 +96,19 @@ data:
         {{- end }}
         {{- if .Values.defaultAlerts.platform.enabled }}
         - alert: AirflowOperatorFailureRate
-          expr: 100 * (sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) / (sum by (operator) (increase(airflow_operator_successes{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) + sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])))) > 50
+          expr: >-
+            100 * (
+              sum by (operator) (
+                increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])
+              ) / (
+                sum by (operator) (
+                  increase(airflow_operator_successes{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])
+                ) +
+                sum by (operator) (
+                  increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])
+                )
+              )
+            ) > 50
           for: 2h
           labels:
             tier: platform
@@ -169,98 +140,13 @@ data:
             description: {{ printf "%q" "{{ $value }} }} schedulers do not have a heartbeat in the last five minutes" }}
         {{- end }}
 
-      - name: node-exporter-recording.rules
-        rules:
-        - expr: |
-            count without (cpu) (
-              count without (mode) (
-                node_cpu_seconds_total{job="node-exporter"}
-              )
-            )
-          record: instance:node_num_cpu:sum
-        - expr: |
-            1 - avg without (cpu, mode) (
-              rate(node_cpu_seconds_total{job="node-exporter", mode="idle"}[1m])
-            )
-          record: instance:node_cpu_utilisation:rate1m
-        - expr: |
-            (
-              node_load1{job="node-exporter"}
-            /
-              instance:node_num_cpu:sum{job="node-exporter"}
-            )
-          record: instance:node_load1_per_cpu:ratio
-        - expr: |
-            1 - (
-              node_memory_MemAvailable_bytes{job="node-exporter"}
-            /
-              node_memory_MemTotal_bytes{job="node-exporter"}
-            )
-          record: instance:node_memory_utilisation:ratio
-        - expr: |
-            rate(node_vmstat_pgmajfault{job="node-exporter"}[1m])
-          record: instance:node_vmstat_pgmajfault:rate1m
-        - expr: |
-            rate(node_disk_io_time_seconds_total{job="node-exporter", device=~"nvme.+|rbd.+|sd.+|vd.+|xvd.+|dm-.+|dasd.+"}[1m])
-          record: instance_device:node_disk_io_time_seconds:rate1m
-        - expr: |
-            rate(node_disk_io_time_weighted_seconds_total{job="node-exporter", device=~"nvme.+|rbd.+|sd.+|vd.+|xvd.+|dm-.+|dasd.+"}[1m])
-          record: instance_device:node_disk_io_time_weighted_seconds:rate1m
-        - expr: |
-            sum without (device) (
-              rate(node_network_receive_bytes_total{job="node-exporter", device!="lo"}[1m])
-            )
-          record: instance:node_network_receive_bytes_excluding_lo:rate1m
-        - expr: |
-            sum without (device) (
-              rate(node_network_transmit_bytes_total{job="node-exporter", device!="lo"}[1m])
-            )
-          record: instance:node_network_transmit_bytes_excluding_lo:rate1m
-        - expr: |
-            sum without (device) (
-              rate(node_network_receive_drop_total{job="node-exporter", device!="lo"}[1m])
-            )
-          record: instance:node_network_receive_drop_excluding_lo:rate1m
-        - expr: |
-            sum without (device) (
-              rate(node_network_transmit_drop_total{job="node-exporter", device!="lo"}[1m])
-            )
-          record: instance:node_network_transmit_drop_excluding_lo:rate1m
-
       - name: k8s-recording.rules
         rules:
-        - expr: |
-            sum(rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])) by (namespace)
-          record: namespace:container_cpu_usage_seconds_total:sum_rate
-        - expr: |
-            sum by (cluster, namespace, pod, container) (
-              rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])
-            ) * on (cluster, namespace, pod) group_left(node) max by(cluster, namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
-        - expr: |
-            container_memory_working_set_bytes{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_memory_working_set_bytes
-        - expr: |
-            container_memory_rss{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_memory_rss
-        - expr: |
-            container_memory_cache{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_memory_cache
-        - expr: |
-            container_memory_swap{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_memory_swap
-        - expr: |
-            sum(container_memory_usage_bytes{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}) by (namespace)
-          record: namespace:container_memory_usage_bytes:sum
         - expr: |
             sum by (namespace) (
                 sum by (namespace, pod) (
                     max by (namespace, pod, container) (
-                        kube_pod_container_resource_requests_memory_bytes{job="{{.Release.Name}}-kube-state"}
+                        kube_pod_container_resource_requests{job="{{.Release.Name}}-kube-state", resource="memory",unit="byte"}
                     ) * on(namespace, pod) group_left() max by (namespace, pod) (
                         kube_pod_status_phase{phase=~"Pending|Running"} == 1
                     )
@@ -271,7 +157,7 @@ data:
             sum by (namespace) (
                 sum by (namespace, pod) (
                     max by (namespace, pod, container) (
-                        kube_pod_container_resource_requests_cpu_cores{job="{{.Release.Name}}-kube-state"}
+                        kube_pod_container_resource_requests{job="{{.Release.Name}}-kube-state", resource="cpu", unit="core"}
                     ) * on(namespace, pod) group_left() max by (namespace, pod) (
                       kube_pod_status_phase{phase=~"Pending|Running"} == 1
                     )
@@ -311,6 +197,7 @@ data:
           labels:
             workload_type: statefulset
           record: mixin_pod_workload
+
       - name: kube-scheduler-recording.rules
         rules:
         - expr: |
@@ -358,59 +245,14 @@ data:
           labels:
             quantile: "0.5"
           record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
-      - name: node-recording.rules
-        rules:
-        - expr: |
-            sum(min(kube_pod_info) by (cluster, node))
-          record: ':kube_pod_info_node_count:'
-        - expr: |
-            max(label_replace(kube_pod_info{job="{{.Release.Name}}-kube-state"}, "pod", "$1", "pod", "(.*)")) by (node, namespace, pod)
-          record: 'node_namespace_pod:kube_pod_info:'
-        - expr: |
-            count by (cluster, node) (sum by (node, cpu) (
-              node_cpu_seconds_total{job="node-exporter"}
-            * on (namespace, pod) group_left(node)
-              node_namespace_pod:kube_pod_info:
-            ))
-          record: node:node_num_cpu:sum
-        - expr: |
-            sum(
-              node_memory_MemAvailable_bytes{job="node-exporter"} or
-              (
-                node_memory_Buffers_bytes{job="node-exporter"} +
-                node_memory_Cached_bytes{job="node-exporter"} +
-                node_memory_MemFree_bytes{job="node-exporter"} +
-                node_memory_Slab_bytes{job="node-exporter"}
-              )
-            ) by (cluster)
-          record: :node_memory_MemAvailable_bytes:sum
-      - name: kube-prometheus-node-recording.rules
-        rules:
-        - expr: sum(rate(node_cpu_seconds_total{mode!="idle",mode!="iowait"}[3m])) BY
-            (instance)
-          record: instance:node_cpu:rate:sum
-        - expr: sum((node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_free_bytes{mountpoint="/"}))
-            BY (instance)
-          record: instance:node_filesystem_usage:sum
-        - expr: sum(rate(node_network_receive_bytes_total[3m])) BY (instance)
-          record: instance:node_network_receive_bytes:rate:sum
-        - expr: sum(rate(node_network_transmit_bytes_total[3m])) BY (instance)
-          record: instance:node_network_transmit_bytes:rate:sum
-        - expr: sum(rate(node_cpu_seconds_total{mode!="idle",mode!="iowait"}[5m])) WITHOUT
-            (cpu, mode) / ON(instance) GROUP_LEFT() count(sum(node_cpu_seconds_total)
-            BY (instance, cpu)) BY (instance)
-          record: instance:node_cpu:ratio
-        - expr: sum(rate(node_cpu_seconds_total{mode!="idle",mode!="iowait"}[5m]))
-          record: cluster:node_cpu:sum_rate5m
-        - expr: cluster:node_cpu_seconds_total:rate5m / count(sum(node_cpu_seconds_total)
-            BY (instance, cpu))
-          record: cluster:node_cpu:ratio
+
       - name: kube-prometheus-general-recording.rules
         rules:
         - expr: count without(instance, pod, node) (up == 1)
           record: count:up1
         - expr: count without(instance, pod, node) (up == 0)
           record: count:up0
+
       - name: kube-state-metrics
         rules:
         - alert: KubeStateMetricsListErrors
@@ -444,152 +286,6 @@ data:
           for: 15m
           labels:
             severity: critical
-            tier: platform
-
-      - name: node-exporter
-        rules:
-        - alert: NodeFilesystemSpaceFillingUp
-          annotations:
-            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
-              has only {{`{{ printf "%.2f" $value }}`}}% available space left and is filling
-              up fast.
-            runbook_url:
-            summary: Filesystem is predicted to run out of space within the next 4 hours.
-          expr: |
-            (
-              node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100 < 20
-            and
-              predict_linear(node_filesystem_avail_bytes{job="node-exporter",fstype!=""}[6h], 4*60*60) < 0
-            and
-              node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
-            )
-          for: 1h
-          labels:
-            severity: critical
-            tier: platform
-        - alert: NodeFilesystemAlmostOutOfSpace
-          annotations:
-            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
-              has only {{`{{ printf "%.2f" $value }}`}}% available space left.
-            runbook_url:
-            summary: Filesystem has less than 5% space left.
-          expr: |
-            (
-              node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100 < 5
-            and
-              node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
-            )
-          for: 1h
-          labels:
-            severity: warning
-            tier: platform
-        - alert: NodeFilesystemAlmostOutOfSpace
-          annotations:
-            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
-              has only {{`{{ printf "%.2f" $value }}`}}% available space left.
-            runbook_url:
-            summary: Filesystem has less than 3% space left.
-          expr: |
-            (
-              node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100 < 3
-            and
-              node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
-            )
-          for: 1h
-          labels:
-            severity: critical
-            tier: platform
-        - alert: NodeFilesystemFilesFillingUp
-          annotations:
-            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
-              has only {{`{{ printf "%.2f" $value }}`}}% available inodes left and is filling
-              up.
-            runbook_url:
-            summary: Filesystem is predicted to run out of inodes within the next 24 hours.
-          expr: |
-            (
-              node_filesystem_files_free{job="node-exporter",fstype!=""} / node_filesystem_files{job="node-exporter",fstype!=""} * 100 < 40
-            and
-              predict_linear(node_filesystem_files_free{job="node-exporter",fstype!=""}[6h], 24*60*60) < 0
-            and
-              node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
-            )
-          for: 1h
-          labels:
-            severity: warning
-            tier: platform
-        - alert: NodeFilesystemFilesFillingUp
-          annotations:
-            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
-              has only {{`{{ printf "%.2f" $value }}`}}% available inodes left and is filling
-              up fast.
-            runbook_url:
-            summary: Filesystem is predicted to run out of inodes within the next 4 hours.
-          expr: |
-            (
-              node_filesystem_files_free{job="node-exporter",fstype!=""} / node_filesystem_files{job="node-exporter",fstype!=""} * 100 < 20
-            and
-              predict_linear(node_filesystem_files_free{job="node-exporter",fstype!=""}[6h], 4*60*60) < 0
-            and
-              node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
-            )
-          for: 1h
-          labels:
-            severity: critical
-        - alert: NodeFilesystemAlmostOutOfFiles
-          annotations:
-            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
-              has only {{`{{ printf "%.2f" $value }}`}}% available inodes left.
-            runbook_url:
-            summary: Filesystem has less than 5% inodes left.
-          expr: |
-            (
-              node_filesystem_files_free{job="node-exporter",fstype!=""} / node_filesystem_files{job="node-exporter",fstype!=""} * 100 < 5
-            and
-              node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
-            )
-          for: 1h
-          labels:
-            severity: warning
-            tier: platform
-        - alert: NodeFilesystemAlmostOutOfFiles
-          annotations:
-            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
-              has only {{`{{ printf "%.2f" $value }}`}}% available inodes left.
-            runbook_url:
-            summary: Filesystem has less than 3% inodes left.
-          expr: |
-            (
-              node_filesystem_files_free{job="node-exporter",fstype!=""} / node_filesystem_files{job="node-exporter",fstype!=""} * 100 < 3
-            and
-              node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
-            )
-          for: 1h
-          labels:
-            severity: critical
-        - alert: NodeNetworkReceiveErrs
-          annotations:
-            description: '{{`{{ $labels.instance }}`}} interface {{`{{ $labels.device }}`}} has encountered
-              {{`{{ printf "%.0f" $value }}`}} receive errors in the last two minutes.'
-            runbook_url:
-            summary: Network interface is reporting many receive errors.
-          expr: |
-            increase(node_network_receive_errs_total[2m]) > 10
-          for: 1h
-          labels:
-            severity: warning
-            tier: platform
-        - alert: NodeNetworkTransmitErrs
-          annotations:
-            description: '{{`{{ $labels.instance }}`}} interface {{`{{ $labels.device }}`}} has encountered
-              {{`{{ printf "%.0f" $value }}`}} transmit errors in the last two minutes.'
-            runbook_url:
-            summary: Network interface is reporting many transmit errors.
-          expr: |
-            increase(node_network_transmit_errs_total[2m]) > 10
-          for: 1h
-          labels:
-            severity: warning
             tier: platform
 
       - name: kubernetes-apps
@@ -637,7 +333,7 @@ data:
             runbook_url:
             summary: '{{`{{ $labels.pod }}`}} Pod is CrashLooping'
           expr: |
-            rate(kube_pod_container_status_restarts_total{container=~"astro-ui|commander|registry|houston|prometheus|sqlproxy"}[15m]) * 60 * 5 > 0
+            rate(kube_pod_container_status_restarts_total{container=~"astro-ui|commander|grafana|houston|prometheus|registry|sqlproxy"}[15m]) * 60 * 5 > 0
           for: 15m
           labels:
             severity: critical
@@ -825,42 +521,9 @@ data:
           labels:
             severity: warning
             tier: platform
+
       - name: kubernetes-resources
         rules:
-        - alert: KubeCPUOvercommit
-          annotations:
-            description: Cluster has overcommitted CPU resource requests for Pods and cannot
-              tolerate node failure.
-            runbook_url:
-            summary: Cluster CPU resources are overcommitted
-          expr: |
-            sum(namespace:kube_pod_container_resource_requests_cpu_cores:sum)
-              /
-            sum(kube_node_status_allocatable_cpu_cores)
-              >
-            (count(kube_node_status_allocatable_cpu_cores)-1) / count(kube_node_status_allocatable_cpu_cores)
-          for: 5m
-          labels:
-            severity: warning
-            tier: platform
-        - alert: KubeMemOvercommit
-          annotations:
-            description: Cluster has overcommitted memory resource requests for Pods and cannot
-              tolerate node failure.
-            runbook_url:
-            summary: Cluster Memory resources are overcommitted
-          expr: |
-            sum(namespace:kube_pod_container_resource_requests_memory_bytes:sum)
-              /
-            sum(kube_node_status_allocatable_memory_bytes)
-              >
-            (count(kube_node_status_allocatable_memory_bytes)-1)
-              /
-            count(kube_node_status_allocatable_memory_bytes)
-          for: 5m
-          labels:
-            severity: warning
-            tier: platform
         - alert: KubeCPUOvercommit
           annotations:
             description: Cluster has overcommitted CPU resource requests for Namespaces.
@@ -869,21 +532,7 @@ data:
           expr: |
             sum(kube_resourcequota{job="{{.Release.Name}}-kube-state", type="hard", resource="cpu"})
               /
-            sum(kube_node_status_allocatable_cpu_cores)
-              > 1.5
-          for: 5m
-          labels:
-            severity: warning
-            tier: platform
-        - alert: KubeMemOvercommit
-          annotations:
-            description: Cluster has overcommitted memory resource requests for Namespaces.
-            runbook_url:
-            summary: Cluster has overcommitted Memory resource requests for Namespaces.
-          expr: |
-            sum(kube_resourcequota{job="{{.Release.Name}}-kube-state", type="hard", resource="memory"})
-              /
-            sum(kube_node_status_allocatable_memory_bytes{job="node-exporter"})
+            sum(kube_node_status_allocatable{resource="cpu", unit="core"})
               > 1.5
           for: 5m
           labels:
@@ -904,74 +553,9 @@ data:
           labels:
             severity: warning
             tier: platform
-        - alert: CPUThrottlingHigh
-          annotations:
-            description: '{{`{{ $value | humanizePercentage }}`}} throttling of CPU in namespace
-              {{`{{ $labels.namespace }}`}} for container {{`{{ $labels.container }}`}} in pod {{`{{
-              $labels.pod }}`}}.'
-            summary: 'CPU Throttling high in pod {{`{{$labels.pod }}`}}'
-            runbook_url:
-          expr: |
-            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"{{ .Release.Namespace }}", namespace != "kube-system"}[5m])) by (container, pod, namespace)
-              /
-            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"{{ .Release.Namespace }}", namespace != "kube-system"}[5m])) by (container, pod, namespace)
-              > ( 51 / 100 )
-          for: 15m
-          labels:
-            silence: cre
-            severity: warning
-            #tier: platform
-
-        - alert: ContainerMemoryNearTheLimit
-          expr: |
-            (container_memory_working_set_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"} /
-            container_spec_memory_limit_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"}) * 100 > 95 < +Inf
-          for: 1h
-          labels:
-            tier: platform
-            component: container
-            severity: warning
-          annotations:
-            summary: "A container in the platform namespace uses more than 95% of the memory limit"
-            description: {{ printf "%q" "{{ $labels.container }} in {{ $labels.pod }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
 
       - name: kubernetes-storage
         rules:
-        - alert: KubePersistentVolumeUsageCritical
-          annotations:
-            description: The PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
-              }}`}} in Namespace {{`{{ $labels.namespace }}`}} is only {{`{{ $value | humanizePercentage
-              }}`}} free.
-            runbook_url:
-            summary: '{{`{{ $labels.persistentvolumeclaim}}`}} Is running out of storage capacity'
-          expr: |
-            kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}
-              /
-            kubelet_volume_stats_capacity_bytes{job="kubernetes-nodes"}
-              < 0.03
-          for: 1m
-          labels:
-            severity: critical
-            tier: platform
-        - alert: KubePersistentVolumeFullInFourDays
-          annotations:
-            description: Based on recent sampling, the PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
-              }}`}} in Namespace {{`{{ $labels.namespace }}`}} is expected to fill up within four
-              days. Currently {{`{{ $value | humanizePercentage }}`}} is available.
-            runbook_url:
-            summary: '{{`{{ $labels.persistentvolumeclaim}}`}} Will fill up in 4 days'
-          expr: |
-            (
-              kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}
-                /
-              kubelet_volume_stats_capacity_bytes{job="kubernetes-nodes"}
-            ) < 0.15
-            and
-            predict_linear(kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}[6h], 4 * 24 * 3600) < 0
-          for: 1h
-          labels:
-            severity: high
-            tier: platform
         - alert: KubePersistentVolumeErrors
           annotations:
             description: The persistent volume {{`{{ $labels.persistentvolume }}`}} has status {{`{{
@@ -984,6 +568,7 @@ data:
           labels:
             severity: critical
             tier: platform
+
       - name: kubernetes-system
         rules:
         - alert: KubeVersionMismatch
@@ -1041,11 +626,12 @@ data:
             runbook_url:
             summary: Too many pods on '{{`{{ $labels.node }}`}}'
           expr: |
-            count by(node) ( (kube_pod_status_phase{job="{{.Release.Name}}-kube-state",phase="Running"} == 1) * on(instance,pod,namespace,cluster) group_left(node) topk by(instance,pod,namespace,cluster) (1, kube_pod_info{job="{{.Release.Name}}-kube-state"}) ) / max by(node) ( kube_node_status_capacity_pods{job="{{.Release.Name}}-kube-state"} != 1 ) > 0.95
+            count by(node) ( (kube_pod_status_phase{job="{{.Release.Name}}-kube-state",phase="Running"} == 1) * on(instance,pod,namespace,cluster) group_left(node) topk by(instance,pod,namespace,cluster) (1, kube_pod_info{job="{{.Release.Name}}-kube-state"}) ) / max by(node) ( kube_node_status_capacity{job="{{.Release.Name}}-kube-state", resource="pods",unit="integer"} != 1 ) > 0.95
           for: 15m
           labels:
             severity: warning
             tier: platform
+
       - name: prometheus
         rules:
         - alert: PrometheusBadConfig
@@ -1205,6 +791,7 @@ data:
           labels:
             severity: warning
             tier: platform
+
       - name: alertmanager.rules
         rules:
         - alert: AlertmanagerConfigInconsistent
@@ -1241,6 +828,7 @@ data:
           labels:
             severity: critical
             tier: platform
+
       - name: general.rules
         rules:
         - alert: TargetDown
@@ -1249,17 +837,6 @@ data:
               }}`}} targets in {{`{{ $labels.namespace }}`}} namespace are down.'
             summary: '{{`{{ $labels.job }}`}} Target Down'
           expr: 100 * (count(up == 0) BY (job, namespace, service) / count(up) BY (job,namespace, service)) > 10
-          for: 10m
-          labels:
-            severity: critical
-            tier: platform
-
-        - alert: NodeDown
-          annotations:
-            runbook_url:
-            description: '{{`{{ $labels.instance }}`}} is not reachable. Prometheus could not contact node-exporter on this node. This is usually a sign of an issue on the node.'
-            summary: '{{`{{ $labels.instance }}`}} is not reachable'
-          expr: up{job="node-exporter"} == 0
           for: 10m
           labels:
             severity: critical
@@ -1277,78 +854,6 @@ data:
           labels:
             severity: none
             tier: none
-      - name: node-time
-        rules:
-        - alert: ClockSkewDetected
-          annotations:
-            description: Clock skew detected on node-exporter {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod
-              }}`}}`. Ensure NTP is configured correctly on this host.
-            summary: Time is slipping on a node
-          expr: |
-            abs(node_timex_offset_seconds{job="node-exporter"}) > 0.05
-          for: 2m
-          labels:
-            severity: high
-            tier: platform
-      - name: node-network
-        rules:
-        - alert: NodeNetworkInterfaceFlapping
-          annotations:
-            description: Network interface "{{`{{ $labels.device }}`}}" changing it's up status
-              often on node-exporter {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}}"
-            summary: Network Interface Flapping
-          expr: |
-            changes(node_network_up{job="node-exporter",device!~"veth.+"}[2m]) > 2
-          for: 2m
-          labels:
-            severity: warning
-            tier: platform
-
-
-      {{- if .Values.global.veleroEnabled }}
-      - name: velero
-        rules:
-        - alert: VeleroMetricsAbsent
-          expr: absent(up{job="velero"} == 1)
-          for: 15m
-          labels:
-            tier: platform
-            component: velero
-          annotations:
-            summary: "Velero has disappeared from Prometheus target discovery"
-            description: "This alert fires if Prometheus target discovery was not able to
-              scrape Velero metrics in the last 15 minutes."
-
-        - alert: FailedVeleroBackup
-          expr: increase(velero_backup_failure_total{job="velero"}[1d]) > 0
-          for: 5m
-          labels:
-            tier: platform
-            component: velero
-          annotations:
-            summary: "Velero failed to backup"
-            description: {{ printf "%q" "Backup attempt failed in Velero past 1 day \n LABELS - {{ $labels }}." }}
-
-        - alert: PartialFailedVeleroBackup
-          expr: increase(velero_backup_partial_failure_total{job="velero"}[1d]) > 0
-          for: 5m
-          labels:
-            tier: platform
-            component: velero
-          annotations:
-            summary: "Velero partially failed to backup"
-            description: {{ printf "%q" "Backup attempt partially failed in Velero past 1 day \n LABELS - {{ $labels }}." }}
-
-        - alert: VeleroNoBackupForLong
-          expr: time() - velero_backup_last_successful_timestamp > 172800
-          for: 5m
-          labels:
-            tier: platform
-            component: velero
-          annotations:
-            summary: "2 days since last successful Backup for a Velero Schedule"
-            description: {{ printf "%q" "Time since last successful backup for {{ $labels.schedule }} :\n  VALUE = {{ $value }}\n  LABELS - {{ $labels }}" }}
-        {{- end }}
 
       - name: Ingress
         rules:
@@ -1391,19 +896,6 @@ data:
             description: "This alert fires if the failure rate (the rate of 5xx responses)
               measured on a time window of 5 minutes was higher than 5% of all traffic
               AND more than 5 per minute for the last 10 minutes."
-
-      - name: logging
-        rules:
-        - alert: FluentdQueueLarge
-          expr: sum by (host)( fluentd_status_buffer_queue_length) > 2
-          for: 15m
-          labels:
-            tier: platform
-            component: fluentd
-            severity: critical
-          annotations:
-            summary: {{ printf "%q" "Fluentd buffer queue length is {{ $value }} For {{ $labels.host }} " }}
-            description: "Check on Elastic Search client and try restarting Fluentd pods"
 
         - alert: ElasticSeachUnassignedShards
           expr: elasticsearch_cluster_health_unassigned_shards > 0

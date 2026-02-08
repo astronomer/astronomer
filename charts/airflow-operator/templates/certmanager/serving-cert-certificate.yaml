@@ -1,0 +1,22 @@
+#####################################
+# Operator Serving-Cert Certificate #
+#####################################
+{{ if and .Values.certManager.enabled (not .Values.webhooks.useCustomTlsCerts) .Values.global.airflowOperator.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Release.Name }}-airflow-operator-serving-cert
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  dnsNames:
+  - {{ .Release.Name }}-airflow-operator-webhook-service.{{ .Release.Namespace }}.svc
+  - {{ .Release.Name }}-airflow-operator-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    name: {{ .Release.Name }}-airflow-operator-selfsigned-issuer
+  secretName: webhook-server-cert
+{{- end }}

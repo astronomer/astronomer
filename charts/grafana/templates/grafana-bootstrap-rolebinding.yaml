@@ -1,6 +1,7 @@
 ####################################
 ## Grafana Bootstrap Role Binding ##
 ####################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if and .Values.global.rbacEnabled (and (not .Values.backendSecretName) (not .Values.backendConnection)) }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -17,6 +18,7 @@ roleRef:
   name: {{ template "grafana.fullname" . }}-bootstrapper
 subjects:
   - kind: ServiceAccount
-    name: {{ template "grafana.bootstrapper.serviceaccount" . }}
+    name: {{ template "grafana.bootstrapper.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}

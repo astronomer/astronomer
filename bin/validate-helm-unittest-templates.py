@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Validate that all referenced templates in helm unittest files exist."""
 
-from pathlib import Path, PosixPath
-import yaml
 import sys
+from pathlib import Path, PosixPath
 
+import yaml
 
-this_script = Path(__file__)
-git_root = this_script.resolve().parent.parent
+git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 
 
 def validate_test_file(file: PosixPath) -> None:
@@ -43,7 +42,7 @@ def validate_template_file(file: PosixPath) -> None:
 def validate_all_unittest_files() -> None:
     """Find all helm unittest files in the repo and validate all template files
     found within them."""
-    for test_file in git_root.glob("charts/*/tests/*_test.yaml"):
+    for test_file in git_root_dir.glob("charts/*/tests/*_test.yaml"):
         validate_test_file(test_file)
 
 

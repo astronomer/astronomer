@@ -1,6 +1,8 @@
 import pytest
-from tests import get_containers_by_name, supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -30,7 +32,7 @@ class TestHoustonCronjobJob:
             "--canary=false",
         ]
 
-        assert c_by_name["cleanup"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["cleanup"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_houston_cleanup_deployment_cronjob_overrides(self, kube_version):
         """Test cleanup deployments cronjob overrides."""
@@ -66,8 +68,9 @@ class TestHoustonCronjobJob:
         ]
 
         assert c_by_name["cleanup"]["securityContext"] == {
-            "runAsNonRoot": True,
+            "readOnlyRootFilesystem": True,
             "allowPriviledgeEscalation": False,
+            "runAsNonRoot": True,
         }
 
     def test_houston_cleanup_deployment_cronjob_disabled(self, kube_version):

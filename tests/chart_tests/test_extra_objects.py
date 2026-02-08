@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from tests.chart_tests.helm_template_generator import render_chart
-from .. import supported_k8s_versions
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)

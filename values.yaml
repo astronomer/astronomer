@@ -4,6 +4,19 @@
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
+    # Name of Kubernetes secret containing registry auth token used for cross-plane authentication (registry, federation, etc.)
+  authHeaderSecretName: ~
+  # This is to select the mode in which the Astronomer platform will run.
+  # The mode can be one of: control, data, unified
+  # - control: The Astronomer platform will run in control plane mode, where it is responsible for platform management, orchestration, and user interfaces
+  # - data: The Astronomer platform will run in data plane mode, where it is responsible for executing and monitoring Airflow workloads.
+  # - unified: The Astronomer platform will run with both the data plane and control plane in the same cluster and namespace. This is the behavior found in Astronomer 0.x.
+  plane:
+    mode: "unified"  # one of: control, data, unified
+    domainPrefix: ""    # cluster-id
+
+  # Labels to add to every pod
+  podLabels: {}
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
@@ -28,13 +41,17 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.18.9
+      tag: 2025.12.24
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
   # level Network Policy
   networkPolicy:
     enabled: true
+
+  #Global flag to enable Operator based deployment
+  airflowOperator:
+    enabled: false
 
   # Specific Astronomer features configuration
   features:
@@ -47,6 +64,12 @@ global:
         # if create is enabled, this helm chart will create the provided k8s namespaces
         create: false
         names: []
+
+  # namespaceLabels is a map of Kubernetes labels that will be applied to airflow deployment namespaces
+  namespaceLabels: {}
+    # To enforce PSA baseline policy, use the following values:
+    # pod-security.kubernetes.io/enforce: baseline
+
   namespaceFreeFormEntry: false
   # Use kube-lego
   acme: false
@@ -54,14 +77,11 @@ global:
   # If RBAC on cluster is enabled
   rbacEnabled: true
 
-  # whether to create pod disrption budgets by default for platform components
+  # whether to create pod disruption budgets by default for platform components
   podDisruptionBudgetsEnabled: true
 
   # URL to the Astronomer helm repo
   helmRepo: "https://helm.astronomer.io"
-
-  # Single namespace mode
-  singleNamespace: false
 
   # Use cluster roles
   clusterRoles: true
@@ -71,22 +91,13 @@ global:
     enabled: false
     rootNamespace: "istio-config"
 
-  # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
-  veleroEnabled: false
-
   # Enable default postgresql database.
   # This is not recommended for production.
   postgresqlEnabled: false
 
-  # Enables a node exporter DaemonSet for node-level metrics
-  #nodeExporterEnabled: true
-
   prometheusPostgresExporterEnabled: false
 
-  # Enables blackbox exporter
-  #blackboxExporterEnabled: false
-
-  # make fluentd to gather logs from all available namespaces
+  # Configure vector to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
@@ -94,13 +105,8 @@ global:
     enabled: true
     replicas: 3
     jetStream:
-      enabled: false
+      enabled: true
       tls: false
-
-  # Used to enable nats-streaming
-  stan:
-    enabled: true
-    replicas: 3
 
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true
@@ -110,17 +116,12 @@ global:
   # Enable security context constraints required for OpenShift
   sccEnabled: false
 
-  # Enabled nodeexporter security context constraints required for OpenShift
-  nodeExporterSccEnabled: false
-
   # Enables namespace labels for network policies
   networkNSLabels: false
 
   taskUsageMetricsEnabled: false
 
   deployRollbackEnabled: false
-
-  enableHoustonInternalAuthorization: false
 
   disableManageClusterScopedResources: false
 
@@ -129,10 +130,19 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.6.3
+    tag: 0.9.2
     securityContexts:
       pod:
         fsGroup: 50000
+    server:
+      readinessProbe: {}
+      livenessProbe: {}
+      nodeSelector: {}
+      affinity: {}
+      tolerations: []
+    client:
+      readinessProbe: {}
+      livenessProbe: {}
     resources: {}
     persistence: {}
 
@@ -144,11 +154,13 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.42.0
+    tag: 0.52.0
     customConfig: false
     indexPattern: ~
     extraEnv: []
     securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
     resources: {}
     #  requests:
     #    cpu: "100m"
@@ -161,10 +173,13 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.27.2
+    tag: 1.29.3
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
+    ingressAllowedNamespaces: []
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;
@@ -249,8 +264,8 @@ global:
 
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
-  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, astro-ui,
-  # registry, es-client, es-data, es-exporter, es-master, nginx-es, grafana, kibana, kube-state, nginx, nginx-default, prometheus.
+  # Pods in the platformNodePool include alertmanager, commander, houston, kube-replicator, astro-ui,registry,
+  # es-client, es-data, es-exporter, es-master, nginx-es, grafana, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   platformNodePool:
@@ -285,16 +300,45 @@ global:
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
   enableArgoCDAnnotation: false
 
+  airflow:
+    images:
+      statsd:
+        repository: quay.io/astronomer/ap-statsd-exporter
+        tag: 0.28.0-3
+      redis:
+        repository: quay.io/astronomer/ap-redis
+        tag: 8.0.3-1
+      pgbouncer:
+        repository: quay.io/astronomer/ap-pgbouncer
+        tag: 1.24.1-4
+      pgbouncerExporter:
+        repository: quay.io/astronomer/ap-pgbouncer-exporter
+        tag: 0.20.0-1
+      gitSync:
+        repository: quay.io/astronomer/ap-git-sync
+        tag: 2025.12.24
+      xcom:
+        repository: quay.io/astronomer/ap-init
+        tag: 2025.12.24
+  gitSyncRelay:
+    images:
+      gitDaemon:
+        repository: quay.io/astronomer/ap-git-daemon
+        tag: 2025.12.24
+      gitSync:
+        repository: quay.io/astronomer/ap-git-sync-relay
+        tag: 0.2.3
+
   # For now we support only pgbouncer with gss api support
   pgbouncer:
     enabled: false
     gssSupport: true
-    krb5ConfSecretName: krb5.conf
+    secretName: astronomer-pgbouncer-config
     # we use it only for in cluster postgresql
     # so we can override astronomer-bootstrap secret
     username: postgres
     password: postgres
-    servicePort: "5432"
+    servicePort: "6543"
     extraEnv: []
       # some: thing
       # another: thing
@@ -311,11 +355,8 @@ tags:
   # Enable monitoring stack (prometheus, kube-state, grafana)
   monitoring: true
 
-  # Enable logging stack (elasticsearch, fluentd, kibana)
+  # Enable logging stack (elasticsearch, vector)
   logging: true
-
-  # NATS Streaming
-  stan: true
 
 #################################
 ## Astronomer configuration
@@ -378,7 +419,6 @@ astronomer:
 ## Nginx configuration
 #################################
 nginx:
-  # Configure resources
   resources:
     requests:
       cpu: "500m"
@@ -448,12 +488,10 @@ prometheus:
   # Data retention
   retention: 15d
 
-  # Persistence configuration
   persistence:
     enabled: true
     size: "150Gi"
 
-  # Configure resources
   resources:
     requests:
       cpu: "1000m"
@@ -471,6 +509,16 @@ prometheus:
         cpu: 100m
         memory: 25Mi
 
+  filesdReloader:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+
 nats:
   nodeSelector:
     <<: *platformNodeSelector
@@ -487,13 +535,6 @@ nats:
         cpu: "250m"
         memory: "100Mi"
 
-stan:
-  nodeSelector:
-    <<: *platformNodeSelector
-  affinity:
-    <<: *platformAffinity
-  tolerations: *platformTolerations
-
   init:
     resources:
       requests:
@@ -502,47 +543,6 @@ stan:
       limits:
         cpu: "250m"
         memory: "100Mi"
-
-  stan:
-    resources:
-      requests:
-        cpu: "75m"
-        memory: "30Mi"
-      limits:
-        cpu: "250m"
-        memory: "100Mi"
-
-#################################
-## Blackbox Exporter configuration
-#################################
-prometheus-blackbox-exporter:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "70Mi"
-    limits:
-      cpu: "100m"
-      memory: "200Mi"
-
-  # define what astronomer platform services will be checked
-  # for up/down status. Enable this will also include
-  # the required network policies
-  astroServices:
-    commander:
-      enabled: true
-    houston:
-      enabled: true
-    registry:
-      enabled: true
-    grafana:
-      enabled: true
-    elasticsearch:
-      enabled: true
-    kibana:
-      enabled: true
-    cliInstall:
-      enabled: true
 
 #################################
 ## Elasticsearch configuration
@@ -644,36 +644,24 @@ elasticsearch:
         memory: "256Mi"
 
 #################################
-## Kibana configuration
+## Vector daemonset configuration
 #################################
-kibana:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
-
-#################################
-## Fluentd configuration
-#################################
-fluentd:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "1000m"
-      memory: "1024Mi"
+vector:    # pod
+  vector:  # container
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+    # livenessProbe: {}
+    # readinessProbe: {}
 
 #################################
 ## Kube State configuration
 #################################
 kube-state:
-  # Configure resources
   resources:
     requests:
       cpu: "250m"

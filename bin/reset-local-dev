@@ -1,93 +1,28 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2016,SC1090,SC1091
-set -euo pipefail
+# This is used in local dev, and in CI. Usage of this script requires exporting the
+# TEST_SCENARIO env var to data, unified, or control.
 
-usage() {
-  echo "
-Description:
-  Sets up a kind cluster running Astronomer
+GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
+BIN_DIR="${GIT_ROOT_DIR}/bin"
 
-Usage:
-  ${0##*/} [OPTIONS]
+# Use the venv if it exists
+[[ -f .venv/bin/activate ]] || { echo "ABORT: .venv does not exist!" ; exit 1 ; }
 
-Options:
-  -h    Print this help text
-  -H    Use HA
-  -k    List recent kubernetes versions to use with -K (not all will be available to KIND)
-  -K    Kubernetes version to use (eg: 1.25.3) https://github.com/kubernetes/kubernetes/releases/
-  -M    Enable multi-node kind cluster
+# shellcheck disable=SC1091
+. .venv/bin/activate
 
-"
-}
+set -ex
 
-get_kube_versions() {
-  curl -s https://api.github.com/repos/kubernetes/kubernetes/releases |
-    jq -r -c '.[] | .tag_name + " " + .created_at' |
-    grep -vE 'alpha|beta|rc' |
-    column -t |
-    sort
-}
+# Download helper tools to ~/.local/share/astronomer-software/bin
+"${BIN_DIR}/install-ci-tools.py"
 
-while getopts ':hHkK:Mx' option ; do
-  case "${option}" in
-    h) usage ; exit 0 ;;
-    H) USE_HA=1 ;;
-    k) get_kube_versions ; exit 0 ;;
-    K) export KUBE_VERSION="${OPTARG}" ;;
-    M) export MULTI_NODE=1 ;;
-    x) set -x ;;
-    *) echo "ERROR: Unknown option: -${OPTARG}" ; usage ; exit 1 ;;
-  esac
-done
-shift $((OPTIND - 1))
+# Generate certificates in ~/.local/share/astronomer-software/certs
+"${BIN_DIR}/certs.py" cleanup
+"${BIN_DIR}/certs.py" generate-tls
+"${BIN_DIR}/certs.py" generate-private-ca
 
-# The path to the working directory - the root of the repo
-GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
-NAMESPACE="${NAMESPACE:-astronomer}"
+# Create a KIND cluster and configure it for testing
+"${BIN_DIR}/setup-kind.py"
 
-if [[ -z "${USE_HA+x}" ]]; then
-  CONFIG_FILE="$GIT_ROOT/configs/local-dev.yaml"
-  echo "Using non-HA config file ${CONFIG_FILE##*/}"
-else
-  CONFIG_FILE="$GIT_ROOT/configs/local-dev-ha.yaml"
-  echo "Using HA config file ${CONFIG_FILE##*/}"
-fi
-
-# Fail fast for helm syntax errors
-helm template -f "$CONFIG_FILE" "$GIT_ROOT" >/dev/null && echo "Helm template parsed successfully"
-
-source "$GIT_ROOT/bin/setup-kind"
-
-echo "Deploying Astronomer..."
-helm install -f "$CONFIG_FILE" \
-  --timeout "${HELM_INSTALL_TIMEOUT:-800}s" \
-  --namespace "${NAMESPACE}" astronomer \
-  --set global.postgresqlEnabled=true \
-  "$GIT_ROOT"
-
-
-cat <<EOF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Astronomer is launching and should be available shortly. Run the following command
-  to configure kubectl to access the kind cluster that Astronomer is running in:
-
-    kind export kubeconfig
-
-  Run the following command to check the progress of the Astronomer installation:
-
-    kubectl get pods -n ${NAMESPACE}
-
-  Next, run the following command to port-forward into the kind cluster so you can
-  access the web UI:
-
-    sudo -E kubectl port-forward -n ${NAMESPACE} svc/astronomer-nginx 443
-
-  You can then access the web UI here: https://app.localtest.me
-
-  Run the following command to delete the cluster and all installed software:
-
-    kind delete cluster
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EOF
+# Install helm chart
+"${BIN_DIR}/helm-install.py"

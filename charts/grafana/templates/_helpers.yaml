@@ -46,9 +46,9 @@ grafana.{{ .Values.global.baseDomain }}
 {{ default (printf "%s-grafana-backend" .Release.Name) .Values.backendSecretName }}
 {{- end }}
 
-{{ define "grafana.bootstrapper.serviceaccount" -}}
-{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
-{{ default (printf "%s-grafana-bootstrapper" .Release.Name ) .Values.serviceAccount.name }}
+{{ define "grafana.bootstrapper.serviceAccountName" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled (not .Values.backendSecretName) (not .Values.backendConnection) -}}
+{{- default (printf "%s-grafana-bootstrapper" .Release.Name ) .Values.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -64,7 +64,7 @@ default:
 
 {{ define "grafana.dashboards" -}}
 {{- if .Values.dashboards -}}
-{{merge .Values.dashboards (fromYaml (include "velero.dashboard" .))  | toYaml}}
+{{merge .Values.dashboards (fromYaml (include "velero.dashboard" .)) | toYaml}}
 {{- else -}}
 {{ template "velero.dashboard" . }}
 {{- end }}

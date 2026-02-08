@@ -1,7 +1,9 @@
 ########################
 ## Astronomer Ingress ##
 ########################
-{{- if and .Values.global.baseDomain  ( not .Values.global.enablePerHostIngress ) }}
+{{- if and .Values.global.baseDomain ( not .Values.global.enablePerHostIngress ) }}
+{{- $planeDataMode := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -14,12 +16,12 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    {{- range $key, $value := .Values.global.extraAnnotations}}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
@@ -27,45 +29,20 @@ metadata:
       }
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
-  tls:
-  {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
-  {{- end }}
   {{- if .Values.global.tlsSecret }}
+  tls:
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
+      {{- if $planeControlMode }}
         - {{ .Values.global.baseDomain }}
         - app.{{ .Values.global.baseDomain }}
-        - registry.{{ .Values.global.baseDomain }}
-        - install.{{ .Values.global.baseDomain }}
+      {{- end }}
+      {{- if $planeDataMode }}
+        - {{ include "registry.ingressURL" . }}
+      {{- end }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: registry.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-registry
-            servicePort: registry-http
-  {{ else -}}
-  rules:
+{{- if $planeControlMode }}
   - host: {{ .Values.global.baseDomain }}
     http:
       paths:
@@ -86,7 +63,9 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-  - host: registry.{{ .Values.global.baseDomain }}
+{{- end }}
+{{- if $planeDataMode }}
+  - host: {{ include "registry.ingressURL" . }}
     http:
       paths:
         - path: /
@@ -96,5 +75,5 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
-  {{- end -}}
+{{- end }}
 {{- end }}

@@ -5,6 +5,7 @@
 # 1. Do not create any resource if rbacEnabled is disabled
 # 2. Create a Cluster Role if clusterRoles and rbacEnabled are enabled and namespacePools is disabled
 # 3. Create roles for each namespaces in the namespacePool (+ astronomer namespace) if enabled.
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $namespacepoolsRBACresources:= and .Values.global.features.namespacePools.createRbac .Values.global.features.namespacePools.enabled }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled) }}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
@@ -16,7 +17,7 @@
 {{- end }}
 
 {{- if $shouldCreateResources}}
-{{- range $i, $namespaceName := $namespaces -}}
+{{- range $i, $namespaceName := $namespaces }}
 ---
 kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -35,6 +36,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 rules:
+{{- if $.Values.global.airflowOperator.enabled }}
+- apiGroups: ["airflow.apache.org"]
+  resources: ["airflows"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+{{- end }}
 - apiGroups: [""]
   resources: ["configmaps"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
@@ -50,13 +56,19 @@ rules:
 # Important to understand: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["roles"]
-  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch", "escalate", "bind"]
+  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
   resources: ["persistentvolumeclaims"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "update", "watch", "patch"]
 - apiGroups: [""]
   resources: ["pods"]
-  verbs: ["get", "list", "watch"]
+  verbs: ["create", "delete", "deletecollection", "get", "list", "watch", "patch"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create", "get"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
 - apiGroups: [""]
   resources: ["endpoints"]
   verbs: ["create", "delete", "get", "list", "update", "watch"]
@@ -89,31 +101,19 @@ rules:
   verbs: ["create", "delete", "get", "patch"]
 - apiGroups: ["apps"]
   resources: ["deployments"]
-  verbs: ["create", "delete", "get", "patch","update"]
+  verbs: ["create", "delete", "get", "patch", "update"]
 - apiGroups: ["autoscaling"]
   resources: ["horizontalpodautoscalers"]
   verbs: ["list", "watch"]
 - apiGroups: ["batch"]
   resources: ["jobs"]
-  verbs: ["list", "watch", "create", "delete", "get"]
+  verbs: ["list", "watch", "create", "delete", "get", "deletecollection"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
-  verbs: ["create", "delete", "get", "list", "patch", "watch"]
-- apiGroups: ["extensions"]
-  resources: ["daemonsets", "replicasets"]
-  verbs: ["list", "watch"]
-- apiGroups: ["extensions"]
-  resources: ["deployments"]
-  verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  verbs: ["create", "delete", "get", "list", "patch", "watch", "deletecollection"]
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["create", "delete", "patch", "list", "watch"]
-- apiGroups: ["extensions"]
-  resources: ["ingresses"]
-  verbs: ["create", "delete", "get", "patch", "list", "watch"]
-- apiGroups: ["extensions"]
-  resources: ["ingresses/status"]
-  verbs: ["update", "list", "watch"]
 - apiGroups: ["networking.k8s.io"]
   resources: ["ingresses"]
   verbs: ["get", "create", "delete", "patch", "list", "watch"]
@@ -163,9 +163,9 @@ rules:
 {{- if and $useClusterRoles $.Values.global.sccEnabled }}
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
-  verbs: ["create", "delete", "list", "watch"]
-{{ end }}
-{{ end }}
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
+{{- end }}
+{{- end }}
 {{- end }}
 
 # If users run Openshift, and are using namespace pools, we also need to provide commander
@@ -175,9 +175,10 @@ rules:
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ $.Release.Name }}-commander
+  name: {{ $.Release.Name }}-commander-scc
   labels:
     tier: houston
+    plane: {{ .Values.global.plane.mode }}
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
     heritage: {{ $.Release.Service }}
@@ -188,5 +189,6 @@ metadata:
 rules:
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
-  verbs: ["create", "delete", "list", "watch"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
+{{- end }}
 {{- end }}

@@ -9,7 +9,7 @@ tolerations: []
 images:
   kubeState:
     repository: quay.io/astronomer/ap-kube-state
-    tag: 2.10.1
+    tag: 2.17.0-2
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -65,20 +65,20 @@ collectors:
   #- nodes
   #- endpoints
   #- poddisruptionbudgets
+  #- replicasets
+  #- replicationcontrollers
+  #- networkpolicies
+  #- horizontalpodautoscalers
   - daemonsets
   - namespaces
   - configmaps
   - cronjobs
   - deployments
-  - horizontalpodautoscalers
   - ingresses
   - jobs
   - limitranges
-  - networkpolicies
   - persistentvolumeclaims
   - pods
-  - replicasets
-  - replicationcontrollers
   - resourcequotas
   - secrets
   - services

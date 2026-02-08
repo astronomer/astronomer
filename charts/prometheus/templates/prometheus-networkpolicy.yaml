@@ -1,5 +1,5 @@
 ################################
-## Prometheus NetworkPolicy
+## Prometheus NetworkPolicy   ##
 ################################
 {{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
@@ -22,25 +22,48 @@ spec:
   - Ingress
   ingress:
   - from:
+    {{- if or (eq .Values.global.plane.mode "unified") (eq .Values.global.plane.mode "control") }}
     - podSelector:
         matchLabels:
           tier: astronomer
           component: houston
           release: {{ .Release.Name }}
+    {{- end }}
+    {{- if (eq .Values.global.plane.mode "data") }}
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: {{ template "prometheus.name" . }}-federation-auth
+          release: {{ .Release.Name }}
+    {{- end }}
     - podSelector:
         matchLabels:
           tier: monitoring
           component: grafana
           release: {{ .Release.Name }}
+    {{- if .Values.global.pgbouncer.enabled }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: pgbouncer
+          release: {{ .Release.Name }}
+    {{- end }}
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+    {{- end }}
     {{- else }}
     - podSelector:
         matchLabels:
           tier: nginx
-          component: ingress-controller
+          component: {{ ternary "dp-ingress-controller" "cp-ingress-controller" (eq .Values.global.plane.mode "data") }}
           release: {{ .Release.Name }}
     {{- end }}
     # It is sometimes useful to whitelist other pods,

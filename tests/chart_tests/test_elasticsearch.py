@@ -1,10 +1,11 @@
 import pytest
 import yaml
-from tests import (
+
+from tests import git_root_dir, supported_k8s_versions
+from tests.utils import (
     get_containers_by_name,
-    supported_k8s_versions,
 )
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -12,37 +13,102 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestElasticSearch:
-    def test_elasticsearch_with_sysctl_defaults(self, kube_version):
-        """Test ElasticSearch with sysctl config/values.yaml."""
+    def test_elasticsearch_defaults(self, kube_version):
+        """Test ElasticSearch default behaviors."""
         docs = render_chart(
             kube_version=kube_version,
-            values={},
             show_only=[
-                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
-                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml",
                 "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml",
             ],
         )
 
         vm_max_map_count = "vm.max_map_count=262144"
-        assert len(docs) == 3
+        assert len(docs) == 5
+
+        curator_doc, client_doc, data_doc, master_doc, nginx_doc = docs
+
+        # elasticsearch curator
+        assert curator_doc["kind"] == "CronJob"
+        assert curator_doc["metadata"]["name"] == "release-name-elasticsearch-curator"
+        assert curator_doc["spec"]["schedule"] == "0 1 * * *"
+
+        curator_pod = curator_doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert not curator_pod.get("nodeSelector")
+        assert not curator_pod.get("affinity")
+        assert not curator_pod.get("tolerations")
+
+        curator_containers = get_containers_by_name(curator_doc, include_init_containers=True)
+        assert len(curator_containers) == 1
+
+        curator_container = curator_containers["curator"]
+        assert curator_container.get("volumeMounts") == [{"name": "config-volume", "mountPath": "/etc/config"}]
+        assert curator_container["command"] == ["/bin/sh", "-c"]
+        assert curator_container["args"] == [
+            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
+        ]
+        assert curator_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
         # elasticsearch master
-        assert docs[0]["kind"] == "StatefulSet"
-        esm_containers = get_containers_by_name(docs[0], include_init_containers=True)
-        assert vm_max_map_count in esm_containers["sysctl"]["command"]
-        assert "persistentVolumeClaimRetentionPolicy" not in docs[0]["spec"]
-
+        assert master_doc["kind"] == "StatefulSet"
+        es_master_containers = get_containers_by_name(master_doc, include_init_containers=True)
+        assert len(es_master_containers) == 3
+        assert vm_max_map_count in es_master_containers["sysctl"]["command"]
+        assert "persistentVolumeClaimRetentionPolicy" not in master_doc["spec"]
+        assert es_master_containers["es-master"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "tmp", "subPath": "logs", "mountPath": "/usr/share/elasticsearch/logs"},
+            {"name": "data", "mountPath": "/usr/share/elasticsearch/data"},
+            {"name": "config", "subPath": "elasticsearch.yml", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml"},
+        ]
         # elasticsearch data
-        assert docs[1]["kind"] == "StatefulSet"
-        esd_containers = get_containers_by_name(docs[1], include_init_containers=True)
-        assert vm_max_map_count in esd_containers["sysctl"]["command"]
-        assert "persistentVolumeClaimRetentionPolicy" not in docs[1]["spec"]
+        assert data_doc["kind"] == "StatefulSet"
+        es_data_containers = get_containers_by_name(data_doc, include_init_containers=True)
+        assert len(es_data_containers) == 3
+        assert vm_max_map_count in es_data_containers["sysctl"]["command"]
+        assert "persistentVolumeClaimRetentionPolicy" not in data_doc["spec"]
+        assert es_data_containers["es-data"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "tmp", "subPath": "logs", "mountPath": "/usr/share/elasticsearch/logs"},
+            {"name": "data", "mountPath": "/usr/share/elasticsearch/data"},
+            {"name": "config", "subPath": "elasticsearch.yml", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml"},
+        ]
 
         # elasticsearch client
-        assert docs[2]["kind"] == "Deployment"
-        esc_containers = get_containers_by_name(docs[1], include_init_containers=True)
-        assert vm_max_map_count in esc_containers["sysctl"]["command"]
+        assert client_doc["kind"] == "Deployment"
+        es_client_containers = get_containers_by_name(client_doc, include_init_containers=True)
+        assert len(es_client_containers) == 3
+        assert vm_max_map_count in es_client_containers["sysctl"]["command"]
+        assert es_client_containers["es-client"]["volumeMounts"] == [
+            {"mountPath": "/tmp", "name": "tmp"},
+            {"mountPath": "/usr/share/elasticsearch/config", "name": "es-config-dir"},
+            {"mountPath": "/usr/share/elasticsearch/data", "name": "es-data"},
+            {"mountPath": "/usr/share/elasticsearch/logs", "name": "es-client-logs"},
+            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
+        ]
+
+        assert es_client_containers["es-config-dir-copier"]["volumeMounts"] == [
+            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config_copy"},
+        ]
+
+        assert es_client_containers["es-config-dir-copier"]["image"] == es_client_containers["es-client"]["image"]
+        assert es_client_containers["es-client"]["image"].startswith("quay.io/astronomer/ap-elasticsearch:")
+
+        # elasticsearch nginx
+        assert nginx_doc["kind"] == "Deployment"
+        esn_containers = get_containers_by_name(nginx_doc, include_init_containers=True)
+        assert len(esn_containers) == 1
+        assert esn_containers["nginx"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"name": "var-cache-nginx", "mountPath": "/var/cache/nginx"},
+            {"name": "nginx-config-volume", "mountPath": "/etc/nginx"},
+            {"name": "var-lib", "mountPath": "/var/lib/nginx/tmp"},
+        ]
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
         """Test ElasticSearch master, data and client with sysctl
@@ -59,7 +125,7 @@ class TestElasticSearch:
 
         assert len(docs) == 3
         for doc in docs:
-            assert not doc["spec"]["template"]["spec"]["initContainers"]
+            assert all("sysctl" not in x["name"] for x in doc["spec"]["template"]["spec"].get("initContainers") or [])
 
     def test_elasticsearch_fsgroup_defaults(self, kube_version):
         """Test ElasticSearch master, data and client with fsGroup default
@@ -103,11 +169,13 @@ class TestElasticSearch:
                 "elasticsearch": {
                     "master": {
                         "securityContext": {
-                            "capabilities": {"add": ["IPC_LOCK"]},
+                            "snoopy": "dog",
+                            "woodstock": "bird",
                         },
                     },
                     "securityContext": {
-                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                        "denver": "colorado",
+                        "detroit": "michigan",
                     },
                 }
             },
@@ -118,7 +186,11 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+        assert pod_data["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_data_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch client with securityContext custom values."""
@@ -128,11 +200,13 @@ class TestElasticSearch:
                 "elasticsearch": {
                     "data": {
                         "securityContext": {
-                            "capabilities": {"add": ["IPC_LOCK"]},
+                            "snoopy": "dog",
+                            "woodstock": "bird",
                         },
                     },
                     "securityContext": {
-                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                        "denver": "colorado",
+                        "detroit": "michigan",
                     },
                 }
             },
@@ -143,7 +217,7 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+        assert pod_data["securityContext"] == {"readOnlyRootFilesystem": True, "snoopy": "dog", "woodstock": "bird"}
 
     def test_elasticsearch_client_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch client with securityContext custom values."""
@@ -153,11 +227,13 @@ class TestElasticSearch:
                 "elasticsearch": {
                     "client": {
                         "securityContext": {
-                            "capabilities": {"add": ["IPC_LOCK"]},
+                            "snoopy": "dog",
+                            "woodstock": "bird",
                         },
                     },
                     "securityContext": {
-                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                        "denver": "colorado",
+                        "detroit": "michigan",
                     },
                 }
             },
@@ -168,7 +244,7 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+        assert pod_data["securityContext"] == {"readOnlyRootFilesystem": True, "snoopy": "dog", "woodstock": "bird"}
 
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch master, data with securityContext custom
@@ -178,9 +254,8 @@ class TestElasticSearch:
             values={
                 "elasticsearch": {
                     "securityContext": {
-                        "capabilities": {"add": ["IPC_LOCK"]},
-                        "runAsNonRoot": True,
-                        "runAsUser": 1001,
+                        "denver": "colorado",
+                        "detroit": "michigan",
                     }
                 }
             },
@@ -191,10 +266,19 @@ class TestElasticSearch:
         )
         assert len(docs) == 2
         for doc in docs:
-            pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-            assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
-            assert pod_data["securityContext"]["runAsNonRoot"] is True
-            assert pod_data["securityContext"]["runAsUser"] == 1001
+            container_data = doc["spec"]["template"]["spec"]["containers"][0]
+            # Assert that container_data["securityContext"] contains at least the listed dict items
+            assert (
+                container_data["securityContext"].items()
+                >= {
+                    "readOnlyRootFilesystem": True,
+                    "capabilities": {"drop": ["ALL"]},
+                    "denver": "colorado",
+                    "detroit": "michigan",
+                    "runAsNonRoot": True,
+                    "runAsUser": 1000,
+                }.items()
+            )
 
     def test_nginx_es_client_network_selector_defaults(self, kube_version):
         """Test Nginx ES Service with NetworkPolicy defaults."""
@@ -202,7 +286,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={},
             show_only=[
-                "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
             ],
         )
 
@@ -213,6 +297,10 @@ class TestElasticSearch:
             {
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}},
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
@@ -222,7 +310,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={"global": {"loggingSidecar": {"enabled": True}}},
             show_only=[
-                "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
             ],
         )
 
@@ -230,31 +318,34 @@ class TestElasticSearch:
         doc = docs[0]
         assert "NetworkPolicy" == doc["kind"]
         assert [
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}}},
             {
                 "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "scheduler", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "worker", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "triggerer", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
+                "podSelector": {
+                    "matchExpressions": [
+                        {
+                            "key": "component",
+                            "operator": "In",
+                            "values": [
+                                "dag-server",
+                                "metacleanup",
+                                "airflow-downgrade",
+                                "git-sync-relay",
+                                "dag-processor",
+                                "triggerer",
+                                "worker",
+                                "scheduler",
+                            ],
+                        }
+                    ],
+                    "matchLabels": {"tier": "airflow"},
+                },
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_elastic_nginx_config_pattern_defaults(self, kube_version):
-        """Test External Elasticsearch Service Index Pattern Search
-        defaults."""
+        """Test External Elasticsearch Service Index Pattern Search defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -279,6 +370,21 @@ class TestElasticSearch:
                 "location ~ ^/ { deny all; } } }",
             ]
         )
+
+    def test_elastic_nginx_config_custom_max_body_size(self, kube_version):
+        """Test that custom max body size is properly set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"nginx": {"maxBodySize": "123456789M"}}},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        nginx_config = " ".join(doc["data"]["nginx.conf"].split())
+        assert "client_max_body_size 123456789M" in nginx_config
 
     def test_elastic_nginx_config_pattern_defaults_and_index_prefix_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search with index prefix overrides."""
@@ -391,8 +497,14 @@ class TestElasticSearch:
             values={
                 "elasticsearch": {
                     "exporter": {
-                        "podSecurityContext": {"runAsNonRoot": True},
-                        "securityContext": {"runAsNonRoot": True, "runAsUser": 2000},
+                        "podSecurityContext": {
+                            "denver": "colorado",
+                            "detroit": "michigan",
+                        },
+                        "securityContext": {
+                            "snoopy": "dog",
+                            "woodstock": "bird",
+                        },
                     }
                 }
             },
@@ -401,9 +513,13 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"]["runAsNonRoot"] is True
-        assert pod_data["containers"][0]["securityContext"]["runAsNonRoot"] is True
-        assert pod_data["containers"][0]["securityContext"]["runAsUser"] == 2000
+        assert pod_data["securityContext"] == {"denver": "colorado", "detroit": "michigan"}
+        assert pod_data["containers"][0]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "capabilities": {"drop": ["ALL"]},
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_role_defaults(self, kube_version):
         """Test ElasticSearch master, data and client with default roles"""
@@ -515,35 +631,16 @@ class TestElasticSearch:
         assert "elasticsearch" in LS
         assert "https://release-name-elasticsearch:9200" in LS["elasticsearch"]["client"]["hosts"]
 
-    def test_elasticsearch_curator_cronjob_defaults(self, kube_version):
-        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config defaults"""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={},
-            show_only=["charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"],
-        )
-        assert len(docs) == 1
-        c_by_name = get_containers_by_name(docs[0])
-        assert docs[0]["kind"] == "CronJob"
-        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
-        assert docs[0]["spec"]["schedule"] == "0 1 * * *"
-        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-        assert spec["nodeSelector"] == {}
-        assert spec["affinity"] == {}
-        assert spec["tolerations"] == []
-        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
-        assert c_by_name["curator"]["args"] == [
-            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
-        ]
-        assert c_by_name["curator"]["securityContext"] == {}
-
     def test_elasticsearch_curator_cronjob_overrides(self, kube_version, global_platform_node_pool_config):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
         values = {
             "elasticsearch": {
                 "curator": {
                     "schedule": "0 45 * * *",
-                    "securityContext": {"runAsNonRoot": True},
+                    "securityContext": {
+                        "snoopy": "dog",
+                        "woodstock": "bird",
+                    },
                 }
             },
             "global": {
@@ -565,11 +662,18 @@ class TestElasticSearch:
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
-        assert c_by_name["curator"]["args"] == [
+        assert len(c_by_name) == 1
+        curator_container = c_by_name["curator"]
+        assert curator_container["command"] == ["/bin/sh", "-c"]
+        assert curator_container["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
-        assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
+        assert curator_container["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_curator_cronjob_subchart_overrides(self, kube_version, global_platform_node_pool_config):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
@@ -578,7 +682,10 @@ class TestElasticSearch:
             "elasticsearch": {
                 "curator": {
                     "schedule": "0 45 * * *",
-                    "securityContext": {"runAsNonRoot": True},
+                    "securityContext": {
+                        "snoopy": "dog",
+                        "woodstock": "bird",
+                    },
                 },
                 "nodeSelector": global_platform_node_pool_config["nodeSelector"],
                 "affinity": global_platform_node_pool_config["affinity"],
@@ -600,11 +707,18 @@ class TestElasticSearch:
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["elasticsearch"]["tolerations"]
-        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
-        assert c_by_name["curator"]["args"] == [
+        assert len(c_by_name) == 1
+        curator_container = c_by_name["curator"]
+        assert curator_container["command"] == ["/bin/sh", "-c"]
+        assert curator_container["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
-        assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
+        assert curator_container["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_nginx_deployment_defaults(self, kube_version):
         """Test ElasticSearch Nginx deployment default values."""
@@ -615,20 +729,32 @@ class TestElasticSearch:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["nginx"]["securityContext"] == {}
+        assert c_by_name["nginx"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_elasticsearch_nginx_deployment_overrides(self, kube_version):
         """Test ElasticSearch Nginx deployment default overrides."""
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "elasticsearch": {"nginx": {"securityContext": {"runAsNonRoot": True}}},
+                "elasticsearch": {
+                    "nginx": {
+                        "securityContext": {
+                            "snoopy": "dog",
+                            "woodstock": "bird",
+                        }
+                    }
+                },
             },
             show_only=["charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml"],
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["nginx"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["nginx"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "snoopy": "dog",
+            "woodstock": "bird",
+        }
 
     def test_elasticsearch_persistentVolumeClaimRetentionPolicy(self, kube_version):
         test_persistentVolumeClaimRetentionPolicy = {
@@ -657,3 +783,205 @@ class TestElasticSearch:
         for doc in docs:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+    def test_elasticsearch_statefulset_with_scc_disabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 0
+
+    def test_elasticsearch_statefulset_with_scc_enabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"sccEnabled": True}},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "SecurityContextConstraints"
+        assert docs[0]["apiVersion"] == "security.openshift.io/v1"
+        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-anyuid"
+        assert docs[0]["users"] == ["system:serviceaccount:default:release-name-elasticsearch"]
+
+    es_component_templates = [
+        str(path.relative_to(git_root_dir)) for path in list(git_root_dir.glob("charts/elasticsearch/templates/*/*.yaml"))
+    ]
+
+    @pytest.mark.parametrize("doc", es_component_templates)
+    @pytest.mark.parametrize("plane_mode,should_render", [("data", True), ("unified", True), ("control", False)])
+    def test_elasticsearch_templates_render_in_data_and_unified_mode(self, kube_version, doc, plane_mode, should_render):
+        """Test that elasticsearch templates are not rendered in control or unified plane modes."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}, "elasticsearch": {"data": {"persistence": {"enabled": True}}}},
+            show_only=[doc],
+        )
+        if should_render:
+            assert len(docs) == 1, f"Document {doc} should render in {plane_mode} mode"
+        else:
+            assert len(docs) == 0, f"Document {doc} should not render in {plane_mode} mode"
+
+    def test_elasticsearch_ingress_control_mode_default(self, kube_version):
+        """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}}},
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 0
+
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_elasticsearch_ingress(self, kube_version, plane_mode):
+        """Test elasticsearch ingress configuration"""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
+        )
+
+        assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
+        assert docs[0]["kind"] == "Ingress"
+        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+        annotations = docs[0]["metadata"]["annotations"]
+        auth_annotations = ["nginx.ingress.kubernetes.io/auth-signin", "nginx.ingress.kubernetes.io/auth-response-headers"]
+        for auth_annotation in auth_annotations:
+            assert auth_annotation not in annotations
+        rules = docs[0]["spec"]["rules"]
+        assert len(rules) == 1
+        paths = rules[0]["http"]["paths"]
+        assert len(paths) == 1
+        assert rules[0]["http"]["paths"] == [
+            {
+                "path": "/",
+                "pathType": "Prefix",
+                "backend": {
+                    "service": {
+                        "name": "release-name-elasticsearch",
+                        "port": {"number": 9200},
+                    }
+                },
+            }
+        ]
+
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_elasticsearch_client_network_policy(self, kube_version, plane_mode):
+        """Test elasticsearch ingress configuration"""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/client/es-client-networkpolicy.yaml"],
+            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
+        )
+        assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
+        assert docs[0]["kind"] == "NetworkPolicy"
+        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+        podSelector = docs[0]["spec"]["podSelector"]
+        assert podSelector == {
+            "matchLabels": {"tier": "logging", "component": "elasticsearch", "release": "release-name", "role": "client"}
+        }
+        assert docs[0]["spec"]["policyTypes"] == ["Ingress"]
+
+    def test_elasticsearch_nginx_auth_cache_enabled_by_default(self, kube_version):
+        """Test that auth caching is enabled by default in nginx-es configmap."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+
+        nginx_config = doc["data"]["nginx.conf"]
+
+        # Verify cache path is configured
+        assert "proxy_cache_path /tmp/nginx-auth-cache" in nginx_config
+        assert "levels=1:2" in nginx_config
+        assert "keys_zone=auth_cache:10m" in nginx_config
+        assert "max_size=100m" in nginx_config
+        assert "inactive=5m" in nginx_config
+
+        # Verify cache directives in /auth location
+        assert "proxy_cache auth_cache" in nginx_config
+        assert 'proxy_cache_key "$http_authorization"' in nginx_config
+        assert "proxy_cache_valid 200 5m" in nginx_config
+        assert "proxy_cache_valid 401 403 1m" in nginx_config
+        assert "proxy_ignore_headers Cache-Control Expires" in nginx_config
+        assert "add_header X-Auth-Cache-Status $upstream_cache_status always" in nginx_config
+
+        # Verify proxy_pass_request_body optimization is present
+        assert "proxy_pass_request_body off" in nginx_config
+
+    def test_elasticsearch_nginx_auth_cache_disabled(self, kube_version):
+        """Test that auth caching can be disabled in nginx-es configmap."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"nginx": {"authCache": {"enabled": False}}}},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+
+        nginx_config = doc["data"]["nginx.conf"]
+
+        # Verify cache directives are NOT present when disabled
+        assert "proxy_cache_path" not in nginx_config
+        assert "proxy_cache auth_cache" not in nginx_config
+        assert "proxy_cache_key" not in nginx_config
+        assert "proxy_cache_valid" not in nginx_config
+        assert "X-Auth-Cache-Status" not in nginx_config
+
+    def test_elasticsearch_nginx_auth_cache_custom_settings(self, kube_version):
+        """Test that custom auth cache settings are properly rendered."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "nginx": {
+                        "authCache": {
+                            "enabled": True,
+                            "levels": "2:2",
+                            "keysZone": "custom_cache:20m",
+                            "maxSize": "200m",
+                            "inactive": "10m",
+                            "validSuccess": "10m",
+                            "validFailure": "2m",
+                        }
+                    }
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+
+        nginx_config = doc["data"]["nginx.conf"]
+
+        # Verify custom cache storage settings (path is always /tmp/nginx-auth-cache)
+        assert "proxy_cache_path /tmp/nginx-auth-cache" in nginx_config
+        assert "levels=2:2" in nginx_config
+        assert "keys_zone=custom_cache:20m" in nginx_config
+        assert "max_size=200m" in nginx_config
+        assert "inactive=10m" in nginx_config
+
+        # Verify custom TTL settings
+        assert "proxy_cache_valid 200 10m" in nginx_config
+        assert "proxy_cache_valid 401 403 2m" in nginx_config

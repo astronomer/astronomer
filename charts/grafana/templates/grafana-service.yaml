@@ -1,6 +1,7 @@
 #####################
 ## Grafana Service ##
 #####################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -23,9 +24,10 @@ spec:
       port: {{ .Values.ports.http }}
       targetPort: {{ .Values.ports.http }}
       appProtocol: http
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled }}
     - name: auth-proxy
       protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
       appProtocol: tcp
     {{- end}}
+{{- end }}

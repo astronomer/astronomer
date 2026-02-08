@@ -1,7 +1,8 @@
 ############################
 ## Houston Bootstrap Role ##
 ############################
-{{- if and .Values.global.rbacEnabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
+{{- if and .Values.global.rbacEnabled  (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -11,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -25,4 +27,5 @@ rules:
       - get
       - create
       - patch
+{{- end }}
 {{- end }}

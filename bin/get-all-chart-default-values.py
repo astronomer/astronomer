@@ -12,13 +12,14 @@
 # ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./my-values.yaml
 # ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./my-values.yaml --as-path
 
-import yaml
-import tempfile
 import argparse
 import shutil
-import requests
-from deepmerge import always_merger
+import tempfile
 from pathlib import Path
+
+import requests
+import yaml
+from deepmerge import always_merger
 
 
 # Function to load YAML file
@@ -127,7 +128,7 @@ def load_chart(chart_path, values=None):
                 subchart_path = download_chart(dep_name, dep_version, dep_repository)
 
             # Recursively load and merge the subchart values
-            subchart_name, subchart_values = load_chart(subchart_path, values.get(dep_name, {}))
+            _subchart_name, subchart_values = load_chart(subchart_path, values.get(dep_name, {}))
             if dep_name in values:
                 values[dep_name] = deep_merge(subchart_values, values[dep_name])
             else:

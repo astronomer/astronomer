@@ -2,6 +2,7 @@
 ## Houston Airflow Db Cleanup CronJob
 ################################
 {{- if .Values.houston.cleanupAirflowDb.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   schedule: {{ .Values.houston.cleanupAirflowDb.schedule }}
   # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
@@ -27,6 +29,8 @@ spec:
             release: {{ .Release.Name }}
             app: houston-cleanup-airflow-db
             version: {{ .Chart.Version }}
+            plane: {{ .Values.global.plane.mode }}
+            {{- include "global.podLabels" . | nindent 12 }}
           {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
           annotations:
           {{- if .Values.global.istio.enabled }}
@@ -37,35 +41,74 @@ spec:
           {{- end }}
           {{- end }}
         spec:
-          nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
-          affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
-          tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+          nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
+          affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
+          tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
           restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          initContainers:
+            - name: etc-ssl-certs-copier
+              command:
+                - sh
+                - -c
+                - |
+                  if [ -d /etc/ssl/certs ]; then
+                    cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+                  else
+                    echo "No /etc/ssl/certs directory found, skipping copy."
+                  fi
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              securityContext:
+                {{- $required := dict "readOnlyRootFilesystem" true }}
+                {{- merge $required .Values.securityContext | toYaml | nindent 16 }}
+              resources: {{- toYaml .Values.houston.resources | nindent 16 }}
+              volumeMounts:
+                - name: etc-ssl-certs
+                  mountPath: /etc/ssl/certs_copy
           containers:
             - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
-              resources: {{ toYaml .Values.houston.resources | nindent 16 }}
-              args: ["yarn", "cleanup-airflow-db-data", "--",
-              "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
-              "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
-              "--output-path={{ .Values.houston.cleanupAirflowDb.outputPath }}",
-              "--purge-archive={{ .Values.houston.cleanupAirflowDb.purgeArchive }}",
-              "--provider={{ .Values.houston.cleanupAirflowDb.provider }}",
-              "--bucket-name={{ .Values.houston.cleanupAirflowDb.bucketName }}",
-              "--provider-env-secret-name={{ .Values.houston.cleanupAirflowDb.providerEnvSecretName }}",
-              "--tables={{ .Values.houston.cleanupAirflowDb.tables }}"]
+              securityContext:
+                {{- $required := dict "readOnlyRootFilesystem" true }}
+                {{- merge $required .Values.securityContext | toYaml | nindent 16 }}
+              resources: {{- toYaml .Values.houston.resources | nindent 16 }}
+              args: [
+                "yarn", "cleanup-airflow-db-data", "--",
+                "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
+                "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
+                "--output-path={{ .Values.houston.cleanupAirflowDb.outputPath }}",
+                "--drop-archives={{ .Values.houston.cleanupAirflowDb.dropArchives }}",
+                "--provider={{ .Values.houston.cleanupAirflowDb.provider }}",
+                "--bucket-name={{ .Values.houston.cleanupAirflowDb.bucketName }}",
+                "--provider-env-secret-name={{ .Values.houston.cleanupAirflowDb.providerEnvSecretName }}",
+                "--tables={{ .Values.houston.cleanupAirflowDb.tables }}"
+              ]
               volumeMounts:
+                - name: etc-ssl-certs
+                  mountPath: /etc/ssl/certs
+                - name: tmp
+                  mountPath: /tmp
+                - name: tmp
+                  mountPath: /houston/node_modules/.cache
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
+              {{- if .Values.houston.cleanupAirflowDb.readinessProbe }}
+              readinessProbe: {{ tpl (toYaml .Values.houston.cleanupAirflowDb.readinessProbe) . | nindent 16 }}
+              {{- end }}
+              {{- if .Values.houston.cleanupAirflowDb.livenessProbe }}
+              livenessProbe: {{ tpl (toYaml .Values.houston.cleanupAirflowDb.livenessProbe) . | nindent 16 }}
+              {{- end }}
           volumes:
+            - name: etc-ssl-certs
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
             {{- include "houston_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
 {{- end }}

@@ -2,6 +2,7 @@
 ## Config Syncer CronJob
 ###################################
 {{- if .Values.configSyncer.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   schedule: {{ include "configSyncer.schedule" .}}
   # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
@@ -27,6 +29,8 @@ spec:
             release: {{ .Release.Name }}
             app: config-syncer
             version: {{ .Chart.Version }}
+            plane: {{ .Values.global.plane.mode }}
+            {{- include "global.podLabels" . | nindent 12 }}
           {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
           annotations:
           {{- if .Values.global.istio.enabled }}
@@ -37,20 +41,18 @@ spec:
           {{- end }}
           {{- end }}
         spec:
-          serviceAccountName: {{ template "configSyncer.ServiceAccount" . }}
-          nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
-          affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
-          tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          serviceAccountName: {{ template "configSyncer.serviceAccountName" . }}
+          nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
+          affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
+          tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
           restartPolicy: Never
-{{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          {{- include "astronomer.imagePullSecrets" . | nindent 10 }}
           containers:
             - name: config-syncer
               image: {{ template "commander.image" . }}
               imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
-              securityContext: {{ template "configSyncer.securityContext" .  }}
+              securityContext:
+                {{ include "configSyncer.securityContext" . | nindent 16 }}
               resources: {{ toYaml .Values.configSyncer.resources | nindent 16 }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args:
@@ -61,4 +63,11 @@ spec:
               - "--target-namespaces"
               - "{{ join "," .Values.global.features.namespacePools.namespaces.names }}"
               {{- end }}
+              {{- if .Values.configSyncer.readinessProbe }}
+              readinessProbe: {{ tpl (toYaml .Values.configSyncer.readinessProbe) . | nindent 16 }}
+              {{- end }}
+              {{- if .Values.configSyncer.livenessProbe }}
+              livenessProbe: {{ tpl (toYaml .Values.configSyncer.livenessProbe) . | nindent 16 }}
+              {{- end }}
+{{- end }}
 {{- end }}

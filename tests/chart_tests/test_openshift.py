@@ -1,9 +1,9 @@
-import pytest
 import jmespath
+import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 show_only = [
     "charts/alertmanager/templates/alertmanager-statefulset.yaml",
@@ -11,12 +11,11 @@ show_only = [
     "charts/elasticsearch/templates/client/es-client-deployment.yaml",
     "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
     "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
-    "charts/prometheus-node-exporter/templates/daemonset.yaml",
     "charts/nats/templates/statefulset.yaml",
-    "charts/stan/templates/statefulset.yaml",
 ]
 
 airflow_components_list = [
+    "apiServer",
     "flower",
     "webserver",
     "scheduler",
@@ -25,6 +24,7 @@ airflow_components_list = [
     "triggerer",
     "migrateDatabaseJob",
     "cleanup",
+    "dagProcessor",
 ]
 
 
@@ -49,7 +49,7 @@ class TestOpenshift:
             show_only=show_only,
         )
 
-        assert len(docs) == 8
+        assert len(docs) == 6
         for doc in docs:
             assert "securityContext" not in doc["spec"]["template"]["spec"]
 
@@ -63,14 +63,13 @@ class TestOpenshift:
             show_only=[
                 "charts/prometheus/templates/prometheus-statefulset.yaml",
                 "charts/nats/templates/statefulset.yaml",
-                "charts/kibana/templates/kibana-deployment.yaml",
                 "charts/elasticsearch/templates/client/es-client-deployment.yaml",
                 "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
                 "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
             ],
         )
 
-        assert len(docs) == 6
+        assert len(docs) == 5
         for doc in docs:
             assert "runAsUser" not in jmespath.search("spec.template.spec.containers[*].securityContext", doc)
 
@@ -89,7 +88,10 @@ class TestOpenshift:
         airflowConfig = prod["deployments"]["helm"]["airflow"]
 
         for component in airflow_components_list:
-            assert {"runAsNonRoot": False} == airflowConfig[component]["securityContexts"]["pod"]
+            assert {"runAsNonRoot": True} == airflowConfig[component]["securityContexts"]["pod"]
 
         for component in non_airflow_components_list:
             assert {"runAsNonRoot": True} == airflowConfig[component]["securityContexts"]["pod"]
+
+        gitSyncConfig = airflowConfig["dags"]["gitSync"]
+        assert {"runAsNonRoot": True} == gitSyncConfig["securityContexts"]["container"]

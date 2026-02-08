@@ -1,9 +1,35 @@
+[project]
+name = "apc_dev_env"
+description = "Astro Private Cloud chart development environment"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "cryptography>=46.0.2",
+    "deepmerge>=2.0",
+    "docker>=7.1.0",
+    "filelock>=3.20.0",
+    "jmespath>=1.0.1",
+    "jsonschema>=4.25.1",
+    "kubernetes>=34.1.0",
+    "pytest>=8.4.2",
+    "pytest-forked>=1.6.0",
+    "pytest-pretty>=1.3.0",
+    "pytest-profiling>=1.8.1",
+    "pytest-rerunfailures>=16.1",
+    "pytest-testinfra>=10.2.2",
+    "pytest-xdist>=3.8.0",
+    "pyyaml>=6.0.3",
+    "requests>=2.32.5",
+    "semver>=3.0.4",
+    "yamllint>=1.37.1",
+]
+
 # https://www.python.org/dev/peps/pep-0518/#file-format
 
 # https://docs.astral.sh/ruff/settings/
 [tool.ruff]
 line-length = 132
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint]
 fixable = ["ALL"]
@@ -18,7 +44,7 @@ select = [
   "F",
   "FLY",
   "FURB",
-#  "I",
+  "I",
 #  "N",
   "PERF",
   "PGH",
@@ -47,6 +73,9 @@ ignore = [
   "S101",
   "S105",
   "S602",
+  ]
+"tests/chart_tests/*" = [
+  "S108",
   ]
 "tests/functional_tests/test_network_security.py" = ["C901"]
 "tests/chart_tests/test_private_registry.py" = ["UP031"]

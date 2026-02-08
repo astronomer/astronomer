@@ -1,0 +1,17 @@
+##############################
+# Runtime Version ConfigMap ##
+##############################
+{{ if and .Values.airgapped .Values.runtimeVersions.versionsJson .Values.global.airflowOperator.enabled (not .Values.runtimeVersions.configMapName) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-runtime-version-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  versions.json: {{ .Values.runtimeVersions.versionsJson | toJson }}
+{{ end }}

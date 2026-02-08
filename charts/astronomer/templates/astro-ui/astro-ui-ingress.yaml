@@ -1,7 +1,8 @@
 #################################
-## Astronomer astro ui Ingress ##
+## Astronomer Astro UI Ingress ##
 #################################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
+{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -12,14 +13,15 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    {{- range $key, $value := .Values.global.extraAnnotations}}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
@@ -27,34 +29,12 @@ metadata:
       }
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
-  tls:
-  {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
-  {{- end }}
   {{- if .Values.global.tlsSecret }}
+  tls:
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - app.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  {{ else -}}
   rules:
   - host: app.{{ .Values.global.baseDomain }}
     http:
@@ -66,13 +46,10 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-  {{- end -}}
-{{- end }}
 ---
 ###############################
 ## Astronomer Common Ingress ##
 ###############################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -83,14 +60,12 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    {{- range $key, $value := .Values.global.extraAnnotations}}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
@@ -98,27 +73,12 @@ metadata:
       }
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
-  tls:
-  {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
-  {{- end }}
   {{- if .Values.global.tlsSecret }}
+  tls:
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - {{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  {{ else -}}
   rules:
   - host: {{ .Values.global.baseDomain }}
     http:

@@ -1,0 +1,118 @@
+##########################################
+## Prometheus Federation Auth Configmap ##
+##########################################
+{{- if eq .Values.global.plane.mode "data" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "prometheus.fullname" . }}-federation-auth-config
+  labels:
+    tier: monitoring
+    component: {{ template "prometheus.name" . }}-federation-auth
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  nginx.conf: |
+    pid /tmp/nginx.pid;
+    worker_processes 1;
+    events {
+        worker_connections 1024;
+    }
+    env REGISTRY_AUTH_TOKEN;
+    http {
+        lua_package_path "/usr/local/openresty/lualib/?.lua;;";
+        lua_shared_dict federation_auth_cache 10m;
+
+        # Upstream to Prometheus service
+        upstream prometheus_backend {
+            server {{ template "prometheus.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.ports.http }};
+            keepalive 15;
+        }
+
+        server {
+            listen {{ .Values.global.authSidecar.port }};
+            server_name _;
+
+            # Disable Nginx Server version
+            server_tokens off;
+
+            # Proxy settings
+            proxy_buffering off;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # Block all paths by default
+            location / {
+               deny all;
+            }
+
+            # Federation endpoint with auth and proxy
+            location = /federate {
+                auth_request /auth;
+
+                # Remove the Authorization header before proxying to Prometheus
+                proxy_set_header Authorization "";
+
+                # Proxy to Prometheus backend
+                proxy_pass http://prometheus_backend/federate;
+                proxy_read_timeout 300s;
+                proxy_connect_timeout 75s;
+
+                # Handle large responses
+                proxy_buffering off;
+                proxy_buffer_size 4k;
+            }
+
+            # Auth endpoint for external ingress controllers (if still needed)
+            location = /auth {
+                internal;
+                content_by_lua_block {
+                    local auth_header = ngx.var.http_authorization
+                    local registry_auth_token = os.getenv("REGISTRY_AUTH_TOKEN")
+
+                    if not auth_header then
+                        ngx.log(ngx.WARN, "Federation auth: Missing Authorization header")
+                        ngx.status = 401
+                        ngx.header["X-Auth-Error"] = "Missing Authorization header"
+                        ngx.exit(401)
+                    end
+
+                    -- Extract token
+                    local provided_token = auth_header:match("^Bearer%s+(.+)$") or
+                                          auth_header:match("^%[(.+)%]$") or
+                                          auth_header
+
+                    if not provided_token then
+                        ngx.log(ngx.WARN, "Federation auth: Invalid Authorization format")
+                        ngx.status = 401
+                        ngx.header["X-Auth-Error"] = "Invalid Authorization format"
+                        ngx.exit(401)
+                    end
+
+                    -- Validate against federation token
+                    if provided_token ~= registry_auth_token then
+                        ngx.log(ngx.WARN, "Federation auth failed for token prefix: ",
+                                string.sub(provided_token, 1, 8))
+                        ngx.status = 403
+                        ngx.header["X-Auth-Error"] = "Invalid federation token"
+                        ngx.exit(403)
+                    end
+
+                    ngx.log(ngx.INFO, "Federation auth successful, proxying to Prometheus")
+                }
+            }
+
+            # Health check endpoint
+            location /healthz {
+                content_by_lua_block {
+                  ngx.status = 200
+                  ngx.say("OK")
+                  return ngx.exit(200)
+                }
+            }
+        }
+    }
+{{- end }}

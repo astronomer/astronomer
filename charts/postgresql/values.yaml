@@ -10,12 +10,12 @@ global:
 #   storageClass: myStorageClass
 
 ## Bitnami PostgreSQL image version
-## ref: https://hub.docker.com/r/bitnami/postgresql/tags/
+## ref: https://hub.docker.com/r/bitnamilegacy/postgresql/tags
 ##
 image:
   registry: quay.io
   repository: astronomer/ap-postgresql
-  tag: 15.9.0
+  tag: 17.7.0
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -84,7 +84,7 @@ securityContext:
 ## Pod Service Account
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
 serviceAccount:
-  enabled: false
+  create: false
   # Annotations to add to the service account
   annotations: {}
   ## Name of an already existing service account. Setting this value disables the automatic service account creation.

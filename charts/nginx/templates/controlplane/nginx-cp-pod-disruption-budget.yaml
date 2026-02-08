@@ -1,0 +1,22 @@
+###########################################################
+## Astronomer Control Plane  Nginx Pod Disruption Budget ##
+###########################################################
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-cp-nginx-pdb
+spec:
+  {{- if lt ( .Values.replicas | int ) 4 }}
+  maxUnavailable: 1
+  {{- else }}
+  maxUnavailable: {{ .Values.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      tier: {{ template "nginx.name" . }}
+      component: cp-ingress-controller
+      release: {{ .Release.Name }}
+{{- end }}
+{{- end }}

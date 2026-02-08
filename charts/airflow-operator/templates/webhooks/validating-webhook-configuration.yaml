@@ -1,0 +1,153 @@
+#######################################################
+## Airflow Operator WebHook Validating Configuration ##
+#######################################################
+{{ if .Values.webhooks.enabled }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Release.Name }}-airflow-operator-serving-cert
+  name: {{ .Release.Name }}-airflow-operator-validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-airflow" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: {{ .Release.Name }}-vairflowv1beta1.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - airflows
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-dag-processor-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: vapiserverscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - apiservers/scale
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-pgbouncer-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: vdagprocessorscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - dagprocessors/scale
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-redis-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: vpgbouncerscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - pgbouncers/scale
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-scheduler-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: vredisscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - redis/scale
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-statsd-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: vschedulerscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - schedulers/scale
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-triggerer-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: vstatsdscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - statsds/scale
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-webserver-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: vtriggererscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - triggerers/scale
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ .Release.Name }}-airflow-operator-webhook-service
+      namespace: airflow-operator-system
+      path: /validate-airflow-apache-org-v1beta1-webserver-scale
+  failurePolicy: Fail
+  name: vwebserverscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - webservers/scale
+  sideEffects: None
+{{- end }}

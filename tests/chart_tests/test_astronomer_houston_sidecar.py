@@ -1,7 +1,7 @@
 import pytest
 
 from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 chart_values = {
     "astronomer": {
@@ -14,8 +14,8 @@ chart_values = {
             "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/houston"}],
             "extraContainers": [
                 {
-                    "name": "fluentd",
-                    "image": "ap-fluentd:0.5",
+                    "name": "vector",
+                    "image": "ap-vector:0.5",
                     "imagePullPolicy": "Never",
                     "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/file_logs/"}],
                 }
@@ -30,8 +30,8 @@ chart_values = {
                 "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/houston_worker"}],
                 "extraContainers": [
                     {
-                        "name": "fluentd",
-                        "image": "ap-fluentd:0.5",
+                        "name": "vector",
+                        "image": "ap-vector:0.5",
                         "imagePullPolicy": "Never",
                         "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/file_logs/"}],
                     }
@@ -48,8 +48,8 @@ chart_values = {
             "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/commander"}],
             "extraContainers": [
                 {
-                    "name": "fluentd",
-                    "image": "ap-fluentd:0.5",
+                    "name": "vector",
+                    "image": "ap-vector:0.5",
                     "imagePullPolicy": "Never",
                     "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/file_logs/"}],
                 }
@@ -66,7 +66,7 @@ chart_values = {
 )
 class TestAstronomerFileLogs:
     def fleuntd_container(self, container):
-        assert container["image"] == "ap-fluentd:0.5"
+        assert container["image"] == "ap-vector:0.5"
         assert len(container["volumeMounts"]) == 1
 
     def houston_container(self, container):
@@ -132,19 +132,19 @@ class TestAstronomerFileLogs:
                 if name == "astro-file-logs-houston":
                     if container["name"] == "houston":
                         self.houston_container(container=container)
-                    elif container["name"] == "fluentd":
+                    elif container["name"] == "vector":
                         self.fleuntd_container(container=container)
 
                 elif name == "astro-file-logs-houston-worker":
                     if container["name"] == "houston":
                         self.houston_worker_container(container=container)
-                    elif container["name"] == "fluentd":
+                    elif container["name"] == "vector":
                         self.fleuntd_container(container)
 
                 elif name == "astro-file-logs-commander":
                     if container["name"] == "commander":
                         self.commander_container(container)
-                    elif container["name"] == "fluentd":
+                    elif container["name"] == "vector":
                         self.fleuntd_container(container)
 
             # Test volumes

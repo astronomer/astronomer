@@ -1,0 +1,50 @@
+############################################
+## External Elasticsearch Logging Ingress ##
+############################################
+{{- if eq .Values.global.plane.mode "data" }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ include "external-es-proxy.fullname" . }}-ingress
+  labels:
+    tier: elasticsearch-networking
+    component: elasticsearch-logging-ingress
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    {{- end }}
+
+spec:
+  {{- if .Values.global.tlsSecret }}
+  tls:
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - {{ template "es-proxy.url" . }}
+  rules:
+    - host: {{ template "es-proxy.url" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "external-es-proxy.fullname" . }}
+                port:
+                  number: {{ .Values.service.http }}
+{{- end }}

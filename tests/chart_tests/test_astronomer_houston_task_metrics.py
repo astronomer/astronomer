@@ -1,7 +1,9 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 import yaml
-from tests import get_containers_by_name, supported_k8s_versions
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -33,7 +35,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         job_container_by_name = get_containers_by_name(docs[0])
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-task-usage-data"
         assert docs[0]["spec"]["schedule"] == "40 23 * * *"
-        assert job_container_by_name["cleanup"]["securityContext"] == {"runAsNonRoot": True}
+        assert job_container_by_name["cleanup"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_astronomer_cleanup_task_usage_cron_custom_schedule(self, kube_version):
         docs = render_chart(
@@ -56,8 +58,9 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-task-usage-data"
         assert docs[0]["spec"]["schedule"] == "0 23 * * *"
         assert job_container_by_name["cleanup"]["securityContext"] == {
-            "runAsNonRoot": True,
+            "readOnlyRootFilesystem": True,
             "allowPriviledgeEscalation": False,
+            "runAsNonRoot": True,
         }
 
     def test_astronomer_populate_hourly_task_audit_metrics_cron_defaults(self, kube_version):
@@ -84,7 +87,20 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         job_container_by_name = get_containers_by_name(docs[0])
         assert docs[0]["metadata"]["name"] == "release-name-houston-populate-hourly-ta-metrics"
         assert docs[0]["spec"]["schedule"] == "57 * * * *"
-        assert job_container_by_name["populate-daily-task-metrics"]["securityContext"] == {"runAsNonRoot": True}
+        assert job_container_by_name["populate-daily-task-metrics"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/production.yaml",
+            "subPath": "production.yaml",
+        } in job_container_by_name["populate-daily-task-metrics"]["volumeMounts"]
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/local-production.yaml",
+            "subPath": "local-production.yaml",
+        } in job_container_by_name["populate-daily-task-metrics"]["volumeMounts"]
 
     def test_astronomer_populate_hourly_task_audit_metrics_cron_custom_schedule(self, kube_version):
         docs = render_chart(
@@ -127,7 +143,10 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         job_container_by_name = get_containers_by_name(docs[0])
         assert docs[0]["metadata"]["name"] == "release-name-houston-populate-daily-task-metrics"
         assert docs[0]["spec"]["schedule"] == "8 0 * * *"
-        assert job_container_by_name["populate-daily-task-metrics"]["securityContext"] == {"runAsNonRoot": True}
+        assert job_container_by_name["populate-daily-task-metrics"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
 
     def test_astronomer_populate_daily_task_metrics_custom_schedule(self, kube_version):
         docs = render_chart(

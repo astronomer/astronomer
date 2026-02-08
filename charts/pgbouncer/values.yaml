@@ -3,14 +3,14 @@
 #############################
 image:
   repository: quay.io/astronomer/ap-pgbouncer-krb
-  tag: 1.17.0-14
+  tag: 1.25.0-3
   pullPolicy: IfNotPresent
 
 securityContext:
   runAsNonRoot: true
 
-internalPort: 5432
-servicePort: 5432
+internalPort: 6543
+servicePort: 6543
 
 podDisruptionBudget:
   enabled: false

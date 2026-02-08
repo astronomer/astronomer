@@ -1,5 +1,6 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import jmespath
+
+from tests.utils.chart import render_chart
 
 show_only = [
     "charts/astronomer/templates/commander/commander-deployment.yaml",
@@ -26,10 +27,6 @@ show_only = [
     "charts/postgresql/templates/serviceaccount.yaml",
     "charts/postgresql/templates/statefulset.yaml",
     "charts/postgresql/templates/svc.yaml",
-    "charts/stan/templates/configmap.yaml",
-    "charts/stan/templates/service.yaml",
-    "charts/stan/templates/stan-networkpolicy.yaml",
-    "charts/stan/templates/statefulset.yaml",
 ]
 
 
@@ -44,14 +41,14 @@ def test_argo_sync_wave():
                     "enableArgoCDAnnotation": argo_enabled,
                     "postgresqlEnabled": True,
                 },
-                "postgresql": {"serviceAccount": {"enabled": True}},
+                "postgresql": {"serviceAccount": {"create": True}},
             },
         )
 
     docs = render_argo_charts(argo_enabled=True)
-    assert len(docs) == 26
-    assert len(jmespath.search('[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs)) == 26
+    assert len(docs) == 22
+    assert len(jmespath.search('[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs)) == 22
 
     docs = render_argo_charts(argo_enabled=False)
-    assert len(docs) == 26
+    assert len(docs) == 22
     assert len(jmespath.search('[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs)) == 0

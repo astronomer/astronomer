@@ -1,0 +1,180 @@
+{{ if .Values.crd.create }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
+  name: statsds.airflow.apache.org
+spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/convert" "Values" .Values "Release" .Release) | indent 8 }}
+      conversionReviewVersions:
+      - v1
+  group: airflow.apache.org
+  names:
+    kind: Statsd
+    listKind: StatsdList
+    plural: statsds
+    singular: statsd
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: age
+      type: date
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .status.replicas
+      name: Desired Replicas
+      type: integer
+    - jsonPath: .status.readyReplicas
+      name: Ready Replicas
+      type: integer
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              customLabels:
+                additionalProperties:
+                  type: string
+                type: object
+              enableNetworkPolicies:
+                type: boolean
+              enabled:
+                default: true
+                type: boolean
+              extraNetworkPolicyRules:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              hostName:
+                type: string
+              image:
+                type: string
+              ingestPort:
+                default: 9125
+                format: int32
+                type: integer
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              podTemplateSpec:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              replicas:
+                default: 1
+                format: int32
+                minimum: 0
+                type: integer
+              resources:
+                default:
+                  limits:
+                    cpu: 200m
+                    memory: 768Mi
+                  requests:
+                    cpu: 200m
+                    memory: 768Mi
+                properties:
+                  claims:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        request:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    type: object
+                type: object
+              scrapePort:
+                default: 9102
+                format: int32
+                type: integer
+              tolerations:
+                items:
+                  properties:
+                    effect:
+                      type: string
+                    key:
+                      type: string
+                    operator:
+                      type: string
+                    tolerationSeconds:
+                      format: int64
+                      type: integer
+                    value:
+                      type: string
+                  type: object
+                type: array
+            type: object
+          status:
+            properties:
+              ingestUrl:
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              readyReplicas:
+                default: 0
+                format: int32
+                type: integer
+              replicas:
+                default: 0
+                format: int32
+                type: integer
+              scrapeUrl:
+                type: string
+              selector:
+                default: app=airflow,component=statsd
+                type: string
+              status:
+                type: string
+            required:
+            - ingestUrl
+            - readyReplicas
+            - replicas
+            - scrapeUrl
+            - selector
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      scale:
+        labelSelectorPath: .status.selector
+        specReplicasPath: .spec.replicas
+        statusReplicasPath: .status.replicas
+      status: {}
+{{- end }}

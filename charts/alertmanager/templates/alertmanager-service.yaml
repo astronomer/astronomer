@@ -1,6 +1,7 @@
 ##########################
 ## Alertmanager Service ##
 ##########################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -11,6 +12,7 @@ metadata:
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   type: ClusterIP
   selector:
@@ -28,4 +30,5 @@ spec:
       protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
       appProtocol: tcp
-    {{- end}}
+    {{- end }}
+{{- end }}

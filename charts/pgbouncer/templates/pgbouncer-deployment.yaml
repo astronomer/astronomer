@@ -1,3 +1,6 @@
+##########################
+## Pgbouncer Deployment ##
+##########################
 {{- if .Values.global.pgbouncer.enabled }}
 kind: Deployment
 apiVersion: apps/v1
@@ -29,37 +32,60 @@ spec:
         release: {{ .Release.Name }}
         component: pgbouncer
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
         tier: astronomer
-        {{- range $key, $value :=  .Values.global.pgbouncer.extraLabels }}
+        {{- range $key, $value := .Values.global.pgbouncer.extraLabels }}
         {{ $key | replace "-" "_" }}: {{ $value | quote }}
         {{- end }}
-{{- if or .Values.global.podAnnotations  .Values.podAnnotations }}
+      {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-{{- end }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ template "pgbouncer.ServiceAccount" . }}
+      serviceAccountName: {{ template "pgbouncer.serviceAccountName" . }}
+      volumes:
+        - name: tmp-workspace
+          emptyDir: {}
+      {{- if .Values.global.pgbouncer.secretName }}
+        - name: pgbouncer-config
+          secret:
+            secretName: {{ .Values.global.pgbouncer.secretName }}
+            items:
+              - key: pgbouncer.ini
+                path: pgbouncer.ini
+              - key: users.txt
+                path: users.txt
+      {{- end }}
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer.image" . }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: tmp-workspace
+              mountPath: /tmp
+          {{- if .Values.global.pgbouncer.secretName }}
+            - name: pgbouncer-config
+              readOnly: true
+              mountPath: /etc/pgbouncer
+          {{- end }}
           env:
-            {{- include "pgbouncer_environment" . | indent 12 }}
-            {{- range $key, $value :=  .Values.env }}
+            {{- range $key, $value := .Values.env }}
             - name: {{ $key | replace "-" "_" }}
               value: {{ $value | quote }}
             {{- end }}
-            {{- range $key, $value :=  .Values.global.pgbouncer.extraEnv }}
+            {{- range $key, $value := .Values.global.pgbouncer.extraEnv }}
             - name: {{ $key | replace "-" "_" }}
               value: {{ $value | quote }}
             {{- end }}

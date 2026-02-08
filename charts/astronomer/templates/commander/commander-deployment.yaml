@@ -1,6 +1,8 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
+
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -8,11 +10,14 @@ metadata:
   labels:
     component: commander
     tier: astronomer
+    plane: {{ .Values.global.plane.mode }}
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+
   annotations:
+    checksum/jwks-secret: {{ printf "%s-commander-jwt-secret" .Release.Name | sha256sum }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:
@@ -30,8 +35,14 @@ spec:
         release: {{ .Release.Name }}
         app: commander
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
+        checksum/metadata-config: {{ include (print $.Template.BasePath "/commander/commander-metadata.yaml") . | sha256sum }}
+        {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/commander/commander-nginx-configmap.yaml") . | sha256sum }}
+        {{- end }}
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
 {{- end }}
@@ -45,16 +56,38 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      serviceAccountName: {{ template "commander.ServiceAccount" . }}
+      serviceAccountName: {{ template "commander.serviceAccountName" . }}
       restartPolicy: Always
-{{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
+      {{- include "commander.hostAliases" . | nindent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          image: {{ template "commander.image" . }}
+          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources: {{ toYaml .Values.commander.resources | nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
       containers:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
-          resources:
-{{ toYaml .Values.commander.resources | indent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           {{- if .Values.commander.command }}
           command:
             {{- toYaml .Values.commander.command | nindent 12 }}
@@ -97,6 +130,14 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
+            - name: HELM_CACHE_HOME
+              value: /tmp/helm-cache
+            - name: HELM_CONFIG_HOME
+              value: /tmp/helm-config
+            - name: HELM_DATA_HOME
+              value: /tmp/helm-data
+            - name: HELM_REPOSITORY_CACHE
+              value: /tmp/helm-cache/repository
             - name: COMMANDER_HTTP_PORT
               value: "8880"
             - name: COMMANDER_GRPC_PORT
@@ -111,26 +152,86 @@ spec:
             - name: COMMANDER_UPGRADE_TIMEOUT
               value: {{ .Values.commander.upgradeTimeout | quote }}
             {{- end }}
-            {{- if .Values.commander.airGapped.enabled }}
             - name: COMMANDER_AIRGAPPED
-              value: "true"
-            {{- end }}
-            {{ if and .Values.global.features.namespacePools.enabled -}}
+              value: {{ ternary "true" "false" .Values.commander.airGapped.enabled | quote  }}
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
+              value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
+            - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
+              value: {{ if .Values.global.rbacEnabled }}"true"{{ else }}"false"{{ end }}
+            {{- if .Values.global.privateCaCerts }}
+            - name: UPDATE_CA_CERTS
               value: "true"
             {{- end }}
-            {{- if .Values.global.disableManageClusterScopedResources }}
-            - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
-              value: "false"
-            {{- end }}
+            {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
-{{- if .Values.commander.volumeMounts }}
-{{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
-{{- end }}
-{{- if .Values.commander.extraContainers }}
-{{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
-{{- end }}
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp-workspace
+              mountPath: /tmp
+            - name: commander-home
+              mountPath: /home/commander
+              subPath: home
+            - mountPath: /app/metadata.yaml
+              name: metadata
+              subPath: metadata.yaml
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
+          {{- if .Values.commander.volumeMounts }}
+          {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
+          {{- end }}
+          {{- if .Values.commander.extraContainers }}
+          {{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
+          {{- end }}
+        {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        - name: auth-proxy
+          image: {{ template "authSidecar.image" . }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          ports:
+            - name: nginx-http
+              containerPort: {{ .Values.ports.commanderSidecarHTTP }}
+              protocol: TCP
+            - name: nginx-grpc
+              containerPort: {{ .Values.ports.commanderSidecarGRPC }}
+              protocol: TCP
+          volumeMounts:
+            - name: nginx-write-dir
+              mountPath: /var/lib/nginx/tmp
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /nginx-health
+              port: {{ .Values.ports.commanderSidecarHTTP }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /nginx-health
+              port: {{ .Values.ports.commanderSidecarHTTP }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        {{- end }}
       volumes:
-{{- if .Values.commander.extraVolumes }}
-{{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
+        - name: nginx-write-dir
+          emptyDir: {}
+        - name: etc-ssl-certs
+          emptyDir: {}
+        - name: tmp-workspace
+          emptyDir: {}
+        {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        - name: nginx-conf
+          configMap:
+            name: {{ .Release.Name }}-commander-nginx-conf
+        {{- end }}
+        - name: commander-home
+          emptyDir: {}
+        - configMap:
+            name: {{ .Release.Name }}-commander-metadata
+          name: metadata
+        {{- include "custom_ca_volumes" . | nindent 8 }}
+      {{- if .Values.commander.extraVolumes }}
+      {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
+      {{- end }}
 {{- end }}

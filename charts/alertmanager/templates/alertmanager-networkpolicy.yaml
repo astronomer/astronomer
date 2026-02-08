@@ -2,6 +2,7 @@
 ## Alertmanager NetworkPolicy ##
 ################################
 {{- if .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
@@ -31,11 +33,18 @@ spec:
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+    {{- end }}
     {{- else }}
     - podSelector:
         matchLabels:
           tier: nginx
-          component: ingress-controller
+          component: cp-ingress-controller
           release: {{ .Release.Name }}
     {{- end }}
     ports:
@@ -45,4 +54,5 @@ spec:
     - protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
     {{- end }}
+{{- end }}
 {{- end }}

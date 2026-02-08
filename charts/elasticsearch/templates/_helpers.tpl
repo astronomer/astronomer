@@ -15,7 +15,7 @@ We truncate at 44 chars (63 - len("-headless-discovery")) because some Kubernete
 {{- printf "%s-%s" .Release.Name $name | trunc 44 | trimSuffix "-" -}}
 {{- end -}}
 
-{{ define "elasticsearch.serviceAccount" -}}
+{{ define "elasticsearch.serviceAccountName" -}}
 {{- if and .Values.common.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "elasticsearch.fullname" . )) .Values.common.serviceAccount.name }}
 {{- else -}}
@@ -111,7 +111,7 @@ Elasticsearch NGINX variable definitions
 {{- end -}}
 
 {{/*
-Return  the proper Storage Class
+Return the proper Storage Class
 */}}
 {{- define "elasticsearch.storageClass" -}}
 storageClassName: {{ or .Values.common.persistence.storageClassName .Values.global.storageClass | default "" }}
@@ -144,9 +144,8 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-
 {{- define "curator.indexPattern" -}}
-{{ if and .Values.global.loggingSidecar.enabled  .Values.global.loggingSidecar.indexPattern }}
+{{ if and .Values.global.loggingSidecar.enabled .Values.global.loggingSidecar.indexPattern }}
 {{- .Values.global.loggingSidecar.indexPattern | squote }}
 {{ else }}
 {{- .Values.curator.age.timestring | squote}}
@@ -155,8 +154,18 @@ imagePullSecrets:
 
 {{- define "elasticsearch.securityContext" -}}
 {{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
-{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
 {{- else }}
-{{- .Values.securityContext | toYaml | nindent 10 }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required .Values.securityContext | toYaml }}
 {{- end -}}
 {{- end }}
+
+{{- define "elasticsearch.ingressurl" -}}
+{{ if eq .Values.global.plane.mode "data" -}}
+elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+elasticsearch.{{ .Values.global.baseDomain }}
+{{- end -}}
+{{- end -}}

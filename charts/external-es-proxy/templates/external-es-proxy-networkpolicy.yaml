@@ -2,6 +2,7 @@
 ## Elasticsearch Proxy NetworkPolicy ##
 #######################################
 {{- if .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: {{ template "external-es-proxy.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
@@ -27,35 +29,56 @@ spec:
         matchLabels:
           tier: airflow
           component: webserver
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          tier: airflow
+          component: api-server
     {{- if .Values.global.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:
+        matchExpressions:
+        - key: component
+          operator: In
+          values:
+          - dag-server
+          - metacleanup
+          - airflow-downgrade
+          - git-sync-relay
+          - dag-processor
+          - triggerer
+          - worker
+          - scheduler
         matchLabels:
-          component: scheduler
-          tier: airflow
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: worker
-          tier: airflow
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: triggerer
-          tier: airflow
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          component: git-sync-relay
           tier: airflow
     {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.service.securehttp }}
   - from:
+    {{- if (eq .Values.global.plane.mode "data") }}
+    {{- if .Values.global.authSidecar.enabled }}
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+    {{- end }}
+    {{- else }}
     - podSelector:
         matchLabels:
-          component: fluentd
+          tier: nginx
+          component: dp-ingress-controller
+          release: {{ .Release.Name }}
+    {{- end }}
+    {{- end }}
+    - podSelector:
+        matchLabels:
+          component: vector
           tier: logging
           release: {{ .Release.Name }}
     - podSelector:
@@ -67,4 +90,5 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.service.http }}
+{{- end }}
 {{- end }}

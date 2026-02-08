@@ -1,8 +1,0 @@
-# This is an example configuration that overrides some configurations
-# that are known to work well on GKE out of the box.
-
-#################################
-## Nginx configuration
-#################################
-nginx:
-  preserveSourceIP: true

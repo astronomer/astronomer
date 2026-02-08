@@ -1,0 +1,49 @@
+################################
+## Commander Metadata Ingress ##
+################################
+{{- if eq .Values.global.plane.mode "data" }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-commander-metadata-ingress
+  labels:
+    component: metadata-ingress
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: dataplane
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/rewrite-target: /metadata
+    {{- end }}
+    {{- if .Values.commander.ingress.annotation  }}
+    {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
+    {{- end }}
+spec:
+  {{- if .Values.global.tlsSecret }}
+  tls:
+    - secretName: {{ .Values.global.tlsSecret }}
+      hosts:
+        - {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+  {{- end }}
+  rules:
+  - host: {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /metadata
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-commander
+              port:
+                name: commander-http
+{{- end }}

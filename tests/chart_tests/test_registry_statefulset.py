@@ -1,7 +1,9 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
 import jmespath
+import pytest
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -34,6 +36,12 @@ class TestRegistryStatefulset:
             },
         }
         assert expected_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        assert c_by_name["etc-ssl-certs-copier"]["name"] == "etc-ssl-certs-copier"
+        assert c_by_name["etc-ssl-certs-copier"]["resources"] == {
+            "limits": {"cpu": "500m", "memory": "1024Mi"},
+            "requests": {"cpu": "250m", "memory": "512Mi"},
+        }
 
     def test_registry_sts_use_keyfile(self, kube_version):
         """Test some things that should apply to all cases."""
@@ -52,8 +60,20 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert doc["spec"]["template"]["spec"]["volumes"][2]["name"] == "gcs-keyfile"
-        assert doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][3]["name"] == "gcs-keyfile"
+        assert sorted(x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]) == [
+            "config",
+            "data",
+            "etc-ssl-certs",
+            "gcs-keyfile",
+            "jwks-certificate",
+        ]
+        assert sorted(x["name"] for x in doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]) == [
+            "config",
+            "data",
+            "etc-ssl-certs",
+            "gcs-keyfile",
+            "jwks-certificate",
+        ]
 
     def test_registry_sts_with_registry_persistence_enabled(self, kube_version):
         docs = render_chart(
@@ -167,3 +187,16 @@ class TestRegistryStatefulset:
         assert volume_mount_search_result == expected_volume_mounts_result
         assert volume_search_result == expected_volume_result
         assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
+
+    def test_registry_hostAliases_overrides(self, kube_version):
+        hostAliasSpec = [{"ip": "127.0.0.1", "hostnames": ["registry.hostname.one"]}]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"registry": {"hostAliases": hostAliasSpec}},
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["hostAliases"] == hostAliasSpec

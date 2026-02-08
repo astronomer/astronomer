@@ -32,49 +32,10 @@
 {{ .Release.Name }}-pgbouncer-stats
 {{- end }}
 
-{{ define "pgbouncer.ServiceAccount" -}}
+{{ define "pgbouncer.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
 {{ default (printf "%s-pgbouncer" .Release.Name ) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}
 {{- end }}
-{{- end }}
-
-{{- define "pgbouncer_environment" }}
-- name: DB_USER
-  value: postgres
-- name: DB_PASSWORD
-  value: postgres
-- name: DB_HOST
-  value: "astronomer-postgresql.astronomer.svc.cluster.local"
-- name: DB_PORT
-  value: "5432"
-- name: POOL_MODE
-  value: session
-- name: ADMIN_USERS
-  value: postgres
-- name: AUTH_TYPE
-  value: plain
-- name: LOG_DISCONNECTIONS
-  value: "1"
-- name: LOG_CONNECTIONS
-  value: "1"
-- name: SERVER_TLS_SSLMODE
-  value: disable
-- name: SERVER_TLS_CIPHERS
-  value: normal
-# - name: SERVER_GSSENCMODE
-#   value: require
-- name: VERBOSE
-  value: "999"
-- name: REALM
-  value: EXAMPLE.COM
-- name: SUPPORTED_ENCRYPTION_TYPES
-  value: "aes256-cts-hmac-sha1-96:normal"
-- name: KADMIN_PRINCIPAL
-  value: "kadmin/admin"
-- name: KADMIN_PASSWORD
-  value: postgres
-- name: LISTEN_PORT
-  value: "5432"
 {{- end }}

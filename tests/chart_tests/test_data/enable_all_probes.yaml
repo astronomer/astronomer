@@ -1,0 +1,504 @@
+########################################################################################################
+# This file should enable and customize every available livenessProbe and readinessProbe. This serves as
+# a way to test that every probe is customizable, and as a document about how to configure every probe.
+# In order to test every available probe, this should also enable every available feature.
+########################################################################################################
+
+airflow-operator:
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+alertmanager:
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+astronomer:
+  astroUI:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  commander:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  configSyncer:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  houston:
+    bootstrapper:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    cleanupAirflowDb:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    cleanupDeployRevisions:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    cleanupClusterAudits:
+      livenessProbe:
+        exec:
+          command:
+            - /bin/true
+      readinessProbe:
+        exec:
+          command:
+            - /bin/true
+    cleanupDeployments:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    dbMigration:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+    taskUsageMetrics:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    updateCheck:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    updateResourceStrategy:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    updateRuntimeCheck:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    syncDataplaneClusters:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    upgradeDeployments:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    waitForDB:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    worker:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+  registry:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+elasticsearch:
+  client:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  curator:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  data:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  exporter:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  master:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  nginx:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  sysctlInitContainer:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+external-es-proxy:
+  awsproxy:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+vector:
+  vector:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+global:
+  airflowOperator:
+    enabled: true
+  authSidecar:
+    enabled: true
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  customLogging:
+    awsServiceAccountAnnotation: "yo imma let you finish but beyonce had the best annotation ever"
+    enabled: true
+  pgbouncer:
+    enabled: true
+  postgresqlEnabled: true
+  prometheusPostgresExporterEnabled: true
+grafana:
+  bootstrapper:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+  waitForDB:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+kube-state:
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+nats:
+  exporter:
+    enabled: true
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  nats:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  reloader:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+nginx:
+  defaultBackend:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+pgbouncer:
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+postgresql:
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  metrics:
+    enabled: true
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  postgresqlDatabase: kitten_picture_db
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+  replication:
+    enabled: true
+prometheus:
+  configMapReloader:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  filesdReloader:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  federation:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+prometheus-postgres-exporter:
+  livenessProbe:
+    exec:
+      command:
+      - /bin/true
+  readinessProbe:
+    exec:
+      command:
+      - /bin/true
+stan:
+  exporter:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  stan:
+    nats:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+  waitForNatsServer:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true

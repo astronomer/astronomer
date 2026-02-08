@@ -1,6 +1,7 @@
 ################################
 ## Grafana NetworkPolicy
 ################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -22,23 +23,31 @@ spec:
   - Ingress
   ingress:
   - from:
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+    {{- end }}
     {{- else }}
     - podSelector:
         matchLabels:
           tier: nginx
-          component: ingress-controller
+          component: cp-ingress-controller
           release: {{ .Release.Name }}
     {{- end }}
     ports:
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled }}
     - protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
     {{- else }}
     - protocol: TCP
       port: {{ .Values.ports.http }}
     {{- end }}
+{{- end }}
 {{- end }}

@@ -4,11 +4,12 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.13
 
 orbs:
   slack: circleci/slack@4.10.1
   python: circleci/python@2.1.1
+  cosign: cpanato/cosign-orb@2.0.0
 
 parameters:
   scan-docker-images:
@@ -25,9 +26,47 @@ parameters:
     description: "This will trigger QA release workflow."
 
 jobs:
+  sign-released-image:
+    executor: docker-executor
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: docker23
+      - cosign/install:
+          version: "v2.5.0"
+      - run:
+          name: Login to docker registry
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin docker.io
+            echo "$QUAY_PASSWORD" | docker login --username $QUAY_USERNAME --password-stdin quay.io
+      - run:
+          name: Set image tag to sign
+          command: |
+            set -xe
+            # Only sign tagged releases or specific QA releases
+            # For regular release job
+            if [ -n "$NEXT_TAG" ]; then
+              echo "export IMAGE_TAG=$NEXT_TAG" >> $BASH_ENV
+            # For custom QA release job
+            elif [ -n "$IMG_TAG" ]; then
+              echo "export IMAGE_TAG=$IMG_TAG" >> $BASH_ENV
+            else
+              echo "No specific release tag found, skipping image signing"
+              exit 0
+            fi
+      - run:
+          name: Install Python dependencies
+          command: pip install requests
+      - run:
+          name: Sign Docker images with cosign
+          command: |
+            # Execute the signing script with version from environment
+            python bin/sign-images.py --version "${IMAGE_TAG}"
+
   trivy-scan-docker:
     docker:
-      - image: cimg/base:current-22.04
+      - image: cimg/base:current-24.04
     shell: /usr/bin/bash
     parameters:
       docker_image:
@@ -82,33 +121,20 @@ jobs:
           paths:
             - /tmp/workspace/trivy-cache
 
-  twistcli-scan-docker:
+  release_bom:
     docker:
-      - image: cimg/base:current-22.04
-    shell: /usr/bin/bash
-    parameters:
-      docker_image:
-        type: string
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: set -euo pipefail
+      - checkout
       - run:
-          name: Pull Docker image
-          command: docker pull << parameters.docker_image >>
-      - run:
-          name: Install twistcli
+          name: Run Release BOM Script
           command: |
-            curl -k -u $USER:$PASSWORD --output twistcli $CONSOLE_URL"/api/v1/util/twistcli"
-            chmod +x twistcli
-      - run:
-          name: scan image
-          command: |
-            ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
+            bin/release-bom -x ${CIRCLE_TAG}
 
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
+    resource_class: small
     steps:
       - checkout
       - run:
@@ -130,7 +156,7 @@ jobs:
           name: Run pre-commit
           command: pre-commit run --all-files --show-diff-on-failure
 
-  unittest-charts:
+  test-unit:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     # https://circleci.com/docs/using-docker/#x86
@@ -139,31 +165,30 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create chart-tests-cache-key.txt
+          name: Create venv-cache-key.txt
           command: |
-            cp requirements/chart-tests.txt /tmp/chart-tests-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/chart-tests-cache-key.txt
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
       - restore_cache:
           keys:
-            - chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
+            - test-venv-{{ '{{' }} checksum "/tmp/requirements-cache-key.txt" }}
       - run:
           name: Create venv
           command: |
-            make unittest-requirements
+            make venv
       - save_cache:
-          key: chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
+          key: test-venv-{{ '{{' }} checksum "/tmp/requirements-cache-key.txt" }}
           paths:
             - ~/.cache/uv
             - ~/.local/share/uv
-            - ~/project/venv
-            - ~/project/.unittest-requirements
+            - ~/project/.venv
       - run:
           name: unittest the Astronomer chart
           command: |
             mkdir test-results
             TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
             echo "TEST_FILES=\"$TEST_FILES\""
-            venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
+            .venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
 
@@ -179,7 +204,7 @@ jobs:
       - run:
           name: Package the Astronomer chart
           command: |
-            source ./bin/install-ci-tools 1
+            bin/install-ci-tools.py
             bin/build-helm-chart.sh << parameters.qa_release >>
       - persist_to_workspace:
           root: "."
@@ -238,27 +263,39 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
-  platform-{{ version | replace(".", "-") }}:
+  scenario-unified-{{ version | replace(".", "-") }}:
     machine:
       image: {{ machine_image_version }}
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
       - run:
-          name: Check chart for k8s {{ version }} compatibility with kubent
+          name: Create venv-cache-key.txt
           command: |
-            set -o pipefail
-            helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ '{{' }} checksum "/tmp/requirements-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: "Test scenario: unified"
+          command: |
+            make test-functional-unified
+      - store_test_results:
+          path: test-results
 {%- endfor %}
 
   check-commander-airflow-version:
     docker:
-      - image: cimg/base:current-22.04
+      # https://circleci.com/developer/images/image/cimg/base
+      - image: cimg/base:current-24.04
     steps:
       - checkout
       - setup_remote_docker:
@@ -288,15 +325,6 @@ workflows:
 {%- endfor %}
           context:
             - slack_team-software-infra-bot
-      - twistcli-scan-docker:
-          matrix:
-            parameters:
-              docker_image:
-{%- for image in docker_images %}
-                - {{ image }}
-{%- endfor %}
-          context:
-            - twistcli
 
   build-and-release-helm-chart:
     when:
@@ -305,49 +333,49 @@ workflows:
         - not: << pipeline.parameters.qa-release >>
     jobs:
       - run_pre_commit
-      - unittest-charts
+      - test-unit
       - check-commander-airflow-version
       - build-artifact:
           requires:
             - check-commander-airflow-version
             - run_pre_commit
-            - unittest-charts
+            - test-unit
       - approve-test-all-platforms:
           type: approval
 {% for version in kube_versions %}{% if version in [kube_versions[0], kube_versions[-1]] %}
-      - platform-{{ version | replace(".", "-") }}:
+      - scenario-unified-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
 {%- else %}
-      - platform-{{ version | replace(".", "-") }}:
+      - scenario-unified-{{ version | replace(".", "-") }}:
           requires:
-            - approve-test-all-platforms
             - build-artifact
+            - approve-test-all-platforms
 {% endif %}{% endfor %}
       - approve-internal-release:
           type: approval
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - release-to-internal:
           context:
             - gcp-astronomer-prod
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
           requires:
             - approve-internal-release
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
-            - platform-{{ version | replace(".", "-") }}
+            - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
       - approve-upgrade-test:
           type: approval
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - trigger-upgrade-test:
           requires:
             - release-to-internal
@@ -355,19 +383,18 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
 {%- for version in kube_versions[1:-1] %}
-            - platform-{{ version | replace(".", "-") }}
+            - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
-
+                - '/^release-\d+\.\d+$/'
       - release-to-public:
           context:
             - gcp-astronomer-prod
@@ -377,7 +404,31 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
+      - sign-released-image:
+          name: sign-release-image
+          context:
+            - quay.io
+            - docker.io
+            - software-cosign-keys
+          requires:
+            - release-to-public
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+
+  release-bom-workflow:
+    jobs:
+      - release_bom:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
+            branches:
+              ignore: /.*/
+          context:
+            - github-repo
+            - gcp-astronomer-prod
 
   qa-build-and-release-helm-chart:
     when:
@@ -386,14 +437,14 @@ workflows:
         - not: << pipeline.parameters.scan-docker-images >>
     jobs:
       - run_pre_commit
-      - unittest-charts
+      - test-unit
       - check-commander-airflow-version
       - build-artifact:
           qa_release: true
           requires:
             - check-commander-airflow-version
             - run_pre_commit
-            - unittest-charts
+            - test-unit
       - release-to-internal:
           context:
             - gcp-astronomer-prod
@@ -402,14 +453,14 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
       - trigger-feature-stack-release:
           requires:
             - release-to-internal
           filters:
             branches:
               only:
-                - '/^release-0\.\d+$/'
+                - '/^release-\d+\.\d+$/'
 
 commands:
   push-to-quay-io:
@@ -495,28 +546,6 @@ commands:
           root: .
           paths:
             - "./<< parameters.image_name >>.tar"
-
-  helm-install:
-    description: "Install Helm chart from artifact"
-    parameters:
-      astronomer-tags:
-        type: string
-        default: "platform"
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
-      - run:
-          name: Install Astronomer chart
-          command: |
-            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
-            set -xe
-            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
-      - store_test_results:
-          path: test-results
 
   publish-github-release:
     description: "Create a release on GitHub"

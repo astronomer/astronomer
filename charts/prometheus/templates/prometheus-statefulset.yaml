@@ -1,6 +1,11 @@
 ############################
 ## Prometheus StatefulSet ##
 ############################
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
+{{- $planeMode := and (eq .Values.global.plane.mode "unified")  ( not $useClusterRoles ) }}
+{{- $planeCPMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
+{{- $prometheusSecurityContext := (include "prometheus.securityContext" . | fromYaml) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -33,11 +38,13 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "prometheus.name" . }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
 {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/proxyCPU: "500m"
         sidecar.istio.io/proxyMemory: "400Mi"
 {{- end }}
+        checksum/jwks-secret: {{ include "registry-auth-secret" . | sha256sum }}
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
 {{- end }}
@@ -45,17 +52,43 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
     spec:
+      {{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+      {{ end }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ template "prometheus.serviceAccount" . }}
+      serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
+      {{- include "prometheus.hostAliases" . | nindent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          image: {{ include "prometheus.image" . }}
+          imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -87,8 +120,12 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
-          - mountPath: /etc/nginx/conf.d/
-            name: prometheus-sidecar-conf
+            - name: nginx-write-dir
+              mountPath: /var/lib/nginx/tmp
+            - mountPath: /etc/nginx/conf.d/
+              name: prometheus-sidecar-conf
+            - name: nginx-run-dir
+              mountPath: /run
         {{- end }}
         - name: configmap-reloader
           args:
@@ -97,7 +134,9 @@ spec:
             - --volume-dir=/etc/prometheus/config
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
           {{- if .Values.configMapReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
@@ -106,14 +145,65 @@ spec:
           readinessProbe: {{ tpl (toYaml .Values.configMapReloader.readinessProbe) . | nindent 12 }}
           {{- end }}
           volumeMounts:
-          - name: alert-volume
-            mountPath: /etc/prometheus/alerts.d
-          - name: prometheus-config-volume
-            mountPath: /etc/prometheus/config
-
+            - name: alert-volume
+              mountPath: /etc/prometheus/alerts.d
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus/config
+        - name: filesd-reloader
+          image: {{ include "filesdReloader.image" . }}
+          imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+          resources: {{ toYaml .Values.filesdReloader.resources | nindent 12 }}
+          {{- if .Values.filesdReloader.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.filesdReloader.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.filesdReloader.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.filesdReloader.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: DATABASE_SCHEMA_NAME
+              value: "houston$default"
+            - name: CLUSTER_TABLE_NAME
+              value: Cluster
+            - name: DEPLOYMENT_TABLE_NAME
+              value: Deployment
+            - name: DATABASE_NAME
+              value: {{ $dbName }}
+            - name: FILESD_FILE_PATH
+              value: /prometheusreloader/airflow
+            - name: ENABLE_DEPLOYMENT_SCRAPING
+              value: {{ if $planeMode}}"True"{{ else }}"False"{{ end }}
+            - name: ENABLE_CLUSTER_SCRAPING
+              value: {{ if $planeCPMode}}"True"{{ else }}"False"{{ end }}
+{{- if .Values.filesdReloader.extraEnv }}
+{{ toYaml .Values.filesdReloader.extraEnv | indent 12 }}
+{{- end }}
+          volumeMounts:
+          - mountPath: /prometheusreloader/airflow
+            name: filesd
         - name: prometheus
           image: {{ include "prometheus.image" . }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          env:
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+            - name: FEDERATION_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "prometheus.federationAuthSecret" . }}
+                  key: token
+          {{- end }}
+          {{- if .Values.global.privateCaCerts }}
+            - name: UPDATE_CA_CERTS
+              value: "true"
+          {{- end }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           args:
@@ -130,12 +220,22 @@ spec:
             - {{ . }}
             {{- end }}
           volumeMounts:
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+            - name: federation-auth
+              mountPath: /etc/prometheus/federation-auth
+              readOnly: true
+          {{- end }}
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
             - name: alert-volume
               mountPath: /etc/prometheus/alerts.d
             - name: data
               mountPath: {{ .Values.dataDir }}
+            - name: filesd
+              mountPath: /prometheusreloader/airflow
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
@@ -164,13 +264,25 @@ spec:
             timeoutSeconds: 1
           {{- end }}
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
+        - name: nginx-write-dir
+          emptyDir: {}
+        - name: nginx-run-dir
+          emptyDir: {}
         - name: prometheus-sidecar-conf
           configMap:
             name: {{ template "prometheus.fullname" . }}-nginx-conf
+        {{- end }}
+        {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+        - name: federation-auth
+          secret:
+            secretName: {{ template "prometheus.federationAuthSecret" . }}
+            items:
+            - key: token
+              path: federation-token
         {{- end }}
         - name: prometheus-config-volume
           configMap:
@@ -184,6 +296,11 @@ spec:
             items:
               - key: alerts
                 path: alerts.yaml
+        - name: filesd
+          emptyDir: {}
+        - name: etc-ssl-certs
+          emptyDir: {}
+        {{- include "custom_ca_volumes" . | nindent 8 }}
   {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
@@ -196,7 +313,7 @@ spec:
           {{- toYaml .Values.persistence.annotations | nindent 10 }}
         {{- end }}
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: {{ .Values.persistence.size }}

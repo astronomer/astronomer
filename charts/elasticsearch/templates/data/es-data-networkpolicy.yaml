@@ -2,6 +2,7 @@
 ## Elasticsearch Data NetworkPolicy
 ###################################
 {{- if .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -13,6 +14,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: data
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
@@ -32,4 +34,5 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.common.ports.transport }}
+{{- end }}
 {{- end }}

@@ -1,7 +1,7 @@
 import pytest
 
 from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -98,27 +98,3 @@ class TestStatefulSetsAnnotations:
                 "annotation": "registry-test",
                 "astro.io/registry": "registry-sts",
             } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
-
-    def test_stan_sts_with_overridden_annotations(self, kube_version):
-        """Test stan sts for the volume claim templates annotations."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "stan": {
-                    "persistence": {
-                        "annotations": {
-                            "astro.io/stan": "stan-sts",
-                            "annotation": "stan-test",
-                        }
-                    }
-                }
-            },
-            show_only=[
-                "charts/stan/templates/statefulset.yaml",
-            ],
-        )
-        assert len(docs) == 1
-        for doc in docs:
-            assert {"annotation": "stan-test", "astro.io/stan": "stan-sts"} == doc["spec"]["volumeClaimTemplates"][0]["metadata"][
-                "annotations"
-            ]

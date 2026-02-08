@@ -69,14 +69,14 @@ provided it will use that certs to trust the connection
 */}}
 
 {{- define "external-es-proxy-trustcerts" -}}
-{{- if .Values.global.customLogging.trustCaCerts  }}
+{{- if .Values.global.customLogging.trustCaCerts }}
 {{- $secret_name := .Values.global.customLogging.trustCaCerts }}
 proxy_ssl_trusted_certificate /etc/ssl/certs/{{ $secret_name }}.pem;
-proxy_ssl_verify              on;
-proxy_ssl_verify_depth        2;
+proxy_ssl_verify on;
+proxy_ssl_verify_depth 2;
 proxy_ssl_session_reuse on;
 {{- else }}
-proxy_ssl_verify              off;
+proxy_ssl_verify off;
 {{- end }}
 {{- end }}
 
@@ -116,11 +116,15 @@ to authenticate with aws managed elastic search or opensearch
 */}}
 
 {{- define "external-es-proxy-nginx-location-common" -}}
-{{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+{{- if or .Values.global.customLogging.awsSecretName .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
 proxy_pass http://localhost:{{ .Values.service.awsproxy }};
 {{- else }}
-access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
+access_by_lua_file /usr/local/openresty/nginx/conf/setenv.lua;
 proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
 {{- include "external-es-proxy-trustcerts" . }}
 {{- end }}
 {{- end }}
+
+{{- define "es-proxy.url" -}}
+elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- end -}}

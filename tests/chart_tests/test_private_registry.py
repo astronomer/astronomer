@@ -1,7 +1,7 @@
 import jmespath
 import pytest
 
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 
 def test_private_registry_repository_image_names_the_same_as_public_ones():
@@ -9,10 +9,8 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
     breaks pull-through caching proxies in use by various customers."""
 
     extra_globals = {
-        "blackboxExporterEnabled": True,
         "postgresqlEnabled": True,
         "prometheusPostgresExporterEnabled": True,
-        "veleroEnabled": True,
     }
 
     repository = "quay.io/astronomer"
@@ -97,7 +95,7 @@ def get_private_registry_docs_image_pull_secrets():
             docs,
         )
 
-    return {f'{doc["name"]}_{doc["kind"]}': doc["image_pull_secrets"] for doc in searched_docs}
+    return {f"{doc['name']}_{doc['kind']}": doc["image_pull_secrets"] for doc in searched_docs}
 
 
 private_registry_docs_image_pull_secrets = get_private_registry_docs_image_pull_secrets()

@@ -1,9 +1,11 @@
-import yaml
-from tests.chart_tests.helm_template_generator import render_chart
-from tests import supported_k8s_versions
 import re
-import pytest
 from textwrap import dedent
+
+import pytest
+import yaml
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -54,7 +56,7 @@ class TestPrometheusAlertConfigmap:
 
         # Validate the contents of an embedded yaml doc
         groups = yaml.safe_load(doc["data"]["alerts"])["groups"]
-        assert len(groups) == 22
+        assert len(groups) == 15
         for group in groups:
             assert isinstance(group.get("name"), str)
             assert isinstance(group.get("rules"), list)
@@ -126,9 +128,9 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 22
+        assert len(groups) == 15
         assert [x["rules"] for x in groups if x["name"] == section] == [[]]
-        assert len([x["rules"] for x in groups if x["name"] != section]) == 21
+        assert len([x["rules"] for x in groups if x["name"] != section]) == 14
 
     @pytest.mark.parametrize("section", ["airflow", "platform"])
     def test_default_alerts_section_disabled_with_additional_alerts(self, kube_version, section):
@@ -157,7 +159,7 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 22
+        assert len(groups) == 15
         assert [x["rules"] for x in groups if x["name"] == section] == [
             [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
         ]

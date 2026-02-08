@@ -16,6 +16,9 @@ tags:
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: localtest.me
+  # Mode of the plane, can be 'data', 'unified' or 'local'
+  plane:
+    domainPrefix: "local"
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
@@ -161,29 +164,6 @@ elasticsearch:
       requests:
         cpu: "0"
         memory: "0Gi"
-
-
-#################################
-## Kibana configuration
-#################################
-kibana:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "0m"
-      memory: "0Mi"
-
-
-#################################
-## Fluentd configuration
-#################################
-fluentd:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "0m"
-      memory: "0Mi"
-
 
 #################################
 ## Kube State configuration

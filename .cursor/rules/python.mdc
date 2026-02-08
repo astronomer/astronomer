@@ -1,0 +1,29 @@
+---
+description:
+globs: **/*.py
+alwaysApply: false
+---
+- All python code should have type hints.
+- All python functions should have docstrings that explain what the function does.
+- Python code should try to use the stdlib for solving problems.
+- Any jmespath code should be refactored to not use jmespath.
+- All date operations should be TZ aware, and should output iso8601 compatible utc unless specified otherwise.
+- Use match ... case instead of if ... elif.
+- Be specific about which exceptions are being caught.
+- Use pathlib for all filesystem operations.
+- Use requests for all http operations, and always specify an http request timeout.
+- Here is an example of a good function definition:
+    ```python
+    def calculate_area(radius: float) -> float:
+        """
+        Calculate the area of a circle given the radius.
+
+        Parameters:
+        radius (float): The radius of the circle.
+
+        Returns:
+        float: The area of the circle.
+        """
+        import math
+        return math.pi * radius ** 2
+    ```

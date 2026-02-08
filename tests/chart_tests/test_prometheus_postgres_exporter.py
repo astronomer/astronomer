@@ -1,7 +1,8 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name
-from tests.chart_tests.helm_template_generator import render_chart
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -55,7 +56,10 @@ class TestPrometheusPostgresExporter:
             "periodSeconds": 10,
             "tcpSocket": {"port": 9187},
         }
-        assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
         spec = docs[1]["spec"]["template"]["spec"]
         assert spec["nodeSelector"] == {}
         assert spec["affinity"] == {}
@@ -73,7 +77,7 @@ class TestPrometheusPostgresExporter:
         docs = render_chart(
             kube_version=kube_version,
             values=values,
-            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+            show_only=["charts/prometheus-postgres-exporter/templates/deployment.yaml"],
         )
         assert len(docs) == 1
         spec = docs[0]["spec"]["template"]["spec"]

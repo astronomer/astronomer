@@ -1,0 +1,47 @@
+#################################
+## Airflow Operator Deployment ##
+#################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    tier: operator
+    component: controller-manager
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  name: {{ .Release.Name }}-aocm
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  replicas: {{ .Values.manager.replicas }}
+  selector:
+    matchLabels:
+      tier: operator
+      component: controller-manager
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: operator
+        app: operator
+        component: controller-manager
+        release: {{ .Release.Name }}
+        version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      {{ include "manager.imagePullSecrets" . | nindent 8 }}
+      containers: {{- include "manager.containers" . | nindent 8 }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      serviceAccountName: {{ template "operator.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      volumes: {{- include "manager.volumes" . | nindent 8 }}

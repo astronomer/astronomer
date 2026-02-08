@@ -1,7 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
 import yaml
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -40,9 +41,17 @@ class TestNSSelectorNetworkPolicies:
         assert len(docs) == 1
         doc = docs[0]
         assert "NetworkPolicy" == doc["kind"]
-        assert [
-            {
-                "namespaceSelector": {"matchLabels": {"platform": "release-name"}},
-                "podSelector": {"matchLabels": {"component": "pgbouncer"}},
+        assert {
+            "namespaceSelector": {"matchLabels": {"platform": "release-name"}},
+            "podSelector": {"matchLabels": {"component": "pgbouncer"}},
+        } in doc["spec"]["ingress"][0]["from"]
+        assert {
+            "podSelector": {
+                "matchLabels": {"release-name-postgresql-client": "true"},
             }
-        ] == [doc["spec"]["ingress"][0]["from"][2]]
+        } in doc["spec"]["ingress"][0]["from"]
+        assert {
+            "podSelector": {
+                "matchLabels": {"app": "postgresql", "release": "release-name", "role": "slave"},
+            }
+        } in doc["spec"]["ingress"][0]["from"]

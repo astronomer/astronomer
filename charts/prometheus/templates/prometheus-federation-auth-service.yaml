@@ -1,0 +1,25 @@
+########################################
+## Prometheus Federation Auth Service ##
+########################################
+{{- if eq .Values.global.plane.mode "data" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "prometheus.fullname" . }}-prom-proxy
+  labels:
+    tier: monitoring
+    component: {{ template "prometheus.name" . }}-federation-auth
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    component: {{ template "prometheus.name" . }}-federation-auth
+    release: {{ .Release.Name }}
+  ports:
+  - name: http
+    port: {{ .Values.global.authSidecar.port | default 80 }}
+    targetPort: {{ .Values.global.authSidecar.port | default 80 }}
+    appProtocol: http
+  type: ClusterIP
+{{- end }}

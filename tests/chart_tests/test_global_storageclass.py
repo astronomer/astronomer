@@ -1,5 +1,6 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
+
+from tests.utils.chart import render_chart
 
 # Test data structure with chart files and expected storage class names
 parametrization_data = (
@@ -19,21 +20,10 @@ def test_global_storageclass(chart_file, expected_sc_name):
         show_only=[chart_file],
     )
 
-    # Assert that one document is rendered
-    assert len(docs) == 1  # Expecting one document per chart file
-
-    # Since docs[0] is already a dictionary, we can directly access the fields
+    assert len(docs) == 1
     statefulset_doc = docs[0]
+    storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
 
-    # Determine if we're dealing with the registry chart or another chart
-    if chart_file == "charts/astronomer/templates/registry/registry-statefulset.yaml":
-        # Registry chart has the storageClassName directly in the statefulset
-        storage_class_name = statefulset_doc["storageClassName"]
-    else:
-        # Other charts have the storageClassName inside volumeClaimTemplates
-        storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
-
-    # Assert that the storageClassName matches the expected one
     assert storage_class_name == expected_sc_name
 
 
@@ -49,24 +39,10 @@ def test_component_storageclass_precendence():
 
     docs = render_chart(
         values=values,
-        show_only=[chart_file for chart_file, _ in parametrization_data],  # Use the list of chart files
+        show_only=[chart_file for chart_file, _ in parametrization_data],
     )
-
-    # Assert that five documents are rendered (one for each chart file)
     assert len(docs) == 5
 
-    # Loop through the rendered documents and verify storageClassName
     for chart_file, doc in zip([x[0] for x in parametrization_data], docs):
-        # Since each doc is already a dictionary, we can work with it directly
-        statefulset_doc = doc
-
-        # Determine if we're dealing with the registry chart or another chart
-        if chart_file == "charts/astronomer/templates/registry/registry-statefulset.yaml":
-            # Registry chart has the storageClassName directly in the statefulset
-            storage_class_name = statefulset_doc["storageClassName"]
-        else:
-            # Other charts have the storageClassName inside volumeClaimTemplates
-            storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
-
-        # Assert that "gp2" is in the storageClassName, indicating the component-specific storageClass overrides the global one
-        assert "gp2" in storage_class_name
+        doc = doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
+        assert "gp2" in doc

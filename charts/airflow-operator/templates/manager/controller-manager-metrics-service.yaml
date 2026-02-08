@@ -1,0 +1,32 @@
+######################################
+## Airflow Operator Metrics Service ##
+######################################
+{{ if .Values.manager.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    tier: operator
+    component: controller-manager
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    astronomer.io/platform-release: {{ .Release.Name }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.ports.managerContainerPort }}"
+
+  name: {{ .Release.Name }}-aocm-metrics-service
+  namespace: '{{ .Release.Namespace }}'
+
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: {{ .Values.ports.managerContainerPort }}
+    targetPort: {{ .Values.ports.managerUpstreamPort }}
+    appProtocol: http
+    protocol: TCP
+  selector:
+    component: controller-manager
+{{- end }}

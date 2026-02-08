@@ -1,6 +1,7 @@
 ###########################
 ## Kube State Deployment ##
 ###########################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
@@ -16,6 +17,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:
@@ -31,6 +33,8 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
 {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
 {{- if .Values.global.podAnnotations }}
@@ -47,37 +51,40 @@ spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
-      serviceAccountName: {{ template "kube-state.serviceAccount" . }}
+      serviceAccountName: {{ template "kube-state.serviceAccountName" . }}
       {{- include "kube-state.imagePullSecrets" . | nindent 6 }}
       containers:
-      - name: kube-state
-        args:
-      {{- if $useRoles }}
-        - --namespaces={{ $namespaceList }}
-      {{- end }}
-        - --resources={{ .Values.collectors | join "," }}
-      {{- if .Values.extraArgs }}
-          {{- .Values.extraArgs | toYaml | nindent 8 }}
-      {{- end }}
-        image: {{ include "kube-state.image" . }}
-        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
-        imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
-        ports:
-        - name: scrape
-          containerPort: {{ .Values.ports.scrape }}
-        - name: telemetry
-          containerPort: {{ .Values.ports.telemetry }}
-        {{- if .Values.readinessProbe }}
-        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+        - name: kube-state
+          args:
+        {{- if $useRoles }}
+          - --namespaces={{ $namespaceList }}
         {{- end }}
-        {{ if .Values.livenessProbe }}
-        livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
-        {{ else }}
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: {{ .Values.ports.scrape }}
-          initialDelaySeconds: 5
-          timeoutSeconds: 5
+          - --resources={{ .Values.collectors | join "," }}
+        {{- if .Values.extraArgs }}
+            {{- .Values.extraArgs | toYaml | nindent 10 }}
         {{- end }}
-        resources: {{ toYaml .Values.resources | nindent 12 }}
+          image: {{ include "kube-state.image" . }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
+          ports:
+            - name: scrape
+              containerPort: {{ .Values.ports.scrape }}
+            - name: telemetry
+              containerPort: {{ .Values.ports.telemetry }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{- tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{ if .Values.livenessProbe }}
+          livenessProbe: {{- tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{ else }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.scrape }}
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          {{- end }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+{{- end }}

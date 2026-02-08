@@ -5,47 +5,69 @@ help: ## Print Makefile help.
 	@grep -Eh '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1;36m%-41s\033[0m %s\n", $$1, $$2}'
 
 # List of charts to build
-CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state postgresql
+CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch vector kube-state postgresql
 
 TEMPDIR := /tmp/astro-temp
+PATH := ${HOME}/.local/share/astronomer-software/bin:$(PATH)
 
 .PHONY: venv
-venv: .unittest-requirements
-unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
-.unittest-requirements:
-	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
-	venv/bin/pip install -r requirements/chart-tests.txt
-	touch .unittest-requirements
+venv: .venv  ## Setup venv required for testing
+.venv:
+	{ uv venv -p 3.13 --seed && uv sync ; } || \
+	{ python3 -m venv .venv -p python3 && .venv/bin/pip install -r tests/requirements.txt ; }
 
+.PHONY: test-functional-control
+test-functional-control: export TEST_SCENARIO=control
+test-functional-control: venv ## Run functional tests on the control installation scenario
+	bin/reset-local-dev
+	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+
+.PHONY: test-functional-data
+test-functional-data: export TEST_SCENARIO=data
+test-functional-data: venv ## Run functional tests on the data installation scenario
+	bin/reset-local-dev
+	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+
+.PHONY: test-functional-unified
+test-functional-unified: export TEST_SCENARIO=unified
+test-functional-unified: venv ## Run functional tests on the unified installation scenario
+	bin/reset-local-dev
+	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+
+# unittest-charts is deprecated
 .PHONY: unittest-charts
-unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
+unittest-charts: test-unit
+.PHONY: test-unit
+test-unit: venv ## Run unit tests
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
-	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
+	.venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
 
 .PHONY: validate-commander-airflow-version
 validate-commander-airflow-version: ## Validate that airflowChartVersion is the same in astronomer configs and the commander docker image
 	bin/validate_commander_airflow_version
 
 .PHONY: test
-test: validate-commander-airflow-version unittest-charts
+test: validate-commander-airflow-version test-unit test-functional ## Run all tests
+	@echo "All tests passed"
 
 .PHONY: clean
 clean: ## Clean build and test artifacts
-	rm -rf ${TEMPDIR}
-	rm -f .unittest-requirements
-	rm -rf venv
-	rm -rf .pytest_cache
-	rm -rf test-results
-	find . -name __pycache__ -exec rm -rf {} \+
+	rm -rfv ${TEMPDIR}
+	rm -rfv .unittest-requirements
+	rm -rfv .pytest_cache
+	rm -rfv .ruff_cache
+	rm -rfv .venv
+	rm -rfv test-results
+	find . -name __pycache__ -exec rm -rfv {} \+
+	rm -rfv ~/.local/share/astronomer-software
+	kind delete cluster -n control
+	kind delete cluster -n data
+	kind delete cluster -n kind
+	kind delete cluster -n unified
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
 	bin/build-helm-chart.sh
-
-.PHONY: update-requirements
-update-requirements: ## Update all requirements.txt files
-	for FILE in requirements/*.in ; do pip-compile --strip-extras --quiet --generate-hashes --allow-unsafe --upgrade $${FILE} ; done ;
-	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
 
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
@@ -54,3 +76,31 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 .PHONY: show-docker-images-with-private-registry
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
 	@bin/show-docker-images.py --private-registry --with-houston
+
+.PHONY: show-downloaded-tool-versions
+show-test-helper-tool-versions: ## Show the versions of helper tools that were downloaded during testing
+	-~/.local/share/astronomer-software/bin/helm version --short
+	-~/.local/share/astronomer-software/tests/kind version
+	-~/.local/share/astronomer-software/bin/kubectl version --client
+	-~/.local/share/astronomer-software/bin/mkcert --version
+
+.PHONY: show-test-helper-files
+show-test-helper-files: ## Show all the test helper files downloaded and created during testing
+	@find ~/.local/share/astronomer-software/ -type f | sort
+
+.PHONY: cache-docker-images
+cache-docker-images: ## Cache all docker images used in the base helm chart
+	bin/show-docker-images.py --no-enable-all-features | cut -w -f2 | xargs -t -r -n1 docker pull
+
+.PHONY: uv-lock-upgrade
+uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.
+	uv lock --upgrade
+
+.PHONY: uv-lock-upgrade-and-sync
+uv-lock-upgrade-and-sync: uv-lock-upgrade ## Upgrade uv lockfile dependencies and sync venv
+	uv sync
+
+.PHONY: update-requirements
+update-requirements: uv-lock-upgrade ## Update requirements.txt file
+	uv export --format requirements-txt > tests/requirements.txt
+	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure

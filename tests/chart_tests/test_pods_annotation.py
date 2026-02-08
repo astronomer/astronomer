@@ -1,12 +1,12 @@
 import jmespath
 import pytest
 
-import tests.chart_tests as chart_tests
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import get_all_features
+from tests.utils.chart import render_chart
 
 
 def init_test_pod_annotation_configs():
-    chart_values = chart_tests.get_all_features()
+    chart_values = get_all_features()
     chart_values["global"]["podAnnotations"] = {"app.cloud.io": "astronomer"}
 
     kubernetes_objects = {
@@ -27,7 +27,7 @@ def init_test_pod_annotation_configs():
             docs,
         )
 
-    return {f'{doc["chart"]}_{doc["kind"]}_{doc["name"]}': doc["annotations"] for doc in pod_docs}
+    return {f"{doc['chart']}_{doc['kind']}_{doc['name']}": doc["annotations"] for doc in pod_docs}
 
 
 test_pod_annotations_configs_data = init_test_pod_annotation_configs()

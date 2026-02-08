@@ -15,7 +15,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{ define "prometheus.serviceAccount" -}}
+{{ define "prometheus.serviceAccountName" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "prometheus.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
@@ -47,6 +47,14 @@ Create chart name and version as used by the chart label.
 {{- end }}
 {{- end }}
 
+{{ define "filesdReloader.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-kuiper-reloader:{{ .Values.images.filesdReloader.tag }}
+{{- else -}}
+{{ .Values.images.filesdReloader.repository }}:{{ .Values.images.filesdReloader.tag }}
+{{- end }}
+{{- end }}
+
 {{ define "prometheus.init.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-init:{{ .Values.images.init.tag }}
@@ -55,9 +63,25 @@ Create chart name and version as used by the chart label.
 {{- end }}
 {{- end }}
 
-{{ define "prometheus.url" -}}
-prometheus.{{ .Values.global.baseDomain }}
+{{ define "prometheus.federationAuthSecret" -}}
+{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
+
+{{- define "prometheus.url" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+prometheus.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+prometheus.{{ .Values.global.baseDomain }}
+{{- end -}}
+{{- end -}}
+
+{{- define "prom-proxy.url" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+prom-proxy.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+prom-proxy.{{ .Values.global.baseDomain }}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Return  the proper Storage Class
@@ -77,9 +101,61 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "prometheus.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled )  }}
-{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
-{{- else }}
-{{- .Values.securityContext | toYaml | nindent 12 }}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- omit  .Values.securityContext "runAsUser" | toYaml }}
 {{- end -}}
 {{- end }}
+
+{{- define "prometheus.airflowMetricsActionDrop" }}
+- source_labels: [__name__]
+  regex: 'airflow_task_instance_created_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_task_removed_from_dag_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_task_restored_to_dag_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_duration_success_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_duration_failed_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_dependency_check_.*_count'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_dependency_check_.*_sum'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_schedule_delay_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_duration_success_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_duration_failed_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dag_processing_last_duration_.*_count'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dag_processing_last_duration_.*_sum'
+  action: drop
+{{- end }}
+
+{{ define "promproxy.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-openresty:{{ .Values.images.promproxy.tag }}
+{{- else -}}
+{{ .Values.images.promproxy.repository}}:{{ .Values.images.promproxy.tag }}
+{{- end }}
+{{- end }}
+
+{{- define "prometheus.hostAliases" -}}
+{{- if .Values.hostAliases }}
+hostAliases:
+{{ toYaml .Values.hostAliases }}
+{{- end }}
+{{- end -}}

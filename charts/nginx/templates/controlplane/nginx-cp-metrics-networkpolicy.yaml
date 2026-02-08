@@ -1,0 +1,36 @@
+###############################################################
+## Nginx Control Plane controller metrics pods NetworkPolicy ##
+###############################################################
+{{- if .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-cp-nginx-metrics-policy
+  labels:
+    tier: astronomer
+    component: nginx-metrics
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  podSelector:
+    matchLabels:
+      component: cp-ingress-controller
+      tier: nginx
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: prometheus
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.metrics }}
+{{- end }}
+{{- end }}

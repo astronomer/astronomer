@@ -43,7 +43,7 @@ spec:
     {{- end }}
 {{- if .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys }}
       affinity:
-{{ toYaml .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys  | indent 8 }}
+{{ toYaml .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys | indent 8 }}
 {{ end }}
 {{- if .Values.global.privateCaCertsAddToHost.containerdTolerations }}
       tolerations: {{ toYaml .Values.global.privateCaCertsAddToHost.containerdTolerations | nindent 8 }}
@@ -61,6 +61,7 @@ spec:
         securityContext:
           runAsUser: 0
           privileged: true
+          readOnlyRootFilesystem: true
         resources:
           requests:
             cpu: 1m

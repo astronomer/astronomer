@@ -1,4 +1,8 @@
----
+######################
+## Nats StatefulSet ##
+######################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $natsSecurityContext := (include "nats.securityContext" . | fromYaml) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -6,6 +10,7 @@ metadata:
   labels:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    plane: {{ .Values.global.plane.mode }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -24,7 +29,7 @@ spec:
     metadata:
       annotations:
         checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-      {{- if and  .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+      {{- if and .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
         checksum/nats-tls: {{ include (print $.Template.BasePath "/nats-jetstream-tls-secret.yaml") . | sha256sum }}
       {{- end }}
       {{- if .Values.exporter.enabled }}
@@ -45,11 +50,12 @@ spec:
         release: {{ .Release.Name }}
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        {{- include "global.podLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ template "nats.ServiceAccount" . }}
+      serviceAccountName: {{ template "nats.serviceAccountName" . }}
     {{- include "nats.imagePullSecrets" . | nindent 6 }}
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
@@ -106,8 +112,8 @@ spec:
         secret:
           secretName: {{ $secretName }}
       {{- end }}
-      {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
-      {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+      {{- if and .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls  }}
+      {{ $secretName := include "nats.jestreamTLSSecret" . }}
       - name: {{ $secretName }}-client-volume
         secret:
           secretName: {{ $secretName }}-client
@@ -141,7 +147,9 @@ spec:
       - name: nats
         image: {{ include "nats.image" . }}
         imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
-        securityContext: {{ template "nats.securityContext" . }}
+        securityContext:
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
         ports:
         - containerPort: 4222
           name: client
@@ -153,12 +161,10 @@ spec:
           name: cluster
         - containerPort: 8222
           name: monitor
-        - containerPort: 7777
-          name: metrics
         command:
-         - "nats-server"
-         - "--config"
-         - "/etc/nats-config/nats.conf"
+        - "nats-server"
+        - "--config"
+        - "/etc/nats-config/nats.conf"
 
         # Required to be able to define an environment variable
         # that refers to other environment variables.  This env var
@@ -192,9 +198,9 @@ spec:
           {{- end }}
           {{- end }}
 
-          {{- if and ( or .Values.nats.jetstream.enabled  .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled }}
+          {{- if and ( or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetStream.fileStorage.enabled }}
           - name: {{ template "nats.name" . }}-js-pvc
-            mountPath: {{ .Values.nats.jetstream.fileStorage.storageDirectory }}
+            mountPath: {{ .Values.nats.jetStream.fileStorage.storageDirectory }}
           {{- end }}
 
           #######################
@@ -223,8 +229,8 @@ spec:
             mountPath: /etc/nats-certs/gateways/{{ $secretName }}
           {{- end }}
 
-          {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
-          {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+          {{- if and .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+          {{ $secretName := include "nats.jestreamTLSSecret" . }}
           - name: {{ $secretName }}-server-volume
             mountPath: /etc/nats-certs/server/{{ $secretName }}
           - name: {{ $secretName }}-client-volume
@@ -284,11 +290,11 @@ spec:
         imagePullPolicy: {{ .Values.reloader.pullPolicy }}
         securityContext: {{ template "nats.securityContext" . }}
         command:
-         - "nats-server-config-reloader"
-         - "-pid"
-         - "/var/run/nats/nats.pid"
-         - "-config"
-         - "/etc/nats-config/nats.conf"
+          - "nats-server-config-reloader"
+          - "-pid"
+          - "/var/run/nats/nats.pid"
+          - "-config"
+          - "/etc/nats-config/nats.conf"
         volumeMounts:
           - name: config-volume
             mountPath: /etc/nats-config
@@ -301,6 +307,9 @@ spec:
         {{- if .Values.reloader.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.reloader.readinessProbe) . | nindent 10 }}
         {{- end }}
+        securityContext:
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
       {{ end }}
 
       ##############################
@@ -310,21 +319,20 @@ spec:
       - name: metrics
         image: {{ template "nats-exporter.image" . }}
         imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
-        securityContext: {{ template "nats.securityContext" . }}
         args:
-        - -connz
-        - -routez
-        - -subz
-        - -varz
-        - -prefix=gnatsd
-        - -use_internal_server_id
-        {{- if .Values.nats.jetstream.enabled }}
-        - -jsz=all
+          - -connz
+          - -routez
+          - -subz
+          - -varz
+          - -prefix=gnatsd
+          - -use_internal_server_id
+        {{- if .Values.nats.jetStream.enabled }}
+          - -jsz=all
         {{- end }}
-        - http://localhost:8222/
+          - http://localhost:8222/
         ports:
-        - containerPort: 7777
-          name: metrics
+          - containerPort: 7777
+            name: metrics
         resources: {{ toYaml .Values.exporter.resources | nindent 10 }}
         {{- if .Values.exporter.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.exporter.livenessProbe) . | nindent 10 }}
@@ -332,32 +340,36 @@ spec:
         {{- if .Values.exporter.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.exporter.readinessProbe) . | nindent 10 }}
         {{- end }}
+        securityContext:
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
       {{ end }}
 
-  {{- if and ( or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
+  {{- if and ( or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetStream.fileStorage.enabled (not .Values.nats.jetStream.fileStorage.existingClaim) }}
   volumeClaimTemplates:
   #####################################
   #                                   #
-  #  Jetstream New Persistent Volume  #
+  #  jetStream New Persistent Volume  #
   #                                   #
   #####################################
     - metadata:
         name: {{ template "nats.name" . }}-js-pvc
-        {{- if .Values.nats.jetstream.fileStorage.annotations }}
+        {{- if .Values.nats.jetStream.fileStorage.annotations }}
         annotations:
-        {{- range $key, $value := .Values.nats.jetstream.fileStorage.annotations }}
+        {{- range $key, $value := .Values.nats.jetStream.fileStorage.annotations }}
           {{ $key }}: {{ $value | quote }}
         {{- end }}
         {{- end }}
       spec:
         accessModes:
-        {{- range .Values.nats.jetstream.fileStorage.accessModes }}
+        {{- range .Values.nats.jetStream.fileStorage.accessModes }}
           - {{ . | quote }}
         {{- end }}
         resources:
           requests:
-            storage: {{ .Values.nats.jetstream.fileStorage.size }}
-        {{- if .Values.nats.jetstream.fileStorage.storageClassName }}
-        storageClassName: {{ .Values.nats.jetstream.fileStorage.storageClassName | quote }}
+            storage: {{ .Values.nats.jetStream.fileStorage.size }}
+        {{- if .Values.nats.jetStream.fileStorage.storageClassName }}
+        storageClassName: {{ .Values.nats.jetStream.fileStorage.storageClassName | quote }}
         {{- end }}
   {{- end }}
+{{- end }}

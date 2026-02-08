@@ -8,13 +8,13 @@ set -e
 
 QA_FEATURE_RELEASE=${1:-false}
 TEMPDIR="${TEMPDIR:-/tmp/astro-temp}"
-git_root="$(git rev-parse --show-toplevel)"
+GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 
 bin/repo-state-report.py
 
 rm -rf "${TEMPDIR}/astronomer" || true
 mkdir -p "${TEMPDIR}"
-cp -R "${git_root}/" "${TEMPDIR}/astronomer/"
+cp -R "${GIT_ROOT_DIR}/" "${TEMPDIR}/astronomer/"
 find "${TEMPDIR}/astronomer/charts" -name requirements.yaml -execdir helm dep update \;
 
 if [[ ! "${CIRCLE_BRANCH}" =~ release-[0-9]+\.[0-9]+ ]] ; then

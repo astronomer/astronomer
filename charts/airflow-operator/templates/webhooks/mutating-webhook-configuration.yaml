@@ -1,0 +1,29 @@
+#####################################################
+## Airflow Operator WebHook Mutating Configuration ##
+#####################################################
+{{ if .Values.webhooks.enabled }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Release.Name }}-airflow-operator-serving-cert
+  name: {{ .Release.Name }}-airflow-operator-mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/mutate-airflow-apache-org-v1beta1-airflow" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: {{ .Release.Name }}-mairflowv1beta1.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - airflows
+  sideEffects: None
+{{- end }}

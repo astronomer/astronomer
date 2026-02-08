@@ -18,5 +18,17 @@ spec:
       tier: astronomer
       component: houston-worker
       release: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+  {{- if .Values.global.pgbouncer.enabled }}
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: astronomer
+              component: pgbouncer
+              release: {{ .Release.Name }}
+  {{- else }}
   ingress: []
+  {{- end }}
 {{- end }}

@@ -1,0 +1,362 @@
+###########################################################################
+# Vector ConfigMap
+###########################################################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "vector.fullname" . }}-config
+  labels:
+    tier: logging
+    component: {{ template "vector.name" . }}
+    chart: {{ template "vector.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+
+data:
+  vector-config.yaml: |
+    # api is used for health check
+    api:
+      enabled: true
+      address: "0.0.0.0:8686"
+      graphql: false
+      playground: false
+    log_schema:
+      timestamp_key: "@timestamp"
+
+    data_dir: "/var/lib/vector"
+
+    sources:
+      airflow_3_task_logs:
+        type: file
+        include:
+          - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs-*/**/*.log
+          - /var/lib/kubelet/pods/*/volumes/kubernetes.io~empty-dir/logs/**/*.log
+        exclude:
+          - "**/latest/**"
+        read_from: beginning
+        fingerprint:
+          strategy: "checksum"
+        max_line_bytes: 102400
+
+      airflow_k8s_logs:
+        type: kubernetes_logs
+        read_from: beginning
+        auto_partial_merge: true
+
+    transforms:
+      filter_by_namespace:
+        type: filter
+        inputs:
+          - airflow_k8s_logs
+        condition:
+          type: "vrl"
+          source: |
+            {{- if and .Values.global.features.namespacePools.enabled (gt (len .Values.global.features.namespacePools.namespaces.names) 0) }}
+            namespaces = [{{ range $i, $ns := .Values.global.features.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
+            includes(namespaces, .kubernetes.pod_namespace)
+            {{- else if or .Values.global.manualNamespaceNamesEnabled .Values.global.disableManageClusterScopedResources }}
+            match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
+            {{- else }}
+            .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
+            {{- end }}
+
+      filter_by_component:
+        type: filter
+        inputs:
+          - filter_by_namespace
+        condition:
+          type: "vrl"
+          source: |
+            component = .kubernetes.pod_labels.component
+            includes(["scheduler", "webserver", "api-server", "worker", "triggerer", "git-sync-relay", "dag-server", "airflow-downgrade", "meta-cleanup", "dag-processor"], component)
+
+      transform_airflow_logs:
+        type: remap
+        inputs:
+          - filter_by_component
+        source: |
+          .component = .kubernetes.pod_labels.component
+          .workspace = .kubernetes.pod_labels.workspace
+          .release = .kubernetes.pod_labels.release
+          .namespace = .kubernetes.pod_namespace
+
+      parse_json_messages:
+        type: remap
+        inputs:
+          - transform_airflow_logs
+        source: |
+          if is_string(.message) {
+            parsed = parse_json(.message) ?? {}
+            if is_object(parsed) {
+              . = merge!(., parsed)
+            }
+          }
+
+      transform_task_logs:
+        type: remap
+        inputs:
+          - parse_json_messages
+        source: |
+          # If we have a dag_id, assume it's a task log
+          if exists(.dag_id) {
+            .log_type = "task"
+            # Add log_id for task logs
+            if !exists(.log_id) && exists(.task_id) && exists(.execution_date) && exists(.try_number) {
+              .log_id = join!([to_string!(.dag_id), to_string!(.task_id), to_string!(.execution_date), to_string!(.try_number)], "_")
+            }
+            .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
+          } else {
+            .log_type = "system"
+          }
+
+      transform_add_timestamp:
+        type: remap
+        inputs:
+          - transform_task_logs
+        source: |
+          .@timestamp = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%3fZ")
+          .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")
+
+      enrich_file_logs:
+        type: remap
+        inputs:
+          - airflow_3_task_logs
+        source: |
+          file_str = to_string!(.file)
+          parts = split!(file_str, "/")
+
+          # Extract pod UID from file path: /var/lib/kubelet/pods/{pod_uid}/...
+          if length(parts) > 5 && parts[4] == "pods" {
+            pod_uid = parts[5]
+            .kubernetes.pod_uid = pod_uid
+            # Add marker for enrichment
+            .pod_uid_for_lookup = pod_uid
+          } else {
+            .kubernetes.pod_uid = "unknown"
+          }
+
+          # Parse the log message to extract Airflow metadata
+          if is_string(.message) {
+            parsed = parse_json(.message) ?? {}
+            if is_object(parsed) {
+              . = merge!(., parsed)
+            }
+          }
+          .log_source = "airflow_3_file"
+
+      enrich_k8s_logs:
+        type: remap
+        inputs:
+          - filter_by_component
+        source: |
+          # airflow_k8s_logs source automatically populates pod labels
+          if exists(.kubernetes.pod_labels.component) {
+            .component = .kubernetes.pod_labels.component
+          }
+          if exists(.kubernetes.pod_labels.release) {
+            .release = .kubernetes.pod_labels.release
+          }
+          if exists(.kubernetes.pod_labels.workspace) {
+            .workspace = .kubernetes.pod_labels.workspace
+          }
+          if exists(.kubernetes.pod_namespace) {
+            .namespace = .kubernetes.pod_namespace
+          }
+          # Parse JSON messages
+          if is_string(.message) {
+            parsed = parse_json(.message) ?? {}
+            if is_object(parsed) {
+              . = merge!(., parsed)
+            }
+          }
+          .log_source = "kubernetes_logs"
+
+
+      parse_airflowV3_path:
+        type: remap
+        inputs:
+          - merge_logs
+        source: |
+          file_str = to_string!(.file)
+
+          # Try task execution logs: /dag_id=xxx/run_id=yyy/task_id=zzz/attempt=n.log
+          task_parsed, task_err = parse_regex(file_str, r'/dag_id=(?P<dag_id>[a-zA-Z0-9_-]+)/run_id=(?P<run_id>[^/]+)/task_id=(?P<task_id>[a-zA-Z0-9_-]+)/(?:map_index=(?P<map_index>-?[0-9]+)/)?attempt=(?P<attempt>[0-9]+)\.log$')
+
+          # Try DAG parse logs: /component/YYYY-MM-DD/dag_file_path.log
+          dag_parsed, dag_err = parse_regex(file_str, r'/(?:scheduler|dag_processor|dag_processor_manager)/(?P<date>\d{4}-\d{2}-\d{2})/(?P<dag_file>.+)\.log$')
+
+          if task_err == null {
+            # Successfully extracted task execution metadata from path
+            . = merge(., task_parsed)
+            .log_type = "task"
+
+            # Create log_id for consistency
+            map_index = get(., ["map_index"]) ?? "-1"
+            if is_null(map_index) {
+              map_index = "-1"
+            }
+            .log_id = join!([
+                string!(get(., ["dag_id"]) ?? "-"),
+                string!(get(., ["task_id"]) ?? "-"),
+                string!(get(., ["run_id"]) ?? "-"),
+                map_index,
+                string!(get(., ["attempt"]) ?? "-")
+            ], "_")
+          } else if dag_err == null {
+            # DAG parse log
+            . = merge(., dag_parsed)
+            .log_type = "dag_parse"
+            dag_file_str = string!(get(., ["dag_file"]) ?? "unknown")
+            parts = split!(dag_file_str, "/")
+            .dag_file = parts[-1]
+          } else {
+            # For k8s logs, check if dag_id exists (task log from stdout)
+            if exists(.dag_id) {
+              .log_type = "task"
+            } else {
+              .log_type = "component"
+            }
+          }
+
+      merge_logs:
+        type: remap
+        inputs:
+          - enrich_file_logs
+          - enrich_k8s_logs
+        source: |
+          # Component from k8s labels if we have it
+          if !exists(.component) && exists(.kubernetes.pod_labels.component) {
+            .component = .kubernetes.pod_labels.component
+          }
+
+      extract_release:
+        type: remap
+        inputs:
+          - parse_airflowV3_path
+        source: |
+          if !exists(.release) && exists(.file) {
+            file_str = to_string!(.file)
+            parsed, err = parse_regex(file_str, r'logs-(?P<release>[^/]+)')
+            if err == null {
+              .release = parsed.release
+            } else {
+              .release = "unknown"
+            }
+          }
+
+          if exists(.kubernetes.pod_labels.workspace) {
+            .workspace = .kubernetes.pod_labels.workspace
+          } else {
+            .workspace = "unknown"
+          }
+
+          if exists(.kubernetes.pod_namespace) {
+            .namespace = .kubernetes.pod_namespace
+          } else {
+            .namespace = "unknown"
+          }
+
+      transform_task_log:
+        type: remap
+        inputs:
+          - extract_release
+        source: |
+          # Parse timestamp with flexible format - handle both with and without milliseconds
+          if !exists(.@timestamp) && exists(.timestamp) {
+            .@timestamp = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%.fZ") ?? now()
+          } else if !exists(.@timestamp) {
+            .@timestamp = now()
+          }
+
+          .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
+          .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")
+
+      map_log_level:
+        type: remap
+        inputs:
+          - transform_task_log
+        source: |
+          if exists(.level) && is_string(.level) {
+            level_lower = downcase!(.level)
+            level_map = {
+              "debug": 10,
+              "info": 20,
+              "warning": 30,
+              "warn": 30,
+              "error": 40,
+              "critical": 50,
+              "exception": 50
+            }
+            .level_numeric = get(level_map, [level_lower]) ?? 20
+          }
+
+      create_event_field:
+        type: remap
+        inputs:
+          - map_log_level
+        source: |
+          if exists(.message) && is_string(.message) {
+            .event = .message
+          } else {
+            .event = ""
+          }
+
+
+      handle_error_details:
+        type: remap
+        inputs:
+          - create_event_field
+        source: |
+          if exists(.error_detail) {
+            error_detail_str = encode_json(.error_detail, pretty: true)
+            if exists(.event) {
+              .event = string!(.event) + "\nError Details:\n" + error_detail_str
+            }
+          }
+
+      filter_task_logs_only:
+        type: filter
+        inputs:
+          - handle_error_details
+        condition: '.log_type == "task"'
+
+      transform_remove_fields:
+        type: remap
+        inputs:
+          - filter_task_logs_only
+          - transform_add_timestamp
+        source: |
+          del(.host)
+          del(.kubernetes)
+          del(.file)
+          del(.pod_uid_for_lookup)
+          del(.source_type_internal)
+
+
+    sinks:
+      elasticsearch:
+        type: elasticsearch
+        inputs:
+          - transform_remove_fields
+        mode: bulk
+        compression: none
+        endpoints: ["http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]
+        api_version: "v8"
+        healthcheck:
+          enabled: true
+        bulk:
+          index: "{{ include "logging.indexNamePrefix" .}}.{{ "{{ .release }}" }}.%Y.%m.%d"
+          action: create
+        batch:
+          max_bytes: 10485760
+          timeout_secs: 5
+        request:
+          retry_attempts: 5
+          retry_initial_backoff_secs: 1
+          retry_max_duration_secs: 60
+          timeout_secs: 120
+      {{- with .Values.extraSinks }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end -}}

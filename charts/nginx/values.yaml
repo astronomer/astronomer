@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.11.3
+    tag: 1.12.6
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.28
+    tag: 0.29.0
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -22,6 +22,8 @@ securityContext:
   capabilities:
     drop:
       - ALL
+    add:
+      - NET_BIND_SERVICE
   allowPrivilegeEscalation: false
 
 serviceAccount:
@@ -107,9 +109,6 @@ ports:
 # Election ID to use for status update
 electionId: ingress-controller-leader
 
-# Enables the annotation validation feature
-enableAnnotationValidations: false
-
 # This must be used together with service annotation service.kubernetes.io/topology-mode="auto"
 enableTopologyAwareRouting: false
 
@@ -130,6 +129,14 @@ defaultBackend:
   readinessProbe: {}
   livenessProbe: {}
   podAnnotations: {}
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ~
 
 cspPolicy:
   cdnEnabled: true

@@ -1,7 +1,8 @@
 #################################
 ## Astronomer Registry Ingress ##
 #################################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
+{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -12,40 +13,26 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    {{- range $key, $value := .Values.global.extraAnnotations}}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
-  tls:
-  {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
-  {{- end }}
   {{- if .Values.global.tlsSecret }}
+  tls:
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
-        - registry.{{ .Values.global.baseDomain }}
+        - {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: registry.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-registry
-            servicePort: registry-http
-  {{ else -}}
-  rules:
-  - host: registry.{{ .Values.global.baseDomain }}
+  - host: {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
     http:
       paths:
         - path: /
@@ -55,5 +42,5 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
-  {{- end -}}
+{{- end }}
 {{- end }}

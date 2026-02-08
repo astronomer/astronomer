@@ -1,6 +1,7 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
+
 from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -30,10 +31,11 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
         assert len(docs) == 1
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-deploy-revisions"
+        assert docs[0]["metadata"]["labels"]["component"] == "houston-cleanup"
+        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]
+        assert spec["metadata"]["labels"]["component"] == "houston-cleanup"
         assert docs[0]["spec"]["schedule"] == "11 23 * * *"
-        assert docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
-            "runAsNonRoot": True
-        }
+        assert spec["spec"]["containers"][0]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_astronomer_cleanup_deploy_revisons_cron_custom_schedule(self, kube_version):
         docs = render_chart(

@@ -1,3 +1,6 @@
+#######################################
+## Prometheus Postgres Exporter Role ##
+#######################################
 {{- if and .Values.rbac.create .Values.global.rbacEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: Role

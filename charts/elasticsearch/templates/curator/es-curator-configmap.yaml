@@ -2,6 +2,7 @@
 ## Curator ConfigMap ##
 #######################
 {{- if .Values.curator.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,6 +13,7 @@ metadata:
     chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 data:
   action_file.yml: |-
     ---
@@ -62,3 +64,4 @@ data:
       logformat: default
       blacklist: ['elasticsearch', 'urllib3']
   {{- end }}
+{{- end }}

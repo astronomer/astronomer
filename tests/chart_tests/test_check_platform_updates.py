@@ -1,6 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import get_containers_by_name, supported_k8s_versions
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 default_houston_resource_spec = {"limits": {"cpu": "1000m", "memory": "2048Mi"}, "requests": {"cpu": "500m", "memory": "1024Mi"}}
 
@@ -29,8 +31,18 @@ class TestHoustonCronJobPlatformUpdates:
             "--",
             " --url=https://updates.astronomer.io/astronomer-platform",
         ]
-        assert job_container_by_name["update-check"]["securityContext"] == {"runAsNonRoot": True}
+        assert job_container_by_name["update-check"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
         assert default_houston_resource_spec == job_container_by_name["update-check"]["resources"]
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/production.yaml",
+            "subPath": "production.yaml",
+        } in job_container_by_name["update-check"]["volumeMounts"]
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/local-production.yaml",
+            "subPath": "local-production.yaml",
+        } in job_container_by_name["update-check"]["volumeMounts"]
 
     def test_cronjob_platform_updates_enabled_with_overrides(self, kube_version):
         docs = render_chart(
@@ -57,6 +69,7 @@ class TestHoustonCronJobPlatformUpdates:
             " --url=https://updates.astronomer.io/astronomer-platform",
         ]
         assert job_container_by_name["update-check"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
             "allowPriviledgeEscalation": False,
         }

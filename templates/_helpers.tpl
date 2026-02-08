@@ -12,7 +12,7 @@ fluentd
 
 
 {{ define "houston.internalauthurl" -}}
-{{- if .Values.global.enableHoustonInternalAuthorization  }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
 {{- else }}
 nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
@@ -65,3 +65,21 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "global.podLabels" -}}
+{{- if .Values.global.podLabels }}
+{{- toYaml .Values.global.podLabels }}
+{{- end }}
+{{- end }}
+
+{{- define "houston-proxy" -}}
+{{- if eq .Values.global.plane.mode "unified" -}}
+proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+{{- else -}}
+proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
+{{- end -}}
+{{- end }}
+
+{{ define "registry.authHeaderSecret" -}}
+{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
+{{- end }}

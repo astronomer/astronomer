@@ -3,6 +3,18 @@ exclude: '(venv|\.vscode|tests/k8s_schema|tests/chart_tests/test_data)' # regex
 repos:
   - repo: local
     hooks:
+      - id: ensure-rolebinding-without-dash
+        language: pygrep
+        name: "Ensure we're using 'rolebinding' and not 'role-binding'"
+        entry: "role-binding"
+        pass_filenames: true
+        exclude: "^.pre-commit-config.yaml$"
+      - id: ensure-liveness-not-liveliness
+        language: pygrep
+        name: "Ensure we're using 'liveness' and not 'liveliness'"
+        entry: "liveliness"
+        pass_filenames: true
+        exclude: "^.pre-commit-config.yaml$"
       - id: check-image-tags
         language: python
         additional_dependencies: ["jinja2", "PyYAML"]
@@ -11,6 +23,10 @@ repos:
         args: ["bin/show-docker-images.py", "--private-registry", "--with-houston", "-c"]
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
+      - id: refuse-authsidecar-files
+        language: python
+        name: Refuse files that include authsidecar
+        entry: bin/refuse-filename-strings.py
       - id: circle-config-yaml
         language: python
         additional_dependencies: ["jinja2", "PyYAML"]
@@ -19,26 +35,26 @@ repos:
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
-        args: ["-L", "AKS,aks,showIn"]
+        args: ["-L", "AKS,aks,showIn,NotIn"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.7.3"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.14.8"
     hooks:
-      - id: ruff
+      - id: ruff-check
         args:
           - "--fix"
           - "--exit-non-zero-on-fix"
-          # - "--unsafe-fixes"
+          - "--unsafe-fixes"
       - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -53,33 +69,30 @@ repos:
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: file-contents-sorter
-        args: ["--ignore-case", "--unique"]
+        args:
+          - "--unique"
         files: '^\.(git|helm)ignore$'
       - id: mixed-line-ending
         args: ["--fix=lf"]
       - id: name-tests-test
         args: ["--pytest-test-first"]
-        exclude: "^tests/chart_tests/helm_template_generator.py$"
+        exclude: "^tests/utils/.*$"
       - id: requirements-txt-fixer
-        args: [
-            "requirements/chart-tests.in",
-            "requirements/chart-tests.txt",
-            "requirements/functional-tests.in",
-            "requirements/functional-tests.txt",
-          ]
+        args:
+          - "tests/requirements.txt"
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
   - repo: https://github.com/astronomer/pre-commit-hooks
-    rev: 8b2d969bd549cd7c9454cc8bb54eec5b35c2e5e6
+    rev: 37614dad793bbbdea699c63c8b341ce1e2bf855a
     hooks:
       - id: CVE-2017-18342
       - id: remove-unicode-zero-width-non-breaking-spaces
       - id: remove-unicode-zero-width-space
       - id: replace-en-dashes
-        exclude: 'bin/kind/.*'
+        exclude: 'tests/kind/.*'
       - id: replace-greek-question-mark
       - id: replace-unicode-non-breaking-spaces

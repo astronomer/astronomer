@@ -1,0 +1,59 @@
+####################################
+## Elasticsearch NGiNX NetworkPolicy
+####################################
+{{- if .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "elasticsearch.fullname" . }}-nginx-policy
+  labels:
+    tier: logging
+    component: {{ template "elasticsearch.name" . }}
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: nginx
+spec:
+  podSelector:
+    matchLabels:
+      tier: elasticsearch
+      component: es-ingress-controller
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          tier: airflow
+          component: webserver
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          tier: airflow
+          component: api-server
+    {{- if .Values.global.loggingSidecar.enabled }}
+    - namespaceSelector: {}
+      podSelector:
+        matchExpressions:
+        - key: component
+          operator: In
+          values:
+          - dag-server
+          - metacleanup
+          - airflow-downgrade
+          - git-sync-relay
+          - dag-processor
+          - triggerer
+          - worker
+          - scheduler
+        matchLabels:
+          tier: airflow
+    {{- end }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.common.ports.http }}
+{{- end }}
+{{- end }}

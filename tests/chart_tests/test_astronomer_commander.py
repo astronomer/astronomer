@@ -1,6 +1,10 @@
-from tests.chart_tests.helm_template_generator import render_chart
+import jmespath
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name
+import yaml
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name, get_env_vars_dict
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -8,34 +12,155 @@ from tests import supported_k8s_versions, get_containers_by_name
     supported_k8s_versions,
 )
 class TestAstronomerCommander:
-    def test_astronomer_commander_deployment_default(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/commander."""
+    def commander_deployment_common_tests(self, doc):
+        """Common validation tests for Commander Deployment."""
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-commander"
+
+    @pytest.mark.parametrize("rbac_enabled", [True, False], ids=["rbac_enabled", "rbac_disabled"])
+    @pytest.mark.parametrize(
+        "namespace_labels", [None, {}, {"env": "prod", "team": "data"}], ids=["no_labels", "empty_labels", "with_labels"]
+    )
+    def test_commander_metadata_yaml(self, kube_version, rbac_enabled, namespace_labels):
+        """Test that helm renders a good metadata.yaml template for astronomer/commander."""
+        values = {
+            "global": {
+                "rbacEnabled": rbac_enabled,
+                "namespaceLabels": namespace_labels,
+            }
+        }
         docs = render_chart(
             kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+
+        metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
+        if namespace_labels and rbac_enabled:
+            assert metadata_file_contents == {"namespaceLabels": namespace_labels}
+        else:
+            assert metadata_file_contents == {"namespaceLabels": {}}
+
+    def test_commander_deployment_default(self, kube_version):
+        """Test that helm renders a good deployment template for astronomer/commander."""
+        values = {
+            "astronomer": {
+                "airflowChartVersion": "99.88.77",
+                "commander": {
+                    "cloudProvider": "aws",
+                    "region": "us-west-2",
+                    "houstonAuthorizationUrl": "https://houston.example.com/auth",
+                },
+                "images": {"commander": {"tag": "88.77.66"}},
+            },
+            "global": {
+                "baseDomain": "astronomer.example.com",
+                "plane": {
+                    "mode": "data",
+                    "domainPrefix": "custom-dp-123",
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
             show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-commander"
+        self.commander_deployment_common_tests(doc)
         c_by_name = get_containers_by_name(doc)
         assert len(c_by_name) == 1
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
         assert c_by_name["commander"]["resources"]["limits"]["memory"] == "2Gi"
         assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+
+        commander_container = c_by_name["commander"]
+        env_vars = get_env_vars_dict(commander_container["env"])
+        assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "99.88.77"
+        assert env_vars["COMMANDER_BASE_DOMAIN"] == "custom-dp-123.example.com"
+        assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
+        assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"]
+        assert env_vars["COMMANDER_DATAPLANE_DATABASE_URL"]
+        assert env_vars["COMMANDER_DATAPLANE_ID"] == "custom-dp-123"
+        assert env_vars["COMMANDER_DATAPLANE_MODE"] == "data"
+        assert env_vars["COMMANDER_DATAPLANE_URL"] == "custom-dp-123.example.com"
+        assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
+        assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
+        assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "https://elasticsearch.custom-dp-123.example.com"
+        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
+        assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
-        assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
+        assert env_vars["COMMANDER_VERSION"] == "88.77.66"
 
-    def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/commander.
+        assert env_vars["HELM_CACHE_HOME"] == "/tmp/helm-cache"
+        assert env_vars["HELM_CONFIG_HOME"] == "/tmp/helm-config"
+        assert env_vars["HELM_DATA_HOME"] == "/tmp/helm-data"
+        assert env_vars["HELM_REPOSITORY_CACHE"] == "/tmp/helm-cache/repository"
 
-        when upgrade timeout is set
-        """
+        volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
+        assert volume_mounts["tmp-workspace"] == "/tmp"
+
+        spec = doc["spec"]["template"]["spec"]
+        volumes = {vol["name"]: vol for vol in spec["volumes"]}
+        assert "tmp-workspace" in volumes
+        assert "emptyDir" in volumes["tmp-workspace"]
+        assert "hostAliases" not in spec
+
+    def test_commander_deployment_unified_defaults(self, kube_version):
+        """Test that helm renders a good deployment template for astronomer/commander."""
+        values = {
+            "astronomer": {
+                "airflowChartVersion": "99.88.77",
+                "commander": {
+                    "cloudProvider": "aws",
+                    "region": "us-west-2",
+                    "houstonAuthorizationUrl": "https://houston.example.com/auth",
+                },
+                "images": {"commander": {"tag": "88.77.66"}},
+            },
+            "global": {"baseDomain": "example.com", "plane": {"mode": "unified"}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        self.commander_deployment_common_tests(doc)
+        c_by_name = get_containers_by_name(doc)
+        assert len(c_by_name) == 1
+        commander_container = c_by_name["commander"]
+        env_vars = get_env_vars_dict(commander_container["env"])
+        assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "99.88.77"
+        assert env_vars["COMMANDER_BASE_DOMAIN"] == "example.com"
+        assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
+        assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"]
+        assert env_vars["COMMANDER_DATAPLANE_DATABASE_URL"]
+        assert env_vars["COMMANDER_DATAPLANE_ID"] == "astronomer"
+        assert env_vars["COMMANDER_DATAPLANE_MODE"] == "unified"
+        assert env_vars["COMMANDER_DATAPLANE_URL"] == "release-name-commander.default.svc.cluster.local.:8880"
+        assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
+        assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
+        assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.default.svc.cluster.local.:9200"
+        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
+        assert env_vars["COMMANDER_REGION"] == "us-west-2"
+        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
+        assert env_vars["COMMANDER_VERSION"] == "88.77.66"
+
+    def test_commander_deployment_upgrade_timeout(self, kube_version):
+        """Test that helm renders a good deployment template for astronomer/commander when upgrade timeout is set."""
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"commander": {"upgradeTimeout": 997}}},
@@ -44,19 +169,16 @@ class TestAstronomerCommander:
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-commander"
+        self.commander_deployment_common_tests(doc)
         c_by_name = get_containers_by_name(doc)
         assert len(c_by_name) == 1
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
 
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
-    def test_astronomer_commander_rbac_cluster_role_enabled(self, kube_version):
-        """Test that if rbacEnabled and clusterRoles are enabled but
-        namespacePools disabled, helm renders ClusterRole and
+    def test_commander_rbac_cluster_role_enabled(self, kube_version):
+        """Test that if rbacEnabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
         ClusterRoleBinding resources."""
 
         # First rbacEnabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
@@ -100,7 +222,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["roleRef"] == expected_role_ref
         assert cluster_role_binding["subjects"] == expected_subjects
 
-    def test_astronomer_commander_rbac_cluster_roles_disabled_rbac_enabled(self, kube_version):
+    def test_commander_rbac_cluster_roles_enabled_rbac_disabled(self, kube_version):
         """Test that if rbacEnabled set to true, but clusterRoles and
         namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
@@ -121,9 +243,8 @@ class TestAstronomerCommander:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled, namespacePools and clusterRoles are
-        disabled, we do not create any RBAC resources."""
+    def test_commander_rbac_all_disabled(self, kube_version):
+        """Test that if rbacEnabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -142,7 +263,7 @@ class TestAstronomerCommander:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_rbac_cluster_role_disabled(self, kube_version):
+    def test_commander_rbac_cluster_role_disabled(self, kube_version):
         """Test that if clusterRoles and namespacePools are disabled but
         rbacEnabled is enabled, helm does not render RBAC resources."""
         docs = render_chart(
@@ -163,10 +284,9 @@ class TestAstronomerCommander:
         )
         assert len(docs) == 0
 
-    def test_astronomer_commander_rbac_multinamespace_mode_disabled(self, kube_version):
-        """Test that if Houston's Airflow chart sub-configuration has
-        multiNamespaceMode disabled, the rendered commander role doesn't have
-        permissions to manage Cluster-level RBAC resources."""
+    def test_commander_rbac_multinamespace_mode_disabled(self, kube_version):
+        """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode disabled, the rendered commander role
+        doesn't have permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"houston": {"config": {"deployments": {"helm": {"airflow": {"multiNamespaceMode": False}}}}}}},
@@ -180,10 +300,9 @@ class TestAstronomerCommander:
         for resource in generated_resources:
             assert resource not in cluster_resources
 
-    def test_astronomer_commander_rbac_multinamespace_mode_undefined(self, kube_version):
-        """Test that if Houston's configuration for Airflow chart is not
-        defined, the rendered commander role doesn't have permissions to manage
-        Cluster-level RBAC resources."""
+    def test_commander_rbac_multinamespace_mode_undefined(self, kube_version):
+        """Test that if Houston's configuration for Airflow chart is not defined, the rendered commander role doesn't have
+        permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={},
@@ -197,10 +316,9 @@ class TestAstronomerCommander:
         for resource in generated_resources:
             assert resource not in cluster_resources
 
-    def test_astronomer_commander_rbac_multinamespace_mode_enabled(self, kube_version):
-        """Test that if Houston's Airflow chart sub-configuration has
-        multiNamespaceMode enabled, the rendered commander role has permissions
-        to manage Cluster-level RBAC resources."""
+    def test_commander_rbac_multinamespace_mode_enabled(self, kube_version):
+        """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode enabled, the rendered commander role has
+        permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"houston": {"config": {"deployments": {"helm": {"airflow": {"multiNamespaceMode": True}}}}}}},
@@ -214,9 +332,8 @@ class TestAstronomerCommander:
         for resource in cluster_resources:
             assert resource in generated_resources
 
-    def test_astronomer_commander_rbac_scc_enabled_ns_pools(self, kube_version):
-        """Test that if a sccEnabled and namespacePools are enabled, we add
-        Cluster permissions for scc resources."""
+    def test_commander_rbac_scc_enabled_namespace_pools(self, kube_version):
+        """Test that if a sccEnabled and namespacePools are enabled, we add Cluster permissions for scc resources."""
         namespaces = ["test"]
         docs = render_chart(
             kube_version=kube_version,
@@ -246,7 +363,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         assert cluster_role["kind"] == "ClusterRole"
         assert cluster_role["rules"] == [expected_rule]
@@ -267,13 +384,13 @@ class TestAstronomerCommander:
         }
 
         cluster_role_binding = docs[3]
-        expected_cluster_role = {
+        expected_scc_cluster_role = {
             "apiGroup": "rbac.authorization.k8s.io",
             "kind": "ClusterRole",
-            "name": "release-name-commander",
+            "name": "release-name-commander-scc",
         }
 
-        assert cluster_role_binding["roleRef"] == expected_cluster_role
+        assert cluster_role_binding["roleRef"] == expected_scc_cluster_role
 
         for i in range(4, 6):
             role_binding = docs[i]
@@ -289,7 +406,7 @@ class TestAstronomerCommander:
             assert role_binding["roleRef"] == expected_role
             assert role_binding["subjects"][0] == expected_subject
 
-    def test_astronomer_commander_rbac_scc_cluster_roles(self, kube_version):
+    def test_commander_rbac_scc_cluster_roles(self, kube_version):
         """Test that if scc is enabled but namespace pools is disabled, scc
         permissions are rendered once in ClusterRole and ClusterRoleBinding
         objects."""
@@ -316,7 +433,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         cluster_role = docs[0]
 
@@ -332,12 +449,11 @@ class TestAstronomerCommander:
 
         assert cluster_role_binding["roleRef"] == expected_cluster_role
 
-    def test_astronomer_commander_disable_manage_clusterscopedresources_overrides(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/commander."""
+    def test_commander_disable_manage_clusterscopedresources_defaults(self, kube_version):
+        """Test that helm renders a good deployment template for astronomer/commander."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"disableManageClusterScopedResources": True}},
+            values={},
             show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
 
@@ -347,37 +463,188 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
-        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
+        env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
 
-    def test_astronomer_commander_clusterscopedresources_overrides_with_custom_flags(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/commander."""
-        docs = render_chart(
+    def test_commander_operator_permissions(self, kube_version):
+        """Test template that helm renders when operator is enabled ."""
+        doc = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
-                    "disableManageClusterScopedResources": True,
-                    "features": {"namespacePools": {"enabled": True}},
-                },
-                "astronomer": {
-                    "commander": {
-                        "env": [{"name": "COMMANDER_HELM_DEBUG", "value": "true"}],
-                        "airGapped": {"enabled": True},
-                    }
+                    "airflowOperator": {"enabled": True},
                 },
             },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+        expected_rule = {
+            "apiGroups": ["airflow.apache.org"],
+            "resources": ["airflows"],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert any(rule == expected_rule for rule in doc["rules"])
+
+    def test_commander_operator_permissions_disabled(self, kube_version):
+        """Test template that helm renders when operator is enabled ."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": False},
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+        expected_rule = {
+            "apiGroups": ["airflow.apache.org"],
+            "resources": ["airflows"],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert all(rule != expected_rule for rule in doc["rules"])
+
+    @pytest.mark.parametrize(
+        "mode,custom_logging,expected_node",
+        [
+            (
+                "data",
+                False,
+                "https://elasticsearch.custom-dp-123.example.com",
+            ),
+            (
+                "unified",
+                True,
+                "http://release-name-es-proxy.default.svc.cluster.local:9201",
+            ),
+            (
+                "unified",
+                False,
+                "http://release-name-elasticsearch.default.svc.cluster.local.:9200",
+            ),
+        ],
+    )
+    def test_commander_elasticsearch_node_variants(self, kube_version, mode, custom_logging, expected_node):
+        """Test COMMANDER_ELASTICSEARCH_NODE is rendered correctly for different plane modes and custom logging configurations."""
+        values = {
+            "astronomer": {
+                "images": {"commander": {"tag": "1.2.3"}},
+            },
+            "global": {
+                "baseDomain": "astronomer.example.com",
+                "plane": {"mode": mode, "domainPrefix": "custom-dp-123"},
+                "customLogging": {"enabled": custom_logging},
+            },
+        }
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
             show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
-        assert env_vars["COMMANDER_HELM_DEBUG"] == "true"
-        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
-        assert env_vars["COMMANDER_MANUAL_NAMESPACE_NAMES"] == "true"
-        assert env_vars["COMMANDER_AIRGAPPED"] == "true"
+        env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
+
+        assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == expected_node
+
+    @pytest.mark.parametrize(
+        "plane_mode,auth_sidecar_enabled,should_render_deployment,expected_containers",
+        [
+            ("data", False, True, ["commander"]),
+            ("data", True, True, ["commander", "auth-proxy"]),
+            ("unified", False, True, ["commander"]),
+            ("unified", True, True, ["commander"]),
+            ("control", False, False, []),
+            ("control", True, False, []),
+        ],
+    )
+    def test_commander_auth_sidecar_conditional_rendering(
+        self, kube_version, plane_mode, auth_sidecar_enabled, should_render_deployment, expected_containers
+    ):
+        """Test that auth-sidecar is only included in data plane mode when enabled, and deployment only renders for data/unified modes."""
+        values = {
+            "global": {
+                "plane": {"mode": plane_mode},
+            },
+        }
+        if auth_sidecar_enabled:
+            values["global"]["authSidecar"] = {
+                "enabled": True,
+                "repository": "quay.io/astronomer/ap-auth-sidecar",
+                "tag": "1.27.4-3",
+                "pullPolicy": "IfNotPresent",
+            }
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        if not should_render_deployment:
+            assert len(docs) == 0
+            return
+
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc)
+
+        assert len(c_by_name) == len(expected_containers)
+
+        for container_name in expected_containers:
+            assert container_name in c_by_name
+
+        if "auth-sidecar" in expected_containers:
+            auth_sidecar = c_by_name["auth-sidecar"]
+            assert auth_sidecar["image"] == "quay.io/astronomer/ap-auth-sidecar:1.27.4-3"
+            assert auth_sidecar["imagePullPolicy"] == "IfNotPresent"
+
+            ports = {port["name"]: port["containerPort"] for port in auth_sidecar["ports"]}
+            assert ports["nginx-http"] == 8080
+            assert ports["nginx-grpc"] == 9090
+
+            assert auth_sidecar["livenessProbe"]["httpGet"]["port"] == 8080
+            assert auth_sidecar["readinessProbe"]["httpGet"]["port"] == 8080
+
+    def test_commander_privateca_enabled(self, kube_version):
+        """Test Commander with privateCA feature enabled  with update ca certs utility."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"privateCaCerts": ["private-root-ca"]}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
+            docs[0],
+        )
+        volume_search_result = jmespath.search(
+            "spec.template.spec.volumes[?name == 'private-root-ca']",
+            docs[0],
+        )
+        expected_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/usr/local/share/ca-certificates/private-root-ca.pem",
+                    "name": "private-root-ca",
+                    "subPath": "cert.pem",
+                }
+            ]
+        ]
+        expected_volume_result = [{"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}]
+        assert docs[0]["kind"] == "Deployment"
+        assert volume_mount_search_result == expected_volume_mounts_result
+        assert volume_search_result == expected_volume_result
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
+
+    def test_commander_hostAliases_overrides(self, kube_version):
+        """Test Commander with hostAliases overrides."""
+        hostAliasSpec = [{"ip": "127.0.0.1", "hostnames": ["commander.hostname.one"]}]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"commander": {"hostAliases": hostAliasSpec}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert docs[0]["kind"] == "Deployment"
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["hostAliases"] == hostAliasSpec

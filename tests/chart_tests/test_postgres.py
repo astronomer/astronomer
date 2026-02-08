@@ -1,6 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -24,30 +26,15 @@ class TestPostgresql:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        self.postgresql_common_tests(doc)
-        assert "initContainers" not in doc["spec"]["template"]["spec"]
-        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
-
-    def test_postgresql_statefulset_with_volumePermissions_enabled(self, kube_version):
-        """Test postgresql statefulset when volumePermissions init container is
-        enabled."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "global": {"postgresqlEnabled": True},
-                "postgresql": {
-                    "volumePermissions": {"enabled": True},
-                    "persistence": {"enabled": True},
-                },
-            },
-            show_only=["charts/postgresql/templates/statefulset.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        self.postgresql_common_tests(doc)
-        assert "initContainers" in doc["spec"]["template"]["spec"]
+        sts = docs[0]
+        self.postgresql_common_tests(sts)
+        assert len(sts["spec"]["template"]["spec"]["containers"]) == 1
+        containers = get_containers_by_name(doc=sts, include_init_containers=True)
+        assert containers["release-name-postgresql"]["volumeMounts"] == [
+            {"mountPath": "/tmp", "name": "tmp"},
+            {"name": "data", "mountPath": "/bitnami/postgresql", "subPath": None},
+        ]
+        assert "persistentVolumeClaimRetentionPolicy" not in sts["spec"]
 
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):
         """Test postgresql with privateRegistry=True."""
@@ -71,9 +58,9 @@ class TestPostgresql:
         for doc in docs:
             c_by_name = get_containers_by_name(doc=doc, include_init_containers=True)
             for name, container in c_by_name.items():
-                assert container["image"].startswith(
-                    repository
-                ), f"Container named '{name}' does not use registry '{repository}': {container}"
+                assert container["image"].startswith(repository), (
+                    f"Container named '{name}' does not use registry '{repository}': {container}"
+                )
 
     def test_postgresql_persistentVolumeClaimRetentionPolicy(self, kube_version):
         test_persistentVolumeClaimRetentionPolicy = {

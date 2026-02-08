@@ -1,6 +1,7 @@
 #######################################
 ## Elasticsearch Exporter Deployment ##
 #######################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: exporter
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.exporter.replicas }}
   selector:
@@ -34,30 +36,27 @@ spec:
         role: exporter
         app: {{ template "elasticsearch.name" . }}-exporter
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
 {{- if or .Values.common.podAnnotations .Values.exporter.podAnnotations .Values.global.podAnnotations }}
       annotations:
-{{- end }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.common.podAnnotations }}
-{{ toYaml .Values.common.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.exporter.podAnnotations }}
-{{ toYaml .Values.exporter.podAnnotations | indent 8 }}
+      {{- if .Values.global.podAnnotations }}
+      {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.common.podAnnotations }}
+      {{- toYaml .Values.common.podAnnotations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.exporter.podAnnotations }}
+      {{- toYaml .Values.exporter.podAnnotations | nindent 8 }}
+      {{- end }}
 {{- end }}
     spec:
-      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: {{ .Values.exporter.restartPolicy }}
-      securityContext:
-{{ toYaml .Values.exporter.podSecurityContext | indent 8 }}
-{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
+      securityContext: {{- toYaml .Values.exporter.podSecurityContext | nindent 8 }}
+      {{- include "elasticsearch.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: metrics-exporter
           image: {{ template "exporter.image" . }}
@@ -69,10 +68,11 @@ spec:
                     "--es.timeout={{ .Values.exporter.es.timeout }}",
                     "--web.listen-address=:{{ .Values.exporter.service.httpPort }}",
                     "--web.telemetry-path={{ .Values.exporter.web.path }}"]
+
           securityContext:
-{{ toYaml .Values.exporter.securityContext | indent 12 }}
-          resources:
-{{ toYaml .Values.exporter.resources | indent 12 }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.exporter.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.exporter.resources | nindent 12 }}
           ports:
             - containerPort: {{ .Values.exporter.service.httpPort }}
               name: http
@@ -81,7 +81,7 @@ spec:
           {{- else }}
           livenessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: http
             initialDelaySeconds: 30
             timeoutSeconds: 10
@@ -91,8 +91,9 @@ spec:
           {{- else }}
           readinessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: http
             initialDelaySeconds: 10
             timeoutSeconds: 10
           {{- end }}
+{{- end }}

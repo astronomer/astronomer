@@ -1,7 +1,8 @@
 ###################################
 ## Astronomer Registry ConfigMap ##
 ###################################
-{{ if .Values.global.baseDomain }}
+{{ if and .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -67,10 +69,11 @@ data:
     notifications:
       endpoints:
         - name: "houston"
-          url: "http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events"
+          url: {{ include "houston.eventsUrl" . | quote }}
           timeout: {{ .Values.registry.notifications.timeout }}
           threshold: 10
           backoff: 1s
           ignoredmediatypes:
             - application/octet-stream
+{{- end }}
 {{- end }}

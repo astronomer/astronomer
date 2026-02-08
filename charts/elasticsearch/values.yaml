@@ -10,23 +10,23 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 8.12.1
+    tag: 8.18.6-2
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 3.18.9
+    tag: 2025.12.24
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.17
+    tag: 8.0.21-8
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.8.0
+    tag: 1.9.0-1
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.27.2
+    tag: 1.29.4
     pullPolicy: IfNotPresent
 
 common:
@@ -44,6 +44,7 @@ common:
     # The name of the ServiceAccount to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ~
+    sccEnabled: true
 
   env:
     CLUSTER_NAME: "astronomer"
@@ -232,7 +233,8 @@ curator:
   podAnnotations: {}
   enabled: true
   schedule: "0 1 * * *"
-  securityContext: {}
+  securityContext:
+    runAsNonRoot: true
   resources: {}
 
   # Allows modification of the default age-based filter. If you require more
@@ -242,6 +244,9 @@ curator:
     timestring: "%Y.%m.%d"
     unit: "days"
     unit_count: 10
+
+  livenessProbe: {}
+  readinessProbe: {}
 
 exporter:
   podAnnotations: {}
@@ -256,7 +261,6 @@ exporter:
     capabilities:
       drop:
       - ALL
-    readOnlyRootFilesystem: true
 
   resources: {}
   # requests:
@@ -302,7 +306,20 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
-  securityContext: {}
+  securityContext:
+    runAsNonRoot: true
+  maxBodySize: "100M"
+
+  authCache:
+    enabled: true
+    # Cache storage settings (path is hardcoded to /tmp/nginx-auth-cache for readOnlyRootFilesystem compatibility)
+    levels: "1:2"
+    keysZone: "auth_cache:10m"
+    maxSize: "100m"
+    inactive: "5m"
+    # Cache TTL settings
+    validSuccess: "5m"      # Cache successful auth (200) responses
+    validFailure: "1m"      # Cache auth failures (401, 403) responses
 
 # sysctl init container
 # Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.
@@ -321,3 +338,6 @@ securityContext:
       - ALL
   runAsNonRoot: true
   runAsUser: 1000
+
+ingress:
+  annotation: {}

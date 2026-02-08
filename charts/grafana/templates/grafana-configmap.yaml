@@ -1,6 +1,7 @@
 #######################
 ## Grafana ConfigMap ##
 #######################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -20,11 +21,13 @@ data:
         url: "http://{{ .Release.Name }}-prometheus:9090"
         access: proxy
         is_default: true
+{{- end }}
 
 #################################
 ## Grafana Dashboards ConfigMap
 #################################
-{{- $grafanadashboards :=  fromYaml (include "grafana.dashboards" .) }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $grafanadashboards := fromYaml (include "grafana.dashboards" .) }}
 {{- if $grafanadashboards }}
 {{ $files := .Files }}
 {{- range $provider, $dashboards := $grafanadashboards }}
@@ -50,6 +53,7 @@ data:
 {{- end }}
 {{- if hasKey $value "file" }}
 {{ toYaml ( $files.Get $value.file ) | indent 4}}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
