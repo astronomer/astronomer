@@ -23,7 +23,7 @@ class TestHoustonBootstrapServiceAccount:
         assert doc["automountServiceAccountToken"] is True
 
     def test_houston_bootstrap_serviceaccount_automount_overrides(self, kube_version):
-        """ Test that the houston serviceaccount automountServiceAccountToken field is set to false overriding the defaults. """
+        """Test that the houston serviceaccount automountServiceAccountToken field is set to false overriding the defaults."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml"],
