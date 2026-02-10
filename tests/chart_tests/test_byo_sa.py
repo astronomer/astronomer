@@ -94,20 +94,25 @@ class TestServiceAccounts:
         assert expected_names.issubset(extracted_names)
         assert all(doc["automountServiceAccountToken"] is True for doc in docs)
 
-
     def test_automountServiceAccountToken_with_overrides(self, kube_version):
-        "Test that if custom SA are added it gets created"
+        "Test that if custom SA are added it gets created with automountServiceAccountToken set to false"
         values = {
             "astronomer": {
-                "commander": {"serviceAccount": {"create": "true", "name": "commander-test", "automountServiceAccountToken": False}},
-                "registry": {"serviceAccount": {"create": "true", "name": "registry-test","automountServiceAccountToken": False}},
-                "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test","automountServiceAccountToken": False}},
-                "houston": {"serviceAccount": {"create": "true", "name": "houston-test","automountServiceAccountToken": False}},
-                "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test","automountServiceAccountToken": False}},
+                "commander": {
+                    "serviceAccount": {"create": "true", "name": "commander-test", "automountServiceAccountToken": False}
+                },
+                "registry": {"serviceAccount": {"create": "true", "name": "registry-test", "automountServiceAccountToken": False}},
+                "configSyncer": {
+                    "serviceAccount": {"create": "true", "name": "configsyncer-test", "automountServiceAccountToken": False}
+                },
+                "houston": {"serviceAccount": {"create": "true", "name": "houston-test", "automountServiceAccountToken": False}},
+                "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test", "automountServiceAccountToken": False}},
             },
-            "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test","automountServiceAccountToken": False}}},
-            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test","automountServiceAccountToken": False}},
-            "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test","automountServiceAccountToken": False}},
+            "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test", "automountServiceAccountToken": False}}},
+            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test", "automountServiceAccountToken": False}},
+            "alertmanager": {
+                "serviceAccount": {"create": "true", "name": "alertmanager-test", "automountServiceAccountToken": False}
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
