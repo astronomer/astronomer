@@ -94,6 +94,50 @@ class TestServiceAccounts:
         assert expected_names.issubset(extracted_names)
         assert all(doc["automountServiceAccountToken"] is True for doc in docs)
 
+
+    def test_automountServiceAccountToken_with_overrides(self, kube_version):
+        "Test that if custom SA are added it gets created"
+        values = {
+            "astronomer": {
+                "commander": {"serviceAccount": {"create": "true", "name": "commander-test", "automountServiceAccountToken": False}},
+                "registry": {"serviceAccount": {"create": "true", "name": "registry-test","automountServiceAccountToken": False}},
+                "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test","automountServiceAccountToken": False}},
+                "houston": {"serviceAccount": {"create": "true", "name": "houston-test","automountServiceAccountToken": False}},
+                "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test","automountServiceAccountToken": False}},
+            },
+            "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test","automountServiceAccountToken": False}}},
+            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test","automountServiceAccountToken": False}},
+            "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test","automountServiceAccountToken": False}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/astronomer/templates/commander/commander-serviceaccount.yaml",
+                "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
+                "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
+                "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
+                "charts/nats/templates/nats-serviceaccount.yaml",
+                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
+                "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
+            ],
+        )
+
+        assert len(docs) == 8
+        expected_names = {
+            "commander-test",
+            "registry-test",
+            "configsyncer-test",
+            "houston-test",
+            "astroui-test",
+            "grafana-test",
+            "alertmanager-test",
+        }
+        extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
+        assert expected_names.issubset(extracted_names)
+        assert all(doc["automountServiceAccountToken"] is False for doc in docs)
+
     def test_serviceaccount_with_create_disabled(self, kube_version):
         "Test that if SA create disabled"
         values = {
