@@ -1010,6 +1010,15 @@ def main() -> int:
             )
             ms.done(h)
 
+            # IMPORTANT: DP components may need to resolve CP endpoints during startup.
+            # Patch DP CoreDNS NodeHosts (and restart CoreDNS) after CP install, before DP install.
+            if not args.skip_dns_reconcile:
+                h = ms.start("Pre-DP: update DP CoreDNS NodeHosts for CP ingress")
+                _run_dns_reconcile(settings)
+                ms.done(h)
+            else:
+                ms.skip("Pre-DP: update DP CoreDNS NodeHosts for CP ingress", reason="--skip-dns-reconcile set")
+
             h = ms.start(f"Helm install/upgrade Data Plane (context={dp_context})")
             _helm_upgrade_install(
                 context=dp_context,
