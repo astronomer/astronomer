@@ -793,9 +793,9 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
 
     _print("\nAdd the following entries to your host `/etc/hosts` (if your host can route to these LB IPs):\n")
     _print(
-        f"{dp_nginx_lb_ip} {dp}.{base} deployments.{dp}.{base} registry.{dp}.{base} commander.{dp}.{base}"
+        f"{dp_nginx_lb_ip} {dp}.{base} deployments.{dp}.{base} registry.{dp}.{base} commander.{dp}.{base} prometheus.{dp}.{base} prom-proxy.{dp}.{base} elasticsearch.{dp}.{base}"
     )
-    _print(f"{cp_nginx_lb_ip} {base} app.{base} houston.{base} grafana.{base}")
+    _print(f"{cp_nginx_lb_ip} {base} app.{base} houston.{base} grafana.{base} prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}")
 
 
 def _validate_prereqs() -> None:
