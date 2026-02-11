@@ -811,7 +811,7 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
         f"{dp_nginx_lb_ip} {dp}.{base} deployments.{dp}.{base} registry.{dp}.{base} commander.{dp}.{base} prometheus.{dp}.{base} prom-proxy.{dp}.{base} elasticsearch.{dp}.{base}"
     )
     _print(
-        f"{cp_nginx_lb_ip} {base} app.{base} houston.{base} grafana.{base} prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}"
+        f"{cp_nginx_lb_ip} {base} app.{base} deployments.{base} houston.{base} grafana.{base} prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}"
     )
 
 
