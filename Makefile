@@ -52,18 +52,20 @@ test: validate-commander-airflow-version test-unit test-functional ## Run all te
 
 .PHONY: clean
 clean: ## Clean build and test artifacts
-	rm -rfv ${TEMPDIR}
-	rm -rfv .unittest-requirements
-	rm -rfv .pytest_cache
-	rm -rfv .ruff_cache
-	rm -rfv .venv
-	rm -rfv test-results
-	find . -name __pycache__ -exec rm -rfv {} \+
-	rm -rfv ~/.local/share/astronomer-software
-	kind delete cluster -n control
-	kind delete cluster -n data
-	kind delete cluster -n kind
-	kind delete cluster -n unified
+	-rm -rfv ${TEMPDIR}
+	-rm -rfv .unittest-requirements
+	-rm -rfv .pytest_cache
+	-rm -rfv .ruff_cache
+	-rm -rfv .venv
+	-rm -rfv test-results
+	-find . -name __pycache__ -exec rm -rfv {} \+
+	-rm -rfv ~/.local/share/astronomer-software
+	-kind delete cluster -n control
+	-kind delete cluster -n data
+	-kind delete cluster -n kind
+	-kind delete cluster -n unified
+	-k3d cluster delete data
+	-k3d cluster delete control
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
