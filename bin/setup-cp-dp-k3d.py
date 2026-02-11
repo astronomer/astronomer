@@ -741,6 +741,23 @@ def _kubectl_get_service_lb_ip(context: str, namespace: str, service: str) -> st
     return ip
 
 
+def _docker_inspect_ip(container: str) -> str:
+    """
+    Return the container IP from `docker inspect`.
+
+    This is useful for k3d's `*-serverlb` containers, which often represent the
+    reachable ingress IP on the shared Docker network.
+    """
+    proc = _run(
+        ["docker", "inspect", container, "-f", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}"],
+        check=True,
+    )
+    ip = proc.stdout.strip()
+    if not ip:
+        raise RuntimeError(f"Could not determine IP for container {container}")
+    return ip
+
+
 def _ensure_container_hosts_mapping(container: str, ip: str, hostname: str) -> None:
     """
     Ensure a single ip->hostname mapping exists in the container's /etc/hosts.
@@ -778,20 +795,19 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
     """
     Print the recommended /etc/hosts entries for accessing CP/DP from the host machine.
 
-    This uses the k3d Service LoadBalancer IPs for the CP/DP nginx services.
+    This uses the Docker IPs of the k3d `*-serverlb` containers:
+    - k3d-control-serverlb (CP ingress)
+    - k3d-data-serverlb (DP ingress)
     """
-    cp_context = f"k3d-{settings.clusters.cp}"
-    dp_context = f"k3d-{settings.clusters.dp}"
-    cp_nginx_svc = f"{settings.release_name}-cp-nginx"
-    dp_nginx_svc = f"{settings.release_name}-dp-nginx"
-
-    cp_nginx_lb_ip = _kubectl_get_service_lb_ip(cp_context, settings.namespace, cp_nginx_svc)
-    dp_nginx_lb_ip = _kubectl_get_service_lb_ip(dp_context, settings.namespace, dp_nginx_svc)
+    cp_serverlb = f"k3d-{settings.clusters.cp}-serverlb"
+    dp_serverlb = f"k3d-{settings.clusters.dp}-serverlb"
+    cp_nginx_lb_ip = _docker_inspect_ip(cp_serverlb)
+    dp_nginx_lb_ip = _docker_inspect_ip(dp_serverlb)
 
     base = settings.base_domain
     dp = settings.dp_domain_prefix
 
-    _print("\nAdd the following entries to your host `/etc/hosts` (if your host can route to these LB IPs):\n")
+    _print("\nAdd the following entries to your host `/etc/hosts`:\n")
     _print(
         f"{dp_nginx_lb_ip} {dp}.{base} deployments.{dp}.{base} registry.{dp}.{base} commander.{dp}.{base} prometheus.{dp}.{base} prom-proxy.{dp}.{base} elasticsearch.{dp}.{base}"
     )
