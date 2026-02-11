@@ -27,7 +27,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 HELPER_DIR = Path.home() / ".local" / "share" / "astronomer-software"
 HELPER_BIN_DIR = HELPER_DIR / "bin"
@@ -811,7 +810,9 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
     _print(
         f"{dp_nginx_lb_ip} {dp}.{base} deployments.{dp}.{base} registry.{dp}.{base} commander.{dp}.{base} prometheus.{dp}.{base} prom-proxy.{dp}.{base} elasticsearch.{dp}.{base}"
     )
-    _print(f"{cp_nginx_lb_ip} {base} app.{base} houston.{base} grafana.{base} prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}")
+    _print(
+        f"{cp_nginx_lb_ip} {base} app.{base} houston.{base} grafana.{base} prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}"
+    )
 
 
 def _validate_prereqs() -> None:
@@ -1081,4 +1082,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
