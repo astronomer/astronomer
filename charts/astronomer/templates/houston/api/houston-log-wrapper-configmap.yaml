@@ -1,0 +1,28 @@
+###############################################
+## Houston Log Wrapper ConfigMap             ##
+## Shared by Houston API and Houston Worker  ##
+###############################################
+{{- if .Values.houston.loggingSidecar.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-houston-log-wrapper
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: astronomer
+    component: houston
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+data:
+  wrapper.sh: |
+    #!/bin/sh
+    # Wrapper script to redirect Houston logs to files for Vector sidecar
+    # stdout/stderr are tee'd to log files so kubectl logs still works
+    exec "$@" \
+      1> >(tee -a /var/log/sidecar-log-consumer/out.log) \
+      2> >(tee -a /var/log/sidecar-log-consumer/err.log)
+{{- end }}
+{{- end }}
