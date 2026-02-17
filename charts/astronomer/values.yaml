@@ -65,7 +65,7 @@ astroUI:
 
 houston:
   prismaConnectionLimit: 5
-  replicas: 2
+  replicas: 1
   # This only applies when replicas > 3
   maxUnavailable: 25%
   livenessProbe: {}
@@ -156,10 +156,43 @@ houston:
   # Worker to connect to NATS
   worker:
     enabled: true
-    replicas: 2
+    replicas: 1
     readinessProbe: {}
     livenessProbe: {}
     hostAliases: []
+
+  # Vector sidecar for audit log shipping to AWS CloudWatch.
+  # When enabled, a Vector sidecar container is added to both Houston API
+  # and Houston Worker pods, along with a log wrapper script that redirects
+  # stdout/stderr to files which Vector reads and ships to the configured sink.
+  loggingSidecar:
+    enabled: false
+
+    image:
+      repository: quay.io/astronomer/ap-vector
+      tag: "0.51.0"
+      pullPolicy: IfNotPresent
+
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "50m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+
+    # AWS CloudWatch Logs configuration
+    cloudwatch:
+      enabled: false
+      region: ""
+      logGroupName: "/astronomer/houston/audit"
+      # Use IRSA (IAM Roles for Service Accounts) for authentication.
+      # When true, no access keys are needed; the service account must be
+      # annotated with eks.amazonaws.com/role-arn via houston.serviceAccount.annotations.
+      useIRSA: true
+      # Secret containing aws_access_key_id and aws_secret_access_key keys.
+      # Only used when useIRSA is false.
+      secretName: "houston-cloudwatch-creds"
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
