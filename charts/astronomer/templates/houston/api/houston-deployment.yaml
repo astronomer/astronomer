@@ -163,6 +163,13 @@ spec:
             {{- if .Values.houston.volumeMounts }}
             {{- tpl (toYaml .Values.houston.volumeMounts) $ | nindent 12 }}
             {{- end }}
+            {{- if .Values.houston.loggingSidecar.enabled }}
+            - name: houston-wrapper-volume
+              mountPath: /etc/houston-wrapper
+              readOnly: true
+            - name: sidecar-log-volume
+              mountPath: /var/log/sidecar-log-consumer
+            {{- end }}
           ports:
             - name: houston-http
               containerPort: {{ .Values.ports.houstonHTTP }}
@@ -188,11 +195,20 @@ spec:
             periodSeconds: 10
             failureThreshold: 10
           {{- end }}
+          {{- if .Values.houston.loggingSidecar.enabled }}
+          command:
+            - /bin/sh
+            - /etc/houston-wrapper/wrapper.sh
+          args:
+            - node
+            - dist/index.js
+          {{- else }}
           {{- if .Values.houston.command }}
           command: {{- toYaml .Values.houston.command | nindent 12 }}
           {{- end }}
           {{- if .Values.houston.apiArgs }}
           args: {{- toYaml .Values.houston.apiArgs | nindent 12 }}
+          {{- end }}
           {{- end }}
           env:
             {{- include "houston_environment" . | indent 12 }}
@@ -216,6 +232,79 @@ spec:
           {{- if .Values.houston.extraContainers }}
           {{- tpl (toYaml .Values.houston.extraContainers) $ | nindent 8 }}
           {{- end }}
+        {{- if .Values.houston.loggingSidecar.enabled }}
+        - name: vector
+          image: {{ .Values.houston.loggingSidecar.image.repository }}:{{ .Values.houston.loggingSidecar.image.tag }}
+          imagePullPolicy: {{ .Values.houston.loggingSidecar.image.pullPolicy }}
+          env:
+            - name: VECTOR_SELF_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: VECTOR_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VECTOR_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: VECTOR_CONFIG_YAML
+              value: /etc/vector/config/vector.yaml
+            - name: CLUSTER_ID
+              value: {{ .Values.global.clusterName | default "unknown" | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.global.environment | default "production" | quote }}
+            - name: COMPONENT_NAME
+              value: houston
+            {{- if .Values.houston.loggingSidecar.cloudwatch.enabled }}
+            - name: AWS_REGION
+              value: {{ .Values.houston.loggingSidecar.cloudwatch.region | quote }}
+            {{- if not .Values.houston.loggingSidecar.cloudwatch.useIRSA }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houston.loggingSidecar.cloudwatch.secretName }}
+                  key: aws_access_key_id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houston.loggingSidecar.cloudwatch.secretName }}
+                  key: aws_secret_access_key
+            {{- end }}
+            {{- end }}
+          resources: {{- toYaml .Values.houston.loggingSidecar.resources | nindent 12 }}
+          volumeMounts:
+            - name: vector-config
+              mountPath: /etc/vector/config
+              readOnly: true
+            - name: vector-data
+              mountPath: /var/lib/vector
+            - name: sidecar-log-volume
+              mountPath: /var/log/sidecar-log-consumer
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8686
+            initialDelaySeconds: 15
+            timeoutSeconds: 3
+            periodSeconds: 30
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8686
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+            periodSeconds: 10
+            failureThreshold: 5
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+        {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
@@ -226,4 +315,17 @@ spec:
       {{- end }}
         {{- include "houston_volumes" . | nindent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
+        {{- if .Values.houston.loggingSidecar.enabled }}
+        - name: vector-config
+          configMap:
+            name: {{ .Release.Name }}-houston-vector-config
+        - name: vector-data
+          emptyDir: {}
+        - name: houston-wrapper-volume
+          configMap:
+            name: {{ .Release.Name }}-houston-log-wrapper
+            defaultMode: 0755
+        - name: sidecar-log-volume
+          emptyDir: {}
+        {{- end }}
 {{- end }}
