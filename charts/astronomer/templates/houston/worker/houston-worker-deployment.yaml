@@ -261,6 +261,11 @@ spec:
             - name: sidecar-log-volume
               mountPath: /var/log/sidecar-log-consumer
               readOnly: true
+            {{- if and .Values.houston.loggingSidecar.gcpCloudLogging.enabled (not .Values.houston.loggingSidecar.gcpCloudLogging.useWorkloadIdentity) }}
+            - name: gcp-credentials
+              mountPath: /etc/gcp-credentials
+              readOnly: true
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /health
@@ -305,6 +310,11 @@ spec:
             defaultMode: 0755
         - name: sidecar-log-volume
           emptyDir: {}
+        {{- if and .Values.houston.loggingSidecar.gcpCloudLogging.enabled (not .Values.houston.loggingSidecar.gcpCloudLogging.useWorkloadIdentity) }}
+        - name: gcp-credentials
+          secret:
+            secretName: {{ .Values.houston.loggingSidecar.gcpCloudLogging.credentialsSecretName }}
+        {{- end }}
         {{- end }}
 {{- end }}
 {{- end }}

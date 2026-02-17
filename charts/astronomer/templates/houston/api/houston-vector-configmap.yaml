@@ -123,6 +123,37 @@ data:
         healthcheck:
           enabled: true
     {{- end }}
+    {{- if .Values.houston.loggingSidecar.gcpCloudLogging.enabled }}
+      gcp_cloud_logging:
+        type: gcp_stackdriver_logs
+        inputs:
+          - normalize_levels
+        project_id: {{ .Values.houston.loggingSidecar.gcpCloudLogging.projectId | quote }}
+        log_id: {{ .Values.houston.loggingSidecar.gcpCloudLogging.logId | quote }}
+        severity_key: {{ .Values.houston.loggingSidecar.gcpCloudLogging.severityKey | quote }}
+    {{- if not .Values.houston.loggingSidecar.gcpCloudLogging.useWorkloadIdentity }}
+        credentials_path: "/etc/gcp-credentials/{{ .Values.houston.loggingSidecar.gcpCloudLogging.credentialsSecretKey }}"
+    {{- end }}
+        resource:
+          type: {{ .Values.houston.loggingSidecar.gcpCloudLogging.resource.type | quote }}
+          project_id: {{ .Values.houston.loggingSidecar.gcpCloudLogging.projectId | quote }}
+          location: "{{ "{{" }} kubernetes.pod_namespace {{ "}}" }}"
+          namespace_name: "{{ "{{" }} kubernetes.pod_namespace {{ "}}" }}"
+          pod_name: "{{ "{{" }} kubernetes.pod_name {{ "}}" }}"
+          container_name: "houston"
+          cluster_name: {{ .Values.global.clusterName | default "unknown" | quote }}
+        labels:
+          component: "houston-api"
+          environment: "{{ "{{" }} environment {{ "}}" }}"
+          cluster_id: "{{ "{{" }} cluster_id {{ "}}" }}"
+        batch:
+          max_events: 100
+          timeout_secs: 5
+        buffer:
+          type: memory
+          max_events: 10000
+          when_full: block
+    {{- end }}
       prometheus_exporter:
         type: prometheus_exporter
         inputs:

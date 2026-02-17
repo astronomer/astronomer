@@ -161,7 +161,7 @@ houston:
     livenessProbe: {}
     hostAliases: []
 
-  # Vector sidecar for audit log shipping to AWS CloudWatch.
+  # Vector sidecar for audit log shipping to AWS CloudWatch or GCP Cloud Logging.
   # When enabled, a Vector sidecar container is added to both Houston API
   # and Houston Worker pods, along with a log wrapper script that redirects
   # stdout/stderr to files which Vector reads and ships to the configured sink.
@@ -193,6 +193,29 @@ houston:
       # Secret containing aws_access_key_id and aws_secret_access_key keys.
       # Only used when useIRSA is false.
       secretName: "houston-cloudwatch-creds"
+
+    # GCP Cloud Logging (formerly Stackdriver) configuration
+    gcpCloudLogging:
+      enabled: false
+      # GCP project ID to which logs are published (required).
+      projectId: ""
+      # Custom log ID that identifies this log stream in Cloud Logging.
+      logId: "houston-audit"
+      # Monitored resource type. "k8s_container" is the standard for GKE pods.
+      resource:
+        type: "k8s_container"
+      # Map the "level" field in log entries to GCP severity levels.
+      severityKey: "level"
+      # Use GKE Workload Identity for authentication (recommended).
+      # When true, no credentials file is needed; the K8s service account must
+      # be annotated with iam.gke.io/gcp-service-account via
+      # houston.serviceAccount.annotations.
+      useWorkloadIdentity: true
+      # Name of the K8s Secret containing a GCP service account JSON key file.
+      # Only used when useWorkloadIdentity is false.
+      credentialsSecretName: "houston-gcp-logging-creds"
+      # Key within the secret that holds the JSON key file.
+      credentialsSecretKey: "key.json"
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
