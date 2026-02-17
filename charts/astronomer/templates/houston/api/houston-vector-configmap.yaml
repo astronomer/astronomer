@@ -1,0 +1,133 @@
+##########################################
+## Houston API Vector ConfigMap          ##
+## Vector pipeline for audit log shipping ##
+##########################################
+{{- if .Values.houston.loggingSidecar.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-houston-vector-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: astronomer
+    component: houston
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+data:
+  vector.yaml: |
+    api:
+      enabled: true
+      address: "0.0.0.0:8686"
+
+    data_dir: "/var/lib/vector"
+
+    sources:
+      houston_logs:
+        type: file
+        include:
+          - /var/log/sidecar-log-consumer/*.log
+        read_from: beginning
+        max_line_bytes: 102400
+        fingerprint:
+          strategy: device_and_inode
+
+    transforms:
+      parse_json:
+        type: remap
+        inputs:
+          - houston_logs
+        source: |
+          parsed, err = parse_json(.message)
+          if err == null && is_object(parsed) {
+            . = merge!(., parsed)
+          }
+
+      filter_logs:
+        type: filter
+        inputs:
+          - parse_json
+        condition:
+          type: vrl
+          source: |
+            !match!(.message, r'/v1/healthz') &&
+            !match!(.message, r'/metrics') &&
+            includes(["INFO", "WARN", "ERROR", "info", "warn", "error"], .level)
+
+      enrich_metadata:
+        type: remap
+        inputs:
+          - filter_logs
+        source: |
+          .kubernetes = {
+            "pod_name": get_env_var!("VECTOR_POD_NAME"),
+            "pod_namespace": get_env_var!("VECTOR_NAMESPACE"),
+            "node_name": get_env_var!("VECTOR_SELF_NODE_NAME"),
+            "container_name": "houston"
+          }
+          .platform = "astronomer-control-plane"
+          .cluster_id = get_env_var("CLUSTER_ID") ?? "unknown"
+          .component = "houston-api"
+          .service = "houston-api"
+          .environment = get_env_var("ENVIRONMENT") ?? "production"
+          if !exists(.timestamp) {
+            .@timestamp = now()
+          } else {
+            .@timestamp = .timestamp
+            del(.timestamp)
+          }
+          del(.file)
+          del(.stream)
+          del(.source_type)
+          del(.host)
+
+      normalize_levels:
+        type: remap
+        inputs:
+          - enrich_metadata
+        source: |
+          if exists(.level) {
+            .level = upcase!(.level)
+          }
+
+    sinks:
+    {{- if .Values.houston.loggingSidecar.cloudwatch.enabled }}
+      cloudwatch:
+        type: aws_cloudwatch_logs
+        inputs:
+          - normalize_levels
+        region: {{ .Values.houston.loggingSidecar.cloudwatch.region | quote }}
+        group_name: {{ .Values.houston.loggingSidecar.cloudwatch.logGroupName | quote }}
+        stream_name: "{{ "{{" }} kubernetes.pod_name {{ "}}" }}"
+    {{- if not .Values.houston.loggingSidecar.cloudwatch.useIRSA }}
+        auth:
+          access_key_id: "${AWS_ACCESS_KEY_ID}"
+          secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+    {{- end }}
+        encoding:
+          codec: json
+        batch:
+          max_events: 100
+          timeout_secs: 5
+        request:
+          retry_attempts: 5
+          retry_initial_backoff_secs: 1
+          retry_max_duration_secs: 300
+          timeout_secs: 60
+        buffer:
+          type: memory
+          max_events: 10000
+          when_full: block
+        healthcheck:
+          enabled: true
+    {{- end }}
+      prometheus_exporter:
+        type: prometheus_exporter
+        inputs:
+          - normalize_levels
+        address: "0.0.0.0:9090"
+        default_namespace: vector_houston
+{{- end }}
+{{- end }}
