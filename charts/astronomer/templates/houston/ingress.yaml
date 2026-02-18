@@ -25,7 +25,7 @@ metadata:
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     {{- if eq .Values.global.plane.mode "unified" }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      location ~ ^/v1/(registry\/events|alerts|elasticsearch|metrics) {
+      location ~ ^/v1/(alerts|elasticsearch|metrics) {
         deny all;
         return 403;
       }
