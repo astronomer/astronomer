@@ -47,7 +47,8 @@ class TestAstronomerCommander:
         else:
             assert metadata_file_contents == {"namespaceLabels": {}}
 
-    def test_commander_deployment_default(self, kube_version):
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_commander_deployment_default(self, kube_version, plane_mode):
         """Test that helm renders a good deployment template for astronomer/commander."""
         values = {
             "astronomer": {
@@ -62,7 +63,7 @@ class TestAstronomerCommander:
             "global": {
                 "baseDomain": "astronomer.example.com",
                 "plane": {
-                    "mode": "data",
+                    "mode": plane_mode,
                     "domainPrefix": "custom-dp-123",
                 },
             },
@@ -85,21 +86,27 @@ class TestAstronomerCommander:
         commander_container = c_by_name["commander"]
         env_vars = get_env_vars_dict(commander_container["env"])
         assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "99.88.77"
-        assert env_vars["COMMANDER_BASE_DOMAIN"] == "custom-dp-123.example.com"
         assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
         assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"]
         assert env_vars["COMMANDER_DATAPLANE_DATABASE_URL"]
         assert env_vars["COMMANDER_DATAPLANE_ID"] == "custom-dp-123"
-        assert env_vars["COMMANDER_DATAPLANE_MODE"] == "data"
-        assert env_vars["COMMANDER_DATAPLANE_URL"] == "custom-dp-123.example.com"
+        assert env_vars["COMMANDER_DATAPLANE_MODE"] == plane_mode
         assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
-        assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "https://elasticsearch.custom-dp-123.example.com"
-        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert env_vars["COMMANDER_VERSION"] == "88.77.66"
+        if plane_mode == "data":
+            assert env_vars["COMMANDER_BASE_DOMAIN"] == "custom-dp-123.example.com"
+            assert env_vars["COMMANDER_DATAPLANE_URL"] == "custom-dp-123.example.com"
+            assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "https://elasticsearch.custom-dp-123.example.com"
+            assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
+        elif plane_mode == "unified":
+            assert env_vars["COMMANDER_BASE_DOMAIN"] == "example.com"
+            assert env_vars["COMMANDER_DATAPLANE_URL"] == "release-name-commander.default.svc.cluster.local.:8880"
+            assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.default.svc.cluster.local.:9200"
+            assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
 
         assert env_vars["HELM_CACHE_HOME"] == "/tmp/helm-cache"
         assert env_vars["HELM_CONFIG_HOME"] == "/tmp/helm-config"
