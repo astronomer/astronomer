@@ -14,7 +14,7 @@ PATH := ${HOME}/.local/share/astronomer-software/bin:$(PATH)
 venv: .venv  ## Setup venv required for testing
 .venv:
 	{ uv venv -p 3.13 --seed && uv sync ; } || \
-	{ python3 -m venv .venv -p python3 && .venv/bin/pip install -r tests/requirements.txt ; }
+	{ python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt ; }
 
 .PHONY: test-functional-control
 test-functional-control: export TEST_SCENARIO=control

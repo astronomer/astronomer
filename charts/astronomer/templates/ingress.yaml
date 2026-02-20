@@ -29,6 +29,17 @@ metadata:
       }
     {{- end }}
 spec:
+  {{- if .Values.global.ingressClassName }}
+  ingressClassName: {{ .Values.global.ingressClassName }}
+  {{- else if .Values.global.extraAnnotations }}
+    {{- range $key, $value := .Values.global.extraAnnotations }}
+      {{- if eq $key "kubernetes.io/ingress.class" }}
+  ingressClassName: {{ $value }}
+      {{- end }}
+    {{- end }}
+  {{- else }}
+  ingressClassName: "{{ .Release.Name }}-nginx"
+  {{- end }}
   {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
