@@ -125,7 +125,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     steps:
       - checkout
       - run:
@@ -140,7 +140,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2025-07
+      - image: quay.io/astronomer/ci-pre-commit:2026-02
     resource_class: small
     steps:
       - checkout
@@ -165,7 +165,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -202,7 +202,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     parameters:
       qa_release:
         type: boolean
@@ -221,7 +221,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -260,7 +260,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-07
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -271,39 +271,48 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-31-12:
+  platform-1-31-14:
     machine:
-      image: ubuntu-2204:2024.11.1
+      image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.12
+      KUBE_VERSION: v1.31.14
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
-  platform-1-32-8:
+  platform-1-32-11:
     machine:
-      image: ubuntu-2204:2024.11.1
+      image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.32.8
+      KUBE_VERSION: v1.32.11
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
-  platform-1-33-4:
+  platform-1-33-7:
     machine:
-      image: ubuntu-2204:2024.11.1
+      image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.33.4
+      KUBE_VERSION: v1.33.7
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
-  platform-1-34-0:
+  platform-1-34-3:
     machine:
-      image: ubuntu-2204:2024.11.1
+      image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.34.0
+      KUBE_VERSION: v1.34.3
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging"
+  platform-1-35-0:
+    machine:
+      image: ubuntu-2404:2025.09.1
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.35.0
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
@@ -396,20 +405,25 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - platform-1-31-12:
+      - platform-1-31-14:
           requires:
             - build-artifact
-      - platform-1-32-8:
-          requires:
-            - approve-test-all-platforms
-            - build-artifact
-
-      - platform-1-33-4:
+      - platform-1-32-11:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-34-0:
+      - platform-1-33-7:
+          requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-34-3:
+          requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-35-0:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -427,8 +441,8 @@ workflows:
                 - '/^release-0\.\d+$/'
           requires:
             - approve-internal-release
-            - platform-1-31-12
-            - platform-1-34-0
+            - platform-1-31-14
+            - platform-1-35-0
       - approve-upgrade-test:
           type: approval
           filters:
@@ -447,8 +461,9 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-32-8
-            - platform-1-33-4
+            - platform-1-32-11
+            - platform-1-33-7
+            - platform-1-34-3
           filters:
             branches:
               only:
