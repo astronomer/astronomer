@@ -608,7 +608,7 @@ class TestAstronomerCommander:
             assert auth_sidecar["readinessProbe"]["httpGet"]["port"] == 8080
             vm_by_name = {vm["mountPath"]: vm for vm in auth_sidecar["volumeMounts"]}
             assert "/var/lib/nginx/logs" in vm_by_name
-            assert vm_by_name["/var/lib/nginx/logs"]["name"] == "nginx-write-logs"
+            assert vm_by_name["/var/lib/nginx/logs"]["name"] == "nginx-write-dir"
             assert "/var/lib/nginx/tmp" in vm_by_name
             assert vm_by_name["/var/lib/nginx/tmp"]["name"] == "nginx-write-dir"
             assert "/etc/nginx/nginx.conf" in vm_by_name
@@ -618,8 +618,8 @@ class TestAstronomerCommander:
 
             # Volume assertions on the pod spec
             volumes_by_name = {v["name"]: v for v in doc["spec"]["volumes"]}
-            assert "nginx-write-logs" in volumes_by_name
-            assert volumes_by_name["nginx-write-logs"]["emptyDir"] == {}
+            assert "nginx-write-dir" in volumes_by_name
+            assert volumes_by_name["nginx-write-dir"]["emptyDir"] == {}
             assert "nginx-write-dir" in volumes_by_name
             assert volumes_by_name["nginx-write-dir"]["emptyDir"] == {}
             assert "nginx-conf" in volumes_by_name
