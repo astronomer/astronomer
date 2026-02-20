@@ -194,7 +194,7 @@ spec:
               protocol: TCP
           volumeMounts:
             - name: nginx-write-dir
-              mountPath: /var/lib/nginx/tmp
+              mountPath: /var/lib/nginx/logs
             - name: nginx-conf
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
