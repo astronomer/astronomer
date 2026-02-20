@@ -125,7 +125,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-12
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     steps:
       - checkout
       - run:
@@ -135,7 +135,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2025-12
+      - image: quay.io/astronomer/ci-pre-commit:2026-02
     resource_class: small
     steps:
       - checkout
@@ -160,7 +160,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-12
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -196,7 +196,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-12
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     parameters:
       qa_release:
         type: boolean
@@ -215,7 +215,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-12
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -254,7 +254,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-12
+      - image: quay.io/astronomer/ci-helm-release:2026-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -265,12 +265,12 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  scenario-unified-1-31-12:
+  scenario-unified-1-31-14:
     machine:
       image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.12
+      KUBE_VERSION: v1.31.14
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -292,12 +292,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-32-8:
+  scenario-unified-1-32-11:
     machine:
       image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.32.8
+      KUBE_VERSION: v1.32.11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -319,12 +319,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-33-4:
+  scenario-unified-1-33-7:
     machine:
       image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.33.4
+      KUBE_VERSION: v1.33.7
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -346,12 +346,39 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-34-0:
+  scenario-unified-1-34-3:
     machine:
       image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.34.0
+      KUBE_VERSION: v1.34.3
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: "Test scenario: unified"
+          command: |
+            make test-functional-unified
+      - store_test_results:
+          path: test-results
+  scenario-unified-1-35-0:
+    machine:
+      image: ubuntu-2404:2025.09.1
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.35.0
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -412,8 +439,8 @@ workflows:
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0-1
                 - quay.io/astronomer/ap-curator:8.0.21-8
                 - quay.io/astronomer/ap-dag-deploy:0.9.2
-                - quay.io/astronomer/ap-db-bootstrapper:1.0.5
-                - quay.io/astronomer/ap-default-backend:0.29.0
+                - quay.io/astronomer/ap-db-bootstrapper:1.0.6
+                - quay.io/astronomer/ap-default-backend:0.29.1
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0-1
                 - quay.io/astronomer/ap-elasticsearch:8.18.6-2
                 - quay.io/astronomer/ap-git-daemon:2025.12.24
@@ -423,7 +450,7 @@ workflows:
                 - quay.io/astronomer/ap-houston-api:1.0.58
                 - quay.io/astronomer/ap-init:2025.12.24
                 - quay.io/astronomer/ap-kube-state:2.17.0-2
-                - quay.io/astronomer/ap-kuiper-reloader:0.1.16
+                - quay.io/astronomer/ap-kuiper-reloader:0.1.17
                 - quay.io/astronomer/ap-nats-exporter:0.17.3-1
                 - quay.io/astronomer/ap-nats-server:2.12.2
                 - quay.io/astronomer/ap-nginx-es:1.29.4
@@ -459,20 +486,25 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - scenario-unified-1-31-12:
+      - scenario-unified-1-31-14:
           requires:
             - build-artifact
-      - scenario-unified-1-32-8:
-          requires:
-            - build-artifact
-            - approve-test-all-platforms
-
-      - scenario-unified-1-33-4:
+      - scenario-unified-1-32-11:
           requires:
             - build-artifact
             - approve-test-all-platforms
 
-      - scenario-unified-1-34-0:
+      - scenario-unified-1-33-7:
+          requires:
+            - build-artifact
+            - approve-test-all-platforms
+
+      - scenario-unified-1-34-3:
+          requires:
+            - build-artifact
+            - approve-test-all-platforms
+
+      - scenario-unified-1-35-0:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -490,8 +522,8 @@ workflows:
                 - '/^release-\d+\.\d+$/'
           requires:
             - approve-internal-release
-            - scenario-unified-1-31-12
-            - scenario-unified-1-34-0
+            - scenario-unified-1-31-14
+            - scenario-unified-1-35-0
       - approve-upgrade-test:
           type: approval
           filters:
@@ -510,8 +542,9 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - scenario-unified-1-32-8
-            - scenario-unified-1-33-4
+            - scenario-unified-1-32-11
+            - scenario-unified-1-33-7
+            - scenario-unified-1-34-3
           filters:
             branches:
               only:
