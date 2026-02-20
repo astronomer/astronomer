@@ -623,7 +623,10 @@ class TestAstronomerCommander:
             assert "nginx-write-dir" in volumes_by_name
             assert volumes_by_name["nginx-write-dir"]["emptyDir"] == {}
             assert "nginx-conf" in volumes_by_name
-            assert volumes_by_name["nginx-conf"]["configMap"]["name"] == f"{doc['metadata']['name'].rsplit('-commander', 1)[0]}-commander-nginx-conf"
+            assert (
+                volumes_by_name["nginx-conf"]["configMap"]["name"]
+                == f"{doc['metadata']['name'].rsplit('-commander', 1)[0]}-commander-nginx-conf"
+            )
 
     def test_commander_privateca_enabled(self, kube_version):
         """Test Commander with privateCA feature enabled  with update ca certs utility."""
