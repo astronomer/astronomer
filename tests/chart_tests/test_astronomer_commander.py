@@ -608,7 +608,7 @@ class TestAstronomerCommander:
             assert auth_sidecar["readinessProbe"]["httpGet"]["port"] == 8080
             vm_by_name = {vm["mountPath"]: vm for vm in auth_sidecar["volumeMounts"]}
             assert "/var/lib/nginx/logs" in vm_by_name
-            assert vm_by_name["/var/lib/nginx/logs"]["name"] == "nginx-write-dir"
+            assert vm_by_name["/var/lib/nginx/logs"]["name"] == "nginx-write-logs"
             assert "/var/lib/nginx/tmp" in vm_by_name
             assert vm_by_name["/var/lib/nginx/tmp"]["name"] == "nginx-write-dir"
             assert "/etc/nginx/nginx.conf" in vm_by_name
