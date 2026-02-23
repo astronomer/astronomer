@@ -69,10 +69,8 @@ data:
             "container_name": "houston-worker"
           }
           .platform = "astronomer-control-plane"
-          .cluster_id = get_env_var("CLUSTER_ID") ?? "unknown"
           .component = "houston-worker"
           .service = "houston-worker"
-          .environment = get_env_var("ENVIRONMENT") ?? "production"
           if !exists(.timestamp) {
             .@timestamp = now()
           } else {
@@ -145,8 +143,6 @@ data:
           cluster_name: {{ .Values.global.clusterName | default "unknown" | quote }}
         labels:
           component: "houston-worker"
-          environment: "{{ "{{" }} environment {{ "}}" }}"
-          cluster_id: "{{ "{{" }} cluster_id {{ "}}" }}"
         batch:
           max_events: 100
           timeout_secs: 5
@@ -154,6 +150,43 @@ data:
           type: memory
           max_events: 10000
           when_full: block
+    {{- end }}
+    {{- if .Values.houston.loggingSidecar.elasticsearch.enabled }}
+      elasticsearch:
+        type: elasticsearch
+        inputs:
+          - normalize_levels
+        endpoints: ["${ES_ENDPOINT}"]
+        api_version: {{ .Values.houston.loggingSidecar.elasticsearch.apiVersion | quote }}
+    {{- if eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic" }}
+        auth:
+          strategy: basic
+          user: "${ES_USERNAME}"
+          password: "${ES_PASSWORD}"
+    {{- end }}
+        mode: bulk
+        bulk:
+          index: {{ .Values.houston.loggingSidecar.elasticsearch.index | quote }}
+          action: create
+        batch:
+          max_bytes: 10485760
+          timeout_secs: 5
+        request:
+          retry_attempts: 5
+          retry_initial_backoff_secs: 1
+          retry_max_duration_secs: 60
+          timeout_secs: 120
+        buffer:
+          type: memory
+          max_events: 10000
+          when_full: block
+        healthcheck:
+          enabled: true
+    {{- if .Values.houston.loggingSidecar.elasticsearch.tls.enabled }}
+        tls:
+          ca_file: "/etc/es-tls/ca.pem"
+          verify_certificate: true
+    {{- end }}
     {{- end }}
       prometheus_exporter:
         type: prometheus_exporter

@@ -251,10 +251,6 @@ spec:
                   fieldPath: metadata.namespace
             - name: VECTOR_CONFIG_YAML
               value: /etc/vector/config/vector.yaml
-            - name: CLUSTER_ID
-              value: {{ .Values.global.clusterName | default "unknown" | quote }}
-            - name: ENVIRONMENT
-              value: {{ .Values.global.environment | default "production" | quote }}
             - name: COMPONENT_NAME
               value: houston
             {{- if .Values.houston.loggingSidecar.cloudwatch.enabled }}
@@ -273,6 +269,22 @@ spec:
                   key: aws_secret_access_key
             {{- end }}
             {{- end }}
+            {{- if .Values.houston.loggingSidecar.elasticsearch.enabled }}
+            - name: ES_ENDPOINT
+              value: {{ .Values.houston.loggingSidecar.elasticsearch.endpoint | quote }}
+            {{- if eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic" }}
+            - name: ES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houston.loggingSidecar.elasticsearch.auth.secretName }}
+                  key: username
+            - name: ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houston.loggingSidecar.elasticsearch.auth.secretName }}
+                  key: password
+            {{- end }}
+            {{- end }}
           resources: {{- toYaml .Values.houston.loggingSidecar.resources | nindent 12 }}
           volumeMounts:
             - name: vector-config
@@ -286,6 +298,11 @@ spec:
             {{- if and .Values.houston.loggingSidecar.gcpCloudLogging.enabled (not .Values.houston.loggingSidecar.gcpCloudLogging.useWorkloadIdentity) }}
             - name: gcp-credentials
               mountPath: /etc/gcp-credentials
+              readOnly: true
+            {{- end }}
+            {{- if and .Values.houston.loggingSidecar.elasticsearch.enabled .Values.houston.loggingSidecar.elasticsearch.tls.enabled }}
+            - name: es-tls-ca
+              mountPath: /etc/es-tls
               readOnly: true
             {{- end }}
           livenessProbe:
@@ -336,6 +353,11 @@ spec:
         - name: gcp-credentials
           secret:
             secretName: {{ .Values.houston.loggingSidecar.gcpCloudLogging.credentialsSecretName }}
+        {{- end }}
+        {{- if and .Values.houston.loggingSidecar.elasticsearch.enabled .Values.houston.loggingSidecar.elasticsearch.tls.enabled }}
+        - name: es-tls-ca
+          secret:
+            secretName: {{ .Values.houston.loggingSidecar.elasticsearch.tls.caSecretName }}
         {{- end }}
         {{- end }}
 {{- end }}
