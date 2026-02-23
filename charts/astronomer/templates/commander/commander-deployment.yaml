@@ -193,7 +193,7 @@ spec:
               containerPort: {{ .Values.ports.commanderSidecarGRPC }}
               protocol: TCP
           volumeMounts:
-            - name: nginx-write-dir
+            - name: nginx-write-logs
               mountPath: /var/lib/nginx/logs
             - name: nginx-write-dir
               mountPath: /var/lib/nginx/tmp
@@ -216,7 +216,7 @@ spec:
             periodSeconds: 5
         {{- end }}
       volumes:
-        - name: nginx-write-dir
+        - name: nginx-write-logs
           emptyDir: {}
         - name: nginx-write-dir
           emptyDir: {}
