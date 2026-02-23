@@ -155,7 +155,7 @@ data:
           - normalize_levels
         endpoints: ["${ES_ENDPOINT}"]
         api_version: {{ .Values.houston.loggingSidecar.elasticsearch.apiVersion | quote }}
-    {{- if eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic" }}
+    {{- if and (eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic") .Values.houston.loggingSidecar.elasticsearch.endpoint }}
         auth:
           strategy: basic
           user: "${ES_USERNAME}"

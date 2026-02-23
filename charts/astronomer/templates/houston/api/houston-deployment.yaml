@@ -271,8 +271,14 @@ spec:
             {{- end }}
             {{- if .Values.houston.loggingSidecar.elasticsearch.enabled }}
             - name: ES_ENDPOINT
+              {{- if .Values.houston.loggingSidecar.elasticsearch.endpoint }}
               value: {{ .Values.houston.loggingSidecar.elasticsearch.endpoint | quote }}
-            {{- if eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic" }}
+              {{- else if .Values.global.customLogging.enabled }}
+              value: {{ printf "http://%s-external-es-proxy:9201" .Release.Name | quote }}
+              {{- else }}
+              value: {{ printf "http://%s-elasticsearch:9200" .Release.Name | quote }}
+              {{- end }}
+            {{- if and (eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic") .Values.houston.loggingSidecar.elasticsearch.endpoint }}
             - name: ES_USERNAME
               valueFrom:
                 secretKeyRef:

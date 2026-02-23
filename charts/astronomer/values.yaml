@@ -148,8 +148,6 @@ houston:
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
   config:
-    apollo:
-      auditMiddlewareEnabled: true
     nats:
       ackWait: 600000
 
@@ -222,7 +220,9 @@ houston:
     # Elasticsearch configuration
     elasticsearch:
       enabled: false
-      # Endpoint URL for the Elasticsearch cluster (required when enabled).
+      # Endpoint URL for the Elasticsearch cluster.
+      # When empty, Houston defaults to external-es-proxy if global.customLogging.enabled,
+      # otherwise it uses the in-cluster Elasticsearch service.
       endpoint: ""                              # e.g. "https://es.example.com:9200"
       # Index name pattern. Supports strftime format for date-based indices.
       index: "houston-audit-%Y.%m.%d"
