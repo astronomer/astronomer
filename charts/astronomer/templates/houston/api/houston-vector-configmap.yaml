@@ -52,9 +52,7 @@ data:
         condition:
           type: vrl
           source: |
-            !match!(.message, r'/v1/healthz') &&
-            !match!(.message, r'/metrics') &&
-            includes(["INFO", "WARN", "ERROR", "info", "warn", "error"], .level)
+            exists(.audit) && .audit == true
 
       enrich_metadata:
         type: remap
