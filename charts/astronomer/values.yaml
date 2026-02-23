@@ -148,6 +148,8 @@ houston:
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
   config:
+    apollo:
+      auditMiddlewareEnabled: true
     nats:
       ackWait: 600000
 
@@ -216,6 +218,26 @@ houston:
       credentialsSecretName: "houston-gcp-logging-creds"
       # Key within the secret that holds the JSON key file.
       credentialsSecretKey: "key.json"
+
+    # Elasticsearch configuration
+    elasticsearch:
+      enabled: false
+      # Endpoint URL for the Elasticsearch cluster (required when enabled).
+      endpoint: ""                              # e.g. "https://es.example.com:9200"
+      # Index name pattern. Supports strftime format for date-based indices.
+      index: "houston-audit-%Y.%m.%d"
+      # Elasticsearch API version.
+      apiVersion: "v8"
+      # Auth strategy: "basic" or "none".
+      # When "basic", a K8s Secret with "username" and "password" keys is required.
+      auth:
+        strategy: "basic"
+        secretName: "houston-elasticsearch-creds"
+      # TLS: enable if using an https endpoint with a custom/self-signed CA.
+      # When enabled, the named secret (containing a PEM CA cert) is mounted.
+      tls:
+        enabled: false
+        caSecretName: ""
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
