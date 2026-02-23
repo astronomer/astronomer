@@ -244,4 +244,6 @@ class TestIngress:
 
         # Check that ingressClassName is set in spec
         assert "ingressClassName" in doc["spec"], f"ingressClassName should be in spec for {description}"
-        assert doc["spec"]["ingressClassName"] == expected_class_name, f"Expected ingressClassName to be {expected_class_name} for {description}"
+        assert doc["spec"]["ingressClassName"] == expected_class_name, (
+            f"Expected ingressClassName to be {expected_class_name} for {description}"
+        )
