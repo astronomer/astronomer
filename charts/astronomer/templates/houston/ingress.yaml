@@ -23,19 +23,11 @@ metadata:
     {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
-    {{- if eq .Values.global.plane.mode "unified" }}
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      location ~ ^/v1/(registry\/events|alerts|elasticsearch|metrics) {
-        deny all;
-        return 403;
-      }
-    {{- else }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
       location ~ ^/v1/(alerts|metrics) {
         deny all;
         return 403;
       }
-    {{- end }}
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     {{- end }}
 
