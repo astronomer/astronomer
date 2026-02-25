@@ -307,7 +307,7 @@ global:
         tag: 0.28.0-3
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.0.3-1
+        tag: 8.0.6
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
         tag: 1.24.1-4
