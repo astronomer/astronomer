@@ -210,3 +210,40 @@ class TestIngress:
         if expected_astro_ui:
             assert "nginx.ingress.kubernetes.io/configuration-snippet" in annotations
             assert "app.example.com" in annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+
+    @pytest.mark.parametrize(
+        ("values", "expected_class_name", "description"),
+        [
+            (
+                {"global": {"ingressClassName": "custom-ingress"}},
+                "custom-ingress",
+                "direct spec.ingressClassName",
+            ),
+            (
+                {"global": {"extraAnnotations": {"kubernetes.io/ingress.class": "annotation-ingress"}}},
+                "annotation-ingress",
+                "kubernetes.io/ingress.class annotation",
+            ),
+            (
+                {},
+                "release-name-nginx",
+                "default when neither specified",
+            ),
+        ],
+    )
+    def test_ingress_class_name(self, values, expected_class_name, description, kube_version):
+        """Test that ingressClassName is correctly populated from different sources"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 1, f"Expected 1 ingress for {description}"
+        doc = docs[0]
+
+        # Check that ingressClassName is set in spec
+        assert "ingressClassName" in doc["spec"], f"ingressClassName should be in spec for {description}"
+        assert doc["spec"]["ingressClassName"] == expected_class_name, (
+            f"Expected ingressClassName to be {expected_class_name} for {description}"
+        )
