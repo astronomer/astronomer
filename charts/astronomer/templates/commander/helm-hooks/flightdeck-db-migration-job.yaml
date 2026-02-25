@@ -43,7 +43,7 @@ spec:
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Never
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}  # Do we need this? Should we reuse houston's or is that too dirty?
+      serviceAccountName: {{ template "flightdeck.bootstrapperServiceAccountName" . }}  # Do we need this? Should we reuse houston's or is that too dirty?
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       # Only run etc-ssl-certs-copier and flightdeck-bootstrapper if the application is creating and managing the logical DB
