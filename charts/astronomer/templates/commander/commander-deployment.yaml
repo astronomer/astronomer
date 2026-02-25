@@ -81,7 +81,73 @@ spec:
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+
+      {{- if .Values.global.flightDeck.enabled }}
+        - name: flightdeck-bootstrapper
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.commander.resources | nindent 12 }}
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            {{ if .Values.global.ssl.enabled }}
+            - name: SSLMODE
+              value: {{ .Values.global.ssl.mode }}
+            {{- end }}
+            - name: DB_NAME
+              value: {{ .Release.Name }}-flightdeck  # TODO: this needs to be unique per DP, and should probably be keyed off of the DP ID
+            - name: SECRET_NAME
+              value: {{ .Release.Name }}-flightdeck-backend
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+
+        - name: flightdeck-db-migrations
+          image: {{ template "commander.image" . }}
+          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+          args:
+           - "migrate"
+           - "up"
+           - "--db"
+           - "$COMMANDER_FLIGHTDECK_DSN"
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.commander.resources | nindent 12 }}
+          env:
+            - name: COMMANDER_FLIGHTDECK_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-flightdeck-backend
+                  key: connection
+          {{- if .Values.flightDeck.migrations.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.flightDeck.migrations.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.flightDeck.migrations.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.flightDeck.migrations.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+          {{- include "custom_ca_volume_mounts" . | indent 12 }}
+      {{- end }}
+
       containers:
+
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
@@ -182,6 +248,7 @@ spec:
           {{- if .Values.commander.extraContainers }}
           {{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
           {{- end }}
+
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: auth-proxy
           image: {{ template "authSidecar.image" . }}
