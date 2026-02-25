@@ -606,6 +606,27 @@ class TestAstronomerCommander:
 
             assert auth_sidecar["livenessProbe"]["httpGet"]["port"] == 8080
             assert auth_sidecar["readinessProbe"]["httpGet"]["port"] == 8080
+            vm_by_name = {vm["mountPath"]: vm for vm in auth_sidecar["volumeMounts"]}
+            assert "/var/lib/nginx/logs" in vm_by_name
+            assert vm_by_name["/var/lib/nginx/logs"]["name"] == "nginx-write-logs"
+            assert "/var/lib/nginx/tmp" in vm_by_name
+            assert vm_by_name["/var/lib/nginx/tmp"]["name"] == "nginx-write-dir"
+            assert "/etc/nginx/nginx.conf" in vm_by_name
+            assert vm_by_name["/etc/nginx/nginx.conf"]["name"] == "nginx-conf"
+            assert vm_by_name["/etc/nginx/nginx.conf"]["readOnly"] is True
+            assert vm_by_name["/etc/nginx/nginx.conf"]["subPath"] == "nginx.conf"
+
+            # Volume assertions on the pod spec
+            volumes_by_name = {v["name"]: v for v in doc["spec"]["volumes"]}
+            assert "nginx-write-dir" in volumes_by_name
+            assert volumes_by_name["nginx-write-dir"]["emptyDir"] == {}
+            assert "nginx-write-dir" in volumes_by_name
+            assert volumes_by_name["nginx-write-dir"]["emptyDir"] == {}
+            assert "nginx-conf" in volumes_by_name
+            assert (
+                volumes_by_name["nginx-conf"]["configMap"]["name"]
+                == f"{doc['metadata']['name'].rsplit('-commander', 1)[0]}-commander-nginx-conf"
+            )
 
     def test_commander_privateca_enabled(self, kube_version):
         """Test Commander with privateCA feature enabled  with update ca certs utility."""
