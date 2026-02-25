@@ -395,8 +395,8 @@ configSyncer:
   livenessProbe: {}
 
 flightDeck:
+  enabled: false
   migrations:
-    enabled: false
     securityContext: {}
     resources:
       requests:
