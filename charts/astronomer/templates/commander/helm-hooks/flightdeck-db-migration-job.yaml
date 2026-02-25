@@ -1,7 +1,7 @@
 ##########################################
 ## Db migration Pre install/update Hook ##
 ##########################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if or (eq .Values.global.plane.mode "unified") (eq .Values.global.plane.mode "data") }}
 {{- if .Values.global.flightDeck.enabled }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
