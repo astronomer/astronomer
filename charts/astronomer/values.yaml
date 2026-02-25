@@ -394,8 +394,8 @@ configSyncer:
   readinessProbe: {}
   livenessProbe: {}
 
+# flightDeck is enabled and disabled through global.flightDeck.enabled, but is configured here.
 flightDeck:
-  enabled: false
   migrations:
     securityContext: {}
     resources:
