@@ -46,6 +46,7 @@ spec:
       restartPolicy: Never
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+      # Only run etc-ssl-certs-copier, wait-for-db and houston-bootstrapper if the application is creating and managing the logical DB
       initContainers:
         - name: etc-ssl-certs-copier
           command:
