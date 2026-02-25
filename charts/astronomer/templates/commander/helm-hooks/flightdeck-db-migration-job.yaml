@@ -81,8 +81,6 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-            - name: SCHEMA_NAME
-              value: "flightdeck" # TODO: do we want this to be flightdeck$default ? We only have '$default' for houston, not for anything else like grafana, airflow
             {{ if .Values.global.ssl.enabled }}
             - name: SSLMODE
               value: {{ .Values.global.ssl.mode }}
