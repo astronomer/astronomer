@@ -65,6 +65,7 @@ def test_grafana_check_db_info(grafana):
 def test_houston_can_reach_prometheus(houston_api):
     assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 
+
 # commenting as curl is not present in chainguard.
 # def test_nginx_can_reach_default_backend(cp_nginx):
 #     assert cp_nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
@@ -73,6 +74,7 @@ def test_houston_can_reach_prometheus(houston_api):
 def test_nginx_ssl_cache(cp_nginx):
     """Ensure nginx default ssl cache size is 10m."""
     assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("grep ssl_session_cache nginx.conf").replace("\t", "")
+
 
 # Commenting only for RC1, will be adding this back: https://github.com/astronomer/ap-vendor/pull/1145
 # def test_nginx_capabilities(cp_nginx):
