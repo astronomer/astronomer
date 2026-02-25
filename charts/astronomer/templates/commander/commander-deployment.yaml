@@ -43,24 +43,25 @@ spec:
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         checksum/configmap: {{ include (print $.Template.BasePath "/commander/commander-nginx-configmap.yaml") . | sha256sum }}
         {{- end }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.commander.podAnnotations }}
-{{ toYaml .Values.commander.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commander.podAnnotations }}
+        {{- toYaml .Values.commander.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- include "commander.hostAliases" . | nindent 6 }}
       initContainers:
+
         - name: etc-ssl-certs-copier
           volumeMounts:
             - name: etc-ssl-certs
@@ -215,6 +216,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
         {{- end }}
+
       volumes:
         - name: nginx-write-logs
           emptyDir: {}
