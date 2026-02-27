@@ -36,7 +36,7 @@ images:
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.51.0"
+    tag: "0.52.0"
     pullPolicy: IfNotPresent
 
 
