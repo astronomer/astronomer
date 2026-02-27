@@ -106,6 +106,12 @@ class TestAstronomerCommander:
         assert env_vars["HELM_DATA_HOME"] == "/tmp/helm-data"
         assert env_vars["HELM_REPOSITORY_CACHE"] == "/tmp/helm-cache/repository"
 
+        assert env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
+            "name": "release-name-cluster-local-data",
+            "key": "local_cluster_id",
+        }
+        assert not env_vars.get("COMMANDER_FLIGHTDECK_DSN")
+
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
         assert volume_mounts["tmp-workspace"] == "/tmp"
 
@@ -698,3 +704,14 @@ class TestAstronomerCommander:
             assert len(init_containers) == init_containers_count
             containers = docs[0]["spec"]["template"]["spec"]["containers"]
             assert len(containers) == containers_count
+
+            commander_env_vars = get_env_vars_dict(containers[0]["env"])
+
+            assert commander_env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
+                "name": "release-name-cluster-local-data",
+                "key": "local_cluster_id",
+            }
+            assert commander_env_vars["COMMANDER_FLIGHTDECK_DSN"].get("secretKeyRef") == {
+                "name": "release-name-flightdeck-backend",
+                "key": "connection",
+            }

@@ -2,9 +2,6 @@
 ## Astronomer Commander Deployment ##
 #####################################
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
-{{- $clusterLocalConfigMapName := printf "%s-cluster-local-data" .Release.Name }}
-{{- $clusterLocalConfigMapObj := (lookup "v1" "ConfigMap" .Release.Namespace $clusterLocalConfigMapName) | default dict }}
-{{- $localClusterID := (get $clusterLocalConfigMapObj "local_cluster_id") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -108,7 +105,10 @@ spec:
               value: {{ .Values.global.ssl.mode }}
             {{- end }}
             - name: DB_NAME
-              value: {{ .Release.Name }}-flightdeck-{{ $localClusterID }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-cluster-local-data
+                  key: flightdeck_db_name
             - name: SECRET_NAME
               value: {{ .Release.Name }}-flightdeck-backend
             - name: NAMESPACE
@@ -204,6 +204,13 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
+            {{- if .Values.global.flightDeck.enabled }}
+            - name: COMMANDER_FLIGHTDECK_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-flightdeck-backend
+                  key: connection
+            {{- end }}
             - name: LOCAL_CLUSTER_ID
               valueFrom:
                 configMapKeyRef:
@@ -297,6 +304,8 @@ spec:
         {{- end }}
 
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: nginx-write-logs
           emptyDir: {}
         - name: nginx-write-dir
