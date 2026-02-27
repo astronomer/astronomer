@@ -185,6 +185,9 @@ data:
           verify_certificate: true
     {{- end }}
     {{- end }}
+    {{- if .Values.houston.loggingSidecar.extraSinks }}
+{{ tpl .Values.houston.loggingSidecar.extraSinks $ | nindent 6 }}
+    {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -238,6 +238,11 @@ houston:
         enabled: false
         caSecretName: ""
 
+    # Additional Vector sinks to append under the `sinks:` section.
+    # Provide as a YAML snippet with sink keys at the same indentation level
+    # as other sinks (e.g., `my_sink:`). Supports templating via `tpl`.
+    extraSinks: ""
+
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
   # This runs as a Job after helm upgrades.
