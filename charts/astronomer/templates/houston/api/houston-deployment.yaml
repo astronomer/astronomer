@@ -234,7 +234,7 @@ spec:
           {{- end }}
         {{- if .Values.houston.loggingSidecar.enabled }}
         - name: vector
-          image: {{ .Values.images.vector.repository }}:{{ .Values.images.vector.tag }}
+          image: {{ template "vector.image" . }}
           imagePullPolicy: {{ .Values.images.vector.pullPolicy }}
           env:
             - name: VECTOR_POD_NAME

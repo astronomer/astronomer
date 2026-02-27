@@ -64,6 +64,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "vector.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.images.vector.tag }}
+{{- else -}}
+{{ .Values.images.vector.repository }}:{{ .Values.images.vector.tag }}
+{{- end }}
+{{- end }}
+
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
