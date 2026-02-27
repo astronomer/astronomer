@@ -108,7 +108,7 @@ spec:
               value: {{ .Values.global.ssl.mode }}
             {{- end }}
             - name: DB_NAME
-              value: {{ .Release.Name }}-flightdeck  # TODO: this needs to be unique per DP, and should probably be keyed off of the DP ID
+              value: {{ .Release.Name }}-flightdeck-{{ $localClusterID }}
             - name: SECRET_NAME
               value: {{ .Release.Name }}-flightdeck-backend
             - name: NAMESPACE
