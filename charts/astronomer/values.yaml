@@ -34,6 +34,10 @@ images:
     repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 1.0.6
     pullPolicy: IfNotPresent
+  vector:
+    repository: quay.io/astronomer/ap-vector
+    tag: "0.51.0"
+    pullPolicy: IfNotPresent
 
 
 securityContext:
@@ -167,11 +171,6 @@ houston:
   # stdout/stderr to files which Vector reads and ships to the configured sink.
   loggingSidecar:
     enabled: false
-
-    image:
-      repository: quay.io/astronomer/ap-vector
-      tag: "0.51.0"
-      pullPolicy: IfNotPresent
 
     resources:
       requests:
