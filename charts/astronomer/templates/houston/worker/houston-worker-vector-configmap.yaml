@@ -63,7 +63,6 @@ data:
           .kubernetes = {
             "pod_name": get_env_var!("VECTOR_POD_NAME"),
             "pod_namespace": get_env_var!("VECTOR_NAMESPACE"),
-            "node_name": get_env_var!("VECTOR_SELF_NODE_NAME"),
             "container_name": "houston-worker"
           }
           .platform = {{ printf "%s-control-plane" .Release.Name | quote }}

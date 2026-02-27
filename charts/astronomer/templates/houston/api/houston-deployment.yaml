@@ -237,10 +237,6 @@ spec:
           image: {{ .Values.images.vector.repository }}:{{ .Values.images.vector.tag }}
           imagePullPolicy: {{ .Values.images.vector.pullPolicy }}
           env:
-            - name: VECTOR_SELF_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
             - name: VECTOR_POD_NAME
               valueFrom:
                 fieldRef:
