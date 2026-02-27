@@ -64,6 +64,18 @@
 {{- end }}
 {{- end }}
 
+{{ define "vector.image" -}}
+{{- $images := .Values.images | default dict -}}
+{{- $vector := $images.vector | default dict -}}
+{{- $repo := default "quay.io/astronomer/ap-vector" $vector.repository -}}
+{{- $tag := default "0.52.0" $vector.tag -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ $tag }}
+{{- else -}}
+{{ $repo }}:{{ $tag }}
+{{- end }}
+{{- end }}
+
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}

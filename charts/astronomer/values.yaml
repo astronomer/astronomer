@@ -34,6 +34,10 @@ images:
     repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 1.0.6
     pullPolicy: IfNotPresent
+  vector:
+    repository: quay.io/astronomer/ap-vector
+    tag: "0.52.0"
+    pullPolicy: IfNotPresent
 
 
 securityContext:
@@ -160,6 +164,84 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
     hostAliases: []
+
+  # Vector sidecar for audit log shipping to AWS CloudWatch or GCP Cloud Logging.
+  # When enabled, a Vector sidecar container is added to both Houston API
+  # and Houston Worker pods, along with a log wrapper script that redirects
+  # stdout/stderr to files which Vector reads and ships to the configured sink.
+  loggingSidecar:
+    enabled: false
+
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "50m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+
+    # AWS CloudWatch Logs configuration
+    cloudwatch:
+      enabled: false
+      region: ""
+      logGroupName: "/astronomer/houston/audit"
+      # Use IRSA (IAM Roles for Service Accounts) for authentication.
+      # When true, no access keys are needed; the service account must be
+      # annotated with eks.amazonaws.com/role-arn via houston.serviceAccount.annotations.
+      useIRSA: true
+      # Secret containing aws_access_key_id and aws_secret_access_key keys.
+      # Only used when useIRSA is false.
+      secretName: "houston-cloudwatch-creds"
+
+    # GCP Cloud Logging (formerly Stackdriver) configuration
+    gcpCloudLogging:
+      enabled: false
+      # GCP project ID to which logs are published (required).
+      projectId: ""
+      # Custom log ID that identifies this log stream in Cloud Logging.
+      logId: "houston-audit"
+      # Monitored resource type. "k8s_container" is the standard for GKE pods.
+      resource:
+        type: "k8s_container"
+      # Map the "level" field in log entries to GCP severity levels.
+      severityKey: "level"
+      # Use GKE Workload Identity for authentication (recommended).
+      # When true, no credentials file is needed; the K8s service account must
+      # be annotated with iam.gke.io/gcp-service-account via
+      # houston.serviceAccount.annotations.
+      useWorkloadIdentity: true
+      # Name of the K8s Secret containing a GCP service account JSON key file.
+      # Only used when useWorkloadIdentity is false.
+      credentialsSecretName: "houston-gcp-logging-creds"
+      # Key within the secret that holds the JSON key file.
+      credentialsSecretKey: "key.json"
+
+    # Elasticsearch configuration
+    elasticsearch:
+      enabled: false
+      # Endpoint URL for the Elasticsearch cluster.
+      # When empty, Houston defaults to external-es-proxy if global.customLogging.enabled,
+      # otherwise it uses the in-cluster Elasticsearch service.
+      endpoint: ""                              # e.g. "https://es.example.com:9200"
+      # Index name pattern. Supports strftime format for date-based indices.
+      index: "houston-audit-%Y.%m.%d"
+      # Elasticsearch API version.
+      apiVersion: "v8"
+      # Auth strategy: "basic" or "none".
+      # When "basic", a K8s Secret with "username" and "password" keys is required.
+      auth:
+        strategy: "basic"
+        secretName: "houston-elasticsearch-creds"
+      # TLS: enable if using an https endpoint with a custom/self-signed CA.
+      # When enabled, the named secret (containing a PEM CA cert) is mounted.
+      tls:
+        enabled: false
+        caSecretName: ""
+
+    # Additional Vector sinks to append under the `sinks:` section.
+    # Provide as a YAML snippet with sink keys at the same indentation level
+    # as other sinks (e.g., `my_sink:`). Supports templating via `tpl`.
+    extraSinks: ""
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.

@@ -163,6 +163,13 @@ spec:
             {{- if .Values.houston.volumeMounts }}
             {{- tpl (toYaml .Values.houston.volumeMounts) $ | nindent 12 }}
             {{- end }}
+            {{- if .Values.houston.loggingSidecar.enabled }}
+            - name: houston-wrapper-volume
+              mountPath: /etc/houston-wrapper
+              readOnly: true
+            - name: sidecar-log-volume
+              mountPath: /var/log/sidecar-log-consumer
+            {{- end }}
           ports:
             - name: houston-http
               containerPort: {{ .Values.ports.houstonHTTP }}
@@ -188,11 +195,20 @@ spec:
             periodSeconds: 10
             failureThreshold: 10
           {{- end }}
+          {{- if .Values.houston.loggingSidecar.enabled }}
+          command:
+            - /bin/sh
+            - /etc/houston-wrapper/wrapper.sh
+          args:
+            - node
+            - dist/index.js
+          {{- else }}
           {{- if .Values.houston.command }}
           command: {{- toYaml .Values.houston.command | nindent 12 }}
           {{- end }}
           {{- if .Values.houston.apiArgs }}
           args: {{- toYaml .Values.houston.apiArgs | nindent 12 }}
+          {{- end }}
           {{- end }}
           env:
             {{- include "houston_environment" . | indent 12 }}
@@ -216,6 +232,105 @@ spec:
           {{- if .Values.houston.extraContainers }}
           {{- tpl (toYaml .Values.houston.extraContainers) $ | nindent 8 }}
           {{- end }}
+        {{- if .Values.houston.loggingSidecar.enabled }}
+        - name: vector
+          image: {{ template "vector.image" . }}
+          imagePullPolicy: {{ .Values.images.vector.pullPolicy }}
+          env:
+            - name: VECTOR_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VECTOR_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: VECTOR_CONFIG_YAML
+              value: /etc/vector/config/vector.yaml
+            - name: COMPONENT_NAME
+              value: houston
+            {{- if .Values.houston.loggingSidecar.cloudwatch.enabled }}
+            - name: AWS_REGION
+              value: {{ .Values.houston.loggingSidecar.cloudwatch.region | quote }}
+            {{- if not .Values.houston.loggingSidecar.cloudwatch.useIRSA }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houston.loggingSidecar.cloudwatch.secretName }}
+                  key: aws_access_key_id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houston.loggingSidecar.cloudwatch.secretName }}
+                  key: aws_secret_access_key
+            {{- end }}
+            {{- end }}
+            {{- if .Values.houston.loggingSidecar.elasticsearch.enabled }}
+            - name: ES_ENDPOINT
+              {{- if .Values.houston.loggingSidecar.elasticsearch.endpoint }}
+              value: {{ .Values.houston.loggingSidecar.elasticsearch.endpoint | quote }}
+              {{- else if .Values.global.customLogging.enabled }}
+              value: {{ printf "http://%s-external-es-proxy:9201" .Release.Name | quote }}
+              {{- else }}
+              value: {{ printf "http://%s-elasticsearch:9200" .Release.Name | quote }}
+              {{- end }}
+            {{- if and (eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic") .Values.houston.loggingSidecar.elasticsearch.endpoint }}
+            - name: ES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houston.loggingSidecar.elasticsearch.auth.secretName }}
+                  key: username
+            - name: ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houston.loggingSidecar.elasticsearch.auth.secretName }}
+                  key: password
+            {{- end }}
+            {{- end }}
+          resources: {{- toYaml .Values.houston.loggingSidecar.resources | nindent 12 }}
+          volumeMounts:
+            - name: vector-config
+              mountPath: /etc/vector/config
+              readOnly: true
+            - name: vector-data
+              mountPath: /var/lib/vector
+            - name: sidecar-log-volume
+              mountPath: /var/log/sidecar-log-consumer
+              readOnly: true
+            {{- if and .Values.houston.loggingSidecar.gcpCloudLogging.enabled (not .Values.houston.loggingSidecar.gcpCloudLogging.useWorkloadIdentity) }}
+            - name: gcp-credentials
+              mountPath: /etc/gcp-credentials
+              readOnly: true
+            {{- end }}
+            {{- if and .Values.houston.loggingSidecar.elasticsearch.enabled .Values.houston.loggingSidecar.elasticsearch.tls.enabled }}
+            - name: es-tls-ca
+              mountPath: /etc/es-tls
+              readOnly: true
+            {{- end }}
+          {{- if not .Values.global.openshiftEnabled }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8686
+            initialDelaySeconds: 15
+            timeoutSeconds: 3
+            periodSeconds: 30
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8686
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+            periodSeconds: 10
+            failureThreshold: 5
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+          {{- end }}
+        {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
@@ -226,4 +341,27 @@ spec:
       {{- end }}
         {{- include "houston_volumes" . | nindent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
+        {{- if .Values.houston.loggingSidecar.enabled }}
+        - name: vector-config
+          configMap:
+            name: {{ .Release.Name }}-houston-vector-config
+        - name: vector-data
+          emptyDir: {}
+        - name: houston-wrapper-volume
+          configMap:
+            name: {{ .Release.Name }}-houston-log-wrapper
+            defaultMode: 0755
+        - name: sidecar-log-volume
+          emptyDir: {}
+        {{- if and .Values.houston.loggingSidecar.gcpCloudLogging.enabled (not .Values.houston.loggingSidecar.gcpCloudLogging.useWorkloadIdentity) }}
+        - name: gcp-credentials
+          secret:
+            secretName: {{ .Values.houston.loggingSidecar.gcpCloudLogging.credentialsSecretName }}
+        {{- end }}
+        {{- if and .Values.houston.loggingSidecar.elasticsearch.enabled .Values.houston.loggingSidecar.elasticsearch.tls.enabled }}
+        - name: es-tls-ca
+          secret:
+            secretName: {{ .Values.houston.loggingSidecar.elasticsearch.tls.caSecretName }}
+        {{- end }}
+        {{- end }}
 {{- end }}
