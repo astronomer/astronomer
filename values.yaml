@@ -327,7 +327,7 @@ global:
         tag: 2025.12.24
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.3
+        tag: 0.2.4
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
