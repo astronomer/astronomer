@@ -288,6 +288,7 @@ spec:
               mountPath: /etc/es-tls
               readOnly: true
             {{- end }}
+          {{- if not .Values.global.openshiftEnabled }}
           livenessProbe:
             httpGet:
               path: /health
@@ -309,6 +310,7 @@ spec:
             runAsNonRoot: true
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
+          {{- end }}
         {{- end }}
       volumes:
         - name: etc-ssl-certs
