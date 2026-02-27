@@ -23,5 +23,5 @@ metadata:
 data:
   local_cluster_id: {{ $configLocalClusterID }}
   {{- if .Values.global.flightDeck.enabled }}
-  flightdeck_db_name: {{.Release.Name }}_flightdeck_{{ $configLocalClusterID }}
+  flightdeck_db_name: {{.Release.Name | replace "-" "_" | lower }}_flightdeck_{{ $configLocalClusterID }}
   {{- end }}
