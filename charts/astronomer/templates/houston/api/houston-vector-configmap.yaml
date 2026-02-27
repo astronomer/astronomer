@@ -185,11 +185,5 @@ data:
           verify_certificate: true
     {{- end }}
     {{- end }}
-      prometheus_exporter:
-        type: prometheus_exporter
-        inputs:
-          - normalize_levels
-        address: "0.0.0.0:9090"
-        default_namespace: vector_houston
 {{- end }}
 {{- end }}
