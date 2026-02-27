@@ -66,7 +66,7 @@ data:
             "node_name": get_env_var!("VECTOR_SELF_NODE_NAME"),
             "container_name": "houston-worker"
           }
-          .platform = "astronomer-control-plane"
+          .platform = {{ printf "%s-control-plane" .Release.Name | quote }}
           .component = "houston-worker"
           .service = "houston-worker"
           if !exists(.timestamp) {
