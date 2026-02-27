@@ -1,0 +1,27 @@
+###################################
+## Astronomer Cluster Local Data ##
+###################################
+{{- $configMapName := printf "%s-cluster-local-data" .Release.Name }}
+{{- $configMapObj := (lookup "v1" "ConfigMap" .Release.Namespace $configMapName) | default dict }}
+{{- $configMapData := (get $configMapObj "data" | default dict) }}
+{{- $configLocalClusterID := (get $configMapData "local_cluster_id") | default (randAlphaNum 12 | lower) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $configMapName }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/resource-policy": keep
+  labels:
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+data:
+  local_cluster_id: {{ $configLocalClusterID }}
+  {{- if .Values.global.flightDeck.enabled }}
+  flightdeck_db_name: {{.Release.Name | replace "-" "_" | lower }}_flightdeck_{{ $configLocalClusterID }}
+  {{- end }}

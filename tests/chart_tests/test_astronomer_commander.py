@@ -106,6 +106,12 @@ class TestAstronomerCommander:
         assert env_vars["HELM_DATA_HOME"] == "/tmp/helm-data"
         assert env_vars["HELM_REPOSITORY_CACHE"] == "/tmp/helm-cache/repository"
 
+        assert env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
+            "name": "release-name-cluster-local-data",
+            "key": "local_cluster_id",
+        }
+        assert not env_vars.get("COMMANDER_FLIGHTDECK_DSN")
+
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
         assert volume_mounts["tmp-workspace"] == "/tmp"
 
@@ -669,3 +675,43 @@ class TestAstronomerCommander:
         assert docs[0]["kind"] == "Deployment"
         spec = docs[0]["spec"]["template"]["spec"]
         assert spec["hostAliases"] == hostAliasSpec
+
+    @pytest.mark.parametrize("plane,init_containers_count,containers_count", [("data", 3, 1), ("control", 0, 0), ("unified", 3, 1)])
+    def test_flightdeck_enabled(self, kube_version, plane, init_containers_count, containers_count):
+        """Test that flightdeck works when enabled with various configs."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": plane},
+                    "flightDeck": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        if plane in ["data", "unified"]:
+            assert len(docs) == 1
+        else:
+            assert len(docs) == 0
+            return
+
+        if len(docs) > 0:
+            assert docs[0]["kind"] == "Deployment"
+            assert docs[0]["metadata"]["name"] == "release-name-commander"
+            init_containers = docs[0]["spec"]["template"]["spec"]["initContainers"]
+            assert len(init_containers) == init_containers_count
+            containers = docs[0]["spec"]["template"]["spec"]["containers"]
+            assert len(containers) == containers_count
+
+            commander_env_vars = get_env_vars_dict(containers[0]["env"])
+
+            assert commander_env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
+                "name": "release-name-cluster-local-data",
+                "key": "local_cluster_id",
+            }
+            assert commander_env_vars["COMMANDER_FLIGHTDECK_DSN"].get("secretKeyRef") == {
+                "name": "release-name-flightdeck-backend",
+                "key": "connection",
+            }
