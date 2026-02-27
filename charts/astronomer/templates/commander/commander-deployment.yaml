@@ -1,8 +1,10 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
-
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $clusterLocalConfigMapName := printf "%s-cluster-local-data" .Release.Name }}
+{{- $clusterLocalConfigMapObj := (lookup "v1" "ConfigMap" .Release.Namespace $clusterLocalConfigMapName) | default dict }}
+{{- $localClusterID := (get $clusterLocalConfigMapObj "local_cluster_id") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -91,6 +93,11 @@ spec:
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           env:
+            - name: LOCAL_CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-cluster-local-data
+                  key: local_cluster_id
             - name: BOOTSTRAP_DB
               valueFrom:
                 secretKeyRef:
@@ -197,6 +204,11 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
+            - name: LOCAL_CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-cluster-local-data
+                  key: local_cluster_id
             - name: HELM_CACHE_HOME
               value: /tmp/helm-cache
             - name: HELM_CONFIG_HOME
