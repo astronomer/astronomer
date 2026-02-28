@@ -79,6 +79,25 @@ pre-flight-setup() {
   export BOTO_CONFIG=/dev/null
 }
 
+update_index() {
+  # Update the index file. We have to do this transactionally (i.e. using
+  # --if-generation-match) to avoid overwriting concurrent updates from other
+  # repositories.
+  gen=$(gcloud storage objects describe "gs://${target_repo}/index.yaml" --format="value(generation)" 2>/dev/null || echo 0)
+  if [ "$gen" -eq 0 ]; then
+    echo "-> no existing index.yaml found in gs://${target_repo}: creating a new one" >&2
+    helm repo index . --url "https://${target_repo}"
+  else
+    echo "-> merging into existing index.yaml (at generation $gen) from gs://${target_repo}" >&2
+    current_index=$(mktemp)
+    trap 'rm -f "$current_index"' RETURN
+    gcloud storage cp "gs://${target_repo}/index.yaml#{$gen}" "$current_index"
+    helm repo index . --url "https://${target_repo}" --merge "$current_index"
+  fi
+  echo "-> uploading index.yaml..." >&2
+  gcloud storage cp --cache-control "public, max-age=${max_age}" --if-generation-match "$gen" ./index.yaml "gs://${target_repo}" || return 1
+}
+
 process_and_release_chart_file() {
   # Unzip the artifact
   tar -xvzf "$helm_chart_path" -C .
@@ -91,17 +110,21 @@ process_and_release_chart_file() {
 
   hr
 
-  echo "Releasing chart..."
-
-  set -x
-  # Set up the index.yaml file
-  gcloud storage cp "gs://${target_repo}/index.yaml" /tmp/index.yaml.current
-  helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
-
+  echo "Uploading chart..."
   gcloud storage cp "$helm_chart_path" "gs://${target_repo}"
-  gcloud storage cp --cache-control "public, max-age=${max_age}" ./index.yaml "gs://${target_repo}"
 
-  set +x
+  echo "Updating index..."
+  att=1
+  until update_index; do
+    echo "Index update failed (attempt $att)"
+    if (( att++ == 3 )); then
+      echo "ERROR: failed to update index after 3 attempts!"
+      exit 1
+    fi
+    echo "Retrying in 5 seconds..."
+    sleep 5
+  done
+
   hr
   echo "Chart released to ${target_env}"
 }
