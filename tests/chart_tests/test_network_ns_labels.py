@@ -14,7 +14,7 @@ class TestNSSelectorNetworkPolicies:
         """Test Houston Configmap with networkNSLabels."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"networkNSLabels": True}},
+            values={"global": {"features": {"networkNSLabels": {"enabled": True}}}},
             show_only=[
                 "charts/astronomer/templates/houston/houston-configmap.yaml",
             ],
@@ -32,7 +32,7 @@ class TestNSSelectorNetworkPolicies:
         """Test postgresql Service with namespace selector labels."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"networkNSLabels": True, "postgresqlEnabled": True}},
+            values={"global": {"features": {"networkNSLabels": {"enabled": True}}, "postgresqlEnabled": True}},
             show_only=[
                 "charts/postgresql/templates/networkpolicy.yaml",
             ],

@@ -69,9 +69,9 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
                     "features": {
                         "namespacePools": {"enabled": False},
+                        "rbac": {"enabled": True},
                     },
                 }
             },
@@ -115,12 +115,12 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
                     "features": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
                         },
+                        "rbac": {"enabled": True},
                     },
                 }
             },
@@ -168,9 +168,9 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": False,
                     "features": {
                         "namespacePools": {"enabled": False},
+                        "rbac": {"enabled": False},
                     },
                 }
             },
@@ -189,12 +189,12 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
                     "features": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
                         },
+                        "rbac": {"enabled": True},
                     },
                 }
             },
@@ -213,7 +213,7 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
+                    "features": {"rbac": {"enabled": True}},
                 },
                 "astronomer": {
                     "securityContext": {
@@ -243,11 +243,9 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
                     "features": {
-                        "namespacePools": {
-                            "enabled": False,
-                        },
+                        "namespacePools": {"enabled": False},
+                        "rbac": {"enabled": True},
                     },
                 }
             },
@@ -303,7 +301,7 @@ class TestAstronomerConfigSyncer:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"rbacEnabled": True},
+                "global": {"features": {"rbac": {"enabled": True}}},
                 "astronomer": {"configSyncer": {"enabled": True, "serviceAccount": {"create": False}}},
             },
             show_only=[
@@ -322,7 +320,7 @@ class TestAstronomerConfigSyncer:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"rbacEnabled": True, "features": {"namespacePools": {"enabled": True}}},
+                "global": {"features": {"namespacePools": {"enabled": True}, "rbac": {"enabled": True}}},
                 "astronomer": {"configSyncer": {"enabled": True, "serviceAccount": {"create": False}}},
             },
             show_only=[

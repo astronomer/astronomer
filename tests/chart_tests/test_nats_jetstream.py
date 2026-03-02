@@ -39,7 +39,13 @@ class TestNatsJetstream:
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test jetstream config with nodeSelector, affinity, and tolerations defaults."""
-        values = {"global": {"nats": {"jetStream": {"enabled": True, "tls": True}}}, "clusterRoles": True, "sccEnabled": True}
+        values = {
+            "global": {
+                "nats": {"jetStream": {"enabled": True, "tls": True}},
+                "clusterRoles": True,
+                "features": {"scc": {"enabled": True}},
+            }
+        }
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -192,8 +198,8 @@ def test_jetstream_job_with_scc(
     """Test that helm renders the nats SCC template only in the right circumstances."""
     values = {
         "global": {
-            "sccEnabled": scc_enabled,
             "clusterRoles": True,
+            "features": {"scc": {"enabled": scc_enabled}},
             "nats": {
                 "jetStream": {
                     "enabled": global_jetstream_enabled,

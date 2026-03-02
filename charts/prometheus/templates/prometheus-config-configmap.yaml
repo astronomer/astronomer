@@ -1,7 +1,7 @@
 #################################
 ## Prometheus Config ConfigMap ##
 #################################
-{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
+{{- $useClusterRoles := and .Values.global.features.rbac.enabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -240,7 +240,7 @@ data:
             regex: 'kube_node_.*'
             action: drop
           # Required for multi-namespace mode (non auto-generated namespaces should be relabeled differently)
-          {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
+          {{- if or .Values.global.features.namespacePools.enabled .Values.global.features.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
           - source_labels: [pod]
             regex: "(.*?)(?:-webserver.*|-api-server.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
             replacement: "$1"

@@ -16,7 +16,7 @@ We truncate at 44 chars (63 - len("-headless-discovery")) because some Kubernete
 {{- end -}}
 
 {{ define "elasticsearch.serviceAccountName" -}}
-{{- if and .Values.common.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.common.serviceAccount.create .Values.global.features.rbac.enabled -}}
 {{ default (printf "%s" (include "elasticsearch.fullname" . )) .Values.common.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.common.serviceAccount.name }}
@@ -145,15 +145,15 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "curator.indexPattern" -}}
-{{ if and .Values.global.loggingSidecar.enabled .Values.global.loggingSidecar.indexPattern }}
-{{- .Values.global.loggingSidecar.indexPattern | squote }}
+{{ if and .Values.global.features.loggingSidecar.enabled .Values.global.features.loggingSidecar.indexPattern }}
+{{- .Values.global.features.loggingSidecar.indexPattern | squote }}
 {{ else }}
 {{- .Values.curator.age.timestring | squote}}
 {{- end -}}
 {{- end -}}
 
 {{- define "elasticsearch.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.features.openshift.enabled ) }}
 {{- $required := dict "readOnlyRootFilesystem" true }}
 {{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
 {{- else }}

@@ -14,7 +14,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_cleanup_task_usage_cron_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": False}},
+            values={"global": {"features": {"taskUsageMetrics": {"enabled": False}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-task-data-cronjob.yaml",
             ],
@@ -24,7 +24,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_cleanup_task_usage_cron_feature_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": True}},
+            values={"global": {"features": {"taskUsageMetrics": {"enabled": True}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-task-data-cronjob.yaml",
             ],
@@ -41,7 +41,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"taskUsageMetricsEnabled": True},
+                "global": {"features": {"taskUsageMetrics": {"enabled": True}}},
                 "astronomer": {
                     "securityContext": {"allowPriviledgeEscalation": False},
                     "houston": {"cleanupTaskUsageData": {"schedule": "0 23 * * *"}},
@@ -66,7 +66,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_populate_hourly_task_audit_metrics_cron_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": False}},
+            values={"global": {"features": {"taskUsageMetrics": {"enabled": False}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-ta-metrics.yaml",
             ],
@@ -76,7 +76,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_populate_hourly_task_audit_metrics_cron_feature_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": True}},
+            values={"global": {"features": {"taskUsageMetrics": {"enabled": True}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-ta-metrics.yaml",
             ],
@@ -106,7 +106,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"taskUsageMetricsEnabled": True},
+                "global": {"features": {"taskUsageMetrics": {"enabled": True}}},
                 "astronomer": {"houston": {"populateHourlyTaskAuditMetrics": {"schedule": "90 * * * *"}}},
             },
             show_only=[
@@ -122,7 +122,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_populate_daily_task_metrics_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": False}},
+            values={"global": {"features": {"taskUsageMetrics": {"enabled": False}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-populate-daily-task-metrics.yaml",
             ],
@@ -132,7 +132,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_populate_daily_task_metrics_feature_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": True}},
+            values={"global": {"features": {"taskUsageMetrics": {"enabled": True}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-populate-daily-task-metrics.yaml",
             ],
@@ -152,7 +152,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"taskUsageMetricsEnabled": True},
+                "global": {"features": {"taskUsageMetrics": {"enabled": True}}},
                 "astronomer": {"houston": {"populateDailyTaskMetrics": {"schedule": "0 23 * * *"}}},
             },
             show_only=[
@@ -170,7 +170,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         taskUsageMetricsEnabled."""
 
         docs = render_chart(
-            values={"global": {"taskUsageMetricsEnabled": True}},
+            values={"global": {"features": {"taskUsageMetrics": {"enabled": True}}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 

@@ -1,7 +1,7 @@
 ##############################
 # postgresql network policy
 ##############################
-{{- if .Values.global.networkPolicy.enabled }}
+{{- if .Values.global.features.networkPolicy.enabled }}
 {{- if .Values.networkPolicy.enabled }}
 kind: NetworkPolicy
 apiVersion: {{ template "apiVersion.NetworkPolicy" . }}
@@ -35,7 +35,7 @@ spec:
           matchLabels:
             release: {{ .Release.Name }}
             component: grafana
-      {{- if .Values.global.networkNSLabels  }}
+      {{- if .Values.global.features.networkNSLabels.enabled  }}
       - namespaceSelector:
           matchLabels:
             platform: {{ .Release.Name }}

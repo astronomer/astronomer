@@ -38,7 +38,7 @@ def test_tags_monitoring_enabled(template, chart_values=chart_values, kube_versi
     """Test that when monitoring is enabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": True}
     if "auth-sidecar" in template:
-        chart_values["global"] = {"plane": {"mode": "control"}, "authSidecar": {"enabled": True}}
+        chart_values["global"] = {"plane": {"mode": "control"}, "features": {"authSidecar": {"enabled": True}}}
     elif "prometheus-federate-ingress" in template or "prometheus-federation-auth" in template:
         chart_values["global"] = {"plane": {"mode": "data"}}
     else:

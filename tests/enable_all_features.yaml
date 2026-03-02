@@ -19,18 +19,23 @@ astronomer:
 global:
   airflowOperator:
     enabled: true
-  authSidecar:
-    enabled: true
   baseDomain: foo.com
   customLogging:
     awsSecretName: dummy
     enabled: true
-  dagOnlyDeployment:
-    enabled: true
-  loggingSidecar:
-    enabled: true
-  networkPolicy:
-    enabled: true
+  features:
+    authSidecar:
+      enabled: true
+    dagOnlyDeployment:
+      enabled: true
+    loggingSidecar:
+      enabled: true
+    networkPolicy:
+      enabled: true
+    rbac:
+      enabled: true
+    taskUsageMetrics:
+      enabled: true
   pgbouncer:
     enabled: true
   podDisruptionBudgetsEnabled: true
@@ -39,8 +44,6 @@ global:
     addToContainerd: true
     enabled: true
   prometheusPostgresExporterEnabled: true
-  rbacEnabled: true
-  taskUsageMetricsEnabled: true
 nats:
   nats:
     exporter:

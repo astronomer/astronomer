@@ -185,7 +185,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             values={
-                "global": {"namespaceFreeFormEntry": True},
+                "global": {"features": {"namespaceFreeFormEntry": True}},
             },
         )[0]
         self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
@@ -217,8 +217,10 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "features": {"namespacePools": {"enabled": True}},
-                    "namespaceFreeFormEntry": False,
+                    "features": {
+                        "namespacePools": {"enabled": True},
+                        "namespaceFreeFormEntry": False,
+                    },
                 }
             },
         )[0]

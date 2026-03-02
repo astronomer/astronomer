@@ -25,7 +25,7 @@ class TestDagOnlyDeploy:
         """Test dagonlydeploy Service Account overrides."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"dagOnlyDeployment": {"enabled": True, "serviceAccount": {"create": True}}}},
+            values={"global": {"features": {"dagOnlyDeployment": {"enabled": True, "serviceAccount": {"create": True}}}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
@@ -47,12 +47,14 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "repository": images.split(":")[0],
-                        "tag": images.split(":")[1],
-                        "securityContexts": {"pod": {"fsGroup": 55555}, "container": {"runAsUser": 12345}},
-                        "resources": resources,
+                    "features": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "repository": images.split(":")[0],
+                            "tag": images.split(":")[1],
+                            "securityContexts": {"pod": {"fsGroup": 55555}, "container": {"runAsUser": 12345}},
+                            "resources": resources,
+                        }
                     }
                 }
             },
@@ -79,7 +81,7 @@ class TestDagOnlyDeploy:
         """Test dagonlydeploy Service defaults."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"dagOnlyDeployment": {"enabled": True}}},
+            values={"global": {"features": {"dagOnlyDeployment": {"enabled": True}}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
@@ -97,12 +99,14 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
+                    "features": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                        },
+                    },
                     "privateRegistry": {
                         "enabled": True,
                         "repository": private_registry,
-                    },
-                    "dagOnlyDeployment": {
-                        "enabled": True,
                     },
                 }
             },
@@ -121,9 +125,11 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "openshiftEnabled": True,
-                    "dagOnlyDeployment": {
-                        "enabled": True,
+                    "features": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                        },
+                        "openshift": {"enabled": True},
                     },
                 }
             },
@@ -142,9 +148,11 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "securityContexts": {"pod": {"fsGroup": "auto"}},
+                    "features": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "securityContexts": {"pod": {"fsGroup": "auto"}},
+                        },
                     },
                 }
             },
@@ -169,9 +177,11 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "persistence": persistenceRetain,
+                    "features": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "persistence": persistenceRetain,
+                        },
                     },
                 },
             },
@@ -196,9 +206,11 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "persistence": persistenceRetain,
+                    "features": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "persistence": persistenceRetain,
+                        },
                     },
                 },
             },
@@ -233,12 +245,14 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "repository": images.split(":")[0],
-                        "tag": images.split(":")[1],
-                        "server": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
-                        "client": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
+                    "features": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "repository": images.split(":")[0],
+                            "tag": images.split(":")[1],
+                            "server": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
+                            "client": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
+                        }
                     }
                 }
             },
@@ -268,15 +282,17 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "repository": images.split(":")[0],
-                        "tag": images.split(":")[1],
-                        "server": {
-                            "nodeSelector": global_platform_node_pool_config["nodeSelector"],
-                            "affinity": global_platform_node_pool_config["affinity"],
-                            "tolerations": global_platform_node_pool_config["tolerations"],
-                        },
+                    "features": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "repository": images.split(":")[0],
+                            "tag": images.split(":")[1],
+                            "server": {
+                                "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                                "affinity": global_platform_node_pool_config["affinity"],
+                                "tolerations": global_platform_node_pool_config["tolerations"],
+                            },
+                        }
                     }
                 }
             },

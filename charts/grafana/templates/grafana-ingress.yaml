@@ -14,7 +14,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    {{- if .Values.global.authSidecar.enabled }}
+    {{- if .Values.global.features.authSidecar.enabled }}
     {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     {{- if .Values.global.extraAnnotations }}
@@ -48,7 +48,7 @@ spec:
               service:
                 name: {{ template "grafana.fullname" . }}
                 port:
-                  {{- if .Values.global.authSidecar.enabled }}
+                  {{- if .Values.global.features.authSidecar.enabled }}
                   name: auth-proxy
                   {{- else }}
                   name: grafana-ui

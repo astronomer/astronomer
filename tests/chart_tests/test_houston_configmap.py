@@ -145,7 +145,7 @@ def test_houston_configmap_with_namespaceFreeFormEntry_true():
     namespaceFreeFormEntry=True."""
 
     docs = render_chart(
-        values={"global": {"namespaceFreeFormEntry": True}},
+        values={"global": {"features": {"namespaceFreeFormEntry": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
@@ -181,7 +181,7 @@ def test_houston_configmap_with_customlogging_enabled():
 def test_houston_configmapwith_scc_enabled():
     """Validate the houston configmap and its embedded data with sscEnabled."""
     docs = render_chart(
-        values={"global": {"sccEnabled": True}},
+        values={"global": {"features": {"scc": {"enabled": True}}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
@@ -261,10 +261,12 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "repository": "quay.io/astronomer/ap-vector",
-                    "tag": "0.22.3",
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "repository": "quay.io/astronomer/ap-vector",
+                        "tag": "0.22.3",
+                    },
                 },
             },
         },
@@ -292,12 +294,14 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
     docs = render_chart(
         values={
             "global": {
-                "logging": {"indexNamePrefix": "test-index-name-prefix-999"},
-                "loggingSidecar": {
-                    "enabled": True,
-                    "repository": image.split(":")[0],
-                    "tag": image.split(":")[1],
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "repository": image.split(":")[0],
+                        "tag": image.split(":")[1],
+                    },
                 },
+                "logging": {"indexNamePrefix": "test-index-name-prefix-999"},
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -325,11 +329,13 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": "quay.io/astronomer/ap-vector",
-                    "tag": "0.22.3",
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": "quay.io/astronomer/ap-vector",
+                        "tag": "0.22.3",
+                    }
                 }
             }
         },
@@ -359,12 +365,14 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": image_name.split(":")[0],
-                    "tag": image_name.split(":")[1],
-                    "indexPattern": indexPattern,
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": image_name.split(":")[0],
+                        "tag": image_name.split(":")[1],
+                        "indexPattern": indexPattern,
+                    }
                 }
             }
         },
@@ -393,12 +401,13 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "customConfig": True,
-                    "repository": image_name.split(":")[0],
-                    "tag": image_name.split(":")[1],
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "customConfig": True,
+                        "repository": image_name.split(":")[0],
+                        "tag": image_name.split(":")[1                    ],
                 }
             }
         },
@@ -427,12 +436,13 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": image_name.split(":")[0],
-                    "tag": image_name.split(":")[1],
-                    "extraEnv": [
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": image_name.split(":")[0],
+                        "tag": image_name.split(":")[1],
+                        "extraEnv": [
                         {
                             "name": "ES_USER",
                             "valueFrom": {
@@ -490,15 +500,16 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": f"{image_name['repository']}",
-                    "tag": f"{image_name['tag']}",
-                    "resources": {
-                        "requests": {"memory": "386Mi", "cpu": "100m"},
-                        "limits": {"memory": "386Mi", "cpu": "100m"},
-                    },
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": f"{image_name['repository']}",
+                        "tag": f"{image_name['tag']}",
+                        "resources": {
+                            "requests": {"memory": "386Mi", "cpu": "100m"},
+                            "limits": {"memory": "386Mi", "cpu": "100m"},
+                        },
                 }
             }
         },
@@ -534,12 +545,14 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": image_name.split(":")[0],
-                    "tag": image_name.split(":")[1],
-                    "securityContext": securityContext,
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": image_name.split(":")[0],
+                        "tag": image_name.split(":")[1],
+                        "securityContext": securityContext,
+                    }
                 }
             }
         },
@@ -668,12 +681,14 @@ def test_houston_configmap_with_authsidecar_liveness_probe():
     docs = render_chart(
         values={
             "global": {
-                "authSidecar": {
-                    "enabled": True,
-                    "repository": "someregistry.io/my-custom-image",
-                    "tag": "my-custom-tag",
-                    "resources": {},
-                    "livenessProbe": liveness_probe,
+                "features": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "resources": {},
+                        "livenessProbe": liveness_probe,
+                    }
                 }
             }
         },
@@ -699,12 +714,14 @@ def test_houston_configmap_with_authsidecar_readiness_probe():
     docs = render_chart(
         values={
             "global": {
-                "authSidecar": {
-                    "enabled": True,
-                    "repository": "someregistry.io/my-custom-image",
-                    "tag": "my-custom-tag",
-                    "resources": {},
-                    "readinessProbe": readiness_probe,
+                "features": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "resources": {},
+                        "readinessProbe": readiness_probe,
+                    }
                 }
             }
         },
@@ -735,10 +752,12 @@ def test_houston_configmap_with_loggingsidecar_liveness_probe():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": "sidecar-log-test",
-                    "livenessProbe": liveness_probe,
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": "sidecar-log-test",
+                        "livenessProbe": liveness_probe,
+                    }
                 }
             }
         },
@@ -770,10 +789,12 @@ def test_houston_configmap_with_loggingsidecar_readiness_probe():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": "sidecar-log-test",
-                    "readinessProbe": readiness_probe,
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": "sidecar-log-test",
+                        "readinessProbe": readiness_probe,
+                    }
                 }
             }
         },
@@ -806,7 +827,10 @@ def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_
     """Validate the houston configmap does not include airflow ingress annotation."""
     docs = render_chart(
         values={
-            "global": {"authSidecar": {"enabled": True}, "extraAnnotations": {"route.openshift.io/termination": "passthrough"}}
+            "global": {
+                "extraAnnotations": {"route.openshift.io/termination": "passthrough"},
+                "features": {"authSidecar": {"enabled": True}},
+            }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -819,7 +843,7 @@ def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_
 def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces_undefined():
     """Validate the houston configmap should have empty array for ingressAllowedNamespaces."""
     docs = render_chart(
-        values={"global": {"authSidecar": {"enabled": True}}},
+        values={"global": {"features": {"authSidecar": {"enabled": True}}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     assert len(docs) == 1
@@ -831,7 +855,7 @@ def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces_undefined
 def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces_is_empty():
     """Validate the houston configmap should have empty array for ingressAllowedNamespaces."""
     docs = render_chart(
-        values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
+        values={"global": {"features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     assert len(docs) == 1
@@ -843,7 +867,7 @@ def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces_is_empty(
 def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces():
     """Validate the houston configmap should have values in ingressAllowedNamespaces."""
     docs = render_chart(
-        values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astronomer", "ingress-namespace"]}}},
+        values={"global": {"features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astronomer", "ingress-namespace"]}}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     assert len(docs) == 1
@@ -878,8 +902,10 @@ def test_houston_configmap_pod_mutation_hook_airflow_compatibility():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
+                "features": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                    }
                 }
             }
         },

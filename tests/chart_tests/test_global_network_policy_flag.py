@@ -39,7 +39,7 @@ def test_networkpolicy_disabled():
     docs = render_chart(
         values={
             "global": {
-                "networkPolicy": {"enabled": False},
+                "features": {"networkPolicy": {"enabled": False}},
                 "postgresqlEnabled": True,
             }
         },
@@ -55,7 +55,7 @@ def test_networkpolicy_enabled(np_enabled, num_of_docs):
         show_only=show_only,
         values={
             "global": {
-                "networkPolicy": {"enabled": np_enabled},
+                "features": {"networkPolicy": {"enabled": np_enabled}},
                 "postgresqlEnabled": True,
             }
         },
@@ -74,8 +74,10 @@ def test_networkpolicy_for_airflow_components(kube_version):
         show_only="charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
         values={
             "global": {
-                "networkPolicy": {"enabled": True},
-                "dagOnlyDeployment": {"enabled": True},
+                "features": {
+                    "dagOnlyDeployment": {"enabled": True},
+                    "networkPolicy": {"enabled": True},
+                },
             },
         },
     )
@@ -108,7 +110,7 @@ def test_houston_networkpolicy_pgbouncer_ingress_rule(kube_version: str, pgbounc
         show_only="charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
         values={
             "global": {
-                "networkPolicy": {"enabled": True},
+                "features": {"networkPolicy": {"enabled": True}},
                 "pgbouncer": {"enabled": pgbouncer_enabled},
             }
         },
@@ -144,7 +146,7 @@ def test_houston_worker_networkpolicy_pgbouncer_ingress_shape(kube_version: str,
         show_only="charts/astronomer/templates/houston/worker/houston-worker-networkpolicy.yaml",
         values={
             "global": {
-                "networkPolicy": {"enabled": True},
+                "features": {"networkPolicy": {"enabled": True}},
                 "pgbouncer": {"enabled": pgbouncer_enabled},
             }
         },
@@ -180,7 +182,7 @@ def test_prometheus_networkpolicy_pgbouncer_ingress_rule(kube_version: str, pgbo
         show_only="charts/prometheus/templates/prometheus-networkpolicy.yaml",
         values={
             "global": {
-                "networkPolicy": {"enabled": True},
+                "features": {"networkPolicy": {"enabled": True}},
                 "pgbouncer": {"enabled": pgbouncer_enabled},
             }
         },

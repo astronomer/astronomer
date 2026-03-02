@@ -24,10 +24,10 @@ spec:
       port: {{ .Values.ports.http }}
       targetPort: {{ .Values.ports.http }}
       appProtocol: http
-    {{- if .Values.global.authSidecar.enabled }}
+    {{- if .Values.global.features.authSidecar.enabled }}
     - name: auth-proxy
       protocol: TCP
-      port: {{ .Values.global.authSidecar.port }}
+      port: {{ .Values.global.features.authSidecar.port }}
       appProtocol: tcp
     {{- end}}
 {{- end }}

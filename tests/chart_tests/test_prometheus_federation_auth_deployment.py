@@ -119,7 +119,7 @@ class TestPrometheusFederationAuthDeployment:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "authSidecar": {"port": custom_port},
+                    "features": {"authSidecar": {"port": custom_port}},
                 }
             },
             show_only=["charts/prometheus/templates/prometheus-federation-auth-deployment.yaml"],

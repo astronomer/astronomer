@@ -21,13 +21,13 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
                     "clusterRoles": True,
                     "features": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
                         },
+                        "rbac": {"enabled": True},
                     },
                 }
             },

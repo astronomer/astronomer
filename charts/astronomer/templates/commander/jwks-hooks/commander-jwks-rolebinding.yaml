@@ -1,7 +1,7 @@
 #####################################
 ## Commander JWKS Hook Role Binding ##
 #####################################
-{{- if .Values.global.rbacEnabled }}
+{{- if .Values.global.features.rbac.enabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}

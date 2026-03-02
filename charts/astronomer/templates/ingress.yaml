@@ -15,7 +15,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.features.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     {{- if .Values.global.extraAnnotations }}

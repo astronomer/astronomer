@@ -31,7 +31,7 @@ class TestAstronomerCommanderNginxConfigMap:
         }
 
         if auth_sidecar_enabled:
-            values["global"]["authSidecar"] = {"enabled": True}
+            values["global"]["features"] = {"authSidecar": {"enabled": True}}
 
         docs = render_chart(
             kube_version=kube_version,
@@ -52,7 +52,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
+                "global": {"plane": {"mode": "data"}, "features": {"authSidecar": {"enabled": True}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -76,7 +76,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
+                "global": {"plane": {"mode": "data"}, "features": {"authSidecar": {"enabled": True}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -95,7 +95,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
+                "global": {"plane": {"mode": "data"}, "features": {"authSidecar": {"enabled": True}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -117,7 +117,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
+                "global": {"plane": {"mode": "data"}, "features": {"authSidecar": {"enabled": True}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -143,7 +143,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
+                "global": {"plane": {"mode": "data"}, "features": {"authSidecar": {"enabled": True}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )
@@ -171,7 +171,7 @@ class TestAstronomerCommanderNginxConfigMap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}},
+                "global": {"plane": {"mode": "data"}, "features": {"authSidecar": {"enabled": True}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-nginx-configmap.yaml"],
         )

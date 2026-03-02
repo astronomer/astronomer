@@ -2,7 +2,7 @@
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{- .Values.global.logging.indexNamePrefix -}}
 {{- else -}}
-{{- if .Values.global.loggingSidecar.enabled  -}}
+{{- if .Values.global.features.loggingSidecar.enabled  -}}
 vector
 {{- else -}}
 fluentd
@@ -34,17 +34,17 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "authSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.authSidecar.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.features.authSidecar.tag }}
 {{- else -}}
-{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}
+{{ .Values.global.features.authSidecar.repository }}:{{ .Values.global.features.authSidecar.tag }}
 {{- end }}
 {{- end }}
 
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.loggingSidecar.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.features.loggingSidecar.tag }}
 {{- else -}}
-{{ .Values.global.loggingSidecar.repository }}:{{ .Values.global.loggingSidecar.tag }}
+{{ .Values.global.features.loggingSidecar.repository }}:{{ .Values.global.features.loggingSidecar.tag }}
 {{- end }}
 {{- end }}
 
