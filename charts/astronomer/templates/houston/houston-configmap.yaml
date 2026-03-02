@@ -76,163 +76,167 @@ data:
       audit:
         retentionDays: {{ .Values.houston.cleanupClusterAudits.olderThan}}
     deployments:
-      mode:
-        operator:
-          enabled: {{.Values.global.airflowOperator.enabled}}
       fluentdIndexPrefix: {{ include "vector.IndexPattern" .}}
-      dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
-      namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
-      # Airflow chart settings
-      # Static helm configurations for this chart are found below.
       chart:
         version: {{ .Values.airflowChartVersion }}
 
-      # Kubernetes labels to add on each airflow deployment namespace
       namespaceLabels:
         platform-release: {{ .Release.Name }}
 
-      taskUsageReport:
-        taskUsageMetricsEnabled: {{ .Values.global.taskUsageMetricsEnabled }}
-        taskUsageReportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
-
-      deployRollback:
-        enabled: {{ .Values.global.deployRollbackEnabled }}
-        deployRevisionReportNumberOfDays: {{ .Values.houston.cleanupDeployRevisions.olderThan}}
-
-      cleanupAirflowDb:
-        enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
-
       {{ if .Values.global.features.namespacePools.enabled }}
-      hardDeleteDeployment: true
-      manualNamespaceNames: true
       preCreatedNamespaces:
       {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
         - name: {{ $namespaceName }}
       {{- end }}
       {{- end }}
 
-      {{- if .Values.global.authSidecar.enabled }}
-      # enables nginx auth sidecar for airflow deployments
-      {{- $authSidecar := include "authSidecar.image" . }}
-      authSideCar:
-        enabled: true
-        ingressAllowedNamespaces: {{ default (list) .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
-        repository: {{ (splitList ":" $authSidecar ) | first }}
-        tag: {{ (splitList ":" $authSidecar ) | last }}
-        port: {{ .Values.global.authSidecar.port }}
-        pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
-        {{- if .Values.global.authSidecar.securityContext}}
-        securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 10 }}
+      features:
+        mode:
+          operator:
+            enabled: {{.Values.global.airflowOperator.enabled}}
+
+        dagOnlyDeployment:
+          enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
+
+        namespaceFreeFormEntry:
+          enabled: {{ .Values.global.namespaceFreeFormEntry }}
+
+        taskUsageMetrics:
+          enabled: {{ .Values.global.taskUsageMetricsEnabled }}
+          reportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
+
+        deployRollback:
+          enabled: {{ .Values.global.deployRollbackEnabled }}
+          deployRevisionReportNumberOfDays: {{ .Values.houston.cleanupDeployRevisions.olderThan}}
+
+        cleanupAirflowDb:
+          enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
+
+        {{ if .Values.global.features.namespacePools.enabled }}
+        hardDeleteDeployment:
+          enabled: true
+        manualNamespaceNames:
+          enabled: true
         {{- end }}
-        {{- if .Values.global.authSidecar.livenessProbe}}
-        livenessProbe: {{- .Values.global.authSidecar.livenessProbe | toYaml | nindent 10 }}
-        {{- end }}
-        {{- if .Values.global.authSidecar.readinessProbe}}
-        readinessProbe: {{- .Values.global.authSidecar.readinessProbe | toYaml | nindent 10 }}
-        {{- end }}
-        resources: {{- .Values.global.authSidecar.resources | toYaml | nindent 10 }}
-        annotations: {
-          {{- range $key, $value := .Values.global.extraAnnotations}}
-          {{ $key }}: {{ $value | quote }},
+
+        {{- if .Values.global.authSidecar.enabled }}
+        {{- $authSidecar := include "authSidecar.image" . }}
+        authSideCar:
+          enabled: true
+          ingressAllowedNamespaces: {{ default (list) .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+          repository: {{ (splitList ":" $authSidecar ) | first }}
+          tag: {{ (splitList ":" $authSidecar ) | last }}
+          port: {{ .Values.global.authSidecar.port }}
+          pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          {{- if .Values.global.authSidecar.securityContext}}
+          securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 12 }}
           {{- end }}
-        }
-      {{- end }}
+          {{- if .Values.global.authSidecar.livenessProbe}}
+          livenessProbe: {{- .Values.global.authSidecar.livenessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.global.authSidecar.readinessProbe}}
+          readinessProbe: {{- .Values.global.authSidecar.readinessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          resources: {{- .Values.global.authSidecar.resources | toYaml | nindent 12 }}
+          annotations: {
+            {{- range $key, $value := .Values.global.extraAnnotations}}
+            {{ $key }}: {{ $value | quote }},
+            {{- end }}
+          }
+        {{- end }}
 
-      {{- if .Values.global.loggingSidecar.enabled }}
-      # enables sidecar logging for airflow deployments
-      loggingSidecar:
-        enabled: true
-        name: {{ .Values.global.loggingSidecar.name }}
-        image: {{ include "loggingSidecar.image" . }}
-        customConfig: {{ .Values.global.loggingSidecar.customConfig }}
-        {{- if .Values.global.loggingSidecar.extraEnv}}
-        extraEnv: {{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 8 }}
+        {{- if .Values.global.loggingSidecar.enabled }}
+        loggingSidecar:
+          enabled: true
+          name: {{ .Values.global.loggingSidecar.name }}
+          image: {{ include "loggingSidecar.image" . }}
+          customConfig: {{ .Values.global.loggingSidecar.customConfig }}
+          {{- if .Values.global.loggingSidecar.extraEnv}}
+          extraEnv: {{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 10 }}
+          {{- end }}
+          {{- if .Values.global.loggingSidecar.securityContext}}
+          securityContext: {{- .Values.global.loggingSidecar.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.global.loggingSidecar.resources}}
+          resources: {{- .Values.global.loggingSidecar.resources | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.global.loggingSidecar.indexPattern }}
+          indexPattern: {{ .Values.global.loggingSidecar.indexPattern | squote }}
+          {{- end }}
+          {{- if .Values.global.logging.indexNamePrefix }}
+          indexNamePrefix: {{ .Values.global.logging.indexNamePrefix }}
+          {{- end }}
+          {{- if .Values.global.loggingSidecar.livenessProbe}}
+          livenessProbe: {{- .Values.global.loggingSidecar.livenessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.global.loggingSidecar.readinessProbe}}
+          readinessProbe: {{- .Values.global.loggingSidecar.readinessProbe | toYaml | nindent 12 }}
+          {{- end }}
         {{- end }}
-        {{- if .Values.global.loggingSidecar.securityContext}}
-        securityContext: {{- .Values.global.loggingSidecar.securityContext | toYaml | nindent 10 }}
-        {{- end }}
-        {{- if .Values.global.loggingSidecar.resources}}
-        resources: {{- .Values.global.loggingSidecar.resources | toYaml | nindent 10 }}
-        {{- end }}
-        {{- if .Values.global.loggingSidecar.indexPattern }}
-        indexPattern: {{ .Values.global.loggingSidecar.indexPattern | squote }}
-        {{- end }}
-        {{- if .Values.global.logging.indexNamePrefix }}
-        indexNamePrefix: {{ .Values.global.logging.indexNamePrefix }}
-        {{- end }}
-        {{- if .Values.global.loggingSidecar.livenessProbe}}
-        livenessProbe: {{- .Values.global.loggingSidecar.livenessProbe | toYaml | nindent 10 }}
-        {{- end }}
-        {{- if .Values.global.loggingSidecar.readinessProbe}}
-        readinessProbe: {{- .Values.global.loggingSidecar.readinessProbe | toYaml | nindent 10 }}
-        {{- end }}
-      {{- end }}
 
-      {{- if .Values.global.dagOnlyDeployment.enabled }}
-      # enables dag only deployment for airflow deployments
-      {{- $dagOnlyDeployment := include "dagOnlyDeployment.image" . }}
-      dagDeploy:
-        enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
-        images:
-          dagServer:
-            repository: {{ (splitList ":" $dagOnlyDeployment ) | first }}
-            tag: {{ (splitList ":" $dagOnlyDeployment ) | last }}
-        {{- if .Values.global.dagOnlyDeployment.securityContexts }}
-        securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
+        {{- if .Values.global.dagOnlyDeployment.enabled }}
+        {{- $dagOnlyDeployment := include "dagOnlyDeployment.image" . }}
+        dagDeploy:
+          enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
+          images:
+            dagServer:
+              repository: {{ (splitList ":" $dagOnlyDeployment ) | first }}
+              tag: {{ (splitList ":" $dagOnlyDeployment ) | last }}
+          {{- if .Values.global.dagOnlyDeployment.securityContexts }}
+          securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
+          {{- end }}
+          {{- if or
+            .Values.global.dagOnlyDeployment.resources
+            .Values.global.dagOnlyDeployment.server.livenessProbe
+            .Values.global.dagOnlyDeployment.server.readinessProbe
+            .Values.global.dagOnlyDeployment.server.nodeSelector
+            .Values.global.dagOnlyDeployment.server.affinity
+            .Values.global.dagOnlyDeployment.server.tolerations
+          }}
+          server:
+          {{- if .Values.global.dagOnlyDeployment.resources }}
+            resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 14 }}
+          {{- end }}
+          {{- if .Values.global.dagOnlyDeployment.server.livenessProbe }}
+            livenessProbe: {{- .Values.global.dagOnlyDeployment.server.livenessProbe | toYaml | nindent 14 }}
+          {{- end }}
+          {{- if .Values.global.dagOnlyDeployment.server.readinessProbe }}
+            readinessProbe: {{- .Values.global.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 14 }}
+          {{- end }}
+          {{- if .Values.global.dagOnlyDeployment.server.nodeSelector }}
+            nodeSelector: {{- .Values.global.dagOnlyDeployment.server.nodeSelector | toYaml | nindent 14 }}
+          {{- end }}
+          {{- if .Values.global.dagOnlyDeployment.server.affinity }}
+            affinity: {{- .Values.global.dagOnlyDeployment.server.affinity | toYaml | nindent 14 }}
+          {{- end }}
+          {{- if .Values.global.dagOnlyDeployment.server.tolerations }}
+            tolerations: {{- .Values.global.dagOnlyDeployment.server.tolerations | toYaml | nindent 14 }}
+          {{- end }}
+          {{- end }}
+          {{- if or
+            .Values.global.dagOnlyDeployment.resources
+            .Values.global.dagOnlyDeployment.client.livenessProbe
+            .Values.global.dagOnlyDeployment.client.readinessProbe
+          }}
+          client:
+          {{- if .Values.global.dagOnlyDeployment.resources }}
+            resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 14 }}
+          {{- end }}
+          {{- if .Values.global.dagOnlyDeployment.client.livenessProbe }}
+            livenessProbe: {{- .Values.global.dagOnlyDeployment.client.livenessProbe | toYaml | nindent 14 }}
+          {{- end }}
+          {{- if .Values.global.dagOnlyDeployment.client.readinessProbe }}
+            readinessProbe: {{- .Values.global.dagOnlyDeployment.client.readinessProbe | toYaml | nindent 14 }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.global.dagOnlyDeployment.persistence }}
+          persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 12 }}
+          {{- end }}
+          {{ if .Values.global.dagOnlyDeployment.serviceAccount }}
+          serviceAccount: {{- .Values.global.dagOnlyDeployment.serviceAccount | toYaml | nindent 12 }}
+          {{- end }}
         {{- end }}
-        {{- if or
-          .Values.global.dagOnlyDeployment.resources
-          .Values.global.dagOnlyDeployment.server.livenessProbe
-          .Values.global.dagOnlyDeployment.server.readinessProbe
-          .Values.global.dagOnlyDeployment.server.nodeSelector
-          .Values.global.dagOnlyDeployment.server.affinity
-          .Values.global.dagOnlyDeployment.server.tolerations
-        }}
-        server:
-        {{- if .Values.global.dagOnlyDeployment.resources }}
-          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.server.livenessProbe }}
-          livenessProbe: {{- .Values.global.dagOnlyDeployment.server.livenessProbe | toYaml | nindent 12 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.server.readinessProbe }}
-          readinessProbe: {{- .Values.global.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 12 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.server.nodeSelector }}
-          nodeSelector: {{- .Values.global.dagOnlyDeployment.server.nodeSelector | toYaml | nindent 12 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.server.affinity }}
-          affinity: {{- .Values.global.dagOnlyDeployment.server.affinity | toYaml | nindent 12 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.server.tolerations }}
-          tolerations: {{- .Values.global.dagOnlyDeployment.server.tolerations | toYaml | nindent 12 }}
-        {{- end }}
-        {{- end }}
-        {{- if or
-          .Values.global.dagOnlyDeployment.resources
-          .Values.global.dagOnlyDeployment.client.livenessProbe
-          .Values.global.dagOnlyDeployment.client.readinessProbe
-        }}
-        client:
-        {{- if .Values.global.dagOnlyDeployment.resources }}
-          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.client.livenessProbe }}
-          livenessProbe: {{- .Values.global.dagOnlyDeployment.client.livenessProbe | toYaml | nindent 12 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.client.readinessProbe }}
-          readinessProbe: {{- .Values.global.dagOnlyDeployment.client.readinessProbe | toYaml | nindent 12 }}
-        {{- end }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.persistence }}
-        persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
-        {{- end }}
-        {{ if .Values.global.dagOnlyDeployment.serviceAccount }}
-        serviceAccount: {{- .Values.global.dagOnlyDeployment.serviceAccount | toYaml | nindent 10 }}
-        {{- end }}
-      {{- end }}
 
-      # These values get passed directly into the airflow helm deployments
       helm:
 
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}

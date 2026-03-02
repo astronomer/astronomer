@@ -497,9 +497,9 @@ tlsEnabled: false
 
 {{- define "dagOnlyDeployment.securityContexts" -}}
 {{- if or (eq ( toString ( .Values.global.dagOnlyDeployment.securityContexts.pod.fsGroup )) "auto") ( .Values.global.openshiftEnabled ) }}
-{{- omit .Values.global.dagOnlyDeployment.securityContexts.pod "fsGroup" | toYaml | nindent 10 }}
+{{- omit .Values.global.dagOnlyDeployment.securityContexts.pod "fsGroup" | toYaml | nindent 12 }}
 {{- else }}
-{{- .Values.global.dagOnlyDeployment.securityContexts | toYaml | nindent 10 }}
+{{- .Values.global.dagOnlyDeployment.securityContexts | toYaml | nindent 12 }}
 {{- end -}}
 {{- end }}
 
