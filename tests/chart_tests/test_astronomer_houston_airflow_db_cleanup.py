@@ -79,4 +79,4 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
 
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod_yaml["deployments"]["cleanupAirflowDb"]["enabled"] is True
+        assert prod_yaml["deployments"]["features"]["cleanupAirflowDb"]["enabled"] is True

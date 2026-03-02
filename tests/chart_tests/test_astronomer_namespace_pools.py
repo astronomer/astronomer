@@ -228,8 +228,8 @@ class TestAstronomerNamespacePools:
 
         deployments_config = yaml.safe_load(doc["data"]["production.yaml"])
 
-        assert deployments_config["deployments"]["hardDeleteDeployment"]
-        assert deployments_config["deployments"]["manualNamespaceNames"]
+        assert deployments_config["deployments"]["features"]["hardDeleteDeployment"]["enabled"]
+        assert deployments_config["deployments"]["features"]["manualNamespaceNames"]["enabled"]
         assert deployments_config["deployments"]["preCreatedNamespaces"] == [{"name": namespace} for namespace in namespaces]
         assert "disableManageClusterScopedResources" not in deployments_config["deployments"]
 
@@ -253,8 +253,8 @@ class TestAstronomerNamespacePools:
 
         deployments_config = yaml.safe_load(doc["data"]["production.yaml"])
 
-        assert "hardDeleteDeployment" not in deployments_config["deployments"]
-        assert "manualNamespaceNames" not in deployments_config["deployments"]
+        assert "hardDeleteDeployment" not in deployments_config["deployments"]["features"]
+        assert "manualNamespaceNames" not in deployments_config["deployments"]["features"]
         assert "preCreatedNamespaces" not in deployments_config["deployments"]
 
     def test_namespace_pools_enabled_create_rbac_false(self, kube_version):
