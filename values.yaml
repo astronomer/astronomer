@@ -154,7 +154,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.52.0
+    tag: 0.53.0
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -304,7 +304,7 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.28.0-3
+        tag: 0.28.0-5
       redis:
         repository: quay.io/astronomer/ap-redis
         tag: 8.0.6
