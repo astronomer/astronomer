@@ -172,6 +172,10 @@ houston:
   loggingSidecar:
     enabled: false
 
+    securityContext:
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+
     resources:
       requests:
         memory: "128Mi"
@@ -222,7 +226,8 @@ houston:
       # Endpoint URL for the Elasticsearch cluster.
       # When empty, Houston defaults to external-es-proxy if global.customLogging.enabled,
       # otherwise it uses the in-cluster Elasticsearch service.
-      endpoint: ""                              # e.g. "https://es.example.com:9200"
+      # e.g. "https://es.example.com:9200"
+      endpoint: ~
       # Index name pattern. Supports strftime format for date-based indices.
       index: "houston-audit-%Y.%m.%d"
       # Elasticsearch API version.

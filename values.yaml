@@ -239,11 +239,11 @@ global:
 
   # External ES logging
   customLogging:
-    enabled: false
+    enabled: true
     scheme: https
-    host: ""
-    port: ""
-    secret: ""
+    host: "test.com"
+    port: "9200"
+    secret: "test"
     #secretName: ~
     #awsSecretName: ~
     #awsIAMRole: ~

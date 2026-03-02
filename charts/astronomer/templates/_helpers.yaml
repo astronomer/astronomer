@@ -64,7 +64,7 @@
 {{- end }}
 {{- end }}
 
-{{ define "vector.image" -}}
+{{ define "houston.loggingSidecar.image" -}}
 {{- $images := .Values.images | default dict -}}
 {{- $vector := $images.vector | default dict -}}
 {{- $repo := default "quay.io/astronomer/ap-vector" $vector.repository -}}
@@ -613,3 +613,24 @@ hostAliases:
 {{ toYaml .Values.commander.hostAliases }}
 {{- end }}
 {{- end -}}
+
+
+{{- define "houston.loggingSidecar.elasticsearch" -}}
+{{- if .Values.houston.loggingSidecar.elasticsearch.endpoint }}
+{{- .Values.houston.loggingSidecar.elasticsearch.endpoint }}
+{{- else if .Values.global.customLogging.enabled }}
+{{- printf "http://%s-external-es-proxy.%s:9201" .Release.Name .Release.Namespace }}
+{{- else }}
+{{- printf "http://%s-elasticsearch.%s:9200" .Release.Name .Release.Namespace }}
+{{- end }}
+{{- end }}
+
+{{- define "houston.loggingSidecar.securityContext" -}}
+{{- if or (eq ( toString ( .Values.houston.loggingSidecar.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required (omit .Values.houston.loggingSidecar.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required .Values.houston.loggingSidecar.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
