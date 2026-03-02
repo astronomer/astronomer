@@ -446,7 +446,7 @@ workflows:
                 - quay.io/astronomer/ap-git-daemon:2025.12.24
                 - quay.io/astronomer/ap-git-sync-relay:0.2.4
                 - quay.io/astronomer/ap-git-sync:2025.12.24
-                - quay.io/astronomer/ap-grafana:12.2.3
+                - quay.io/astronomer/ap-grafana:12.2.6
                 - quay.io/astronomer/ap-houston-api:1.1.1
                 - quay.io/astronomer/ap-init:2025.12.24
                 - quay.io/astronomer/ap-kube-state:2.17.0-2
