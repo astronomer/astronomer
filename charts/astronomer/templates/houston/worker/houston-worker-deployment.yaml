@@ -148,6 +148,7 @@ spec:
           command:
             - /bin/sh
             - /etc/houston-wrapper/wrapper.sh
+          args:
             - /bin/sh
             - -c
             - "update-ca-certificates;yarn worker"
