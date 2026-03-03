@@ -146,6 +146,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "flightdeck.bootstrapperServiceAccountName" -}}
+{{- if and .Values.flightdeck.serviceAccount.create .Values.global.rbacEnabled (not .Values.flightdeck.backendSecretName) (not .Values.flightdeck.backendConnection) }}
+{{- default (printf "%s-flightdeck-bootstrapper" .Release.Name ) .Values.flightdeck.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.flightdeck.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{ define "houston.bootstrapperServiceAccountName" -}}
 {{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
 {{- default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}

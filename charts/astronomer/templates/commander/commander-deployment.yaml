@@ -1,7 +1,6 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
-
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
@@ -43,24 +42,25 @@ spec:
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         checksum/configmap: {{ include (print $.Template.BasePath "/commander/commander-nginx-configmap.yaml") . | sha256sum }}
         {{- end }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.commander.podAnnotations }}
-{{ toYaml .Values.commander.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commander.podAnnotations }}
+        {{- toYaml .Values.commander.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+        {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- include "commander.hostAliases" . | nindent 6 }}
       initContainers:
+
         - name: etc-ssl-certs-copier
           volumeMounts:
             - name: etc-ssl-certs
@@ -80,7 +80,81 @@ spec:
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+
+      {{- if .Values.global.flightDeck.enabled }}
+        - name: flightdeck-bootstrapper
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.commander.resources | nindent 12 }}
+          env:
+            - name: LOCAL_CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-cluster-local-data
+                  key: local_cluster_id
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            {{ if .Values.global.ssl.enabled }}
+            - name: SSLMODE
+              value: {{ .Values.global.ssl.mode }}
+            {{- end }}
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-cluster-local-data
+                  key: flightdeck_db_name
+            - name: SECRET_NAME
+              value: {{ .Release.Name }}-flightdeck-backend
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+
+        - name: flightdeck-db-migrations
+          image: {{ template "commander.image" . }}
+          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+          args:
+           - "migrate"
+           - "up"
+           - "--db"
+           - "$COMMANDER_FLIGHTDECK_DSN"
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.commander.resources | nindent 12 }}
+          env:
+            - name: COMMANDER_FLIGHTDECK_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-flightdeck-backend
+                  key: connection
+          {{- if .Values.flightDeck.migrations.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.flightDeck.migrations.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.flightDeck.migrations.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.flightDeck.migrations.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+          {{- include "custom_ca_volume_mounts" . | indent 12 }}
+      {{- end }}
+
       containers:
+
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
@@ -130,6 +204,18 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
+            {{- if .Values.global.flightDeck.enabled }}
+            - name: COMMANDER_FLIGHTDECK_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-flightdeck-backend
+                  key: connection
+            {{- end }}
+            - name: LOCAL_CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-cluster-local-data
+                  key: local_cluster_id
             - name: HELM_CACHE_HOME
               value: /tmp/helm-cache
             - name: HELM_CONFIG_HOME
@@ -181,6 +267,7 @@ spec:
           {{- if .Values.commander.extraContainers }}
           {{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
           {{- end }}
+
         {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: auth-proxy
           image: {{ template "authSidecar.image" . }}
@@ -215,7 +302,10 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
         {{- end }}
+
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: nginx-write-logs
           emptyDir: {}
         - name: nginx-write-dir

@@ -20,7 +20,7 @@ class TestExtraObjects:
         assert len(docs) == 0
 
     def test_extra_objects_configured(self, kube_version):
-        """Test that extra-objects works as default."""
+        """Test that extra-objects works when configured."""
 
         eo1 = json.loads(
             """{"apiVersion": "networking.k8s.io/v1", "kind": "Ingress", "metadata":

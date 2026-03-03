@@ -394,6 +394,20 @@ configSyncer:
   readinessProbe: {}
   livenessProbe: {}
 
+# flightDeck is enabled and disabled through global.flightDeck.enabled, but is configured here.
+flightDeck:
+  migrations:
+    securityContext: {}
+    resources:
+      requests:
+        cpu: 100m
+        memory: 16Mi
+      limits:
+        cpu: 200m
+        memory: 32Mi
+    livenessProbe: {}
+    readinessProbe: {}
+
 
 commander:
   replicas: 2
