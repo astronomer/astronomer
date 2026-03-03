@@ -61,7 +61,7 @@ class TestNatsJetstream:
             ],
         )
 
-        assert len(docs) == 11
+        assert len(docs) == 12
 
         obj_by_name = {f"{x['kind']}-{x['metadata']['name']}": x for x in docs}
 
@@ -75,9 +75,9 @@ class TestNatsJetstream:
                 "keyFile": f"{jetStreamCertPrefix}-client/tls.key",
             },
         }
-        assert docs[7]["spec"]["template"]["spec"]["nodeSelector"] == {}
-        assert docs[7]["spec"]["template"]["spec"]["affinity"] == {}
-        assert docs[7]["spec"]["template"]["spec"]["tolerations"] == []
+        assert docs[8]["spec"]["template"]["spec"]["nodeSelector"] == {}
+        assert docs[8]["spec"]["template"]["spec"]["affinity"] == {}
+        assert docs[8]["spec"]["template"]["spec"]["tolerations"] == []
 
         assert {
             "name": "release-name-jetstream-tls-certificate-client-volume",

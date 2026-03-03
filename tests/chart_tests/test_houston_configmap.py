@@ -407,7 +407,8 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
                         "name": sidecar_container_name,
                         "customConfig": True,
                         "repository": image_name.split(":")[0],
-                        "tag": image_name.split(":")[1                    ],
+                        "tag": image_name.split(":")[1],
+                    }
                 }
             }
         },
@@ -443,25 +444,26 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
                         "repository": image_name.split(":")[0],
                         "tag": image_name.split(":")[1],
                         "extraEnv": [
-                        {
-                            "name": "ES_USER",
-                            "valueFrom": {
-                                "secretKeyRef": {
-                                    "name": "elastic-creds",
-                                    "key": "ESUSER",
-                                }
+                            {
+                                "name": "ES_USER",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "name": "elastic-creds",
+                                        "key": "ESUSER",
+                                    }
+                                },
                             },
-                        },
-                        {
-                            "name": "ES_PASS",
-                            "valueFrom": {
-                                "secretKeyRef": {
-                                    "name": "elastic-creds",
-                                    "key": "ESPASS",
-                                }
+                            {
+                                "name": "ES_PASS",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "name": "elastic-creds",
+                                        "key": "ESPASS",
+                                    }
+                                },
                             },
-                        },
-                    ],
+                        ],
+                    }
                 }
             }
         },
@@ -510,6 +512,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
                             "requests": {"memory": "386Mi", "cpu": "100m"},
                             "limits": {"memory": "386Mi", "cpu": "100m"},
                         },
+                    }
                 }
             }
         },

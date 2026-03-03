@@ -26,9 +26,9 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "dagOnlyDeployment.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.dagOnlyDeployment.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.features.dagOnlyDeployment.tag }}
 {{- else -}}
-{{ .Values.global.dagOnlyDeployment.repository }}:{{ .Values.global.dagOnlyDeployment.tag }}
+{{ .Values.global.features.dagOnlyDeployment.repository }}:{{ .Values.global.features.dagOnlyDeployment.tag }}
 {{- end }}
 {{- end }}
 
