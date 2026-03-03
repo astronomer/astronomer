@@ -849,7 +849,10 @@ def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces():
     assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod_yaml["deployments"]["features"]["authSideCar"].get("ingressAllowedNamespaces") == ["astronomer", "ingress-namespace"]
+    assert prod_yaml["deployments"]["features"]["authSideCar"].get("ingressAllowedNamespaces") == [
+        "astronomer",
+        "ingress-namespace",
+    ]
 
 
 def test_houston_configmap_with_plane_mode():
