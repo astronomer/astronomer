@@ -666,7 +666,7 @@ elasticsearch:
 """
 
 
-MYSQL_ROOT_PASSWORD = "rootpassword"
+MYSQL_ROOT_PASSWORD = os.environ.get("MYSQL_ROOT_PASSWORD", "rootpassword")
 MYSQL_IMAGE = "mysql:8.0"
 
 
@@ -753,8 +753,13 @@ def _deploy_mysql(*, context: str, namespace: str, release_name: str) -> None:
     _print(f"Waiting for MySQL pod to become ready ({svc_name})")
     _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "wait", "--for=condition=available",
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "wait",
+            "--for=condition=available",
             f"deployment/{svc_name}",
             "--timeout=180s",
         ],
@@ -762,19 +767,26 @@ def _deploy_mysql(*, context: str, namespace: str, release_name: str) -> None:
     )
 
 
-def _create_astronomer_bootstrap_secret_mysql(
-    *, context: str, namespace: str, release_name: str
-) -> None:
+def _create_astronomer_bootstrap_secret_mysql(*, context: str, namespace: str, release_name: str) -> None:
     """Create (or update) the astronomer-bootstrap secret with a MySQL connection string."""
     svc_name = _mysql_service_name(release_name)
     conn = f"mysql://root:{MYSQL_ROOT_PASSWORD}@{svc_name}.{namespace}.svc.cluster.local:3306"
 
     secret_yaml = _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "create", "secret", "generic", "astronomer-bootstrap",
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "generic",
+            "astronomer-bootstrap",
             f"--from-literal=connection={conn}",
-            "--dry-run=client", "-o", "yaml",
+            "--dry-run=client",
+            "-o",
+            "yaml",
         ],
         check=True,
     ).stdout
@@ -1129,7 +1141,9 @@ def main() -> int:  # noqa: C901
 
             h = ms.start("Create astronomer-bootstrap secret (MySQL) in DP")
             _create_astronomer_bootstrap_secret_mysql(
-                context=dp_context, namespace=settings.namespace, release_name=settings.release_name,
+                context=dp_context,
+                namespace=settings.namespace,
+                release_name=settings.release_name,
             )
             ms.done(h)
 
