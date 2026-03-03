@@ -60,6 +60,7 @@ class Settings:
     mkcert_root_ca_secret_key: str
     helm_timeout: str
     helm_debug: bool
+    dp_airflow_db: str
 
 
 def _print(msg: str) -> None:
@@ -579,6 +580,11 @@ elasticsearch:
 
 
 def _dp_values_yaml(settings: Settings) -> str:
+    """Generate DP Helm values, switching between PostgreSQL and MySQL for Airflow databases."""
+    use_mysql = settings.dp_airflow_db == "mysql"
+    pg_enabled = "false" if use_mysql else "true"
+    pg_exporter_enabled = "false" if use_mysql else "true"
+
     return f"""\
 global:
   baseDomain: {settings.base_domain}
@@ -586,8 +592,8 @@ global:
     mode: data
     domainPrefix: {settings.dp_domain_prefix}
   tlsSecret: {settings.tls_secret_name}
-  postgresqlEnabled: true
-  prometheusPostgresExporterEnabled: true
+  postgresqlEnabled: {pg_enabled}
+  prometheusPostgresExporterEnabled: {pg_exporter_enabled}
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:
@@ -607,7 +613,7 @@ tags:
   platform: true
   logging: true
   monitoring: true
-  postgresql: true
+  postgresql: {pg_enabled}
   nats: true
 
 astronomer:
@@ -658,6 +664,122 @@ elasticsearch:
       repository: docker.elastic.co/elasticsearch/elasticsearch
       tag: "8.18.6"
 """
+
+
+MYSQL_ROOT_PASSWORD = "rootpassword"
+MYSQL_IMAGE = "mysql:8.0"
+
+
+def _mysql_service_name(release_name: str) -> str:
+    """Return the Kubernetes Service name for the MySQL instance."""
+    return f"{release_name}-mysql"
+
+
+def _mysql_manifest_yaml(namespace: str, release_name: str) -> str:
+    """Generate a Kubernetes Deployment + Service manifest for a local MySQL 8.0 instance."""
+    svc_name = _mysql_service_name(release_name)
+    labels = f"app: {svc_name}"
+    return f"""\
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {svc_name}
+  namespace: {namespace}
+  labels:
+    {labels}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {labels}
+  template:
+    metadata:
+      labels:
+        {labels}
+    spec:
+      containers:
+        - name: mysql
+          image: {MYSQL_IMAGE}
+          args:
+            - --default-authentication-plugin=mysql_native_password
+            - --explicit_defaults_for_timestamp=1
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "{MYSQL_ROOT_PASSWORD}"
+          ports:
+            - containerPort: 3306
+              name: mysql
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - "127.0.0.1"
+                - -u
+                - root
+                - -p{MYSQL_ROOT_PASSWORD}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {svc_name}
+  namespace: {namespace}
+  labels:
+    {labels}
+spec:
+  selector:
+    {labels}
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+"""
+
+
+def _deploy_mysql(*, context: str, namespace: str, release_name: str) -> None:
+    """Deploy MySQL into the cluster and wait for it to become ready."""
+    manifest = _mysql_manifest_yaml(namespace, release_name)
+    _kubectl_apply_yaml(context, manifest)
+
+    svc_name = _mysql_service_name(release_name)
+    _print(f"Waiting for MySQL pod to become ready ({svc_name})")
+    _run(
+        [
+            "kubectl", "--context", context, "-n", namespace,
+            "wait", "--for=condition=available",
+            f"deployment/{svc_name}",
+            "--timeout=180s",
+        ],
+        check=True,
+    )
+
+
+def _create_astronomer_bootstrap_secret_mysql(
+    *, context: str, namespace: str, release_name: str
+) -> None:
+    """Create (or update) the astronomer-bootstrap secret with a MySQL connection string."""
+    svc_name = _mysql_service_name(release_name)
+    conn = f"mysql://root:{MYSQL_ROOT_PASSWORD}@{svc_name}.{namespace}.svc.cluster.local:3306"
+
+    secret_yaml = _run(
+        [
+            "kubectl", "--context", context, "-n", namespace,
+            "create", "secret", "generic", "astronomer-bootstrap",
+            f"--from-literal=connection={conn}",
+            "--dry-run=client", "-o", "yaml",
+        ],
+        check=True,
+    ).stdout
+    _kubectl_apply_yaml(context, secret_yaml)
+    _debug(f"astronomer-bootstrap secret set with MySQL connection: {svc_name}")
 
 
 def _helm_dependency_update(chart_dir: Path) -> None:
@@ -868,6 +990,13 @@ def parse_args() -> argparse.Namespace:
         help="Directory to write cp-values.yaml + dp-values.yaml. Defaults to a temp directory.",
     )
 
+    parser.add_argument(
+        "--dp-airflow-db",
+        choices=["postgres", "mysql"],
+        default="postgres",
+        help="Database type for Airflow deployments on the data plane (default: postgres).",
+    )
+
     return parser.parse_args()
 
 
@@ -892,6 +1021,7 @@ def main() -> int:  # noqa: C901
         mkcert_root_ca_secret_key=args.mkcert_root_ca_secret_key,
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
+        dp_airflow_db=args.dp_airflow_db,
     )
 
     try:
@@ -990,6 +1120,18 @@ def main() -> int:  # noqa: C901
             ms.done(h, detail=f"tlsSecret={settings.tls_secret_name} caSecret={settings.mkcert_root_ca_secret_name}")
         else:
             ms.skip("Apply namespace + secrets in both clusters", reason="--skip-secrets set")
+
+        # Step: deploy MySQL in DP (when --dp-airflow-db=mysql)
+        if settings.dp_airflow_db == "mysql":
+            h = ms.start("Deploy MySQL in DP cluster")
+            _deploy_mysql(context=dp_context, namespace=settings.namespace, release_name=settings.release_name)
+            ms.done(h, detail=f"svc={_mysql_service_name(settings.release_name)}")
+
+            h = ms.start("Create astronomer-bootstrap secret (MySQL) in DP")
+            _create_astronomer_bootstrap_secret_mysql(
+                context=dp_context, namespace=settings.namespace, release_name=settings.release_name,
+            )
+            ms.done(h)
 
         # Step: values files
         h = ms.start("Write CP/DP Helm values files")
