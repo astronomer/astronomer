@@ -23,7 +23,6 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import sys
 from dataclasses import dataclass
 
 
@@ -63,8 +62,7 @@ def _kubectl_apply_json_via_stdin(context: str, obj: dict) -> None:
         ["kubectl", "--context", context, "apply", "-f", "-"],
         input=json.dumps(minimal),
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     if proc.returncode != 0:
         raise RuntimeError(f"kubectl apply failed (context={context}): {proc.stderr.strip()}")
@@ -73,7 +71,19 @@ def _kubectl_apply_json_via_stdin(context: str, obj: dict) -> None:
 def _kubectl_delete_coredns_pods(context: str) -> None:
     _run(["kubectl", "--context", context, "-n", "kube-system", "delete", "pod", "-l", "k8s-app=kube-dns"])
     _run(
-        ["kubectl", "--context", context, "-n", "kube-system", "wait", "--for=condition=ready", "pod", "-l", "k8s-app=kube-dns", "--timeout=120s"]
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            "kube-system",
+            "wait",
+            "--for=condition=ready",
+            "pod",
+            "-l",
+            "k8s-app=kube-dns",
+            "--timeout=120s",
+        ]
     )
 
 
@@ -110,11 +120,7 @@ def _kubectl_get_service_lb_ip(context: str, namespace: str, service: str) -> st
 
 def _ensure_container_hosts_mapping(container: str, ip: str, hostname: str) -> None:
     # /etc/hosts is often regenerated on container restart; we append if missing.
-    sh = (
-        f"set -eu; "
-        f"grep -qE '^[[:space:]]*{ip}[[:space:]]+.*\\b{hostname}\\b' /etc/hosts "
-        f"|| echo '{ip} {hostname}' >> /etc/hosts"
-    )
+    sh = f"set -eu; grep -qE '^[[:space:]]*{ip}[[:space:]]+.*\\b{hostname}\\b' /etc/hosts || echo '{ip} {hostname}' >> /etc/hosts"
     _run(["docker", "exec", container, "sh", "-c", sh])
 
 
@@ -228,9 +234,7 @@ def main() -> int:
     cp_coredns = _kubectl_get_json(s.cp_context, "kube-system", "configmap", "coredns")
     cp_nodehosts = cp_coredns.get("data", {}).get("NodeHosts", "")
     cp_coredns.setdefault("data", {})
-    cp_coredns["data"]["NodeHosts"] = _render_nodehosts(
-        cp_nodehosts, ip=dp_node_ip, hostnames=dp_hostnames, marker="astronomer-dp"
-    )
+    cp_coredns["data"]["NodeHosts"] = _render_nodehosts(cp_nodehosts, ip=dp_node_ip, hostnames=dp_hostnames, marker="astronomer-dp")
     _kubectl_apply_json_via_stdin(s.cp_context, cp_coredns)
     _kubectl_delete_coredns_pods(s.cp_context)
 
@@ -245,4 +249,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
