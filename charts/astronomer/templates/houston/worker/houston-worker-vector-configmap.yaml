@@ -1,10 +1,9 @@
-##############################################
-## Houston Worker Vector ConfigMap           ##
-## Vector pipeline for worker audit log shipping ##
-##############################################
+####################################################
+## Houston Worker Vector ConfigMap                ##
+## Vector pipeline for worker audit log shipping  ##
+####################################################
+{{- if and .Values.houston.worker.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
 {{- if .Values.houston.loggingSidecar.enabled }}
-{{- if .Values.houston.worker.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
