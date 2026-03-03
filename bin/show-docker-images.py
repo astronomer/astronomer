@@ -70,15 +70,21 @@ def get_images_from_values_yaml():
     af_images = values["global"]["airflow"]["images"]
     images = [f"{i['repository']}:{i['tag']}" for i in af_images.values()]
     images.extend(f"{image['repository']}:{image['tag']}" for image in af_images.values())
-    images.append(f"{values['global']['authSidecar']['repository']}:{values['global']['authSidecar']['tag']}")
-    images.append(f"{values['global']['dagOnlyDeployment']['repository']}:{values['global']['dagOnlyDeployment']['tag']}")
+    images.append(
+        f"{values['global']['features']['authSidecar']['repository']}:{values['global']['features']['authSidecar']['tag']}"
+    )
+    images.append(
+        f"{values['global']['features']['dagOnlyDeployment']['repository']}:{values['global']['features']['dagOnlyDeployment']['tag']}"
+    )
     images.append(
         f"{values['global']['gitSyncRelay']['images']['gitDaemon']['repository']}:{values['global']['gitSyncRelay']['images']['gitDaemon']['tag']}"
     )
     images.append(
         f"{values['global']['gitSyncRelay']['images']['gitSync']['repository']}:{values['global']['gitSyncRelay']['images']['gitSync']['tag']}"
     )
-    images.append(f"{values['global']['loggingSidecar']['repository']}:{values['global']['loggingSidecar']['tag']}")
+    images.append(
+        f"{values['global']['features']['loggingSidecar']['repository']}:{values['global']['features']['loggingSidecar']['tag']}"
+    )
     images.append(
         f"{values['global']['privateCaCertsAddToHost']['certCopier']['repository']}:{values['global']['privateCaCertsAddToHost']['certCopier']['tag']}"
     )
@@ -89,11 +95,12 @@ def get_images_from_values_yaml():
 def get_images_from_houston_configmap(doc, args):
     """Return a list of images used in the houston configmap."""
     houston_config = yaml.safe_load(doc["data"]["production.yaml"])
-    keepers = ("authSideCar", "loggingSidecar")
-    deployment_items = {k: v for k, v in houston_config["deployments"].items() if k in keepers}
-    auth_sidecar_image = f"{deployment_items['authSideCar']['repository']}:{deployment_items['authSideCar']['tag']}"
-    logging_sidecar_image = f"{deployment_items['loggingSidecar']['image']}"
-    dag_server_image = f"{houston_config['deployments']['dagDeploy']['images']['dagServer']['repository']}:{houston_config['deployments']['dagDeploy']['images']['dagServer']['tag']}"
+    features = houston_config["deployments"]["features"]
+    auth_sidecar_image = f"{features['authSideCar']['repository']}:{features['authSideCar']['tag']}"
+    logging_sidecar_image = f"{features['loggingSidecar']['image']}"
+    dag_server_image = (
+        f"{features['dagDeploy']['images']['dagServer']['repository']}:{features['dagDeploy']['images']['dagServer']['tag']}"
+    )
     images = [auth_sidecar_image, dag_server_image, logging_sidecar_image]
     if args.verbose and any("quay.io" in x for x in images):
         print(

@@ -345,7 +345,11 @@ class TestAuthSidecar:
 
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}}},
+            values={
+                "global": {
+                    "features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}
+                }
+            },
             show_only=[
                 "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
@@ -375,7 +379,12 @@ class TestAuthSidecar:
         Only include networkpolicies that have the network.openshift.io/policy-group: ingress label."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}, "plane": {"mode": "data"}}},
+            values={
+                "global": {
+                    "features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}},
+                    "plane": {"mode": "data"},
+                }
+            },
             show_only=["charts/astronomer/templates/commander/commander-networkpolicy.yaml"],
         )
 

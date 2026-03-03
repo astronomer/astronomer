@@ -257,7 +257,10 @@ class TestPrometheusStatefulset:
 
     def test_prometheus_cluster_role_overrides(self, kube_version):
         """Test Prometheus with role and rolebinding."""
-        values = {"global": {"features": {"rbac": {"enabled": True}}}, "prometheus": {"rbac": {"role": {"kind": "Role", "create": True}}}}
+        values = {
+            "global": {"features": {"rbac": {"enabled": True}}},
+            "prometheus": {"rbac": {"role": {"kind": "Role", "create": True}}},
+        }
         docs = render_chart(
             kube_version=kube_version,
             values=values,
