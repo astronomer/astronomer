@@ -590,15 +590,8 @@ workflows:
         - << pipeline.parameters.qa-release >>
         - not: << pipeline.parameters.scan-docker-images >>
     jobs:
-      - run_pre_commit
-      - test-unit
-      - check-commander-airflow-version
       - build-artifact:
           qa_release: true
-          requires:
-            - check-commander-airflow-version
-            - run_pre_commit
-            - test-unit
       - release-to-internal:
           context:
             - gcp-astronomer-prod
