@@ -95,8 +95,12 @@ process_and_release_chart_file() {
 
   set -x
   # Set up the index.yaml file
+  rm -f /tmp/index.yaml.current
   gcloud storage cp "gs://${target_repo}/index.yaml" /tmp/index.yaml.current
+  sha256sum /tmp/index.yaml.current
   helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
+  diff /tmp/index.yaml.current index.yaml || true
+  sha256sum index.yaml
 
   gcloud storage cp "$helm_chart_path" "gs://${target_repo}"
   gcloud storage cp --cache-control "public, max-age=${max_age}" ./index.yaml "gs://${target_repo}"
@@ -113,7 +117,7 @@ release_to_dev() {
   # Copy the artifact
   cp "$helm_chart_path" .
 
-  max_age="30"
+  max_age="0"
   process_and_release_chart_file
 }
 
