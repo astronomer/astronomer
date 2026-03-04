@@ -247,3 +247,101 @@ class TestIngress:
         assert doc["spec"]["ingressClassName"] == expected_class_name, (
             f"Expected ingressClassName to be {expected_class_name} for {description}"
         )
+
+    @pytest.mark.parametrize(
+        ("ingress_file", "plane_mode", "extra_values"),
+        [
+            (
+                "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
+                "control",
+                {"enablePerHostIngress": True},
+            ),
+            (
+                "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
+                "unified",
+                {"enablePerHostIngress": True},
+            ),
+            (
+                "charts/astronomer/templates/houston/ingress.yaml",
+                "control",
+                {},
+            ),
+            (
+                "charts/astronomer/templates/houston/ingress.yaml",
+                "unified",
+                {},
+            ),
+            (
+                "charts/astronomer/templates/registry/registry-ingress.yaml",
+                "unified",
+                {"enablePerHostIngress": True},
+            ),
+            (
+                "charts/astronomer/templates/commander/commander-grpc-ingress.yaml",
+                "data",
+                {"plane": {"domainPrefix": "dp01"}},
+            ),
+            (
+                "charts/astronomer/templates/commander/commander-metadata-ingress.yaml",
+                "data",
+                {"plane": {"domainPrefix": "dp01"}},
+            ),
+        ],
+    )
+    @pytest.mark.parametrize(
+        ("class_values", "expected_class_name", "description"),
+        [
+            (
+                {"ingressClassName": "custom-ingress"},
+                "custom-ingress",
+                "direct spec.ingressClassName",
+            ),
+            (
+                {"extraAnnotations": {"kubernetes.io/ingress.class": "annotation-ingress"}},
+                "annotation-ingress",
+                "kubernetes.io/ingress.class annotation",
+            ),
+            (
+                {},
+                "release-name-nginx",
+                "default when neither specified",
+            ),
+        ],
+    )
+    def test_per_host_ingress_class_name(
+        self, ingress_file, plane_mode, extra_values, class_values, expected_class_name, description, kube_version
+    ):
+        """Test that ingressClassName is correctly populated for per-host ingress files"""
+        # Merge values together - handle nested plane dict properly
+        values = {"global": {"plane": {"mode": plane_mode}, **class_values}}
+
+        # Merge extra_values, being careful with nested plane dict
+        for key, value in extra_values.items():
+            if key == "plane" and isinstance(value, dict):
+                values["global"]["plane"].update(value)
+            else:
+                values["global"][key] = value
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[ingress_file],
+        )
+
+        # astro-ui-ingress.yaml renders 2 ingresses
+        if "astro-ui-ingress.yaml" in ingress_file:
+            assert len(docs) == 2, f"Expected 2 ingresses for {ingress_file}"
+            for doc in docs:
+                assert "ingressClassName" in doc["spec"], f"ingressClassName should be in spec for {description} in {ingress_file}"
+                assert doc["spec"]["ingressClassName"] == expected_class_name, (
+                    f"Expected ingressClassName to be {expected_class_name} for {description} in {ingress_file}"
+                )
+        else:
+            assert len(docs) == 1, f"Expected 1 ingress for {ingress_file}"
+            doc = docs[0]
+
+            # Check that ingressClassName is set in spec
+            assert "ingressClassName" in doc["spec"], f"ingressClassName should be in spec for {description} in {ingress_file}"
+            assert doc["spec"]["ingressClassName"] == expected_class_name, (
+                f"Expected ingressClassName to be {expected_class_name} for {description} in {ingress_file}"
+            )
