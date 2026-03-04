@@ -32,11 +32,7 @@ spec:
   {{- if .Values.global.ingressClassName }}
   ingressClassName: {{ .Values.global.ingressClassName }}
   {{- else if .Values.global.extraAnnotations }}
-    {{- range $key, $value := .Values.global.extraAnnotations }}
-      {{- if eq $key "kubernetes.io/ingress.class" }}
-  ingressClassName: {{ $value }}
-      {{- end }}
-    {{- end }}
+  ingressClassName: {{ index .Values.global.extraAnnotations "kubernetes.io/ingress.class" | default (printf "%s-nginx" .Release.Name) }}
   {{- else }}
   ingressClassName: "{{ .Release.Name }}-nginx"
   {{- end }}
