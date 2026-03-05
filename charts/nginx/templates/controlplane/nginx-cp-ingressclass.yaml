@@ -1,7 +1,7 @@
 ##########################
 ## NGINX IngressClass ##
 ##########################
-{{- if eq .Values.global.plane.mode "control" }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if not .Values.global.ingressClassName }}
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
