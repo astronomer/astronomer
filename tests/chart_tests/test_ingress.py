@@ -91,6 +91,7 @@ class TestIngress:
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)
         assert all(doc["kind"] == "Ingress" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
+        assert all(doc["spec"]["ingressClassName"] == "release-name-nginx" for doc in ingresses)
 
     def test_prometheus_federate_ingress(self, kube_version):
         """Test prometheus federate ingress configuration"""
@@ -344,4 +345,73 @@ class TestIngress:
             assert "ingressClassName" in doc["spec"], f"ingressClassName should be in spec for {description} in {ingress_file}"
             assert doc["spec"]["ingressClassName"] == expected_class_name, (
                 f"Expected ingressClassName to be {expected_class_name} for {description} in {ingress_file}"
+            )
+
+    def test_all_ingresses_have_ingressClassName_spec(self, kube_version):
+        """Test that all Ingress resources always have spec.ingressClassName"""
+        # Render all templates
+        docs = render_chart(kube_version=kube_version)
+
+        # Filter for Ingress resources
+        ingresses = [doc for doc in docs if doc.get("kind") == "Ingress"]
+
+        # There should be ingresses rendered
+        assert len(ingresses) > 0, "Expected at least one Ingress resource"
+
+        # Check each ingress has ingressClassName in spec
+        for ingress in ingresses:
+            ingress_name = ingress["metadata"]["name"]
+            assert "ingressClassName" in ingress["spec"], f"Ingress '{ingress_name}' missing spec.ingressClassName"
+            # Verify it's not empty
+            assert ingress["spec"]["ingressClassName"], f"Ingress '{ingress_name}' has empty spec.ingressClassName"
+            # Should default to release-name-nginx
+            assert ingress["spec"]["ingressClassName"] == "release-name-nginx", (
+                f"Ingress '{ingress_name}' has unexpected ingressClassName: {ingress['spec']['ingressClassName']}"
+            )
+
+    @pytest.mark.parametrize(
+        ("config_type", "values", "expected_class"),
+        [
+            (
+                "global.ingressClassName",
+                {"global": {"ingressClassName": "custom-class"}},
+                "custom-class",
+            ),
+            (
+                "annotation",
+                {"global": {"extraAnnotations": {"kubernetes.io/ingress.class": "annotation-class"}}},
+                "annotation-class",
+            ),
+            (
+                "default",
+                {},
+                "release-name-nginx",
+            ),
+        ],
+    )
+    def test_all_ingresses_respect_ingressClassName_configuration(self, config_type, values, expected_class, kube_version):
+        """Test that all Ingress resources consistently use the configured ingressClassName"""
+        # Render all templates with the given values
+        docs = render_chart(kube_version=kube_version, values=values)
+
+        # Filter for Ingress resources
+        ingresses = [doc for doc in docs if doc.get("kind") == "Ingress"]
+
+        # There should be ingresses rendered
+        assert len(ingresses) > 0, f"Expected at least one Ingress resource for {config_type}"
+
+        # Check every ingress uses the same ingressClassName
+        for ingress in ingresses:
+            ingress_name = ingress["metadata"]["name"]
+
+            # Verify spec.ingressClassName exists
+            assert "ingressClassName" in ingress["spec"], (
+                f"Ingress '{ingress_name}' missing spec.ingressClassName when {config_type} is set"
+            )
+
+            # Verify it matches expected value
+            actual_class = ingress["spec"]["ingressClassName"]
+            assert actual_class == expected_class, (
+                f"Ingress '{ingress_name}' has ingressClassName '{actual_class}', "
+                f"expected '{expected_class}' (config: {config_type})"
             )
