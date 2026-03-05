@@ -1,0 +1,19 @@
+---
+astronomer:
+  images:
+    commander:
+      pullPolicy: Always
+      tag: feature_apc-dr
+    dbBootstrapper:
+      pullPolicy: Always
+    houston:
+      pullPolicy: Always
+      tag: feature_apc-dr
+global:
+  # These explicit configs are required for local testing commander db migrations
+  ssl:
+    enabled: yes
+    mode: disable
+tags:
+  logging: False  # disable to save resources
+  monitoring: False  # disable to save resources
