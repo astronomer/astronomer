@@ -19,7 +19,7 @@ class TestDagOnlyDeploy:
         )
 
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is False
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is False
 
     def test_dagonlydeploy_with_serviceaccount_overrides(self, kube_version):
         """Test dagonlydeploy Service Account overrides."""
@@ -31,10 +31,10 @@ class TestDagOnlyDeploy:
 
         assert len(docs) == 1
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is True
-        assert prod["deployments"]["features"]["dagDeploy"]["enabled"] is True
-        assert "serviceAccount" in prod["deployments"]["features"]["dagDeploy"]
-        assert {"create": True} == prod["deployments"]["features"]["dagDeploy"]["serviceAccount"]
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
+        assert prod["deployments"]["dagDeploy"]["enabled"] is True
+        assert "serviceAccount" in prod["deployments"]["dagDeploy"]
+        assert {"create": True} == prod["deployments"]["dagDeploy"]["serviceAccount"]
 
     def test_dagonlydeploy_config_enabled(self, kube_version):
         """Test dagonlydeploy Service defaults."""
@@ -63,8 +63,8 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is True
-        assert prod["deployments"]["features"]["dagDeploy"] == {
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
+        assert prod["deployments"]["dagDeploy"] == {
             "enabled": True,
             "images": {
                 "dagServer": {
@@ -87,10 +87,10 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is True
-        assert prod["deployments"]["features"]["dagDeploy"]["enabled"] is True
-        assert "server" not in prod["deployments"]["features"]["dagDeploy"]
-        assert "client" not in prod["deployments"]["features"]["dagDeploy"]
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
+        assert prod["deployments"]["dagDeploy"]["enabled"] is True
+        assert "server" not in prod["deployments"]["dagDeploy"]
+        assert "client" not in prod["deployments"]["dagDeploy"]
 
     def test_dagonlydeploy_config_enabled_with_private_registry(self, kube_version):
         """Test dagonlydeploy with private registry."""
@@ -115,9 +115,9 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
 
-        assert prod["deployments"]["features"]["dagDeploy"]["images"]["dagServer"]["repository"].startswith(private_registry)
+        assert prod["deployments"]["dagDeploy"]["images"]["dagServer"]["repository"].startswith(private_registry)
 
     def test_dagonlydeploy_config_enabled_with_openshift_enabled(self, kube_version):
         """Test dagonlydeploy with openshift enabled to validate fsGroup removal."""
@@ -138,9 +138,9 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
 
-        assert {} == prod["deployments"]["features"]["dagDeploy"]["securityContexts"]
+        assert {} == prod["deployments"]["dagDeploy"]["securityContexts"]
 
     def test_dagonlydeploy_config_enabled_with_fsGroup_auto(self, kube_version):
         """Test dagonlydeploy with auto to validate fsGroup removal."""
@@ -161,9 +161,9 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
 
-        assert {} == prod["deployments"]["features"]["dagDeploy"]["securityContexts"]
+        assert {} == prod["deployments"]["dagDeploy"]["securityContexts"]
 
     def test_dagonlydeploy_config_enabled_with_persistence_retain(self, kube_version):
         """Test dagonlydeploy to validate persistence policy retain."""
@@ -190,9 +190,9 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
 
-        assert persistenceRetain == prod["deployments"]["features"]["dagDeploy"]["persistence"]
+        assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
 
     def test_dagonlydeploy_config_enabled_with_persistence_delete(self, kube_version):
         """Test dagonlydeploy to validate persistence policy delete."""
@@ -219,8 +219,8 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["features"]["dagOnlyDeployment"]["enabled"] is True
-        assert persistenceRetain == prod["deployments"]["features"]["dagDeploy"]["persistence"]
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
+        assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
 
     def test_houston_configmap_with_dagonlydeployment_probe(self, kube_version):
         """Validate the dagOnlyDeployment liveness and readiness probes in the Houston configmap."""
@@ -262,7 +262,7 @@ class TestDagOnlyDeploy:
         assert len(docs) == 1
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod_yaml["deployments"]["features"]["dagDeploy"] == {
+        assert prod_yaml["deployments"]["dagDeploy"] == {
             "enabled": True,
             "images": {
                 "dagServer": {
@@ -302,7 +302,7 @@ class TestDagOnlyDeploy:
         assert len(docs) == 1
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod_yaml["deployments"]["features"]["dagDeploy"] == {
+        assert prod_yaml["deployments"]["dagDeploy"] == {
             "enabled": True,
             "images": {
                 "dagServer": {

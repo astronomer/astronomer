@@ -34,7 +34,11 @@ global:
       enabled: true
     rbac:
       enabled: true
+    namespaceFreeFormEntry:
+      enabled: true
     taskUsageMetrics:
+      enabled: true
+    deployRollback:
       enabled: true
   pgbouncer:
     enabled: true

@@ -95,11 +95,11 @@ def get_images_from_values_yaml():
 def get_images_from_houston_configmap(doc, args):
     """Return a list of images used in the houston configmap."""
     houston_config = yaml.safe_load(doc["data"]["production.yaml"])
-    features = houston_config["deployments"]["features"]
-    auth_sidecar_image = f"{features['authSideCar']['repository']}:{features['authSideCar']['tag']}"
-    logging_sidecar_image = f"{features['loggingSidecar']['image']}"
+    deployments = houston_config["deployments"]
+    auth_sidecar_image = f"{deployments['authSideCar']['repository']}:{deployments['authSideCar']['tag']}"
+    logging_sidecar_image = f"{deployments['logging']['loggingSidecar']['image']}"
     dag_server_image = (
-        f"{features['dagDeploy']['images']['dagServer']['repository']}:{features['dagDeploy']['images']['dagServer']['tag']}"
+        f"{deployments['dagDeploy']['images']['dagServer']['repository']}:{deployments['dagDeploy']['images']['dagServer']['tag']}"
     )
     images = [auth_sidecar_image, dag_server_image, logging_sidecar_image]
     if args.verbose and any("quay.io" in x for x in images):

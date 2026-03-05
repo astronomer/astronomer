@@ -17,7 +17,7 @@ Feature flags were previously spread across the root of `global` with inconsiste
 | `global.openshiftEnabled` | `global.features.openshift.enabled` |
 | `global.networkPolicy.enabled` | `global.features.networkPolicy.enabled` |
 | `global.networkNSLabels` | `global.features.networkNSLabels.enabled` |
-| `global.namespaceFreeFormEntry` | `global.features.namespaceFreeFormEntry` |
+| `global.namespaceFreeFormEntry` | `global.features.namespaceFreeFormEntry.enabled` |
 | `global.taskUsageMetricsEnabled` | `global.features.taskUsageMetrics.enabled` |
 | `global.deployRollbackEnabled` | `global.features.deployRollback.enabled` |
 
@@ -37,17 +37,23 @@ The rendered Houston configuration (`production.yaml` inside the Houston ConfigM
 
 | Old output path | New output path |
 |---|---|
-| `deployments.dagOnlyDeployment` (boolean) | `deployments.features.dagOnlyDeployment.enabled` |
-| `deployments.namespaceFreeFormEntry` (boolean) | `deployments.features.namespaceFreeFormEntry.enabled` |
-| `deployments.hardDeleteDeployment` (boolean) | `deployments.features.hardDeleteDeployment.enabled` |
-| `deployments.taskUsageReport.*` | `deployments.features.taskUsageMetrics.*` |
-| `deployments.cleanupAirflowDb.*` | `deployments.features.cleanupAirflowDb.*` |
-| `deployments.deployRollback.*` | `deployments.features.deployRollback.*` |
-| `deployments.authSideCar.*` | `deployments.features.authSideCar.*` |
-| `deployments.loggingSidecar.*` | `deployments.features.loggingSidecar.*` |
-| `deployments.dagDeploy.*` | `deployments.features.dagDeploy.*` |
-| `deployments.mode` | `deployments.features.mode` |
-| `deployments.manualNamespaceNames` (boolean) | `deployments.features.manualNamespaceNames` |
+| `deployments.dagOnlyDeployment` (boolean) | `deployments.deployMechanisms.dagOnlyDeployment.enabled` |
+| `deployments.namespaceFreeFormEntry` (boolean) | `deployments.namespaceManagement.namespaceFreeFormEntry.enabled` |
+| `deployments.hardDeleteDeployment` (boolean) | `deployments.namespaceManagement.hardDeleteDeployment.enabled` |
+| `deployments.manualNamespaceNames` (boolean) | `deployments.namespaceManagement.manualNamespaceNames.enabled` |
+| `deployments.namespaceLabels` | `deployments.namespaceManagement.namespaceLabels` |
+| `deployments.preCreatedNamespaces` | `deployments.namespaceManagement.preCreatedNamespaces` |
+| `deployments.taskUsageReport.*` | `deployments.metricsReporting.taskUsageMetrics.*` |
+| `deployments.cleanupAirflowDb.*` | `deployments.deploymentLifecycle.cleanupAirflowDb.*` |
+| `deployments.deployRollback.*` | `deployments.deploymentLifecycle.deployRollback.*` |
+| `deployments.authSideCar.*` | `deployments.authSideCar.*` |
+| `deployments.loggingSidecar.*` | `deployments.logging.loggingSidecar.*` |
+| `deployments.dagDeploy.*` | `deployments.dagDeploy.*` |
+| `deployments.mode` | `deployments.mode` |
+| (not previously emitted) | `deployments.logging.enabled` |
+| (not previously emitted) | `deployments.logging.provider` |
+| (not previously emitted) | `deployments.logging.elasticsearch.*` |
+| (not previously emitted) | `deployments.metricsReporting.grafana.enabled` |
 
 ### Unchanged paths
 

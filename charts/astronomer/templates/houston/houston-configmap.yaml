@@ -80,71 +80,58 @@ data:
       chart:
         version: {{ .Values.airflowChartVersion }}
 
-      namespaceLabels:
-        platform-release: {{ .Release.Name }}
-
-      {{ if .Values.global.features.namespacePools.enabled }}
-      preCreatedNamespaces:
-      {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
-        - name: {{ $namespaceName }}
-      {{- end }}
-      {{- end }}
-
-      features:
-        mode:
-          operator:
-            enabled: {{.Values.global.airflowOperator.enabled}}
-
-        dagOnlyDeployment:
-          enabled: {{ .Values.global.features.dagOnlyDeployment.enabled }}
-
+      namespaceManagement:
+        namespaceLabels:
+          platform-release: {{ .Release.Name }}
         namespaceFreeFormEntry:
-          enabled: {{ .Values.global.features.namespaceFreeFormEntry }}
-
-        taskUsageMetrics:
-          enabled: {{ .Values.global.features.taskUsageMetrics.enabled }}
-          reportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
-
-        deployRollback:
-          enabled: {{ .Values.global.features.deployRollback.enabled }}
-          deployRevisionReportNumberOfDays: {{ .Values.houston.cleanupDeployRevisions.olderThan}}
-
-        cleanupAirflowDb:
-          enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
-
+          enabled: {{ .Values.global.features.namespaceFreeFormEntry.enabled }}
         {{ if .Values.global.features.namespacePools.enabled }}
+        preCreatedNamespaces:
+        {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+          - name: {{ $namespaceName }}
+        {{- end }}
         hardDeleteDeployment:
           enabled: true
         manualNamespaceNames:
           enabled: true
         {{- end }}
 
-        {{- if .Values.global.features.authSidecar.enabled }}
-        {{- $authSidecar := include "authSidecar.image" . }}
-        authSideCar:
-          enabled: true
-          ingressAllowedNamespaces: {{ default (list) .Values.global.features.authSidecar.ingressAllowedNamespaces | toJson }}
-          repository: {{ (splitList ":" $authSidecar ) | first }}
-          tag: {{ (splitList ":" $authSidecar ) | last }}
-          port: {{ .Values.global.features.authSidecar.port }}
-          pullPolicy: {{ .Values.global.features.authSidecar.pullPolicy }}
-          {{- if .Values.global.features.authSidecar.securityContext}}
-          securityContext: {{- .Values.global.features.authSidecar.securityContext | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.global.features.authSidecar.livenessProbe}}
-          livenessProbe: {{- .Values.global.features.authSidecar.livenessProbe | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.global.features.authSidecar.readinessProbe}}
-          readinessProbe: {{- .Values.global.features.authSidecar.readinessProbe | toYaml | nindent 12 }}
-          {{- end }}
-          resources: {{- .Values.global.features.authSidecar.resources | toYaml | nindent 12 }}
-          annotations: {
-            {{- range $key, $value := .Values.global.extraAnnotations}}
-            {{ $key }}: {{ $value | quote }},
-            {{- end }}
-          }
-        {{- end }}
+      mode:
+        operator:
+          enabled: {{.Values.global.airflowOperator.enabled}}
 
+      deployMechanisms:
+        dagOnlyDeployment:
+          enabled: {{ .Values.global.features.dagOnlyDeployment.enabled }}
+
+      metricsReporting:
+        taskUsageMetrics:
+          enabled: {{ .Values.global.features.taskUsageMetrics.enabled }}
+          reportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
+        grafana:
+          enabled: true
+
+      deploymentLifecycle:
+        deployRollback:
+          enabled: {{ .Values.global.features.deployRollback.enabled }}
+          deployRevisionReportNumberOfDays: {{ .Values.houston.cleanupDeployRevisions.olderThan}}
+        cleanupAirflowDb:
+          enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
+
+      logging:
+        enabled: true
+        provider: {{ default "fluentd" .Values.global.logging.provider | quote }}
+        elasticsearch:
+          enabled: true
+        {{- if .Values.global.customLogging.enabled }}
+          connection:
+            host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
+            port: 9200
+        {{- else }}
+          connection:
+            host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
+            port: 9200
+        {{- end }}
         {{- if .Values.global.features.loggingSidecar.enabled }}
         loggingSidecar:
           enabled: true
@@ -174,68 +161,94 @@ data:
           {{- end }}
         {{- end }}
 
-        {{- if .Values.global.features.dagOnlyDeployment.enabled }}
-        {{- $dagOnlyDeployment := include "dagOnlyDeployment.image" . }}
-        dagDeploy:
-          enabled: {{ .Values.global.features.dagOnlyDeployment.enabled }}
-          images:
-            dagServer:
-              repository: {{ (splitList ":" $dagOnlyDeployment ) | first }}
-              tag: {{ (splitList ":" $dagOnlyDeployment ) | last }}
-          {{- if .Values.global.features.dagOnlyDeployment.securityContexts }}
-          securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
-          {{- end }}
-          {{- if or
-            .Values.global.features.dagOnlyDeployment.resources
-            .Values.global.features.dagOnlyDeployment.server.livenessProbe
-            .Values.global.features.dagOnlyDeployment.server.readinessProbe
-            .Values.global.features.dagOnlyDeployment.server.nodeSelector
-            .Values.global.features.dagOnlyDeployment.server.affinity
-            .Values.global.features.dagOnlyDeployment.server.tolerations
-          }}
-          server:
-          {{- if .Values.global.features.dagOnlyDeployment.resources }}
-            resources: {{- .Values.global.features.dagOnlyDeployment.resources | toYaml | nindent 14 }}
-          {{- end }}
-          {{- if .Values.global.features.dagOnlyDeployment.server.livenessProbe }}
-            livenessProbe: {{- .Values.global.features.dagOnlyDeployment.server.livenessProbe | toYaml | nindent 14 }}
-          {{- end }}
-          {{- if .Values.global.features.dagOnlyDeployment.server.readinessProbe }}
-            readinessProbe: {{- .Values.global.features.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 14 }}
-          {{- end }}
-          {{- if .Values.global.features.dagOnlyDeployment.server.nodeSelector }}
-            nodeSelector: {{- .Values.global.features.dagOnlyDeployment.server.nodeSelector | toYaml | nindent 14 }}
-          {{- end }}
-          {{- if .Values.global.features.dagOnlyDeployment.server.affinity }}
-            affinity: {{- .Values.global.features.dagOnlyDeployment.server.affinity | toYaml | nindent 14 }}
-          {{- end }}
-          {{- if .Values.global.features.dagOnlyDeployment.server.tolerations }}
-            tolerations: {{- .Values.global.features.dagOnlyDeployment.server.tolerations | toYaml | nindent 14 }}
-          {{- end }}
-          {{- end }}
-          {{- if or
-            .Values.global.features.dagOnlyDeployment.resources
-            .Values.global.features.dagOnlyDeployment.client.livenessProbe
-            .Values.global.features.dagOnlyDeployment.client.readinessProbe
-          }}
-          client:
-          {{- if .Values.global.features.dagOnlyDeployment.resources }}
-            resources: {{- .Values.global.features.dagOnlyDeployment.resources | toYaml | nindent 14 }}
-          {{- end }}
-          {{- if .Values.global.features.dagOnlyDeployment.client.livenessProbe }}
-            livenessProbe: {{- .Values.global.features.dagOnlyDeployment.client.livenessProbe | toYaml | nindent 14 }}
-          {{- end }}
-          {{- if .Values.global.features.dagOnlyDeployment.client.readinessProbe }}
-            readinessProbe: {{- .Values.global.features.dagOnlyDeployment.client.readinessProbe | toYaml | nindent 14 }}
-          {{- end }}
-          {{- end }}
-          {{- if .Values.global.features.dagOnlyDeployment.persistence }}
-          persistence: {{- .Values.global.features.dagOnlyDeployment.persistence | toYaml | nindent 12 }}
-          {{- end }}
-          {{ if .Values.global.features.dagOnlyDeployment.serviceAccount }}
-          serviceAccount: {{- .Values.global.features.dagOnlyDeployment.serviceAccount | toYaml | nindent 12 }}
-          {{- end }}
+      {{- if .Values.global.features.authSidecar.enabled }}
+      {{- $authSidecar := include "authSidecar.image" . }}
+      authSideCar:
+        enabled: true
+        ingressAllowedNamespaces: {{ default (list) .Values.global.features.authSidecar.ingressAllowedNamespaces | toJson }}
+        repository: {{ (splitList ":" $authSidecar ) | first }}
+        tag: {{ (splitList ":" $authSidecar ) | last }}
+        port: {{ .Values.global.features.authSidecar.port }}
+        pullPolicy: {{ .Values.global.features.authSidecar.pullPolicy }}
+        {{- if .Values.global.features.authSidecar.securityContext}}
+        securityContext: {{- .Values.global.features.authSidecar.securityContext | toYaml | nindent 10 }}
         {{- end }}
+        {{- if .Values.global.features.authSidecar.livenessProbe}}
+        livenessProbe: {{- .Values.global.features.authSidecar.livenessProbe | toYaml | nindent 10 }}
+        {{- end }}
+        {{- if .Values.global.features.authSidecar.readinessProbe}}
+        readinessProbe: {{- .Values.global.features.authSidecar.readinessProbe | toYaml | nindent 10 }}
+        {{- end }}
+        resources: {{- .Values.global.features.authSidecar.resources | toYaml | nindent 10 }}
+        annotations: {
+          {{- range $key, $value := .Values.global.extraAnnotations}}
+          {{ $key }}: {{ $value | quote }},
+          {{- end }}
+        }
+      {{- end }}
+
+      {{- if .Values.global.features.dagOnlyDeployment.enabled }}
+      {{- $dagOnlyDeployment := include "dagOnlyDeployment.image" . }}
+      dagDeploy:
+        enabled: {{ .Values.global.features.dagOnlyDeployment.enabled }}
+        images:
+          dagServer:
+            repository: {{ (splitList ":" $dagOnlyDeployment ) | first }}
+            tag: {{ (splitList ":" $dagOnlyDeployment ) | last }}
+        {{- if .Values.global.features.dagOnlyDeployment.securityContexts }}
+        securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
+        {{- end }}
+        {{- if or
+          .Values.global.features.dagOnlyDeployment.resources
+          .Values.global.features.dagOnlyDeployment.server.livenessProbe
+          .Values.global.features.dagOnlyDeployment.server.readinessProbe
+          .Values.global.features.dagOnlyDeployment.server.nodeSelector
+          .Values.global.features.dagOnlyDeployment.server.affinity
+          .Values.global.features.dagOnlyDeployment.server.tolerations
+        }}
+        server:
+        {{- if .Values.global.features.dagOnlyDeployment.resources }}
+          resources: {{- .Values.global.features.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.features.dagOnlyDeployment.server.livenessProbe }}
+          livenessProbe: {{- .Values.global.features.dagOnlyDeployment.server.livenessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.features.dagOnlyDeployment.server.readinessProbe }}
+          readinessProbe: {{- .Values.global.features.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.features.dagOnlyDeployment.server.nodeSelector }}
+          nodeSelector: {{- .Values.global.features.dagOnlyDeployment.server.nodeSelector | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.features.dagOnlyDeployment.server.affinity }}
+          affinity: {{- .Values.global.features.dagOnlyDeployment.server.affinity | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.features.dagOnlyDeployment.server.tolerations }}
+          tolerations: {{- .Values.global.features.dagOnlyDeployment.server.tolerations | toYaml | nindent 12 }}
+        {{- end }}
+        {{- end }}
+        {{- if or
+          .Values.global.features.dagOnlyDeployment.resources
+          .Values.global.features.dagOnlyDeployment.client.livenessProbe
+          .Values.global.features.dagOnlyDeployment.client.readinessProbe
+        }}
+        client:
+        {{- if .Values.global.features.dagOnlyDeployment.resources }}
+          resources: {{- .Values.global.features.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.features.dagOnlyDeployment.client.livenessProbe }}
+          livenessProbe: {{- .Values.global.features.dagOnlyDeployment.client.livenessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.features.dagOnlyDeployment.client.readinessProbe }}
+          readinessProbe: {{- .Values.global.features.dagOnlyDeployment.client.readinessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.global.features.dagOnlyDeployment.persistence }}
+        persistence: {{- .Values.global.features.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
+        {{- end }}
+        {{ if .Values.global.features.dagOnlyDeployment.serviceAccount }}
+        serviceAccount: {{- .Values.global.features.dagOnlyDeployment.serviceAccount | toYaml | nindent 10 }}
+        {{- end }}
+      {{- end }}
 
       helm:
 

@@ -108,7 +108,7 @@ class TestAuthSidecar:
             "resources": custom_resources,
         }
 
-        assert expected_output == prod["deployments"]["features"]["authSideCar"]
+        assert expected_output == prod["deployments"]["authSideCar"]
 
     def test_authSidecar_prometheus(self, kube_version):
         """Test Prometheus Service with authSidecar."""
@@ -196,7 +196,7 @@ class TestAuthSidecar:
             "resources": default_resource,
             "annotations": {},
         }
-        assert expected_output == prod["deployments"]["features"]["authSideCar"]
+        assert expected_output == prod["deployments"]["authSideCar"]
 
     def test_authSidecar_houston_configmap_with_annotation(self, kube_version):
         """Test Houston Configmap with authSidecar."""
@@ -238,7 +238,7 @@ class TestAuthSidecar:
                 "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
             },
         }
-        assert expected_output == prod["deployments"]["features"]["authSideCar"]
+        assert expected_output == prod["deployments"]["authSideCar"]
 
     def test_authSidecar_houston_configmap_with_securityContext(self, kube_version):
         """Test Houston Configmap with authSidecar securityContext."""
@@ -276,7 +276,7 @@ class TestAuthSidecar:
             "resources": default_resource,
             "annotations": {},
         }
-        assert expected_output == prod["deployments"]["features"]["authSideCar"]
+        assert expected_output == prod["deployments"]["authSideCar"]
 
     def test_authSidecar_houston_configmap_with_ingress_allowed_namespace(self, kube_version):
         """Test Houston Configmap with authSidecar ingressAllowedNamespaces."""
@@ -315,7 +315,7 @@ class TestAuthSidecar:
             "resources": default_resource,
             "annotations": {},
         }
-        assert expected_output == prod["deployments"]["features"]["authSideCar"]
+        assert expected_output == prod["deployments"]["authSideCar"]
 
     def test_authSidecar_with_ingress_allowed_namespaces_empty(self, kube_version):
         """Test All Services with authSidecar and set no values in ingressAllowedNamespaces.

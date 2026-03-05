@@ -81,7 +81,8 @@ global:
       enabled: false
 
     # Platform Features
-    namespaceFreeFormEntry: false
+    namespaceFreeFormEntry:
+      enabled: false
 
     taskUsageMetrics:
       enabled: false
@@ -245,6 +246,7 @@ global:
 
   logging:
     indexNamePrefix: ~
+    provider: ~
 
   # External ES logging
   customLogging:
