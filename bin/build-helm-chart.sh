@@ -23,7 +23,7 @@ if [[ ! "${CIRCLE_BRANCH}" =~ release-[0-9]+\.[0-9]+ ]] ; then
   sed -Ei='' "/(^version|appVersion): /s/^(version|appVersion): .*/\1: $version/" "${TEMPDIR}/astronomer/Chart.yaml" "${TEMPDIR}/astronomer/charts/astronomer/Chart.yaml"
   sed -i='' "s#^description: .*#description: $(date "+%FT%T%z") ${CIRCLE_BRANCH} ${CIRCLE_BUILD_URL} https://github.com/astronomer/astronomer/commits/${CIRCLE_SHA1}#" "${TEMPDIR}/astronomer/Chart.yaml"
 elif [[ "${CIRCLE_BRANCH}" =~ release-[0-9]+\.[0-9]+ ]] && [[ "${QA_FEATURE_RELEASE}" == "true" ]] ; then
-  version=$(awk '$1 ~ /^version/ {print $2}' Chart.yaml)+$(date -u +%Y%m%dT%H%M).$(git rev-parse --short HEAD)
+  version=$(awk '$1 ~ /^version/ {print $2}' Chart.yaml)-$(date -u +%Y%m%dT%H%M).$(git rev-parse --short HEAD)
   echo "Building helm chart for CIRCLE_BUILD_NUM $CIRCLE_BUILD_NUM version ${version}"
   sed -Ei='' "/(^version|appVersion): /s/^(version|appVersion): .*/\1: $version/" "${TEMPDIR}/astronomer/Chart.yaml" "${TEMPDIR}/astronomer/charts/astronomer/Chart.yaml"
   sed -i='' "s#^description: .*#description: $(date "+%FT%T%z") ${CIRCLE_BRANCH} ${CIRCLE_BUILD_URL} https://github.com/astronomer/astronomer/commits/${CIRCLE_SHA1}#" "${TEMPDIR}/astronomer/Chart.yaml"
