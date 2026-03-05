@@ -43,7 +43,7 @@ class TestNatsJetstream:
             "global": {
                 "nats": {"jetStream": {"enabled": True, "tls": True}},
                 "clusterRoles": True,
-                "features": {"scc": {"enabled": True}},
+                "scc": {"enabled": True},
             }
         }
         docs = render_chart(
@@ -199,7 +199,7 @@ def test_jetstream_job_with_scc(
     values = {
         "global": {
             "clusterRoles": True,
-            "features": {"scc": {"enabled": scc_enabled}},
+            "scc": {"enabled": scc_enabled},
             "nats": {
                 "jetStream": {
                     "enabled": global_jetstream_enabled,

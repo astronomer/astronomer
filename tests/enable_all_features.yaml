@@ -23,22 +23,26 @@ global:
   customLogging:
     awsSecretName: dummy
     enabled: true
-  features:
-    authSidecar:
-      enabled: true
-    dagOnlyDeployment:
-      enabled: true
-    loggingSidecar:
-      enabled: true
-    networkPolicy:
-      enabled: true
-    rbac:
-      enabled: true
+  authSidecar:
+    enabled: true
+  networkPolicy:
+    enabled: true
+  rbac:
+    enabled: true
+  namespaceManagement:
     namespaceFreeFormEntry:
       enabled: true
+  metricsReporting:
     taskUsageMetrics:
       enabled: true
+  deploymentLifecycle:
     deployRollback:
+      enabled: true
+  deployMechanisms:
+    dagOnlyDeployment:
+      enabled: true
+  logging:
+    loggingSidecar:
       enabled: true
   pgbouncer:
     enabled: true

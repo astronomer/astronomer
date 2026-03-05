@@ -22,13 +22,13 @@ class TestAstronomerNamespacePools:
             values={
                 "global": {
                     "clusterRoles": True,
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
-                        "rbac": {"enabled": True},
+                        }
                     },
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -73,7 +73,7 @@ class TestAstronomerNamespacePools:
         namespaces = ["my-namespace-1", "my-namespace-2"]
         values = {
             "global": {
-                "features": {
+                "namespaceManagement": {
                     "namespacePools": {
                         "enabled": True,
                         "namespaces": {"create": True, "names": namespaces},
@@ -112,7 +112,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -140,7 +140,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": False, "names": namespaces},
@@ -165,7 +165,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": False, "names": namespaces},
@@ -190,7 +190,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -215,7 +215,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
@@ -242,7 +242,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -266,7 +266,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "createRbac": False,
@@ -293,7 +293,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},

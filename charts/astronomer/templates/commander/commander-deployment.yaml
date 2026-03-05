@@ -40,7 +40,7 @@ spec:
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
         checksum/metadata-config: {{ include (print $.Template.BasePath "/commander/commander-metadata.yaml") . | sha256sum }}
-        {{- if and .Values.global.features.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         checksum/configmap: {{ include (print $.Template.BasePath "/commander/commander-nginx-configmap.yaml") . | sha256sum }}
         {{- end }}
 {{- if .Values.global.podAnnotations }}
@@ -155,9 +155,9 @@ spec:
             - name: COMMANDER_AIRGAPPED
               value: {{ ternary "true" "false" .Values.commander.airGapped.enabled | quote  }}
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
-              value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
+              value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
-              value: {{ if .Values.global.features.rbac.enabled }}"true"{{ else }}"false"{{ end }}
+              value: {{ if .Values.global.rbac.enabled }}"true"{{ else }}"false"{{ end }}
             {{- if .Values.global.privateCaCerts }}
             - name: UPDATE_CA_CERTS
               value: "true"
@@ -181,10 +181,10 @@ spec:
           {{- if .Values.commander.extraContainers }}
           {{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
           {{- end }}
-        {{- if and .Values.global.features.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: auth-proxy
           image: {{ template "authSidecar.image" . }}
-          imagePullPolicy: {{ .Values.global.features.authSidecar.pullPolicy }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           ports:
             - name: nginx-http
               containerPort: {{ .Values.ports.commanderSidecarHTTP }}
@@ -201,7 +201,7 @@ spec:
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
               readOnly: true
-          resources: {{- toYaml .Values.global.features.authSidecar.resources | nindent 12 }}
+          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
           livenessProbe:
             httpGet:
               path: /nginx-health
@@ -224,7 +224,7 @@ spec:
           emptyDir: {}
         - name: tmp-workspace
           emptyDir: {}
-        {{- if and .Values.global.features.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
+        {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
         - name: nginx-conf
           configMap:
             name: {{ .Release.Name }}-commander-nginx-conf

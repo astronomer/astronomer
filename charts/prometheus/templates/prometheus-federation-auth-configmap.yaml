@@ -31,7 +31,7 @@ data:
         }
 
         server {
-            listen {{ .Values.global.features.authSidecar.port }};
+            listen {{ .Values.global.authSidecar.port }};
             server_name _;
 
             # Disable Nginx Server version

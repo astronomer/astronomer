@@ -180,39 +180,39 @@ spec:
           {{- if .Values.extraEnvVars}}
             {{- toYaml .Values.extraEnvVars | nindent 12 -}}
           {{- end }}
-        {{- if .Values.global.features.authSidecar.enabled }}
+        {{- if .Values.global.authSidecar.enabled }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
-          imagePullPolicy: {{ .Values.global.features.authSidecar.pullPolicy }}
-          {{- if .Values.global.features.authSidecar.resources }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          {{- if .Values.global.authSidecar.resources }}
           resources:
-{{ toYaml .Values.global.features.authSidecar.resources | nindent 12 }}
+{{ toYaml .Values.global.authSidecar.resources | nindent 12 }}
           {{- end }}
           ports:
-          - containerPort: {{ .Values.global.features.authSidecar.port }}
+          - containerPort: {{ .Values.global.authSidecar.port }}
             name: auth-proxy
             protocol: TCP
-          {{- if .Values.global.features.authSidecar.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.global.features.authSidecar.readinessProbe) . | nindent 12 }}
+          {{- if .Values.global.authSidecar.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
           {{- else }}
           readinessProbe:
             httpGet:
               path: /healthz
-              port: {{ .Values.global.features.authSidecar.port }}
+              port: {{ .Values.global.authSidecar.port }}
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
           {{- end }}
-          {{- if .Values.global.features.authSidecar.livenessProbe }}
-          livenessProbe: {{ tpl (toYaml .Values.global.features.authSidecar.livenessProbe) . | nindent 12 }}
+          {{- if .Values.global.authSidecar.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.global.authSidecar.livenessProbe) . | nindent 12 }}
           {{- else }}
           livenessProbe:
             httpGet:
               path: /healthz
-              port: {{ .Values.global.features.authSidecar.port }}
+              port: {{ .Values.global.authSidecar.port }}
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
@@ -228,7 +228,7 @@ spec:
       volumes:
         - name: var-lib-grafana
           emptyDir: {}
-        {{- if .Values.global.features.authSidecar.enabled }}
+        {{- if .Values.global.authSidecar.enabled }}
         - name: grafana-sidecar-conf
           configMap:
             name: {{ template "grafana.fullname" . }}-nginx-conf

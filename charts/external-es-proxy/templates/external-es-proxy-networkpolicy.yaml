@@ -1,7 +1,7 @@
 #######################################
 ## Elasticsearch Proxy NetworkPolicy ##
 #######################################
-{{- if .Values.global.features.networkPolicy.enabled }}
+{{- if .Values.global.networkPolicy.enabled }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -34,7 +34,7 @@ spec:
         matchLabels:
           tier: airflow
           component: api-server
-    {{- if .Values.global.features.loggingSidecar.enabled }}
+    {{- if .Values.global.logging.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:
         matchExpressions:
@@ -57,16 +57,16 @@ spec:
       port: {{ .Values.service.securehttp }}
   - from:
     {{- if (eq .Values.global.plane.mode "data") }}
-    {{- if .Values.global.features.authSidecar.enabled }}
+    {{- if .Values.global.authSidecar.enabled }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
-    {{- if .Values.global.features.authSidecar.ingressAllowedNamespaces }}
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
     - namespaceSelector:
         matchExpressions:
         - key: kubernetes.io/metadata.name
           operator: In
-          values: {{ .Values.global.features.authSidecar.ingressAllowedNamespaces | toJson }}
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
     {{- end }}
     {{- else }}
     - podSelector:

@@ -70,11 +70,9 @@ def get_images_from_values_yaml():
     af_images = values["global"]["airflow"]["images"]
     images = [f"{i['repository']}:{i['tag']}" for i in af_images.values()]
     images.extend(f"{image['repository']}:{image['tag']}" for image in af_images.values())
+    images.append(f"{values['global']['authSidecar']['repository']}:{values['global']['authSidecar']['tag']}")
     images.append(
-        f"{values['global']['features']['authSidecar']['repository']}:{values['global']['features']['authSidecar']['tag']}"
-    )
-    images.append(
-        f"{values['global']['features']['dagOnlyDeployment']['repository']}:{values['global']['features']['dagOnlyDeployment']['tag']}"
+        f"{values['global']['deployMechanisms']['dagOnlyDeployment']['repository']}:{values['global']['deployMechanisms']['dagOnlyDeployment']['tag']}"
     )
     images.append(
         f"{values['global']['gitSyncRelay']['images']['gitDaemon']['repository']}:{values['global']['gitSyncRelay']['images']['gitDaemon']['tag']}"
@@ -83,7 +81,7 @@ def get_images_from_values_yaml():
         f"{values['global']['gitSyncRelay']['images']['gitSync']['repository']}:{values['global']['gitSyncRelay']['images']['gitSync']['tag']}"
     )
     images.append(
-        f"{values['global']['features']['loggingSidecar']['repository']}:{values['global']['features']['loggingSidecar']['tag']}"
+        f"{values['global']['logging']['loggingSidecar']['repository']}:{values['global']['logging']['loggingSidecar']['tag']}"
     )
     images.append(
         f"{values['global']['privateCaCertsAddToHost']['certCopier']['repository']}:{values['global']['privateCaCertsAddToHost']['certCopier']['tag']}"

@@ -18,8 +18,8 @@ spec:
     release: {{ .Release.Name }}
   ports:
   - name: http
-    port: {{ .Values.global.features.authSidecar.port | default 80 }}
-    targetPort: {{ .Values.global.features.authSidecar.port | default 80 }}
+    port: {{ .Values.global.authSidecar.port | default 80 }}
+    targetPort: {{ .Values.global.authSidecar.port | default 80 }}
     appProtocol: http
   type: ClusterIP
 {{- end }}

@@ -2,7 +2,7 @@
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{- .Values.global.logging.indexNamePrefix -}}
 {{- else -}}
-{{- if .Values.global.features.loggingSidecar.enabled  -}}
+{{- if .Values.global.logging.loggingSidecar.enabled  -}}
 vector
 {{- else -}}
 fluentd
@@ -26,25 +26,25 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "dagOnlyDeployment.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.features.dagOnlyDeployment.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.deployMechanisms.dagOnlyDeployment.tag }}
 {{- else -}}
-{{ .Values.global.features.dagOnlyDeployment.repository }}:{{ .Values.global.features.dagOnlyDeployment.tag }}
+{{ .Values.global.deployMechanisms.dagOnlyDeployment.repository }}:{{ .Values.global.deployMechanisms.dagOnlyDeployment.tag }}
 {{- end }}
 {{- end }}
 
 {{ define "authSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.features.authSidecar.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.authSidecar.tag }}
 {{- else -}}
-{{ .Values.global.features.authSidecar.repository }}:{{ .Values.global.features.authSidecar.tag }}
+{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}
 {{- end }}
 {{- end }}
 
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.features.loggingSidecar.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.logging.loggingSidecar.tag }}
 {{- else -}}
-{{ .Values.global.features.loggingSidecar.repository }}:{{ .Values.global.features.loggingSidecar.tag }}
+{{ .Values.global.logging.loggingSidecar.repository }}:{{ .Values.global.logging.loggingSidecar.tag }}
 {{- end }}
 {{- end }}
 

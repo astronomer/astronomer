@@ -50,7 +50,7 @@ imagePullSecrets:
 {{- end -}}
 
 {{ define "kube-state.serviceAccountName" -}}
-{{- if and .Values.serviceAccount.create .Values.global.features.rbac.enabled -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "kube-state.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}

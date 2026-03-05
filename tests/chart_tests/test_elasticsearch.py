@@ -308,7 +308,7 @@ class TestElasticSearch:
         """Test Nginx ES Service with NetworkPolicies."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"loggingSidecar": {"enabled": True}}}},
+            values={"global": {"logging": {"loggingSidecar": {"enabled": True}}}},
             show_only=[
                 "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
             ],
@@ -417,7 +417,7 @@ class TestElasticSearch:
         """Test Nginx ES Service Index Pattern Search with sidecar logging."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"loggingSidecar": {"enabled": True}}}},
+            values={"global": {"logging": {"loggingSidecar": {"enabled": True}}}},
             show_only=[
                 "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
             ],
@@ -446,8 +446,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {"loggingSidecar": {"enabled": True}},
-                    "logging": {"indexNamePrefix": "astronomer"},
+                    "logging": {"loggingSidecar": {"enabled": True}, "indexNamePrefix": "astronomer"},
                 }
             },
             show_only=[
@@ -588,7 +587,7 @@ class TestElasticSearch:
         indexPattern = "%Y.%m"
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"loggingSidecar": {"enabled": True, "indexPattern": indexPattern}}}},
+            values={"global": {"logging": {"loggingSidecar": {"enabled": True, "indexPattern": indexPattern}}}},
             show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
         )
         assert len(docs) == 1
@@ -801,7 +800,7 @@ class TestElasticSearch:
         elasticsearch with SA disabled."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"scc": {"enabled": True}}}},
+            values={"global": {"scc": {"enabled": True}}},
             show_only=[
                 "charts/elasticsearch/templates/es-scc.yaml",
             ],

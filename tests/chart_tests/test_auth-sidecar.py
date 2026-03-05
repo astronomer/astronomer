@@ -26,7 +26,7 @@ class TestAuthSidecar:
         """Test Alertmanager Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"authSidecar": {"enabled": True}}}},
+            values={"global": {"authSidecar": {"enabled": True}}},
             show_only=[
                 "charts/alertmanager/templates/alertmanager-statefulset.yaml",
                 "charts/alertmanager/templates/alertmanager-auth-sidecar-configmap.yaml",
@@ -79,13 +79,11 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "authSidecar": {
-                            "enabled": True,
-                            "repository": "someregistry.io/my-custom-image",
-                            "tag": "my-custom-tag",
-                            "resources": custom_resources,
-                        }
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "resources": custom_resources,
                     }
                 }
             },
@@ -114,7 +112,7 @@ class TestAuthSidecar:
         """Test Prometheus Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"authSidecar": {"enabled": True}}}},
+            values={"global": {"authSidecar": {"enabled": True}}},
             show_only=[
                 "charts/prometheus/templates/prometheus-statefulset.yaml",
                 "charts/prometheus/templates/prometheus-auth-sidecar-configmap.yaml",
@@ -169,13 +167,11 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "authSidecar": {
-                            "enabled": True,
-                            "repository": "someregistry.io/my-custom-image",
-                            "tag": "my-custom-tag",
-                        },
-                    }
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                    },
                 }
             },
             show_only=[
@@ -204,12 +200,10 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "authSidecar": {
-                            "enabled": True,
-                            "repository": "someregistry.io/my-custom-image",
-                            "tag": "my-custom-tag",
-                        },
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
                     },
                     "extraAnnotations": {
                         "kubernetes.io/ingress.class": "astronomer-nginx",
@@ -246,14 +240,12 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "authSidecar": {
-                            "enabled": True,
-                            "repository": "someregistry.io/my-custom-image",
-                            "tag": "my-custom-tag",
-                            "securityContext": {"runAsUser": 1000},
-                        },
-                    }
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "securityContext": {"runAsUser": 1000},
+                    },
                 }
             },
             show_only=[
@@ -284,15 +276,13 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "authSidecar": {
-                            "enabled": True,
-                            "ingressAllowedNamespaces": ["astronomer", "ingress"],
-                            "repository": "someregistry.io/my-custom-image",
-                            "tag": "my-custom-tag",
-                            "securityContext": {"runAsUser": 1000},
-                        },
-                    }
+                    "authSidecar": {
+                        "enabled": True,
+                        "ingressAllowedNamespaces": ["astronomer", "ingress"],
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "securityContext": {"runAsUser": 1000},
+                    },
                 }
             },
             show_only=[
@@ -322,7 +312,7 @@ class TestAuthSidecar:
         Only include networkpolicies that have the network.openshift.io/policy-group: ingress label."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}}},
+            values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
             show_only=[
                 "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
@@ -345,11 +335,7 @@ class TestAuthSidecar:
 
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}
-                }
-            },
+            values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}},
             show_only=[
                 "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
@@ -381,7 +367,7 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}},
+                    "authSidecar": {"enabled": True, "ingressAllowedNamespaces": []},
                     "plane": {"mode": "data"},
                 }
             },
@@ -404,7 +390,7 @@ class TestAuthSidecar:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "features": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}},
+                    "authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]},
                 }
             },
             show_only=[

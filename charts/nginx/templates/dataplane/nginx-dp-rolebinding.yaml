@@ -3,7 +3,7 @@
 #####################################################
 {{- if eq .Values.global.plane.mode "data" }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
-{{- if .Values.global.features.rbac.enabled }}
+{{- if .Values.global.rbac.enabled }}
 kind: ClusterRoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:

@@ -69,10 +69,8 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                        "rbac": {"enabled": True},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -115,13 +113,13 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
-                        "rbac": {"enabled": True},
+                        }
                     },
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -168,10 +166,8 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                        "rbac": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": False},
                 }
             },
             show_only=[
@@ -189,13 +185,13 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
-                        "rbac": {"enabled": True},
+                        }
                     },
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -213,7 +209,7 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {"rbac": {"enabled": True}},
+                    "rbac": {"enabled": True},
                 },
                 "astronomer": {
                     "securityContext": {
@@ -243,10 +239,8 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                        "rbac": {"enabled": True},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -301,7 +295,7 @@ class TestAstronomerConfigSyncer:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"features": {"rbac": {"enabled": True}}},
+                "global": {"rbac": {"enabled": True}},
                 "astronomer": {"configSyncer": {"enabled": True, "serviceAccount": {"create": False}}},
             },
             show_only=[
@@ -320,7 +314,7 @@ class TestAstronomerConfigSyncer:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"features": {"namespacePools": {"enabled": True}, "rbac": {"enabled": True}}},
+                "global": {"namespaceManagement": {"namespacePools": {"enabled": True}}, "rbac": {"enabled": True}},
                 "astronomer": {"configSyncer": {"enabled": True, "serviceAccount": {"create": False}}},
             },
             show_only=[

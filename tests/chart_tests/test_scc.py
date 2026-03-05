@@ -32,10 +32,8 @@ class TestScc:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
-                        "scc": {"enabled": False},
-                        "namespacePools": {"enabled": False},
-                    },
+                    "scc": {"enabled": False},
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
                 }
             },
             show_only=show_only,
@@ -54,10 +52,8 @@ class TestScc:
             values={
                 "global": {
                     "clusterRoles": True,
-                    "features": {
-                        "scc": {"enabled": True},
-                        "namespacePools": {"enabled": False},
-                    },
+                    "scc": {"enabled": True},
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
                 }
             },
             show_only=show_only,

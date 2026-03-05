@@ -2,12 +2,12 @@
 ## Kube State Role/ClusterRole ##
 #################################
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
-{{- $namespacepoolsRBACresources:= and .Values.global.features.namespacePools.createRbac .Values.global.features.namespacePools.enabled }}
-{{- $useRoles := .Values.global.features.namespacePools.enabled }}
-{{- $useClusterRoles := and .Values.global.features.rbac.enabled .Values.global.clusterRoles (not $useRoles )}}
-{{- $shouldCreateResources := and .Values.global.features.rbac.enabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
+{{- $namespacepoolsRBACresources:= and .Values.global.namespaceManagement.namespacePools.createRbac .Values.global.namespaceManagement.namespacePools.enabled }}
+{{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}
+{{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not $useRoles )}}
+{{- $shouldCreateResources := and .Values.global.rbac.enabled (or (and .Values.global.clusterRoles (not .Values.global.namespaceManagement.namespacePools.enabled )) $namespacepoolsRBACresources) }}
 {{- if $shouldCreateResources }}
-{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
 {{- else  }}

@@ -1,7 +1,7 @@
 ################################
 ## Prometheus NetworkPolicy   ##
 ################################
-{{- if .Values.global.features.networkPolicy.enabled }}
+{{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -48,16 +48,16 @@ spec:
           component: pgbouncer
           release: {{ .Release.Name }}
     {{- end }}
-    {{- if .Values.global.features.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
-    {{- if .Values.global.features.authSidecar.ingressAllowedNamespaces }}
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
     - namespaceSelector:
         matchExpressions:
         - key: kubernetes.io/metadata.name
           operator: In
-          values: {{ .Values.global.features.authSidecar.ingressAllowedNamespaces | toJson }}
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
     {{- end }}
     {{- else }}
     - podSelector:
@@ -75,8 +75,8 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.ports.http }}
-    {{- if .Values.global.features.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled  }}
     - protocol: TCP
-      port: {{ .Values.global.features.authSidecar.port }}
+      port: {{ .Values.global.authSidecar.port }}
     {{- end }}
 {{- end }}

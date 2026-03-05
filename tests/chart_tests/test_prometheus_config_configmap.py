@@ -156,7 +156,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             namespace=namespace,
             values={
-                "global": {"features": {"namespacePools": {"enabled": False}}},
+                "global": {"namespaceManagement": {"namespacePools": {"enabled": False}}},
                 "astronomer": {
                     "houston": {
                         "config": {"deployments": {"namespaceFreeFormEntry": False}},
@@ -185,7 +185,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             values={
-                "global": {"features": {"namespaceFreeFormEntry": {"enabled": True}}},
+                "global": {"namespaceManagement": {"namespaceFreeFormEntry": {"enabled": True}}},
             },
         )[0]
         self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
@@ -217,7 +217,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {"enabled": True},
                         "namespaceFreeFormEntry": {"enabled": False},
                     },
@@ -234,7 +234,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "features": {"namespacePools": {"enabled": False}},
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
                     "manualNamespaceNamesEnabled": True,
                 }
             },

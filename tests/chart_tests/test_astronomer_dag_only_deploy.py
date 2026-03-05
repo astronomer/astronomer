@@ -25,7 +25,7 @@ class TestDagOnlyDeploy:
         """Test dagonlydeploy Service Account overrides."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"dagOnlyDeployment": {"enabled": True, "serviceAccount": {"create": True}}}}},
+            values={"global": {"deployMechanisms": {"dagOnlyDeployment": {"enabled": True, "serviceAccount": {"create": True}}}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
@@ -47,15 +47,15 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "deployMechanisms": {
                         "dagOnlyDeployment": {
                             "enabled": True,
                             "repository": images.split(":")[0],
                             "tag": images.split(":")[1],
                             "securityContexts": {"pod": {"fsGroup": 55555}, "container": {"runAsUser": 12345}},
                             "resources": resources,
-                        }
-                    }
+                        },
+                    },
                 }
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -81,7 +81,7 @@ class TestDagOnlyDeploy:
         """Test dagonlydeploy Service defaults."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"features": {"dagOnlyDeployment": {"enabled": True}}}},
+            values={"global": {"deployMechanisms": {"dagOnlyDeployment": {"enabled": True}}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
@@ -99,7 +99,7 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "deployMechanisms": {
                         "dagOnlyDeployment": {
                             "enabled": True,
                         },
@@ -125,12 +125,12 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "deployMechanisms": {
                         "dagOnlyDeployment": {
                             "enabled": True,
                         },
-                        "openshift": {"enabled": True},
                     },
+                    "openshift": {"enabled": True},
                 }
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -148,7 +148,7 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "deployMechanisms": {
                         "dagOnlyDeployment": {
                             "enabled": True,
                             "securityContexts": {"pod": {"fsGroup": "auto"}},
@@ -177,7 +177,7 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "deployMechanisms": {
                         "dagOnlyDeployment": {
                             "enabled": True,
                             "persistence": persistenceRetain,
@@ -206,7 +206,7 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "deployMechanisms": {
                         "dagOnlyDeployment": {
                             "enabled": True,
                             "persistence": persistenceRetain,
@@ -245,15 +245,15 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "deployMechanisms": {
                         "dagOnlyDeployment": {
                             "enabled": True,
                             "repository": images.split(":")[0],
                             "tag": images.split(":")[1],
                             "server": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
                             "client": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
-                        }
-                    }
+                        },
+                    },
                 }
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -282,7 +282,7 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "deployMechanisms": {
                         "dagOnlyDeployment": {
                             "enabled": True,
                             "repository": images.split(":")[0],
@@ -292,8 +292,8 @@ class TestDagOnlyDeploy:
                                 "affinity": global_platform_node_pool_config["affinity"],
                                 "tolerations": global_platform_node_pool_config["tolerations"],
                             },
-                        }
-                    }
+                        },
+                    },
                 }
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],

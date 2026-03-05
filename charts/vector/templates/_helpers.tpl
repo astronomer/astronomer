@@ -54,7 +54,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "vector.serviceAccountName" -}}
-{{- if and .Values.serviceAccount.create .Values.global.features.rbac.enabled -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "vector.fullname" . )) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}

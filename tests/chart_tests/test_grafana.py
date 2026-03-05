@@ -154,7 +154,7 @@ def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
     # Test with auth sidecar enabled
     docs = render_chart(
         kube_version=kube_version,
-        values={"global": {"plane": {"mode": plane_mode}, "features": {"authSidecar": {"enabled": True}}}},
+        values={"global": {"plane": {"mode": plane_mode}, "authSidecar": {"enabled": True}}},
         show_only=[DEPLOYMENT_FILE],
     )
 
@@ -203,7 +203,7 @@ def test_grafana_auth_sidecar_disabled_no_sidecar_volumes(kube_version, plane_mo
     """Test that when auth sidecar is disabled, auth-proxy container and tmp volume are not present."""
     docs = render_chart(
         kube_version=kube_version,
-        values={"global": {"plane": {"mode": plane_mode}, "features": {"authSidecar": {"enabled": False}}}},
+        values={"global": {"plane": {"mode": plane_mode}, "authSidecar": {"enabled": False}}},
         show_only=[DEPLOYMENT_FILE],
     )
 

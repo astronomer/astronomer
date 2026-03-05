@@ -16,7 +16,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{ define "prometheus.serviceAccountName" -}}
-{{- if and .Values.serviceAccount.create .Values.global.features.rbac.enabled -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "prometheus.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}
@@ -101,7 +101,7 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "prometheus.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.features.openshift.enabled ) }}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
 {{- omit  .Values.securityContext "runAsUser" | toYaml }}
 {{- end -}}
 {{- end }}

@@ -305,7 +305,7 @@ storageClassName: {{ or .Values.persistence.storageClass .Values.global.storageC
 {{- end -}}
 
 {{ define "postgresql.serviceAccountName" -}}
-{{- if and .Values.serviceAccount.create .Values.global.features.rbac.enabled -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "postgresql.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}

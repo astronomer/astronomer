@@ -26,7 +26,7 @@ class TestAstronomerCommander:
         """Test that helm renders a good metadata.yaml template for astronomer/commander."""
         values = {
             "global": {
-                "features": {"rbac": {"enabled": rbac_enabled}},
+                "rbac": {"enabled": rbac_enabled},
                 "namespaceLabels": namespace_labels,
             }
         }
@@ -187,10 +187,8 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "clusterRoles": True,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                        "rbac": {"enabled": True},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -230,10 +228,8 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "clusterRoles": True,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                        "rbac": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": False},
                 }
             },
             show_only=[
@@ -250,10 +246,8 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "clusterRoles": False,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                        "rbac": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": False},
                 }
             },
             show_only=[
@@ -271,10 +265,8 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "clusterRoles": False,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                        "rbac": {"enabled": True},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -339,14 +331,14 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
-                        "rbac": {"enabled": True},
-                        "scc": {"enabled": True},
+                        }
                     },
+                    "rbac": {"enabled": True},
+                    "scc": {"enabled": True},
                 }
             },
             show_only=[
@@ -415,11 +407,9 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "clusterRoles": True,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                        "rbac": {"enabled": True},
-                        "scc": {"enabled": True},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
+                    "scc": {"enabled": True},
                 }
             },
             show_only=[
@@ -569,14 +559,11 @@ class TestAstronomerCommander:
             },
         }
         if auth_sidecar_enabled:
-            values["global"]["features"] = {
-                **values["global"].get("features", {}),
-                "authSidecar": {
-                    "enabled": True,
-                    "repository": "quay.io/astronomer/ap-auth-sidecar",
-                    "tag": "1.27.4-3",
-                    "pullPolicy": "IfNotPresent",
-                },
+            values["global"]["authSidecar"] = {
+                "enabled": True,
+                "repository": "quay.io/astronomer/ap-auth-sidecar",
+                "tag": "1.27.4-3",
+                "pullPolicy": "IfNotPresent",
             }
 
         docs = render_chart(

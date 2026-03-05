@@ -1,35 +1,36 @@
 # Feature flag configuration path migration
 
-This document maps every relocated Helm value from the previous scattered layout to the new unified `global.features.*` structure. Use it when upgrading custom `values.yaml` overrides to the current chart version.
+This document maps every relocated Helm value from the previous scattered layout to the new structure directly under `global.*`. Use it when upgrading custom `values.yaml` overrides to the current chart version.
 
 ## Why this changed
 
-Feature flags were previously spread across the root of `global` with inconsistent naming (boolean suffixes like `rbacEnabled`, nested objects like `authSidecar`, standalone booleans like `namespaceFreeFormEntry`). They are now consolidated under `global.features.*` with a consistent `enabled` boolean pattern.
+Feature flags were previously spread across `global` with inconsistent naming (boolean suffixes like `rbacEnabled`, nested objects like `authSidecar`, standalone booleans like `namespaceFreeFormEntry`). They now use a consistent `enabled` boolean pattern with domain-grouped nesting that mirrors Houston's `default.yaml` schema. The intermediate `global.features.*` key was removed to keep Helm values aligned with Houston's config paths.
 
 ## Migration table
 
-### Simple boolean flags
+### Simple feature flags (directly under global)
 
 | Old path | New path |
 |---|---|
-| `global.rbacEnabled` | `global.features.rbac.enabled` |
-| `global.sccEnabled` | `global.features.scc.enabled` |
-| `global.openshiftEnabled` | `global.features.openshift.enabled` |
-| `global.networkPolicy.enabled` | `global.features.networkPolicy.enabled` |
-| `global.networkNSLabels` | `global.features.networkNSLabels.enabled` |
-| `global.namespaceFreeFormEntry` | `global.features.namespaceFreeFormEntry.enabled` |
-| `global.taskUsageMetricsEnabled` | `global.features.taskUsageMetrics.enabled` |
-| `global.deployRollbackEnabled` | `global.features.deployRollback.enabled` |
+| `global.rbacEnabled` | `global.rbac.enabled` |
+| `global.sccEnabled` | `global.scc.enabled` |
+| `global.openshiftEnabled` | `global.openshift.enabled` |
+| `global.networkPolicy.enabled` | `global.networkPolicy.enabled` (unchanged) |
+| `global.networkNSLabels` | `global.networkNSLabels.enabled` |
+| `global.authSidecar.*` | `global.authSidecar.*` (unchanged) |
 
-### Complex configuration blocks
+### Domain-grouped features
 
-These blocks moved in their entirety. All nested keys remain the same.
+These features are nested under domain groups that mirror the Houston API config schema.
 
-| Old path | New path |
-|---|---|
-| `global.dagOnlyDeployment.*` | `global.features.dagOnlyDeployment.*` |
-| `global.loggingSidecar.*` | `global.features.loggingSidecar.*` |
-| `global.authSidecar.*` | `global.features.authSidecar.*` |
+| Old path | New path | Houston domain group |
+|---|---|---|
+| `global.namespaceFreeFormEntry` | `global.namespaceManagement.namespaceFreeFormEntry.enabled` | `deployments.namespaceManagement` |
+| `global.namespacePools.*` | `global.namespaceManagement.namespacePools.*` | `deployments.namespaceManagement` |
+| `global.taskUsageMetricsEnabled` | `global.metricsReporting.taskUsageMetrics.enabled` | `deployments.metricsReporting` |
+| `global.deployRollbackEnabled` | `global.deploymentLifecycle.deployRollback.enabled` | `deployments.deploymentLifecycle` |
+| `global.dagOnlyDeployment.*` | `global.deployMechanisms.dagOnlyDeployment.*` | `deployments.deployMechanisms` |
+| `global.loggingSidecar.*` | `global.logging.loggingSidecar.*` | `deployments.logging` |
 
 ### Houston configmap output changes
 
@@ -68,7 +69,8 @@ The following `global.*` values were **not** moved and remain at their original 
 - `global.nats.*`
 - `global.airflowOperator.*`
 - `global.istio.*`
-- `global.logging.*`
+- `global.logging.indexNamePrefix`
+- `global.logging.provider`
 - `global.pgbouncer.*`
 - `global.podLabels`
 - `global.podAnnotations`
@@ -112,18 +114,18 @@ global:
 ```yaml
 global:
   baseDomain: example.com
-  features:
-    rbac:
-      enabled: true
-    scc:
-      enabled: false
-    openshift:
-      enabled: false
-    authSidecar:
-      enabled: true
-      port: 8084
+  rbac:
+    enabled: true
+  scc:
+    enabled: false
+  openshift:
+    enabled: false
+  networkPolicy:
+    enabled: true
+  authSidecar:
+    enabled: true
+    port: 8084
+  deployMechanisms:
     dagOnlyDeployment:
-      enabled: true
-    networkPolicy:
       enabled: true
 ```

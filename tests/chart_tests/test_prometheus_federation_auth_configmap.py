@@ -106,7 +106,7 @@ class TestPrometheusFederationAuthConfigMap:
         """Test the server block configuration."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}, "features": {"authSidecar": {"port": 8080}}}},
+            values={"global": {"plane": {"mode": "data"}, "authSidecar": {"port": 8080}}},
             show_only=["charts/prometheus/templates/prometheus-federation-auth-configmap.yaml"],
         )
 
