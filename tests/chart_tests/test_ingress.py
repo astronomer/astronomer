@@ -347,28 +347,6 @@ class TestIngress:
                 f"Expected ingressClassName to be {expected_class_name} for {description} in {ingress_file}"
             )
 
-    def test_all_ingresses_have_ingressClassName_spec(self, kube_version):
-        """Test that all Ingress resources always have spec.ingressClassName"""
-        # Render all templates
-        docs = render_chart(kube_version=kube_version)
-
-        # Filter for Ingress resources
-        ingresses = [doc for doc in docs if doc.get("kind") == "Ingress"]
-
-        # There should be ingresses rendered
-        assert len(ingresses) > 0, "Expected at least one Ingress resource"
-
-        # Check each ingress has ingressClassName in spec
-        for ingress in ingresses:
-            ingress_name = ingress["metadata"]["name"]
-            assert "ingressClassName" in ingress["spec"], f"Ingress '{ingress_name}' missing spec.ingressClassName"
-            # Verify it's not empty
-            assert ingress["spec"]["ingressClassName"], f"Ingress '{ingress_name}' has empty spec.ingressClassName"
-            # Should default to release-name-nginx
-            assert ingress["spec"]["ingressClassName"] == "release-name-nginx", (
-                f"Ingress '{ingress_name}' has unexpected ingressClassName: {ingress['spec']['ingressClassName']}"
-            )
-
     @pytest.mark.parametrize(
         ("config_type", "values", "expected_class"),
         [
