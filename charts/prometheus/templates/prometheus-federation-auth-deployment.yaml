@@ -32,9 +32,7 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/prom-auth-config: {{ include (print $.Template.BasePath "/prometheus-federation-auth-configmap.yaml") . | sha256sum }}
-        {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "registry.authHeaderSecret" .)) | default dict }}
-        {{- $secretData := (get $secretObj "data") | default dict }}
-        checksum/registry-secret: {{ $secretData | toJson | sha256sum }}
+        checksum/registry-auth-secret: {{ include "registry-auth-secret" . | sha256sum }}
       {{- if .Values.global.podAnnotations }}
       {{- toYaml .Values.global.podAnnotations | nindent 8 }}
       {{- end }}
