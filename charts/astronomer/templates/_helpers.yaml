@@ -126,10 +126,6 @@
 /usr/local/share/ca-certificates/registry.crt
 {{- end }}
 
-{{ define "registry.authSecret" -}}
-{{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
-{{- end }}
-
 {{ define "registry.serviceAccountName" -}}
 {{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-registry" .Release.Name ) .Values.registry.serviceAccount.name }}
