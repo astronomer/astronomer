@@ -408,11 +408,11 @@ workflows:
                 - quay.io/astronomer/ap-auth-sidecar:1.29.4
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-23
                 - quay.io/astronomer/ap-base:2026.02.25
-                - quay.io/astronomer/ap-commander:1.1.4
+                - quay.io/astronomer/ap-commander:1.1.5
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0-2
                 - quay.io/astronomer/ap-curator:8.0.21-9
                 - quay.io/astronomer/ap-dag-deploy:0.9.3
-                - quay.io/astronomer/ap-db-bootstrapper:1.1.0
+                - quay.io/astronomer/ap-db-bootstrapper:1.1.1
                 - quay.io/astronomer/ap-default-backend:0.29.2
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.10.0
                 - quay.io/astronomer/ap-elasticsearch:8.18.8
