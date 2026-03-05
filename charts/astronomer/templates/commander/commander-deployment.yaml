@@ -100,7 +100,7 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-            {{ if .Values.global.ssl.enabled }}
+            {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
             - name: SSLMODE
               value: {{ .Values.global.ssl.mode }}
             {{- end }}
@@ -128,7 +128,7 @@ spec:
            - "migrate"
            - "up"
            - "--db"
-           - "$COMMANDER_FLIGHTDECK_DSN"
+           - "$(COMMANDER_FLIGHTDECK_DSN)"
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
