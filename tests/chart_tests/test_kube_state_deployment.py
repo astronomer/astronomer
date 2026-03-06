@@ -79,7 +79,7 @@ class TestKubeStateDeployment:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"names": namespace_pools_list},

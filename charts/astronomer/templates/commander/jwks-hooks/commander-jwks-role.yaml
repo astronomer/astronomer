@@ -1,7 +1,7 @@
 #############################
 ## Commander JWKS Hook Role ##
 #############################
-{{- if .Values.global.rbacEnabled }}
+{{- if .Values.global.rbac.enabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}

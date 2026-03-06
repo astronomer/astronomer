@@ -40,13 +40,13 @@ pod_managers = [
 class TestServiceAccounts:
     def test_serviceaccount_rbac_disabled(self, kube_version):
         """Test that no ServiceAccounts are rendered when rbac is disabled."""
-        docs = render_chart(kube_version=kube_version, values={"global": {"rbacEnabled": False}})
+        docs = render_chart(kube_version=kube_version, values={"global": {"rbac": {"enabled": False}}})
         service_account_names = [doc["metadata"]["name"] for doc in docs if doc["kind"] == "ServiceAccount"]
         assert not service_account_names, f"Expected no ServiceAccounts but found {service_account_names}"
 
     def test_role_created(self, kube_version):
         """Test that no roles or rolebindings are created when rbac is disabled."""
-        values = {"global": {"rbacEnabled": False}}
+        values = {"global": {"rbac": {"enabled": False}}}
 
         docs = [doc for doc in render_chart(kube_version=kube_version, values=values) if doc["kind"] in ["RoleBinding", "Role"]]
         assert not docs
@@ -249,7 +249,10 @@ class TestServiceAccounts:
 def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
-    default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
+    default_serviceaccount_names_overrides = {
+        "global": {"rbac": {"enabled": False}},
+        "postgresql": {"serviceAccount": {"enabled": True}},
+    }
     if "nginx-dp-deployment" in template_name or "prometheus-federation-auth-deployment" in template_name:
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)

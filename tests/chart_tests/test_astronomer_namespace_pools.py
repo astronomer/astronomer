@@ -21,14 +21,14 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
                     "clusterRoles": True,
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
+                        }
                     },
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -73,7 +73,7 @@ class TestAstronomerNamespacePools:
         namespaces = ["my-namespace-1", "my-namespace-2"]
         values = {
             "global": {
-                "features": {
+                "namespaceManagement": {
                     "namespacePools": {
                         "enabled": True,
                         "namespaces": {"create": True, "names": namespaces},
@@ -112,7 +112,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -140,7 +140,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": False, "names": namespaces},
@@ -165,7 +165,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": False, "names": namespaces},
@@ -190,7 +190,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -215,7 +215,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
@@ -228,9 +228,11 @@ class TestAstronomerNamespacePools:
 
         deployments_config = yaml.safe_load(doc["data"]["production.yaml"])
 
-        assert deployments_config["deployments"]["hardDeleteDeployment"]
-        assert deployments_config["deployments"]["manualNamespaceNames"]
-        assert deployments_config["deployments"]["preCreatedNamespaces"] == [{"name": namespace} for namespace in namespaces]
+        assert deployments_config["deployments"]["namespaceManagement"]["hardDeleteDeployment"]["enabled"]
+        assert deployments_config["deployments"]["namespaceManagement"]["manualNamespaceNames"]["enabled"]
+        assert deployments_config["deployments"]["namespaceManagement"]["preCreatedNamespaces"] == [
+            {"name": namespace} for namespace in namespaces
+        ]
         assert "disableManageClusterScopedResources" not in deployments_config["deployments"]
 
     def test_houston_configmap_namespace_pools_disabled_create_true(self, kube_version):
@@ -240,7 +242,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -253,9 +255,9 @@ class TestAstronomerNamespacePools:
 
         deployments_config = yaml.safe_load(doc["data"]["production.yaml"])
 
-        assert "hardDeleteDeployment" not in deployments_config["deployments"]
-        assert "manualNamespaceNames" not in deployments_config["deployments"]
-        assert "preCreatedNamespaces" not in deployments_config["deployments"]
+        assert "hardDeleteDeployment" not in deployments_config["deployments"]["namespaceManagement"]
+        assert "manualNamespaceNames" not in deployments_config["deployments"]["namespaceManagement"]
+        assert "preCreatedNamespaces" not in deployments_config["deployments"]["namespaceManagement"]
 
     def test_namespace_pools_enabled_create_rbac_false(self, kube_version):
         """Test that commander deployment rbac is generating roles and role binding on namespace pools mode."""
@@ -264,7 +266,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "createRbac": False,
@@ -291,7 +293,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
