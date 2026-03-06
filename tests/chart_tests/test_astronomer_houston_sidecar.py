@@ -167,6 +167,8 @@ class TestHoustonSidecarLogging:
             show_only=[
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
                 "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+                "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml"
             ],
             values={},
         )
@@ -192,6 +194,8 @@ class TestHoustonSidecarLogging:
             show_only=[
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
                 "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+                "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml"
             ],
             values={
                 "astronomer": {
@@ -204,7 +208,7 @@ class TestHoustonSidecarLogging:
             },
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 4
         # Test houston deployment sidecar
         c_by_name = get_containers_by_name(docs[0])
         assert len(c_by_name) == 2
