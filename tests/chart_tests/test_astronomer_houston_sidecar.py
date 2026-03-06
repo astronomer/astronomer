@@ -1,6 +1,7 @@
 import pytest
 
 from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
 chart_values = {
@@ -152,3 +153,68 @@ class TestAstronomerFileLogs:
             for volume in volumes:
                 if volume["name"] == "logvol":
                     assert volume["emptyDir"] == {}
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+class TestHoustonSidecarLogging:
+    def test_houston_sidecar_logging_defaults(self, kube_version):
+        docs = render_chart(
+            name="houston-sidecar-logging-defaults",
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+            ],
+            values={},
+        )
+        assert len(docs) == 2
+        for doc in docs:
+            assert doc["kind"] == "Deployment"
+            containers = doc["spec"]["template"]["spec"]["containers"]
+            assert len(containers) == 1
+
+    def test_houston_sidecar_logging_enabled(self, kube_version):
+        resource_defaults = {
+            "limits": {
+                "memory": "256Mi",
+                "cpu": "200m",
+            },
+            "requests": {
+                "memory": "128Mi",
+                "cpu": "50m",
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+            ],
+            values={
+                "astronomer": {
+                    "houston": {
+                        "loggingSidecar": {
+                            "enabled": True,
+                        }
+                    }
+                }
+            },
+        )
+
+        assert len(docs) == 2
+        # Test houston deployment sidecar
+        c_by_name = get_containers_by_name(docs[0])
+        assert len(c_by_name) == 2
+        assert "vector" in c_by_name
+        assert c_by_name["vector"]["image"].startswith("quay.io/astronomer/ap-vector:")
+        assert c_by_name["vector"]["resources"] == resource_defaults
+
+        # Test houston worker deployment sidecar
+        c_by_name = get_containers_by_name(docs[1])
+        assert len(c_by_name) == 2
+        assert "vector" in c_by_name
+        assert c_by_name["vector"]["image"].startswith("quay.io/astronomer/ap-vector:")
+        assert c_by_name["vector"]["resources"] == resource_defaults
