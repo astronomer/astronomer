@@ -168,7 +168,7 @@ class TestHoustonSidecarLogging:
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
                 "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
                 "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
-                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml"
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
             ],
             values={},
         )
@@ -195,7 +195,7 @@ class TestHoustonSidecarLogging:
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
                 "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
                 "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
-                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml"
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
             ],
             values={
                 "astronomer": {
