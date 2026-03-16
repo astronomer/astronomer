@@ -163,6 +163,8 @@ spec:
           successThreshold: 1
         {{- end }}
         volumeMounts:
+        - name: pg-conf
+          mountPath: /var/run/postgresql
         {{- if .Values.persistence.enabled }}
         - name: data
           mountPath: {{ .Values.persistence.mountPath }}
@@ -172,6 +174,8 @@ spec:
         {{- toYaml .Values.slave.extraVolumeMounts | nindent 8 }}
         {{- end }}
       volumes:
+      - name: pg-conf
+        emptyDir: {}
       {{- if .Values.usePasswordFile }}
       - name: postgresql-password
         secret:
