@@ -31,6 +31,7 @@ class TestPostgresql:
         assert len(sts["spec"]["template"]["spec"]["containers"]) == 1
         containers = get_containers_by_name(doc=sts, include_init_containers=True)
         assert containers["release-name-postgresql"]["volumeMounts"] == [
+            {"mountPath": "/var/run/postgresql", "name": "pg-conf"},
             {"mountPath": "/tmp", "name": "tmp"},
             {"name": "data", "mountPath": "/bitnami/postgresql", "subPath": None},
         ]
