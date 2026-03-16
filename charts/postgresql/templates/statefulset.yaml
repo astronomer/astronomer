@@ -169,6 +169,8 @@ spec:
           successThreshold: 1
         {{- end }}
         volumeMounts:
+        - mountPath: /var/run/postgresql
+          name: pg-conf
         - mountPath: /tmp
           name: tmp
         {{- if or (.Files.Glob "files/docker-entrypoint-initdb.d/*.{sh,sql,sql.gz}") .Values.initdbScriptsConfigMap .Values.initdbScripts }}
