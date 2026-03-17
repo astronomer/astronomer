@@ -1,7 +1,7 @@
 FROM debian:trixie
 
 ENV DEVCONTAINER=true
-ENV PATH="/root/.local/bin:$PATH"
+ENV PATH="/root/.local/bin:/root/bin:$PATH"
 
 RUN apt update && apt install -y \
     build-essential \
