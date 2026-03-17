@@ -94,286 +94,7 @@ class TestHoustonWorkerDeployment:
         assert dispatcher_enabled_env is not None
         assert dispatcher_enabled_env["value"] == "false"
 
-    def test_houston_worker_deployment_dispatcher_enabled(self, kube_version):
-        """Test that dispatcher environment variables are set when enabled."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"astronomer": {"houston": {"worker": {"dispatcher": {"enabled": True}}}}},
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["DISPATCHER_ENABLED"] == "true"
-
-    def test_houston_worker_deployment_dispatcher_lease_ttl(self, kube_version):
-        """Test dispatcher lease TTL configuration."""
-        CUSTOM_TTL = 45
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                                "lease": {"ttlSeconds": CUSTOM_TTL},
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["DISPATCH_LEASE_TTL_SECONDS"] == str(CUSTOM_TTL)
-
-    def test_houston_worker_deployment_dispatcher_batch_size(self, kube_version):
-        """Test dispatcher batch size configuration."""
-        CUSTOM_BATCH_SIZE = 100
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                                "batch": {"size": CUSTOM_BATCH_SIZE},
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["DISPATCH_BATCH_SIZE"] == str(CUSTOM_BATCH_SIZE)
-
-    def test_houston_worker_deployment_dispatcher_inflight_limits(self, kube_version):
-        """Test dispatcher inflight limits configuration."""
-        CUSTOM_MAX_INFLIGHT = 75
-        CUSTOM_MAX_INFLIGHT_PER_DP = 10
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                                "inflight": {
-                                    "max": CUSTOM_MAX_INFLIGHT,
-                                    "maxPerDp": CUSTOM_MAX_INFLIGHT_PER_DP,
-                                },
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["DISPATCH_MAX_INFLIGHT"] == str(CUSTOM_MAX_INFLIGHT)
-        assert houston_container_env["DISPATCH_MAX_INFLIGHT_PER_DP"] == str(CUSTOM_MAX_INFLIGHT_PER_DP)
-
-    def test_houston_worker_deployment_dispatcher_poll_seconds(self, kube_version):
-        """Test dispatcher poll interval configuration."""
-        CUSTOM_POLL_SECONDS = 15
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                                "poll": {"seconds": CUSTOM_POLL_SECONDS},
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["DISPATCH_POLL_SECONDS"] == str(CUSTOM_POLL_SECONDS)
-
-    def test_houston_worker_deployment_dispatcher_max_attempts(self, kube_version):
-        """Test dispatcher max attempts configuration."""
-        CUSTOM_ATTEMPTS_PER_LEASE = 8
-        CUSTOM_ATTEMPTS_PER_FLIGHT = 40
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                                "maxAttemptsPerLease": CUSTOM_ATTEMPTS_PER_LEASE,
-                                "maxAttemptsPerFlight": CUSTOM_ATTEMPTS_PER_FLIGHT,
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["DISPATCH_MAX_ATTEMPTS_PER_LEASE"] == str(CUSTOM_ATTEMPTS_PER_LEASE)
-        assert houston_container_env["DISPATCH_MAX_ATTEMPTS_PER_FLIGHT"] == str(CUSTOM_ATTEMPTS_PER_FLIGHT)
-
-    def test_houston_worker_deployment_dispatcher_retry_cooloff(self, kube_version):
-        """Test dispatcher retry cooloff period configuration."""
-        CUSTOM_COOLOFF_SECONDS = 120
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                                "retryCooloffPeriodSeconds": CUSTOM_COOLOFF_SECONDS,
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["DISPATCH_RETRY_COOLOFF_PERIOD"] == str(CUSTOM_COOLOFF_SECONDS)
-
-    def test_houston_worker_deployment_dispatcher_rpc_timeouts(self, kube_version):
-        """Test dispatcher RPC timeout configuration."""
-        CUSTOM_INREGION_TIMEOUT = 8000
-        CUSTOM_CROSSREGION_TIMEOUT = 15000
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                                "rpc": {
-                                    "inRegionTimeoutMs": CUSTOM_INREGION_TIMEOUT,
-                                    "crossRegionTimeoutMs": CUSTOM_CROSSREGION_TIMEOUT,
-                                },
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["IN_REGION_STARTFLIGHT_RPC_TIMEOUT"] == str(CUSTOM_INREGION_TIMEOUT)
-        assert houston_container_env["CROSS_REGION_STARTFLIGHT_RPC_TIMEOUT"] == str(CUSTOM_CROSSREGION_TIMEOUT)
-
-    def test_houston_worker_deployment_dispatcher_circuit_breaker_defaults(self, kube_version):
-        """Test dispatcher circuit breaker default configuration."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["CB_FAILURE_THRESHOLD"] == "10"
-        assert houston_container_env["CB_COOLOFF_SECONDS"] == "30"
-        assert houston_container_env["CB_PROBE_MAX_INFLIGHT"] == "1"
-
-    def test_houston_worker_deployment_dispatcher_circuit_breaker_custom(self, kube_version):
-        """Test dispatcher circuit breaker custom configuration."""
-        CUSTOM_FAILURE_THRESHOLD = 20
-        CUSTOM_COOLOFF_SECONDS = 60
-        CUSTOM_PROBE_MAX_INFLIGHT = 5
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "worker": {
-                            "dispatcher": {
-                                "enabled": True,
-                                "circuitBreaker": {
-                                    "failureThreshold": CUSTOM_FAILURE_THRESHOLD,
-                                    "cooloffSeconds": CUSTOM_COOLOFF_SECONDS,
-                                    "probeMaxInflight": CUSTOM_PROBE_MAX_INFLIGHT,
-                                },
-                            }
-                        }
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
-
-        assert houston_container_env["CB_FAILURE_THRESHOLD"] == str(CUSTOM_FAILURE_THRESHOLD)
-        assert houston_container_env["CB_COOLOFF_SECONDS"] == str(CUSTOM_COOLOFF_SECONDS)
-        assert houston_container_env["CB_PROBE_MAX_INFLIGHT"] == str(CUSTOM_PROBE_MAX_INFLIGHT)
-
-    def test_houston_worker_deployment_all_dispatcher_defaults(self, kube_version):
+    def test_houston_worker_deployment_dispatcher_defaults(self, kube_version):
         """Test all dispatcher default values when enabled."""
         docs = render_chart(
             kube_version=kube_version,
@@ -411,6 +132,64 @@ class TestHoustonWorkerDeployment:
         assert houston_container_env["CB_FAILURE_THRESHOLD"] == "10"
         assert houston_container_env["CB_COOLOFF_SECONDS"] == "30"
         assert houston_container_env["CB_PROBE_MAX_INFLIGHT"] == "1"
+
+    def test_houston_worker_deployment_dispatcher_custom_values(self, kube_version):
+        """Test dispatcher with custom values for all configurable parameters."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "worker": {
+                            "dispatcher": {
+                                "enabled": True,
+                                "lease": {"ttlSeconds": 45},
+                                "batch": {"size": 100},
+                                "inflight": {
+                                    "max": 75,
+                                    "maxPerDp": 10,
+                                },
+                                "poll": {"seconds": 15},
+                                "maxAttemptsPerLease": 8,
+                                "maxAttemptsPerFlight": 40,
+                                "retryCooloffPeriodSeconds": 120,
+                                "rpc": {
+                                    "inRegionTimeoutMs": 8000,
+                                    "crossRegionTimeoutMs": 15000,
+                                },
+                                "circuitBreaker": {
+                                    "failureThreshold": 20,
+                                    "cooloffSeconds": 60,
+                                    "probeMaxInflight": 5,
+                                },
+                            }
+                        }
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
+
+        # Verify all dispatcher custom values
+        assert houston_container_env["DISPATCHER_ENABLED"] == "true"
+        assert houston_container_env["DISPATCH_LEASE_TTL_SECONDS"] == "45"
+        assert houston_container_env["DISPATCH_BATCH_SIZE"] == "100"
+        assert houston_container_env["DISPATCH_MAX_INFLIGHT"] == "75"
+        assert houston_container_env["DISPATCH_MAX_INFLIGHT_PER_DP"] == "10"
+        assert houston_container_env["DISPATCH_POLL_SECONDS"] == "15"
+        assert houston_container_env["DISPATCH_MAX_ATTEMPTS_PER_LEASE"] == "8"
+        assert houston_container_env["DISPATCH_MAX_ATTEMPTS_PER_FLIGHT"] == "40"
+        assert houston_container_env["DISPATCH_RETRY_COOLOFF_PERIOD"] == "120"
+        assert houston_container_env["IN_REGION_STARTFLIGHT_RPC_TIMEOUT"] == "8000"
+        assert houston_container_env["CROSS_REGION_STARTFLIGHT_RPC_TIMEOUT"] == "15000"
+        assert houston_container_env["CB_FAILURE_THRESHOLD"] == "20"
+        assert houston_container_env["CB_COOLOFF_SECONDS"] == "60"
+        assert houston_container_env["CB_PROBE_MAX_INFLIGHT"] == "5"
 
     def test_houston_worker_deployment_private_registry_with_secret_name_defined(self, kube_version):
         """Test houston worker deployment private registry configuration."""
