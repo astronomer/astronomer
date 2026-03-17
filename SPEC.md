@@ -105,6 +105,8 @@ helm template astronomer . \
 
 ### Validating Changes
 
+#### Running Tests
+
 ```bash
 # Run the full unit test suite
 pytest tests/chart_tests/ -v
@@ -112,6 +114,33 @@ pytest tests/chart_tests/ -v
 # Run specific unit test file
 pytest tests/chart_tests/test_nginx.py -v
 ```
+
+#### Pre-Commit Checks with `prek`
+
+All changes must pass pre-commit checks. Use `prek` to run these checks locally before committing:
+
+```bash
+# Run all pre-commit checks
+prek
+
+# Run pre-commit checks on staged files only
+prek run --from-ref origin/main --to-ref HEAD
+
+# Run specific hook
+prek run --hook codespell
+```
+
+**Important**: Ensure `prek` exits with code 0. These checks are also run in CI/CD and must pass before code can be merged.
+
+**What prek checks for:**
+- **Custom validations**: Naming consistency (e.g., `rolebinding` not `role-binding`)
+- **Image tags**: Ensures all Docker images have unique, valid tags
+- **CircleCI config**: Validates consistency between `config.yml` and `config.yml.j2`
+- **Spell checking**: Catches typos and spelling errors (codespell)
+- **Formatting**: Removes tabs, enforces consistent formatting
+- **Python linting**: Runs ruff checks on Python scripts
+
+If checks fail, fix the issues and run `prek` again until it passes.
 
 ---
 
@@ -446,6 +475,12 @@ We will add `values.schema.json` to each chart for:
 ---
 
 ## Code Standards
+
+All code changes in this repository must pass automated checks. Before submitting a pull request:
+
+1. **Run tests**: Ensure all pytest tests pass (see [Testing Strategy](#testing-strategy))
+2. **Run pre-commit checks**: Use `prek` to validate code quality
+3. **Follow naming conventions** and patterns documented below
 
 ### Naming Conventions
 
