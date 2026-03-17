@@ -28,3 +28,6 @@ RUN uv python install 3.14 --default
 # - https://code.claude.com/docs/en/devcontainer
 # - https://github.com/anthropics/claude-code/blob/main/.devcontainer
 RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# TODO: make this use the helm version from metadata.yaml
+RUN curl -fsSL https://get.helm.sh/helm-v3.20.1-linux-amd64.tar.gz | tar --directory=/usr/local/bin/ --strip-components=1 -xzf - linux-amd64/helm
