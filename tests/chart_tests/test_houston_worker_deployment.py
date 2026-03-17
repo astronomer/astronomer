@@ -1,4 +1,3 @@
-import jmespath
 import pytest
 
 from tests import supported_k8s_versions
@@ -421,7 +420,8 @@ class TestHoustonWorkerDeployment:
             show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
             values={"global": {"privateRegistry": {"enabled": True, "secretName": secretName}}},
         )
-        assert jmespath.search("spec.template.spec.imagePullSecrets[0].name", docs[0]) == secretName
+        image_pull_secrets = docs[0]["spec"]["template"]["spec"]["imagePullSecrets"]
+        assert image_pull_secrets[0]["name"] == secretName
 
     def test_houston_worker_deployment_with_custom_replicas(self, kube_version):
         """Test houston worker deployment with custom replica count."""
