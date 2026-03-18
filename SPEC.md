@@ -100,7 +100,8 @@ The chart is built using:
 ```bash
 helm template astronomer . \
   --values values.yaml \
-  --show-only=charts/astronomer/templates/commander/commander-deployment.yaml
+  --show-only=charts/astronomer/templates/commander/commander-role.yaml \
+  --show-only=charts/astronomer/templates/commander/commander-rolebinding.yaml
 ```
 
 ### Validating Changes
