@@ -341,6 +341,55 @@ s3:
 - name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
   value: {{ .Values.houston.updateRuntimeCheck.url }}
 {{- end }}
+{{- /* Dispatcher configuration for houston-worker */ -}}
+{{- if .Values.houston.worker.dispatcher }}
+- name: DISPATCHER_ENABLED
+  value: {{ .Values.houston.worker.dispatcher.enabled | quote }}
+{{- if .Values.houston.worker.dispatcher.lease }}
+- name: DISPATCH_LEASE_TTL_SECONDS
+  value: {{ .Values.houston.worker.dispatcher.lease.ttlSeconds | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.batch }}
+- name: DISPATCH_BATCH_SIZE
+  value: {{ .Values.houston.worker.dispatcher.batch.size | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.inflight }}
+- name: DISPATCH_MAX_INFLIGHT
+  value: {{ .Values.houston.worker.dispatcher.inflight.max | quote }}
+- name: DISPATCH_MAX_INFLIGHT_PER_DP
+  value: {{ .Values.houston.worker.dispatcher.inflight.maxPerDp | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.poll }}
+- name: DISPATCH_POLL_SECONDS
+  value: {{ .Values.houston.worker.dispatcher.poll.seconds | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.maxAttemptsPerLease }}
+- name: DISPATCH_MAX_ATTEMPTS_PER_LEASE
+  value: {{ .Values.houston.worker.dispatcher.maxAttemptsPerLease | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.maxAttemptsPerFlight }}
+- name: DISPATCH_MAX_ATTEMPTS_PER_FLIGHT
+  value: {{ .Values.houston.worker.dispatcher.maxAttemptsPerFlight | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.retryCooloffPeriodSeconds }}
+- name: DISPATCH_RETRY_COOLOFF_PERIOD
+  value: {{ .Values.houston.worker.dispatcher.retryCooloffPeriodSeconds | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.rpc }}
+- name: IN_REGION_STARTFLIGHT_RPC_TIMEOUT
+  value: {{ .Values.houston.worker.dispatcher.rpc.inRegionTimeoutMs | quote }}
+- name: CROSS_REGION_STARTFLIGHT_RPC_TIMEOUT
+  value: {{ .Values.houston.worker.dispatcher.rpc.crossRegionTimeoutMs | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.circuitBreaker }}
+- name: CB_FAILURE_THRESHOLD
+  value: {{ .Values.houston.worker.dispatcher.circuitBreaker.failureThreshold | quote }}
+- name: CB_COOLOFF_SECONDS
+  value: {{ .Values.houston.worker.dispatcher.circuitBreaker.cooloffSeconds | quote }}
+- name: CB_PROBE_MAX_INFLIGHT
+  value: {{ .Values.houston.worker.dispatcher.circuitBreaker.probeMaxInflight | quote }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
