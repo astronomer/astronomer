@@ -186,6 +186,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "dpLink.serviceAccountName" -}}
+{{- if and .Values.dpLink.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-dp-link" .Release.Name ) .Values.dpLink.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.dpLink.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{ define "commander_metadataEnv" -}}
 - name: COMMANDER_ELASTICSEARCH_ENABLED
   value: "true"

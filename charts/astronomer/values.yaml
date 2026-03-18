@@ -383,6 +383,15 @@ dpLink:
   # @default -- true
   enabled: true
 
+  # -- Service account configuration
+  serviceAccount:
+    # -- Specifies whether a service account should be created
+    create: true
+    # -- Annotations to add to the service account
+    annotations: {}
+    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+    name: ""
+
   # -- Number of DP-Link replicas
   # @default -- 3
   replicas: 3
@@ -431,22 +440,19 @@ dpLink:
   podAnnotations: {}
 
   # -- Resource requests and limits
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
 
   # -- Liveness probe configuration
   livenessProbe: {}
 
   # -- Readiness probe configuration
   readinessProbe: {}
-
-  # -- Command to run in the container
-  command: ~
 
   # -- Arguments to pass to the container
   args: ~

@@ -1,8 +1,8 @@
 ###################################
 ## Astronomer DP-Link Deployment ##
 ###################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- if .Values.dpLink.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -43,8 +43,28 @@ spec:
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ .Release.Name }}-dp-link
+      serviceAccountName: {{ template "dpLink.serviceAccountName" . }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
       containers:
         - name: dp-link
           image: {{ template "houston.image" . }}
@@ -54,14 +74,17 @@ spec:
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
           volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
             {{- if .Values.dpLink.volumeMounts }}
             {{- tpl (toYaml .Values.dpLink.volumeMounts) $ | nindent 12 }}
             {{- end }}
-          {{- if .Values.dpLink.command }}
-          command: {{- toYaml .Values.dpLink.command | nindent 12 }}
-          {{- end }}
+          command:
+            - yarn
+            - run
+            - dp-link
           {{- if .Values.dpLink.args }}
           args: {{- toYaml .Values.dpLink.args | nindent 12 }}
           {{- end }}
@@ -100,6 +123,8 @@ spec:
           readinessProbe: {{ tpl (toYaml .Values.dpLink.readinessProbe) $ | nindent 12 }}
           {{- end }}
       volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
         - name: tmp
           emptyDir: {}
         {{- if .Values.dpLink.extraVolumes }}
