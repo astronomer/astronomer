@@ -90,6 +90,14 @@ spec:
           {{- end }}
           env:
             {{- include "houston_environment" . | nindent 12 }}
+            {{- if .Values.dpLink.prismaConnectionLimit }}
+            - name: PRISMA_CONNECTION_LIMIT
+              value: {{ .Values.dpLink.prismaConnectionLimit | quote }}
+            {{- end }}
+            - name: DB_NAME
+              value: {{ .Release.Name }}-houston
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
             # Claim loop configuration
             - name: CLAIM_INTERVAL_SECONDS
               value: {{ .Values.dpLink.claimIntervalSeconds | quote }}
