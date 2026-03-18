@@ -10,7 +10,11 @@ description: Use for Helm chart work - creating charts, modifying existing chart
 **See SPEC.md in the repository root for all APC-specific guidance:**
 
 - **Architecture**: Umbrella chart design, sub-chart organization, design principles
+- **Template Best Practices**: See "Probe Customization Pattern" section
+  - **Critical**: Every container must support customizable livenessProbe and readinessProbe
 - **Testing Strategy**: Pytest patterns, `render_chart()` utilities, test organization, running tests
+  - **Critical**: Read the "Testing Sub-Chart Values" section in SPEC.md for proper values nesting in tests
+  - **Critical**: Read "Testing Probe Customization" section - must add probes to `enable_all_probes.yaml` test data
 - **Code Standards**: Naming conventions, template best practices, Python script standards
 - **Values Documentation**: Helm-docs adoption plan, JSON schema structure
 - **Refactoring Guidelines**: Modernization roadmap and improvement areas
