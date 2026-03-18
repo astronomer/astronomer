@@ -74,6 +74,8 @@ spec:
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
           volumeMounts:
+            {{- include "houston_volume_mounts" . | indent 12 }}
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
             - name: tmp
@@ -89,7 +91,7 @@ spec:
           args: {{- toYaml .Values.dpLink.args | nindent 12 }}
           {{- end }}
           env:
-            {{- include "houston_environment" . | nindent 12 }}
+            {{- include "dp_link_environment" . | nindent 12 }}
             {{- if .Values.dpLink.prismaConnectionLimit }}
             - name: PRISMA_CONNECTION_LIMIT
               value: {{ .Values.dpLink.prismaConnectionLimit | quote }}
@@ -139,5 +141,8 @@ spec:
         {{- if .Values.dpLink.extraVolumes }}
         {{- tpl (toYaml .Values.dpLink.extraVolumes) $ | nindent 8 }}
         {{- end }}
+        {{- include "houston_volumes" . | nindent 8 }}
+        {{- include "custom_ca_volumes" . | indent 8 }}
+
 {{- end }}
 {{- end }}

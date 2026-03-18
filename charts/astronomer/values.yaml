@@ -428,6 +428,24 @@ houston:
 
 # -- DP-Link configuration for data plane linking
 dpLink:
+  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  env:
+    - name: DPLINK_DEBUG_ENABLED
+      value: "true"
+    # - name: DEBUG
+    #   value: "prisma*"
+
+  # -- Extra secret environment variables to insert into the env.
+  # For example
+  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
+  # and then set:
+  #
+  # secret:
+  # - envName: "EMAIL__SMTP_URL"
+  #   secretName: "my-scret"
+  #   secretKey: "connection"
+  secret: []
+
   # -- Enable DP-Link deployment
   # @default -- true
   enabled: true
