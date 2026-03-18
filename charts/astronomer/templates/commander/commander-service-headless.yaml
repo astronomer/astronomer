@@ -1,0 +1,33 @@
+################################
+## Commander Headless Service ##
+################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-commander-headless
+  labels:
+    component: commander
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    component: commander
+    tier: astronomer
+    release: {{ .Release.Name }}
+  ports:
+    - name: commander-grpc
+      protocol: TCP
+      port: {{ .Values.ports.commanderGRPC }}
+      targetPort: {{ .Values.ports.commanderGRPC }}
+      appProtocol: grpc
+{{- end }}
