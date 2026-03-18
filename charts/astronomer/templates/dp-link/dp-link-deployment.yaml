@@ -84,7 +84,7 @@ spec:
           command:
             - yarn
             - run
-            - dp-link
+            - dplink
           {{- if .Values.dpLink.args }}
           args: {{- toYaml .Values.dpLink.args | nindent 12 }}
           {{- end }}
