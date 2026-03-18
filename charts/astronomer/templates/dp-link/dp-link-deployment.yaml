@@ -84,6 +84,8 @@ spec:
             {{- tpl (toYaml .Values.dpLink.volumeMounts) $ | nindent 12 }}
             {{- end }}
           command:
+            - /houston/bin/entrypoint
+          args:
             - yarn
             - run
             - dplink
