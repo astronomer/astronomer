@@ -377,6 +377,89 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+# -- DP-Link configuration for data plane linking
+dpLink:
+  # -- Enable DP-Link deployment
+  # @default -- true
+  enabled: true
+
+  # -- Number of DP-Link replicas
+  # @default -- 3
+  replicas: 3
+
+  # -- Claim interval in seconds
+  # @default -- 30
+  claimIntervalSeconds: 30
+
+  # -- Lease renewal interval in seconds
+  # @default -- 15
+  leaseRenewalIntervalSeconds: 15
+
+  # -- Lease duration in seconds
+  # @default -- 60
+  leaseDurationSeconds: 60
+
+  # -- Unreachable threshold in seconds (heartbeat failure threshold, ~9 heartbeat failures)
+  # @default -- 90
+  unreachableThresholdSeconds: 90
+
+  # -- Degraded threshold in seconds (heartbeat failure threshold, ~3 heartbeat failures)
+  # @default -- 30
+  degradedThresholdSeconds: 30
+
+  # -- Maximum reconnection attempts
+  # @default -- 10
+  reconnectMaxAttempts: 10
+
+  # -- Initial reconnection delay in seconds
+  # @default -- 1
+  initialReconnectDelaySeconds: 1
+
+  # -- Maximum reconnection delay in seconds
+  # @default -- 30
+  maxReconnectDelaySeconds: 30
+
+  # -- Reconnection delay multiplier for exponential backoff
+  # @default -- 2
+  reconnectDelayMultiplier: 2
+
+  # -- Jitter fraction for reconnection delay (0.2 = ~20% randomness)
+  # @default -- 0.2
+  jitterFraction: 0.2
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Resource requests and limits
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+  # -- Liveness probe configuration
+  livenessProbe: {}
+
+  # -- Readiness probe configuration
+  readinessProbe: {}
+
+  # -- Command to run in the container
+  command: ~
+
+  # -- Arguments to pass to the container
+  args: ~
+
+  # -- Additional environment variables
+  env: []
+
+  # -- Volume mounts
+  volumeMounts: ~
+
+  # -- Extra volumes
+  extraVolumes: []
+
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.

@@ -1,0 +1,109 @@
+###################################
+## Astronomer DP-Link Deployment ##
+###################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if .Values.dpLink.enabled }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-dp-link
+  labels:
+    component: dp-link
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  replicas: {{ .Values.dpLink.replicas }}
+  selector:
+    matchLabels:
+      tier: astronomer
+      component: dp-link
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: dp-link
+        release: {{ .Release.Name }}
+        app: dp-link
+        version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.dpLink.podAnnotations }}
+        {{- toYaml .Values.dpLink.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      restartPolicy: Always
+      serviceAccountName: {{ .Release.Name }}-dp-link
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: dp-link
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.dpLink.volumeMounts }}
+            {{- tpl (toYaml .Values.dpLink.volumeMounts) $ | nindent 12 }}
+            {{- end }}
+          {{- if .Values.dpLink.command }}
+          command: {{- toYaml .Values.dpLink.command | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dpLink.args }}
+          args: {{- toYaml .Values.dpLink.args | nindent 12 }}
+          {{- end }}
+          env:
+            # Claim loop configuration
+            - name: CLAIM_INTERVAL_SECONDS
+              value: {{ .Values.dpLink.claimIntervalSeconds | quote }}
+            # Owner loop configuration
+            - name: LEASE_RENEWAL_INTERVAL_SECONDS
+              value: {{ .Values.dpLink.leaseRenewalIntervalSeconds | quote }}
+            - name: LEASE_DURATION_SECONDS
+              value: {{ .Values.dpLink.leaseDurationSeconds | quote }}
+            # Heartbeat configuration
+            - name: UNREACHABLE_THRESHOLD_SECONDS
+              value: {{ .Values.dpLink.unreachableThresholdSeconds | quote }}
+            - name: DEGRADED_THRESHOLD_SECONDS
+              value: {{ .Values.dpLink.degradedThresholdSeconds | quote }}
+            # Stream reconnect configuration
+            - name: RECONNECT_MAX_ATTEMPTS
+              value: {{ .Values.dpLink.reconnectMaxAttempts | quote }}
+            - name: INITIAL_RECONNECT_DELAY_SECONDS
+              value: {{ .Values.dpLink.initialReconnectDelaySeconds | quote }}
+            - name: MAX_RECONNECT_DELAY_SECONDS
+              value: {{ .Values.dpLink.maxReconnectDelaySeconds | quote }}
+            - name: RECONNECT_DELAY_MULTIPLIER
+              value: {{ .Values.dpLink.reconnectDelayMultiplier | quote }}
+            - name: JITTER_FRACTION
+              value: {{ .Values.dpLink.jitterFraction | quote }}
+            {{- if .Values.dpLink.env }}
+            {{- tpl (toYaml .Values.dpLink.env) $ | nindent 12 }}
+            {{- end }}
+          {{- if .Values.dpLink.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.dpLink.livenessProbe) $ | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dpLink.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.dpLink.readinessProbe) $ | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.dpLink.extraVolumes }}
+        {{- tpl (toYaml .Values.dpLink.extraVolumes) $ | nindent 8 }}
+        {{- end }}
+{{- end }}
+{{- end }}
