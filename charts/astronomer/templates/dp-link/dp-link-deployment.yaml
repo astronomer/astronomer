@@ -89,6 +89,7 @@ spec:
           args: {{- toYaml .Values.dpLink.args | nindent 12 }}
           {{- end }}
           env:
+            {{- include "houston_environment" . | nindent 12 }}
             # Claim loop configuration
             - name: CLAIM_INTERVAL_SECONDS
               value: {{ .Values.dpLink.claimIntervalSeconds | quote }}
