@@ -161,6 +161,55 @@ houston:
     livenessProbe: {}
     hostAliases: []
 
+    # Dispatcher configuration for houston-worker
+    dispatcher:
+      # Enable/disable the dispatcher feature
+      enabled: false
+
+      # Dispatcher loop knobs
+      lease:
+        # TTL for dispatcher leases in seconds
+        ttlSeconds: 30
+
+      batch:
+        # Maximum batch size for dispatches
+        size: 50
+
+      inflight:
+        # Maximum inflight operations
+        max: 50
+        # Maximum inflight operations per data plane
+        maxPerDp: 5
+
+      poll:
+        # Poll interval in seconds
+        seconds: 10
+
+      # Maximum attempts per lease (per process retry loop)
+      maxAttemptsPerLease: 5
+
+      # Maximum attempts per flight (durable total retries across processes)
+      maxAttemptsPerFlight: 25
+
+      # Cooloff period after max attempts exceeded (in seconds)
+      retryCooloffPeriodSeconds: 60
+
+      # RPC timeouts
+      rpc:
+        # In-region StartFlight RPC timeout in milliseconds
+        inRegionTimeoutMs: 5000
+        # Cross-region StartFlight RPC timeout in milliseconds
+        crossRegionTimeoutMs: 12000
+
+      # Circuit breaker configuration
+      circuitBreaker:
+        # Failure threshold before circuit opens
+        failureThreshold: 10
+        # Cooloff period in seconds after circuit opens
+        cooloffSeconds: 30
+        # Maximum inflight probe requests
+        probeMaxInflight: 1
+
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
   # This runs as a Job after helm upgrades.
