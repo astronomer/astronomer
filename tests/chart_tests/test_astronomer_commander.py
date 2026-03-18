@@ -715,3 +715,82 @@ class TestAstronomerCommander:
                 "name": "release-name-flightdeck-backend",
                 "key": "connection",
             }
+
+    @pytest.mark.parametrize(
+        "plane_mode,should_render",
+        [
+            ("data", True),
+            ("unified", True),
+            ("control", False),
+        ],
+    )
+    def test_commander_headless_service_plane_modes(self, kube_version, plane_mode, should_render):
+        """Test that the headless service renders only for data and unified plane modes."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=["charts/astronomer/templates/commander/commander-service-headless.yaml"],
+        )
+
+        if not should_render:
+            assert len(docs) == 0
+            return
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Service"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "release-name-commander-headless"
+        assert doc["spec"]["clusterIP"] == "None"
+        assert doc["spec"]["type"] == "ClusterIP"
+
+        assert doc["spec"]["selector"] == {
+            "component": "commander",
+            "tier": "astronomer",
+            "release": "release-name",
+        }
+
+        ports = doc["spec"]["ports"]
+        assert len(ports) == 1
+        assert ports[0]["name"] == "commander-grpc"
+        assert ports[0]["port"] == 50051
+        assert ports[0]["targetPort"] == 50051
+        assert ports[0]["protocol"] == "TCP"
+        assert ports[0]["appProtocol"] == "grpc"
+
+    def test_commander_headless_service_labels(self, kube_version):
+        """Test that the headless service has correct labels."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=["charts/astronomer/templates/commander/commander-service-headless.yaml"],
+        )
+
+        assert len(docs) == 1
+        labels = docs[0]["metadata"]["labels"]
+        assert labels["component"] == "commander"
+        assert labels["tier"] == "astronomer"
+        assert labels["release"] == "release-name"
+        assert labels["plane"] == "data"
+
+    def test_commander_headless_service_argocd_annotation(self, kube_version):
+        """Test that the headless service includes ArgoCD annotation when enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "unified"}, "enableArgoCDAnnotation": True}},
+            show_only=["charts/astronomer/templates/commander/commander-service-headless.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert docs[0]["metadata"]["annotations"]["argocd.argoproj.io/sync-wave"] == "-1"
+
+    def test_commander_headless_service_no_argocd_annotation_by_default(self, kube_version):
+        """Test that the headless service does not include ArgoCD annotation by default."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=["charts/astronomer/templates/commander/commander-service-headless.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert "annotations" not in docs[0]["metadata"]
