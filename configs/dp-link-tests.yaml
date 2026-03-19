@@ -1,0 +1,12 @@
+---
+astronomer:
+  images:
+    commander:
+      pullPolicy: Always
+      tag: feature_apc-dr
+    houston:
+      pullPolicy: Always
+      tag: feature_apc-dr
+tags:
+  logging: False  # disable to save resources
+  monitoring: False  # disable to save resources
