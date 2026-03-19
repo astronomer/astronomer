@@ -336,9 +336,9 @@ s3:
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
 - name: COMMANDER_WAIT_ENABLED
-  value: true
+  value: "true"
 - name: REGISTRY_WAIT_ENABLED
-  value: false
+  value: "false"
 {{- end }}
 
 
