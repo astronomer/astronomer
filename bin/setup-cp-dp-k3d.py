@@ -806,6 +806,7 @@ def _helm_upgrade_install(
     release_name: str,
     namespace: str,
     values_file: Path,
+    extra_values_files: list[Path],
     timeout: str,
     debug: bool,
 ) -> None:
@@ -825,6 +826,8 @@ def _helm_upgrade_install(
         timeout,
         "--wait",
     ]
+    for extra in extra_values_files:
+        cmd.extend(["--values", str(extra)])
     if debug:
         cmd.append("--debug")
     _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
@@ -1003,6 +1006,15 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--helm-values",
+        action="append",
+        default=[],
+        dest="helm_values",
+        metavar="FILE",
+        help="Extra Helm values file passed to both CP and DP installs (can be repeated).",
+    )
+
+    parser.add_argument(
         "--dp-airflow-db",
         choices=["postgres", "mysql"],
         default="postgres",
@@ -1178,6 +1190,7 @@ def main() -> int:  # noqa: C901
                 release_name=settings.release_name,
                 namespace=settings.namespace,
                 values_file=cp_values,
+                extra_values_files=[Path(f) for f in args.helm_values],
                 timeout=settings.helm_timeout,
                 debug=settings.helm_debug,
             )
@@ -1199,6 +1212,7 @@ def main() -> int:  # noqa: C901
                 release_name=settings.release_name,
                 namespace=settings.namespace,
                 values_file=dp_values,
+                extra_values_files=[Path(f) for f in args.helm_values],
                 timeout=settings.helm_timeout,
                 debug=settings.helm_debug,
             )
