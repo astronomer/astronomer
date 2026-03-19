@@ -282,6 +282,7 @@ def test_houston_configmap_with_loggingsidecar_enabled():
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
     }
+    assert "vector" in prod_yaml["deployments"].get("fluentdIndexPrefix")
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
@@ -315,6 +316,9 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
         "customConfig": False,
         "indexNamePrefix": "test-index-name-prefix-999",
     }
+    assert "test-index-name-prefix-999" in prod_yaml["deployments"].get(
+        "fluentdIndexPrefix"
+    )
     assert image in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
