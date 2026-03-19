@@ -149,6 +149,8 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
+            - name: grafana-dashboards
+              mountPath: /etc/grafana/provisioning/dashboards
             - name: var-lib-grafana
               mountPath: /var/lib/grafana
             - name: grafana-datasource-volume
@@ -226,6 +228,8 @@ spec:
             mountPath: /run
         {{- end }}
       volumes:
+        - name: grafana-dashboards
+          emptyDir: {}
         - name: var-lib-grafana
           emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
