@@ -109,6 +109,7 @@ class TestServiceAccounts:
                 "configSyncer": {"serviceAccount": {"create": False}},
                 "houston": {"serviceAccount": {"create": False}},
                 "astroUI": {"serviceAccount": {"create": False}},
+                "dpLink": {"serviceAccount": {"create": False}},
             },
             "nats": {"nats": {"serviceAccount": {"create": False}}},
             "grafana": {"serviceAccount": {"create": False}},
@@ -153,6 +154,7 @@ class TestServiceAccounts:
                 "configSyncer": {"serviceAccount": {"create": True, "annotations": annotations}},
                 "houston": {"serviceAccount": {"create": True, "annotations": annotations}},
                 "astroUI": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "dpLink": {"serviceAccount": {"create": True, "annotations": annotations}},
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "grafana": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -279,6 +281,9 @@ custom_service_account_names = {
     },
     "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml": {
         "astronomer": {"configSyncer": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/dp-link/dp-link-deployment.yaml": {
+        "astronomer": {"dpLink": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
