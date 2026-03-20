@@ -108,13 +108,7 @@ helm template astronomer . \
 
 #### Running Tests
 
-```bash
-# Run the full unit test suite
-pytest tests/chart_tests/ -v
-
-# Run specific unit test file
-pytest tests/chart_tests/test_nginx.py -v
-```
+See [Testing Strategy](#testing-strategy)
 
 #### Pre-Commit Checks with `prek`
 
@@ -353,24 +347,32 @@ for container in containers:
 ### Running Tests
 
 ```bash
-# Run all tests
-uv run pytest tests/chart_tests/ -v
+# Run full suite in parallel (fastest — use for full runs)
+uv run pytest tests/chart_tests/ -n auto --quiet
+
+# Run all tests (verbose, sequential)
+uv run pytest tests/chart_tests/ --verbose
 
 # Run a specific test file
-uv run pytest tests/chart_tests/test_nginx.py -v
+uv run pytest tests/chart_tests/test_nginx.py --verbose
 
 # Run tests matching a pattern
-uv run pytest tests/chart_tests/ -k "test_service" -v
+uv run pytest tests/chart_tests/ -k "test_service" --verbose
 
 # Run a single test
-uv run pytest tests/chart_tests/test_nginx.py::test_nginx_service_basics -v
+uv run pytest tests/chart_tests/test_nginx.py::test_nginx_service_basics --verbose
 
-# Run with verbose output and stop on first failure
-uv run pytest tests/chart_tests/ -vvs -x
+# Run with increased verbose output and stop on first failure
+uv run pytest tests/chart_tests/ --verbose --verbose --capture=no --maxfail=1
 
 # See test collection (without running)
 uv run pytest tests/chart_tests/ --collect-only
+
+# Iterate on fixing tests by running this repeatedly after encountering errors
+uv run pytest tests/chart_tests/ --maxfail=1 --lf
 ```
+
+> **Tip**: `-n auto` runs tests across all available CPU cores in parallel. Use it for full suite runs to significantly reduce wall-clock time. Omit it when running a single file or test to avoid subprocess overhead.
 
 ### Kubernetes Schema Validation
 
