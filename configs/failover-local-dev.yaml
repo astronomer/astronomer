@@ -15,6 +15,7 @@ astronomer:
   pilot:
     enabled: true
 global:
+  prometheusPostgresExporterEnabled: false
   ssl:
     enabled: true
     mode: disable
