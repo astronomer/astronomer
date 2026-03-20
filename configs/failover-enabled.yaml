@@ -1,6 +1,8 @@
 astronomer:
   dplink:
     enabled: true
+  flightDeck:
+    enabled: true
   images:
     commander:
       pullPolicy: Always
@@ -13,8 +15,6 @@ astronomer:
   pilot:
     enabled: true
 global:
-  flightDeck:
-    enabled: true
   ssl:
     enabled: true
     mode: disable

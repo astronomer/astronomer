@@ -42,6 +42,7 @@ spec:
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
+      serviceAccountName: {{ template "navigator.serviceAccountName" . }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier

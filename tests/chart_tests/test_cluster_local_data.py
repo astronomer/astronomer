@@ -22,7 +22,7 @@ def test_cluster_local_data_cm_defaults():
 
 def test_cluster_local_data_cm_with_features():
     """Test that cluster local data configmap is rendered correctly."""
-    values = {"global": {"flightDeck": {"enabled": True}}}
+    values = {"astronomer": {"flightDeck": {"enabled": True}}}
 
     docs = render_chart(
         values=values,

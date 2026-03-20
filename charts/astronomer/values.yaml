@@ -550,8 +550,10 @@ configSyncer:
   readinessProbe: {}
   livenessProbe: {}
 
-# flightDeck is enabled and disabled through global.flightDeck.enabled, but is configured here.
 flightDeck:
+  # -- Enable the flightDeck feature
+  # @default -- false
+  enabled: false
   migrations:
     securityContext: {}
     resources:
@@ -752,14 +754,23 @@ navigator:
   # -- Pod annotations
   podAnnotations: {}
 
+  # -- Service account configuration
+  serviceAccount:
+    # -- Specifies whether a service account should be created
+    create: true
+    # -- Annotations to add to the service account
+    annotations: {}
+    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+    name: ""
+
   # -- Resource requests and limits
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
 
   # -- Custom liveness probe configuration (overrides default)
   livenessProbe: {}

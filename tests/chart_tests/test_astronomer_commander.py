@@ -685,6 +685,8 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "plane": {"mode": plane},
+                },
+                "astronomer": {
                     "flightDeck": {"enabled": True},
                 },
             },
