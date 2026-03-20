@@ -91,7 +91,7 @@ spec:
           env:
             # Component Flag
             - name: NAVIGATOR_ENABLED
-              value: {{ .Values.navigator.navigatorEnabled | quote }}
+              value: {{ .Values.navigator.enabled | quote }}
             # Failover request reconcile loop
             - name: FAILOVER_REQUEST_RECONCILER_INTERVAL_SECONDS
               value: {{ .Values.navigator.failoverRequestReconcilerIntervalSeconds | quote }}

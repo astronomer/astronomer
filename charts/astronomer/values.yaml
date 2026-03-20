@@ -784,7 +784,7 @@ navigator:
   # Component Flag
   # -- Enable Navigator feature flag passed to the application
   # @default -- false
-  navigatorEnabled: false
+  enabled: false
 
   # Failover request reconcile loop knobs
   # -- Interval in seconds between failover request reconciler runs

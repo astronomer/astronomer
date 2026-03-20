@@ -88,7 +88,7 @@ class TestAstronomerNavigator:
         env_vars = get_env_vars_dict(c_by_name["navigator"]["env"])
 
         # Component flag
-        assert env_vars["NAVIGATOR_ENABLED"] == "false"
+        assert env_vars["NAVIGATOR_ENABLED"] == "true"
 
         # Failover request reconcile loop
         assert env_vars["FAILOVER_REQUEST_RECONCILER_INTERVAL_SECONDS"] == "10"
@@ -120,7 +120,6 @@ class TestAstronomerNavigator:
                 "astronomer": {
                     "navigator": {
                         "enabled": True,
-                        "navigatorEnabled": True,
                         "failoverRequestReconcilerIntervalSeconds": 30,
                         "deploymentAdmitForInProgressMissionsIntervalSeconds": 20,
                         "deploymentAdmitForPendingCleanupMissionsIntervalSeconds": 60,
