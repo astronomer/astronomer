@@ -59,6 +59,15 @@ astronomer:
       exec:
         command:
         - /bin/true
+  pilot:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
   houston:
     bootstrapper:
       livenessProbe:

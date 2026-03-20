@@ -630,6 +630,112 @@ commander:
     retryDelay: 10
     extraEnv: []
 
+pilot:
+  # -- Number of Pilot replicas (data plane only)
+  # @default -- 3
+  replicas: 3
+
+  # -- Service account configuration
+  serviceAccount:
+    # -- Specifies whether a service account should be created
+    create: true
+    # -- Annotations to add to the service account
+    annotations: {}
+    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Resource requests and limits
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+  # -- Liveness probe configuration
+  livenessProbe: {}
+
+  # -- Readiness probe configuration
+  readinessProbe: {}
+
+  # -- Extra environment variables
+  env: []
+
+  # -- Extra volumes
+  extraVolumes: []
+
+  # Claim knobs
+  # -- Maximum number of in-flight tasks per worker
+  # @default -- 5
+  maxInflightPerWorker: 5
+
+  # -- Claim poll interval in milliseconds
+  # @default -- 5000
+  claimPollIntervalMs: 5000
+
+  # -- Maximum batch claim size (defaults to 2 × maxInflightPerWorker)
+  # @default -- 10
+  maxBatchClaimSize: 10
+
+  # Leasing knobs
+  # -- Lease TTL in seconds
+  # @default -- 60
+  leaseTtlSeconds: 60
+
+  # -- Lease renew tick interval in seconds
+  # @default -- 5
+  leaseRenewTickSeconds: 5
+
+  # -- Lease renew threshold in seconds
+  # @default -- 20
+  leaseRenewThresholdSeconds: 20
+
+  # Retry knobs
+  # -- Maximum retry attempts per lease
+  # @default -- 3
+  maxAttemptsPerLease: 3
+
+  # -- Maximum retry attempts per flight
+  # @default -- 25
+  maxAttemptsPerFlight: 25
+
+  # -- Retry base interval in milliseconds
+  # @default -- 250
+  retryBaseIntervalMs: 250
+
+  # -- Retry maximum interval in milliseconds
+  # @default -- 5000
+  retryMaxIntervalMs: 5000
+
+  # -- Retry cool-off period in seconds
+  # @default -- 30
+  retryCooloffSeconds: 30
+
+  # -- Retry backoff multiplier
+  # @default -- 2.0
+  retryMultiplier: 2.0
+
+  # -- Retry jitter percentage (0.2 = 20%)
+  # @default -- 0.2
+  retryJitterPct: 0.2
+
+  # Circuit breaker knobs
+  # -- Circuit breaker failure threshold
+  # @default -- 10
+  cbFailureThreshold: 10
+
+  # -- Circuit breaker cool-off period in seconds
+  # @default -- 30
+  cbCooloffSeconds: 30
+
+  # -- Circuit breaker probe maximum in-flight
+  # @default -- 1
+  cbProbeMaxInflight: 1
+
 registry:
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False
