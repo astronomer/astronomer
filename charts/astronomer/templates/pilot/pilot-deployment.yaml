@@ -1,0 +1,154 @@
+##################################
+## Astronomer Pilot Deployment  ##
+##################################
+{{- if and .Values.pilot.enabled (eq .Values.global.plane.mode "data") }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-pilot
+  labels:
+    component: pilot
+    tier: astronomer
+    plane: {{ .Values.global.plane.mode }}
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.pilot.replicas }}
+  selector:
+    matchLabels:
+      component: pilot
+      tier: astronomer
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        component: pilot
+        tier: astronomer
+        release: {{ .Release.Name }}
+        app: pilot
+        version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.pilot.podAnnotations }}
+        {{- toYaml .Values.pilot.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      nodeSelector:
+        {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity:
+        {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations:
+        {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      serviceAccountName: {{ template "pilot.serviceAccountName" . }}
+      restartPolicy: Always
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          image: {{ template "commander.image" . }}
+          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources: {{- toYaml .Values.pilot.resources | nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+      containers:
+        - name: pilot
+          image: {{ template "commander.image" . }}
+          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+          command:
+            - commander
+            - pilot
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.pilot.resources | nindent 12 }}
+          {{- if .Values.pilot.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.pilot.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.pilot.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.pilot.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
+          env:
+            - name: PILOT_ENABLED
+              value: "true"
+            # Infrastructure
+            - name: PILOT_COMMANDER_ADDR
+              value: {{ printf "%s-commander-headless.%s.svc.cluster.local.:%d" .Release.Name .Release.Namespace (int .Values.ports.commanderGRPC) | quote }}
+            {{- if .Values.global.flightDeck.enabled }}
+            - name: COMMANDER_FLIGHTDECK_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-flightdeck-backend
+                  key: connection
+            {{- end }}
+            # Claim knobs
+            - name: PILOT_MAX_INFLIGHT_PER_WORKER
+              value: {{ .Values.pilot.maxInflightPerWorker | quote }}
+            - name: PILOT_CLAIM_POLL_INTERVAL_MS
+              value: {{ .Values.pilot.claimPollIntervalMs | quote }}
+            - name: PILOT_MAX_BATCH_CLAIM_SIZE
+              value: {{ .Values.pilot.maxBatchClaimSize | quote }}
+            # Leasing knobs
+            - name: PILOT_LEASE_TTL_SECONDS
+              value: {{ .Values.pilot.leaseTtlSeconds | quote }}
+            - name: PILOT_LEASE_RENEW_TICK_SECONDS
+              value: {{ .Values.pilot.leaseRenewTickSeconds | quote }}
+            - name: PILOT_LEASE_RENEW_THRESHOLD_SECONDS
+              value: {{ .Values.pilot.leaseRenewThresholdSeconds | quote }}
+            # Retry knobs
+            - name: PILOT_MAX_ATTEMPTS_PER_LEASE
+              value: {{ .Values.pilot.maxAttemptsPerLease | quote }}
+            - name: PILOT_MAX_ATTEMPTS_PER_FLIGHT
+              value: {{ .Values.pilot.maxAttemptsPerFlight | quote }}
+            - name: PILOT_RETRY_BASE_INTERVAL_MS
+              value: {{ .Values.pilot.retryBaseIntervalMs | quote }}
+            - name: PILOT_RETRY_MAX_INTERVAL_MS
+              value: {{ .Values.pilot.retryMaxIntervalMs | quote }}
+            - name: PILOT_RETRY_COOLOFF_SECONDS
+              value: {{ .Values.pilot.retryCooloffSeconds | quote }}
+            - name: PILOT_RETRY_MULTIPLIER
+              value: {{ .Values.pilot.retryMultiplier | quote }}
+            - name: PILOT_RETRY_JITTER_PCT
+              value: {{ .Values.pilot.retryJitterPct | quote }}
+            # Circuit breaker knobs
+            - name: PILOT_CB_FAILURE_THRESHOLD
+              value: {{ .Values.pilot.cbFailureThreshold | quote }}
+            - name: PILOT_CB_COOLOFF_SECONDS
+              value: {{ .Values.pilot.cbCooloffSeconds | quote }}
+            - name: PILOT_CB_PROBE_MAX_INFLIGHT
+              value: {{ .Values.pilot.cbProbeMaxInflight | quote }}
+            {{- if .Values.pilot.env }}
+            {{- tpl (toYaml .Values.pilot.env) $ | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        {{- include "custom_ca_volumes" . | nindent 8 }}
+        {{- if .Values.pilot.extraVolumes }}
+        {{- tpl (toYaml .Values.pilot.extraVolumes) $ | nindent 8 }}
+        {{- end }}
+{{- end }}

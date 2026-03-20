@@ -252,7 +252,7 @@ def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
     default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
-    if "nginx-dp-deployment" in template_name or "prometheus-federation-auth-deployment" in template_name:
+    if any(s in template_name for s in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment")):
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
@@ -284,6 +284,9 @@ custom_service_account_names = {
     },
     "charts/astronomer/templates/dp-link/dp-link-deployment.yaml": {
         "astronomer": {"dpLink": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/pilot/pilot-deployment.yaml": {
+        "astronomer": {"pilot": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
@@ -389,7 +392,7 @@ def test_custom_serviceaccount_names(template_name):
 
     values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
-    if "nginx-dp-deployment" in template_name or "prometheus-federation-auth-deployment" in template_name:
+    if any(s in template_name for s in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment")):
         plane_config = {"global": {"plane": {"mode": "data"}}}
         values = always_merger.merge(values, plane_config)
     values = always_merger.merge(values, enable_pgsql_sa)

@@ -194,6 +194,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "pilot.serviceAccountName" -}}
+{{- if and .Values.pilot.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-pilot" .Release.Name ) .Values.pilot.serviceAccount.name }}
+{{- else -}}
+{{ default "default" .Values.pilot.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{ define "commander_metadataEnv" -}}
 - name: COMMANDER_ELASTICSEARCH_ENABLED
   value: "true"
