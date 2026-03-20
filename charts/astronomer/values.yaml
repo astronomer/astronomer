@@ -429,9 +429,9 @@ houston:
 # -- DP-Link configuration for data plane linking
 dpLink:
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
-  env:
-    - name: DPLINK_DEBUG_ENABLED
-      value: "true"
+  env: []
+    # - name: DPLINK_DEBUG_ENABLED
+    #   value: true
     # - name: DEBUG
     #   value: "prisma*"
 
