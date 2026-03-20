@@ -12,34 +12,25 @@ from tests.utils.chart import render_chart
 class TestAstronomerPilot:
     show_only = ["charts/astronomer/templates/pilot/pilot-deployment.yaml"]
 
-    def test_pilot_deployment_only_in_data_plane(self, kube_version):
+    @pytest.mark.parametrize(
+        "plane_mode,expected_count",
+        [
+            ("data", 1),
+            ("control", 0),
+            ("unified", 0),
+        ],
+    )
+    def test_pilot_deployment_plane_mode(self, kube_version, plane_mode, expected_count):
         """Test that pilot deployment is only rendered in data plane mode."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": plane_mode}}},
             show_only=self.show_only,
         )
-        assert len(docs) == 1
-        assert docs[0]["kind"] == "Deployment"
-        assert docs[0]["metadata"]["name"] == "release-name-pilot"
-
-    def test_pilot_deployment_not_in_control_plane(self, kube_version):
-        """Test that pilot deployment is not rendered in control plane mode."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"plane": {"mode": "control"}}},
-            show_only=self.show_only,
-        )
-        assert len(docs) == 0
-
-    def test_pilot_deployment_not_in_unified_plane(self, kube_version):
-        """Test that pilot deployment is not rendered in unified plane mode."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"plane": {"mode": "unified"}}},
-            show_only=self.show_only,
-        )
-        assert len(docs) == 0
+        assert len(docs) == expected_count
+        if expected_count:
+            assert docs[0]["kind"] == "Deployment"
+            assert docs[0]["metadata"]["name"] == "release-name-pilot"
 
     def test_pilot_deployment_default_values(self, kube_version):
         """Test that pilot deployment renders correctly with default values."""
