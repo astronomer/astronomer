@@ -631,6 +631,10 @@ commander:
     extraEnv: []
 
 pilot:
+  # -- Enable Pilot deployment (data plane only)
+  # @default -- false
+  enabled: false
+
   # -- Number of Pilot replicas (data plane only)
   # @default -- 3
   replicas: 3

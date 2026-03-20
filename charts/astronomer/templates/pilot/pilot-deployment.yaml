@@ -1,7 +1,7 @@
 ##################################
 ## Astronomer Pilot Deployment  ##
 ##################################
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if and .Values.pilot.enabled (eq .Values.global.plane.mode "data") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -91,6 +91,8 @@ spec:
               mountPath: /tmp
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
+            - name: PILOT_ENABLED
+              value: "true"
             # Infrastructure
             - name: PILOT_COMMANDER_ADDR
               value: {{ printf "%s-commander-headless.%s.svc.cluster.local.:%d" .Release.Name .Release.Namespace (int .Values.ports.commanderGRPC) | quote }}

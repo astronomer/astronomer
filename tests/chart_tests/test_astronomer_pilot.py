@@ -24,7 +24,7 @@ class TestAstronomerPilot:
         """Test that pilot deployment is only rendered in data plane mode."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": plane_mode}}},
+            values={"global": {"plane": {"mode": plane_mode}}, "astronomer": {"pilot": {"enabled": True}}},
             show_only=self.show_only,
         )
         assert len(docs) == expected_count
@@ -32,11 +32,20 @@ class TestAstronomerPilot:
             assert docs[0]["kind"] == "Deployment"
             assert docs[0]["metadata"]["name"] == "release-name-pilot"
 
+    def test_pilot_deployment_disabled(self, kube_version):
+        """Test that pilot deployment is not rendered when disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}, "astronomer": {"pilot": {"enabled": False}}},
+            show_only=self.show_only,
+        )
+        assert len(docs) == 0
+
     def test_pilot_deployment_default_values(self, kube_version):
         """Test that pilot deployment renders correctly with default values."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": "data"}}, "astronomer": {"pilot": {"enabled": True}}},
             show_only=self.show_only,
         )
         assert len(docs) == 1
@@ -59,7 +68,7 @@ class TestAstronomerPilot:
         """Test that pilot deployment exposes all expected env vars with defaults."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": "data"}}, "astronomer": {"pilot": {"enabled": True}}},
             show_only=self.show_only,
         )
         assert len(docs) == 1
@@ -103,7 +112,8 @@ class TestAstronomerPilot:
                 "global": {
                     "plane": {"mode": "data"},
                     "flightDeck": {"enabled": True},
-                }
+                },
+                "astronomer": {"pilot": {"enabled": True}},
             },
             show_only=self.show_only,
         )
@@ -124,7 +134,7 @@ class TestAstronomerPilot:
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "data"}},
-                "astronomer": {"images": {"commander": {"tag": "test-tag-123"}}},
+                "astronomer": {"images": {"commander": {"tag": "test-tag-123"}}, "pilot": {"enabled": True}},
             },
             show_only=self.show_only,
         )
@@ -138,7 +148,7 @@ class TestAstronomerPilot:
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "data"}},
-                "astronomer": {"pilot": {"replicas": 5}},
+                "astronomer": {"pilot": {"enabled": True, "replicas": 5}},
             },
             show_only=self.show_only,
         )
@@ -153,6 +163,7 @@ class TestAstronomerPilot:
                 "global": {"plane": {"mode": "data"}},
                 "astronomer": {
                     "pilot": {
+                        "enabled": True,
                         "maxInflightPerWorker": 10,
                         "claimPollIntervalMs": 1000,
                         "leaseTtlSeconds": 120,
@@ -180,6 +191,7 @@ class TestAstronomerPilot:
                 "global": {"plane": {"mode": "data"}},
                 "astronomer": {
                     "pilot": {
+                        "enabled": True,
                         "livenessProbe": probe,
                         "readinessProbe": probe,
                     }
@@ -201,7 +213,8 @@ class TestAstronomerPilot:
                 "global": {
                     "plane": {"mode": "data"},
                     "rbacEnabled": True,
-                }
+                },
+                "astronomer": {"pilot": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/pilot/pilot-serviceaccount.yaml"],
         )
@@ -218,7 +231,8 @@ class TestAstronomerPilot:
                 "global": {
                     "plane": {"mode": "data"},
                     "rbacEnabled": False,
-                }
+                },
+                "astronomer": {"pilot": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/pilot/pilot-serviceaccount.yaml"],
         )
@@ -228,7 +242,7 @@ class TestAstronomerPilot:
         """Test that PILOT_COMMANDER_ADDR is set to the commander headless service address."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": "data"}}, "astronomer": {"pilot": {"enabled": True}}},
             show_only=self.show_only,
         )
         assert len(docs) == 1

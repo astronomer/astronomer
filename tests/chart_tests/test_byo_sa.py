@@ -286,7 +286,7 @@ custom_service_account_names = {
         "astronomer": {"dpLink": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/pilot/pilot-deployment.yaml": {
-        "astronomer": {"pilot": {"serviceAccount": {"create": True, "name": "prothean"}}}
+        "astronomer": {"pilot": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}

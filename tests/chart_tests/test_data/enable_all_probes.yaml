@@ -60,6 +60,7 @@ astronomer:
         command:
         - /bin/true
   pilot:
+    enabled: true
     livenessProbe:
       exec:
         command:
