@@ -1,4 +1,8 @@
 astronomer:
+  dpLink:
+    enabled: true
+  flightDeck:
+    enabled: true
   pilot:
     enabled: true
   navigator:
