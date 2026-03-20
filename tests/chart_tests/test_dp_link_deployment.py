@@ -44,7 +44,8 @@ class TestDpLinkDeployment:
 
         assert dp_link_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
         assert dp_link_container["securityContext"]["readOnlyRootFilesystem"]
-        assert dp_link_container["command"] == ["yarn", "run", "dplink"]
+        assert dp_link_container["command"] == ["/houston/bin/entrypoint"]
+        assert dp_link_container["args"] == ["yarn", "run", "dplink"]
 
         # Verify all environment variables are set with default values
         dp_link_env = get_env_vars_dict(dp_link_container["env"])
