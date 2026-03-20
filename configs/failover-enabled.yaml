@@ -1,0 +1,23 @@
+astronomer:
+  dplink:
+    enabled: true
+  images:
+    commander:
+      pullPolicy: Always
+      tag: feature_apc-dr
+    houston:
+      pullPolicy: Always
+      tag: feature_apc-dr
+  navigator:
+    enabled: true
+  pilot:
+    enabled: true
+global:
+  flightDeck:
+    enabled: true
+  ssl:
+    enabled: true
+    mode: disable
+tags:
+  logging: false
+  monitoring: false

@@ -1,6 +1,8 @@
 astronomer:
   pilot:
     enabled: true
+  navigator:
+    enabled: true
   houston:
     cleanupAirflowDb:
       enabled: true

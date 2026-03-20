@@ -740,6 +740,97 @@ pilot:
   # @default -- 1
   cbProbeMaxInflight: 1
 
+navigator:
+  # -- Enable Navigator deployment (control plane or unified mode only)
+  # @default -- false
+  enabled: false
+
+  # -- Number of Navigator replicas
+  # @default -- 3
+  replicas: 3
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Resource requests and limits
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+  # -- Custom liveness probe configuration (overrides default)
+  livenessProbe: {}
+
+  # -- Custom readiness probe configuration (overrides default)
+  readinessProbe: {}
+
+  # -- Extra environment variables
+  env: []
+
+  # Component Flag
+  # -- Enable Navigator feature flag passed to the application
+  # @default -- false
+  navigatorEnabled: false
+
+  # Failover request reconcile loop knobs
+  # -- Interval in seconds between failover request reconciler runs
+  # @default -- 10
+  failoverRequestReconcilerIntervalSeconds: 10
+
+  # Deployment admission control loop knobs
+  # -- Interval in seconds for admitting deployments with in-progress missions
+  # @default -- 10
+  deploymentAdmitForInProgressMissionsIntervalSeconds: 10
+
+  # -- Interval in seconds for admitting deployments with pending cleanup missions
+  # @default -- 30
+  deploymentAdmitForPendingCleanupMissionsIntervalSeconds: 30
+
+  # -- Batch size for deployment claim operations
+  # @default -- 50
+  deploymentClaimBatchSize: 50
+
+  # -- Batch size for deployment admit operations
+  # @default -- 5
+  deploymentAdmitBatchSize: 5
+
+  # Mission reconciler loop knobs
+  # -- Minimum batch size for mission claim operations
+  # @default -- 10
+  missionClaimMinBatchSize: 10
+
+  # -- Batch size for mission plan operations
+  # @default -- 5
+  missionPlanBatchSize: 5
+
+  # -- Batch size for mission reconcile operations
+  # @default -- 5
+  missionReconcileBatchSize: 5
+
+  # -- Interval in seconds between claim loop runs
+  # @default -- 10
+  claimIntervalSeconds: 10
+
+  # -- Fraction of available capacity to claim per interval
+  # @default -- 0.5
+  claimFraction: 0.5
+
+  # Cleanup knobs
+  # -- Interval in seconds between cleanup loop runs
+  # @default -- 300
+  cleanupIntervalSeconds: 300
+
+  # -- Time-to-live in seconds for completed missions before cleanup (7 days)
+  # @default -- 604800
+  missionCleanupTtl: 604800
+
+  # -- Time-to-live in seconds for completed flights before cleanup (7 days)
+  # @default -- 604800
+  flightCleanupTtl: 604800
+
 registry:
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False

@@ -1,0 +1,133 @@
+######################################
+## Astronomer Navigator Deployment  ##
+######################################
+{{- if and .Values.navigator.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-navigator
+  labels:
+    component: navigator
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  replicas: {{ .Values.navigator.replicas }}
+  selector:
+    matchLabels:
+      tier: astronomer
+      component: navigator
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: navigator
+        release: {{ .Release.Name }}
+        app: navigator
+        version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.navigator.podAnnotations }}
+        {{- toYaml .Values.navigator.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      restartPolicy: Always
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          resources: {{- toYaml .Values.navigator.resources | nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+      containers:
+        - name: navigator
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          command:
+            - yarn
+            - run
+            - navigator
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          resources: {{- toYaml .Values.navigator.resources | nindent 12 }}
+          {{- if .Values.navigator.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.navigator.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.navigator.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.navigator.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
+          env:
+            # Component Flag
+            - name: NAVIGATOR_ENABLED
+              value: {{ .Values.navigator.navigatorEnabled | quote }}
+            # Failover request reconcile loop
+            - name: FAILOVER_REQUEST_RECONCILER_INTERVAL_SECONDS
+              value: {{ .Values.navigator.failoverRequestReconcilerIntervalSeconds | quote }}
+            # Deployment admission control loop
+            - name: DEPLOYMENT_ADMIT_FOR_IN_PROGRESS_MISSIONS_INTERVAL_SECONDS
+              value: {{ .Values.navigator.deploymentAdmitForInProgressMissionsIntervalSeconds | quote }}
+            - name: DEPLOYMENT_ADMIT_FOR_PENDING_CLEANUP_MISSIONS_INTERVAL_SECONDS
+              value: {{ .Values.navigator.deploymentAdmitForPendingCleanupMissionsIntervalSeconds | quote }}
+            - name: DEPLOYMENT_CLAIM_BATCH_SIZE
+              value: {{ .Values.navigator.deploymentClaimBatchSize | quote }}
+            - name: DEPLOYMENT_ADMIT_BATCH_SIZE
+              value: {{ .Values.navigator.deploymentAdmitBatchSize | quote }}
+            # Mission reconciler loop
+            - name: MISSION_CLAIM_MIN_BATCH_SIZE
+              value: {{ .Values.navigator.missionClaimMinBatchSize | quote }}
+            - name: MISSION_PLAN_BATCH_SIZE
+              value: {{ .Values.navigator.missionPlanBatchSize | quote }}
+            - name: MISSION_RECONCILE_BATCH_SIZE
+              value: {{ .Values.navigator.missionReconcileBatchSize | quote }}
+            - name: CLAIM_INTERVAL_SECONDS
+              value: {{ .Values.navigator.claimIntervalSeconds | quote }}
+            - name: CLAIM_FRACTION
+              value: {{ .Values.navigator.claimFraction | quote }}
+            # Cleanup knobs
+            - name: CLEANUP_INTERVAL_SECONDS
+              value: {{ .Values.navigator.cleanupIntervalSeconds | quote }}
+            - name: MISSION_CLEANUP_TTL
+              value: {{ .Values.navigator.missionCleanupTtl | quote }}
+            - name: FLIGHT_CLEANUP_TTL
+              value: {{ .Values.navigator.flightCleanupTtl | quote }}
+            {{- if .Values.navigator.env }}
+            {{- tpl (toYaml .Values.navigator.env) $ | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        {{- include "custom_ca_volumes" . | nindent 8 }}
+{{- end }}
