@@ -15,6 +15,15 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainPrefix: ""    # cluster-id
 
+  # Shared secret for internal service-to-service authentication (e.g. pilot -> commander gRPC).
+  # Auto-generated on install if empty; preserved across upgrades.
+  internalServiceAuth:
+    token: ""
+
+  # Enable or disable the flightDeck feature
+  flightDeck:
+    enabled: false
+
   # Labels to add to every pod
   podLabels: {}
 

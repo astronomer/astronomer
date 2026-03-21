@@ -739,3 +739,22 @@ hostAliases:
 {{ toYaml .Values.commander.hostAliases }}
 {{- end }}
 {{- end -}}
+
+{{/*
+Auto-generate a shared internal-service-auth token on install,
+preserve across upgrades via lookup, or use a user-supplied value.
+Uses randBytes 32 (base64-encoded 32 random bytes) to match the
+entropy of a Fernet key.
+*/}}
+{{- define "astronomer.internalServiceToken" -}}
+  {{- if .Values.global.internalServiceAuth.token -}}
+    {{- .Values.global.internalServiceAuth.token -}}
+  {{- else -}}
+    {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-internal-service-auth" .Release.Name) -}}
+    {{- if and $existing $existing.data.token -}}
+      {{- $existing.data.token | b64dec -}}
+    {{- else -}}
+      {{- randBytes 32 | b64enc -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
