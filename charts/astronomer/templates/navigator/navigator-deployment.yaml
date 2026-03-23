@@ -91,10 +91,26 @@ spec:
           env:
             # Component Flag
             - name: NAVIGATOR_ENABLED
-              value: {{ .Values.navigator.enabled | quote }}
+              value: "true"
+
+            # Houston common configurations
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
+            {{- if not (((.Values.houston.config.deployments).database).connection) }}
+            - name: DEPLOYMENTS__DATABASE__CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.airflowBackendSecret" . }}
+                  key: connection
+            {{- end }}
+
             # Failover request reconcile loop
             - name: FAILOVER_REQUEST_RECONCILER_INTERVAL_SECONDS
               value: {{ .Values.navigator.failoverRequestReconcilerIntervalSeconds | quote }}
+
             # Deployment admission control loop
             - name: DEPLOYMENT_ADMIT_FOR_IN_PROGRESS_MISSIONS_INTERVAL_SECONDS
               value: {{ .Values.navigator.deploymentAdmitForInProgressMissionsIntervalSeconds | quote }}
@@ -104,6 +120,7 @@ spec:
               value: {{ .Values.navigator.deploymentClaimBatchSize | quote }}
             - name: DEPLOYMENT_ADMIT_BATCH_SIZE
               value: {{ .Values.navigator.deploymentAdmitBatchSize | quote }}
+
             # Mission reconciler loop
             - name: MISSION_CLAIM_MIN_BATCH_SIZE
               value: {{ .Values.navigator.missionClaimMinBatchSize | quote }}
@@ -115,6 +132,7 @@ spec:
               value: {{ .Values.navigator.claimIntervalSeconds | quote }}
             - name: CLAIM_FRACTION
               value: {{ .Values.navigator.claimFraction | quote }}
+
             # Cleanup knobs
             - name: CLEANUP_INTERVAL_SECONDS
               value: {{ .Values.navigator.cleanupIntervalSeconds | quote }}
@@ -122,8 +140,20 @@ spec:
               value: {{ .Values.navigator.missionCleanupTtl | quote }}
             - name: FLIGHT_CLEANUP_TTL
               value: {{ .Values.navigator.flightCleanupTtl | quote }}
-            {{- if .Values.navigator.env }}
-            {{- tpl (toYaml .Values.navigator.env) $ | nindent 12 }}
+
+            # User provided env vars
+            {{- range $i, $config := .Values.navigator.env }}
+            - name: {{ $config.name }}
+              value: {{ $config.value | quote }}
+            {{- end }}
+
+            # User provided secret vars
+            {{- range $i, $config := .Values.navigator.secret }}
+            - name: {{ $config.envName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $config.secretName }}
+                  key: {{ default "value" $config.secretKey }}
             {{- end }}
       volumes:
         - name: etc-ssl-certs

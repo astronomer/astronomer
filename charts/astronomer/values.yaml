@@ -125,6 +125,7 @@ houston:
 
   podAnnotations: {}
 
+  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
 
   # For example
@@ -762,6 +763,19 @@ navigator:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+
+  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  env: []
+
+  # For example
+  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
+  # and then set:
+  #
+  # secret:
+  # - envName: "EMAIL__SMTP_URL"
+  #   secretName: "my-scret"
+  #   secretKey: "connection"
+  secret: []
 
   # -- Resource requests and limits
   resources:
