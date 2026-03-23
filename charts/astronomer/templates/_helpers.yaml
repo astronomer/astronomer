@@ -194,6 +194,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "navigator.serviceAccountName" -}}
+{{- if and .Values.navigator.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-navigator" .Release.Name ) .Values.navigator.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.navigator.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{ define "pilot.serviceAccountName" -}}
 {{- if and .Values.pilot.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-pilot" .Release.Name ) .Values.pilot.serviceAccount.name }}

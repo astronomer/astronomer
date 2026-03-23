@@ -111,9 +111,11 @@ class TestAstronomerPilot:
             values={
                 "global": {
                     "plane": {"mode": "data"},
+                },
+                "astronomer": {
+                    "pilot": {"enabled": True},
                     "flightDeck": {"enabled": True},
                 },
-                "astronomer": {"pilot": {"enabled": True}},
             },
             show_only=self.show_only,
         )

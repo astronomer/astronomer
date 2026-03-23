@@ -15,10 +15,6 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainPrefix: ""    # cluster-id
 
-  # Enable or disable the flightDeck feature
-  flightDeck:
-    enabled: false
-
   # Labels to add to every pod
   podLabels: {}
 

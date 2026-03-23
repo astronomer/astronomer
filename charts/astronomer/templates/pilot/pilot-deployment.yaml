@@ -96,7 +96,7 @@ spec:
             # Infrastructure
             - name: PILOT_COMMANDER_ADDR
               value: {{ printf "%s-commander-headless.%s.svc.cluster.local.:%d" .Release.Name .Release.Namespace (int .Values.ports.commanderGRPC) | quote }}
-            {{- if .Values.global.flightDeck.enabled }}
+            {{- if .Values.flightDeck.enabled }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:

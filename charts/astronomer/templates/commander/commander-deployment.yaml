@@ -81,7 +81,7 @@ spec:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
 
-      {{- if .Values.global.flightDeck.enabled }}
+      {{- if .Values.flightDeck.enabled }}
         - name: flightdeck-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -204,7 +204,7 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
-            {{- if .Values.global.flightDeck.enabled }}
+            {{- if .Values.flightDeck.enabled }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:

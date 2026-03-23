@@ -1,0 +1,24 @@
+astronomer:
+  dplink:
+    enabled: true
+  flightDeck:
+    enabled: true
+  images:
+    commander:
+      pullPolicy: Always
+      tag: feature_apc-dr
+    houston:
+      pullPolicy: Always
+      tag: feature_apc-dr
+  navigator:
+    enabled: true
+  pilot:
+    enabled: true
+global:
+  prometheusPostgresExporterEnabled: false
+  ssl:
+    enabled: true
+    mode: disable
+tags:
+  logging: false
+  monitoring: false
