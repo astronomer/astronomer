@@ -796,3 +796,25 @@ class TestAstronomerCommander:
 
         assert len(docs) == 1
         assert "annotations" not in docs[0]["metadata"]
+
+    def test_commander_user_provided_env_vars(self, kube_version):
+        """Test that user-provided env vars are injected into the commander container."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "commander": {
+                        "env": [
+                            {"name": "MY_CUSTOM_VAR", "value": "custom-value"},
+                            {"name": "ANOTHER_VAR", "value": "another-value"},
+                        ],
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert env_vars["MY_CUSTOM_VAR"] == "custom-value"
+        assert env_vars["ANOTHER_VAR"] == "another-value"

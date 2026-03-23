@@ -328,3 +328,31 @@ class TestHoustonApiDeployment:
         assert len(docs) == 1
         spec = docs[0]["spec"]["template"]["spec"]
         assert spec["hostAliases"] == hostAliasSpec
+
+    def test_houston_user_provided_env_vars_and_secret_vars(self, kube_version):
+        """Test that user-provided env vars and secret vars are injected into the houston container."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "env": [
+                            {"name": "MY_CUSTOM_VAR", "value": "custom-value"},
+                            {"name": "ANOTHER_VAR", "value": "another-value"},
+                        ],
+                        "secret": [
+                            {"envName": "MY_SECRET_VAR", "secretName": "my-secret", "secretKey": "my-key"},
+                            {"envName": "ANOTHER_SECRET", "secretName": "other-secret"},
+                        ],
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
+        assert env_vars["MY_CUSTOM_VAR"] == "custom-value"
+        assert env_vars["ANOTHER_VAR"] == "another-value"
+        assert env_vars["MY_SECRET_VAR"] == {"secretKeyRef": {"name": "my-secret", "key": "my-key"}}
+        assert env_vars["ANOTHER_SECRET"] == {"secretKeyRef": {"name": "other-secret", "key": "value"}}
