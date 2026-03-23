@@ -20,10 +20,6 @@ global:
   internalServiceAuth:
     token: ""
 
-  # Enable or disable the flightDeck feature
-  flightDeck:
-    enabled: false
-
   # Labels to add to every pod
   podLabels: {}
 
