@@ -31,7 +31,6 @@ spec:
         plane: {{ .Values.global.plane.mode }}
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
-        checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
         {{- if .Values.global.podAnnotations }}
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
         {{- end }}
@@ -88,7 +87,6 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
-            {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
             # Component Flag
@@ -124,7 +122,6 @@ spec:
               value: {{ .Values.navigator.missionCleanupTtl | quote }}
             - name: FLIGHT_CLEANUP_TTL
               value: {{ .Values.navigator.flightCleanupTtl | quote }}
-            {{- include "houston_environment" . | indent 12 }}
             {{- if .Values.navigator.env }}
             {{- tpl (toYaml .Values.navigator.env) $ | nindent 12 }}
             {{- end }}
@@ -133,6 +130,5 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
-        {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | nindent 8 }}
 {{- end }}
