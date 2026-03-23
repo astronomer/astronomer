@@ -52,6 +52,7 @@ class Settings:
     namespace: str
     release_name: str
     docker_network: str
+    cp_mode: str
     cp_cluster_name: str
     ports: Ports
     data_planes: tuple[DataPlane, ...]
@@ -163,9 +164,7 @@ class Milestones:
         def _truncate(s: str, max_len: int) -> str:
             if len(s) <= max_len:
                 return s
-            if max_len <= 3:
-                return s[:max_len]
-            return s[: max_len - 3] + "..."
+            return s[:max_len] if max_len <= 3 else f"{s[: max_len - 3]}..."
 
         rows: list[list[str]] = []
         for row in self._rows:
@@ -189,7 +188,7 @@ class Milestones:
 
             details_cell = detail
             if error:
-                details_cell = (details_cell + " " if details_cell else "") + error
+                details_cell = (f"{details_cell} " if details_cell else "") + error
 
             # Keep the table readable in a terminal.
             title = _truncate(title, 70)
@@ -373,9 +372,11 @@ def _k3d_create_cluster(
     docker_network: str,
     ports: list[str],
     mkcert_root_ca: Path,
+    extra_k3s_args: list[str] | None = None,
 ) -> None:
     """
     Create a k3d cluster and disable traefik.
+    Pass extra_k3s_args to forward additional --k3s-arg values (each applied @server:0).
     """
     volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*"
     cmd = [
@@ -390,6 +391,8 @@ def _k3d_create_cluster(
         "--volume",
         volume,
     ]
+    for arg in extra_k3s_args or []:
+        cmd.extend(["--k3s-arg", arg])
     for p in ports:
         cmd.extend(["--port", p])
 
@@ -483,11 +486,10 @@ def _cp_values_yaml(settings: Settings) -> str:
 global:
   baseDomain: {settings.base_domain}
   plane:
-    mode: control
+    mode: {settings.cp_mode}
     domainPrefix: ""
   tlsSecret: {settings.tls_secret_name}
   postgresqlEnabled: true
-  prometheusPostgresExporterEnabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:
@@ -499,16 +501,12 @@ global:
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
   vectorEnabled: true
-  elasticsearchEnabled: true
   dagOnlyDeployment:
     enabled: true
 
 tags:
   platform: true
-  logging: false
-  monitoring: false
   postgresql: true
-  nats: true
 
 astronomer:
   astroUI:
@@ -580,15 +578,18 @@ elasticsearch:
     es:
       repository: docker.elastic.co/elasticsearch/elasticsearch
       tag: "8.18.6"
+
+postgresql:
+  postgresqlUsername: postgres
+  postgresqlPassword: postgres
+  service:
+    type: NodePort
+    nodePort: {CP_POSTGRES_NODEPORT}
 """
 
 
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
-    """Generate DP Helm values, switching between PostgreSQL and MySQL for Airflow databases."""
-    use_mysql = settings.dp_airflow_db == "mysql"
-    pg_enabled = "false" if use_mysql else "true"
-    pg_exporter_enabled = "false" if use_mysql else "true"
-
+    """Generate DP Helm values.  PostgreSQL is always disabled — DPs use the CP's shared postgres."""
     return f"""\
 global:
   baseDomain: {settings.base_domain}
@@ -596,8 +597,7 @@ global:
     mode: data
     domainPrefix: {dp.domain_prefix}
   tlsSecret: {settings.tls_secret_name}
-  postgresqlEnabled: {pg_enabled}
-  prometheusPostgresExporterEnabled: {pg_exporter_enabled}
+  postgresqlEnabled: false
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:
@@ -609,16 +609,12 @@ global:
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
   vectorEnabled: true
-  elasticsearchEnabled: true
   dagOnlyDeployment:
     enabled: true
 
 tags:
   platform: true
-  logging: false
-  monitoring: false
-  postgresql: {pg_enabled}
-  nats: true
+  postgresql: false
 
 astronomer:
   commander:
@@ -669,6 +665,10 @@ elasticsearch:
       tag: "8.18.6"
 """
 
+
+CP_POSTGRES_NODEPORT = 5432
+CP_POSTGRES_USERNAME = "postgres"
+CP_POSTGRES_PASSWORD = "postgres"  # noqa: S105
 
 MYSQL_ROOT_PASSWORD = os.environ.get("MYSQL_ROOT_PASSWORD", "rootpassword")
 MYSQL_IMAGE = "mysql:8.0"
@@ -796,6 +796,31 @@ def _create_astronomer_bootstrap_secret_mysql(*, context: str, namespace: str, r
     ).stdout
     _kubectl_apply_yaml(context, secret_yaml)
     _debug(f"astronomer-bootstrap secret set with MySQL connection: {svc_name}")
+
+
+def _create_astronomer_bootstrap_secret_postgres(*, context: str, namespace: str, pg_host: str) -> None:
+    """Create (or update) the astronomer-bootstrap secret with a Postgres connection string pointing to the CP."""
+    conn = f"postgres://{CP_POSTGRES_USERNAME}:{CP_POSTGRES_PASSWORD}@{pg_host}:{CP_POSTGRES_NODEPORT}"
+    secret_yaml = _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "generic",
+            "astronomer-bootstrap",
+            f"--from-literal=connection={conn}",
+            "--dry-run=client",
+            "-o",
+            "yaml",
+        ],
+        check=True,
+    ).stdout
+    _kubectl_apply_yaml(context, secret_yaml)
+    _debug(f"astronomer-bootstrap secret set with postgres connection to {pg_host}")
 
 
 def _helm_dependency_update(chart_dir: Path) -> None:
@@ -975,22 +1000,25 @@ def parse_args() -> argparse.Namespace:
         "--data-plane-count",
         type=int,
         default=1,
-        help="Number of data plane clusters to create (default: 1). Clusters are named data-1, data-2, …",
+        help="Number of data plane clusters to create. Clusters are named data-1, data-2, … Default: '%(default)s'",
     )
 
-    parser.add_argument("--cp-https-port", type=int, default=8443)
-    parser.add_argument("--cp-http-port", type=int, default=8080)
+    parser.add_argument(
+        "--cp-mode", type=str, default="unified", help="Control plane mode to install (unified, control) Default: '%(default)s'"
+    )
+    parser.add_argument("--cp-https-port", type=int, default=8443, help="Control plane HTTPS port. Default: '%(default)s'")
+    parser.add_argument("--cp-http-port", type=int, default=8080, help="Control plane HTTP port. Default: '%(default)s'")
     parser.add_argument(
         "--dp-base-https-port",
         type=int,
         default=8444,
-        help="Base HTTPS port for the first data plane; subsequent data planes increment by 1.",
+        help="Base HTTPS port for the first data plane; subsequent data planes increment by 1. Default: '%(default)s'",
     )
     parser.add_argument(
         "--dp-base-http-port",
         type=int,
         default=8081,
-        help="Base HTTP port for the first data plane; subsequent data planes increment by 1.",
+        help="Base HTTP port for the first data plane; subsequent data planes increment by 1. Default: '%(default)s'",
     )
 
     parser.add_argument("--tls-secret-name", default="astronomer-tls")
@@ -1066,6 +1094,7 @@ def main() -> int:  # noqa: C901
         namespace=args.namespace,
         release_name=args.release_name,
         docker_network=args.docker_network,
+        cp_mode=args.cp_mode,
         cp_cluster_name=args.cp_cluster_name,
         ports=Ports(cp_https=args.cp_https_port, cp_http=args.cp_http_port),
         data_planes=data_planes,
@@ -1124,6 +1153,8 @@ def main() -> int:  # noqa: C901
                         f"{settings.ports.cp_http}:80@loadbalancer",
                     ],
                     mkcert_root_ca=mkcert_root_ca,
+                    # Expand NodePort range so postgres can be exposed as NodePort 5432.
+                    extra_k3s_args=["--kube-apiserver-arg=--service-node-port-range=1024-65535@server:0"],
                 )
             else:
                 _debug(f"Cluster already exists, skipping: {settings.cp_cluster_name}")
@@ -1177,20 +1208,13 @@ def main() -> int:  # noqa: C901
             ms.skip("Apply namespace + secrets in both clusters", reason="--skip-secrets set")
 
         # Step: deploy MySQL in DP clusters (when --dp-airflow-db=mysql)
+        # Bootstrap secrets (postgres or mysql) are created later in a dedicated step after CP helm install.
         if settings.dp_airflow_db == "mysql":
             for dp in settings.data_planes:
                 dp_ctx = f"k3d-{dp.cluster_name}"
                 h = ms.start(f"Deploy MySQL in DP cluster ({dp.cluster_name})")
                 _deploy_mysql(context=dp_ctx, namespace=settings.namespace, release_name=settings.release_name)
                 ms.done(h, detail=f"svc={_mysql_service_name(settings.release_name)}")
-
-                h = ms.start(f"Create astronomer-bootstrap secret (MySQL) in DP ({dp.cluster_name})")
-                _create_astronomer_bootstrap_secret_mysql(
-                    context=dp_ctx,
-                    namespace=settings.namespace,
-                    release_name=settings.release_name,
-                )
-                ms.done(h)
 
         # Step: values files
         h = ms.start("Write CP/DP Helm values files")
@@ -1231,6 +1255,27 @@ def main() -> int:  # noqa: C901
                 debug=settings.helm_debug,
             )
             ms.done(h)
+
+            # Step: create astronomer-bootstrap secrets in all DP clusters.
+            # Postgres mode: point to the CP's shared postgres NodePort on the CP node Docker IP.
+            # MySQL mode: point to each DP's own MySQL service.
+            h = ms.start("Create DP astronomer-bootstrap secrets")
+            if settings.dp_airflow_db == "mysql":
+                for dp in settings.data_planes:
+                    _create_astronomer_bootstrap_secret_mysql(
+                        context=f"k3d-{dp.cluster_name}",
+                        namespace=settings.namespace,
+                        release_name=settings.release_name,
+                    )
+            else:
+                cp_node_ip = _docker_inspect_ip(f"k3d-{settings.cp_cluster_name}-server-0")
+                for dp in settings.data_planes:
+                    _create_astronomer_bootstrap_secret_postgres(
+                        context=f"k3d-{dp.cluster_name}",
+                        namespace=settings.namespace,
+                        pg_host=cp_node_ip,
+                    )
+            ms.done(h, detail=f"db={settings.dp_airflow_db}")
 
             # IMPORTANT: DP components may need to resolve CP endpoints during startup.
             # Patch each DP's CoreDNS NodeHosts (and restart CoreDNS) after CP install, before that DP's install.
