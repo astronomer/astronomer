@@ -85,43 +85,9 @@ jobs:
       BASH_ENV: /etc/profile
       ASTRO_SEC_ENDPOINT: << parameters.report_url >>
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: set -euo pipefail
-      - checkout
       - run:
-          name: Pull Docker image
-          command: docker pull << parameters.docker_image >>
-      - run:
-          name: Install trivy
-          command: |
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-            date +%F > date
-      - restore_cache:
-          keys:
-            - trivy-cache-{{ checksum "date" }}
-      - run:
-          name: Scan the local image with trivy
-          command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
-      - when:
-          condition:
-            or:
-              - << parameters.slack_notify >>
-          steps:
-            - run:
-                name: Slack Init
-                command: |
-                  echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
-                  source $BASH_ENV
-                when: on_fail
-            - slack/notify:
-                event: fail
-                template: SLACK_MSG_TEMPLATE
-                channel: C03HS1H9G1E
-      - save_cache:
-          key: trivy-cache-{{ checksum "date" }}
-          paths:
-            - /tmp/workspace/trivy-cache
+          name: Trivy scan (disabled - security compromise)
+          command: echo "Trivy scan disabled due to security compromise"
 
   release_bom:
     docker:
@@ -714,5 +680,6 @@ commands:
       docker_image:
         type: string
     steps:
-      - trivy/vulnerability-scan:
-            docker-image: << parameters.docker_image >>
+      - run:
+          name: Trivy scan (disabled - security compromise)
+          command: echo "Trivy scan disabled due to security compromise"
