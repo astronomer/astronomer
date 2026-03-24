@@ -997,7 +997,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--docker-network", default="astronomer-net")
     parser.add_argument("--cp-cluster-name", default="control")
     parser.add_argument(
-        "--data-plane-count",
+        "--dp-count",
         type=int,
         default=1,
         help="Number of data plane clusters to create. Clusters are named data-1, data-2, … Default: '%(default)s'",
@@ -1086,7 +1086,7 @@ def main() -> int:  # noqa: C901
             https_port=args.dp_base_https_port + (i - 1),
             http_port=args.dp_base_http_port + (i - 1),
         )
-        for i in range(1, args.data_plane_count + 1)
+        for i in range(1, args.dp_count + 1)
     )
 
     settings = Settings(
