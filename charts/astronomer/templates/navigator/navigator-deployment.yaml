@@ -97,8 +97,8 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
                   key: connection
-                  name: astronomer-bootstrap
             {{- if not (((.Values.houston.config.deployments).database).connection) }}
             - name: DEPLOYMENTS__DATABASE__CONNECTION
               valueFrom:
