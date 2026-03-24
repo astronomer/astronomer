@@ -431,10 +431,10 @@ workflows:
               docker_image:
                 - quay.io/astronomer/airflow-operator-controller:1.5.2
                 - quay.io/astronomer/ap-alertmanager:0.31.1-2
-                - quay.io/astronomer/ap-astro-ui:1.1.0
+                - quay.io/astronomer/ap-astro-ui:1.1.1
                 - quay.io/astronomer/ap-auth-sidecar:1.29.5
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-24
-                - quay.io/astronomer/ap-base:2026.02.25
+                - quay.io/astronomer/ap-base:2026.03.18
                 - quay.io/astronomer/ap-commander:1.1.6
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0-3
                 - quay.io/astronomer/ap-curator:8.0.21-10
@@ -447,7 +447,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.2.5
                 - quay.io/astronomer/ap-git-sync:2026.3.18
                 - quay.io/astronomer/ap-grafana:12.4.1
-                - quay.io/astronomer/ap-houston-api:1.1.3
+                - quay.io/astronomer/ap-houston-api:1.1.4
                 - quay.io/astronomer/ap-init:2026.3.18
                 - quay.io/astronomer/ap-kube-state:2.18.0
                 - quay.io/astronomer/ap-kuiper-reloader:0.1.19
