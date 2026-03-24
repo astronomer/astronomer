@@ -584,4 +584,3 @@ commands:
             set -xe
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository "$CIRCLE_PROJECT_REPONAME" --github-organization "$CIRCLE_PROJECT_USERNAME" --commitish "$CIRCLE_SHA1"
-

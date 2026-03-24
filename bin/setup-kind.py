@@ -62,6 +62,7 @@ def run_command(command: str | list) -> str:
         raise RuntimeError(f"Command failed: {command}\n{result.stderr}")
     return result.stdout.strip()
 
+
 def list_docker_images():
     command = f"{GIT_ROOT_DIR}/bin/show-docker-images.py --with-houston"
     docker_images_output = subprocess.check_output(command, shell=True)
