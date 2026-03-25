@@ -431,8 +431,6 @@ houston:
 dpLink:
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
-    # - name: DPLINK_DEBUG_ENABLED
-    #   value: true
     # - name: DEBUG
     #   value: "prisma*"
 
