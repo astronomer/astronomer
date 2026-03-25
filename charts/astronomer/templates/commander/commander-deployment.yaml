@@ -204,6 +204,9 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
+            # TODO: replace this with a more generic failover feature helm value
+            - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
+              value: {{ ternary "true" "false" .Values.flightDeck.enabled | quote }}
             {{- if .Values.flightDeck.enabled }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
