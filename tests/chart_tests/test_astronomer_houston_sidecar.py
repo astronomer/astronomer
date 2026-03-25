@@ -1,3 +1,5 @@
+from subprocess import CalledProcessError
+
 import pytest
 
 from tests import supported_k8s_versions
@@ -202,6 +204,9 @@ class TestHoustonSidecarLogging:
                     "houston": {
                         "loggingSidecar": {
                             "enabled": True,
+                            "cloudwatch": {
+                                "enabled": True,
+                            },
                         }
                     }
                 }
@@ -222,3 +227,112 @@ class TestHoustonSidecarLogging:
         assert "vector" in c_by_name
         assert c_by_name["vector"]["image"].startswith("quay.io/astronomer/ap-vector:")
         assert c_by_name["vector"]["resources"] == resource_defaults
+
+    def test_houston_sidecar_logging_supports_multiple_sinks(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
+            ],
+            values={
+                "astronomer": {
+                    "houston": {
+                        "loggingSidecar": {
+                            "enabled": True,
+                            "cloudwatch": {
+                                "enabled": True,
+                                "region": "us-east-2",
+                            },
+                            "elasticsearch": {
+                                "enabled": True,
+                                "endpoint": "https://es.example.com:9200",
+                            },
+                        }
+                    }
+                }
+            },
+        )
+
+        assert len(docs) == 2
+        for doc in docs:
+            vector_config = doc["data"]["vector.yaml"]
+            assert "cloudwatch:" in vector_config
+            assert "elasticsearch:" in vector_config
+
+    def test_houston_sidecar_logging_requires_at_least_one_sink(self, kube_version):
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                show_only=[
+                    "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                ],
+                values={
+                    "astronomer": {
+                        "houston": {
+                            "loggingSidecar": {
+                                "enabled": True,
+                            }
+                        }
+                    }
+                },
+            )
+        assert "houston.loggingSidecar.enabled requires at least one sink" in excinfo.value.stderr.decode("utf-8")
+
+    def test_houston_sidecar_logging_elasticsearch_requires_endpoint(self, kube_version):
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                show_only=[
+                    "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                ],
+                values={
+                    "astronomer": {
+                        "houston": {
+                            "loggingSidecar": {
+                                "enabled": True,
+                                "elasticsearch": {
+                                    "enabled": True,
+                                },
+                            }
+                        }
+                    }
+                },
+            )
+        assert "houston.loggingSidecar.elasticsearch.endpoint must be set" in excinfo.value.stderr.decode("utf-8")
+
+    def test_houston_sidecar_logging_elasticsearch_uses_explicit_endpoint(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+            ],
+            values={
+                "astronomer": {
+                    "houston": {
+                        "loggingSidecar": {
+                            "enabled": True,
+                            "elasticsearch": {
+                                "enabled": True,
+                                "endpoint": "https://es.example.com:9200",
+                                "auth": {
+                                    "strategy": "basic",
+                                    "secretName": "houston-elasticsearch-creds",
+                                },
+                            },
+                        }
+                    }
+                }
+            },
+        )
+
+        deployment = docs[0]
+        vector_configmap = docs[1]
+        vector_env = {env_var["name"]: env_var for env_var in get_containers_by_name(deployment)["vector"]["env"]}
+
+        assert vector_env["ES_ENDPOINT"]["value"] == "https://es.example.com:9200"
+        assert vector_env["ES_USERNAME"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
+        assert vector_env["ES_PASSWORD"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
+        assert 'endpoints: ["${ES_ENDPOINT}"]' in vector_configmap["data"]["vector.yaml"]
+        assert "strategy: basic" in vector_configmap["data"]["vector.yaml"]

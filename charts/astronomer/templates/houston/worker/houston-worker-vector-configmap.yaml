@@ -4,6 +4,7 @@
 ####################################################
 {{- if and .Values.houston.worker.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
 {{- if .Values.houston.loggingSidecar.enabled }}
+{{- include "houston.loggingSidecar.validate" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -154,7 +155,7 @@ data:
           - normalize_levels
         endpoints: ["${ES_ENDPOINT}"]
         api_version: {{ .Values.houston.loggingSidecar.elasticsearch.apiVersion | quote }}
-    {{- if and (eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic") .Values.houston.loggingSidecar.elasticsearch.endpoint }}
+    {{- if eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic" }}
         auth:
           strategy: basic
           user: "${ES_USERNAME}"

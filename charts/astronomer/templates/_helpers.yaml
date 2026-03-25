@@ -76,6 +76,16 @@
 {{- end }}
 {{- end }}
 
+{{- define "houston.loggingSidecar.validate" -}}
+{{- if .Values.houston.loggingSidecar.enabled -}}
+{{- $hasBuiltInSink := or .Values.houston.loggingSidecar.cloudwatch.enabled .Values.houston.loggingSidecar.gcpCloudLogging.enabled .Values.houston.loggingSidecar.elasticsearch.enabled -}}
+{{- $hasExtraSinks := ne (trim (.Values.houston.loggingSidecar.extraSinks | default "")) "" -}}
+{{- if not (or $hasBuiltInSink $hasExtraSinks) -}}
+{{- fail "houston.loggingSidecar.enabled requires at least one sink: enable cloudwatch, gcpCloudLogging, elasticsearch, or set extraSinks" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
@@ -616,13 +626,7 @@ hostAliases:
 
 
 {{- define "houston.loggingSidecar.elasticsearch" -}}
-{{- if .Values.houston.loggingSidecar.elasticsearch.endpoint }}
-{{- .Values.houston.loggingSidecar.elasticsearch.endpoint }}
-{{- else if .Values.global.customLogging.enabled }}
-{{- printf "http://%s-external-es-proxy.%s:9201" .Release.Name .Release.Namespace }}
-{{- else }}
-{{- printf "http://%s-elasticsearch.%s:9200" .Release.Name .Release.Namespace }}
-{{- end }}
+{{- required "houston.loggingSidecar.elasticsearch.endpoint must be set when houston.loggingSidecar.elasticsearch.enabled is true" .Values.houston.loggingSidecar.elasticsearch.endpoint }}
 {{- end }}
 
 {{- define "houston.loggingSidecar.securityContext" -}}

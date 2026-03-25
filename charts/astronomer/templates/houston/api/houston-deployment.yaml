@@ -2,6 +2,7 @@
 ## Astronomer Houston Deployment ##
 ###################################
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- include "houston.loggingSidecar.validate" . }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -268,7 +269,7 @@ spec:
             {{- if .Values.houston.loggingSidecar.elasticsearch.enabled }}
             - name: ES_ENDPOINT
               value: {{ include "houston.loggingSidecar.elasticsearch" . | quote }}
-            {{- if and (eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic") .Values.houston.loggingSidecar.elasticsearch.endpoint }}
+            {{- if eq .Values.houston.loggingSidecar.elasticsearch.auth.strategy "basic" }}
             - name: ES_USERNAME
               valueFrom:
                 secretKeyRef:
