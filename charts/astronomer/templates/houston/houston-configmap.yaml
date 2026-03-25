@@ -252,7 +252,7 @@ data:
 
         gitSyncRelay:
           metrics:
-            enabled: false
+            enabled: {{ .Values.global.gitSyncRelay.metrics.enabled }}
           images:
             gitDaemon:
               repository: {{ .Values.global.gitSyncRelay.images.gitDaemon.repository }}
