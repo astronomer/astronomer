@@ -1,0 +1,1402 @@
+#!/usr/bin/env python3
+"""
+One-shot local CP + multi-DP setup for Astronomer using multiple k3d clusters.
+
+This script extends setup-cp-dp-k3d.py to support:
+- 1 Control Plane cluster (unified mode)
+- N Data Plane clusters (data mode), defaulting to 2
+
+New flags vs the original script:
+  --dp-count N          Number of data-plane clusters to create (default: 2)
+  --houston-image       Override houston image on CP (format: "repo:tag")
+  --commander-image     Override commander image on all DP clusters (format: "repo:tag")
+
+DP clusters are auto-named:
+  cluster 1: "data"   → domain prefix "dp01", HTTPS port 8444, HTTP port 8081
+  cluster 2: "data2"  → domain prefix "dp02", HTTPS port 8445, HTTP port 8082
+  cluster N: "dataN"  → domain prefix "dpNN", HTTPS port 8443+N, HTTP port 8080+N
+
+Notes / constraints:
+- We intentionally do NOT modify `/etc/hosts` on the local machine (sudo). The guide covers that manually.
+- We do NOT install k3d/helm/kubectl/mkcert for you by default; we validate and fail with actionable messages.
+- Safe to re-run: cluster/secrets/helm installs are done in an idempotent way.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import shlex
+import subprocess
+import sys
+import tempfile
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+HELPER_DIR = Path.home() / ".local" / "share" / "astronomer-software"
+HELPER_BIN_DIR = HELPER_DIR / "bin"
+
+
+@dataclass(frozen=True)
+class Ports:
+    cp_https: int
+    cp_http: int
+
+
+@dataclass(frozen=True)
+class ClusterNames:
+    cp: str
+
+
+@dataclass(frozen=True)
+class DpCluster:
+    """Per-data-plane cluster configuration."""
+    name: str           # k3d cluster name (e.g. "data", "data2")
+    domain_prefix: str  # Helm domainPrefix (e.g. "dp01", "dp02")
+    https_port: int
+    http_port: int
+
+
+@dataclass(frozen=True)
+class Settings:
+    base_domain: str
+    namespace: str
+    release_name: str
+    docker_network: str
+    clusters: ClusterNames
+    ports: Ports
+    dps: tuple[DpCluster, ...]   # one entry per data-plane cluster
+    tls_secret_name: str
+    mkcert_root_ca_secret_name: str
+    mkcert_root_ca_secret_key: str
+    helm_timeout: str
+    helm_debug: bool
+    dp_airflow_db: str
+    houston_image: str | None    # "repo:tag" override for CP houston
+    commander_image: str | None  # "repo:tag" override for DP commander
+
+
+def _print(msg: str) -> None:
+    print(msg, flush=True)
+
+
+def _debug_enabled() -> bool:
+    return os.environ.get("DEBUG", "").lower() in {"1", "true", "yes"}
+
+
+def _debug(msg: str) -> None:
+    if _debug_enabled():
+        _print(f"DEBUG: {msg}")
+
+
+def _ts() -> str:
+    """Return a compact local timestamp for progress logs."""
+    return time.strftime("%H:%M:%S")
+
+
+@dataclass(frozen=True)
+class MilestoneHandle:
+    idx: int
+
+
+class Milestones:
+    """
+    Milestone logger:
+    - Minimal live output
+    - Final summary table with ✅/❌
+    """
+
+    def __init__(self) -> None:
+        self._idx = 0
+        self._active: MilestoneHandle | None = None
+        self._rows: list[dict[str, object]] = []
+
+    def start(self, title: str) -> MilestoneHandle:
+        self._idx += 1
+        h = MilestoneHandle(idx=self._idx)
+        self._active = h
+        self._rows.append(
+            {
+                "idx": h.idx,
+                "title": title,
+                "status": "running",
+                "started_at": time.monotonic(),
+                "ended_at": None,
+                "duration_s": None,
+                "detail": "",
+                "error": "",
+            }
+        )
+        _print(f"⏳ [{h.idx:02d}] {title}")
+        return h
+
+    def done(self, h: MilestoneHandle, *, detail: str | None = None) -> None:
+        row = self._row(h)
+        row["status"] = "success"
+        row["ended_at"] = time.monotonic()
+        row["duration_s"] = float(row["ended_at"]) - float(row["started_at"])
+        if detail:
+            row["detail"] = detail
+        if self._active == h:
+            self._active = None
+
+    def fail(self, h: MilestoneHandle, *, error: str) -> None:
+        row = self._row(h)
+        row["status"] = "failure"
+        row["ended_at"] = time.monotonic()
+        row["duration_s"] = float(row["ended_at"]) - float(row["started_at"])
+        row["error"] = error
+        if self._active == h:
+            self._active = None
+
+    def fail_active_if_any(self, *, error: str) -> None:
+        if self._active is None:
+            return
+        self.fail(self._active, error=error)
+
+    def skip(self, title: str, *, reason: str) -> None:
+        self._idx += 1
+        self._rows.append(
+            {
+                "idx": self._idx,
+                "title": title,
+                "status": "skipped",
+                "started_at": None,
+                "ended_at": None,
+                "duration_s": 0.0,
+                "detail": reason,
+                "error": "",
+            }
+        )
+
+    def print_summary_table(self) -> None:
+        def _one_line(s: str) -> str:
+            return " ".join(s.split())
+
+        def _truncate(s: str, max_len: int) -> str:
+            if len(s) <= max_len:
+                return s
+            if max_len <= 3:
+                return s[:max_len]
+            return s[: max_len - 3] + "..."
+
+        rows: list[list[str]] = []
+        for row in self._rows:
+            idx = str(int(row["idx"]))
+            title = _one_line(str(row["title"]))
+            status = str(row["status"])
+            duration_s = row.get("duration_s")
+            detail = _one_line(str(row.get("detail") or ""))
+            error = _one_line(str(row.get("error") or ""))
+
+            status_cell = {
+                "success": "✅ Success",
+                "failure": "❌ Failed",
+                "skipped": "⏭️ Skipped",
+                "running": "⏳ Running",
+            }.get(status, status)
+
+            duration_cell = "-"
+            if isinstance(duration_s, (int, float)):
+                duration_cell = f"{duration_s:.1f}s"
+
+            details_cell = detail
+            if error:
+                details_cell = (details_cell + " " if details_cell else "") + error
+
+            # Keep the table readable in a terminal.
+            title = _truncate(title, 70)
+            details_cell = _truncate(details_cell, 90)
+
+            rows.append([idx, title, status_cell, duration_cell, details_cell])
+
+        headers = ["#", "Milestone", "Status", "Duration", "Details"]
+        widths = [len(h) for h in headers]
+        for r in rows:
+            for i, cell in enumerate(r):
+                widths[i] = max(widths[i], len(cell))
+
+        def _sep(char: str = "-") -> str:
+            return "+".join([char * (w + 2) for w in widths]).join(["+", "+"])
+
+        def _fmt_row(cells: list[str]) -> str:
+            padded = [f" {cells[i].ljust(widths[i])} " for i in range(len(cells))]
+            return "|" + "|".join(padded) + "|"
+
+        _print("\nMilestones summary:\n")
+        _print(_sep("-"))
+        _print(_fmt_row(headers))
+        _print(_sep("-"))
+        for r in rows:
+            _print(_fmt_row(r))
+        _print(_sep("-"))
+
+    def _row(self, h: MilestoneHandle) -> dict[str, object]:
+        for row in reversed(self._rows):
+            if int(row["idx"]) == h.idx:
+                return row
+        raise RuntimeError(f"Milestone handle not found: {h.idx}")
+
+
+class CommandError(RuntimeError):
+    """Raised when an external command fails."""
+
+
+def _run(
+    cmd: list[str],
+    *,
+    check: bool = True,
+    capture: bool = True,
+    env: dict[str, str] | None = None,
+    stdin: str | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """
+    Run a command and optionally capture stdout/stderr.
+    """
+    _debug(f"run: {shlex.join(cmd)}")
+    proc = subprocess.run(
+        cmd,
+        text=True,
+        check=False,
+        input=stdin,
+        stdout=subprocess.PIPE if capture else None,
+        stderr=subprocess.PIPE if capture else None,
+        env=env,
+    )
+    if check and proc.returncode != 0:
+        stderr = (proc.stderr or "").strip()
+        raise CommandError(f"Command failed ({proc.returncode}): {shlex.join(cmd)}\n{stderr}")
+    return proc
+
+
+def _which(exe: str) -> str | None:
+    proc = _run(["/usr/bin/env", "bash", "-lc", f"command -v {shlex.quote(exe)}"], check=False)
+    path = (proc.stdout or "").strip()
+    return path or None
+
+
+def _require_executable(exe: str, *, hint: str) -> None:
+    if _which(exe) is None:
+        raise RuntimeError(f"Missing required executable `{exe}`. {hint}")
+
+
+def _docker_network_exists(name: str) -> bool:
+    proc = _run(["docker", "network", "inspect", name], check=False)
+    return proc.returncode == 0
+
+
+def _ensure_docker_network(name: str) -> None:
+    if _docker_network_exists(name):
+        return
+    _print(f"Creating Docker network: {name}")
+    _run(["docker", "network", "create", name], check=True)
+
+
+def _k3d_cluster_exists(name: str) -> bool:
+    proc = _run(["k3d", "cluster", "get", name], check=False)
+    return proc.returncode == 0
+
+
+def _delete_k3d_cluster(name: str) -> None:
+    if not _k3d_cluster_exists(name):
+        return
+    _print(f"Deleting k3d cluster: {name}")
+    _run(["k3d", "cluster", "delete", name], check=True)
+
+
+def _mkcert_path() -> str:
+    """
+    Prefer our helper-installed mkcert if present, otherwise fall back to PATH.
+    """
+    helper = HELPER_BIN_DIR / "mkcert"
+    if helper.exists():
+        return str(helper)
+    return "mkcert"
+
+
+def _mkcert_caroot(mkcert_exe: str) -> Path:
+    proc = _run([mkcert_exe, "-CAROOT"], check=True)
+    caroot = Path(proc.stdout.strip())
+    if not caroot.exists():
+        raise RuntimeError(f"mkcert CAROOT does not exist: {caroot}")
+    root_ca = caroot / "rootCA.pem"
+    if not root_ca.exists():
+        raise RuntimeError(f"mkcert rootCA.pem not found at: {root_ca}")
+    return root_ca
+
+
+def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
+    """
+    Generate `astronomer-tls.pem` + `astronomer-tls.key` with SANs for:
+    - <baseDomain>, *.<baseDomain>
+    - <dpPrefix>.<baseDomain>, *.<dpPrefix>.<baseDomain>  (for each DP)
+
+    Returns:
+        (cert_path, key_path, mkcert_root_ca_path)
+    """
+    mkcert_exe = _mkcert_path()
+    _require_executable(
+        mkcert_exe,
+        hint="Install mkcert (or run `python3 bin/install-ci-tools.py` to install the repo-pinned version).",
+    )
+
+    cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
+    cert_dir.mkdir(parents=True, exist_ok=True)
+    cert_path = cert_dir / "astronomer-tls.pem"
+    key_path = cert_dir / "astronomer-tls.key"
+
+    root_ca = _mkcert_caroot(mkcert_exe)
+
+    # Always regenerate to ensure SANs are correct for all dp domain prefixes.
+    _print("Generating TLS certificates via mkcert (overwrites existing astronomer-tls.{pem,key})")
+    _run([mkcert_exe, "-install"], check=True)
+
+    base = settings.base_domain
+    sans = [base, f"*.{base}"]
+    for dp in settings.dps:
+        dp_domain = f"{dp.domain_prefix}.{base}"
+        sans.extend([dp_domain, f"*.{dp_domain}"])
+
+    _run(
+        [
+            mkcert_exe,
+            f"-cert-file={cert_path}",
+            f"-key-file={key_path}",
+            *sans,
+        ],
+        check=True,
+    )
+
+    # Append mkcert root CA to cert for a full chain (matches `bin/certs.py` behavior).
+    # NOTE: mkcert might already include it; we avoid double-appending by a simple guard.
+    root_ca_bytes = root_ca.read_bytes()
+    cert_bytes = cert_path.read_bytes()
+    if root_ca_bytes not in cert_bytes:
+        cert_path.write_bytes(cert_bytes + b"\n" + root_ca_bytes)
+
+    if not cert_path.exists() or not key_path.exists():
+        raise RuntimeError(f"Failed to generate TLS certs at {cert_path} / {key_path}")
+
+    return cert_path, key_path, root_ca
+
+
+def _k3d_create_cluster(
+    *,
+    name: str,
+    docker_network: str,
+    ports: list[str],
+    mkcert_root_ca: Path,
+) -> None:
+    """
+    Create a k3d cluster and disable traefik.
+    """
+    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*"
+    cmd = [
+        "k3d",
+        "cluster",
+        "create",
+        name,
+        "--network",
+        docker_network,
+        "--k3s-arg",
+        "--disable=traefik@server:0",
+        "--volume",
+        volume,
+    ]
+    for p in ports:
+        cmd.extend(["--port", p])
+
+    _print(f"Creating k3d cluster: {name}")
+    _run(cmd, check=True, capture=True)
+
+
+def _kubectl_apply_yaml(context: str, yaml_text: str) -> None:
+    _run(["kubectl", "--context", context, "apply", "-f", "-"], check=True, stdin=yaml_text)
+
+
+def _kubectl_create_namespace(context: str, namespace: str) -> None:
+    proc = _run(["kubectl", "--context", context, "create", "namespace", namespace], check=False)
+    if proc.returncode == 0:
+        return
+    if "AlreadyExists" in (proc.stderr or ""):
+        return
+    raise CommandError(f"Failed to create namespace {namespace} (context={context}): {(proc.stderr or '').strip()}")
+
+
+def _kubectl_apply_tls_secret(
+    *,
+    context: str,
+    namespace: str,
+    secret_name: str,
+    cert_path: Path,
+    key_path: Path,
+) -> None:
+    """
+    Idempotently apply a TLS secret.
+    """
+    secret_yaml = _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "tls",
+            secret_name,
+            f"--cert={cert_path}",
+            f"--key={key_path}",
+            "--dry-run=client",
+            "-o",
+            "yaml",
+        ],
+        check=True,
+    ).stdout
+    _kubectl_apply_yaml(context, secret_yaml)
+
+
+def _kubectl_apply_generic_secret_from_file(
+    *,
+    context: str,
+    namespace: str,
+    secret_name: str,
+    key: str,
+    file_path: Path,
+) -> None:
+    secret_yaml = _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "generic",
+            secret_name,
+            f"--from-file={key}={file_path}",
+            "--dry-run=client",
+            "-o",
+            "yaml",
+        ],
+        check=True,
+    ).stdout
+    _kubectl_apply_yaml(context, secret_yaml)
+
+
+def _write_values_file(path: Path, content: str) -> None:
+    path.write_text(content)
+
+
+def _inline_images_yaml(component: str, repo_tag: str | None, indent: int = 4) -> str:
+    """Return an indented ``images.<component>:`` block to embed inside an ``astronomer:`` section.
+
+    The astronomer umbrella chart has ``astronomer`` as a subchart, so image
+    overrides live under ``astronomer.images.<component>`` in the values file.
+    This function returns just the fragment to nest inside the ``astronomer:``
+    block at the given indentation level (default 4 = two-space indent * 2):
+
+        images:
+          houston:
+            repository: quay.io/astronomer/ap-houston-api
+            tag: "PLX-223-..."
+    """
+    if not repo_tag:
+        return ""
+    if ":" in repo_tag:
+        repo, tag = repo_tag.rsplit(":", 1)
+    else:
+        repo, tag = "", repo_tag
+    pad = " " * indent
+    lines = [f"{pad}images:", f"{pad}  {component}:"]
+    if repo:
+        lines.append(f"{pad}    repository: {repo}")
+    if tag:
+        lines.append(f"{pad}    tag: \"{tag}\"")
+    return "\n".join(lines) + "\n"
+
+
+def _cp_values_yaml(settings: Settings) -> str:
+    houston_image_yaml = _inline_images_yaml("houston", settings.houston_image, indent=2)
+    return f"""\
+global:
+  baseDomain: {settings.base_domain}
+  plane:
+    mode: control
+    domainPrefix: ""
+  tlsSecret: {settings.tls_secret_name}
+  postgresqlEnabled: true
+  prometheusPostgresExporterEnabled: true
+  privateCaCerts:
+    - {settings.mkcert_root_ca_secret_name}
+  nats:
+    enabled: true
+    replicas: 1
+  networkPolicy:
+    enabled: false
+  defaultDenyNetworkPolicy: false
+  deployRollbackEnabled: true
+  taskUsageMetricsEnabled: true
+  vectorEnabled: true
+  elasticsearchEnabled: true
+  dagOnlyDeployment:
+    enabled: true
+
+tags:
+  platform: true
+  logging: true
+  monitoring: true
+  postgresql: true
+  nats: true
+
+astronomer:
+{houston_image_yaml}\
+  astroUI:
+    replicas: 1
+  houston:
+    replicas: 1
+    worker:
+      replicas: 1
+    config:
+      emailConfirmation: false
+      publicSignups: false
+      cors:
+        allowedOrigins:
+          - "https://app.{settings.base_domain}"
+      auth:
+        local:
+          enabled: true
+      deployments:
+        configureDagDeployment: true
+        hardDeleteDeployment: true
+  navigator:
+    enabled: true
+  registry: {{}}
+
+nginx:
+  replicas: 1
+  replicasDefaultBackend: 1
+
+nats:
+  cluster:
+    enabled: false
+    replicas: 1
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+
+elasticsearch:
+  common:
+    env:
+      NUMBER_OF_MASTERS: "1"
+
+  master:
+    replicas: 1
+    heapMemory: 256m
+    resources:
+      requests:
+        memory: 512Mi
+
+  data:
+    replicas: 1
+    heapMemory: 512m
+    resources:
+      requests:
+        memory: 1Gi
+
+  client:
+    replicas: 1
+    heapMemory: 256m
+    resources:
+      requests:
+        memory: 512Mi
+  images:
+    es:
+      repository: docker.elastic.co/elasticsearch/elasticsearch
+      tag: "8.18.6"
+"""
+
+
+def _dp_values_yaml(settings: Settings, dp: DpCluster) -> str:
+    """Generate DP Helm values, switching between PostgreSQL and MySQL for Airflow databases."""
+    use_mysql = settings.dp_airflow_db == "mysql"
+    pg_enabled = "false" if use_mysql else "true"
+    pg_exporter_enabled = "false" if use_mysql else "true"
+    commander_image_yaml = _inline_images_yaml("commander", settings.commander_image, indent=2)
+
+    return f"""\
+global:
+  baseDomain: {settings.base_domain}
+  plane:
+    mode: data
+    domainPrefix: {dp.domain_prefix}
+  tlsSecret: {settings.tls_secret_name}
+  postgresqlEnabled: {pg_enabled}
+  prometheusPostgresExporterEnabled: {pg_exporter_enabled}
+  privateCaCerts:
+    - {settings.mkcert_root_ca_secret_name}
+  nats:
+    enabled: true
+    replicas: 1
+  networkPolicy:
+    enabled: false
+  defaultDenyNetworkPolicy: false
+  deployRollbackEnabled: true
+  taskUsageMetricsEnabled: true
+  vectorEnabled: true
+  elasticsearchEnabled: true
+  dagOnlyDeployment:
+    enabled: true
+  # Ensure db-bootstrapper passes SSLMODE=disable so commander can connect to
+  # the local in-cluster PostgreSQL (which does not have SSL enabled).
+  ssl:
+    enabled: true
+    mode: disable
+
+tags:
+  platform: true
+  logging: true
+  monitoring: true
+  postgresql: {pg_enabled}
+  nats: true
+
+astronomer:
+{commander_image_yaml}\
+  commander:
+    replicas: 1
+    env:
+      - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
+        value: "true"
+  pilot:
+    enabled: true
+  flightDeck:
+    enabled: true
+  registry: {{}}
+
+nginx:
+  replicas: 1
+  replicasDefaultBackend: 1
+
+nats:
+  cluster:
+    enabled: false
+    replicas: 1
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+
+elasticsearch:
+  common:
+    env:
+      NUMBER_OF_MASTERS: "1"
+
+  master:
+    replicas: 1
+    heapMemory: 256m
+    resources:
+      requests:
+        memory: 512Mi
+
+  data:
+    replicas: 1
+    heapMemory: 512m
+    resources:
+      requests:
+        memory: 1Gi
+
+  client:
+    replicas: 1
+    heapMemory: 256m
+    resources:
+      requests:
+        memory: 512Mi
+  images:
+    es:
+      repository: docker.elastic.co/elasticsearch/elasticsearch
+      tag: "8.18.6"
+"""
+
+
+MYSQL_ROOT_PASSWORD = os.environ.get("MYSQL_ROOT_PASSWORD", "rootpassword")
+MYSQL_IMAGE = "mysql:8.0"
+
+
+def _mysql_service_name(release_name: str) -> str:
+    """Return the Kubernetes Service name for the MySQL instance."""
+    return f"{release_name}-mysql"
+
+
+def _mysql_manifest_yaml(namespace: str, release_name: str) -> str:
+    """Generate a Kubernetes Deployment + Service manifest for a local MySQL 8.0 instance."""
+    svc_name = _mysql_service_name(release_name)
+    labels = f"app: {svc_name}"
+    return f"""\
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {svc_name}
+  namespace: {namespace}
+  labels:
+    {labels}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {labels}
+  template:
+    metadata:
+      labels:
+        {labels}
+    spec:
+      containers:
+        - name: mysql
+          image: {MYSQL_IMAGE}
+          args:
+            - --default-authentication-plugin=mysql_native_password
+            - --explicit_defaults_for_timestamp=1
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "{MYSQL_ROOT_PASSWORD}"
+          ports:
+            - containerPort: 3306
+              name: mysql
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - "127.0.0.1"
+                - -u
+                - root
+                - -p{MYSQL_ROOT_PASSWORD}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {svc_name}
+  namespace: {namespace}
+  labels:
+    {labels}
+spec:
+  selector:
+    {labels}
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+"""
+
+
+def _deploy_mysql(*, context: str, namespace: str, release_name: str) -> None:
+    """Deploy MySQL into the cluster and wait for it to become ready."""
+    manifest = _mysql_manifest_yaml(namespace, release_name)
+    _kubectl_apply_yaml(context, manifest)
+
+    svc_name = _mysql_service_name(release_name)
+    _print(f"Waiting for MySQL pod to become ready ({svc_name})")
+    _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "wait",
+            "--for=condition=available",
+            f"deployment/{svc_name}",
+            "--timeout=180s",
+        ],
+        check=True,
+    )
+
+
+def _create_astronomer_bootstrap_secret_mysql(*, context: str, namespace: str, release_name: str) -> None:
+    """Create (or update) the astronomer-bootstrap secret with a MySQL connection string."""
+    svc_name = _mysql_service_name(release_name)
+    conn = f"mysql://root:{MYSQL_ROOT_PASSWORD}@{svc_name}.{namespace}.svc.cluster.local:3306"
+
+    secret_yaml = _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "generic",
+            "astronomer-bootstrap",
+            f"--from-literal=connection={conn}",
+            "--dry-run=client",
+            "-o",
+            "yaml",
+        ],
+        check=True,
+    ).stdout
+    _kubectl_apply_yaml(context, secret_yaml)
+    _debug(f"astronomer-bootstrap secret set with MySQL connection: {svc_name}")
+
+
+def _helm_dependency_update(chart_dir: Path) -> None:
+    _print("Running `helm dependency update`")
+    _run(["helm", "dependency", "update", str(chart_dir)], check=True)
+
+
+def _helm_upgrade_install(
+    *,
+    context: str,
+    chart_dir: Path,
+    release_name: str,
+    namespace: str,
+    values_file: Path,
+    extra_values_files: list[Path],
+    timeout: str,
+    debug: bool,
+) -> None:
+    cmd = [
+        "helm",
+        "upgrade",
+        "--install",
+        release_name,
+        str(chart_dir),
+        "--namespace",
+        namespace,
+        "--kube-context",
+        context,
+        "--values",
+        str(values_file),
+        "--timeout",
+        timeout,
+        "--wait",
+        "--force-conflicts",  # helm v4 SSA: take ownership of fields from other managers
+    ]
+    for extra in extra_values_files:
+        cmd.extend(["--values", str(extra)])
+    if debug:
+        cmd.append("--debug")
+    _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
+    _run(cmd, check=True, capture=False)
+
+
+def _run_dns_reconcile(settings: Settings, dp: DpCluster) -> None:
+    """
+    Run the existing reconcile helper to pin CoreDNS NodeHosts and the DP node's /etc/hosts.
+    Called once per DP cluster.
+    """
+    script = Path(GIT_ROOT_DIR) / "bin" / "reconcile-k3d-orbstack-network.py"
+    env = dict(os.environ)
+    env.update(
+        {
+            "CP_CONTEXT": f"k3d-{settings.clusters.cp}",
+            "DP_CONTEXT": f"k3d-{dp.name}",
+            "PLATFORM_NAMESPACE": settings.namespace,
+            "BASE_DOMAIN": settings.base_domain,
+            "DP_DOMAIN_PREFIX": dp.domain_prefix,
+            "DP_NODE_CONTAINER": f"k3d-{dp.name}-server-0",
+            "CP_INGRESS_SERVICE": f"{settings.release_name}-cp-nginx",
+        }
+    )
+    _print(f"Reconciling k3d cross-cluster DNS + node-level hosts pins (dp={dp.name})")
+    _run([sys.executable, str(script)], check=True, env=env, capture=False)
+
+
+def _kubectl_get_service_lb_ip(context: str, namespace: str, service: str) -> str:
+    proc = _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "get",
+            "svc",
+            service,
+            "-o",
+            "jsonpath={.status.loadBalancer.ingress[0].ip}",
+        ],
+        check=True,
+    )
+    ip = proc.stdout.strip()
+    if not ip:
+        raise RuntimeError(f"Service {namespace}/{service} has no LoadBalancer ingress IP (context={context})")
+    return ip
+
+
+def _docker_inspect_ip(container: str) -> str:
+    """
+    Return the container IP from `docker inspect`.
+
+    This is useful for k3d's `*-serverlb` containers, which often represent the
+    reachable ingress IP on the shared Docker network.
+    """
+    proc = _run(
+        ["docker", "inspect", container, "-f", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}"],
+        check=True,
+    )
+    ip = proc.stdout.strip()
+    if not ip:
+        raise RuntimeError(f"Could not determine IP for container {container}")
+    return ip
+
+
+def _ensure_container_hosts_mapping(container: str, ip: str, hostname: str) -> None:
+    """
+    Ensure a single ip->hostname mapping exists in the container's /etc/hosts.
+
+    /etc/hosts can be regenerated on container restart; safe to run repeatedly.
+    """
+    sh = (
+        "set -eu; "
+        + f"grep -qE '^[[:space:]]*{ip}[[:space:]]+.*\\b{hostname}\\b' /etc/hosts "
+        + f"|| echo '{ip} {hostname}' >> /etc/hosts"
+    )
+    _run(["docker", "exec", container, "sh", "-c", sh], check=True)
+
+
+def _ensure_dp_node_houston_hosts_pin(settings: Settings, dp: DpCluster) -> None:
+    """
+    Ensure DP node container has node-level DNS pin for `houston.<baseDomain>` -> CP ingress LB IP.
+
+    Why:
+    - Pods resolve via CoreDNS, but node-level operations (kubelet/containerd image pulls) use node DNS + /etc/hosts.
+    - If `houston.<baseDomain>` resolves incorrectly at the node level, registry auth can break.
+    """
+    cp_context = f"k3d-{settings.clusters.cp}"
+    dp_node_container = f"k3d-{dp.name}-server-0"
+    cp_nginx_svc = f"{settings.release_name}-cp-nginx"
+
+    cp_nginx_lb_ip = _kubectl_get_service_lb_ip(cp_context, settings.namespace, cp_nginx_svc)
+    houston_host = f"houston.{settings.base_domain}"
+
+    _ensure_container_hosts_mapping(dp_node_container, cp_nginx_lb_ip, houston_host)
+    _debug(f"Ensured DP node /etc/hosts pin: {cp_nginx_lb_ip} {houston_host} (dp={dp.name})")
+
+
+def _print_host_etc_hosts_instructions(settings: Settings) -> None:
+    """
+    Print the recommended /etc/hosts entries for accessing CP/DP from the host machine.
+
+    This uses the Docker IPs of the k3d `*-serverlb` containers:
+    - k3d-control-serverlb (CP ingress)
+    - k3d-data-serverlb, k3d-data2-serverlb, ... (DP ingresses)
+    """
+    cp_serverlb = f"k3d-{settings.clusters.cp}-serverlb"
+    cp_nginx_lb_ip = _docker_inspect_ip(cp_serverlb)
+
+    base = settings.base_domain
+
+    _print("\nAdd the following entries to your host `/etc/hosts`:\n")
+
+    for dp in settings.dps:
+        dp_serverlb = f"k3d-{dp.name}-serverlb"
+        dp_nginx_lb_ip = _docker_inspect_ip(dp_serverlb)
+        prefix = dp.domain_prefix
+        _print(
+            f"{dp_nginx_lb_ip} {prefix}.{base} deployments.{prefix}.{base} registry.{prefix}.{base} "
+            f"commander.{prefix}.{base} prometheus.{prefix}.{base} prom-proxy.{prefix}.{base} "
+            f"elasticsearch.{prefix}.{base}"
+        )
+
+    _print(
+        f"{cp_nginx_lb_ip} {base} app.{base} houston.{base} grafana.{base} prometheus.{base} "
+        f"elasticsearch.{base} alertmanager.{base} registry.{base}"
+    )
+
+
+def _validate_prereqs() -> None:
+    _require_executable("docker", hint="Install Docker Desktop/OrbStack and ensure `docker` works.")
+    _require_executable("k3d", hint="Install k3d (e.g. `brew install k3d` on macOS).")
+    _require_executable("kubectl", hint="Install kubectl and ensure it is in PATH.")
+    _require_executable("helm", hint="Install helm and ensure it is in PATH.")
+
+
+def _build_dp_clusters(args: argparse.Namespace) -> tuple[DpCluster, ...]:
+    """
+    Build the list of DP cluster configs from parsed args.
+
+    Naming convention:
+      index 1 → name="data",   domain_prefix="dp01", https=8444, http=8081
+      index 2 → name="data2",  domain_prefix="dp02", https=8445, http=8082
+      index N → name="dataN",  domain_prefix="dpNN", https=8443+N, http=8080+N
+    """
+    dps = []
+    for i in range(1, args.dp_count + 1):
+        name = "data" if i == 1 else f"data{i}"
+        domain_prefix = f"dp{i:02d}"
+        https_port = 8443 + i
+        http_port = 8080 + i
+        dps.append(DpCluster(name=name, domain_prefix=domain_prefix, https_port=https_port, http_port=http_port))
+    return tuple(dps)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Automate Astronomer CP + multi-DP local setup using k3d.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # 1 CP + 2 DP clusters (default)
+  python bin/setup-cp-dp-dp-k3d.py
+
+  # 1 CP + 3 DP clusters with custom images
+  python bin/setup-cp-dp-dp-k3d.py --dp-count 3 \\
+    --houston-image quay.io/astronomer/ap-houston-api:my-branch \\
+    --commander-image quay.io/astronomer/ap-commander:my-branch
+""",
+    )
+    parser.add_argument("--base-domain", default="localtest.me")
+    parser.add_argument("--namespace", default="astronomer")
+    parser.add_argument("--release-name", default="astronomer")
+    parser.add_argument("--docker-network", default="astronomer-net")
+    parser.add_argument("--cp-cluster-name", default="control")
+
+    parser.add_argument(
+        "--dp-count",
+        type=int,
+        default=2,
+        metavar="N",
+        help="Number of data-plane clusters to create (default: 2). "
+             "Clusters are named data, data2, ..., dataN with prefixes dp01, dp02, ..., dpNN.",
+    )
+
+    parser.add_argument("--cp-https-port", type=int, default=8443)
+    parser.add_argument("--cp-http-port", type=int, default=8080)
+
+    parser.add_argument("--tls-secret-name", default="astronomer-tls")
+    parser.add_argument("--mkcert-root-ca-secret-name", default="mkcert-root-ca")
+    parser.add_argument("--mkcert-root-ca-secret-key", default="cert.pem")
+
+    parser.add_argument("--helm-timeout", default=os.environ.get("HELM_TIMEOUT", "60m"))
+    parser.add_argument("--helm-debug", action="store_true")
+    parser.add_argument(
+        "--helm-deps-update",
+        action="store_true",
+        help="Run `helm dependency update` before installing (off by default; local charts are already vendored).",
+    )
+
+    parser.add_argument("--recreate-clusters", action="store_true", help="Delete and recreate k3d clusters if they exist")
+
+    parser.add_argument("--skip-certs", action="store_true")
+    parser.add_argument("--skip-clusters", action="store_true")
+    parser.add_argument("--skip-secrets", action="store_true")
+    parser.add_argument("--skip-helm", action="store_true")
+    parser.add_argument("--skip-dns-reconcile", action="store_true")
+    parser.add_argument(
+        "--skip-node-registry-check",
+        action="store_true",
+        help="Skip DP node /etc/hosts pin + registry authorization endpoint check.",
+    )
+
+    parser.add_argument(
+        "--values-dir",
+        default="",
+        help="Directory to write cp-values.yaml + dp-values.yaml. Defaults to a temp directory.",
+    )
+
+    parser.add_argument(
+        "--helm-values",
+        action="append",
+        default=[],
+        dest="helm_values",
+        metavar="FILE",
+        help="Extra Helm values file passed to both CP and DP installs (can be repeated).",
+    )
+
+    parser.add_argument(
+        "--dp-airflow-db",
+        choices=["postgres", "mysql"],
+        default="postgres",
+        help="Database type for Airflow deployments on the data plane (default: postgres).",
+    )
+
+    parser.add_argument(
+        "--houston-image",
+        default=None,
+        metavar="REPO:TAG",
+        help="Override the houston image on the CP cluster (format: 'repo:tag').",
+    )
+
+    parser.add_argument(
+        "--commander-image",
+        default=None,
+        metavar="REPO:TAG",
+        help="Override the commander image on all DP clusters (format: 'repo:tag').",
+    )
+
+    return parser.parse_args()
+
+
+def main() -> int:  # noqa: C901
+    args = parse_args()
+
+    if GIT_ROOT_DIR is None:
+        raise RuntimeError("Could not locate repo root (missing .git).")
+
+    if args.dp_count < 1:
+        raise RuntimeError("--dp-count must be at least 1")
+
+    ms = Milestones()
+
+    dps = _build_dp_clusters(args)
+
+    settings = Settings(
+        base_domain=args.base_domain,
+        namespace=args.namespace,
+        release_name=args.release_name,
+        docker_network=args.docker_network,
+        clusters=ClusterNames(cp=args.cp_cluster_name),
+        ports=Ports(cp_https=args.cp_https_port, cp_http=args.cp_http_port),
+        dps=dps,
+        tls_secret_name=args.tls_secret_name,
+        mkcert_root_ca_secret_name=args.mkcert_root_ca_secret_name,
+        mkcert_root_ca_secret_key=args.mkcert_root_ca_secret_key,
+        helm_timeout=args.helm_timeout,
+        helm_debug=bool(args.helm_debug),
+        dp_airflow_db=args.dp_airflow_db,
+        houston_image=args.houston_image,
+        commander_image=args.commander_image,
+    )
+
+    dp_names = ", ".join(dp.name for dp in settings.dps)
+    _print(f"Setting up 1 CP ({settings.clusters.cp}) + {len(settings.dps)} DP(s) ({dp_names})")
+    if settings.houston_image:
+        _print(f"  houston image override: {settings.houston_image}")
+    if settings.commander_image:
+        _print(f"  commander image override: {settings.commander_image}")
+
+    try:
+        h = ms.start("Validate prerequisites (docker/k3d/kubectl/helm)")
+        _validate_prereqs()
+        ms.done(h)
+
+        # Step: Docker network
+        h = ms.start(f"Ensure Docker network `{settings.docker_network}` exists")
+        _ensure_docker_network(settings.docker_network)
+        ms.done(h)
+
+        # Step: TLS + mkcert root CA file
+        cert_path: Path | None = None
+        key_path: Path | None = None
+        mkcert_root_ca: Path | None = None
+        if not args.skip_certs:
+            dp_prefixes = ", ".join(dp.domain_prefix for dp in settings.dps)
+            h = ms.start(f"Generate TLS certs (mkcert) with CP+DP SANs ({dp_prefixes})")
+            cert_path, key_path, mkcert_root_ca = _ensure_tls_certs(settings)
+            ms.done(h, detail=f"cert={cert_path} key={key_path}")
+        else:
+            ms.skip("Generate TLS certs (mkcert) with CP+DP SANs", reason="--skip-certs set")
+            # Still need root CA for cluster volume mount + secret if we create clusters/secrets.
+            mkcert_root_ca = _mkcert_caroot(_mkcert_path())
+            cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
+            cert_path = cert_dir / "astronomer-tls.pem"
+            key_path = cert_dir / "astronomer-tls.key"
+
+        if mkcert_root_ca is None:
+            raise RuntimeError("mkcert root CA path not available")
+
+        # Step: clusters
+        if not args.skip_clusters:
+            all_cluster_names = f"CP={settings.clusters.cp}, DPs={dp_names}"
+            h = ms.start(f"Ensure k3d clusters exist ({all_cluster_names})")
+            if args.recreate_clusters:
+                _delete_k3d_cluster(settings.clusters.cp)
+                for dp in settings.dps:
+                    _delete_k3d_cluster(dp.name)
+
+            if not _k3d_cluster_exists(settings.clusters.cp):
+                _k3d_create_cluster(
+                    name=settings.clusters.cp,
+                    docker_network=settings.docker_network,
+                    ports=[
+                        f"{settings.ports.cp_https}:443@loadbalancer",
+                        f"{settings.ports.cp_http}:80@loadbalancer",
+                    ],
+                    mkcert_root_ca=mkcert_root_ca,
+                )
+            else:
+                _debug(f"Cluster already exists, skipping: {settings.clusters.cp}")
+
+            for dp in settings.dps:
+                if not _k3d_cluster_exists(dp.name):
+                    _k3d_create_cluster(
+                        name=dp.name,
+                        docker_network=settings.docker_network,
+                        ports=[
+                            f"{dp.https_port}:443@loadbalancer",
+                            f"{dp.http_port}:80@loadbalancer",
+                        ],
+                        mkcert_root_ca=mkcert_root_ca,
+                    )
+                else:
+                    _debug(f"Cluster already exists, skipping: {dp.name}")
+            ms.done(h)
+        else:
+            ms.skip(
+                f"Ensure k3d clusters exist (CP={settings.clusters.cp}, DPs={dp_names})",
+                reason="--skip-clusters set",
+            )
+
+        cp_context = f"k3d-{settings.clusters.cp}"
+
+        # Step: namespace + secrets
+        if not args.skip_secrets:
+            h = ms.start(f"Apply namespace + secrets in all clusters (ns={settings.namespace})")
+            if cert_path is None or key_path is None:
+                raise RuntimeError("TLS cert/key paths not available; cannot create secrets")
+
+            all_contexts = [cp_context] + [f"k3d-{dp.name}" for dp in settings.dps]
+            for ctx in all_contexts:
+                _kubectl_create_namespace(ctx, settings.namespace)
+                _kubectl_apply_tls_secret(
+                    context=ctx,
+                    namespace=settings.namespace,
+                    secret_name=settings.tls_secret_name,
+                    cert_path=cert_path,
+                    key_path=key_path,
+                )
+                _kubectl_apply_generic_secret_from_file(
+                    context=ctx,
+                    namespace=settings.namespace,
+                    secret_name=settings.mkcert_root_ca_secret_name,
+                    key=settings.mkcert_root_ca_secret_key,
+                    file_path=mkcert_root_ca,
+                )
+            ms.done(h, detail=f"tlsSecret={settings.tls_secret_name} caSecret={settings.mkcert_root_ca_secret_name}")
+        else:
+            ms.skip("Apply namespace + secrets in all clusters", reason="--skip-secrets set")
+
+        # Step: deploy MySQL in each DP (when --dp-airflow-db=mysql)
+        if settings.dp_airflow_db == "mysql":
+            for dp in settings.dps:
+                dp_context = f"k3d-{dp.name}"
+                h = ms.start(f"Deploy MySQL in DP cluster ({dp.name})")
+                _deploy_mysql(context=dp_context, namespace=settings.namespace, release_name=settings.release_name)
+                ms.done(h, detail=f"svc={_mysql_service_name(settings.release_name)}")
+
+                h = ms.start(f"Create astronomer-bootstrap secret (MySQL) in DP ({dp.name})")
+                _create_astronomer_bootstrap_secret_mysql(
+                    context=dp_context,
+                    namespace=settings.namespace,
+                    release_name=settings.release_name,
+                )
+                ms.done(h)
+
+        # Step: values files
+        h = ms.start("Write CP/DP Helm values files")
+        values_dir: Path
+        if args.values_dir:
+            values_dir = Path(args.values_dir)
+            values_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            values_dir = Path(tempfile.mkdtemp(prefix="astro-k3d-"))
+
+        cp_values = values_dir / "cp-values.yaml"
+        _write_values_file(cp_values, _cp_values_yaml(settings))
+
+        dp_values_files: dict[str, Path] = {}
+        for dp in settings.dps:
+            dp_values = values_dir / f"dp-values-{dp.name}.yaml"
+            _write_values_file(dp_values, _dp_values_yaml(settings, dp))
+            dp_values_files[dp.name] = dp_values
+
+        ms.done(h, detail=f"dir={values_dir}")
+
+        # Step: helm installs
+        if not args.skip_helm:
+            if args.helm_deps_update:
+                h = ms.start("Helm dependency update")
+                _helm_dependency_update(Path(GIT_ROOT_DIR))
+                ms.done(h)
+            else:
+                ms.skip("Helm dependency update", reason="Disabled by default (vendored local charts)")
+
+            h = ms.start(f"Helm install/upgrade Control Plane (context={cp_context})")
+            _helm_upgrade_install(
+                context=cp_context,
+                chart_dir=Path(GIT_ROOT_DIR),
+                release_name=settings.release_name,
+                namespace=settings.namespace,
+                values_file=cp_values,
+                extra_values_files=[Path(f) for f in args.helm_values],
+                timeout=settings.helm_timeout,
+                debug=settings.helm_debug,
+            )
+            ms.done(h)
+
+            for dp in settings.dps:
+                dp_context = f"k3d-{dp.name}"
+
+                # IMPORTANT: DP components may need to resolve CP endpoints during startup.
+                # Patch DP CoreDNS NodeHosts (and restart CoreDNS) after CP install, before DP install.
+                if not args.skip_dns_reconcile:
+                    h = ms.start(f"Pre-DP: update DP CoreDNS NodeHosts for CP ingress (dp={dp.name})")
+                    _run_dns_reconcile(settings, dp)
+                    ms.done(h)
+                else:
+                    ms.skip(
+                        f"Pre-DP: update DP CoreDNS NodeHosts for CP ingress (dp={dp.name})",
+                        reason="--skip-dns-reconcile set",
+                    )
+
+                h = ms.start(f"Helm install/upgrade Data Plane (context={dp_context})")
+                _helm_upgrade_install(
+                    context=dp_context,
+                    chart_dir=Path(GIT_ROOT_DIR),
+                    release_name=settings.release_name,
+                    namespace=settings.namespace,
+                    values_file=dp_values_files[dp.name],
+                    extra_values_files=[Path(f) for f in args.helm_values],
+                    timeout=settings.helm_timeout,
+                    debug=settings.helm_debug,
+                )
+                ms.done(h)
+        else:
+            ms.skip("Helm dependency update + CP/DP install", reason="--skip-helm set")
+
+        # Step: DNS reconcile (post-install)
+        if not args.skip_dns_reconcile:
+            for dp in settings.dps:
+                h = ms.start(f"Reconcile cross-cluster DNS + node-level hosts pins (dp={dp.name})")
+                _run_dns_reconcile(settings, dp)
+                ms.done(h)
+        else:
+            ms.skip("Reconcile cross-cluster DNS + node-level hosts pins", reason="--skip-dns-reconcile set")
+
+        # Step: DP node-level houston.<baseDomain> pin (node-level DNS for kubelet/containerd-like operations)
+        if not args.skip_node_registry_check:
+            for dp in settings.dps:
+                h = ms.start(f"DP node: pin houston.<baseDomain> to CP ingress (dp={dp.name})")
+                _ensure_dp_node_houston_hosts_pin(settings, dp)
+                ms.done(h)
+        else:
+            ms.skip(
+                "DP node: pin houston.<baseDomain> to CP ingress (node /etc/hosts)",
+                reason="--skip-node-registry-check set",
+            )
+
+        ms.print_summary_table()
+        _print_host_etc_hosts_instructions(settings)
+        _print("\n✅ Completed.")
+        return 0
+    except Exception as e:  # noqa: BLE001
+        ms.fail_active_if_any(error=str(e))
+        ms.print_summary_table()
+        _print(f"\n❌ Failed: {e}")
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

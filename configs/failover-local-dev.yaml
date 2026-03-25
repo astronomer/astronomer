@@ -1,6 +1,10 @@
 astronomer:
   dplink:
     enabled: true
+  houston:
+    worker:
+      dispatcher:
+        enabled: true
   flightDeck:
     enabled: true
   images:

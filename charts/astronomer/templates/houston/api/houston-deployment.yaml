@@ -87,11 +87,6 @@ spec:
           livenessProbe: {{ tpl (toYaml .Values.houston.waitForDB.livenessProbe) . | nindent 12 }}
           {{- end }}
           env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
            {{- include "houston_environment" . | indent 12 }}
           volumeMounts:
             - name: etc-ssl-certs

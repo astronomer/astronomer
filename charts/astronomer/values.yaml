@@ -164,8 +164,8 @@ houston:
 
     # Dispatcher configuration for houston-worker
     dispatcher:
-      # Enable/disable the dispatcher feature
-      enabled: false
+      # Enable/disable the dispatcher feature (required for CpFlight StartFlight dispatch)
+      enabled: true
 
       # Dispatcher loop knobs
       lease:

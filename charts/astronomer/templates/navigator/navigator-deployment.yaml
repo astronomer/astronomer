@@ -94,11 +94,13 @@ spec:
               value: "true"
 
             # Houston common configurations
+            - name: NODE_ENV
+              value: "production"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   key: connection
-                  name: astronomer-bootstrap
+                  name: {{ template "houston.backendSecret" . }}
             {{- if not (((.Values.houston.config.deployments).database).connection) }}
             - name: DEPLOYMENTS__DATABASE__CONNECTION
               valueFrom:
@@ -106,6 +108,10 @@ spec:
                   name: {{ template "houston.airflowBackendSecret" . }}
                   key: connection
             {{- end }}
+            - name: NATS__SERVERS
+              value: {{ template "houston.nats.servers" . }}
+            - name: NATS__CLUSTER_ID
+              value: {{ .Release.Name }}-stan
 
             # Failover request reconcile loop
             - name: FAILOVER_REQUEST_RECONCILER_INTERVAL_SECONDS
