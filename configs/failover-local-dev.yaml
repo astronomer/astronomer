@@ -8,6 +8,10 @@ astronomer:
         value: "true"
   flightDeck:
     enabled: true
+  houston:
+    worker:
+      dispatcher:
+        enabled: true
   images:
     commander:
       pullPolicy: Always
