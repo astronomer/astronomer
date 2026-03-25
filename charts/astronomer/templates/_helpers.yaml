@@ -302,6 +302,8 @@ s3:
 {{- end }}
 
 {{- define "dp_link_environment" }}
+- name: NODE_ENV
+  value: "production"
 {{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.dpLink.env }}
 - name: {{ $config.name }}
@@ -352,9 +354,13 @@ s3:
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
 - name: COMMANDER_WAIT_ENABLED
-  value: "true"
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
 - name: REGISTRY_WAIT_ENABLED
   value: "false"
+- name: NATS__SERVERS
+  value: {{ template "houston.nats.servers" . }}
+- name: NATS__CLUSTER_ID
+  value: {{ .Release.Name }}-stan
 {{- end }}
 
 
