@@ -251,6 +251,8 @@ data:
       {{- end }}
 
         gitSyncRelay:
+          metrics:
+            enabled: false
           images:
             gitDaemon:
               repository: {{ .Values.global.gitSyncRelay.images.gitDaemon.repository }}
@@ -258,6 +260,7 @@ data:
             gitSync:
               repository: {{ .Values.global.gitSyncRelay.images.gitSync.repository }}
               tag: {{ .Values.global.gitSyncRelay.images.gitSync.tag }}
+
 
         airflow:
           images:
