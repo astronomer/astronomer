@@ -12,14 +12,6 @@ orbs:
   cosign: cpanato/cosign-orb@2.0.0
 
 parameters:
-  scan-docker-images:
-    type: boolean
-    default: false
-    description: "This will run docker image scan."
-  scan-docker-images-report-url:
-    type: string
-    default: ""
-    description: "The URN to report image scan result."
   qa-release:
     type: boolean
     default: false
@@ -63,63 +55,6 @@ jobs:
           command: |
             # Execute the signing script with version from environment
             python bin/sign-images.py --version "${IMAGE_TAG}"
-
-  trivy-scan-docker:
-    docker:
-      - image: cimg/base:current-24.04
-    shell: /usr/bin/bash
-    parameters:
-      docker_image:
-        type: string
-      report_url:
-        type: string
-        default: ""
-      slack_notify:
-        type: boolean
-        default: false
-    environment:
-      SCAN_IMAGE: << parameters.docker_image >>
-      SCAN_TOOL: Trivy
-      BASH_ENV: /etc/profile
-      ASTRO_SEC_ENDPOINT: << parameters.report_url >>
-    steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: set -euo pipefail
-      - checkout
-      - run:
-          name: Pull Docker image
-          command: docker pull << parameters.docker_image >>
-      - run:
-          name: Install trivy
-          command: |
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-            date +%F > date
-      - restore_cache:
-          keys:
-            {% raw %}- trivy-cache-{{ checksum "date" }}{% endraw %}
-      - run:
-          name: Scan the local image with trivy
-          command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
-      - when:
-          condition:
-            or:
-              - << parameters.slack_notify >>
-          steps:
-            - run:
-                name: Slack Init
-                command: |
-                  echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
-                  source $BASH_ENV
-                when: on_fail
-            - slack/notify:
-                event: fail
-                template: SLACK_MSG_TEMPLATE
-                channel: C03HS1H9G1E
-      - save_cache:
-          {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
-          paths:
-            - /tmp/workspace/trivy-cache
 
   release_bom:
     docker:
@@ -307,30 +242,9 @@ jobs:
 workflows:
   version: 2.1
 
-  # This workflow is triggered by https://app.circleci.com/settings/project/github/astronomer/astronomer/triggers
-  scan-docker-images:
-    when:
-      and:
-        - << pipeline.parameters.scan-docker-images >>
-        - not: << pipeline.parameters.qa-release >>
-    jobs:
-      - trivy-scan-docker:
-          report_url: << pipeline.parameters.scan-docker-images-report-url >>
-          slack_notify: false
-          matrix:
-            parameters:
-              docker_image:
-{%- for image in docker_images %}
-                - {{ image }}
-{%- endfor %}
-          context:
-            - slack_team-software-infra-bot
-
   build-and-release-helm-chart:
     when:
-      and:
-        - not: << pipeline.parameters.scan-docker-images >>
-        - not: << pipeline.parameters.qa-release >>
+      not: << pipeline.parameters.qa-release >>
     jobs:
       - run_pre_commit
       - test-unit
@@ -431,10 +345,7 @@ workflows:
             - gcp-astronomer-prod
 
   qa-build-and-release-helm-chart:
-    when:
-      and:
-        - << pipeline.parameters.qa-release >>
-        - not: << pipeline.parameters.scan-docker-images >>
+    when: << pipeline.parameters.qa-release >>
     jobs:
       - run_pre_commit
       - test-unit
@@ -560,12 +471,3 @@ commands:
             set -xe
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository "$CIRCLE_PROJECT_REPONAME" --github-organization "$CIRCLE_PROJECT_USERNAME" --commitish "$CIRCLE_SHA1"
-
-  trivy-docker-test:
-    description: "Trivy: Vulnerability scan a Docker image"
-    parameters:
-      docker_image:
-        type: string
-    steps:
-      - trivy/vulnerability-scan:
-            docker-image: << parameters.docker_image >>
