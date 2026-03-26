@@ -70,12 +70,13 @@ global:
         create: false
         names: []
 
-    # dataPlaneFailover: master switch for DR failover
-    # On data plane (mode=data): enables pilot, flightDeck, and commander StartFlight RPC
-    # On control plane (mode=control): enables navigator, dp-link, and houston dispatcher
-    # On unified (mode=unified): no effect — enable components individually
-    dataPlaneFailover:
-      enabled: false
+
+  # dataPlaneFailover: master switch for DR failover
+  # On data plane (mode=data): enables pilot, flightDeck, and commander StartFlight RPC
+  # On control plane (mode=control): enables navigator, dp-link, and houston dispatcher
+  # On unified (mode=unified): no effect — enable components individually
+  dataPlaneFailover:
+    enabled: false
 
   # namespaceLabels is a map of Kubernetes labels that will be applied to airflow deployment namespaces
   namespaceLabels: {}

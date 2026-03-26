@@ -10,14 +10,14 @@ def failover_values(plane_mode):
     return {
         "global": {
             "plane": {"mode": plane_mode},
-            "features": {"dataPlaneFailover": {"enabled": True}},
+            "dataPlaneFailover": {"enabled": True},
         },
     }
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestDataPlaneFailoverFlag:
-    """Tests for the global.features.dataPlaneFailover.enabled feature flag."""
+    """Tests for the global.dataPlaneFailover.enabled feature flag."""
 
     # --- Data-plane components (mode=data) ---
 
@@ -40,7 +40,7 @@ class TestDataPlaneFailoverFlag:
                 "global": {
                     "plane": {"mode": "data"},
                     "rbacEnabled": True,
-                    "features": {"dataPlaneFailover": {"enabled": True}},
+                    "dataPlaneFailover": {"enabled": True},
                 },
             },
             show_only=["charts/astronomer/templates/pilot/pilot-serviceaccount.yaml"],
@@ -132,7 +132,7 @@ class TestDataPlaneFailoverFlag:
                 "global": {
                     "plane": {"mode": "control"},
                     "rbacEnabled": True,
-                    "features": {"dataPlaneFailover": {"enabled": True}},
+                    "dataPlaneFailover": {"enabled": True},
                 },
             },
             show_only=["charts/astronomer/templates/navigator/navigator-serviceaccount.yaml"],
@@ -147,7 +147,7 @@ class TestDataPlaneFailoverFlag:
             values={
                 "global": {
                     "plane": {"mode": "control"},
-                    "features": {"dataPlaneFailover": {"enabled": True}},
+                    "dataPlaneFailover": {"enabled": True},
                 },
                 "astronomer": {"dpLink": {"enabled": False}},
             },
@@ -186,7 +186,7 @@ class TestDataPlaneFailoverFlag:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "features": {"dataPlaneFailover": {"enabled": True}},
+                    "dataPlaneFailover": {"enabled": True},
                 },
                 "astronomer": {"dpLink": {"enabled": False}},
             },
@@ -232,7 +232,7 @@ class TestDataPlaneFailoverFlag:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "features": {"dataPlaneFailover": {"enabled": False}},
+                    "dataPlaneFailover": {"enabled": False},
                 },
             },
             show_only=["charts/astronomer/templates/pilot/pilot-deployment.yaml"],
@@ -246,7 +246,7 @@ class TestDataPlaneFailoverFlag:
             values={
                 "global": {
                     "plane": {"mode": "control"},
-                    "features": {"dataPlaneFailover": {"enabled": False}},
+                    "dataPlaneFailover": {"enabled": False},
                 },
             },
             show_only=["charts/astronomer/templates/navigator/navigator-deployment.yaml"],
