@@ -22,6 +22,6 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   local_cluster_id: {{ $configLocalClusterID }}
-  {{- if .Values.flightDeck.enabled }}
+  {{- if and (or .Values.flightDeck.enabled (and .Values.global.features.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data"))) (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) }}
   flightdeck_db_name: {{.Release.Name | replace "-" "_" | lower }}_flightdeck_{{ $configLocalClusterID }}
   {{- end }}
