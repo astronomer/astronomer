@@ -10,6 +10,7 @@ import pytest
 from ruamel.yaml import YAML
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 
 
 def _load_rt(text: str) -> dict:
@@ -185,23 +186,8 @@ def new_schema_partial_text() -> str:
 
 @pytest.fixture()
 def old_full_values_text() -> str:
-    """Load the full old values.yaml from the master branch via git.
-
-    Falls back to the current values.yaml on disk if git is unavailable.
-    """
-    import subprocess
-
-    try:
-        result = subprocess.run(
-            ["git", "show", "master:values.yaml"],
-            capture_output=True,
-            text=True,
-            check=True,
-            cwd=str(REPO_ROOT),
-        )
-        return result.stdout
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return (REPO_ROOT / "values.yaml").read_text()
+    """Load the pinned 1.x full values.yaml fixture."""
+    return (FIXTURES_DIR / "old-1x-values.yaml").read_text()
 
 
 @pytest.fixture()

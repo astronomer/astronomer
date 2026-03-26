@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import importlib.util
 import sys
-from importlib import import_module
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
@@ -12,10 +12,12 @@ import pytest
 from ruamel.yaml import YAML
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "bin"))
 
-
-migrate_mod = import_module("migrate-helm-chart-values-1x-to-2x")
+_SCRIPT_PATH = REPO_ROOT / "bin" / "migrate-helm-chart-values-1x-to-2x.py"
+_spec = importlib.util.spec_from_file_location("migrate_helm_chart_values_1x_to_2x", _SCRIPT_PATH)
+migrate_mod = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = migrate_mod
+_spec.loader.exec_module(migrate_mod)
 migrate_values = migrate_mod.migrate_values
 BoolToNested = migrate_mod.BoolToNested
 SubtreeMove = migrate_mod.SubtreeMove
@@ -514,6 +516,139 @@ class TestEdgeCases:
 
 
 # ---------------------------------------------------------------------------
+# Conflict / precedence tests
+# ---------------------------------------------------------------------------
+
+
+class TestConflictPrecedence:
+    """When both old and new keys exist, new-schema values take precedence."""
+
+    def test_bool_to_nested_keeps_new_value(self):
+        """BoolToNested preserves the existing new-schema value and removes the old key."""
+        text = dedent("""\
+            global:
+              rbacEnabled: true
+              rbac:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["rbac"]["enabled"] is False
+        assert "rbacEnabled" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_bool_to_nested_deeply_nested_keeps_new(self):
+        """BoolToNested for a deep path preserves the existing new-schema value."""
+        text = dedent("""\
+            global:
+              namespaceFreeFormEntry: true
+              namespaceManagement:
+                namespaceFreeFormEntry:
+                  enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["namespaceManagement"]["namespaceFreeFormEntry"]["enabled"] is False
+        assert "namespaceFreeFormEntry" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_subtree_move_keeps_new_subtree(self):
+        """SubtreeMove preserves the existing new-location subtree and removes the old one."""
+        text = dedent("""\
+            global:
+              dagOnlyDeployment:
+                enabled: true
+                repository: old/repo
+              deployMechanisms:
+                dagOnlyDeployment:
+                  enabled: false
+                  repository: new/repo
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        dag = result["global"]["deployMechanisms"]["dagOnlyDeployment"]
+        assert dag["enabled"] is False
+        assert dag["repository"] == "new/repo"
+        assert "dagOnlyDeployment" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_subtree_move_features_keeps_new_namespace_pools(self):
+        """SubtreeMove for features.namespacePools preserves the new-location value."""
+        text = dedent("""\
+            global:
+              features:
+                namespacePools:
+                  enabled: true
+                  createRbac: false
+              namespaceManagement:
+                namespacePools:
+                  enabled: false
+                  createRbac: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        ns = result["global"]["namespaceManagement"]["namespacePools"]
+        assert ns["enabled"] is False
+        assert ns["createRbac"] is True
+        assert "features" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_logging_sidecar_conflict_keeps_new(self):
+        """SubtreeMove for loggingSidecar preserves the new-location subtree."""
+        text = dedent("""\
+            global:
+              loggingSidecar:
+                enabled: true
+                name: old-sidecar
+              logging:
+                loggingSidecar:
+                  enabled: false
+                  name: new-sidecar
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        ls = result["global"]["logging"]["loggingSidecar"]
+        assert ls["enabled"] is False
+        assert ls["name"] == "new-sidecar"
+        assert "loggingSidecar" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_mixed_conflicts_and_normal_migrations(self):
+        """A file with some conflicts and some normal migrations handles both correctly."""
+        text = dedent("""\
+            global:
+              rbacEnabled: true
+              rbac:
+                enabled: false
+              sccEnabled: true
+              openshiftEnabled: false
+              openshift:
+                enabled: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["rbac"]["enabled"] is False
+        assert result["global"]["scc"]["enabled"] is True
+        assert result["global"]["openshift"]["enabled"] is True
+        assert "rbacEnabled" not in result["global"]
+        assert "sccEnabled" not in result["global"]
+        assert "openshiftEnabled" not in result["global"]
+        assert len(changes) == 3
+
+
+# ---------------------------------------------------------------------------
 # Comment preservation tests
 # ---------------------------------------------------------------------------
 
@@ -566,6 +701,67 @@ class TestCommentPreservation:
         output = _dump_rt(data)
 
         assert "# scale up" in output
+
+    def test_inline_comment_transferred_on_bool_to_nested(self):
+        """Inline comment on a renamed BoolToNested key transfers to the new leaf key."""
+        text = dedent("""\
+            global:
+              rbacEnabled: true  # Enable RBAC
+              baseDomain: example.com
+        """)
+        data = _load_rt(text)
+        migrate_values(data)
+        output = _dump_rt(data)
+
+        assert "# Enable RBAC" in output
+        assert "rbacEnabled" not in output
+
+    def test_inline_comment_on_self_rename_preserved(self):
+        """Inline comment survives when key name stays the same (networkNSLabels)."""
+        text = dedent("""\
+            global:
+              networkNSLabels: true  # NS labels
+              baseDomain: example.com
+        """)
+        data = _load_rt(text)
+        migrate_values(data)
+        output = _dump_rt(data)
+
+        assert "# NS labels" in output
+        assert "networkNSLabels:" in output
+
+    def test_inline_comment_on_subtree_move_preserved(self):
+        """Inline comment on a subtree top-level key survives the move."""
+        text = dedent("""\
+            global:
+              dagOnlyDeployment:  # DAG deploy config
+                enabled: true
+                repository: test/repo  # custom repo
+              baseDomain: example.com
+        """)
+        data = _load_rt(text)
+        migrate_values(data)
+        output = _dump_rt(data)
+
+        assert "# DAG deploy config" in output
+        assert "# custom repo" in output
+        assert "deployMechanisms" in output
+
+    def test_multiple_inline_comments_transferred(self):
+        """Inline comments on multiple BoolToNested keys all transfer."""
+        text = dedent("""\
+            global:
+              rbacEnabled: true  # RBAC comment
+              sccEnabled: false  # SCC comment
+              openshiftEnabled: true  # OpenShift comment
+        """)
+        data = _load_rt(text)
+        migrate_values(data)
+        output = _dump_rt(data)
+
+        assert "# RBAC comment" in output
+        assert "# SCC comment" in output
+        assert "# OpenShift comment" in output
 
 
 # ---------------------------------------------------------------------------

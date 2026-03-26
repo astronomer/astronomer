@@ -71,23 +71,25 @@ Review the diff between old and new:
 diff current-values.yaml.bak current-values.yaml
 ```
 
-## Step 5: Build the Local Chart Dependencies
+## Step 5: Verify Local Chart Dependencies
 
-The local chart needs its sub-chart dependencies resolved before it can be
-installed:
+The local chart uses sub-charts vendored in the `charts/` directory. Verify
+they are present:
 
 ```bash
 cd /path/to/astronomer   # your local repo checkout
-
-helm dep update .
-```
-
-If sub-charts are already vendored in `charts/`, you can skip this step.
-Verify with:
-
-```bash
 ls charts/
 ```
+
+You should see directories like `astronomer`, `nginx`, `prometheus`, etc.
+
+> **Important:** Do NOT run `helm dep update .` on the local checkout. The
+> `Chart.yaml` dependencies use local sub-charts without version constraints,
+> which causes `helm dep update` to fail with
+> `invalid version/constraint format: improper constraint`. This is expected --
+> the CI build pipeline (`bin/build-helm-chart.sh`) injects versions during
+> packaging. For local testing, the vendored sub-charts in `charts/` are used
+> directly and no dependency resolution is needed.
 
 ## Step 6: Dry-Run the Upgrade (Template Rendering)
 
@@ -97,7 +99,6 @@ Before touching the cluster, render the templates locally to check for errors:
 helm template astronomer . \
   -n astronomer \
   -f current-values.yaml \
-  --set global.baseDomain=<YOUR_BASE_DOMAIN> \
   > /dev/null
 ```
 

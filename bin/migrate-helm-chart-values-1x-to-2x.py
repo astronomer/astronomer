@@ -92,6 +92,51 @@ def _delete_key(mapping: CommentedMap, key: str) -> None:
         del mapping[key]
 
 
+def _extract_inline_comment(mapping: CommentedMap, key: str) -> Any | None:
+    """Extract the inline comment token attached to a key, if any.
+
+    Parameters:
+        mapping: The CommentedMap containing the key.
+        key: The key whose inline comment to extract.
+
+    Returns:
+        The CommentToken for the inline comment, or None.
+    """
+    tokens = mapping.ca.items.get(key)
+    if tokens and len(tokens) > 2:
+        return tokens[2]
+    return None
+
+
+def _attach_inline_comment(mapping: CommentedMap, key: str, comment: Any) -> None:
+    """Attach an inline comment token to a key in a CommentedMap.
+
+    Parameters:
+        mapping: The CommentedMap to attach the comment to.
+        key: The key to attach the comment to.
+        comment: The CommentToken to attach.
+    """
+    mapping.ca.items[key] = [None, None, comment, None]
+
+
+def _path_exists(mapping: CommentedMap, keys: list[str]) -> bool:
+    """Check whether a dotted key path already exists in a mapping.
+
+    Parameters:
+        mapping: The root mapping to check.
+        keys: List of key segments forming the path.
+
+    Returns:
+        True if the full path resolves to an existing value.
+    """
+    current: Any = mapping
+    for key in keys:
+        if not isinstance(current, CommentedMap) or key not in current:
+            return False
+        current = current[key]
+    return True
+
+
 @dataclass
 class BoolToNested(MigrationRule):
     """Migrate a flat boolean key to a nested .enabled structure.
@@ -104,6 +149,9 @@ class BoolToNested(MigrationRule):
 
     def apply(self, global_mapping: CommentedMap) -> list[MigrationChange]:
         """Apply the boolean-to-nested migration rule.
+
+        If the destination path already exists the new-schema value is preserved
+        and the stale old key is removed without overwriting.
 
         Parameters:
             global_mapping: The 'global' section of the values.yaml.
@@ -119,6 +167,14 @@ class BoolToNested(MigrationRule):
         if isinstance(value, CommentedMap):
             return []
 
+        if _path_exists(global_mapping, self.new_path):
+            _delete_key(global_mapping, self.old_key)
+            old_path = f"global.{self.old_key}"
+            new_path = "global." + ".".join(self.new_path)
+            return [MigrationChange(old_path, new_path, f"Removed stale {old_path} (kept existing {new_path})")]
+
+        inline_comment = _extract_inline_comment(global_mapping, self.old_key)
+
         parent_keys = self.new_path[:-1]
         leaf_key = self.new_path[-1]
 
@@ -130,6 +186,8 @@ class BoolToNested(MigrationRule):
         else:
             parent = _ensure_nested_key(global_mapping, parent_keys)
             parent[leaf_key] = value
+            if inline_comment:
+                _attach_inline_comment(parent, leaf_key, inline_comment)
             _delete_key(global_mapping, self.old_key)
 
         old_path = f"global.{self.old_key}"
@@ -150,6 +208,9 @@ class SubtreeMove(MigrationRule):
     def apply(self, global_mapping: CommentedMap) -> list[MigrationChange]:
         """Apply the subtree-move migration rule.
 
+        If the destination path already exists the new-schema subtree is preserved
+        and the stale old subtree is removed without overwriting.
+
         Parameters:
             global_mapping: The 'global' section of the values.yaml.
 
@@ -164,6 +225,17 @@ class SubtreeMove(MigrationRule):
             source_parents.append((source, key))
             source = source[key]
 
+        old_str = "global." + ".".join(self.old_path)
+        new_str = "global." + ".".join(self.new_path)
+
+        if _path_exists(global_mapping, self.new_path):
+            parent_map, key_to_delete = source_parents[-1]
+            _delete_key(parent_map, key_to_delete)
+            for parent_map, key in reversed(source_parents[:-1]):
+                if key in parent_map and isinstance(parent_map[key], CommentedMap) and len(parent_map[key]) == 0:
+                    _delete_key(parent_map, key)
+            return [MigrationChange(old_str, new_str, f"Removed stale {old_str} (kept existing {new_str})")]
+
         subtree = source
 
         dest_parent_keys = self.new_path[:-1]
@@ -174,13 +246,10 @@ class SubtreeMove(MigrationRule):
         parent_map, key_to_delete = source_parents[-1]
         _delete_key(parent_map, key_to_delete)
 
-        # Clean up empty parent mappings left behind
         for parent_map, key in reversed(source_parents[:-1]):
             if key in parent_map and isinstance(parent_map[key], CommentedMap) and len(parent_map[key]) == 0:
                 _delete_key(parent_map, key)
 
-        old_str = "global." + ".".join(self.old_path)
-        new_str = "global." + ".".join(self.new_path)
         return [MigrationChange(old_str, new_str, f"Moved subtree {old_str}.* -> {new_str}.*")]
 
 

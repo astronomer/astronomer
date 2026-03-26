@@ -144,9 +144,13 @@ the chart defaults and do not need to be in your file.
 
 ### What if I have both old and new keys?
 
-The script only transforms keys that use the old format. If a key already uses
-the new format (e.g., `global.rbac.enabled` instead of `global.rbacEnabled`),
-it is left untouched.
+If a key already exists at the new-schema path, the new-schema value takes
+precedence and the stale old key is removed. For example, if your file contains
+both `global.rbacEnabled: true` and `global.rbac.enabled: false`, the script
+keeps `global.rbac.enabled: false` and deletes `global.rbacEnabled`. The same
+precedence applies to subtree moves: if both `global.dagOnlyDeployment` and
+`global.deployMechanisms.dagOnlyDeployment` exist, the new-location subtree is
+preserved and the old-location subtree is deleted.
 
 ### What if I have a full copy of values.yaml instead of just overrides?
 
@@ -164,9 +168,17 @@ and makes no changes.
 
 ### What about YAML comments?
 
-The script uses `ruamel.yaml` in round-trip mode, which preserves inline
-comments, block comments, and formatting in most cases. Inline comments on
-migrated keys are preserved, and comments on untouched keys are not affected.
+The script uses `ruamel.yaml` in round-trip mode, which preserves comments and
+formatting. Specifically:
+
+- **Untouched keys**: All comments (inline, block, and end-of-line) are
+  unaffected.
+- **Renamed boolean keys** (e.g., `rbacEnabled` → `rbac.enabled`): Inline
+  comments transfer to the new leaf key. Block comments above the old key
+  remain in place and reattach to the next sibling key.
+- **Moved subtrees** (e.g., `dagOnlyDeployment` → `deployMechanisms.dagOnlyDeployment`):
+  All comments within the subtree are preserved, including inline comments on
+  the subtree root key.
 
 ### What if my file has keys not listed in the mapping table?
 
