@@ -1,7 +1,7 @@
 ######################################
 ## Astronomer Navigator Deployment  ##
 ######################################
-{{- if and .Values.navigator.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
+{{- if and (or .Values.navigator.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control"))) (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:

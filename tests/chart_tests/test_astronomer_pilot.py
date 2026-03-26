@@ -17,7 +17,7 @@ class TestAstronomerPilot:
         [
             ("data", 1),
             ("control", 0),
-            ("unified", 0),
+            ("unified", 1),
         ],
     )
     def test_pilot_deployment_plane_mode(self, kube_version, plane_mode, expected_count):

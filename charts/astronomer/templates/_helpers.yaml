@@ -258,6 +258,12 @@
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.features.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
+{{- if eq .Values.global.plane.mode "data" }}
+- name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
+  value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
+- name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
+  value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
+{{- end }}
 {{- end }}
 
 {{- define "registry.gcsVolume" }}
@@ -425,7 +431,7 @@ s3:
 {{- /* Dispatcher configuration for houston-worker */ -}}
 {{- if .Values.houston.worker.dispatcher }}
 - name: DISPATCHER_ENABLED
-  value: {{ .Values.houston.worker.dispatcher.enabled | quote }}
+  value: {{ or .Values.houston.worker.dispatcher.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control")) | quote }}
 {{- if .Values.houston.worker.dispatcher.lease }}
 - name: DISPATCH_LEASE_TTL_SECONDS
   value: {{ .Values.houston.worker.dispatcher.lease.ttlSeconds | quote }}
