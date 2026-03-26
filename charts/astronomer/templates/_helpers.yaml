@@ -261,6 +261,8 @@
 {{- if eq .Values.global.plane.mode "data" }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
   value: {{ ternary "true" "false" .Values.global.features.dataPlaneFailover.enabled | quote }}
+- name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
+  value: {{ ternary "true" "false" .Values.global.features.dataPlaneFailover.enabled | quote }}
 {{- end }}
 {{- end }}
 

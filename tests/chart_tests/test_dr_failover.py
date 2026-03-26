@@ -77,6 +77,18 @@ class TestDataPlaneFailoverFlag:
         env_vars = get_env_vars_dict(containers[0]["env"])
         assert env_vars["COMMANDER_DATAPLANE_FAILOVER_ENABLED"] == "true"
 
+    def test_flag_data_mode_sets_external_secret_manager_env(self, kube_version):
+        """Flag in data mode sets COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED=true on commander."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=failover_values("data"),
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        containers = docs[0]["spec"]["template"]["spec"]["containers"]
+        env_vars = get_env_vars_dict(containers[0]["env"])
+        assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED"] == "true"
+
     def test_flag_data_mode_sets_flightdeck_configmap(self, kube_version):
         """Flag in data mode renders flightdeck_db_name in cluster-local-data configmap."""
         docs = render_chart(
