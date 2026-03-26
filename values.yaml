@@ -49,7 +49,11 @@ global:
   networkPolicy:
     enabled: true
 
-  #Global flag to enable Operator based deployment
+  # If you do NOT want to use the default configured nginx ingress controller, add the ingressClassName you want to replace it with
+  # If no value is provided, the default will be set to <release-name>-nginx and the nginx ingress controller will be created with that name
+  ingressClassName: ~
+
+  # Global flag to enable Operator based deployment
   airflowOperator:
     enabled: false
 
@@ -253,7 +257,6 @@ global:
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##
   extraAnnotations: {}
-    #kubernetes.io/ingress.class: "default"
     #route.openshift.io/termination: "passthrough"
 
   podAnnotations: {}

@@ -91,6 +91,7 @@ class TestIngress:
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)
         assert all(doc["kind"] == "Ingress" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
+        assert all(doc["spec"]["ingressClassName"] == "release-name-nginx" for doc in ingresses)
 
     def test_prometheus_federate_ingress(self, kube_version):
         """Test prometheus federate ingress configuration"""
@@ -210,3 +211,185 @@ class TestIngress:
         if expected_astro_ui:
             assert "nginx.ingress.kubernetes.io/configuration-snippet" in annotations
             assert "app.example.com" in annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+
+    @pytest.mark.parametrize(
+        ("values", "expected_class_name", "description"),
+        [
+            (
+                {"global": {"ingressClassName": "custom-ingress"}},
+                "custom-ingress",
+                "direct spec.ingressClassName",
+            ),
+            (
+                {"global": {"extraAnnotations": {"kubernetes.io/ingress.class": "annotation-ingress"}}},
+                "annotation-ingress",
+                "kubernetes.io/ingress.class annotation",
+            ),
+            (
+                {},
+                "release-name-nginx",
+                "default when neither specified",
+            ),
+        ],
+    )
+    def test_ingress_class_name(self, values, expected_class_name, description, kube_version):
+        """Test that ingressClassName is correctly populated from different sources"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 1, f"Expected 1 ingress for {description}"
+        doc = docs[0]
+
+        # Check that ingressClassName is set in spec
+        assert "ingressClassName" in doc["spec"], f"ingressClassName should be in spec for {description}"
+        assert doc["spec"]["ingressClassName"] == expected_class_name, (
+            f"Expected ingressClassName to be {expected_class_name} for {description}"
+        )
+
+    @pytest.mark.parametrize(
+        ("ingress_file", "plane_mode", "extra_values"),
+        [
+            (
+                "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
+                "control",
+                {"enablePerHostIngress": True},
+            ),
+            (
+                "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
+                "unified",
+                {"enablePerHostIngress": True},
+            ),
+            (
+                "charts/astronomer/templates/houston/ingress.yaml",
+                "control",
+                {},
+            ),
+            (
+                "charts/astronomer/templates/houston/ingress.yaml",
+                "unified",
+                {},
+            ),
+            (
+                "charts/astronomer/templates/registry/registry-ingress.yaml",
+                "unified",
+                {"enablePerHostIngress": True},
+            ),
+            (
+                "charts/astronomer/templates/commander/commander-grpc-ingress.yaml",
+                "data",
+                {"plane": {"domainPrefix": "dp01"}},
+            ),
+            (
+                "charts/astronomer/templates/commander/commander-metadata-ingress.yaml",
+                "data",
+                {"plane": {"domainPrefix": "dp01"}},
+            ),
+        ],
+    )
+    @pytest.mark.parametrize(
+        ("class_values", "expected_class_name", "description"),
+        [
+            (
+                {"ingressClassName": "custom-ingress"},
+                "custom-ingress",
+                "direct spec.ingressClassName",
+            ),
+            (
+                {"extraAnnotations": {"kubernetes.io/ingress.class": "annotation-ingress"}},
+                "annotation-ingress",
+                "kubernetes.io/ingress.class annotation",
+            ),
+            (
+                {},
+                "release-name-nginx",
+                "default when neither specified",
+            ),
+        ],
+    )
+    def test_per_host_ingress_class_name(
+        self, ingress_file, plane_mode, extra_values, class_values, expected_class_name, description, kube_version
+    ):
+        """Test that ingressClassName is correctly populated for per-host ingress files"""
+        # Merge values together - handle nested plane dict properly
+        values = {"global": {"plane": {"mode": plane_mode}, **class_values}}
+
+        # Merge extra_values, being careful with nested plane dict
+        for key, value in extra_values.items():
+            if key == "plane" and isinstance(value, dict):
+                values["global"]["plane"].update(value)
+            else:
+                values["global"][key] = value
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[ingress_file],
+        )
+
+        # astro-ui-ingress.yaml renders 2 ingresses
+        if "astro-ui-ingress.yaml" in ingress_file:
+            assert len(docs) == 2, f"Expected 2 ingresses for {ingress_file}"
+            for doc in docs:
+                assert "ingressClassName" in doc["spec"], f"ingressClassName should be in spec for {description} in {ingress_file}"
+                assert doc["spec"]["ingressClassName"] == expected_class_name, (
+                    f"Expected ingressClassName to be {expected_class_name} for {description} in {ingress_file}"
+                )
+        else:
+            assert len(docs) == 1, f"Expected 1 ingress for {ingress_file}"
+            doc = docs[0]
+
+            # Check that ingressClassName is set in spec
+            assert "ingressClassName" in doc["spec"], f"ingressClassName should be in spec for {description} in {ingress_file}"
+            assert doc["spec"]["ingressClassName"] == expected_class_name, (
+                f"Expected ingressClassName to be {expected_class_name} for {description} in {ingress_file}"
+            )
+
+    @pytest.mark.parametrize(
+        ("config_type", "values", "expected_class"),
+        [
+            (
+                "global.ingressClassName",
+                {"global": {"ingressClassName": "custom-class"}},
+                "custom-class",
+            ),
+            (
+                "annotation",
+                {"global": {"extraAnnotations": {"kubernetes.io/ingress.class": "annotation-class"}}},
+                "annotation-class",
+            ),
+            (
+                "default",
+                {},
+                "release-name-nginx",
+            ),
+        ],
+    )
+    def test_all_ingresses_respect_ingressClassName_configuration(self, config_type, values, expected_class, kube_version):
+        """Test that all Ingress resources consistently use the configured ingressClassName"""
+        # Render all templates with the given values
+        docs = render_chart(kube_version=kube_version, values=values)
+
+        # Filter for Ingress resources
+        ingresses = [doc for doc in docs if doc.get("kind") == "Ingress"]
+
+        # There should be ingresses rendered
+        assert len(ingresses) > 0, f"Expected at least one Ingress resource for {config_type}"
+
+        # Check every ingress uses the same ingressClassName
+        for ingress in ingresses:
+            ingress_name = ingress["metadata"]["name"]
+
+            # Verify spec.ingressClassName exists
+            assert "ingressClassName" in ingress["spec"], (
+                f"Ingress '{ingress_name}' missing spec.ingressClassName when {config_type} is set"
+            )
+
+            # Verify it matches expected value
+            actual_class = ingress["spec"]["ingressClassName"]
+            assert actual_class == expected_class, (
+                f"Ingress '{ingress_name}' has ingressClassName '{actual_class}', "
+                f"expected '{expected_class}' (config: {config_type})"
+            )

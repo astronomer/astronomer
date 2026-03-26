@@ -1,0 +1,19 @@
+##########################
+## NGINX IngressClass ##
+##########################
+{{- if eq .Values.global.plane.mode "data" }}
+{{- if not .Values.global.ingressClassName }}
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: {{ .Release.Name }}-nginx
+  labels:
+    tier: {{ template "nginx.name" . }}
+    component: dp-ingress-controller
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  controller: k8s.io/ingress-nginx
+{{- end }}
+{{- end }}
