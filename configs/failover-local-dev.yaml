@@ -21,6 +21,9 @@ astronomer:
       tag: feature_apc-dr
   navigator:
     enabled: true
+    env:
+      - name: DEBUG
+        value: "true"
   pilot:
     enabled: true
 global:
