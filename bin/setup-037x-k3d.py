@@ -32,9 +32,9 @@ HELPER_DIR = Path.home() / ".local" / "share" / "astronomer-software"
 HELPER_BIN_DIR = HELPER_DIR / "bin"
 
 DEFAULT_CHART_VERSION = "0.37.7"
-HELM_REPO_NAME = "astronomer"
+HELM_REPO_NAME = "astronomer-internal"
 HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
-HELM_REPO_URL = "https://helm.astronomer.io"
+HELM_REPO_URL = "https://internal-helm.astronomer.io"
 
 
 def _print(msg: str) -> None:
@@ -577,6 +577,9 @@ nats:
         memory: "64Mi"
 
 stan:
+  store:
+    cluster:
+      enabled: false
   stan:
     resources:
       requests:
@@ -625,15 +628,21 @@ elasticsearch:
       requests:
         cpu: "250m"
         memory: "512Mi"
+  images:
+    es:
+      repository: docker.elastic.co/elasticsearch/elasticsearch
+      tag: "8.18.6"
 
 kibana:
   resources:
     requests:
       cpu: "100m"
-      memory: "256Mi"
+      memory: "1Gi"
     limits:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "500m"
+      memory: "2Gi"
+  env:
+    NODE_OPTIONS: "--max-old-space-size=768"
 
 fluentd:
   resources:
@@ -708,8 +717,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--release-name", default="astronomer")
     parser.add_argument("--docker-network", default="astronomer-net")
     parser.add_argument("--cluster-name", default="astro037")
-    parser.add_argument("--https-port", type=int, default=8443, help="HTTPS port. Default: '%(default)s'")
-    parser.add_argument("--http-port", type=int, default=8080, help="HTTP port. Default: '%(default)s'")
+    parser.add_argument("--https-port", type=int, default=443, help="HTTPS port. Default: '%(default)s'")
+    parser.add_argument("--http-port", type=int, default=80, help="HTTP port. Default: '%(default)s'")
     parser.add_argument("--tls-secret-name", default="astronomer-tls")
     parser.add_argument("--mkcert-root-ca-secret-name", default="mkcert-root-ca")
     parser.add_argument("--mkcert-root-ca-secret-key", default="cert.pem")
@@ -885,12 +894,13 @@ def main() -> int:
 
         ms.print_summary_table()
         _print_host_etc_hosts_instructions(settings)
+        port_suffix = "" if settings.https_port == 443 else f":{settings.https_port}"
         _print(f"\n\u2705 Astronomer {settings.chart_version} is running on k3d cluster `{settings.cluster_name}`.")
         _print(f"   kubectl context: {context}")
-        _print(f"   Astro UI: https://app.{settings.base_domain}:{settings.https_port}")
-        _print(f"   Houston:  https://houston.{settings.base_domain}:{settings.https_port}/v1")
-        _print(f"   Grafana:  https://grafana.{settings.base_domain}:{settings.https_port}")
-        _print(f"   Kibana:   https://kibana.{settings.base_domain}:{settings.https_port}")
+        _print(f"   Astro UI: https://app.{settings.base_domain}{port_suffix}")
+        _print(f"   Houston:  https://houston.{settings.base_domain}{port_suffix}/v1")
+        _print(f"   Grafana:  https://grafana.{settings.base_domain}{port_suffix}")
+        _print(f"   Kibana:   https://kibana.{settings.base_domain}{port_suffix}")
         return 0
     except Exception as e:  # noqa: BLE001
         ms.fail_active_if_any(error=str(e))
