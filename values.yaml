@@ -372,6 +372,59 @@ astronomer:
         memory: "1024Mi"
 
   houston:
+    # Vector sidecar for audit log shipping from Houston API and worker.
+    # This mirrors charts/astronomer/values.yaml for customers who install
+    # or upgrade the umbrella chart from the repo root or packaged release.
+    # When enabled, Vector can ship to one or more sinks at the same time.
+    loggingSidecar:
+      enabled: false
+
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+
+      cloudwatch:
+        enabled: false
+        region: ""
+        logGroupName: "/astronomer/houston/audit"
+        useIRSA: true
+        secretName: "houston-cloudwatch-creds"
+
+      gcpCloudLogging:
+        enabled: false
+        projectId: ""
+        logId: "houston-audit"
+        resource:
+          type: "k8s_container"
+        severityKey: "level"
+        useWorkloadIdentity: true
+        credentialsSecretName: "houston-gcp-logging-creds"
+        credentialsSecretKey: "key.json"
+
+      elasticsearch:
+        enabled: false
+        # External endpoint URL for the Elasticsearch cluster.
+        # This must be set explicitly when Elasticsearch sink support is enabled.
+        endpoint: ~
+        index: "houston-audit-%Y.%m.%d"
+        apiVersion: "v8"
+        auth:
+          strategy: "basic"
+          secretName: "houston-elasticsearch-creds"
+        tls:
+          enabled: false
+          caSecretName: ""
+
+      extraSinks: ""
+
     resources:
       requests:
         cpu: "500m"

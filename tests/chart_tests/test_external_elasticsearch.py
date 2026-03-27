@@ -394,6 +394,11 @@ class TestExternalElasticSearch:
                     },
                     {"podSelector": {"matchLabels": {"component": "vector", "release": "release-name", "tier": "logging"}}},
                     {"podSelector": {"matchLabels": {"component": "houston", "release": "release-name", "tier": "astronomer"}}},
+                    {
+                        "podSelector": {
+                            "matchLabels": {"component": "houston-worker", "release": "release-name", "tier": "astronomer"}
+                        }
+                    },
                 ],
                 "ports": [{"port": 9201, "protocol": "TCP"}],
             },

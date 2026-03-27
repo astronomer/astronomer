@@ -64,6 +64,28 @@
 {{- end }}
 {{- end }}
 
+{{ define "houston.loggingSidecar.image" -}}
+{{- $images := .Values.images | default dict -}}
+{{- $vector := $images.vector | default dict -}}
+{{- $repo := default "quay.io/astronomer/ap-vector" $vector.repository -}}
+{{- $tag := default "0.52.0" $vector.tag -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ $tag }}
+{{- else -}}
+{{ $repo }}:{{ $tag }}
+{{- end }}
+{{- end }}
+
+{{- define "houston.loggingSidecar.validate" -}}
+{{- if .Values.houston.loggingSidecar.enabled -}}
+{{- $hasBuiltInSink := or .Values.houston.loggingSidecar.cloudwatch.enabled .Values.houston.loggingSidecar.gcpCloudLogging.enabled .Values.houston.loggingSidecar.elasticsearch.enabled -}}
+{{- $hasExtraSinks := ne (trim (.Values.houston.loggingSidecar.extraSinks | default "")) "" -}}
+{{- if not (or $hasBuiltInSink $hasExtraSinks) -}}
+{{- fail "houston.loggingSidecar.enabled requires at least one sink: enable cloudwatch, gcpCloudLogging, elasticsearch, or set extraSinks" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
@@ -601,3 +623,18 @@ hostAliases:
 {{ toYaml .Values.commander.hostAliases }}
 {{- end }}
 {{- end -}}
+
+
+{{- define "houston.loggingSidecar.elasticsearch" -}}
+{{- required "houston.loggingSidecar.elasticsearch.endpoint must be set when houston.loggingSidecar.elasticsearch.enabled is true" .Values.houston.loggingSidecar.elasticsearch.endpoint }}
+{{- end }}
+
+{{- define "houston.loggingSidecar.securityContext" -}}
+{{- if or (eq ( toString ( .Values.houston.loggingSidecar.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required (omit .Values.houston.loggingSidecar.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required .Values.houston.loggingSidecar.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
