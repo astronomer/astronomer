@@ -20,7 +20,9 @@ class TestAstronomerCommander:
 
     @pytest.mark.parametrize("rbac_enabled", [True, False], ids=["rbac_enabled", "rbac_disabled"])
     @pytest.mark.parametrize(
-        "namespace_labels", [None, {}, {"env": "prod", "team": "data"}], ids=["no_labels", "empty_labels", "with_labels"]
+        "namespace_labels",
+        [None, {}, {"env": "prod", "team": "data"}],
+        ids=["no_labels", "empty_labels", "with_labels"],
     )
     def test_commander_metadata_yaml(self, kube_version, rbac_enabled, namespace_labels):
         """Test that helm renders a good metadata.yaml template for astronomer/commander."""
@@ -111,6 +113,7 @@ class TestAstronomerCommander:
             "key": "local_cluster_id",
         }
         assert not env_vars.get("COMMANDER_FLIGHTDECK_DSN")
+        assert env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
 
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
         assert volume_mounts["tmp-workspace"] == "/tmp"
@@ -566,7 +569,12 @@ class TestAstronomerCommander:
         ],
     )
     def test_commander_auth_sidecar_conditional_rendering(
-        self, kube_version, plane_mode, auth_sidecar_enabled, should_render_deployment, expected_containers
+        self,
+        kube_version,
+        plane_mode,
+        auth_sidecar_enabled,
+        should_render_deployment,
+        expected_containers,
     ):
         """Test that auth-sidecar is only included in data plane mode when enabled, and deployment only renders for data/unified modes."""
         values = {
@@ -676,7 +684,10 @@ class TestAstronomerCommander:
         spec = docs[0]["spec"]["template"]["spec"]
         assert spec["hostAliases"] == hostAliasSpec
 
-    @pytest.mark.parametrize("plane,init_containers_count,containers_count", [("data", 3, 1), ("control", 0, 0), ("unified", 3, 1)])
+    @pytest.mark.parametrize(
+        "plane,init_containers_count,containers_count",
+        [("data", 3, 1), ("control", 0, 0), ("unified", 3, 1)],
+    )
     def test_flightdeck_enabled(self, kube_version, plane, init_containers_count, containers_count):
         """Test that flightdeck works when enabled with various configs."""
 
@@ -717,6 +728,8 @@ class TestAstronomerCommander:
                 "name": "release-name-flightdeck-backend",
                 "key": "connection",
             }
+
+            assert commander_env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
 
     @pytest.mark.parametrize(
         "plane_mode,should_render",
