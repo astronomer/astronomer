@@ -759,7 +759,7 @@ Uses randBytes 32 (base64-encoded 32 random bytes) to match the
 entropy of a Fernet key.
 */}}
 {{- define "astronomer.internalServiceToken" -}}
-  {{- if .Values.global.internalServiceAuth.token -}}
+  {{- if and .Values.global.internalServiceAuth .Values.global.internalServiceAuth.token -}}
     {{- .Values.global.internalServiceAuth.token -}}
   {{- else -}}
     {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-internal-service-auth" .Release.Name) -}}
