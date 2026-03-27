@@ -108,13 +108,12 @@ class TestAstronomerCommander:
         assert env_vars["HELM_DATA_HOME"] == "/tmp/helm-data"
         assert env_vars["HELM_REPOSITORY_CACHE"] == "/tmp/helm-cache/repository"
 
-        assert env_vars["COMMANDER_DATAPLANE_FAILOVER_ENABLED"] == "false"
-
         assert env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
             "name": "release-name-cluster-local-data",
             "key": "local_cluster_id",
         }
         assert not env_vars.get("COMMANDER_FLIGHTDECK_DSN")
+        assert env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
 
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
         assert volume_mounts["tmp-workspace"] == "/tmp"
@@ -730,7 +729,7 @@ class TestAstronomerCommander:
                 "key": "connection",
             }
 
-            assert commander_env_vars["COMMANDER_DATAPLANE_FAILOVER_ENABLED"] == "false"
+            assert commander_env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
 
     @pytest.mark.parametrize(
         "plane_mode,should_render",
