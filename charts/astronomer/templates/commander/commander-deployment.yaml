@@ -204,8 +204,6 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
-            - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
-              value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
             {{- if or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
