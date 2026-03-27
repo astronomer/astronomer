@@ -27,6 +27,8 @@ astronomer:
   pilot:
     enabled: true
 global:
+  dataPlaneFailover:
+    enabled: true
   prometheusPostgresExporterEnabled: false
   ssl:
     enabled: true
