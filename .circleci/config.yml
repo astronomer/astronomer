@@ -10,7 +10,6 @@ executors:
 
 orbs:
   slack: circleci/slack@4.10.1
-  python: circleci/python@2.1.1
   cosign: cpanato/cosign-orb@2.0.0
 
 parameters:
@@ -143,7 +142,6 @@ jobs:
           name: Create pre-commit-cache-key.txt
           command: |
             cp .pre-commit-config.yaml /tmp/pre-commit-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/pre-commit-cache-key.txt
       - restore_cache:
           keys:
             - pre-commit-cache-{{ checksum "/tmp/pre-commit-cache-key.txt" }}
@@ -169,17 +167,16 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Create venv
           command: |
             make venv
       - save_cache:
-          key: test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+          key: test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
           paths:
             - ~/.cache/uv
             - ~/.local/share/uv
@@ -190,7 +187,7 @@ jobs:
             mkdir test-results
             TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
             echo "TEST_FILES=\"$TEST_FILES\""
-            .venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
+            uv run pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
 
@@ -278,11 +275,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -305,11 +301,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -332,11 +327,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -359,11 +353,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -386,11 +379,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
