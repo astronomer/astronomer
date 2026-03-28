@@ -1,3 +1,7 @@
+---
+###########################################################################
+# external-secrets service
+###########################################################################
 {{- $shouldRenderStr := include "external-secrets.shouldRenderServiceMonitor" . | trim }}
 {{- if or .Values.metrics.service.enabled (and .Values.serviceMonitor.enabled (eq $shouldRenderStr "true")) -}}
 apiVersion: v1

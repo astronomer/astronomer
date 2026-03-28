@@ -3,16 +3,6 @@ global:
   nodeSelector: {}
   tolerations: []
   topologySpreadConstraints: []
-  #  - maxSkew: 1
-  #    topologyKey: topology.kubernetes.io/zone
-  #    whenUnsatisfiable: ScheduleAnyway
-  #    matchLabelKeys:
-  #      - pod-template-hash
-  #  - maxSkew: 1
-  #    topologyKey: kubernetes.io/hostname
-  #    whenUnsatisfiable: DoNotSchedule
-  #    matchLabelKeys:
-  #      - pod-template-hash
   affinity: {}
   # -- Global hostAliases to be applied to all deployments
   hostAliases: []
@@ -35,23 +25,13 @@ global:
 
 replicaCount: 1
 
-bitwarden-sdk-server:
-  enabled: false
-  namespaceOverride: ""
-
 # -- Specifies the amount of historic ReplicaSets k8s should keep (see https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy)
 revisionHistoryLimit: 10
 
 image:
-  repository: ghcr.io/external-secrets/external-secrets
+  repository: quay.io/astronomer/ap-external-secrets
+  tag: 2.2.0
   pullPolicy: IfNotPresent
-  # -- The image tag to use. The default is the chart appVersion.
-  tag: ""
-  # -- The flavour of tag you want to use
-  # There are different image flavours available, like distroless and ubi.
-  # Please see GitHub release notes for image tags for these flavors.
-  # By default, the distroless image is used.
-  flavour: ""
 
 # -- If set, install and upgrade CRDs through helm chart.
 installCRDs: true
@@ -73,10 +53,6 @@ crds:
   conversion:
     # -- Conversion is disabled by default as we stopped supporting v1alpha1.
     enabled: false
-  # -- If true, enable v1beta1 API version serving for ExternalSecret, ClusterExternalSecret, SecretStore, and ClusterSecretStore CRDs.
-  # v1beta1 is deprecated. Only enable this for backward compatibility if you have existing v1beta1 resources.
-  # Warning: This flag will be removed on 2026.05.01.
-  unsafeServeV1Beta1: false
 
 imagePullSecrets: []
 nameOverride: ""
@@ -151,7 +127,7 @@ genericTargets:
 # -- Specifies whether an external secret operator deployment be created.
 createOperator: true
 
-# -- if true, HTTP2 will be enabled for the services created by all controllers, curently metrics and webhook.
+# -- if true, HTTP2 will be enabled for the services created by all controllers, currently metrics and webhook.
 enableHTTP2: false
 
 # -- Specifies the number of concurrent ExternalSecret Reconciles external-secret executes at
@@ -323,24 +299,6 @@ metrics:
     # -- Additional service annotations
     annotations: {}
 
-grafanaDashboard:
-  # -- If true creates a Grafana dashboard.
-  enabled: false
-
-  # -- Label that ConfigMaps should have to be loaded as dashboards.
-  sidecarLabel: "grafana_dashboard"
-
-  # -- Label value that ConfigMaps should have to be loaded as dashboards.
-  sidecarLabelValue: "1"
-
-  # -- Annotations that ConfigMaps can have to get configured in Grafana,
-  # See: sidecar.dashboards.folderAnnotation for specifying the dashboard folder.
-  # https://github.com/grafana/helm-charts/tree/main/charts/grafana
-  annotations: {}
-
-  # -- Extra labels to add to the Grafana dashboard ConfigMap.
-  extraLabels: {}
-
 livenessProbe:
   # -- Enabled determines if the liveness probe should be used or not. By default it's disabled.
   enabled: false
@@ -442,12 +400,10 @@ webhook:
   # @schema type: [boolean, null]
   hostUsers:
   image:
-    repository: ghcr.io/external-secrets/external-secrets
+    repository: quay.io/astronomer/ap-external-secrets
+    tag: 2.2.0
     pullPolicy: IfNotPresent
-    # -- The image tag to use. The default is the chart appVersion.
-    tag: ""
-    # -- The flavour of tag you want to use
-    flavour: ""
+
   imagePullSecrets: []
   # -- The port the webhook will listen to
   port: 10250
@@ -467,53 +423,6 @@ webhook:
 
   # -- Specifies `hostAliases` to webhook deployment
   hostAliases: []
-
-  certManager:
-    # -- Enabling cert-manager support will disable the built in secret and
-    # switch to using cert-manager (installed separately) to automatically issue
-    # and renew the webhook certificate. This chart does not install
-    # cert-manager for you, See https://cert-manager.io/docs/
-    enabled: false
-    # -- Automatically add the cert-manager.io/inject-ca-from annotation to the
-    # webhooks and CRDs. As long as you have the cert-manager CA Injector
-    # enabled, this will automatically setup your webhook's CA to the one used
-    # by cert-manager. See https://cert-manager.io/docs/concepts/ca-injector
-    addInjectorAnnotations: true
-    cert:
-      # -- Create a certificate resource within this chart. See
-      # https://cert-manager.io/docs/usage/certificate/
-      create: true
-      # -- For the Certificate created by this chart, setup the issuer. See
-      # https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.IssuerSpec
-      issuerRef:
-        group: cert-manager.io
-        kind: "Issuer"
-        name: "my-issuer"
-      # -- Set the requested duration (i.e. lifetime) of the Certificate. See
-      # https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
-      # One year by default.
-      duration: "8760h0m0s"
-      # -- Set the revisionHistoryLimit on the Certificate. See
-      # https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
-      # Defaults to 0 (ignored).
-      revisionHistoryLimit: 0
-      # -- How long before the currently issued certificate’s expiry
-      # cert-manager should renew the certificate. See
-      # https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
-      # Note that renewBefore should be greater than .webhook.lookaheadInterval
-      # since the webhook will check this far in advance that the certificate is
-      # valid.
-      renewBefore: ""
-      # -- Specific settings on the privateKey and its generation
-      privateKey: {}
-        # rotationPolicy: Always
-        # algorithm: RSA
-        # size: 2048
-      # -- Specific settings on the signatureAlgorithm used on the cert.
-      # signatureAlgorithm is only valid for cert-manager v1.18.0+
-      signatureAlgorithm: ""
-      # -- Add extra annotations to the Certificate resource.
-      annotations: {}
 
   tolerations: []
 
@@ -631,10 +540,9 @@ certController:
   revisionHistoryLimit: 10
 
   image:
-    repository: ghcr.io/external-secrets/external-secrets
+    repository: quay.io/astronomer/ap-external-secrets
+    tag: 2.2.0
     pullPolicy: IfNotPresent
-    tag: ""
-    flavour: ""
   imagePullSecrets: []
   rbac:
   # -- Specifies whether role and rolebinding resources should be created.

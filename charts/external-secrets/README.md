@@ -105,7 +105,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | deploymentAnnotations | object | `{}` | Annotations to add to Deployment |
 | dnsConfig | object | `{}` | Specifies `dnsOptions` to deployment |
 | dnsPolicy | string | `"ClusterFirst"` | Specifies `dnsPolicy` to deployment |
-| enableHTTP2 | bool | `false` | if true, HTTP2 will be enabled for the services created by all controllers, curently metrics and webhook. |
+| enableHTTP2 | bool | `false` | if true, HTTP2 will be enabled for the services created by all controllers, currently metrics and webhook. |
 | extendedMetricLabels | bool | `false` | If true external secrets will use recommended kubernetes annotations as prometheus metric labels. |
 | extraArgs | object | `{}` |  |
 | extraContainers | list | `[]` |  |
@@ -128,11 +128,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | global.repository | string | `""` | Global image repository to be applied to all deployments |
 | global.tolerations | list | `[]` |  |
 | global.topologySpreadConstraints | list | `[]` |  |
-| grafanaDashboard.annotations | object | `{}` | Annotations that ConfigMaps can have to get configured in Grafana, See: sidecar.dashboards.folderAnnotation for specifying the dashboard folder. https://github.com/grafana/helm-charts/tree/main/charts/grafana |
-| grafanaDashboard.enabled | bool | `false` | If true creates a Grafana dashboard. |
-| grafanaDashboard.extraLabels | object | `{}` | Extra labels to add to the Grafana dashboard ConfigMap. |
-| grafanaDashboard.sidecarLabel | string | `"grafana_dashboard"` | Label that ConfigMaps should have to be loaded as dashboards. |
-| grafanaDashboard.sidecarLabelValue | string | `"1"` | Label value that ConfigMaps should have to be loaded as dashboards. |
 | hostAliases | list | `[]` | Specifies `hostAliases` to deployment |
 | hostNetwork | bool | `false` | Run the controller on the host network |
 | hostUsers | bool | `nil` | Specifies if controller pod should use hostUsers or not. If hostNetwork is true, hostUsers should be too. Only available in Kubernetes ≥ 1.33. @schema type: [boolean, null] |
@@ -230,16 +225,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | webhook.annotations | object | `{}` | Annotations to place on validating webhook configuration. |
 | webhook.certCheckInterval | string | `"5m"` | Specifies the time to check if the cert is valid |
 | webhook.certDir | string | `"/tmp/certs"` |  |
-| webhook.certManager.addInjectorAnnotations | bool | `true` | Automatically add the cert-manager.io/inject-ca-from annotation to the webhooks and CRDs. As long as you have the cert-manager CA Injector enabled, this will automatically setup your webhook's CA to the one used by cert-manager. See https://cert-manager.io/docs/concepts/ca-injector |
-| webhook.certManager.cert.annotations | object | `{}` | Add extra annotations to the Certificate resource. |
-| webhook.certManager.cert.create | bool | `true` | Create a certificate resource within this chart. See https://cert-manager.io/docs/usage/certificate/ |
-| webhook.certManager.cert.duration | string | `"8760h0m0s"` | Set the requested duration (i.e. lifetime) of the Certificate. See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec One year by default. |
-| webhook.certManager.cert.issuerRef | object | `{"group":"cert-manager.io","kind":"Issuer","name":"my-issuer"}` | For the Certificate created by this chart, setup the issuer. See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.IssuerSpec |
-| webhook.certManager.cert.privateKey | object | `{}` | Specific settings on the privateKey and its generation |
-| webhook.certManager.cert.renewBefore | string | `""` | How long before the currently issued certificate’s expiry cert-manager should renew the certificate. See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec Note that renewBefore should be greater than .webhook.lookaheadInterval since the webhook will check this far in advance that the certificate is valid. |
-| webhook.certManager.cert.revisionHistoryLimit | int | `0` | Set the revisionHistoryLimit on the Certificate. See https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec Defaults to 0 (ignored). |
-| webhook.certManager.cert.signatureAlgorithm | string | `""` | Specific settings on the signatureAlgorithm used on the cert. signatureAlgorithm is only valid for cert-manager v1.18.0+ |
-| webhook.certManager.enabled | bool | `false` | Enabling cert-manager support will disable the built in secret and switch to using cert-manager (installed separately) to automatically issue and renew the webhook certificate. This chart does not install cert-manager for you, See https://cert-manager.io/docs/ |
 | webhook.create | bool | `true` | Specifies whether a webhook deployment be created. If set to false, crds.conversion.enabled should also be set to false otherwise the kubeapi will be hammered because the conversion is looking for a webhook endpoint. |
 | webhook.deploymentAnnotations | object | `{}` | Annotations to add to Deployment |
 | webhook.extraArgs | object | `{}` |  |

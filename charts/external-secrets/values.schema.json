@@ -409,26 +409,6 @@
                 }
             }
         },
-        "grafanaDashboard": {
-            "type": "object",
-            "properties": {
-                "annotations": {
-                    "type": "object"
-                },
-                "enabled": {
-                    "type": "boolean"
-                },
-                "extraLabels": {
-                    "type": "object"
-                },
-                "sidecarLabel": {
-                    "type": "string"
-                },
-                "sidecarLabelValue": {
-                    "type": "string"
-                }
-            }
-        },
         "hostAliases": {
             "type": "array"
         },
@@ -849,57 +829,6 @@
                 },
                 "certDir": {
                     "type": "string"
-                },
-                "certManager": {
-                    "type": "object",
-                    "properties": {
-                        "addInjectorAnnotations": {
-                            "type": "boolean"
-                        },
-                        "cert": {
-                            "type": "object",
-                            "properties": {
-                                "annotations": {
-                                    "type": "object"
-                                },
-                                "create": {
-                                    "type": "boolean"
-                                },
-                                "duration": {
-                                    "type": "string"
-                                },
-                                "issuerRef": {
-                                    "type": "object",
-                                    "properties": {
-                                        "group": {
-                                            "type": "string"
-                                        },
-                                        "kind": {
-                                            "type": "string"
-                                        },
-                                        "name": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "privateKey": {
-                                    "type": "object"
-                                },
-                                "renewBefore": {
-                                    "type": "string"
-                                },
-                                "revisionHistoryLimit": {
-                                    "type": "integer"
-                                },
-                                "signatureAlgorithm": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "enabled": {
-                            "type": "boolean"
-                        }
-                    }
                 },
                 "create": {
                     "type": "boolean"

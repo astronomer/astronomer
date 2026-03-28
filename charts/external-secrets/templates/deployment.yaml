@@ -1,3 +1,4 @@
+---
 {{- if .Values.createOperator }}
 {{- include "external-secrets.reconciler-sanity-test" . }}
 apiVersion: apps/v1

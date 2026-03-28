@@ -1,3 +1,4 @@
+---
 {{- if and .Values.webhook.create .Values.webhook.service.enabled }}
 {{- $shouldRenderStr := include "external-secrets.shouldRenderServiceMonitor" . | trim }}
 apiVersion: v1
@@ -25,8 +26,8 @@ spec:
     targetPort: webhook
     protocol: TCP
     name: webhook
-{{- if or .Values.webhook.metrics.service.enabled 
-         (and .Values.serviceMonitor.enabled 
+{{- if or .Values.webhook.metrics.service.enabled
+         (and .Values.serviceMonitor.enabled
               (eq $shouldRenderStr "true")) }}
   - port: {{ .Values.webhook.metrics.service.port }}
     protocol: TCP

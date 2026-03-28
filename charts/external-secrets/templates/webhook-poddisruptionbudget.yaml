@@ -1,3 +1,7 @@
+---
+###########################################################################
+# external-secrets webhook PDB
+###########################################################################
 {{- if and .Values.webhook.create .Values.webhook.podDisruptionBudget.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget

@@ -1,3 +1,7 @@
+---
+###########################################################################
+# external-secrets service monitor
+###########################################################################
 {{- $shouldRenderStr := include "external-secrets.shouldRenderServiceMonitor" . | trim }}
 {{- if and .Values.serviceMonitor.enabled (eq $shouldRenderStr "true") }}
 apiVersion: "monitoring.coreos.com/v1"
@@ -31,6 +35,9 @@ spec:
       {{- toYaml . | nindent 6 }}
     {{- end }}
 ---
+###########################################################################
+# external-secrets webhook service monitor
+###########################################################################
 {{- if .Values.webhook.create }}
 apiVersion: "monitoring.coreos.com/v1"
 kind: ServiceMonitor
@@ -64,6 +71,9 @@ spec:
     {{- end }}
 {{- end }}
 ---
+###########################################################################
+# external-secrets cert controller service monitor
+###########################################################################
 {{- if .Values.certController.create }}
 apiVersion: "monitoring.coreos.com/v1"
 kind: ServiceMonitor

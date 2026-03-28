@@ -38,7 +38,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: ["-L", "AKS,aks,showIn,NotIn"]
+        args: ["-L", "AKS,aks,showIn,NotIn,templateAs"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
@@ -67,6 +67,7 @@ repos:
         exclude: 'charts|templates\/.*\.yaml'
       - id: debug-statements
       - id: detect-private-key
+        exclude: 'charts/external-secrets/templates/clustersecretstores.external-secrets.io.yaml'
       - id: end-of-file-fixer
       - id: file-contents-sorter
         args:

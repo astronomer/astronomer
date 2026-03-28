@@ -1,3 +1,7 @@
+---
+###########################################################################
+# external-secrets PDB
+###########################################################################
 {{- if .Values.podDisruptionBudget.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
