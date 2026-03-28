@@ -67,7 +67,7 @@ repos:
         exclude: 'charts|templates\/.*\.yaml'
       - id: debug-statements
       - id: detect-private-key
-        exclude: 'charts/external-secrets/templates/clustersecretstores.external-secrets.io.yaml'
+        exclude: 'charts/external-secrets/templates/crd-clustersecretstores.external-secrets.io.yaml'
       - id: end-of-file-fixer
       - id: file-contents-sorter
         args:
