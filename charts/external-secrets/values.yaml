@@ -215,10 +215,13 @@ securityContext:
   seccompProfile:
     type: RuntimeDefault
 
-resources: {}
-  # requests:
-  #   cpu: 10m
-  #   memory: 32Mi
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 32Mi
 
 serviceMonitor:
   # -- Specifies whether to create a ServiceMonitor resource for collecting Prometheus metrics
@@ -505,10 +508,13 @@ webhook:
     seccompProfile:
       type: RuntimeDefault
 
-  resources: {}
-      # requests:
-      #   cpu: 10m
-      #   memory: 32Mi
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
 
   # -- Manage the service through which the webhook is reached.
   service:
@@ -654,10 +660,13 @@ certController:
     seccompProfile:
       type: RuntimeDefault
 
-  resources: {}
-      # requests:
-      #   cpu: 10m
-      #   memory: 32Mi
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
 
 # -- Specifies `dnsPolicy` to deployment
 dnsPolicy: ClusterFirst

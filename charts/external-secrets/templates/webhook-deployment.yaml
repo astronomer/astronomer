@@ -31,12 +31,14 @@ spec:
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
       {{- end }}
       labels:
+        tier: dp-failover
+        component: {{ template "external-secrets.name" . }}-webhook
+        release: {{ .Release.Name }}
         {{- include "external-secrets-webhook.labels" . | nindent 8 }}
-        {{- if .Values.webhook.podLabels }}
-        {{- toYaml .Values.webhook.podLabels | nindent 8 }}
-        {{- else if .Values.global.podLabels }}
-        {{- toYaml .Values.global.podLabels | nindent 8 }}
+        {{- with .Values.webhook.podLabels }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
+        {{- include "global.podLabels" . | nindent 8 }}
     spec:
       {{- if .Values.webhook.imagePullSecrets }}
       imagePullSecrets:
@@ -61,12 +63,9 @@ spec:
       {{- end }}
       containers:
         - name: webhook
-          {{- with .Values.webhook.securityContext }}
-          {{- if and (.enabled) (gt (keys . | len) 1) }}
           securityContext:
-            {{- include "external-secrets.renderSecurityContext" (dict "securityContext" . "context" $) | nindent 12 }}
-          {{- end }}
-          {{- end }}
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- include "external-secrets.renderSecurityContext" (dict "securityContext" (merge $required .Values.webhook.securityContext) "context" $) | nindent 12 }}
           image: {{ include "external-secrets.image" (dict "chartAppVersion" .Chart.AppVersion "image" .Values.webhook.image "context" .) | trim }}
           imagePullPolicy: {{ .Values.webhook.image.pullPolicy }}
           args:
@@ -141,15 +140,14 @@ spec:
       {{- with .Values.webhook.nodeSelector | default .Values.global.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
+      {{- else }}
+      nodeSelector:
+        {{- toYaml .Values.global.platformNodePool.nodeSelector | nindent 8 }}
       {{- end }}
-      {{- with .Values.webhook.affinity | default .Values.global.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.webhook.tolerations | default .Values.global.tolerations }}
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.webhook.affinity) | indent 8 }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.webhook.tolerations) | indent 8 }}
       {{- with .Values.webhook.topologySpreadConstraints | default .Values.global.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- range $constraint := . }}

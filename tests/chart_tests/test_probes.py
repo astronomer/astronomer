@@ -188,6 +188,11 @@ class TestDefaultProbes:
             "httpGet": {"path": "/_cluster/health?local=true", "port": 9200},
             "initialDelaySeconds": 5,
         },
+        "external-secrets-webhook_webhook": {
+            "httpGet": {"path": "/readyz", "port": "ready"},
+            "initialDelaySeconds": 20,
+            "periodSeconds": 5,
+        },
         "grafana_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,

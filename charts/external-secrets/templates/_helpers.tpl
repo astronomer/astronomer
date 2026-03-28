@@ -173,8 +173,11 @@ Create the name of the service account to use
 Determine the image to use, including if using a flavour.
 */}}
 {{- define "external-secrets.image" -}}
+{{- $imageBasename := .image.repository | splitList "/" | last -}}
 {{- $repository := "" -}}
-{{- if .context.Values.global.repository -}}
+{{- if and .context.Values.global.privateRegistry .context.Values.global.privateRegistry.enabled -}}
+{{- $repository = printf "%s/%s" .context.Values.global.privateRegistry.repository $imageBasename -}}
+{{- else if .context.Values.global.repository -}}
 {{- $repository = .context.Values.global.repository -}}
 {{- else -}}
 {{- $repository = .image.repository -}}

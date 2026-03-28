@@ -26,6 +26,7 @@ spec:
     targetPort: webhook
     protocol: TCP
     name: webhook
+    appProtocol: https
 {{- if or .Values.webhook.metrics.service.enabled
          (and .Values.serviceMonitor.enabled
               (eq $shouldRenderStr "true")) }}
@@ -33,6 +34,7 @@ spec:
     protocol: TCP
     targetPort: metrics
     name: metrics
+    appProtocol: http
 {{- end }}
   selector:
     {{- include "external-secrets-webhook.selectorLabels" . | nindent 4 }}
