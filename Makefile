@@ -99,8 +99,3 @@ uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.
 .PHONY: uv-lock-upgrade-and-sync
 uv-lock-upgrade-and-sync: uv-lock-upgrade ## Upgrade uv lockfile dependencies and sync venv
 	uv sync
-
-.PHONY: update-requirements
-update-requirements: uv-lock-upgrade ## Update requirements.txt file
-	uv export --format requirements-txt > tests/requirements.txt
-	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
