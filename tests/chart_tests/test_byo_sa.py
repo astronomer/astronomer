@@ -124,6 +124,12 @@ class TestServiceAccounts:
             "prometheus": {"serviceAccount": {"create": False}},
             "elasticsearch": {"common": {"serviceAccount": {"create": False}}},
             "airflow-operator": {"serviceAccount": {"create": False}},
+            "external-secrets": {
+                "enabled": True,
+                "serviceAccount": {"create": False},
+                "webhook": {"serviceAccount": {"create": False}},
+                "certController": {"serviceAccount": {"create": False}},
+            },
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -172,6 +178,12 @@ class TestServiceAccounts:
             "prometheus": {"serviceAccount": {"create": True, "annotations": annotations}},
             "elasticsearch": {"common": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "airflow-operator": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "external-secrets": {
+                "enabled": True,
+                "serviceAccount": {"create": True, "annotations": annotations},
+                "webhook": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "certController": {"serviceAccount": {"create": True, "annotations": annotations}},
+            },
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -350,6 +362,12 @@ custom_service_account_names = {
     },
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/external-secrets/templates/deployment.yaml": {
+        "external-secrets": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/external-secrets/templates/webhook-deployment.yaml": {
+        "external-secrets": {"enabled": True, "webhook": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/nats/templates/jetstream-job.yaml": {

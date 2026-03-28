@@ -682,3 +682,9 @@ kube-state:
     limits:
       cpu: "500m"
       memory: "1024Mi"
+
+#################################
+## External Secrets configuration
+#################################
+external-secrets:
+  enabled: false

@@ -311,9 +311,6 @@
                 }
             }
         },
-        "createOperator": {
-            "type": "boolean"
-        },
         "deploymentAnnotations": {
             "type": "object"
         },

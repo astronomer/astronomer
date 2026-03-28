@@ -26,6 +26,8 @@ astronomer:
         value: "true"
   pilot:
     enabled: true
+external-secrets:
+  enabled: true
 global:
   dataPlaneFailover:
     enabled: true

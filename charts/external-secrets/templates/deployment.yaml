@@ -1,5 +1,7 @@
 ---
-{{- if .Values.createOperator }}
+###########################################################################
+# external-secrets operator
+###########################################################################
 {{- include "external-secrets.reconciler-sanity-test" . }}
 apiVersion: apps/v1
 kind: Deployment
@@ -220,4 +222,3 @@ spec:
       {{- if .Values.podSpecExtra }}
       {{- toYaml .Values.podSpecExtra | nindent 6 }}
       {{- end }}
-{{- end }}
