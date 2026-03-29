@@ -11,10 +11,7 @@ ESO_VALUES = {"external-secrets": {"enabled": True}}
 ESO_DATA_PLANE_VALUES = {**ESO_VALUES, "global": {"plane": {"mode": "data"}}}
 
 DEPLOYMENT_TEMPLATE = "charts/external-secrets/templates/deployment.yaml"
-WEBHOOK_DEPLOYMENT_TEMPLATE = "charts/external-secrets/templates/webhook-deployment.yaml"
-WEBHOOK_SERVICE_TEMPLATE = "charts/external-secrets/templates/webhook-service.yaml"
 SERVICEACCOUNT_TEMPLATE = "charts/external-secrets/templates/serviceaccount.yaml"
-WEBHOOK_SERVICEACCOUNT_TEMPLATE = "charts/external-secrets/templates/webhook-serviceaccount.yaml"
 RBAC_TEMPLATE = "charts/external-secrets/templates/rbac.yaml"
 
 
@@ -117,7 +114,10 @@ class TestExternalSecretsDeployment:
         """Test that replicaCount can be overridden."""
         docs = render_chart(
             kube_version=kube_version,
-            values={**ESO_VALUES, "external-secrets": {"enabled": True, "replicaCount": 3}},
+            values={
+                **ESO_VALUES,
+                "external-secrets": {"enabled": True, "replicaCount": 3},
+            },
             show_only=[DEPLOYMENT_TEMPLATE],
         )
         assert docs[0]["spec"]["replicas"] == 3
@@ -138,138 +138,6 @@ class TestExternalSecretsDeployment:
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
-class TestExternalSecretsWebhookDeployment:
-    def test_webhook_deployment_defaults(self, kube_version):
-        """Test that the webhook deployment renders correctly with defaults."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values=ESO_VALUES,
-            show_only=[WEBHOOK_DEPLOYMENT_TEMPLATE],
-        )
-        assert len(docs) == 1
-        doc = docs[0]
-
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["kind"] == "Deployment"
-        assert doc["metadata"]["name"] == "release-name-external-secrets-webhook"
-        assert doc["spec"]["replicas"] == 1
-        assert doc["spec"]["template"]["metadata"]["labels"]["tier"] == "dp-failover"
-        assert doc["spec"]["template"]["metadata"]["labels"]["release"] == "release-name"
-
-    def test_webhook_deployment_image(self, kube_version):
-        """Test that the webhook deployment uses the correct image."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values=ESO_VALUES,
-            show_only=[WEBHOOK_DEPLOYMENT_TEMPLATE],
-        )
-        c_by_name = get_containers_by_name(docs[0])
-        assert "webhook" in c_by_name
-        assert c_by_name["webhook"]["image"] == "quay.io/astronomer/ap-external-secrets:2.2.0"
-        assert c_by_name["webhook"]["imagePullPolicy"] == "IfNotPresent"
-
-    def test_webhook_deployment_private_registry(self, kube_version):
-        """Test that the webhook deployment respects global.privateRegistry."""
-        private_repo = "registry.example.com/myorg"
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                **ESO_VALUES,
-                "global": {
-                    "privateRegistry": {
-                        "enabled": True,
-                        "repository": private_repo,
-                    }
-                },
-            },
-            show_only=[WEBHOOK_DEPLOYMENT_TEMPLATE],
-        )
-        c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["webhook"]["image"].startswith(private_repo)
-
-    def test_webhook_deployment_resources(self, kube_version):
-        """Test that the webhook deployment has resource requests and limits set."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values=ESO_VALUES,
-            show_only=[WEBHOOK_DEPLOYMENT_TEMPLATE],
-        )
-        c_by_name = get_containers_by_name(docs[0])
-        resources = c_by_name["webhook"]["resources"]
-        assert "cpu" in resources["requests"]
-        assert "memory" in resources["requests"]
-        assert "cpu" in resources["limits"]
-        assert "memory" in resources["limits"]
-
-    def test_webhook_deployment_security_context(self, kube_version):
-        """Test that the webhook container has readOnlyRootFilesystem set."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values=ESO_VALUES,
-            show_only=[WEBHOOK_DEPLOYMENT_TEMPLATE],
-        )
-        c_by_name = get_containers_by_name(docs[0])
-        sc = c_by_name["webhook"]["securityContext"]
-        assert sc["readOnlyRootFilesystem"] is True
-        assert sc["allowPrivilegeEscalation"] is False
-        assert sc["runAsNonRoot"] is True
-
-    def test_webhook_deployment_node_pool(self, kube_version):
-        """Test that the webhook deployment includes nodeSelector, affinity, and tolerations."""
-        spec = render_chart(
-            kube_version=kube_version,
-            values=ESO_VALUES,
-            show_only=[WEBHOOK_DEPLOYMENT_TEMPLATE],
-        )[0]["spec"]["template"]["spec"]
-        assert "nodeSelector" in spec
-        assert "affinity" in spec
-        assert "tolerations" in spec
-
-    def test_webhook_disabled(self, kube_version):
-        """Test that the webhook deployment is not rendered when webhook.create is false."""
-        with pytest.raises(subprocess.CalledProcessError):
-            render_chart(
-                kube_version=kube_version,
-                values={**ESO_VALUES, "external-secrets": {"enabled": True, "webhook": {"create": False}}},
-                show_only=[WEBHOOK_DEPLOYMENT_TEMPLATE],
-            )
-
-
-@pytest.mark.parametrize("kube_version", supported_k8s_versions)
-class TestExternalSecretsWebhookService:
-    def test_webhook_service_defaults(self, kube_version):
-        """Test that the webhook service renders correctly."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values=ESO_VALUES,
-            show_only=[WEBHOOK_SERVICE_TEMPLATE],
-        )
-        assert len(docs) == 1
-        doc = docs[0]
-
-        assert doc["apiVersion"] == "v1"
-        assert doc["kind"] == "Service"
-        assert doc["metadata"]["name"] == "release-name-external-secrets-webhook"
-
-        ports = {p["name"]: p for p in doc["spec"]["ports"]}
-        assert "webhook" in ports
-        assert ports["webhook"]["port"] == 443
-        assert ports["webhook"]["protocol"] == "TCP"
-        assert ports["webhook"]["appProtocol"] == "https"
-
-    def test_webhook_service_selector(self, kube_version):
-        """Test that the webhook service selector matches the webhook deployment."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values=ESO_VALUES,
-            show_only=[WEBHOOK_SERVICE_TEMPLATE],
-        )
-        selector = docs[0]["spec"]["selector"]
-        assert "app.kubernetes.io/name" in selector
-        assert selector["app.kubernetes.io/name"] == "external-secrets-webhook"
-
-
-@pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestExternalSecretsServiceAccounts:
     def test_serviceaccount_created_by_default(self, kube_version):
         """Test that the operator ServiceAccount is created by default."""
@@ -281,17 +149,6 @@ class TestExternalSecretsServiceAccounts:
         sa_docs = [d for d in docs if d["kind"] == "ServiceAccount"]
         assert len(sa_docs) == 1
         assert sa_docs[0]["metadata"]["name"] == "release-name-external-secrets"
-
-    def test_webhook_serviceaccount_created_by_default(self, kube_version):
-        """Test that the webhook ServiceAccount is created by default."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values=ESO_VALUES,
-            show_only=[WEBHOOK_SERVICEACCOUNT_TEMPLATE],
-        )
-        sa_docs = [d for d in docs if d["kind"] == "ServiceAccount"]
-        assert len(sa_docs) == 1
-        assert sa_docs[0]["metadata"]["name"] == "release-name-external-secrets-webhook"
 
     def test_serviceaccount_create_disabled(self, kube_version):
         """Test that no SA is rendered when create is false."""
@@ -305,7 +162,7 @@ class TestExternalSecretsServiceAccounts:
                     "webhook": {"serviceAccount": {"create": False}},
                 },
             },
-            show_only=[SERVICEACCOUNT_TEMPLATE, WEBHOOK_SERVICEACCOUNT_TEMPLATE],
+            show_only=[SERVICEACCOUNT_TEMPLATE],
         )
         assert len([d for d in docs if d["kind"] == "ServiceAccount"]) == 0
 
@@ -361,7 +218,10 @@ class TestExternalSecretsRBAC:
         with pytest.raises(subprocess.CalledProcessError):
             render_chart(
                 kube_version=kube_version,
-                values={**ESO_VALUES, "external-secrets": {"enabled": True, "rbac": {"create": False}}},
+                values={
+                    **ESO_VALUES,
+                    "external-secrets": {"enabled": True, "rbac": {"create": False}},
+                },
                 show_only=[RBAC_TEMPLATE],
             )
 
@@ -413,12 +273,12 @@ def test_external_secrets_only_renders_when_enabled(plane_mode):
     with pytest.raises(subprocess.CalledProcessError):
         render_chart(
             values={"global": {"plane": {"mode": plane_mode}}},
-            show_only=[DEPLOYMENT_TEMPLATE, WEBHOOK_DEPLOYMENT_TEMPLATE],
+            show_only=[DEPLOYMENT_TEMPLATE],
         )
 
     docs_enabled = render_chart(
         values={**ESO_VALUES, "global": {"plane": {"mode": plane_mode}}},
-        show_only=[DEPLOYMENT_TEMPLATE, WEBHOOK_DEPLOYMENT_TEMPLATE],
+        show_only=[DEPLOYMENT_TEMPLATE],
     )
     assert len(docs_enabled) == 2, (
         f"Expected 2 external-secrets deployments when enabled in plane.mode={plane_mode}, got {len(docs_enabled)}"
@@ -432,7 +292,7 @@ class TestExternalSecretsDataPlaneMode:
         docs = render_chart(
             kube_version=kube_version,
             values=ESO_DATA_PLANE_VALUES,
-            show_only=[DEPLOYMENT_TEMPLATE, WEBHOOK_DEPLOYMENT_TEMPLATE],
+            show_only=[DEPLOYMENT_TEMPLATE],
         )
         assert len(docs) == 2
         for doc in docs:
@@ -444,8 +304,11 @@ class TestExternalSecretsDataPlaneMode:
         custom_labels = {"foo": "FOO", "bar": "BAR"}
         docs = render_chart(
             kube_version=kube_version,
-            values={**ESO_DATA_PLANE_VALUES, "global": {"plane": {"mode": "data"}, "podLabels": custom_labels}},
-            show_only=[DEPLOYMENT_TEMPLATE, WEBHOOK_DEPLOYMENT_TEMPLATE],
+            values={
+                **ESO_DATA_PLANE_VALUES,
+                "global": {"plane": {"mode": "data"}, "podLabels": custom_labels},
+            },
+            show_only=[DEPLOYMENT_TEMPLATE],
         )
         for doc in docs:
             pod_labels = doc["spec"]["template"]["metadata"]["labels"]

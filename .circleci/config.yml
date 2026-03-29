@@ -435,6 +435,7 @@ workflows:
                 - quay.io/astronomer/ap-default-backend:0.29.2
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.10.0
                 - quay.io/astronomer/ap-elasticsearch:8.19.12
+                - quay.io/astronomer/ap-external-secrets:2.2.0
                 - quay.io/astronomer/ap-git-daemon:2026.3.18
                 - quay.io/astronomer/ap-git-sync-relay:0.2.5
                 - quay.io/astronomer/ap-git-sync:2026.3.18

@@ -10,6 +10,15 @@ from pathlib import Path
 
 import yaml
 
+# Helm is run once for each of these list items, and images from all runs are aggregated into
+# one list. This allows us to discover more images that would not be discovered due to mutually
+# incompatible configurations, like plane.mode.
+HELM_RUNS = [
+    {"label": "unified", "files": ["tests/enable_all_features.yaml"]},
+    {"label": "control", "files": ["configs/enable-all-features-control.yaml"]},
+    {"label": "data", "files": ["configs/enable-all-features-data.yaml"]},
+]
+
 
 def get_containers_from_spec(spec):
     """Return a list of images used in a kubernetes pod spec."""
@@ -107,23 +116,23 @@ def get_images_from_houston_configmap(doc, args):
     return images
 
 
-def helm_template(args):
-    """Run helm template and return the parsed yaml."""
+def helm_template(args, label, files):
+    """Run helm template for the given value files and return the parsed yaml."""
     GIT_ROOT = next(
         iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
         None,
     )
 
     command = "helm template . --set forceIncompatibleKubernetes=true"
-    if args.enable_all_features:
-        command += " -f tests/enable_all_features.yaml"
+    for f in files:
+        command += f" -f {f}"
     if args.private_registry:
         command += (
             " --set global.privateRegistry.repository=example.com/the-private-registry --set global.privateRegistry.enabled=True"
         )
 
     if args.verbose:
-        print(f"Running command: {command}", flush=True, file=sys.stderr)
+        print(f"Running helm template [{label}]: {command}", flush=True, file=sys.stderr)
     output = subprocess.check_output(command, shell=True, cwd=GIT_ROOT).decode("utf-8")
 
     return list(yaml.safe_load_all(output))
@@ -150,16 +159,11 @@ def main():
         action="store_true",
         help="only check for multiple tags for the same image, do not print the images",
     )
-    parser.add_argument(
-        "--no-enable-all-features",
-        dest="enable_all_features",
-        action="store_false",
-        help="Disable enable-all-features",
-    )
-
     args = parser.parse_args()
 
-    docs = helm_template(args)
+    docs = []
+    for run in HELM_RUNS:
+        docs.extend(helm_template(args, run["label"], run["files"]))
 
     containers = set()
 
