@@ -6,9 +6,9 @@ from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
-# external-secrets is a data-plane-only component
-ESO_VALUES = {"external-secrets": {"enabled": True}}
-ESO_DATA_PLANE_VALUES = {**ESO_VALUES, "global": {"plane": {"mode": "data"}}}
+# external-secrets is a data-plane-only component; all templates require plane.mode=="data"
+ESO_VALUES = {"external-secrets": {"enabled": True}, "global": {"plane": {"mode": "data"}}}
+ESO_DATA_PLANE_VALUES = ESO_VALUES  # alias kept for readability
 
 DEPLOYMENT_TEMPLATE = "charts/external-secrets/templates/deployment.yaml"
 SERVICEACCOUNT_TEMPLATE = "charts/external-secrets/templates/serviceaccount.yaml"
@@ -57,10 +57,11 @@ class TestExternalSecretsDeployment:
             values={
                 **ESO_VALUES,
                 "global": {
+                    "plane": {"mode": "data"},
                     "privateRegistry": {
                         "enabled": True,
                         "repository": private_repo,
-                    }
+                    },
                 },
             },
             show_only=[DEPLOYMENT_TEMPLATE],
@@ -159,7 +160,6 @@ class TestExternalSecretsServiceAccounts:
                 "external-secrets": {
                     "enabled": True,
                     "serviceAccount": {"create": False},
-                    "webhook": {"serviceAccount": {"create": False}},
                 },
             },
             show_only=[SERVICEACCOUNT_TEMPLATE],
@@ -214,16 +214,20 @@ class TestExternalSecretsRBAC:
         assert "ClusterRoleBinding" in kinds
 
     def test_rbac_disabled(self, kube_version):
-        """Test that no RBAC resources are rendered when rbac.create is false."""
-        with pytest.raises(subprocess.CalledProcessError):
-            render_chart(
-                kube_version=kube_version,
-                values={
-                    **ESO_VALUES,
-                    "external-secrets": {"enabled": True, "rbac": {"create": False}},
-                },
-                show_only=[RBAC_TEMPLATE],
-            )
+        """Test that no RBAC resources are rendered when rbac.create is false.
+
+        The template has a static comment header outside the if-block so helm
+        does not error — it returns an empty document list instead.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                **ESO_VALUES,
+                "external-secrets": {"enabled": True, "rbac": {"create": False}},
+            },
+            show_only=[RBAC_TEMPLATE],
+        )
+        assert len(docs) == 0
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -266,35 +270,43 @@ class TestExternalSecretsCRDs:
 
 @pytest.mark.parametrize("plane_mode", ["unified", "control", "data"])
 def test_external_secrets_only_renders_when_enabled(plane_mode):
-    """Test that external-secrets templates only render when explicitly enabled, regardless of plane mode."""
+    """Test that external-secrets deployment only renders in data plane mode when enabled.
 
-    # When the subchart is disabled, helm errors with 'could not find template'
-    # because --show-only targets a template that produces no output.
+    When the subchart is entirely absent (not enabled at umbrella level), helm
+    cannot find any of its templates and raises an error.  When the subchart IS
+    enabled, the deployment only renders if plane.mode == 'data'.
+    """
+    # When the subchart is entirely disabled helm errors regardless of plane mode.
     with pytest.raises(subprocess.CalledProcessError):
         render_chart(
             values={"global": {"plane": {"mode": plane_mode}}},
             show_only=[DEPLOYMENT_TEMPLATE],
         )
 
-    docs_enabled = render_chart(
-        values={**ESO_VALUES, "global": {"plane": {"mode": plane_mode}}},
+    # When the subchart is enabled, deployment renders only in data plane mode.
+    docs = render_chart(
+        values={
+            "external-secrets": {"enabled": True},
+            "global": {"plane": {"mode": plane_mode}},
+        },
         show_only=[DEPLOYMENT_TEMPLATE],
     )
-    assert len(docs_enabled) == 2, (
-        f"Expected 2 external-secrets deployments when enabled in plane.mode={plane_mode}, got {len(docs_enabled)}"
-    )
+    if plane_mode == "data":
+        assert len(docs) == 1, f"Expected 1 external-secrets deployment in plane.mode=data, got {len(docs)}"
+    else:
+        assert len(docs) == 0, f"Expected 0 external-secrets deployments in plane.mode={plane_mode}, got {len(docs)}"
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestExternalSecretsDataPlaneMode:
     def test_tier_label_is_dp_failover(self, kube_version):
-        """Test that both deployments carry the dp-failover tier label."""
+        """Test that the operator deployment carries the dp-failover tier label."""
         docs = render_chart(
             kube_version=kube_version,
             values=ESO_DATA_PLANE_VALUES,
             show_only=[DEPLOYMENT_TEMPLATE],
         )
-        assert len(docs) == 2
+        assert len(docs) == 1
         for doc in docs:
             pod_labels = doc["spec"]["template"]["metadata"]["labels"]
             assert pod_labels["tier"] == "dp-failover"

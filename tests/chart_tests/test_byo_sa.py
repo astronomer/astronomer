@@ -264,7 +264,10 @@ def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
     default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
-    if any(s in template_name for s in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment")):
+    if any(
+        substring in template_name
+        for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")
+    ):
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
@@ -366,9 +369,6 @@ custom_service_account_names = {
     "charts/external-secrets/templates/deployment.yaml": {
         "external-secrets": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}
     },
-    "charts/external-secrets/templates/webhook-deployment.yaml": {
-        "external-secrets": {"enabled": True, "webhook": {"serviceAccount": {"create": True, "name": "prothean"}}}
-    },
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/nats/templates/jetstream-job.yaml": {
         "nats": {"nats": {"jetStream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
@@ -413,7 +413,10 @@ def test_custom_serviceaccount_names(template_name):
 
     values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
-    if any(s in template_name for s in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment")):
+    if any(
+        substring in template_name
+        for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")
+    ):
         plane_config = {"global": {"plane": {"mode": "data"}}}
         values = always_merger.merge(values, plane_config)
     values = always_merger.merge(values, enable_pgsql_sa)
