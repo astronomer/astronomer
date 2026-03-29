@@ -1,11 +1,6 @@
 astronomer:
   dpLink:
     enabled: true
-    env:
-      - name: DPLINK_DEBUG_ENABLED
-        value: "true"
-      - name: DEBUG
-        value: "true"
   flightDeck:
     enabled: true
   houston:
