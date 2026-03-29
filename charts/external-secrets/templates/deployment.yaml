@@ -1,7 +1,8 @@
 ---
-###########################################################################
-# external-secrets operator
-###########################################################################
+###############################
+## external-secrets operator ##
+###############################
+{{- if eq .Values.global.plane.mode "data" }}
 {{- include "external-secrets.reconciler-sanity-test" . }}
 apiVersion: apps/v1
 kind: Deployment
@@ -220,3 +221,4 @@ spec:
       {{- if .Values.podSpecExtra }}
       {{- toYaml .Values.podSpecExtra | nindent 6 }}
       {{- end }}
+{{- end }}

@@ -1,5 +1,8 @@
 ---
-{{- if .Values.rbac.create -}}
+###########################
+## external-secrets RBAC ##
+###########################
+{{- if and (eq .Values.global.plane.mode "data") .Values.rbac.create -}}
 apiVersion: rbac.authorization.k8s.io/v1
 {{- if and .Values.scopedNamespace .Values.scopedRBAC }}
 kind: Role

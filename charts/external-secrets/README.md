@@ -37,58 +37,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | affinity | object | `{}` |  |
 | bitwarden-sdk-server.enabled | bool | `false` |  |
 | bitwarden-sdk-server.namespaceOverride | string | `""` |  |
-| certController.affinity | object | `{}` |  |
-| certController.create | bool | `true` | Specifies whether a certificate controller deployment be created. |
-| certController.deploymentAnnotations | object | `{}` | Annotations to add to Deployment |
-| certController.extraArgs | object | `{}` |  |
-| certController.extraEnv | list | `[]` |  |
-| certController.extraInitContainers | list | `[]` |  |
-| certController.extraVolumeMounts | list | `[]` |  |
-| certController.extraVolumes | list | `[]` |  |
-| certController.hostAliases | list | `[]` | Specifies `hostAliases` to cert-controller deployment |
-| certController.hostNetwork | bool | `false` | Run the certController on the host network |
-| certController.hostUsers | bool | `nil` | Specifies if certController pod should use hostUsers or not. If hostNetwork is true, hostUsers should be too. Only available in Kubernetes ≥ 1.33. @schema type: [boolean, null] |
-| certController.image.flavour | string | `""` |  |
-| certController.image.pullPolicy | string | `"IfNotPresent"` |  |
-| certController.image.repository | string | `"ghcr.io/external-secrets/external-secrets"` |  |
-| certController.image.tag | string | `""` |  |
-| certController.imagePullSecrets | list | `[]` |  |
-| certController.log | object | `{"level":"info","timeEncoding":"epoch"}` | Specifies Log Params to the Certificate Controller |
-| certController.metrics.listen.port | int | `8080` |  |
-| certController.metrics.service.annotations | object | `{}` | Additional service annotations |
-| certController.metrics.service.enabled | bool | `false` | Enable if you use another monitoring tool than Prometheus to scrape the metrics |
-| certController.metrics.service.port | int | `8080` | Metrics service port to scrape |
-| certController.nodeSelector | object | `{}` |  |
-| certController.podAnnotations | object | `{}` | Annotations to add to Pod |
-| certController.podDisruptionBudget | object | `{"enabled":false,"minAvailable":1,"nameOverride":""}` | Pod disruption budget - for more details see https://kubernetes.io/docs/concepts/workloads/pods/disruptions/ |
-| certController.podLabels | object | `{}` |  |
-| certController.podSecurityContext.enabled | bool | `true` |  |
-| certController.priorityClassName | string | `""` | Pod priority class name. |
-| certController.rbac.create | bool | `true` | Specifies whether role and rolebinding resources should be created. |
-| certController.readinessProbe.address | string | `""` | Address for readiness probe |
-| certController.readinessProbe.port | int | `8081` | ReadinessProbe port for kubelet |
-| certController.replicaCount | int | `1` |  |
-| certController.requeueInterval | string | `"5m"` |  |
-| certController.resources | object | `{}` |  |
-| certController.revisionHistoryLimit | int | `10` | Specifies the amount of historic ReplicaSets k8s should keep (see https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy) |
-| certController.securityContext.allowPrivilegeEscalation | bool | `false` |  |
-| certController.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
-| certController.securityContext.enabled | bool | `true` |  |
-| certController.securityContext.readOnlyRootFilesystem | bool | `true` |  |
-| certController.securityContext.runAsNonRoot | bool | `true` |  |
-| certController.securityContext.runAsUser | int | `1000` |  |
-| certController.securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
-| certController.serviceAccount.annotations | object | `{}` | Annotations to add to the service account. |
-| certController.serviceAccount.automount | bool | `true` | Automounts the service account token in all containers of the pod |
-| certController.serviceAccount.create | bool | `true` | Specifies whether a service account should be created. |
-| certController.serviceAccount.extraLabels | object | `{}` | Extra Labels to add to the service account. |
-| certController.serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template. |
-| certController.startupProbe.enabled | bool | `false` | Enabled determines if the startup probe should be used or not. By default it's enabled |
-| certController.startupProbe.port | string | `""` | Port for startup probe. |
-| certController.startupProbe.useReadinessProbePort | bool | `true` | whether to use the readiness probe port for startup probe. |
-| certController.strategy | object | `{}` | Set deployment strategy |
-| certController.tolerations | list | `[]` |  |
-| certController.topologySpreadConstraints | list | `[]` |  |
 | commonLabels | object | `{}` | Additional labels added to all helm chart resources. |
 | concurrent | int | `1` | Specifies the number of concurrent ExternalSecret Reconciles external-secret executes at a time. |
 | controllerClass | string | `""` | If set external secrets will filter matching Secret Stores with the appropriate controller values. |
@@ -104,7 +52,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | deploymentAnnotations | object | `{}` | Annotations to add to Deployment |
 | dnsConfig | object | `{}` | Specifies `dnsOptions` to deployment |
 | dnsPolicy | string | `"ClusterFirst"` | Specifies `dnsPolicy` to deployment |
-| enableHTTP2 | bool | `false` | if true, HTTP2 will be enabled for the services created by all controllers, currently metrics and webhook. |
 | extendedMetricLabels | bool | `false` | If true external secrets will use recommended kubernetes annotations as prometheus metric labels. |
 | extraArgs | object | `{}` |  |
 | extraContainers | list | `[]` |  |
@@ -207,76 +154,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created. |
 | serviceAccount.extraLabels | object | `{}` | Extra Labels to add to the service account. |
 | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template. |
-| serviceMonitor.additionalLabels | object | `{}` | Additional labels |
-| serviceMonitor.enabled | bool | `false` | Specifies whether to create a ServiceMonitor resource for collecting Prometheus metrics |
-| serviceMonitor.honorLabels | bool | `false` | Let prometheus add an exported_ prefix to conflicting labels |
-| serviceMonitor.interval | string | `"30s"` | Interval to scrape metrics |
-| serviceMonitor.metricRelabelings | list | `[]` | Metric relabel configs to apply to samples before ingestion. [Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs) |
-| serviceMonitor.namespace | string | `""` | namespace where you want to install ServiceMonitors |
-| serviceMonitor.relabelings | list | `[]` | Relabel configs to apply to samples before ingestion. [Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config) |
-| serviceMonitor.renderMode | string | `"skipIfMissing"` | How should we react to missing CRD "`monitoring.coreos.com/v1/ServiceMonitor`"  Possible values: - `skipIfMissing`: Only render ServiceMonitor resources if CRD is present, skip if missing. - `failIfMissing`: Fail Helm install if CRD is not present. - `alwaysRender` : Always render ServiceMonitor resources, do not check for CRD. @schema enum: - skipIfMissing - failIfMissing - alwaysRender @schema |
-| serviceMonitor.scrapeTimeout | string | `"25s"` | Timeout if metrics can't be retrieved in given time interval |
 | strategy | object | `{}` | Set deployment strategy |
 | systemAuthDelegator | bool | `false` | If true the system:auth-delegator ClusterRole will be added to RBAC |
 | tolerations | list | `[]` |  |
 | topologySpreadConstraints | list | `[]` |  |
-| webhook.affinity | object | `{}` |  |
-| webhook.annotations | object | `{}` | Annotations to place on validating webhook configuration. |
-| webhook.certCheckInterval | string | `"5m"` | Specifies the time to check if the cert is valid |
-| webhook.certDir | string | `"/tmp/certs"` |  |
-| webhook.create | bool | `true` | Specifies whether a webhook deployment be created. If set to false, crds.conversion.enabled should also be set to false otherwise the kubeapi will be hammered because the conversion is looking for a webhook endpoint. |
-| webhook.deploymentAnnotations | object | `{}` | Annotations to add to Deployment |
-| webhook.extraArgs | object | `{}` |  |
-| webhook.extraEnv | list | `[]` |  |
-| webhook.extraInitContainers | list | `[]` |  |
-| webhook.extraVolumeMounts | list | `[]` |  |
-| webhook.extraVolumes | list | `[]` |  |
-| webhook.failurePolicy | string | `"Fail"` | Specifies whether validating webhooks should be created with failurePolicy: Fail or Ignore |
-| webhook.hostAliases | list | `[]` | Specifies `hostAliases` to webhook deployment |
-| webhook.hostNetwork | bool | `false` | Specifies if webhook pod should use hostNetwork or not. |
-| webhook.hostUsers | bool | `nil` | Specifies if webhook pod should use hostUsers or not. If hostNetwork is true, hostUsers should be too. Only available in Kubernetes ≥ 1.33. @schema type: [boolean, null] |
-| webhook.image.flavour | string | `""` | The flavour of tag you want to use |
-| webhook.image.pullPolicy | string | `"IfNotPresent"` |  |
-| webhook.image.repository | string | `"ghcr.io/external-secrets/external-secrets"` |  |
-| webhook.image.tag | string | `""` | The image tag to use. The default is the chart appVersion. |
-| webhook.imagePullSecrets | list | `[]` |  |
-| webhook.log | object | `{"level":"info","timeEncoding":"epoch"}` | Specifies Log Params to the Webhook |
-| webhook.lookaheadInterval | string | `""` | Specifies the lookaheadInterval for certificate validity |
-| webhook.metrics.listen.port | int | `8080` |  |
-| webhook.metrics.service.annotations | object | `{}` | Additional service annotations |
-| webhook.metrics.service.enabled | bool | `false` | Enable if you use another monitoring tool than Prometheus to scrape the metrics |
-| webhook.metrics.service.port | int | `8080` | Metrics service port to scrape |
-| webhook.nodeSelector | object | `{}` |  |
-| webhook.podAnnotations | object | `{}` | Annotations to add to Pod |
-| webhook.podDisruptionBudget | object | `{"enabled":false,"minAvailable":1,"nameOverride":""}` | Pod disruption budget - for more details see https://kubernetes.io/docs/concepts/workloads/pods/disruptions/ |
-| webhook.podLabels | object | `{}` |  |
-| webhook.podSecurityContext.enabled | bool | `true` |  |
-| webhook.port | int | `10250` | The port the webhook will listen to |
-| webhook.priorityClassName | string | `""` | Pod priority class name. |
-| webhook.readinessProbe.address | string | `""` | Address for readiness probe |
-| webhook.readinessProbe.port | int | `8081` | ReadinessProbe port for kubelet |
-| webhook.replicaCount | int | `1` |  |
-| webhook.resources | object | `{}` |  |
-| webhook.revisionHistoryLimit | int | `10` | Specifies the amount of historic ReplicaSets k8s should keep (see https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy) |
-| webhook.secretAnnotations | object | `{}` | Annotations to add to Secret |
-| webhook.securityContext.allowPrivilegeEscalation | bool | `false` |  |
-| webhook.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
-| webhook.securityContext.enabled | bool | `true` |  |
-| webhook.securityContext.readOnlyRootFilesystem | bool | `true` |  |
-| webhook.securityContext.runAsNonRoot | bool | `true` |  |
-| webhook.securityContext.runAsUser | int | `1000` |  |
-| webhook.securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
-| webhook.service | object | `{"annotations":{},"enabled":true,"labels":{},"loadBalancerIP":"","type":"ClusterIP"}` | Manage the service through which the webhook is reached. |
-| webhook.service.annotations | object | `{}` | Custom annotations for the webhook service. |
-| webhook.service.enabled | bool | `true` | Whether the service object should be enabled or not (it is expected to exist). |
-| webhook.service.labels | object | `{}` | Custom labels for the webhook service. |
-| webhook.service.loadBalancerIP | string | `""` | If the webhook service type is LoadBalancer, you can assign a specific load balancer IP here. Check the documentation of your load balancer provider to see if/how this should be used. |
-| webhook.service.type | string | `"ClusterIP"` | The service type of the webhook service. |
-| webhook.serviceAccount.annotations | object | `{}` | Annotations to add to the service account. |
-| webhook.serviceAccount.automount | bool | `true` | Automounts the service account token in all containers of the pod |
-| webhook.serviceAccount.create | bool | `true` | Specifies whether a service account should be created. |
-| webhook.serviceAccount.extraLabels | object | `{}` | Extra Labels to add to the service account. |
-| webhook.serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template. |
-| webhook.strategy | object | `{}` | Set deployment strategy |
-| webhook.tolerations | list | `[]` |  |
-| webhook.topologySpreadConstraints | list | `[]` |  |

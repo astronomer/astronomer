@@ -2,8 +2,7 @@
 ###########################################################################
 # external-secrets service
 ###########################################################################
-{{- $shouldRenderStr := include "external-secrets.shouldRenderServiceMonitor" . | trim }}
-{{- if or .Values.metrics.service.enabled (and .Values.serviceMonitor.enabled (eq $shouldRenderStr "true")) -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.metrics.service.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:

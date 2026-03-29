@@ -1,8 +1,8 @@
 ---
-###########################################################################
-# external-secrets PDB
-###########################################################################
-{{- if .Values.podDisruptionBudget.enabled }}
+##########################
+## external-secrets PDB ##
+##########################
+{{- if and (eq .Values.global.plane.mode "data") .Values.podDisruptionBudget.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
