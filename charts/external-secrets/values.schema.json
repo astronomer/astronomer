@@ -287,27 +287,6 @@
                             "type": "boolean"
                         }
                     }
-                },
-                "createClusterExternalSecret": {
-                    "type": "boolean"
-                },
-                "createClusterGenerator": {
-                    "type": "boolean"
-                },
-                "createClusterPushSecret": {
-                    "type": "boolean"
-                },
-                "createClusterSecretStore": {
-                    "type": "boolean"
-                },
-                "createPushSecret": {
-                    "type": "boolean"
-                },
-                "createSecretStore": {
-                    "type": "boolean"
-                },
-                "unsafeServeV1Beta1": {
-                    "type": "boolean"
                 }
             }
         },
