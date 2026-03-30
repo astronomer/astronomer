@@ -95,6 +95,9 @@ global:
   # This is not recommended for production.
   postgresqlEnabled: false
 
+  # Enables a node exporter DaemonSet for node-level metrics
+  nodeExporterEnabled: false
+
   prometheusPostgresExporterEnabled: false
 
   # Configure vector to gather logs from all available namespaces
@@ -115,6 +118,9 @@ global:
 
   # Enable security context constraints required for OpenShift
   sccEnabled: false
+
+  # Enabled nodeexporter security context constraints required for OpenShift
+  nodeExporterSccEnabled: false
 
   # Enables namespace labels for network policies
   networkNSLabels: false
