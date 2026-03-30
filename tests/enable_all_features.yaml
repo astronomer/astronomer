@@ -51,6 +51,7 @@ global:
   privateCaCertsAddToHost:
     addToContainerd: true
     enabled: true
+  nodeExporterEnabled: true
   prometheusPostgresExporterEnabled: true
 nats:
   nats:
