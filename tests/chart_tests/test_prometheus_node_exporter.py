@@ -4,6 +4,8 @@ from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
+enable_node_exporter = {"global": {"nodeExporterEnabled": True}}
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -19,6 +21,7 @@ class TestPrometheusNodeExporterDaemonset:
     def test_prometheus_node_exporter_service_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
+            values=enable_node_exporter,
             show_only=["charts/prometheus-node-exporter/templates/service.yaml"],
         )
 
@@ -41,6 +44,7 @@ class TestPrometheusNodeExporterDaemonset:
     def test_prometheus_node_exporter_daemonset_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
+            values=enable_node_exporter,
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )
 
@@ -61,6 +65,7 @@ class TestPrometheusNodeExporterDaemonset:
         doc = render_chart(
             kube_version=kube_version,
             values={
+                **enable_node_exporter,
                 "prometheus-node-exporter": {
                     "resources": {
                         "limits": {"cpu": "777m", "memory": "999Mi"},
@@ -85,6 +90,7 @@ class TestPrometheusNodeExporterDaemonset:
         doc = render_chart(
             kube_version=kube_version,
             values={
+                **enable_node_exporter,
                 "prometheus-node-exporter": {
                     "securityContext": {
                         "allowPrivilegeEscalation": False,
@@ -106,10 +112,10 @@ class TestPrometheusNodeExporterDaemonset:
         }
 
     def test_node_exporter_priorityclass_defaults(self, kube_version):
-        """Test to validate fluentd with priority class defaults."""
+        """Test to validate node exporter with priority class defaults."""
         docs = render_chart(
             kube_version=kube_version,
-            values={},
+            values=enable_node_exporter,
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )
         assert len(docs) == 1
@@ -121,7 +127,10 @@ class TestPrometheusNodeExporterDaemonset:
         """Test to validate node exporter with priority class configured."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"prometheus-node-exporter": {"priorityClassName": "node-exporter-priority-pod"}},
+            values={
+                **enable_node_exporter,
+                "prometheus-node-exporter": {"priorityClassName": "node-exporter-priority-pod"},
+            },
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )
         assert len(docs) == 1
@@ -133,7 +142,10 @@ class TestPrometheusNodeExporterDaemonset:
     def test_node_exporter_nodepool_config_overrides(self, kube_version, global_platform_node_pool_config):
         """Test to validate node exporter with nodeSelector, affinity, tolerations configured."""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astro-node-exporter"}
-        values = {"prometheus-node-exporter": global_platform_node_pool_config}
+        values = {
+            **enable_node_exporter,
+            "prometheus-node-exporter": global_platform_node_pool_config,
+        }
         docs = render_chart(
             kube_version=kube_version,
             values=values,
