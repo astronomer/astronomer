@@ -2,11 +2,21 @@
 
 <p><img src="https://raw.githubusercontent.com/external-secrets/external-secrets/main/assets/eso-logo-large.png" width="100x"  alt="external-secrets"></p>
 
-This is a hard fork of the public external-secrets chart tailored for APC use cases.
+This is a hard fork of the [public external-secrets chart](https://github.com/external-secrets/external-secrets/) that has been tailored for APC use cases.
 
-### Custom Resources
+## Custom Resources
 
 By default, the chart will install external-secrets CRDs on each upgrade.
+
+To upgrade CRDs, download `https://github.com/external-secrets/external-secrets/blob/main/deploy/crds/bundle.yaml` and using macOS, run:
+
+```sh
+wget https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/deploy/crds/bundle.yaml
+split -p '^---$' bundle.yaml  # this step is incompatible with GNU/Linux split
+for FILE in x?? ; do mv "$FILE" crd-$(yq -r .metadata.name $FILE).yaml ; done ;
+```
+
+Where `yq` is `uv tool install yq`.
 
 ## Values
 
