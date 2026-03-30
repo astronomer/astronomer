@@ -1,7 +1,7 @@
 #################################
 ## Prometheus Config ConfigMap ##
 #################################
-{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
+{{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -240,7 +240,7 @@ data:
             regex: 'kube_node_.*'
             action: drop
           # Required for multi-namespace mode (non auto-generated namespaces should be relabeled differently)
-          {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
+          {{- if or .Values.global.namespaceManagement.namespacePools.enabled .Values.global.namespaceManagement.namespaceFreeFormEntry.enabled .Values.global.manualNamespaceNamesEnabled}}
           - source_labels: [pod]
             regex: "(.*?)(?:-webserver.*|-api-server.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
             replacement: "$1"
@@ -298,7 +298,7 @@ data:
               names:
                 {{- if not $useClusterRoles }}
                 # explicitly including each namespace in the pool
-                {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+                {{- range $i, $namespaceName := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
                 - {{ $namespaceName }}
                 {{- end }}
                 {{- end }}

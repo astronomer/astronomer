@@ -59,9 +59,9 @@ spec:
               - "sync"
               - "--source-namespace"
               - "{{ .Release.Namespace }}"
-              {{- if .Values.global.features.namespacePools.enabled }}
+              {{- if .Values.global.namespaceManagement.namespacePools.enabled }}
               - "--target-namespaces"
-              - "{{ join "," .Values.global.features.namespacePools.namespaces.names }}"
+              - "{{ join "," .Values.global.namespaceManagement.namespacePools.namespaces.names }}"
               {{- end }}
               {{- if .Values.configSyncer.readinessProbe }}
               readinessProbe: {{ tpl (toYaml .Values.configSyncer.readinessProbe) . | nindent 16 }}

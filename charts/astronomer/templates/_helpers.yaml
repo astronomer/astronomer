@@ -1,7 +1,7 @@
 {{ define "helm.globals" -}}
   {{- $globals := dict -}}
   {{- $_ := set $globals "baseDomain" (default "" .Values.global.baseDomain) -}}
-  {{- $_ := set $globals "rbacEnabled" .Values.global.rbacEnabled -}}
+  {{- $_ := set $globals "rbacEnabled" .Values.global.rbac.enabled -}}
   {{- $_ := set $globals "releaseName" (print .Release.Name | toString) -}}
   {{- $_ := set $globals "releaseNamespace" (print .Release.Namespace | toString) -}}
   {{- $_ := set $globals "releaseVersion" (print .Chart.Version | toString) -}}
@@ -17,7 +17,7 @@
 {{- end }}
 
 {{ define "commander.metadata.namespaceLabels" }}
-{{- if .Values.global.rbacEnabled -}}
+{{- if .Values.global.rbac.enabled -}}
 {{ .Values.global.namespaceLabels | toYaml | nindent 6 -}}
 {{- else -}}
 {}
@@ -131,7 +131,7 @@
 {{- end }}
 
 {{ define "registry.serviceAccountName" -}}
-{{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.registry.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-registry" .Release.Name ) .Values.registry.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.registry.serviceAccount.name }}
@@ -139,7 +139,7 @@
 {{- end }}
 
 {{ define "astroUI.serviceAccountName" -}}
-{{- if and .Values.astroUI.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.astroUI.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-astro-ui" .Release.Name) .Values.astroUI.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.astroUI.serviceAccount.name }}
@@ -147,7 +147,7 @@
 {{- end }}
 
 {{ define "houston.bootstrapperServiceAccountName" -}}
-{{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+{{- if and .Values.houston.serviceAccount.create .Values.global.rbac.enabled (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
 {{- default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.houston.serviceAccount.name }}
@@ -155,7 +155,7 @@
 {{- end }}
 
 {{ define "commander.jwksServiceAccountName" -}}
-{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.commander.serviceAccount.name }}
@@ -163,7 +163,7 @@
 {{- end }}
 
 {{ define "configSyncer.serviceAccountName" -}}
-{{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.configSyncer.serviceAccount.name }}
@@ -171,7 +171,7 @@
 {{- end }}
 
 {{ define "commander.serviceAccountName" -}}
-{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-commander" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.commander.serviceAccount.name }}
@@ -221,10 +221,10 @@
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
   value: "{{ include "houston.authServiceURL" . }}"
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
-  value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
-{{- if .Values.global.features.namespacePools.enabled  }}
+  value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
+{{- if .Values.global.namespaceManagement.namespacePools.enabled  }}
 - name: COMMANDER_NAMESPACE_POOLS_LIST
-  value: {{ .Values.global.features.namespacePools.namespaces.names | join "," | quote }}
+  value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
 {{- end }}
 
@@ -496,10 +496,10 @@ tlsEnabled: false
 {{- end }}
 
 {{- define "dagOnlyDeployment.securityContexts" -}}
-{{- if or (eq ( toString ( .Values.global.dagOnlyDeployment.securityContexts.pod.fsGroup )) "auto") ( .Values.global.openshiftEnabled ) }}
-{{- omit .Values.global.dagOnlyDeployment.securityContexts.pod "fsGroup" | toYaml | nindent 10 }}
+{{- if or (eq ( toString ( .Values.global.deployMechanisms.dagOnlyDeployment.securityContexts.pod.fsGroup )) "auto") ( .Values.global.openshift.enabled ) }}
+{{- omit .Values.global.deployMechanisms.dagOnlyDeployment.securityContexts.pod "fsGroup" | toYaml | nindent 12 }}
 {{- else }}
-{{- .Values.global.dagOnlyDeployment.securityContexts | toYaml | nindent 10 }}
+{{- .Values.global.deployMechanisms.dagOnlyDeployment.securityContexts | toYaml | nindent 12 }}
 {{- end -}}
 {{- end }}
 
