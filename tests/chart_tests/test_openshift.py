@@ -44,7 +44,7 @@ class TestOpenshift:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"openshiftEnabled": True},
+                "global": {"openshift": {"enabled": True}},
             },
             show_only=show_only,
         )
@@ -58,7 +58,7 @@ class TestOpenshift:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"openshiftEnabled": True},
+                "global": {"openshift": {"enabled": True}},
             },
             show_only=[
                 "charts/prometheus/templates/prometheus-statefulset.yaml",
@@ -77,7 +77,7 @@ class TestOpenshift:
         "Validate houston config when openshiftEnabled is Enabled"
         docs = render_chart(
             values={
-                "global": {"openshiftEnabled": True},
+                "global": {"openshift": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )

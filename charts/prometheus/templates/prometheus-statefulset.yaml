@@ -1,7 +1,7 @@
 ############################
 ## Prometheus StatefulSet ##
 ############################
-{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
+{{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 {{- $planeMode := and (eq .Values.global.plane.mode "unified")  ( not $useClusterRoles ) }}
 {{- $planeCPMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
@@ -263,7 +263,7 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 1
           {{- end }}
-{{- if eq .Values.global.openshiftEnabled false }}
+{{- if eq .Values.global.openshift.enabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       volumes:
