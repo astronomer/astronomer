@@ -511,6 +511,58 @@ class TestAstronomerCommander:
         }
         assert all(rule != expected_rule for rule in doc["rules"])
 
+    def test_commander_data_plane_failover_permissions(self, kube_version):
+        """Test that commander role includes external-secrets RBAC rules when dataPlaneFailover is enabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "dataPlaneFailover": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+        expected_rule = {
+            "apiGroups": ["external-secrets.io", "generators.external-secrets.io"],
+            "resources": [
+                "clusterexternalsecrets",
+                "clusterpushsecrets",
+                "clustersecretstores",
+                "externalsecrets",
+                "pushsecrets",
+                "secretstores",
+                "generatorstates",
+            ],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert any(rule == expected_rule for rule in doc["rules"])
+
+    def test_commander_data_plane_failover_permissions_disabled(self, kube_version):
+        """Test that commander role does not include external-secrets RBAC rules when dataPlaneFailover is disabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "dataPlaneFailover": {"enabled": False},
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+        expected_rule = {
+            "apiGroups": ["external-secrets.io", "generators.external-secrets.io"],
+            "resources": [
+                "clusterexternalsecrets",
+                "clusterpushsecrets",
+                "clustersecretstores",
+                "externalsecrets",
+                "pushsecrets",
+                "secretstores",
+                "generatorstates",
+            ],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert all(rule != expected_rule for rule in doc["rules"])
+
     @pytest.mark.parametrize(
         "mode,custom_logging,expected_node",
         [
