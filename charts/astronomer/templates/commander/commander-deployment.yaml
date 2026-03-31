@@ -17,7 +17,7 @@ metadata:
 
   annotations:
     checksum/jwks-secret: {{ printf "%s-commander-jwt-secret" .Release.Name | sha256sum }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:

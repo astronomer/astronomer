@@ -981,7 +981,7 @@ data:
             {{/* We want '{{ $labels.host }}' to be evaluated by prometheus, not helm, so we have to escape it once */ -}}
             description: {{ printf "%q" "The TLS Certificate for {{ $labels.host }} is expiring in less than a week." }}
 
-      {{- if .Values.global.prometheusPostgresExporterEnabled }}
+      {{- if .Values.global.prometheusPostgresExporter.enabled }}
       - name: PostgreSQL
         rules:
         - alert: AirflowChartVersionInconsistent

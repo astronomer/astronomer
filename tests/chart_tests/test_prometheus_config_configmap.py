@@ -64,7 +64,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "prometheusPostgresExporterEnabled": True,
+                    "prometheusPostgresExporter": {"enabled": True},
                 },
             },
         )[0]
@@ -234,8 +234,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "namespaceManagement": {"namespacePools": {"enabled": False}},
-                    "manualNamespaceNamesEnabled": True,
+                    "namespaceManagement": {"namespacePools": {"enabled": False}, "manualNamespaceNames": {"enabled": True}},
                 }
             },
         )[0]

@@ -70,7 +70,7 @@ class TestPartialOverrideMigration:
         expected = _to_plain(_load_rt(expected_new_partial_text))
 
         assert result == expected
-        assert len(changes) == 29
+        assert len(changes) == 36
 
     def test_non_global_sections_preserved(self, old_partial_override_text: str):
         """Sections outside global (astronomer, nginx, etc.) are not modified."""
@@ -111,7 +111,14 @@ class TestFullValuesMigration:
         assert g["deployMechanisms"]["dagOnlyDeployment"]["repository"] == "quay.io/astronomer/ap-dag-deploy"
         assert g["logging"]["loggingSidecar"]["enabled"] is False
         assert g["logging"]["loggingSidecar"]["name"] == "sidecar-log-consumer"
-        assert len(changes) == 29
+        assert g["podDisruptionBudgets"]["enabled"] is True
+        assert g["postgresql"]["enabled"] is False
+        assert g["prometheusPostgresExporter"]["enabled"] is False
+        assert g["namespaceManagement"]["manualNamespaceNames"]["enabled"] is False
+        assert g["perHostIngress"]["enabled"] is False
+        assert g["argoCD"]["annotation"]["enabled"] is False
+        assert g["manageClusterScopedResources"]["enabled"] is True
+        assert len(changes) == 36
 
     def test_houston_config_migrated(self, old_full_values_text: str):
         """Houston config deployment flags are restructured and obsolete keys deleted."""
@@ -150,6 +157,13 @@ class TestFullValuesMigration:
             "deployRollbackEnabled",
             "dagOnlyDeployment",
             "loggingSidecar",
+            "podDisruptionBudgetsEnabled",
+            "postgresqlEnabled",
+            "prometheusPostgresExporterEnabled",
+            "manualNamespaceNamesEnabled",
+            "enablePerHostIngress",
+            "enableArgoCDAnnotation",
+            "disableManageClusterScopedResources",
         ]
         for key in old_keys:
             assert key not in g, f"Old key '{key}' should have been removed from global"
@@ -390,6 +404,41 @@ RULE_TEST_CASES = [
         "loggingSidecar",
         "global:\n  loggingSidecar:\n    enabled: true\n    name: test-sidecar\n",
         lambda g: g["logging"]["loggingSidecar"]["enabled"] is True and g["logging"]["loggingSidecar"]["name"] == "test-sidecar",
+    ),
+    (
+        "podDisruptionBudgetsEnabled",
+        "global:\n  podDisruptionBudgetsEnabled: true\n",
+        lambda g: g["podDisruptionBudgets"]["enabled"] is True,
+    ),
+    (
+        "postgresqlEnabled",
+        "global:\n  postgresqlEnabled: false\n",
+        lambda g: g["postgresql"]["enabled"] is False,
+    ),
+    (
+        "prometheusPostgresExporterEnabled",
+        "global:\n  prometheusPostgresExporterEnabled: false\n",
+        lambda g: g["prometheusPostgresExporter"]["enabled"] is False,
+    ),
+    (
+        "manualNamespaceNamesEnabled",
+        "global:\n  manualNamespaceNamesEnabled: false\n",
+        lambda g: g["namespaceManagement"]["manualNamespaceNames"]["enabled"] is False,
+    ),
+    (
+        "enablePerHostIngress",
+        "global:\n  enablePerHostIngress: false\n",
+        lambda g: g["perHostIngress"]["enabled"] is False,
+    ),
+    (
+        "enableArgoCDAnnotation",
+        "global:\n  enableArgoCDAnnotation: false\n",
+        lambda g: g["argoCD"]["annotation"]["enabled"] is False,
+    ),
+    (
+        "disableManageClusterScopedResources",
+        "global:\n  disableManageClusterScopedResources: false\n",
+        lambda g: g["manageClusterScopedResources"]["enabled"] is True,
     ),
 ]
 

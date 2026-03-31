@@ -489,7 +489,8 @@ global:
     mode: {settings.cp_mode}
     domainPrefix: ""
   tlsSecret: {settings.tls_secret_name}
-  postgresqlEnabled: true
+  postgresql:
+    enabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:
@@ -597,7 +598,8 @@ global:
     mode: data
     domainPrefix: {dp.domain_prefix}
   tlsSecret: {settings.tls_secret_name}
-  postgresqlEnabled: false
+  postgresql:
+    enabled: false
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:

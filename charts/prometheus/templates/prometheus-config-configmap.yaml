@@ -140,7 +140,7 @@ data:
             replacement: $1:$2
             target_label: __address__
 
-      {{- if .Values.global.prometheusPostgresExporterEnabled }}
+      {{- if .Values.global.prometheusPostgresExporter.enabled }}
       - job_name: postgresql-exporter
         scrape_interval: 60s
         scrape_timeout: 30s
@@ -240,7 +240,7 @@ data:
             regex: 'kube_node_.*'
             action: drop
           # Required for multi-namespace mode (non auto-generated namespaces should be relabeled differently)
-          {{- if or .Values.global.namespaceManagement.namespacePools.enabled .Values.global.namespaceManagement.namespaceFreeFormEntry.enabled .Values.global.manualNamespaceNamesEnabled}}
+          {{- if or .Values.global.namespaceManagement.namespacePools.enabled .Values.global.namespaceManagement.namespaceFreeFormEntry.enabled .Values.global.namespaceManagement.manualNamespaceNames.enabled}}
           - source_labels: [pod]
             regex: "(.*?)(?:-webserver.*|-api-server.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
             replacement: "$1"

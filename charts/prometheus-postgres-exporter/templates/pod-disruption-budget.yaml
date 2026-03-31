@@ -1,7 +1,7 @@
 ########################################################
 ## Prometheus Postgres Exporter Pod Disruption Budget ##
 ########################################################
-{{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if .Values.global.podDisruptionBudgets.enabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:

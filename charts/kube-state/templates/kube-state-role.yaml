@@ -176,7 +176,7 @@ rules:
   - nodes
   verbs: ["list", "watch"]
 {{ end -}}
-{{ if and (has "namespaces" $.Values.collectors) (not $.Values.global.disableManageClusterScopedResources) }}
+{{ if and (has "namespaces" $.Values.collectors) $.Values.global.manageClusterScopedResources.enabled }}
 - apiGroups: [""]
   resources:
   - namespaces

@@ -254,6 +254,62 @@ class BoolToNested(MigrationRule):
 
 
 # ---------------------------------------------------------------------------
+# Rule: InvertedBoolToNested (operates on global section)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class InvertedBoolToNested(MigrationRule):
+    """Migrate a flat boolean key to a nested .enabled structure with inverted value.
+
+    Example: global.disableManageClusterScopedResources: false
+          -> global.manageClusterScopedResources.enabled: true
+    """
+
+    old_key: str
+    new_path: list[str] = field(default_factory=list)
+
+    def apply(self, root: CommentedMap) -> list[MigrationChange]:
+        """Apply the inverted boolean-to-nested migration rule.
+
+        Parameters:
+            root: The parsed YAML document root.
+
+        Returns:
+            A list of changes made.
+        """
+        global_mapping = root.get("global")
+        if not isinstance(global_mapping, CommentedMap):
+            return []
+
+        if self.old_key not in global_mapping:
+            return []
+
+        value = global_mapping[self.old_key]
+        if isinstance(value, CommentedMap):
+            return []
+
+        if _path_exists(global_mapping, self.new_path):
+            _delete_key(global_mapping, self.old_key)
+            old_path = f"global.{self.old_key}"
+            new_path = "global." + ".".join(self.new_path)
+            return [MigrationChange(old_path, new_path, f"Removed stale {old_path} (kept existing {new_path})")]
+
+        inverted = not value if isinstance(value, bool) else value
+
+        parent_keys = self.new_path[:-1]
+        leaf_key = self.new_path[-1]
+
+        parent = _ensure_nested_key(global_mapping, parent_keys)
+        parent[leaf_key] = inverted
+        _delete_key(global_mapping, self.old_key)
+
+        old_path = f"global.{self.old_key}"
+        new_path = "global." + ".".join(self.new_path)
+        return [MigrationChange(old_path, new_path, f"Moved (inverted) {old_path} -> {new_path}")]
+
+
+# ---------------------------------------------------------------------------
 # Rule: SubtreeMove (operates on global section)
 # ---------------------------------------------------------------------------
 
@@ -663,6 +719,22 @@ MIGRATIONS: list[MigrationRule] = [
     SubtreeMove(["features", "namespacePools"], ["namespaceManagement", "namespacePools"]),
     SubtreeMove(["dagOnlyDeployment"], ["deployMechanisms", "dagOnlyDeployment"]),
     SubtreeMove(["loggingSidecar"], ["logging", "loggingSidecar"]),
+    # --- A2. Global flat boolean flags restructuring ---
+    BoolToNested("podDisruptionBudgetsEnabled", ["podDisruptionBudgets", "enabled"]),
+    BoolToNested("postgresqlEnabled", ["postgresql", "enabled"]),
+    BoolToNested("prometheusPostgresExporterEnabled", ["prometheusPostgresExporter", "enabled"]),
+    BoolToNested("manualNamespaceNamesEnabled", ["namespaceManagement", "manualNamespaceNames", "enabled"]),
+    BoolToNested("enablePerHostIngress", ["perHostIngress", "enabled"]),
+    BoolToNested("enableArgoCDAnnotation", ["argoCD", "annotation", "enabled"]),
+    InvertedBoolToNested("disableManageClusterScopedResources", ["manageClusterScopedResources", "enabled"]),
+    BoolToNested("astronomerEnabled", ["astronomer", "enabled"]),
+    BoolToNested("nginxEnabled", ["nginx", "enabled"]),
+    BoolToNested("alertmanagerEnabled", ["alertmanager", "enabled"]),
+    BoolToNested("grafanaEnabled", ["grafana", "enabled"]),
+    BoolToNested("kubeStateEnabled", ["kubeState", "enabled"]),
+    BoolToNested("prometheusEnabled", ["prometheus", "enabled"]),
+    BoolToNested("elasticsearchEnabled", ["elasticsearch", "enabled"]),
+    BoolToNested("vectorEnabled", ["vector", "enabled"]),
     # --- B. Delete obsolete global keys ---
     DeleteKey(["global", "singleNamespace"]),
     DeleteKey(["global", "veleroEnabled"]),
@@ -701,7 +773,9 @@ MIGRATIONS: list[MigrationRule] = [
     HoustonDeploymentBoolToNested("gitSyncDagDeployment", ["deployMechanisms", "gitSyncDagDeployment", "enabled"]),
     HoustonDeploymentBoolToNested("nfsMountDagDeployment", ["deployMechanisms", "nfsMountDagDeployment", "enabled"]),
     HoustonDeploymentBoolToNested("enableListAllRuntimeVersions", ["runtimeManagement", "listAllRuntimeVersions", "enabled"]),
-    HoustonDeploymentBoolToNested("enableUpdateDeploymentImageEndpoint", ["deploymentImagesRegistry", "updateDeploymentImageEndpoint", "enabled"]),
+    HoustonDeploymentBoolToNested(
+        "enableUpdateDeploymentImageEndpoint", ["deploymentImagesRegistry", "updateDeploymentImageEndpoint", "enabled"]
+    ),
     HoustonDeploymentBoolToNested("grafanaUIEnabled", ["metricsReporting", "grafana", "enabled"]),
     HoustonDeploymentBoolToNested("hardDeleteDeployment", ["deploymentLifecycle", "hardDeleteDeployment", "enabled"]),
     HoustonDeploymentBoolToNested("logHelmValues", ["logHelmValues", "enabled"]),

@@ -66,6 +66,9 @@ global:
 
   # Namespace management features
   namespaceManagement:
+    # Configure vector to gather logs from all available namespaces
+    manualNamespaceNames:
+      enabled: false
     namespaceFreeFormEntry:
       enabled: false
     namespacePools:
@@ -184,7 +187,8 @@ global:
   acme: false
 
   # whether to create pod disruption budgets by default for platform components
-  podDisruptionBudgetsEnabled: true
+  podDisruptionBudgets:
+    enabled: true
 
   # URL to the Astronomer helm repo
   helmRepo: "https://helm.astronomer.io"
@@ -199,12 +203,11 @@ global:
 
   # Enable default postgresql database.
   # This is not recommended for production.
-  postgresqlEnabled: false
+  postgresql:
+    enabled: false
 
-  prometheusPostgresExporterEnabled: false
-
-  # Configure vector to gather logs from all available namespaces
-  manualNamespaceNamesEnabled: false
+  prometheusPostgresExporter:
+    enabled: false
 
   # Used to enable nats-server
   nats:
@@ -218,9 +221,11 @@ global:
   defaultDenyNetworkPolicy: true
 
 
-  disableManageClusterScopedResources: false
+  manageClusterScopedResources:
+    enabled: true
 
-  enablePerHostIngress: false
+  perHostIngress:
+    enabled: false
 
   logging:
     indexNamePrefix: ~
@@ -305,7 +310,9 @@ global:
   # Enable argo CD annotations currently available only for:
   # ServiceAccounts, ClusterRoles, RoleBindings, ClusterRoleBindings
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
-  enableArgoCDAnnotation: false
+  argoCD:
+    annotation:
+      enabled: false
 
   airflow:
     images:

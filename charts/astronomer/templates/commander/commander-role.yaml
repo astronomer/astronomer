@@ -31,7 +31,7 @@ metadata:
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
     heritage: {{ $.Release.Service }}
-  {{- if $.Values.global.enableArgoCDAnnotation }}
+  {{- if $.Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
@@ -182,7 +182,7 @@ metadata:
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
     heritage: {{ $.Release.Service }}
-  {{- if $.Values.global.enableArgoCDAnnotation }}
+  {{- if $.Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}

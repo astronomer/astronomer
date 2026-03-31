@@ -55,6 +55,13 @@ def old_partial_override_text() -> str:
           taskUsageMetricsEnabled: true
           deployRollbackEnabled: true
           networkNSLabels: true
+          podDisruptionBudgetsEnabled: true
+          postgresqlEnabled: false
+          prometheusPostgresExporterEnabled: false
+          manualNamespaceNamesEnabled: false
+          enablePerHostIngress: false
+          enableArgoCDAnnotation: false
+          disableManageClusterScopedResources: false
           features:
             namespacePools:
               enabled: true
@@ -119,9 +126,24 @@ def expected_new_partial_text() -> str:
             enabled: true
           networkNSLabels:
             enabled: true
+          podDisruptionBudgets:
+            enabled: true
+          postgresql:
+            enabled: false
+          prometheusPostgresExporter:
+            enabled: false
+          perHostIngress:
+            enabled: false
+          argoCD:
+            annotation:
+              enabled: false
+          manageClusterScopedResources:
+            enabled: true
           namespaceManagement:
             namespaceFreeFormEntry:
               enabled: true
+            manualNamespaceNames:
+              enabled: false
             namespacePools:
               enabled: true
               createRbac: true
@@ -216,6 +238,19 @@ def new_schema_partial_text() -> str:
             enabled: false
           networkNSLabels:
             enabled: true
+          podDisruptionBudgets:
+            enabled: true
+          postgresql:
+            enabled: false
+          prometheusPostgresExporter:
+            enabled: false
+          perHostIngress:
+            enabled: false
+          argoCD:
+            annotation:
+              enabled: false
+          manageClusterScopedResources:
+            enabled: true
           namespaceManagement:
             namespaceFreeFormEntry:
               enabled: true
@@ -297,6 +332,13 @@ def old_037x_partial_override_text() -> str:
           taskUsageMetricsEnabled: true
           deployRollbackEnabled: true
           networkNSLabels: true
+          podDisruptionBudgetsEnabled: true
+          postgresqlEnabled: false
+          prometheusPostgresExporterEnabled: false
+          manualNamespaceNamesEnabled: false
+          enablePerHostIngress: false
+          enableArgoCDAnnotation: false
+          disableManageClusterScopedResources: false
           singleNamespace: true
           veleroEnabled: true
           enableHoustonInternalAuthorization: true
@@ -410,9 +452,24 @@ def expected_037x_new_partial_text() -> str:
             enabled: true
           networkNSLabels:
             enabled: true
+          podDisruptionBudgets:
+            enabled: true
+          postgresql:
+            enabled: false
+          prometheusPostgresExporter:
+            enabled: false
+          perHostIngress:
+            enabled: false
+          argoCD:
+            annotation:
+              enabled: false
+          manageClusterScopedResources:
+            enabled: true
           namespaceManagement:
             namespaceFreeFormEntry:
               enabled: true
+            manualNamespaceNames:
+              enabled: false
             namespacePools:
               enabled: true
               createRbac: true
@@ -493,8 +550,6 @@ def expected_037x_new_partial_text() -> str:
                 deploymentLifecycle:
                   hardDeleteDeployment:
                     enabled: true
-                logHelmValues:
-                  enabled: true
                 namespaceManagement:
                   manualReleaseNames:
                     enabled: false
@@ -541,6 +596,19 @@ def new_037x_schema_partial_text() -> str:
           openshift:
             enabled: false
           networkNSLabels:
+            enabled: true
+          podDisruptionBudgets:
+            enabled: true
+          postgresql:
+            enabled: false
+          prometheusPostgresExporter:
+            enabled: false
+          perHostIngress:
+            enabled: false
+          argoCD:
+            annotation:
+              enabled: false
+          manageClusterScopedResources:
             enabled: true
           namespaceManagement:
             namespaceFreeFormEntry:

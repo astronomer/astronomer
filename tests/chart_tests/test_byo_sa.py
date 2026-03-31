@@ -97,9 +97,9 @@ class TestServiceAccounts:
         "Test that if SA create disabled"
         values = {
             "global": {
-                "postgresqlEnabled": True,
+                "postgresql": {"enabled": True},
                 "customLogging": {"enabled": True},
-                "prometheusPostgresExporterEnabled": True,
+                "prometheusPostgresExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
                 "airflowOperator": {"enabled": True},
             },
@@ -141,9 +141,9 @@ class TestServiceAccounts:
         annotations = {"app.managedby": "astronomer"}
         values = {
             "global": {
-                "postgresqlEnabled": True,
+                "postgresql": {"enabled": True},
                 "customLogging": {"enabled": True},
-                "prometheusPostgresExporterEnabled": True,
+                "prometheusPostgresExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
                 "airflowOperator": {"enabled": True},
             },

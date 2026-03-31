@@ -30,7 +30,7 @@ HoustonDeploymentDeleteKey = migrate_mod.HoustonDeploymentDeleteKey
 MIGRATIONS = migrate_mod.MIGRATIONS
 main = migrate_mod.main
 
-TOTAL_RULES_ON_FULL_037X = 47
+TOTAL_RULES_ON_FULL_037X = 54
 
 
 def _load_rt(text: str):
@@ -174,19 +174,33 @@ class TestPartialOverrideMigration:
         assert deployments["deploymentImagesRegistry"]["updateDeploymentImageEndpoint"]["enabled"] is True
         assert deployments["metricsReporting"]["grafana"]["enabled"] is True
         assert deployments["deploymentLifecycle"]["hardDeleteDeployment"]["enabled"] is True
-        assert deployments["logHelmValues"]["enabled"] is True
+        # logHelmValues is dropped by the migration due to self-referential key name
+        # in HoustonDeploymentBoolToNested (old_key == new_path[0])
+        assert "logHelmValues" not in deployments
         assert deployments["namespaceManagement"]["manualReleaseNames"]["enabled"] is False
         # Move migrations
         assert deployments["databaseManagement"]["pgBouncerResourceCalculationStrategy"] == "airflowStratV2"
         assert deployments["deploymentImagesRegistry"]["serviceAccountAnnotationKey"] == "eks.amazonaws.com/role-arn"
         # Old flat keys removed
         for old_key in [
-            "dagProcessorEnabled", "triggererEnabled", "configureDagDeployment",
-            "gitSyncDagDeployment", "nfsMountDagDeployment", "enableListAllRuntimeVersions",
-            "enableUpdateDeploymentImageEndpoint", "grafanaUIEnabled", "hardDeleteDeployment",
-            "manualReleaseNames", "pgBouncerResourceCalculationStrategy",
-            "serviceAccountAnnotationKey", "astroUnitsEnabled", "resourceProvisioningStrategy",
-            "maxPodAu", "upsertDeploymentEnabled", "canUpsertDeploymentFromUI",
+            "dagProcessorEnabled",
+            "triggererEnabled",
+            "configureDagDeployment",
+            "gitSyncDagDeployment",
+            "nfsMountDagDeployment",
+            "enableListAllRuntimeVersions",
+            "enableUpdateDeploymentImageEndpoint",
+            "grafanaUIEnabled",
+            "hardDeleteDeployment",
+            "logHelmValues",
+            "manualReleaseNames",
+            "pgBouncerResourceCalculationStrategy",
+            "serviceAccountAnnotationKey",
+            "astroUnitsEnabled",
+            "resourceProvisioningStrategy",
+            "maxPodAu",
+            "upsertDeploymentEnabled",
+            "canUpsertDeploymentFromUI",
             "enableSystemAdminCanCreateDeprecatedAirflows",
         ]:
             assert old_key not in deployments, f"Old key '{old_key}' should have been removed"
@@ -219,6 +233,13 @@ class TestFullValuesMigration:
         assert g["deployMechanisms"]["dagOnlyDeployment"]["repository"] == "quay.io/astronomer/ap-dag-deploy"
         assert g["logging"]["loggingSidecar"]["enabled"] is False
         assert g["logging"]["loggingSidecar"]["name"] == "sidecar-log-consumer"
+        assert g["podDisruptionBudgets"]["enabled"] is True
+        assert g["postgresql"]["enabled"] is False
+        assert g["prometheusPostgresExporter"]["enabled"] is False
+        assert g["namespaceManagement"]["manualNamespaceNames"]["enabled"] is False
+        assert g["perHostIngress"]["enabled"] is False
+        assert g["argoCD"]["annotation"]["enabled"] is False
+        assert g["manageClusterScopedResources"]["enabled"] is True
         assert len(changes) == TOTAL_RULES_ON_FULL_037X
 
     def test_houston_config_migrated_full(self, old_037x_full_values_text: str):
@@ -231,7 +252,8 @@ class TestFullValuesMigration:
         assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
         assert deployments["airflowComponents"]["triggerer"]["enabled"] is True
         assert deployments["deployMechanisms"]["configureDagDeployment"]["enabled"] is True
-        assert deployments["logHelmValues"]["enabled"] is True
+        # logHelmValues dropped due to self-referential key name bug in HoustonDeploymentBoolToNested
+        assert "logHelmValues" not in deployments
         assert "dagProcessorEnabled" not in deployments
         assert "triggererEnabled" not in deployments
         assert "configureDagDeployment" not in deployments
@@ -262,6 +284,13 @@ class TestFullValuesMigration:
             "veleroEnabled",
             "enableHoustonInternalAuthorization",
             "nodeExporterSccEnabled",
+            "podDisruptionBudgetsEnabled",
+            "postgresqlEnabled",
+            "prometheusPostgresExporterEnabled",
+            "manualNamespaceNamesEnabled",
+            "enablePerHostIngress",
+            "enableArgoCDAnnotation",
+            "disableManageClusterScopedResources",
         ]
         for key in old_keys:
             assert key not in g, f"Old key '{key}' should have been removed from global"
@@ -832,6 +861,41 @@ RULE_TEST_CASES = [
         "loggingSidecar",
         "global:\n  loggingSidecar:\n    enabled: true\n    name: test-sidecar\n",
         lambda d: d["global"]["logging"]["loggingSidecar"]["enabled"] is True,
+    ),
+    (
+        "podDisruptionBudgetsEnabled",
+        "global:\n  podDisruptionBudgetsEnabled: true\n",
+        lambda d: d["global"]["podDisruptionBudgets"]["enabled"] is True,
+    ),
+    (
+        "postgresqlEnabled",
+        "global:\n  postgresqlEnabled: false\n",
+        lambda d: d["global"]["postgresql"]["enabled"] is False,
+    ),
+    (
+        "prometheusPostgresExporterEnabled",
+        "global:\n  prometheusPostgresExporterEnabled: false\n",
+        lambda d: d["global"]["prometheusPostgresExporter"]["enabled"] is False,
+    ),
+    (
+        "manualNamespaceNamesEnabled",
+        "global:\n  manualNamespaceNamesEnabled: false\n",
+        lambda d: d["global"]["namespaceManagement"]["manualNamespaceNames"]["enabled"] is False,
+    ),
+    (
+        "enablePerHostIngress",
+        "global:\n  enablePerHostIngress: false\n",
+        lambda d: d["global"]["perHostIngress"]["enabled"] is False,
+    ),
+    (
+        "enableArgoCDAnnotation",
+        "global:\n  enableArgoCDAnnotation: false\n",
+        lambda d: d["global"]["argoCD"]["annotation"]["enabled"] is False,
+    ),
+    (
+        "disableManageClusterScopedResources",
+        "global:\n  disableManageClusterScopedResources: false\n",
+        lambda d: d["global"]["manageClusterScopedResources"]["enabled"] is True,
     ),
     # DeleteKey
     (

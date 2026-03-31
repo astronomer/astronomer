@@ -40,7 +40,7 @@ def test_networkpolicy_disabled():
         values={
             "global": {
                 "networkPolicy": {"enabled": False},
-                "postgresqlEnabled": True,
+                "postgresql": {"enabled": True},
             }
         },
     )
@@ -56,7 +56,7 @@ def test_networkpolicy_enabled(np_enabled, num_of_docs):
         values={
             "global": {
                 "networkPolicy": {"enabled": np_enabled},
-                "postgresqlEnabled": True,
+                "postgresql": {"enabled": True},
             }
         },
     )
