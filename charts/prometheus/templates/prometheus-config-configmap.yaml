@@ -325,7 +325,7 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) .Values.cadvisorEnabled }}
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:
@@ -342,9 +342,7 @@ data:
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
-      {{- end }}
 
-      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
       - job_name: kubernetes-nodes-cadvisor
         scheme: https
         tls_config:
