@@ -13,7 +13,9 @@ separation. It includes NATS + NATS Streaming (stan), Fluentd, Kibana, and
 the Prometheus blackbox exporter.
 
 Notes:
-- We do NOT modify `/etc/hosts` on the local machine (sudo). Print instructions at the end.
+- No `/etc/hosts` changes are needed. `localtest.me` is a public wildcard DNS that resolves
+  to 127.0.0.1, and port 443 is bound directly on the host. Adding a Docker-internal IP
+  to /etc/hosts will break access on macOS (Docker Desktop / OrbStack).
 - Safe to re-run: cluster/secrets/helm installs are done in an idempotent way.
 """
 
@@ -822,15 +824,31 @@ def _docker_inspect_ip(container: str) -> str:
 
 
 def _print_host_etc_hosts_instructions(settings: Settings) -> None:
-    """Print the recommended /etc/hosts entries for accessing the cluster from the host."""
-    serverlb = f"k3d-{settings.cluster_name}-serverlb"
-    lb_ip = _docker_inspect_ip(serverlb)
-    base = settings.base_domain
+    """Print DNS access instructions for the 0.37x single-cluster setup.
 
-    _print("\nAdd the following entry to your host `/etc/hosts`:\n")
+    Unlike the CP/DP setup, NO /etc/hosts entry is needed here.
+
+    Reason: this cluster binds port 443 directly to 0.0.0.0:443 on the host, and
+    `localtest.me` is a public wildcard DNS that resolves *.localtest.me -> 127.0.0.1.
+    So https://app.localtest.me reaches the cluster via localhost:443 with no host
+    DNS overrides required.
+
+    Adding a /etc/hosts entry pointing to the Docker-internal container IP will
+    *break* access on macOS (Docker Desktop / OrbStack) because that IP is only
+    reachable inside the Docker network, not from the host.
+    """
+    base = settings.base_domain
+    port_suffix = "" if settings.https_port == 443 else f":{settings.https_port}"
+
     _print(
-        f"{lb_ip} {base} app.{base} houston.{base} grafana.{base} kibana.{base} "
-        f"prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}"
+        f"\n\u2139\ufe0f  No /etc/hosts changes needed for this setup.\n"
+        f"   `{base}` is a public wildcard DNS that resolves to 127.0.0.1,\n"
+        f"   and port {settings.https_port} is bound directly on localhost.\n"
+        f"\n"
+        f"   If you previously added a Docker IP to /etc/hosts for this domain,\n"
+        f"   remove it — it will cause connection timeouts on macOS:\n"
+        f"\n"
+        f"     sudo sed -i '' '/{base}/d' /etc/hosts\n"
     )
 
 
