@@ -53,6 +53,10 @@ prometheus:
   securityContext:
     dummy_key: dummy_value
     readOnlyRootFilesystem: false
+prometheus-node-exporter:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
 prometheus-postgres-exporter:
   securityContext:
     dummy_key: dummy_value

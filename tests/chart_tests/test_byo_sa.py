@@ -100,6 +100,7 @@ class TestServiceAccounts:
                 "postgresqlEnabled": True,
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
+                "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
                 "airflowOperator": {"enabled": True},
             },
@@ -116,6 +117,7 @@ class TestServiceAccounts:
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
+            "prometheus-node-exporter": {"serviceAccount": {"create": False}},
             "pgbouncer": {"serviceAccount": {"create": False}},
             "vector": {"serviceAccount": {"create": False}},
             "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
@@ -144,6 +146,7 @@ class TestServiceAccounts:
                 "postgresqlEnabled": True,
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
+                "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
                 "airflowOperator": {"enabled": True},
             },
@@ -160,6 +163,7 @@ class TestServiceAccounts:
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "prometheus-node-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "pgbouncer": {"serviceAccount": {"create": True, "annotations": annotations}},
             "vector": {"serviceAccount": {"create": True, "annotations": annotations}},
             "nginx": {
@@ -368,6 +372,9 @@ custom_service_account_names = {
     },
     "charts/prometheus/templates/prometheus-federation-auth-deployment.yaml": {
         "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/prometheus-node-exporter/templates/daemonset.yaml": {
+        "prometheus-node-exporter": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/vector/templates/vector-daemonset.yaml": {
         "vector": {"serviceAccount": {"create": True, "name": "prothean"}},

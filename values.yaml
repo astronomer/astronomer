@@ -202,6 +202,8 @@ global:
   postgresqlEnabled: false
 
   prometheusPostgresExporterEnabled: false
+  nodeExporter:
+    enabled: false
 
   # Configure vector to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
