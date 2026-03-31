@@ -84,7 +84,10 @@ class TestPrometheusNodeExporterDaemonset:
             "limits": {"cpu": "777m", "memory": "999Mi"},
             "requests": {"cpu": "666m", "memory": "888Mi"},
         }
-        assert c_by_name["node-exporter"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["node-exporter"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
 
     def test_prometheus_node_exporter_daemonset_with_security_context_overrides(self, kube_version):
         doc = render_chart(
@@ -94,7 +97,6 @@ class TestPrometheusNodeExporterDaemonset:
                 "prometheus-node-exporter": {
                     "securityContext": {
                         "allowPrivilegeEscalation": False,
-                        "readOnlyRootFilesystem": True,
                     }
                 },
             },
