@@ -123,6 +123,9 @@ class TestDefaultProbes:
             "successThreshold": 1,
             "failureThreshold": 6,
         },
+        "prometheus-node-exporter_node-exporter": {
+            "httpGet": {"path": "/", "port": 9100},
+        },
         "prometheus-postgres-exporter_prometheus-postgres-exporter": {
             "tcpSocket": {"port": 9187},
             "initialDelaySeconds": 5,
@@ -217,6 +220,9 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
             "successThreshold": 1,
             "failureThreshold": 6,
+        },
+        "prometheus-node-exporter_node-exporter": {
+            "httpGet": {"path": "/", "port": 9100},
         },
         "prometheus-postgres-exporter_prometheus-postgres-exporter": {
             "tcpSocket": {"port": 9187},
