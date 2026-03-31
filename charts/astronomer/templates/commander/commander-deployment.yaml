@@ -155,9 +155,9 @@ spec:
             - name: COMMANDER_AIRGAPPED
               value: {{ ternary "true" "false" .Values.commander.airGapped.enabled | quote  }}
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
-              value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
+              value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
-              value: {{ if .Values.global.rbacEnabled }}"true"{{ else }}"false"{{ end }}
+              value: {{ if .Values.global.rbac.enabled }}"true"{{ else }}"false"{{ end }}
             {{- if .Values.global.privateCaCerts }}
             - name: UPDATE_CA_CERTS
               value: "true"

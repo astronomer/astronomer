@@ -5,7 +5,7 @@
 {{- if or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- $natsSecurityContext := (include "nats.securityContext" . | fromYaml) }}
-{{- if .Values.global.rbacEnabled }}
+{{- if .Values.global.rbac.enabled }}
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
