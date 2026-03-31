@@ -35,11 +35,11 @@ global:
   dataPlaneFailover:
     enabled: true
   helmRepo: https://internal-helm.astronomer.io
-  prometheusPostgresExporterEnabled: false
+  prometheusPostgresExporterEnabled: true
   rbacEnabled: true
   ssl:
     enabled: true
     mode: disable
 tags:
-  logging: false
-  monitoring: false
+  logging: true
+  monitoring: true

@@ -1,17 +1,8 @@
+---
+# This is for generating images, not for testing. There may be invalid configurations in here.
 astronomer:
   dpLink:
     enabled: true
-  flightDeck:
-    enabled: true
-  pilot:
-    enabled: true
-    resources:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
   navigator:
     enabled: true
   houston:
@@ -48,6 +39,8 @@ global:
     enabled: true
   pgbouncer:
     enabled: true
+  plane:
+    mode: control
   podDisruptionBudgetsEnabled: true
   postgresqlEnabled: true
   privateCaCertsAddToHost:

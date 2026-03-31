@@ -124,6 +124,12 @@ class TestServiceAccounts:
             "prometheus": {"serviceAccount": {"create": False}},
             "elasticsearch": {"common": {"serviceAccount": {"create": False}}},
             "airflow-operator": {"serviceAccount": {"create": False}},
+            "external-secrets": {
+                "enabled": True,
+                "serviceAccount": {"create": False},
+                "webhook": {"serviceAccount": {"create": False}},
+                "certController": {"serviceAccount": {"create": False}},
+            },
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -172,6 +178,12 @@ class TestServiceAccounts:
             "prometheus": {"serviceAccount": {"create": True, "annotations": annotations}},
             "elasticsearch": {"common": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "airflow-operator": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "external-secrets": {
+                "enabled": True,
+                "serviceAccount": {"create": True, "annotations": annotations},
+                "webhook": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "certController": {"serviceAccount": {"create": True, "annotations": annotations}},
+            },
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -252,7 +264,10 @@ def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
     default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
-    if any(s in template_name for s in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment")):
+    if any(
+        substring in template_name
+        for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")
+    ):
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
@@ -351,6 +366,9 @@ custom_service_account_names = {
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
+    "charts/external-secrets/templates/deployment.yaml": {
+        "external-secrets": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/nats/templates/jetstream-job.yaml": {
         "nats": {"nats": {"jetStream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
@@ -395,7 +413,10 @@ def test_custom_serviceaccount_names(template_name):
 
     values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
-    if any(s in template_name for s in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment")):
+    if any(
+        substring in template_name
+        for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")
+    ):
         plane_config = {"global": {"plane": {"mode": "data"}}}
         values = always_merger.merge(values, plane_config)
     values = always_merger.merge(values, enable_pgsql_sa)

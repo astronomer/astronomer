@@ -80,3 +80,11 @@ dependencies:
     condition: global.airflowOperator.enabled
     tags:
       - airflow-operator
+
+  # External Secrets Operator
+  - name: external-secrets
+    condition: external-secrets.enabled
+    tags:
+      - eso
+      - external-secrets
+      - dp-failover
