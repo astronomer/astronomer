@@ -25,10 +25,12 @@ DeleteKey = migrate_mod.DeleteKey
 RenameKey = migrate_mod.RenameKey
 SetValue = migrate_mod.SetValue
 AddKeyIfMissing = migrate_mod.AddKeyIfMissing
+HoustonDeploymentBoolToNested = migrate_mod.HoustonDeploymentBoolToNested
+HoustonDeploymentDeleteKey = migrate_mod.HoustonDeploymentDeleteKey
 MIGRATIONS = migrate_mod.MIGRATIONS
 main = migrate_mod.main
 
-TOTAL_RULES_ON_FULL_037X = 28
+TOTAL_RULES_ON_FULL_037X = 47
 
 
 def _load_rt(text: str):
@@ -155,6 +157,40 @@ class TestPartialOverrideMigration:
         assert "podLabels" in result["global"]
         assert result["nats"]["init"]["resources"]["requests"]["cpu"] == "75m"
 
+    def test_houston_config_migrated(self, old_037x_partial_override_text: str):
+        """Houston config deployment flags are restructured and obsolete keys deleted."""
+        data = _load_rt(old_037x_partial_override_text)
+        migrate_values(data)
+        result = _to_plain(data)
+
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        # Bool-to-nested migrations
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert deployments["airflowComponents"]["triggerer"]["enabled"] is True
+        assert deployments["deployMechanisms"]["configureDagDeployment"]["enabled"] is True
+        assert deployments["deployMechanisms"]["gitSyncDagDeployment"]["enabled"] is True
+        assert deployments["deployMechanisms"]["nfsMountDagDeployment"]["enabled"] is True
+        assert deployments["runtimeManagement"]["listAllRuntimeVersions"]["enabled"] is True
+        assert deployments["deploymentImagesRegistry"]["updateDeploymentImageEndpoint"]["enabled"] is True
+        assert deployments["metricsReporting"]["grafana"]["enabled"] is True
+        assert deployments["deploymentLifecycle"]["hardDeleteDeployment"]["enabled"] is True
+        assert deployments["logHelmValues"]["enabled"] is True
+        assert deployments["namespaceManagement"]["manualReleaseNames"]["enabled"] is False
+        # Move migrations
+        assert deployments["databaseManagement"]["pgBouncerResourceCalculationStrategy"] == "airflowStratV2"
+        assert deployments["deploymentImagesRegistry"]["serviceAccountAnnotationKey"] == "eks.amazonaws.com/role-arn"
+        # Old flat keys removed
+        for old_key in [
+            "dagProcessorEnabled", "triggererEnabled", "configureDagDeployment",
+            "gitSyncDagDeployment", "nfsMountDagDeployment", "enableListAllRuntimeVersions",
+            "enableUpdateDeploymentImageEndpoint", "grafanaUIEnabled", "hardDeleteDeployment",
+            "manualReleaseNames", "pgBouncerResourceCalculationStrategy",
+            "serviceAccountAnnotationKey", "astroUnitsEnabled", "resourceProvisioningStrategy",
+            "maxPodAu", "upsertDeploymentEnabled", "canUpsertDeploymentFromUI",
+            "enableSystemAdminCanCreateDeprecatedAirflows",
+        ]:
+            assert old_key not in deployments, f"Old key '{old_key}' should have been removed"
+
 
 # ---------------------------------------------------------------------------
 # Correctness tests: full values.yaml
@@ -184,6 +220,28 @@ class TestFullValuesMigration:
         assert g["logging"]["loggingSidecar"]["enabled"] is False
         assert g["logging"]["loggingSidecar"]["name"] == "sidecar-log-consumer"
         assert len(changes) == TOTAL_RULES_ON_FULL_037X
+
+    def test_houston_config_migrated_full(self, old_037x_full_values_text: str):
+        """Houston config deployment flags are restructured in full values."""
+        data = _load_rt(old_037x_full_values_text)
+        migrate_values(data)
+        result = _to_plain(data)
+
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert deployments["airflowComponents"]["triggerer"]["enabled"] is True
+        assert deployments["deployMechanisms"]["configureDagDeployment"]["enabled"] is True
+        assert deployments["logHelmValues"]["enabled"] is True
+        assert "dagProcessorEnabled" not in deployments
+        assert "triggererEnabled" not in deployments
+        assert "configureDagDeployment" not in deployments
+        assert "grafanaUIEnabled" not in deployments
+        assert "astroUnitsEnabled" not in deployments
+        assert "resourceProvisioningStrategy" not in deployments
+        assert "maxPodAu" not in deployments
+        assert "upsertDeploymentEnabled" not in deployments
+        assert "canUpsertDeploymentFromUI" not in deployments
+        assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
 
     def test_old_keys_removed_after_migration(self, old_037x_full_values_text: str):
         """Old flat keys no longer exist at the global root after migration."""
@@ -560,6 +618,140 @@ class TestAddKeyIfMissing:
 
 
 # ---------------------------------------------------------------------------
+# Individual rule tests: HoustonDeploymentBoolToNested
+# ---------------------------------------------------------------------------
+
+
+class TestHoustonDeploymentBoolToNested:
+    """Test the HoustonDeploymentBoolToNested rule type."""
+
+    def test_migrates_dag_processor(self):
+        """HoustonDeploymentBoolToNested migrates dagProcessorEnabled."""
+        data = _load_rt(
+            dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    dagProcessorEnabled: true
+        """)
+        )
+        rule = HoustonDeploymentBoolToNested("dagProcessorEnabled", ["airflowComponents", "dagProcessor", "enabled"])
+        changes = rule.apply(data)
+
+        result = _to_plain(data)
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert "dagProcessorEnabled" not in deployments
+        assert len(changes) == 1
+
+    def test_migrates_triggerer(self):
+        """HoustonDeploymentBoolToNested migrates triggererEnabled."""
+        data = _load_rt(
+            dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    triggererEnabled: false
+        """)
+        )
+        rule = HoustonDeploymentBoolToNested("triggererEnabled", ["airflowComponents", "triggerer", "enabled"])
+        changes = rule.apply(data)
+
+        result = _to_plain(data)
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["triggerer"]["enabled"] is False
+        assert "triggererEnabled" not in deployments
+        assert len(changes) == 1
+
+    def test_missing_section(self):
+        """HoustonDeploymentBoolToNested does nothing when section is absent."""
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        rule = HoustonDeploymentBoolToNested("dagProcessorEnabled", ["airflowComponents", "dagProcessor", "enabled"])
+        changes = rule.apply(data)
+
+        assert len(changes) == 0
+
+    def test_conflict_keeps_new(self):
+        """When new path already exists, old key is removed and new value kept."""
+        data = _load_rt(
+            dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    dagProcessorEnabled: false
+                    airflowComponents:
+                      dagProcessor:
+                        enabled: true
+        """)
+        )
+        rule = HoustonDeploymentBoolToNested("dagProcessorEnabled", ["airflowComponents", "dagProcessor", "enabled"])
+        changes = rule.apply(data)
+
+        result = _to_plain(data)
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert "dagProcessorEnabled" not in deployments
+        assert len(changes) == 1
+
+
+# ---------------------------------------------------------------------------
+# Individual rule tests: HoustonDeploymentDeleteKey
+# ---------------------------------------------------------------------------
+
+
+class TestHoustonDeploymentDeleteKey:
+    """Test the HoustonDeploymentDeleteKey rule type."""
+
+    def test_deletes_key(self):
+        """HoustonDeploymentDeleteKey removes a key from houston config deployments."""
+        data = _load_rt(
+            dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    astroUnitsEnabled: false
+                    dagProcessorEnabled: true
+        """)
+        )
+        rule = HoustonDeploymentDeleteKey("astroUnitsEnabled")
+        changes = rule.apply(data)
+
+        result = _to_plain(data)
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert "astroUnitsEnabled" not in deployments
+        assert deployments["dagProcessorEnabled"] is True
+        assert len(changes) == 1
+
+    def test_missing_key(self):
+        """HoustonDeploymentDeleteKey does nothing when key is absent."""
+        data = _load_rt(
+            dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    dagProcessorEnabled: true
+        """)
+        )
+        rule = HoustonDeploymentDeleteKey("astroUnitsEnabled")
+        changes = rule.apply(data)
+
+        assert len(changes) == 0
+
+    def test_missing_section(self):
+        """HoustonDeploymentDeleteKey does nothing when section is absent."""
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        rule = HoustonDeploymentDeleteKey("astroUnitsEnabled")
+        changes = rule.apply(data)
+
+        assert len(changes) == 0
+
+
+# ---------------------------------------------------------------------------
 # BoolToNested and SubtreeMove (same behavior as 1.x, tested for completeness)
 # ---------------------------------------------------------------------------
 
@@ -699,6 +891,45 @@ RULE_TEST_CASES = [
         lambda d: "logging" in d["global"] and "provider" in d["global"]["logging"],
     ),
     ("add_nats_init", "nats:\n  nats:\n    resources: {}\n", lambda d: d["nats"]["init"]["resources"]["requests"]["cpu"] == "75m"),
+    # HoustonDeploymentBoolToNested
+    (
+        "houston_dagProcessorEnabled",
+        "astronomer:\n  houston:\n    config:\n      deployments:\n        dagProcessorEnabled: true\n",
+        lambda d: d["astronomer"]["houston"]["config"]["deployments"]["airflowComponents"]["dagProcessor"]["enabled"] is True
+        and "dagProcessorEnabled" not in d["astronomer"]["houston"]["config"]["deployments"],
+    ),
+    (
+        "houston_triggererEnabled",
+        "astronomer:\n  houston:\n    config:\n      deployments:\n        triggererEnabled: false\n",
+        lambda d: d["astronomer"]["houston"]["config"]["deployments"]["airflowComponents"]["triggerer"]["enabled"] is False
+        and "triggererEnabled" not in d["astronomer"]["houston"]["config"]["deployments"],
+    ),
+    # HoustonDeploymentDeleteKey
+    (
+        "houston_delete_astroUnitsEnabled",
+        "astronomer:\n  houston:\n    config:\n      deployments:\n        astroUnitsEnabled: false\n        otherKey: true\n",
+        lambda d: "astroUnitsEnabled" not in d["astronomer"]["houston"]["config"]["deployments"],
+    ),
+    (
+        "houston_delete_upsertDeploymentEnabled",
+        "astronomer:\n  houston:\n    config:\n      deployments:\n        upsertDeploymentEnabled: true\n        otherKey: true\n",
+        lambda d: "upsertDeploymentEnabled" not in d["astronomer"]["houston"]["config"]["deployments"],
+    ),
+    (
+        "houston_delete_canUpsertDeploymentFromUI",
+        "astronomer:\n  houston:\n    config:\n      deployments:\n        canUpsertDeploymentFromUI: true\n        otherKey: true\n",
+        lambda d: "canUpsertDeploymentFromUI" not in d["astronomer"]["houston"]["config"]["deployments"],
+    ),
+    (
+        "houston_delete_enableSystemAdminCanCreateDeprecatedAirflows",
+        "astronomer:\n  houston:\n    config:\n      deployments:\n        enableSystemAdminCanCreateDeprecatedAirflows: false\n        otherKey: true\n",
+        lambda d: "enableSystemAdminCanCreateDeprecatedAirflows" not in d["astronomer"]["houston"]["config"]["deployments"],
+    ),
+    (
+        "houston_delete_resourceProvisioningStrategy",
+        "astronomer:\n  houston:\n    config:\n      deployments:\n        resourceProvisioningStrategy:\n          astroUnitsEnabled: false\n        otherKey: true\n",
+        lambda d: "resourceProvisioningStrategy" not in d["astronomer"]["houston"]["config"]["deployments"],
+    ),
 ]
 
 

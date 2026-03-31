@@ -79,6 +79,28 @@ def old_partial_override_text() -> str:
             resources:
               requests:
                 cpu: "1000m"
+            config:
+              deployments:
+                dagProcessorEnabled: true
+                triggererEnabled: true
+                configureDagDeployment: true
+                gitSyncDagDeployment: true
+                nfsMountDagDeployment: true
+                enableListAllRuntimeVersions: true
+                enableUpdateDeploymentImageEndpoint: true
+                grafanaUIEnabled: true
+                hardDeleteDeployment: true
+                logHelmValues: true
+                manualReleaseNames: false
+                pgBouncerResourceCalculationStrategy: airflowStratV2
+                serviceAccountAnnotationKey: eks.amazonaws.com/role-arn
+                astroUnitsEnabled: false
+                resourceProvisioningStrategy:
+                  astroUnitsEnabled: false
+                maxPodAu: 100
+                upsertDeploymentEnabled: true
+                canUpsertDeploymentFromUI: true
+                enableSystemAdminCanCreateDeprecatedAirflows: false
     """)
 
 
@@ -131,6 +153,40 @@ def expected_new_partial_text() -> str:
             resources:
               requests:
                 cpu: "1000m"
+            config:
+              deployments:
+                airflowComponents:
+                  dagProcessor:
+                    enabled: true
+                  triggerer:
+                    enabled: true
+                deployMechanisms:
+                  configureDagDeployment:
+                    enabled: true
+                  gitSyncDagDeployment:
+                    enabled: true
+                  nfsMountDagDeployment:
+                    enabled: true
+                runtimeManagement:
+                  listAllRuntimeVersions:
+                    enabled: true
+                deploymentImagesRegistry:
+                  updateDeploymentImageEndpoint:
+                    enabled: true
+                  serviceAccountAnnotationKey: eks.amazonaws.com/role-arn
+                metricsReporting:
+                  grafana:
+                    enabled: true
+                deploymentLifecycle:
+                  hardDeleteDeployment:
+                    enabled: true
+                logHelmValues:
+                  enabled: true
+                namespaceManagement:
+                  manualReleaseNames:
+                    enabled: false
+                databaseManagement:
+                  pgBouncerResourceCalculationStrategy: airflowStratV2
     """)
 
 
@@ -181,6 +237,21 @@ def new_schema_partial_text() -> str:
             loggingSidecar:
               enabled: true
               name: sidecar-log-consumer
+
+        astronomer:
+          houston:
+            config:
+              deployments:
+                airflowComponents:
+                  dagProcessor:
+                    enabled: true
+                  triggerer:
+                    enabled: true
+                deployMechanisms:
+                  configureDagDeployment:
+                    enabled: true
+                logHelmValues:
+                  enabled: true
     """)
 
 
@@ -274,6 +345,28 @@ def old_037x_partial_override_text() -> str:
             resources:
               requests:
                 cpu: "1000m"
+            config:
+              deployments:
+                dagProcessorEnabled: true
+                triggererEnabled: true
+                configureDagDeployment: true
+                gitSyncDagDeployment: true
+                nfsMountDagDeployment: true
+                enableListAllRuntimeVersions: true
+                enableUpdateDeploymentImageEndpoint: true
+                grafanaUIEnabled: true
+                hardDeleteDeployment: true
+                logHelmValues: true
+                manualReleaseNames: false
+                pgBouncerResourceCalculationStrategy: airflowStratV2
+                serviceAccountAnnotationKey: eks.amazonaws.com/role-arn
+                astroUnitsEnabled: false
+                resourceProvisioningStrategy:
+                  astroUnitsEnabled: false
+                maxPodAu: 100
+                upsertDeploymentEnabled: true
+                canUpsertDeploymentFromUI: true
+                enableSystemAdminCanCreateDeprecatedAirflows: false
 
         stan:
           stan:
@@ -373,6 +466,40 @@ def expected_037x_new_partial_text() -> str:
             resources:
               requests:
                 cpu: "1000m"
+            config:
+              deployments:
+                airflowComponents:
+                  dagProcessor:
+                    enabled: true
+                  triggerer:
+                    enabled: true
+                deployMechanisms:
+                  configureDagDeployment:
+                    enabled: true
+                  gitSyncDagDeployment:
+                    enabled: true
+                  nfsMountDagDeployment:
+                    enabled: true
+                runtimeManagement:
+                  listAllRuntimeVersions:
+                    enabled: true
+                deploymentImagesRegistry:
+                  updateDeploymentImageEndpoint:
+                    enabled: true
+                  serviceAccountAnnotationKey: eks.amazonaws.com/role-arn
+                metricsReporting:
+                  grafana:
+                    enabled: true
+                deploymentLifecycle:
+                  hardDeleteDeployment:
+                    enabled: true
+                logHelmValues:
+                  enabled: true
+                namespaceManagement:
+                  manualReleaseNames:
+                    enabled: false
+                databaseManagement:
+                  pgBouncerResourceCalculationStrategy: airflowStratV2
 
         vector:
           resources:
@@ -448,6 +575,16 @@ def new_037x_schema_partial_text() -> str:
             gssSupport: true
             secretName: astronomer-pgbouncer-config
             servicePort: "6543"
+
+        astronomer:
+          houston:
+            config:
+              deployments:
+                airflowComponents:
+                  dagProcessor:
+                    enabled: true
+                  triggerer:
+                    enabled: true
 
         tags:
           platform: true

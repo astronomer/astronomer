@@ -119,6 +119,26 @@ def _attach_inline_comment(mapping: CommentedMap, key: str, comment: Any) -> Non
     mapping.ca.items[key] = [None, None, comment, None]
 
 
+def _get_nested_mapping(mapping: CommentedMap, keys: list[str]) -> CommentedMap | None:
+    """Walk into a CommentedMap and return the mapping at the given path, or None.
+
+    Parameters:
+        mapping: The root mapping to walk into.
+        keys: List of key segments to traverse.
+
+    Returns:
+        The CommentedMap at the end of the path, or None if any segment is missing.
+    """
+    current: Any = mapping
+    for key in keys:
+        if not isinstance(current, CommentedMap) or key not in current:
+            return None
+        current = current[key]
+    if isinstance(current, CommentedMap):
+        return current
+    return None
+
+
 def _path_exists(mapping: CommentedMap, keys: list[str]) -> bool:
     """Check whether a dotted key path already exists in a mapping.
 
@@ -146,6 +166,7 @@ class BoolToNested(MigrationRule):
 
     old_key: str
     new_path: list[str] = field(default_factory=list)
+    path_prefix: str = "global"
 
     def apply(self, global_mapping: CommentedMap) -> list[MigrationChange]:
         """Apply the boolean-to-nested migration rule.
@@ -154,7 +175,7 @@ class BoolToNested(MigrationRule):
         and the stale old key is removed without overwriting.
 
         Parameters:
-            global_mapping: The 'global' section of the values.yaml.
+            global_mapping: The mapping section containing the key to migrate.
 
         Returns:
             A list of changes made; empty if the old key was not present or already migrated.
@@ -169,8 +190,8 @@ class BoolToNested(MigrationRule):
 
         if _path_exists(global_mapping, self.new_path):
             _delete_key(global_mapping, self.old_key)
-            old_path = f"global.{self.old_key}"
-            new_path = "global." + ".".join(self.new_path)
+            old_path = f"{self.path_prefix}.{self.old_key}"
+            new_path = self.path_prefix + "." + ".".join(self.new_path)
             return [MigrationChange(old_path, new_path, f"Removed stale {old_path} (kept existing {new_path})")]
 
         inline_comment = _extract_inline_comment(global_mapping, self.old_key)
@@ -190,8 +211,8 @@ class BoolToNested(MigrationRule):
                 _attach_inline_comment(parent, leaf_key, inline_comment)
             _delete_key(global_mapping, self.old_key)
 
-        old_path = f"global.{self.old_key}"
-        new_path = "global." + ".".join(self.new_path)
+        old_path = f"{self.path_prefix}.{self.old_key}"
+        new_path = self.path_prefix + "." + ".".join(self.new_path)
         return [MigrationChange(old_path, new_path, f"Moved {old_path} -> {new_path}")]
 
 
@@ -266,6 +287,38 @@ MIGRATIONS: list[MigrationRule] = [
     SubtreeMove(["loggingSidecar"], ["logging", "loggingSidecar"]),
 ]
 
+_HOUSTON_PREFIX = "astronomer.houston.config.deployments"
+
+HOUSTON_DEPLOYMENT_MIGRATIONS: list[MigrationRule] = [
+    # boolean-to-enabled transforms
+    BoolToNested("dagProcessorEnabled", ["airflowComponents", "dagProcessor", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("triggererEnabled", ["airflowComponents", "triggerer", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("configureDagDeployment", ["deployMechanisms", "configureDagDeployment", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("gitSyncDagDeployment", ["deployMechanisms", "gitSyncDagDeployment", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("nfsMountDagDeployment", ["deployMechanisms", "nfsMountDagDeployment", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("enableListAllRuntimeVersions", ["runtimeManagement", "listAllRuntimeVersions", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("enableUpdateDeploymentImageEndpoint", ["deploymentImagesRegistry", "updateDeploymentImageEndpoint", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("grafanaUIEnabled", ["metricsReporting", "grafana", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("hardDeleteDeployment", ["deploymentLifecycle", "hardDeleteDeployment", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("logHelmValues", ["logHelmValues", "enabled"], path_prefix=_HOUSTON_PREFIX),
+    BoolToNested("manualReleaseNames", ["namespaceManagement", "manualReleaseNames", "enabled"], path_prefix=_HOUSTON_PREFIX),
+]
+
+# (old_key, new_path_segments) — value is moved as-is to the nested path.
+HOUSTON_DEPLOYMENT_MOVE_KEYS: list[tuple[str, list[str]]] = [
+    ("pgBouncerResourceCalculationStrategy", ["databaseManagement", "pgBouncerResourceCalculationStrategy"]),
+    ("serviceAccountAnnotationKey", ["deploymentImagesRegistry", "serviceAccountAnnotationKey"]),
+]
+
+HOUSTON_DEPLOYMENT_DELETE_KEYS: list[str] = [
+    "astroUnitsEnabled",
+    "resourceProvisioningStrategy",
+    "maxPodAu",
+    "upsertDeploymentEnabled",
+    "canUpsertDeploymentFromUI",
+    "enableSystemAdminCanCreateDeprecatedAirflows",
+]
+
 
 def migrate_values(data: Any) -> list[MigrationChange]:
     """Apply all migration rules to a parsed YAML document.
@@ -279,14 +332,37 @@ def migrate_values(data: Any) -> list[MigrationChange]:
     if data is None or not isinstance(data, CommentedMap):
         return []
 
-    global_section = data.get("global")
-    if global_section is None or not isinstance(global_section, CommentedMap):
-        return []
-
     all_changes: list[MigrationChange] = []
-    for rule in MIGRATIONS:
-        changes = rule.apply(global_section)
-        all_changes.extend(changes)
+
+    global_section = data.get("global")
+    if global_section is not None and isinstance(global_section, CommentedMap):
+        for rule in MIGRATIONS:
+            changes = rule.apply(global_section)
+            all_changes.extend(changes)
+
+    deployments = _get_nested_mapping(data, ["astronomer", "houston", "config", "deployments"])
+    if deployments is not None:
+        for rule in HOUSTON_DEPLOYMENT_MIGRATIONS:
+            changes = rule.apply(deployments)
+            all_changes.extend(changes)
+        for old_key, new_path in HOUSTON_DEPLOYMENT_MOVE_KEYS:
+            if old_key not in deployments:
+                continue
+            if _path_exists(deployments, new_path):
+                _delete_key(deployments, old_key)
+            else:
+                value = deployments[old_key]
+                parent = _ensure_nested_key(deployments, new_path[:-1])
+                parent[new_path[-1]] = value
+                _delete_key(deployments, old_key)
+            old_str = f"{_HOUSTON_PREFIX}.{old_key}"
+            new_str = _HOUSTON_PREFIX + "." + ".".join(new_path)
+            all_changes.append(MigrationChange(old_str, new_str, f"Moved {old_str} -> {new_str}"))
+        for key in HOUSTON_DEPLOYMENT_DELETE_KEYS:
+            if key in deployments:
+                _delete_key(deployments, key)
+                path_str = f"{_HOUSTON_PREFIX}.{key}"
+                all_changes.append(MigrationChange(path_str, "(deleted)", f"Deleted obsolete key {path_str}"))
 
     return all_changes
 

@@ -118,6 +118,26 @@ def _path_exists(mapping: CommentedMap, keys: list[str]) -> bool:
     return True
 
 
+def _get_nested_mapping(mapping: CommentedMap, keys: list[str]) -> CommentedMap | None:
+    """Walk into a CommentedMap and return the mapping at the given path, or None.
+
+    Parameters:
+        mapping: The root mapping to walk into.
+        keys: List of key segments to traverse.
+
+    Returns:
+        The CommentedMap at the end of the path, or None if any segment is missing.
+    """
+    current: Any = mapping
+    for key in keys:
+        if not isinstance(current, CommentedMap) or key not in current:
+            return None
+        current = current[key]
+    if isinstance(current, CommentedMap):
+        return current
+    return None
+
+
 def _resolve_parent(mapping: CommentedMap, keys: list[str]) -> tuple[CommentedMap | None, str]:
     """Resolve a dotted path to its parent mapping and leaf key.
 
@@ -492,6 +512,141 @@ class AddKeyIfMissing(MigrationRule):
 
 
 # ---------------------------------------------------------------------------
+# Rule: HoustonDeploymentBoolToNested (operates on astronomer.houston.config.deployments)
+# ---------------------------------------------------------------------------
+
+_HOUSTON_PREFIX = "astronomer.houston.config.deployments"
+
+
+@dataclass
+class HoustonDeploymentBoolToNested(MigrationRule):
+    """Migrate a flat boolean key under astronomer.houston.config.deployments to nested .enabled.
+
+    Example: astronomer.houston.config.deployments.dagProcessorEnabled: true
+          -> astronomer.houston.config.deployments.airflowComponents.dagProcessor.enabled: true
+    """
+
+    old_key: str
+    new_path: list[str] = field(default_factory=list)
+
+    def apply(self, root: CommentedMap) -> list[MigrationChange]:
+        """Apply the boolean-to-nested migration on the Houston deployments config section.
+
+        Parameters:
+            root: The parsed YAML document root.
+
+        Returns:
+            A list of changes made.
+        """
+        deployments = _get_nested_mapping(root, ["astronomer", "houston", "config", "deployments"])
+        if deployments is None:
+            return []
+
+        if self.old_key not in deployments:
+            return []
+
+        value = deployments[self.old_key]
+        if isinstance(value, CommentedMap):
+            return []
+
+        if _path_exists(deployments, self.new_path):
+            _delete_key(deployments, self.old_key)
+            old_path = f"{_HOUSTON_PREFIX}.{self.old_key}"
+            new_path = _HOUSTON_PREFIX + "." + ".".join(self.new_path)
+            return [MigrationChange(old_path, new_path, f"Removed stale {old_path} (kept existing {new_path})")]
+
+        inline_comment = _extract_inline_comment(deployments, self.old_key)
+
+        parent_keys = self.new_path[:-1]
+        leaf_key = self.new_path[-1]
+
+        parent = _ensure_nested_key(deployments, parent_keys)
+        parent[leaf_key] = value
+        if inline_comment:
+            _attach_inline_comment(parent, leaf_key, inline_comment)
+        _delete_key(deployments, self.old_key)
+
+        old_path = f"{_HOUSTON_PREFIX}.{self.old_key}"
+        new_path = _HOUSTON_PREFIX + "." + ".".join(self.new_path)
+        return [MigrationChange(old_path, new_path, f"Moved {old_path} -> {new_path}")]
+
+
+# ---------------------------------------------------------------------------
+# Rule: HoustonDeploymentDeleteKey (operates on astronomer.houston.config.deployments)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class HoustonDeploymentDeleteKey(MigrationRule):
+    """Delete a key from astronomer.houston.config.deployments.
+
+    Example: HoustonDeploymentDeleteKey("astroUnitsEnabled") removes the deprecated flag.
+    """
+
+    key: str
+
+    def apply(self, root: CommentedMap) -> list[MigrationChange]:
+        """Apply the delete-key rule on the Houston deployments config section.
+
+        Parameters:
+            root: The parsed YAML document root.
+
+        Returns:
+            A list of changes made; empty if the key was not found.
+        """
+        deployments = _get_nested_mapping(root, ["astronomer", "houston", "config", "deployments"])
+        if deployments is None or self.key not in deployments:
+            return []
+
+        _delete_key(deployments, self.key)
+        path_str = f"{_HOUSTON_PREFIX}.{self.key}"
+        return [MigrationChange(path_str, "(deleted)", f"Deleted obsolete key {path_str}")]
+
+
+# ---------------------------------------------------------------------------
+# Rule: HoustonDeploymentMove (operates on astronomer.houston.config.deployments)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class HoustonDeploymentMove(MigrationRule):
+    """Move a key to a new nested path under astronomer.houston.config.deployments.
+
+    Example: HoustonDeploymentMove("serviceAccountAnnotationKey",
+                                   ["deploymentImagesRegistry", "serviceAccountAnnotationKey"])
+    """
+
+    old_key: str
+    new_path: list[str] = field(default_factory=list)
+
+    def apply(self, root: CommentedMap) -> list[MigrationChange]:
+        """Apply the move rule on the Houston deployments config section.
+
+        Parameters:
+            root: The parsed YAML document root.
+
+        Returns:
+            A list of changes made; empty if the key was not found.
+        """
+        deployments = _get_nested_mapping(root, ["astronomer", "houston", "config", "deployments"])
+        if deployments is None or self.old_key not in deployments:
+            return []
+
+        old_str = f"{_HOUSTON_PREFIX}.{self.old_key}"
+        new_str = _HOUSTON_PREFIX + "." + ".".join(self.new_path)
+
+        if _path_exists(deployments, self.new_path):
+            _delete_key(deployments, self.old_key)
+        else:
+            value = deployments[self.old_key]
+            parent = _ensure_nested_key(deployments, self.new_path[:-1])
+            parent[self.new_path[-1]] = value
+            _delete_key(deployments, self.old_key)
+
+        return [MigrationChange(old_str, new_str, f"Moved {old_str} -> {new_str}")]
+
+
+# ---------------------------------------------------------------------------
 # Migration rule list
 # ---------------------------------------------------------------------------
 
@@ -539,6 +694,28 @@ MIGRATIONS: list[MigrationRule] = [
             },
         },
     ),
+    # --- G. Houston config deployments boolean-to-enabled restructuring ---
+    HoustonDeploymentBoolToNested("dagProcessorEnabled", ["airflowComponents", "dagProcessor", "enabled"]),
+    HoustonDeploymentBoolToNested("triggererEnabled", ["airflowComponents", "triggerer", "enabled"]),
+    HoustonDeploymentBoolToNested("configureDagDeployment", ["deployMechanisms", "configureDagDeployment", "enabled"]),
+    HoustonDeploymentBoolToNested("gitSyncDagDeployment", ["deployMechanisms", "gitSyncDagDeployment", "enabled"]),
+    HoustonDeploymentBoolToNested("nfsMountDagDeployment", ["deployMechanisms", "nfsMountDagDeployment", "enabled"]),
+    HoustonDeploymentBoolToNested("enableListAllRuntimeVersions", ["runtimeManagement", "listAllRuntimeVersions", "enabled"]),
+    HoustonDeploymentBoolToNested("enableUpdateDeploymentImageEndpoint", ["deploymentImagesRegistry", "updateDeploymentImageEndpoint", "enabled"]),
+    HoustonDeploymentBoolToNested("grafanaUIEnabled", ["metricsReporting", "grafana", "enabled"]),
+    HoustonDeploymentBoolToNested("hardDeleteDeployment", ["deploymentLifecycle", "hardDeleteDeployment", "enabled"]),
+    HoustonDeploymentBoolToNested("logHelmValues", ["logHelmValues", "enabled"]),
+    HoustonDeploymentBoolToNested("manualReleaseNames", ["namespaceManagement", "manualReleaseNames", "enabled"]),
+    # --- H. Houston config deployments key moves ---
+    HoustonDeploymentMove("pgBouncerResourceCalculationStrategy", ["databaseManagement", "pgBouncerResourceCalculationStrategy"]),
+    HoustonDeploymentMove("serviceAccountAnnotationKey", ["deploymentImagesRegistry", "serviceAccountAnnotationKey"]),
+    # --- I. Houston config deployments obsolete keys ---
+    HoustonDeploymentDeleteKey("astroUnitsEnabled"),
+    HoustonDeploymentDeleteKey("resourceProvisioningStrategy"),
+    HoustonDeploymentDeleteKey("maxPodAu"),
+    HoustonDeploymentDeleteKey("upsertDeploymentEnabled"),
+    HoustonDeploymentDeleteKey("canUpsertDeploymentFromUI"),
+    HoustonDeploymentDeleteKey("enableSystemAdminCanCreateDeprecatedAirflows"),
 ]
 
 

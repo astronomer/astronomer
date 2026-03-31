@@ -22,6 +22,7 @@ migrate_values = migrate_mod.migrate_values
 BoolToNested = migrate_mod.BoolToNested
 SubtreeMove = migrate_mod.SubtreeMove
 MIGRATIONS = migrate_mod.MIGRATIONS
+HOUSTON_DEPLOYMENT_MIGRATIONS = migrate_mod.HOUSTON_DEPLOYMENT_MIGRATIONS
 main = migrate_mod.main
 
 
@@ -69,7 +70,7 @@ class TestPartialOverrideMigration:
         expected = _to_plain(_load_rt(expected_new_partial_text))
 
         assert result == expected
-        assert len(changes) == 10
+        assert len(changes) == 29
 
     def test_non_global_sections_preserved(self, old_partial_override_text: str):
         """Sections outside global (astronomer, nginx, etc.) are not modified."""
@@ -110,7 +111,29 @@ class TestFullValuesMigration:
         assert g["deployMechanisms"]["dagOnlyDeployment"]["repository"] == "quay.io/astronomer/ap-dag-deploy"
         assert g["logging"]["loggingSidecar"]["enabled"] is False
         assert g["logging"]["loggingSidecar"]["name"] == "sidecar-log-consumer"
-        assert len(changes) == 10
+        assert len(changes) == 29
+
+    def test_houston_config_migrated(self, old_full_values_text: str):
+        """Houston config deployment flags are restructured and obsolete keys deleted."""
+        data = _load_rt(old_full_values_text)
+        migrate_values(data)
+        result = _to_plain(data)
+
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert deployments["airflowComponents"]["triggerer"]["enabled"] is True
+        assert deployments["deployMechanisms"]["configureDagDeployment"]["enabled"] is True
+        assert deployments["logHelmValues"]["enabled"] is False
+        assert "dagProcessorEnabled" not in deployments
+        assert "triggererEnabled" not in deployments
+        assert "configureDagDeployment" not in deployments
+        assert "grafanaUIEnabled" not in deployments
+        assert "astroUnitsEnabled" not in deployments
+        assert "resourceProvisioningStrategy" not in deployments
+        assert "maxPodAu" not in deployments
+        assert "upsertDeploymentEnabled" not in deployments
+        assert "canUpsertDeploymentFromUI" not in deployments
+        assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
 
     def test_old_keys_removed_after_migration(self, old_full_values_text: str):
         """Old flat keys no longer exist at the global root after migration."""
@@ -762,6 +785,171 @@ class TestCommentPreservation:
         assert "# RBAC comment" in output
         assert "# SCC comment" in output
         assert "# OpenShift comment" in output
+
+
+# ---------------------------------------------------------------------------
+# Houston config deployment flag tests
+# ---------------------------------------------------------------------------
+
+
+class TestHoustonDeploymentMigration:
+    """Test migration of houston config deployment flags."""
+
+    def test_dag_processor_enabled_migrated(self):
+        """dagProcessorEnabled is moved to airflowComponents.dagProcessor.enabled."""
+        text = dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    dagProcessorEnabled: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert "dagProcessorEnabled" not in deployments
+        assert len(changes) == 1
+
+    def test_triggerer_enabled_migrated(self):
+        """triggererEnabled is moved to airflowComponents.triggerer.enabled."""
+        text = dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    triggererEnabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["triggerer"]["enabled"] is False
+        assert "triggererEnabled" not in deployments
+        assert len(changes) == 1
+
+    def test_both_houston_flags_migrated(self):
+        """Both dagProcessorEnabled and triggererEnabled migrate together."""
+        text = dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    dagProcessorEnabled: true
+                    triggererEnabled: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert deployments["airflowComponents"]["triggerer"]["enabled"] is True
+        assert "dagProcessorEnabled" not in deployments
+        assert "triggererEnabled" not in deployments
+        assert len(changes) == 2
+
+    def test_obsolete_houston_keys_deleted(self):
+        """Obsolete houston config deployment keys are deleted."""
+        text = dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    astroUnitsEnabled: false
+                    resourceProvisioningStrategy:
+                      astroUnitsEnabled: false
+                    maxPodAu: 100
+                    upsertDeploymentEnabled: true
+                    canUpsertDeploymentFromUI: true
+                    enableSystemAdminCanCreateDeprecatedAirflows: false
+                    otherKey: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert "astroUnitsEnabled" not in deployments
+        assert "resourceProvisioningStrategy" not in deployments
+        assert "maxPodAu" not in deployments
+        assert "upsertDeploymentEnabled" not in deployments
+        assert "canUpsertDeploymentFromUI" not in deployments
+        assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
+        assert deployments["otherKey"] is True
+        assert len(changes) == 6
+
+    def test_houston_config_absent(self):
+        """Missing astronomer.houston.config.deployments section produces no changes."""
+        text = "global:\n  rbacEnabled: true\n"
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["rbac"]["enabled"] is True
+        assert len(changes) == 1
+
+    def test_houston_config_already_migrated(self):
+        """Already-migrated houston config is not changed."""
+        text = dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    airflowComponents:
+                      dagProcessor:
+                        enabled: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+
+        assert len(changes) == 0
+
+    def test_houston_config_conflict_keeps_new(self):
+        """When both old and new keys exist, new-schema value is preserved."""
+        text = dedent("""\
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    dagProcessorEnabled: false
+                    airflowComponents:
+                      dagProcessor:
+                        enabled: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert "dagProcessorEnabled" not in deployments
+        assert len(changes) >= 1
+
+    def test_global_and_houston_migrate_together(self):
+        """Both global flags and houston config flags are migrated in a single pass."""
+        text = dedent("""\
+            global:
+              rbacEnabled: true
+            astronomer:
+              houston:
+                config:
+                  deployments:
+                    dagProcessorEnabled: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["rbac"]["enabled"] is True
+        assert "rbacEnabled" not in result["global"]
+        deployments = result["astronomer"]["houston"]["config"]["deployments"]
+        assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
+        assert "dagProcessorEnabled" not in deployments
+        assert len(changes) == 2
 
 
 # ---------------------------------------------------------------------------
