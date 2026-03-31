@@ -41,9 +41,9 @@ DEFAULT_DOCKER_NETWORK = "astronomer-net"
 
 @dataclass(frozen=True)
 class RegistrySpec:
-    name: str          # Docker container name
-    upstream: str      # Full upstream URL (https://...)
-    host_port: int     # Port exposed on the host for direct docker pull
+    name: str  # Docker container name
+    upstream: str  # Full upstream URL (https://...)
+    host_port: int  # Port exposed on the host for direct docker pull
 
 
 REGISTRY_SPECS: tuple[RegistrySpec, ...] = (
@@ -195,16 +195,26 @@ def _ensure_registry(spec: RegistrySpec, docker_network: str) -> None:
 
     # Container does not exist — create it.
     _print(f"  Creating registry proxy container: {spec.name} ({spec.upstream}) on port {spec.host_port}")
-    _run([
-        "docker", "run", "-d",
-        "--name", spec.name,
-        "--network", docker_network,
-        "--restart", "always",
-        "-p", f"{spec.host_port}:5000",
-        "-v", f"{volume_name}:/var/lib/registry",
-        "-v", f"{config_path}:/etc/docker/registry/config.yml:ro",
-        REGISTRY_IMAGE,
-    ])
+    _run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            spec.name,
+            "--network",
+            docker_network,
+            "--restart",
+            "always",
+            "-p",
+            f"{spec.host_port}:5000",
+            "-v",
+            f"{volume_name}:/var/lib/registry",
+            "-v",
+            f"{config_path}:/etc/docker/registry/config.yml:ro",
+            REGISTRY_IMAGE,
+        ]
+    )
 
 
 def _ensure_local_registries(docker_network: str = DEFAULT_DOCKER_NETWORK) -> None:
@@ -273,6 +283,7 @@ def get_registry_config_path(docker_network: str = DEFAULT_DOCKER_NETWORK) -> Pa
 # Status + destroy helpers (used by the standalone CLI only)
 # ---------------------------------------------------------------------------
 
+
 def _status_table() -> None:
     """Print a human-readable status table of all registry containers."""
     rows = []
@@ -323,6 +334,7 @@ def _destroy(*, purge_volumes: bool = False) -> None:
 # CLI entry point
 # ---------------------------------------------------------------------------
 
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Manage local pull-through registry proxy containers for k3d development.",
@@ -332,7 +344,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--docker-network",
         default=DEFAULT_DOCKER_NETWORK,
-        help=f"Docker network to attach registry containers to. Default: '%(default)s'",
+        help="Docker network to attach registry containers to. Default: '%(default)s'",
     )
     parser.add_argument(
         "--status",

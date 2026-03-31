@@ -43,6 +43,7 @@ REGISTRY_IMAGE = "registry:2"
 # (See bin/setup-local-registry.py for the standalone management script.)
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class _RegistrySpec:
     name: str
@@ -113,16 +114,26 @@ def _ensure_registry(spec: _RegistrySpec, docker_network: str) -> None:
         return
 
     _print(f"  Creating registry proxy: {spec.name} -> {spec.upstream} (host port {spec.host_port})")
-    _run([
-        "docker", "run", "-d",
-        "--name", spec.name,
-        "--network", docker_network,
-        "--restart", "always",
-        "-p", f"{spec.host_port}:5000",
-        "-v", f"{volume_name}:/var/lib/registry",
-        "-v", f"{config_path}:/etc/docker/registry/config.yml:ro",
-        REGISTRY_IMAGE,
-    ])
+    _run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            spec.name,
+            "--network",
+            docker_network,
+            "--restart",
+            "always",
+            "-p",
+            f"{spec.host_port}:5000",
+            "-v",
+            f"{volume_name}:/var/lib/registry",
+            "-v",
+            f"{config_path}:/etc/docker/registry/config.yml:ro",
+            REGISTRY_IMAGE,
+        ]
+    )
 
 
 def _ensure_local_registries(docker_network: str) -> None:
@@ -162,6 +173,7 @@ mirrors:
     HELPER_DIR.mkdir(parents=True, exist_ok=True)
     K3D_REGISTRY_CONFIG_PATH.write_text(content)
     return K3D_REGISTRY_CONFIG_PATH
+
 
 DEFAULT_CHART_VERSION = "0.37.7"
 HELM_REPO_NAME = "astronomer-internal"
@@ -838,7 +850,6 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
     reachable inside the Docker network, not from the host.
     """
     base = settings.base_domain
-    port_suffix = "" if settings.https_port == 443 else f":{settings.https_port}"
 
     _print(
         f"\n\u2139\ufe0f  No /etc/hosts changes needed for this setup.\n"
