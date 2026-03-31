@@ -1,3 +1,4 @@
+import base64
 import subprocess
 
 import pytest
@@ -13,6 +14,8 @@ ESO_DATA_PLANE_VALUES = ESO_VALUES  # alias kept for readability
 DEPLOYMENT_TEMPLATE = "charts/external-secrets/templates/deployment.yaml"
 SERVICEACCOUNT_TEMPLATE = "charts/external-secrets/templates/serviceaccount.yaml"
 RBAC_TEMPLATE = "charts/external-secrets/templates/rbac.yaml"
+CLUSTER_SECRET_STORE_TEMPLATE = "charts/external-secrets/templates/cluster-secret-store.yaml"
+SECRETS_BACKEND_CREDENTIALS_TEMPLATE = "charts/external-secrets/templates/secrets-backend-credentials.yaml"
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -326,3 +329,220 @@ class TestExternalSecretsDataPlaneMode:
             pod_labels = doc["spec"]["template"]["metadata"]["labels"]
             for key, value in custom_labels.items():
                 assert pod_labels.get(key) == value, f"Label {key}={value} missing from {doc['metadata']['name']}"
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestClusterSecretStore:
+    def test_renders_in_data_plane_mode(self, kube_version):
+        """ClusterSecretStore renders when plane.mode is 'data'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values=ESO_VALUES,
+            show_only=[CLUSTER_SECRET_STORE_TEMPLATE],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["apiVersion"] == "external-secrets.io/v1"
+        assert doc["kind"] == "ClusterSecretStore"
+
+    def test_not_rendered_outside_data_plane(self, kube_version):
+        """ClusterSecretStore is not rendered when plane.mode is not 'data'."""
+        for mode in ("control", "unified"):
+            docs = render_chart(
+                kube_version=kube_version,
+                validate_objects=False,
+                values={
+                    "external-secrets": {"enabled": True},
+                    "global": {"plane": {"mode": mode}},
+                },
+                show_only=[CLUSTER_SECRET_STORE_TEMPLATE],
+            )
+            assert len(docs) == 0, f"Expected no ClusterSecretStore in plane.mode={mode}"
+
+    def test_default_name_and_region(self, kube_version):
+        """ClusterSecretStore uses default name and region from values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values=ESO_VALUES,
+            show_only=[CLUSTER_SECRET_STORE_TEMPLATE],
+        )
+        doc = docs[0]
+        assert doc["metadata"]["name"] == "astronomer-cluster-secret-store"
+        assert doc["spec"]["provider"]["aws"]["region"] == "us-east-2"
+
+    def test_custom_name_and_region(self, kube_version):
+        """ClusterSecretStore uses overridden name and region."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values={
+                **ESO_VALUES,
+                "external-secrets": {
+                    "enabled": True,
+                    "secretsBackend": {
+                        "clusterSecretStore": {
+                            "name": "my-custom-store",
+                            "region": "eu-west-1",
+                        },
+                    },
+                },
+            },
+            show_only=[CLUSTER_SECRET_STORE_TEMPLATE],
+        )
+        doc = docs[0]
+        assert doc["metadata"]["name"] == "my-custom-store"
+        assert doc["spec"]["provider"]["aws"]["region"] == "eu-west-1"
+
+    def test_credentials_secret_refs(self, kube_version):
+        """ClusterSecretStore references the correct credentials Secret name and namespace."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values={
+                **ESO_VALUES,
+                "external-secrets": {
+                    "enabled": True,
+                    "secretsBackend": {
+                        "credentials": {
+                            "name": "my-aws-creds",
+                        },
+                    },
+                },
+            },
+            show_only=[CLUSTER_SECRET_STORE_TEMPLATE],
+        )
+        doc = docs[0]
+        auth = doc["spec"]["provider"]["aws"]["auth"]["secretRef"]
+        assert auth["accessKeyIDSecretRef"]["name"] == "my-aws-creds"
+        assert auth["secretAccessKeySecretRef"]["name"] == "my-aws-creds"
+
+    def test_metadata_namespace_matches_credentials_namespace(self, kube_version):
+        """ClusterSecretStore metadata.namespace matches the credentials namespace."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values=ESO_VALUES,
+            show_only=[CLUSTER_SECRET_STORE_TEMPLATE],
+        )
+        doc = docs[0]
+        creds_namespace = doc["spec"]["provider"]["aws"]["auth"]["secretRef"]["accessKeyIDSecretRef"]["namespace"]
+        assert doc["metadata"]["namespace"] == creds_namespace
+
+    def test_aws_service_is_secrets_manager(self, kube_version):
+        """ClusterSecretStore always targets SecretsManager."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values=ESO_VALUES,
+            show_only=[CLUSTER_SECRET_STORE_TEMPLATE],
+        )
+        assert docs[0]["spec"]["provider"]["aws"]["service"] == "SecretsManager"
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestSecretsBackendCredentials:
+    def test_renders_in_data_plane_mode(self, kube_version):
+        """Credentials Secret renders when plane.mode is 'data'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values=ESO_VALUES,
+            show_only=[SECRETS_BACKEND_CREDENTIALS_TEMPLATE],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["apiVersion"] == "v1"
+        assert doc["kind"] == "Secret"
+        assert doc["type"] == "Opaque"
+
+    def test_not_rendered_outside_data_plane(self, kube_version):
+        """Credentials Secret is not rendered when plane.mode is not 'data'."""
+        for mode in ("control", "unified"):
+            docs = render_chart(
+                kube_version=kube_version,
+                validate_objects=False,
+                values={
+                    "external-secrets": {"enabled": True},
+                    "global": {"plane": {"mode": mode}},
+                },
+                show_only=[SECRETS_BACKEND_CREDENTIALS_TEMPLATE],
+            )
+            assert len(docs) == 0, f"Expected no credentials Secret in plane.mode={mode}"
+
+    def test_default_name_and_namespace(self, kube_version):
+        """Credentials Secret uses default name and namespace from values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values=ESO_VALUES,
+            show_only=[SECRETS_BACKEND_CREDENTIALS_TEMPLATE],
+        )
+        doc = docs[0]
+        assert doc["metadata"]["name"] == "secrets-backend-credentials"
+        assert doc["metadata"]["namespace"] == "default"
+
+    def test_custom_name_and_namespace(self, kube_version):
+        """Credentials Secret uses overridden name and namespace."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values={
+                **ESO_VALUES,
+                "external-secrets": {
+                    "enabled": True,
+                    "secretsBackend": {
+                        "credentials": {
+                            "name": "custom-creds",
+                            "accessKey": "",
+                            "secretAccessKey": "",
+                        },
+                    },
+                },
+            },
+            show_only=[SECRETS_BACKEND_CREDENTIALS_TEMPLATE],
+        )
+        doc = docs[0]
+        assert doc["metadata"]["name"] == "custom-creds"
+
+    def test_credentials_are_base64_encoded(self, kube_version):
+        """Access key and secret access key values are base64-encoded in the Secret data."""
+        access_key = "AKIAIOSFODNN7EXAMPLE"
+        secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values={
+                **ESO_VALUES,
+                "external-secrets": {
+                    "enabled": True,
+                    "secretsBackend": {
+                        "credentials": {
+                            "name": "secrets-backend-credentials",
+                            "namespace": "astronomer",
+                            "accessKey": access_key,
+                            "secretAccessKey": secret_key,
+                        },
+                    },
+                },
+            },
+            show_only=[SECRETS_BACKEND_CREDENTIALS_TEMPLATE],
+        )
+        doc = docs[0]
+        expected_access_key = base64.b64encode(access_key.encode()).decode()
+        expected_secret_key = base64.b64encode(secret_key.encode()).decode()
+        assert doc["data"]["access-key"] == expected_access_key
+        assert doc["data"]["secret-access-key"] == expected_secret_key
+
+    def test_data_keys_present(self, kube_version):
+        """Credentials Secret always contains the required data keys."""
+        docs = render_chart(
+            kube_version=kube_version,
+            validate_objects=False,
+            values=ESO_VALUES,
+            show_only=[SECRETS_BACKEND_CREDENTIALS_TEMPLATE],
+        )
+        doc = docs[0]
+        assert "access-key" in doc["data"]
+        assert "secret-access-key" in doc["data"]

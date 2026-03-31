@@ -502,3 +502,18 @@ hostAliases: []
 
 # -- Any extra pod spec on the deployment
 podSpecExtra: {}
+
+# -- Configuration for the Secrets Manager backend integration
+secretsBackend:
+  clusterSecretStore:
+    # -- Name of the ClusterSecretStore resource
+    name: astronomer-cluster-secret-store
+    # -- Region for Secrets Manager
+    region: us-east-2
+  credentials:
+    # -- Name of the Secret containing credentials
+    name: secrets-backend-credentials
+    # -- access key ID (plaintext, will be base64 encoded)
+    accessKey: ""
+    # -- secret access key (plaintext, will be base64 encoded)
+    secretAccessKey: ""
