@@ -325,6 +325,145 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
+      - job_name: kubernetes-nodes
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+      {{- end }}
+
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
+      - job_name: kubernetes-nodes-cadvisor
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+          - source_labels: [__metrics_path__]
+            separator: ;
+            regex: (.*)
+            target_label: metrics_path
+            replacement: $1
+            action: replace
+
+          - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+            separator: ;
+            regex: Pod;(.*)
+            target_label: pod
+            replacement: ${1}
+            action: replace
+          - source_labels: [__meta_kubernetes_namespace]
+            separator: ;
+            regex: (.*)
+            target_label: namespace
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_service_name]
+            separator: ;
+            regex: (.*)
+            target_label: service
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_pod_name]
+            separator: ;
+            regex: (.*)
+            target_label: pod
+            replacement: $1
+            action: replace
+          - source_labels: [__metrics_path__]
+            separator: ;
+            regex: (.*)
+            target_label: metrics_path
+            replacement: $1
+            action: replace
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            separator: ;
+            regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
+            replacement: $1
+            action: drop
+
+          - source_labels: [pod]
+            regex: (.*)
+            target_label: pod_name
+            replacement: $1
+            action: replace
+
+          - source_labels: [container]
+            regex: "^(.*)$"
+            replacement: "$1"
+            target_label: container_name
+            action: replace
+
+          - action: replace
+            source_labels: [id]
+            regex: '^/system\.slice/(.+)\.service$'
+            target_label: systemd_service_name
+            replacement: '${1}'
+
+          - regex: "^name"
+            action: labeldrop
+
+          - source_labels: [pod_name]
+            regex: "(^[-a-z0-9-]*)-[^-]*-[^-]*-[^-]*?"
+            replacement: "$1"
+            target_label: deployment
+
+          - source_labels: [container_name]
+            regex: "^(.*)$"
+            replacement: "$1"
+            target_label: component_name
+
+          - source_labels: [pod_name]
+            regex: "^.*-.*-(.*)$"
+            replacement: "$1"
+            target_label: component_instance
+
+          - source_labels: [__name__, container_name, pod_name]
+            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
+            replacement: "$1"
+            target_label: deployment
+          - source_labels: [__name__, container_name, pod_name]
+            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
+            replacement: "$2"
+            target_label: component_name
+          - source_labels: [__name__, container_name, pod_name]
+            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
+            replacement: "$3"
+            target_label: component_instance
+          - source_labels: [__name__, pod_name]
+            regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
+            replacement: "$2"
+            target_label: component_name
+          - source_labels: [__name__, pod_name]
+            regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
+            replacement: "$3"
+            target_label: component_instance
+
+      {{- end }}
+
       - job_name: houston-api
         metrics_path: /v1/metrics
         kubernetes_sd_configs:
