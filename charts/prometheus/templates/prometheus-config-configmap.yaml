@@ -256,7 +256,7 @@ data:
             target_label: release
           {{- end }}
 
-      {{- if and $useClusterRoles .Values.global.nodeExporterEnabled }}
+      {{- if and $useClusterRoles .Values.global.nodeExporter.enabled }}
       - job_name: node-exporter
         scrape_interval: 30s
         kubernetes_sd_configs:

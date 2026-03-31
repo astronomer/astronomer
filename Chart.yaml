@@ -34,7 +34,7 @@ dependencies:
     tags:
       - monitoring
   - name: prometheus-node-exporter
-    condition: global.nodeExporterEnabled
+    condition: global.nodeExporter.enabled
     tags:
       - monitoring
   - name: prometheus-postgres-exporter

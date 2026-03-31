@@ -4,7 +4,7 @@ from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
-enable_node_exporter = {"global": {"nodeExporterEnabled": True}}
+enable_node_exporter = {"global": {"nodeExporter.enabled": True}}
 
 
 @pytest.mark.parametrize(

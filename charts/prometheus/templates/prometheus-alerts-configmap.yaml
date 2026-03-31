@@ -140,7 +140,7 @@ data:
             description: {{ printf "%q" "{{ $value }} }} schedulers do not have a heartbeat in the last five minutes" }}
         {{- end }}
 
-      {{- if .Values.global.nodeExporterEnabled }}
+      {{- if .Values.global.nodeExporter.enabled }}
       - name: node-exporter-recording.rules
         rules:
         - expr: |
@@ -305,7 +305,7 @@ data:
           labels:
             quantile: "0.5"
           record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
-      {{- if .Values.global.nodeExporterEnabled }}
+      {{- if .Values.global.nodeExporter.enabled }}
       - name: node-recording.rules
         rules:
         - expr: |
@@ -397,7 +397,7 @@ data:
             severity: critical
             tier: platform
 
-      {{- if .Values.global.nodeExporterEnabled }}
+      {{- if .Values.global.nodeExporter.enabled }}
       - name: node-exporter
         rules:
         - alert: NodeFilesystemSpaceFillingUp
@@ -795,7 +795,7 @@ data:
           labels:
             severity: warning
             tier: platform
-        {{- if .Values.global.nodeExporterEnabled }}
+        {{- if .Values.global.nodeExporter.enabled }}
         - alert: KubeMemOvercommit
           annotations:
             description: Cluster has overcommitted memory resource requests for Namespaces.
@@ -1115,7 +1115,7 @@ data:
             severity: critical
             tier: platform
 
-        {{- if .Values.global.nodeExporterEnabled }}
+        {{- if .Values.global.nodeExporter.enabled }}
         - alert: NodeDown
           annotations:
             runbook_url:
@@ -1140,7 +1140,7 @@ data:
           labels:
             severity: none
             tier: none
-      {{- if .Values.global.nodeExporterEnabled }}
+      {{- if .Values.global.nodeExporter.enabled }}
       - name: node-time
         rules:
         - alert: ClockSkewDetected
