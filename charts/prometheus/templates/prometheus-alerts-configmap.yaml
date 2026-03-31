@@ -142,7 +142,7 @@ data:
 
       - name: k8s-recording.rules
         rules:
-        {{- if .Values.config.cadvisorEnabled }}
+        {{- if .Values.config.cadvisor.enabled }}
         - expr: |
             sum(rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])) by (namespace)
           record: namespace:container_cpu_usage_seconds_total:sum_rate

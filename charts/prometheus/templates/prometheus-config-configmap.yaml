@@ -325,7 +325,7 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      {{- if and $useClusterRoles (not .Values.global.singleNamespace) .Values.config.cadvisorEnabled }}
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) .Values.config.cadvisor.enabled }}
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:
