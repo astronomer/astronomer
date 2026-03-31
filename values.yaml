@@ -495,9 +495,6 @@ grafana:
 prometheus:
   podLabels: {}
 
-  # Enables kubelet and cAdvisor scrape jobs for pod-level metrics
-  cadvisorEnabled: false
-
   # Data retention
   retention: 15d
 
