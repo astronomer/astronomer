@@ -7,6 +7,9 @@ affinity: {}
 tolerations: []
 podLabels: {}
 
+# Enables kubelet and cAdvisor scrape jobs for pod-level metrics
+cadvisorEnabled: false
+
 # Prometheus is not designed to be horizontally scalable behind a single load
 # balancer. This configuration will increase the replicas in the Prometheus
 # StatefulSet, and assign a different Service to each Pod. In this way,
