@@ -41,7 +41,9 @@ spec:
         - name: node-exporter
           image: {{ template "image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
@@ -123,15 +125,9 @@ spec:
 {{- end }}
       hostNetwork: {{ .Values.hostNetwork }}
       hostPID: true
-{{- if .Values.affinity }}
       affinity: {{ toYaml .Values.affinity | nindent 8 }}
-{{- end }}
-{{- if .Values.nodeSelector }}
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
-{{- end }}
-    {{- with .Values.tolerations }}
-      tolerations: {{ toYaml . | nindent 8 }}
-    {{- end }}
+      tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
       volumes:
         - name: proc
           hostPath:
