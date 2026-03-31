@@ -42,4 +42,4 @@ global:
     mode: disable
 tags:
   logging: false
-  monitoring: true
+  monitoring: false
