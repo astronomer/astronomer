@@ -8,6 +8,7 @@ RUN apt update && apt install -y \
     cmake \
     curl \
     dnsutils \
+    file \
     gh \
     git \
     jq \
@@ -22,7 +23,9 @@ RUN apt update && apt install -y \
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN uv python install 3.14 --default && uv tool install prek
+RUN uv python install 3.14 --default && \
+    uv tool install prek && \
+    uv tool install ruff
 
 # Reference:
 # - https://code.claude.com/docs/en/devcontainer

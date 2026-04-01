@@ -100,20 +100,15 @@ The chart is built using:
 ```bash
 helm template astronomer . \
   --values values.yaml \
-  --show-only=charts/astronomer/templates/commander/commander-deployment.yaml
+  --show-only=charts/astronomer/templates/commander/commander-role.yaml \
+  --show-only=charts/astronomer/templates/commander/commander-rolebinding.yaml
 ```
 
 ### Validating Changes
 
 #### Running Tests
 
-```bash
-# Run the full unit test suite
-pytest tests/chart_tests/ -v
-
-# Run specific unit test file
-pytest tests/chart_tests/test_nginx.py -v
-```
+See [Testing Strategy](#testing-strategy)
 
 #### Pre-Commit Checks with `prek`
 
@@ -214,6 +209,27 @@ docs = render_chart(
 )
 ```
 
+#### Testing Sub-Chart Values (Critical for Umbrella Chart)
+
+Since the APC chart is an **umbrella chart** with sub-charts, values for sub-charts must be nested under the sub-chart name in the values dict:
+
+```python
+# ❌ WRONG: Will not override sub-chart values
+values = {"houston": {"replicas": 3}}
+
+# ✅ CORRECT: Properly nests values for the 'astronomer' sub-chart
+values = {"astronomer": {"houston": {"replicas": 3}}}
+
+# ✅ EXAMPLE: Testing dp-link with custom configuration
+docs = render_chart(
+    values={"astronomer": {"dpLink": {"enabled": False}}},
+    show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
+)
+assert len(docs) == 0  # Deployment not rendered when disabled
+```
+
+**Important**: When testing templates from a sub-chart (e.g., `charts/astronomer/templates/...`), wrap all values under the sub-chart's top-level key, which is the sub-chart name from the parent chart's dependencies.
+
 #### Parametrized Tests
 
 ```python
@@ -254,6 +270,31 @@ def test_with_all_features():
     kinds = [doc["kind"] for doc in docs]
     assert "Deployment" in kinds
     assert "StatefulSet" in kinds
+```
+
+#### Testing Probe Customization (All Components)
+
+Use `tests/chart_tests/test_data/enable_all_probes.yaml` to verify that every component and container supports customizable liveness and readiness probes. This test data file serves two purposes:
+
+1. **Documentation**: Shows how to configure every probe in the system
+2. **Validation**: Tests that all probes are actually customizable (not silently ignored)
+
+When adding a new component or container, ensure it supports probe customization by:
+1. Adding the component's liveness/readiness probes to `enable_all_probes.yaml`
+2. Running tests with `enable_all_probes.yaml` to verify the probes are properly rendered
+
+```yaml
+# Example from enable_all_probes.yaml
+astronomer:
+  dpLink:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
 ```
 
 ### Test Utilities
@@ -306,24 +347,32 @@ for container in containers:
 ### Running Tests
 
 ```bash
-# Run all tests
-uv run pytest tests/chart_tests/ -v
+# Run full suite in parallel (fastest — use for full runs)
+uv run pytest tests/chart_tests/ -n auto --quiet
+
+# Run all tests (verbose, sequential)
+uv run pytest tests/chart_tests/ --verbose
 
 # Run a specific test file
-uv run pytest tests/chart_tests/test_nginx.py -v
+uv run pytest tests/chart_tests/test_nginx.py --verbose
 
 # Run tests matching a pattern
-uv run pytest tests/chart_tests/ -k "test_service" -v
+uv run pytest tests/chart_tests/ -k "test_service" --verbose
 
 # Run a single test
-uv run pytest tests/chart_tests/test_nginx.py::test_nginx_service_basics -v
+uv run pytest tests/chart_tests/test_nginx.py::test_nginx_service_basics --verbose
 
-# Run with verbose output and stop on first failure
-uv run pytest tests/chart_tests/ -vvs -x
+# Run with increased verbose output and stop on first failure
+uv run pytest tests/chart_tests/ --verbose --verbose --capture=no --maxfail=1
 
 # See test collection (without running)
 uv run pytest tests/chart_tests/ --collect-only
+
+# Iterate on fixing tests by running this repeatedly after encountering errors
+uv run pytest tests/chart_tests/ --maxfail=1 --lf
 ```
+
+> **Tip**: `-n auto` runs tests across all available CPU cores in parallel. Use it for full suite runs to significantly reduce wall-clock time. Omit it when running a single file or test to avoid subprocess overhead.
 
 ### Kubernetes Schema Validation
 
@@ -509,6 +558,34 @@ charts/<component>/templates/<component>[-feature]-<k8s_object>.yaml
 3. **Comments**: Document non-obvious template logic
 4. **Indentation**: Use 2 spaces consistently
 5. **Scope management**: Use `with`, `range` scoping to keep templates readable
+6. **Probe Customization**: Every container should support customizable `livenessProbe` and `readinessProbe` to allow operators to tune health checks for their environments
+
+#### Probe Customization Pattern
+
+Always expose `livenessProbe` and `readinessProbe` as overridable values:
+
+```yaml
+# In deployment template
+{{- if .Values.myComponent.livenessProbe }}
+livenessProbe: {{ tpl (toYaml .Values.myComponent.livenessProbe) $ | nindent 12 }}
+{{- else }}
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+{{- end }}
+
+# In values.yaml
+myComponent:
+  # -- Custom liveness probe configuration (overrides default)
+  livenessProbe: {}
+  # -- Custom readiness probe configuration (overrides default)
+  readinessProbe: {}
+```
+
+**Why This Matters**: Different deployments have different operational requirements. Some may need longer initial delays due to slow startup, higher failure thresholds, or alternative probe methods (exec vs httpGet). Making probes customizable is a Kubernetes best practice.
 
 #### Common Helpers Pattern
 

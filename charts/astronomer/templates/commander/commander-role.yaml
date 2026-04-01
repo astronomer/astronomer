@@ -36,6 +36,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 rules:
+{{- if $.Values.global.dataPlaneFailover.enabled  }}
+- apiGroups: ["external-secrets.io", "generators.external-secrets.io"]
+  resources: ["clusterexternalsecrets", "clusterpushsecrets", "clustersecretstores", "externalsecrets", "pushsecrets", "secretstores", "generatorstates"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+{{- end }}
 {{- if $.Values.global.airflowOperator.enabled }}
 - apiGroups: ["airflow.apache.org"]
   resources: ["airflows"]

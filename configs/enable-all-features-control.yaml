@@ -1,0 +1,64 @@
+---
+# This is for generating images, not for testing. There may be invalid configurations in here.
+astronomer:
+  dpLink:
+    enabled: true
+  navigator:
+    enabled: true
+  houston:
+    cleanupAirflowDb:
+      enabled: true
+    cleanupClusterAudits:
+      enabled: true
+    cleanupDeployRevisions:
+      enabled: true
+    cleanupDeployments:
+      enabled: true
+    updateCheck:
+      enabled: true
+    updateRuntimeCheck:
+      enabled: true
+    upgradeDeployments:
+      enabled: true
+    worker:
+      enabled: true
+global:
+  airflowOperator:
+    enabled: true
+  authSidecar:
+    enabled: true
+  baseDomain: foo.com
+  customLogging:
+    awsSecretName: dummy
+    enabled: true
+  dagOnlyDeployment:
+    enabled: true
+  loggingSidecar:
+    enabled: true
+  networkPolicy:
+    enabled: true
+  pgbouncer:
+    enabled: true
+  plane:
+    mode: control
+  podDisruptionBudgetsEnabled: true
+  postgresqlEnabled: true
+  privateCaCertsAddToHost:
+    addToContainerd: true
+    enabled: true
+  prometheusPostgresExporterEnabled: true
+  rbacEnabled: true
+  taskUsageMetricsEnabled: true
+nats:
+  nats:
+    exporter:
+      enabled: true
+    reloader:
+      enabled: true
+    jetStream:
+      enabled: true
+external-secrets:
+  enabled: true
+postgresql:
+  replication:
+    enabled: true

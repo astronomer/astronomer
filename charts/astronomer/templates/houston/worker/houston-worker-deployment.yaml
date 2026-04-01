@@ -47,8 +47,9 @@ spec:
       {{- include "houston.worker.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
-{{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+
       initContainers:
         - name: etc-ssl-certs-copier
           command:
@@ -138,6 +139,7 @@ spec:
             - name: tmp
               mountPath: /houston/node_modules/.cache
         {{- end }}
+
       containers:
         - name: houston
           image: {{ template "houston.image" . }}

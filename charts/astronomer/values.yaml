@@ -125,6 +125,7 @@ houston:
 
   podAnnotations: {}
 
+  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
 
   # For example
@@ -160,6 +161,55 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
     hostAliases: []
+
+    # Dispatcher configuration for houston-worker
+    dispatcher:
+      # Enable/disable the dispatcher feature
+      enabled: false
+
+      # Dispatcher loop knobs
+      lease:
+        # TTL for dispatcher leases in seconds
+        ttlSeconds: 30
+
+      batch:
+        # Maximum batch size for dispatches
+        size: 50
+
+      inflight:
+        # Maximum inflight operations
+        max: 50
+        # Maximum inflight operations per data plane
+        maxPerDp: 5
+
+      poll:
+        # Poll interval in seconds
+        seconds: 10
+
+      # Maximum attempts per lease (per process retry loop)
+      maxAttemptsPerLease: 5
+
+      # Maximum attempts per flight (durable total retries across processes)
+      maxAttemptsPerFlight: 25
+
+      # Cooloff period after max attempts exceeded (in seconds)
+      retryCooloffPeriodSeconds: 60
+
+      # RPC timeouts
+      rpc:
+        # In-region StartFlight RPC timeout in milliseconds
+        inRegionTimeoutMs: 5000
+        # Cross-region StartFlight RPC timeout in milliseconds
+        crossRegionTimeoutMs: 12000
+
+      # Circuit breaker configuration
+      circuitBreaker:
+        # Failure threshold before circuit opens
+        failureThreshold: 10
+        # Cooloff period in seconds after circuit opens
+        cooloffSeconds: 30
+        # Maximum inflight probe requests
+        probeMaxInflight: 1
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
@@ -377,6 +427,111 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+# -- DP-Link configuration for data plane linking
+dpLink:
+  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  env: []
+    # - name: DEBUG
+    #   value: "prisma*"
+
+  # -- Extra secret environment variables to insert into the env.
+  # For example
+  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
+  # and then set:
+  #
+  # secret:
+  # - envName: "EMAIL__SMTP_URL"
+  #   secretName: "my-scret"
+  #   secretKey: "connection"
+  secret: []
+
+  # -- Enable DP-Link deployment
+  # @default -- true
+  enabled: true
+
+  # -- Service account configuration
+  serviceAccount:
+    # -- Specifies whether a service account should be created
+    create: true
+    # -- Annotations to add to the service account
+    annotations: {}
+    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  # -- Number of DP-Link replicas
+  # @default -- 3
+  replicas: 3
+
+  # -- Claim interval in seconds
+  # @default -- 30
+  claimIntervalSeconds: 30
+
+  # -- Lease renewal interval in seconds
+  # @default -- 15
+  leaseRenewalIntervalSeconds: 15
+
+  # -- Lease duration in seconds
+  # @default -- 60
+  leaseDurationSeconds: 60
+
+  # -- Unreachable threshold in seconds (heartbeat failure threshold, ~9 heartbeat failures)
+  # @default -- 90
+  unreachableThresholdSeconds: 90
+
+  # -- Degraded threshold in seconds (heartbeat failure threshold, ~3 heartbeat failures)
+  # @default -- 30
+  degradedThresholdSeconds: 30
+
+  # -- Maximum reconnection attempts
+  # @default -- 10
+  reconnectMaxAttempts: 10
+
+  # -- Initial reconnection delay in seconds
+  # @default -- 1
+  initialReconnectDelaySeconds: 1
+
+  # -- Maximum reconnection delay in seconds
+  # @default -- 30
+  maxReconnectDelaySeconds: 30
+
+  # -- Reconnection delay multiplier for exponential backoff
+  # @default -- 2
+  reconnectDelayMultiplier: 2
+
+  # -- Jitter fraction for reconnection delay (0.2 = ~20% randomness)
+  # @default -- 0.2
+  jitterFraction: 0.2
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+
+  # -- Liveness probe configuration
+  livenessProbe: {}
+
+  # -- Readiness probe configuration
+  readinessProbe: {}
+
+  # -- Arguments to pass to the container
+  args: ~
+
+  # -- Additional environment variables
+  env: []
+
+  # -- Volume mounts
+  volumeMounts: ~
+
+  # -- Extra volumes
+  extraVolumes: []
+
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
@@ -393,6 +548,22 @@ configSyncer:
     name: ""
   readinessProbe: {}
   livenessProbe: {}
+
+flightDeck:
+  # -- Enable the flightDeck feature
+  # @default -- false
+  enabled: false
+  migrations:
+    securityContext: {}
+    resources:
+      requests:
+        cpu: 100m
+        memory: 16Mi
+      limits:
+        cpu: 200m
+        memory: 32Mi
+    livenessProbe: {}
+    readinessProbe: {}
 
 
 commander:
@@ -459,6 +630,229 @@ commander:
     retryAttempts: 2
     retryDelay: 10
     extraEnv: []
+
+pilot:
+  # -- Enable Pilot deployment (data plane only)
+  # @default -- false
+  enabled: false
+
+  # -- Number of Pilot replicas (data plane only)
+  # @default -- 3
+  replicas: 3
+
+  # -- Service account configuration
+  serviceAccount:
+    # -- Specifies whether a service account should be created
+    create: true
+    # -- Annotations to add to the service account
+    annotations: {}
+    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Resource requests and limits
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+  # -- Liveness probe configuration
+  livenessProbe: {}
+
+  # -- Readiness probe configuration
+  readinessProbe: {}
+
+  # -- Extra environment variables
+  env: []
+
+  # -- Extra volumes
+  extraVolumes: []
+
+  # Claim knobs
+  # -- Maximum number of in-flight tasks per worker
+  # @default -- 5
+  maxInflightPerWorker: 5
+
+  # -- Claim poll interval in milliseconds
+  # @default -- 5000
+  claimPollIntervalMs: 5000
+
+  # -- Maximum batch claim size (defaults to 2 × maxInflightPerWorker)
+  # @default -- 10
+  maxBatchClaimSize: 10
+
+  # Leasing knobs
+  # -- Lease TTL in seconds
+  # @default -- 60
+  leaseTtlSeconds: 60
+
+  # -- Lease renew tick interval in seconds
+  # @default -- 5
+  leaseRenewTickSeconds: 5
+
+  # -- Lease renew threshold in seconds
+  # @default -- 20
+  leaseRenewThresholdSeconds: 20
+
+  # Retry knobs
+  # -- Maximum retry attempts per lease
+  # @default -- 3
+  maxAttemptsPerLease: 3
+
+  # -- Maximum retry attempts per flight
+  # @default -- 25
+  maxAttemptsPerFlight: 25
+
+  # -- Retry base interval in milliseconds
+  # @default -- 250
+  retryBaseIntervalMs: 250
+
+  # -- Retry maximum interval in milliseconds
+  # @default -- 5000
+  retryMaxIntervalMs: 5000
+
+  # -- Retry cool-off period in seconds
+  # @default -- 30
+  retryCooloffSeconds: 30
+
+  # -- Retry backoff multiplier
+  # @default -- 2.0
+  retryMultiplier: 2.0
+
+  # -- Retry jitter percentage (0.2 = 20%)
+  # @default -- 0.2
+  retryJitterPct: 0.2
+
+  # Circuit breaker knobs
+  # -- Circuit breaker failure threshold
+  # @default -- 10
+  cbFailureThreshold: 10
+
+  # -- Circuit breaker cool-off period in seconds
+  # @default -- 30
+  cbCooloffSeconds: 30
+
+  # -- Circuit breaker probe maximum in-flight
+  # @default -- 1
+  cbProbeMaxInflight: 1
+
+navigator:
+  # -- Enable Navigator deployment (control plane or unified mode only)
+  # @default -- false
+  enabled: false
+
+  # -- Number of Navigator replicas
+  # @default -- 3
+  replicas: 3
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Service account configuration
+  serviceAccount:
+    # -- Specifies whether a service account should be created
+    create: true
+    # -- Annotations to add to the service account
+    annotations: {}
+    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  env: []
+
+  # For example
+  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
+  # and then set:
+  #
+  # secret:
+  # - envName: "EMAIL__SMTP_URL"
+  #   secretName: "my-scret"
+  #   secretKey: "connection"
+  secret: []
+
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+
+  # -- Custom liveness probe configuration (overrides default)
+  livenessProbe: {}
+
+  # -- Custom readiness probe configuration (overrides default)
+  readinessProbe: {}
+
+  # -- Extra environment variables
+  env: []
+
+  # Component Flag
+  # -- Enable Navigator feature flag passed to the application
+  # @default -- false
+  enabled: false
+
+  # Failover request reconcile loop knobs
+  # -- Interval in seconds between failover request reconciler runs
+  # @default -- 10
+  failoverRequestReconcilerIntervalSeconds: 10
+
+  # Deployment admission control loop knobs
+  # -- Interval in seconds for admitting deployments with in-progress missions
+  # @default -- 10
+  deploymentAdmitForInProgressMissionsIntervalSeconds: 10
+
+  # -- Interval in seconds for admitting deployments with pending cleanup missions
+  # @default -- 30
+  deploymentAdmitForPendingCleanupMissionsIntervalSeconds: 30
+
+  # -- Batch size for deployment claim operations
+  # @default -- 50
+  deploymentClaimBatchSize: 50
+
+  # -- Batch size for deployment admit operations
+  # @default -- 5
+  deploymentAdmitBatchSize: 5
+
+  # Mission reconciler loop knobs
+  # -- Minimum batch size for mission claim operations
+  # @default -- 10
+  missionClaimMinBatchSize: 10
+
+  # -- Batch size for mission plan operations
+  # @default -- 5
+  missionPlanBatchSize: 5
+
+  # -- Batch size for mission reconcile operations
+  # @default -- 5
+  missionReconcileBatchSize: 5
+
+  # -- Interval in seconds between claim loop runs
+  # @default -- 10
+  claimIntervalSeconds: 10
+
+  # -- Fraction of available capacity to claim per interval
+  # @default -- 0.5
+  claimFraction: 0.5
+
+  # Cleanup knobs
+  # -- Interval in seconds between cleanup loop runs
+  # @default -- 300
+  cleanupIntervalSeconds: 300
+
+  # -- Time-to-live in seconds for completed missions before cleanup (7 days)
+  # @default -- 604800
+  missionCleanupTtl: 604800
+
+  # -- Time-to-live in seconds for completed flights before cleanup (7 days)
+  # @default -- 604800
+  flightCleanupTtl: 604800
 
 registry:
   # flag to bypass secure (tls) authentication to astronomer registry

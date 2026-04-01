@@ -511,11 +511,6 @@ tags:
 astronomer:
   astroUI:
     replicas: 1
-    env:
-      - name: APP_API_LOC_HTTPS
-        value: "https://houston.{settings.base_domain}/v1"
-      - name: APP_API_LOC_WSS
-        value: "wss://houston.{settings.base_domain}/ws"
   houston:
     replicas: 1
     worker:
