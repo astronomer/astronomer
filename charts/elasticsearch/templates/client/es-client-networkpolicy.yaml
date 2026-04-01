@@ -52,6 +52,11 @@ spec:
           tier: astronomer
           component: houston
           release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: houston-worker
+          release: {{ .Release.Name }}
     {{- end }}
     - podSelector:
         matchLabels:
