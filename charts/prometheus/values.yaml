@@ -201,6 +201,9 @@ extraFlags:
 # Convert lists to dicts for more explicit assignment.
 # Convert dashes to underscores for golang compatibility.
 config:
+  # Enables kubelet and cAdvisor scrape jobs for pod-level metrics
+  cadvisor:
+    enabled: false
   enableSelfScrape: false
   scrape_configs:
     kubernetes_apiservers:

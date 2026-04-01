@@ -569,6 +569,7 @@ grafana:
 #################################
 prometheus:
   podLabels: {}
+
   # Data retention
   retention: 15d
 

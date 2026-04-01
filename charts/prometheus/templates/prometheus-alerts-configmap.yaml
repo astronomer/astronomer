@@ -202,6 +202,35 @@ data:
 
       - name: k8s-recording.rules
         rules:
+        {{- if .Values.config.cadvisor.enabled }}
+        - expr: |
+            sum(rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])) by (namespace)
+          record: namespace:container_cpu_usage_seconds_total:sum_rate
+        - expr: |
+            sum by (cluster, namespace, pod, container) (
+              rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])
+            ) * on (cluster, namespace, pod) group_left(node) max by(cluster, namespace, pod, node) (kube_pod_info)
+          record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
+        - expr: |
+            container_memory_working_set_bytes{job="kubernetes-nodes-cadvisor", image!=""}
+            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
+          record: node_namespace_pod_container:container_memory_working_set_bytes
+        - expr: |
+            container_memory_rss{job="kubernetes-nodes-cadvisor", image!=""}
+            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
+          record: node_namespace_pod_container:container_memory_rss
+        - expr: |
+            container_memory_cache{job="kubernetes-nodes-cadvisor", image!=""}
+            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
+          record: node_namespace_pod_container:container_memory_cache
+        - expr: |
+            container_memory_swap{job="kubernetes-nodes-cadvisor", image!=""}
+            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
+          record: node_namespace_pod_container:container_memory_swap
+        - expr: |
+            sum(container_memory_usage_bytes{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}) by (namespace)
+          record: namespace:container_memory_usage_bytes:sum
+        {{- end }}
         - expr: |
             sum by (namespace) (
                 sum by (namespace, pod) (
