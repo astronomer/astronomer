@@ -405,13 +405,13 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "authSidecar": {"enabled": True},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
+                    "authSidecar": {"enabled": True},
                     "networkPolicy": {"enabled": True},
                     "plane": {"mode": "data"},
                 },
@@ -437,18 +437,18 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
                     "authSidecar": {
                         "enabled": True,
                         "ingressAllowedNamespaces": [
                             "test-namespace-1",
                             "test-namespace-2",
                         ],
-                    },
-                    "customLogging": {
-                        "enabled": True,
-                        "scheme": "https",
-                        "host": "esdemo.example.com",
-                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
                     "networkPolicy": {"enabled": True},
                     "plane": {"mode": "data"},
@@ -490,7 +490,7 @@ class TestExternalElasticSearch:
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                 },
             },
             show_only=[
@@ -593,8 +593,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "logging": {"indexNamePrefix": "astronomer"},
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"indexNamePrefix": "astronomer", "loggingSidecar": {"enabled": True}},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
@@ -621,7 +620,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
@@ -654,7 +653,7 @@ class TestExternalElasticSearch:
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                 },
             },
             show_only=[

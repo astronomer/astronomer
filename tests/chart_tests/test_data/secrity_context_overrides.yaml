@@ -27,10 +27,11 @@ external-secrets:
       dummy_key: dummy_value
       readOnlyRootFilesystem: false
 global:
-  loggingSidecar:
-    securityContext:
-      dummy_key: dummy_value
-      readOnlyRootFilesystem: false
+  logging:
+    loggingSidecar:
+        securityContext:
+          dummy_key: dummy_value
+          readOnlyRootFilesystem: false
 grafana:
   securityContext:
     dummy_key: dummy_value
@@ -57,6 +58,10 @@ postgresql:
       dummy_key: dummy_value
       readOnlyRootFilesystem: false
 prometheus:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
+prometheus-node-exporter:
   securityContext:
     dummy_key: dummy_value
     readOnlyRootFilesystem: false

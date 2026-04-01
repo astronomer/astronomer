@@ -74,8 +74,8 @@ def test_networkpolicy_for_airflow_components(kube_version):
         show_only="charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
         values={
             "global": {
+                "deployMechanisms": {"dagOnlyDeployment": {"enabled": True}},
                 "networkPolicy": {"enabled": True},
-                "dagOnlyDeployment": {"enabled": True},
             },
         },
     )

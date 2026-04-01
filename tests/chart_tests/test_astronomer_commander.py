@@ -28,7 +28,7 @@ class TestAstronomerCommander:
         """Test that helm renders a good metadata.yaml template for astronomer/commander."""
         values = {
             "global": {
-                "rbacEnabled": rbac_enabled,
+                "rbac": {"enabled": rbac_enabled},
                 "namespaceLabels": namespace_labels,
             }
         }
@@ -195,11 +195,9 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
                     "clusterRoles": True,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -239,10 +237,8 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "clusterRoles": True,
-                    "rbacEnabled": False,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": False},
                 }
             },
             show_only=[
@@ -259,10 +255,8 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "clusterRoles": False,
-                    "rbacEnabled": False,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": False},
                 }
             },
             show_only=[
@@ -280,10 +274,8 @@ class TestAstronomerCommander:
             values={
                 "global": {
                     "clusterRoles": False,
-                    "rbacEnabled": True,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -348,14 +340,14 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
-                    "sccEnabled": True,
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
+                        }
                     },
+                    "rbac": {"enabled": True},
+                    "scc": {"enabled": True},
                 }
             },
             show_only=[
@@ -423,12 +415,10 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
-                    "sccEnabled": True,
                     "clusterRoles": True,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
+                    "scc": {"enabled": True},
                 }
             },
             show_only=[

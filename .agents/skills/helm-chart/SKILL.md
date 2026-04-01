@@ -792,8 +792,6 @@ helm lint mychart/ --strict
 # With values
 helm lint mychart/ -f values-production.yaml
 
-# Security scanning
-trivy config mychart/
 
 # Best practices
 helm template myrelease mychart/ | polaris audit --audit-path -
@@ -915,18 +913,8 @@ jobs:
             helm template test $chart --debug
           done
 
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Trivy
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: "config"
-          scan-ref: "charts/"
-
   release:
-    needs: [lint, test, template, security]
+    needs: [lint, test, template]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:

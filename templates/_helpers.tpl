@@ -2,7 +2,7 @@
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{- .Values.global.logging.indexNamePrefix -}}
 {{- else -}}
-{{- if .Values.global.loggingSidecar.enabled  -}}
+{{- if .Values.global.logging.loggingSidecar.enabled  -}}
 vector
 {{- else -}}
 fluentd
@@ -26,9 +26,9 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "dagOnlyDeployment.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.dagOnlyDeployment.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.deployMechanisms.dagOnlyDeployment.tag }}
 {{- else -}}
-{{ .Values.global.dagOnlyDeployment.repository }}:{{ .Values.global.dagOnlyDeployment.tag }}
+{{ .Values.global.deployMechanisms.dagOnlyDeployment.repository }}:{{ .Values.global.deployMechanisms.dagOnlyDeployment.tag }}
 {{- end }}
 {{- end }}
 
@@ -42,9 +42,9 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.loggingSidecar.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.logging.loggingSidecar.tag }}
 {{- else -}}
-{{ .Values.global.loggingSidecar.repository }}:{{ .Values.global.loggingSidecar.tag }}
+{{ .Values.global.logging.loggingSidecar.repository }}:{{ .Values.global.logging.loggingSidecar.tag }}
 {{- end }}
 {{- end }}
 
