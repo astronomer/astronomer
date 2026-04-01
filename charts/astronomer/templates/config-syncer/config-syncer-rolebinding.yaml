@@ -28,7 +28,7 @@ metadata:
   {{- if not $useClusterRoles }}
   namespace: {{ $namespaceName }}
   {{- end }}
-  {{- if $.Values.global.enableArgoCDAnnotation }}
+  {{- if $.Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}

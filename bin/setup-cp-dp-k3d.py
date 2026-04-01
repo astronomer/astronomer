@@ -489,7 +489,8 @@ global:
     mode: {settings.cp_mode}
     domainPrefix: ""
   tlsSecret: {settings.tls_secret_name}
-  postgresqlEnabled: true
+  postgresql:
+    enabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:
@@ -511,11 +512,6 @@ tags:
 astronomer:
   astroUI:
     replicas: 1
-    env:
-      - name: APP_API_LOC_HTTPS
-        value: "https://houston.{settings.base_domain}/v1"
-      - name: APP_API_LOC_WSS
-        value: "wss://houston.{settings.base_domain}/ws"
   houston:
     replicas: 1
     worker:
@@ -597,7 +593,8 @@ global:
     mode: data
     domainPrefix: {dp.domain_prefix}
   tlsSecret: {settings.tls_secret_name}
-  postgresqlEnabled: false
+  postgresql:
+    enabled: false
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:

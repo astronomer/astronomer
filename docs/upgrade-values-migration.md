@@ -110,6 +110,13 @@ helm upgrade <release-name> astronomer/astronomer \
 | `global.dagOnlyDeployment.*` | `global.deployMechanisms.dagOnlyDeployment.*` | subtree move |
 | `global.loggingSidecar.*` | `global.logging.loggingSidecar.*` | subtree move |
 
+The script also migrates flat boolean flags under
+`astronomer.houston.config.deployments` to nested `.enabled` paths (for example
+`dagProcessorEnabled` → `airflowComponents.dagProcessor.enabled`), moves a few
+non-boolean keys to grouped sections, and deletes obsolete deployment config
+keys. Run `./bin/migrate-helm-chart-values-1x-to-2x.py --dry-run your-values.yaml`
+to see the exact list for your file.
+
 ### Unchanged Keys (No Migration Needed)
 
 These keys already use the correct schema and are not modified:
@@ -117,7 +124,8 @@ These keys already use the correct schema and are not modified:
 - `global.networkPolicy.enabled`
 - `global.authSidecar.*`
 - `global.airflowOperator.*`
-- All keys under `astronomer`, `nginx`, `grafana`, `prometheus`,
+- Most keys under `astronomer` **outside** `astronomer.houston.config.deployments`
+- All keys under `nginx`, `grafana`, `prometheus`,
   `elasticsearch`, `vector`, `kube-state`, `nats`, `tags`
 
 ## Rollback

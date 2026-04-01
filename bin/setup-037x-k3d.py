@@ -448,7 +448,8 @@ def _values_yaml(settings: Settings) -> str:
 global:
   baseDomain: {settings.base_domain}
   tlsSecret: {settings.tls_secret_name}
-  postgresqlEnabled: true
+  postgresql:
+    enabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   rbacEnabled: true

@@ -31,11 +31,16 @@ metadata:
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
     heritage: {{ $.Release.Service }}
-  {{- if $.Values.global.enableArgoCDAnnotation }}
+  {{- if $.Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 rules:
+{{- if $.Values.global.dataPlaneFailover.enabled  }}
+- apiGroups: ["external-secrets.io", "generators.external-secrets.io"]
+  resources: ["clusterexternalsecrets", "clusterpushsecrets", "clustersecretstores", "externalsecrets", "pushsecrets", "secretstores", "generatorstates"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+{{- end }}
 {{- if $.Values.global.airflowOperator.enabled }}
 - apiGroups: ["airflow.apache.org"]
   resources: ["airflows"]
@@ -182,7 +187,7 @@ metadata:
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
     heritage: {{ $.Release.Service }}
-  {{- if $.Values.global.enableArgoCDAnnotation }}
+  {{- if $.Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}

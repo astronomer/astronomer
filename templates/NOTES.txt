@@ -8,9 +8,15 @@ Astronomer has been installed in {{ $planeMode }} plane mode.
 {{- if .Values.global.baseDomain }}
 The platform components may take a few minutes to spin up.
 
-{{- $astronomerEnabled := hasKey .Values.global "astronomerEnabled" | ternary .Values.global.astronomerEnabled true }}
+{{- $astronomerEnabled := true }}
+{{- if and (hasKey .Values.global "astronomer") (kindIs "map" .Values.global.astronomer) (hasKey .Values.global.astronomer "enabled") }}
+{{- $astronomerEnabled = .Values.global.astronomer.enabled }}
+{{- end }}
 {{- $platformEnabled := hasKey .Values.tags "platform" | ternary .Values.tags.platform true }}
-{{- $grafanaEnabled := hasKey .Values.global "grafanaEnabled" | ternary .Values.global.grafanaEnabled true }}
+{{- $grafanaEnabled := true }}
+{{- if and (hasKey .Values.global "grafana") (kindIs "map" .Values.global.grafana) (hasKey .Values.global.grafana "enabled") }}
+{{- $grafanaEnabled = .Values.global.grafana.enabled }}
+{{- end }}
 {{- $monitoringEnabled := hasKey .Values.tags "monitoring" | ternary .Values.tags.monitoring true }}
 {{- $loggingEnabled := hasKey .Values.tags "logging" | ternary .Values.tags.logging true }}
 

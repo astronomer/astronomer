@@ -2,7 +2,7 @@
 ## Houston Log Wrapper ConfigMap             ##
 ## Shared by Houston API and Houston Worker  ##
 ###############################################
-{{- if .Values.houston.loggingSidecar.enabled }}
+{{- if .Values.houston.logging.loggingSidecar.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap

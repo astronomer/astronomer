@@ -55,6 +55,13 @@ def old_partial_override_text() -> str:
           taskUsageMetricsEnabled: true
           deployRollbackEnabled: true
           networkNSLabels: true
+          podDisruptionBudgetsEnabled: true
+          postgresqlEnabled: false
+          prometheusPostgresExporterEnabled: false
+          manualNamespaceNamesEnabled: false
+          enablePerHostIngress: false
+          enableArgoCDAnnotation: false
+          disableManageClusterScopedResources: false
           features:
             namespacePools:
               enabled: true
@@ -79,6 +86,28 @@ def old_partial_override_text() -> str:
             resources:
               requests:
                 cpu: "1000m"
+            config:
+              deployments:
+                dagProcessorEnabled: true
+                triggererEnabled: true
+                configureDagDeployment: true
+                gitSyncDagDeployment: true
+                nfsMountDagDeployment: true
+                enableListAllRuntimeVersions: true
+                enableUpdateDeploymentImageEndpoint: true
+                grafanaUIEnabled: true
+                hardDeleteDeployment: true
+                logHelmValues: true
+                manualReleaseNames: false
+                pgBouncerResourceCalculationStrategy: airflowStratV2
+                serviceAccountAnnotationKey: eks.amazonaws.com/role-arn
+                astroUnitsEnabled: false
+                resourceProvisioningStrategy:
+                  astroUnitsEnabled: false
+                maxPodAu: 100
+                upsertDeploymentEnabled: true
+                canUpsertDeploymentFromUI: true
+                enableSystemAdminCanCreateDeprecatedAirflows: false
     """)
 
 
@@ -97,9 +126,24 @@ def expected_new_partial_text() -> str:
             enabled: true
           networkNSLabels:
             enabled: true
+          podDisruptionBudgets:
+            enabled: true
+          postgresql:
+            enabled: false
+          prometheusPostgresExporter:
+            enabled: false
+          perHostIngress:
+            enabled: false
+          argoCD:
+            annotation:
+              enabled: false
+          manageClusterScopedResources:
+            enabled: true
           namespaceManagement:
             namespaceFreeFormEntry:
               enabled: true
+            manualNamespaceNames:
+              enabled: false
             namespacePools:
               enabled: true
               createRbac: true
@@ -131,6 +175,40 @@ def expected_new_partial_text() -> str:
             resources:
               requests:
                 cpu: "1000m"
+            config:
+              deployments:
+                airflowComponents:
+                  dagProcessor:
+                    enabled: true
+                  triggerer:
+                    enabled: true
+                deployMechanisms:
+                  configureDagDeployment:
+                    enabled: true
+                  gitSyncDagDeployment:
+                    enabled: true
+                  nfsMountDagDeployment:
+                    enabled: true
+                runtimeManagement:
+                  listAllRuntimeVersions:
+                    enabled: true
+                deploymentImagesRegistry:
+                  updateDeploymentImageEndpoint:
+                    enabled: true
+                  serviceAccountAnnotationKey: eks.amazonaws.com/role-arn
+                metricsReporting:
+                  grafana:
+                    enabled: true
+                deploymentLifecycle:
+                  hardDeleteDeployment:
+                    enabled: true
+                logHelmValues:
+                  enabled: true
+                namespaceManagement:
+                  manualReleaseNames:
+                    enabled: false
+                databaseManagement:
+                  pgBouncerResourceCalculationStrategy: airflowStratV2
     """)
 
 
@@ -160,6 +238,19 @@ def new_schema_partial_text() -> str:
             enabled: false
           networkNSLabels:
             enabled: true
+          podDisruptionBudgets:
+            enabled: true
+          postgresql:
+            enabled: false
+          prometheusPostgresExporter:
+            enabled: false
+          perHostIngress:
+            enabled: false
+          argoCD:
+            annotation:
+              enabled: false
+          manageClusterScopedResources:
+            enabled: true
           namespaceManagement:
             namespaceFreeFormEntry:
               enabled: true
@@ -181,6 +272,21 @@ def new_schema_partial_text() -> str:
             loggingSidecar:
               enabled: true
               name: sidecar-log-consumer
+
+        astronomer:
+          houston:
+            config:
+              deployments:
+                airflowComponents:
+                  dagProcessor:
+                    enabled: true
+                  triggerer:
+                    enabled: true
+                deployMechanisms:
+                  configureDagDeployment:
+                    enabled: true
+                logHelmValues:
+                  enabled: true
     """)
 
 
@@ -226,6 +332,13 @@ def old_037x_partial_override_text() -> str:
           taskUsageMetricsEnabled: true
           deployRollbackEnabled: true
           networkNSLabels: true
+          podDisruptionBudgetsEnabled: true
+          postgresqlEnabled: false
+          prometheusPostgresExporterEnabled: false
+          manualNamespaceNamesEnabled: false
+          enablePerHostIngress: false
+          enableArgoCDAnnotation: false
+          disableManageClusterScopedResources: false
           singleNamespace: true
           veleroEnabled: true
           enableHoustonInternalAuthorization: true
@@ -274,6 +387,28 @@ def old_037x_partial_override_text() -> str:
             resources:
               requests:
                 cpu: "1000m"
+            config:
+              deployments:
+                dagProcessorEnabled: true
+                triggererEnabled: true
+                configureDagDeployment: true
+                gitSyncDagDeployment: true
+                nfsMountDagDeployment: true
+                enableListAllRuntimeVersions: true
+                enableUpdateDeploymentImageEndpoint: true
+                grafanaUIEnabled: true
+                hardDeleteDeployment: true
+                logHelmValues: true
+                manualReleaseNames: false
+                pgBouncerResourceCalculationStrategy: airflowStratV2
+                serviceAccountAnnotationKey: eks.amazonaws.com/role-arn
+                astroUnitsEnabled: false
+                resourceProvisioningStrategy:
+                  astroUnitsEnabled: false
+                maxPodAu: 100
+                upsertDeploymentEnabled: true
+                canUpsertDeploymentFromUI: true
+                enableSystemAdminCanCreateDeprecatedAirflows: false
 
         stan:
           stan:
@@ -317,9 +452,24 @@ def expected_037x_new_partial_text() -> str:
             enabled: true
           networkNSLabels:
             enabled: true
+          podDisruptionBudgets:
+            enabled: true
+          postgresql:
+            enabled: false
+          prometheusPostgresExporter:
+            enabled: false
+          perHostIngress:
+            enabled: false
+          argoCD:
+            annotation:
+              enabled: false
+          manageClusterScopedResources:
+            enabled: true
           namespaceManagement:
             namespaceFreeFormEntry:
               enabled: true
+            manualNamespaceNames:
+              enabled: false
             namespacePools:
               enabled: true
               createRbac: true
@@ -373,6 +523,40 @@ def expected_037x_new_partial_text() -> str:
             resources:
               requests:
                 cpu: "1000m"
+            config:
+              deployments:
+                airflowComponents:
+                  dagProcessor:
+                    enabled: true
+                  triggerer:
+                    enabled: true
+                deployMechanisms:
+                  configureDagDeployment:
+                    enabled: true
+                  gitSyncDagDeployment:
+                    enabled: true
+                  nfsMountDagDeployment:
+                    enabled: true
+                runtimeManagement:
+                  listAllRuntimeVersions:
+                    enabled: true
+                deploymentImagesRegistry:
+                  updateDeploymentImageEndpoint:
+                    enabled: true
+                  serviceAccountAnnotationKey: eks.amazonaws.com/role-arn
+                metricsReporting:
+                  grafana:
+                    enabled: true
+                deploymentLifecycle:
+                  hardDeleteDeployment:
+                    enabled: true
+                logHelmValues:
+                  enabled: true
+                namespaceManagement:
+                  manualReleaseNames:
+                    enabled: false
+                databaseManagement:
+                  pgBouncerResourceCalculationStrategy: airflowStratV2
 
         vector:
           resources:
@@ -415,6 +599,19 @@ def new_037x_schema_partial_text() -> str:
             enabled: false
           networkNSLabels:
             enabled: true
+          podDisruptionBudgets:
+            enabled: true
+          postgresql:
+            enabled: false
+          prometheusPostgresExporter:
+            enabled: false
+          perHostIngress:
+            enabled: false
+          argoCD:
+            annotation:
+              enabled: false
+          manageClusterScopedResources:
+            enabled: true
           namespaceManagement:
             namespaceFreeFormEntry:
               enabled: true
@@ -448,6 +645,16 @@ def new_037x_schema_partial_text() -> str:
             gssSupport: true
             secretName: astronomer-pgbouncer-config
             servicePort: "6543"
+
+        astronomer:
+          houston:
+            config:
+              deployments:
+                airflowComponents:
+                  dagProcessor:
+                    enabled: true
+                  triggerer:
+                    enabled: true
 
         tags:
           platform: true

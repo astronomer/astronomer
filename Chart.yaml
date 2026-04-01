@@ -12,25 +12,25 @@ keywords:
 dependencies:
   # Platform components
   - name: astronomer
-    condition: global.astronomerEnabled
+    condition: global.astronomer.enabled
     tags:
       - platform
   - name: nginx
-    condition: global.nginxEnabled
+    condition: global.nginx.enabled
     tags:
       - platform
 
   # Monitoring stack
   - name: alertmanager
-    condition: global.alertmanagerEnabled
+    condition: global.alertmanager.enabled
     tags:
       - monitoring
   - name: grafana
-    condition: global.grafanaEnabled
+    condition: global.grafana.enabled
     tags:
       - monitoring
   - name: kube-state
-    condition: global.kubeStateEnabled
+    condition: global.kubeState.enabled
     tags:
       - monitoring
   - name: prometheus-node-exporter
@@ -38,28 +38,28 @@ dependencies:
     tags:
       - monitoring
   - name: prometheus-postgres-exporter
-    condition: global.prometheusPostgresExporterEnabled
+    condition: global.prometheusPostgresExporter.enabled
     tags:
       - monitoring
   - name: prometheus
-    condition: global.prometheusEnabled
+    condition: global.prometheus.enabled
     tags:
       - monitoring
 
   # Logging stack
   - name: elasticsearch
-    condition: global.elasticsearchEnabled
+    condition: global.elasticsearch.enabled
     tags:
       - logging
   - name: vector
-    condition: global.vectorEnabled
+    condition: global.vector.enabled
     tags:
       - logging
 
   # In-cluster DB
   # !! Not recommended for production !!
   - name: postgresql
-    condition: global.postgresqlEnabled
+    condition: global.postgresql.enabled
     tags:
       - postgresql
 
@@ -84,3 +84,11 @@ dependencies:
     condition: global.airflowOperator.enabled
     tags:
       - airflow-operator
+
+  # External Secrets Operator
+  - name: external-secrets
+    condition: external-secrets.enabled
+    tags:
+      - eso
+      - external-secrets
+      - dp-failover

@@ -15,6 +15,11 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainPrefix: ""    # cluster-id
 
+  # Shared secret for internal service-to-service authentication (e.g. pilot -> commander gRPC).
+  # Auto-generated on install if empty; preserved across upgrades.
+  internalServiceAuth:
+    token: ""
+
   # Labels to add to every pod
   podLabels: {}
 
@@ -66,6 +71,9 @@ global:
 
   # Namespace management features
   namespaceManagement:
+    # Configure vector to gather logs from all available namespaces
+    manualNamespaceNames:
+      enabled: false
     namespaceFreeFormEntry:
       enabled: false
     namespacePools:
@@ -76,6 +84,13 @@ global:
         # if create is enabled, this helm chart will create the provided k8s namespaces
         create: false
         names: []
+
+  # dataPlaneFailover: master switch for DR failover
+  # On data plane (mode=data): enables pilot, flightDeck, and commander StartFlight RPC
+  # On control plane (mode=control): enables navigator, dp-link, and houston dispatcher
+  # On unified (mode=unified): no effect — enable components individually
+  dataPlaneFailover:
+    enabled: false
 
   # Metrics and reporting features
   metricsReporting:
@@ -184,7 +199,8 @@ global:
   acme: false
 
   # whether to create pod disruption budgets by default for platform components
-  podDisruptionBudgetsEnabled: true
+  podDisruptionBudgets:
+    enabled: true
 
   # URL to the Astronomer helm repo
   helmRepo: "https://helm.astronomer.io"
@@ -199,14 +215,13 @@ global:
 
   # Enable default postgresql database.
   # This is not recommended for production.
-  postgresqlEnabled: false
-
-  prometheusPostgresExporterEnabled: false
-  nodeExporter:
+  postgresql:
     enabled: false
 
-  # Configure vector to gather logs from all available namespaces
-  manualNamespaceNamesEnabled: false
+  prometheusPostgresExporter:
+    enabled: false
+  nodeExporter:
+    enabled: false
 
   # Used to enable nats-server
   nats:
@@ -220,9 +235,11 @@ global:
   defaultDenyNetworkPolicy: true
 
 
-  disableManageClusterScopedResources: false
+  manageClusterScopedResources:
+    enabled: true
 
-  enablePerHostIngress: false
+  perHostIngress:
+    enabled: false
 
   logging:
     indexNamePrefix: ~
@@ -307,7 +324,9 @@ global:
   # Enable argo CD annotations currently available only for:
   # ServiceAccounts, ClusterRoles, RoleBindings, ClusterRoleBindings
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
-  enableArgoCDAnnotation: false
+  argoCD:
+    annotation:
+      enabled: false
 
   airflow:
     images:
@@ -387,54 +406,55 @@ astronomer:
     # This mirrors charts/astronomer/values.yaml for customers who install
     # or upgrade the umbrella chart from the repo root or packaged release.
     # When enabled, Vector can ship to one or more sinks at the same time.
-    loggingSidecar:
-      enabled: false
-
-      securityContext:
-        runAsNonRoot: true
-        allowPrivilegeEscalation: false
-
-      resources:
-        requests:
-          memory: "128Mi"
-          cpu: "50m"
-        limits:
-          memory: "256Mi"
-          cpu: "200m"
-
-      cloudwatch:
+    logging:
+      loggingSidecar:
         enabled: false
-        region: ""
-        logGroupName: "/astronomer/houston/audit"
-        useIRSA: true
-        secretName: "houston-cloudwatch-creds"
 
-      gcpCloudLogging:
-        enabled: false
-        projectId: ""
-        logId: "houston-audit"
-        resource:
-          type: "k8s_container"
-        severityKey: "level"
-        useWorkloadIdentity: true
-        credentialsSecretName: "houston-gcp-logging-creds"
-        credentialsSecretKey: "key.json"
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
 
-      elasticsearch:
-        enabled: false
-        # External endpoint URL for the Elasticsearch cluster.
-        # This must be set explicitly when Elasticsearch sink support is enabled.
-        endpoint: ~
-        index: "houston-audit-%Y.%m.%d"
-        apiVersion: "v8"
-        auth:
-          strategy: "basic"
-          secretName: "houston-elasticsearch-creds"
-        tls:
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+        cloudwatch:
           enabled: false
-          caSecretName: ""
+          region: ""
+          logGroupName: "/astronomer/houston/audit"
+          useIRSA: true
+          secretName: "houston-cloudwatch-creds"
 
-      extraSinks: ""
+        gcpCloudLogging:
+          enabled: false
+          projectId: ""
+          logId: "houston-audit"
+          resource:
+            type: "k8s_container"
+          severityKey: "level"
+          useWorkloadIdentity: true
+          credentialsSecretName: "houston-gcp-logging-creds"
+          credentialsSecretKey: "key.json"
+
+        elasticsearch:
+          enabled: false
+          # External endpoint URL for the Elasticsearch cluster.
+          # This must be set explicitly when Elasticsearch sink support is enabled.
+          endpoint: ~
+          index: "houston-audit-%Y.%m.%d"
+          apiVersion: "v8"
+          auth:
+            strategy: "basic"
+            secretName: "houston-elasticsearch-creds"
+          tls:
+            enabled: false
+            caSecretName: ""
+
+        extraSinks: ""
 
     resources:
       requests:
@@ -733,3 +753,9 @@ kube-state:
     limits:
       cpu: "500m"
       memory: "1024Mi"
+
+#################################
+## External Secrets configuration
+#################################
+external-secrets:
+  enabled: false

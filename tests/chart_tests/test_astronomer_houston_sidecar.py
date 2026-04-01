@@ -202,12 +202,14 @@ class TestHoustonSidecarLogging:
             values={
                 "astronomer": {
                     "houston": {
-                        "loggingSidecar": {
-                            "enabled": True,
-                            "cloudwatch": {
+                        "logging": {
+                            "loggingSidecar": {
                                 "enabled": True,
+                                "cloudwatch": {
+                                    "enabled": True,
+                                },
                             },
-                        }
+                        },
                     }
                 }
             },
@@ -238,17 +240,19 @@ class TestHoustonSidecarLogging:
             values={
                 "astronomer": {
                     "houston": {
-                        "loggingSidecar": {
-                            "enabled": True,
-                            "cloudwatch": {
+                        "logging": {
+                            "loggingSidecar": {
                                 "enabled": True,
-                                "region": "us-east-2",
+                                "cloudwatch": {
+                                    "enabled": True,
+                                    "region": "us-east-2",
+                                },
+                                "elasticsearch": {
+                                    "enabled": True,
+                                    "endpoint": "https://es.example.com:9200",
+                                },
                             },
-                            "elasticsearch": {
-                                "enabled": True,
-                                "endpoint": "https://es.example.com:9200",
-                            },
-                        }
+                        },
                     }
                 }
             },
@@ -270,14 +274,16 @@ class TestHoustonSidecarLogging:
                 values={
                     "astronomer": {
                         "houston": {
-                            "loggingSidecar": {
-                                "enabled": True,
+                            "logging": {
+                                "loggingSidecar": {
+                                    "enabled": True,
+                                }
                             }
                         }
                     }
                 },
             )
-        assert "houston.loggingSidecar.enabled requires at least one sink" in excinfo.value.stderr.decode("utf-8")
+        assert "houston.logging.loggingSidecar.enabled requires at least one sink" in excinfo.value.stderr.decode("utf-8")
 
     def test_houston_sidecar_logging_elasticsearch_requires_endpoint(self, kube_version):
         with pytest.raises(CalledProcessError) as excinfo:
@@ -289,17 +295,19 @@ class TestHoustonSidecarLogging:
                 values={
                     "astronomer": {
                         "houston": {
-                            "loggingSidecar": {
-                                "enabled": True,
-                                "elasticsearch": {
+                            "logging": {
+                                "loggingSidecar": {
                                     "enabled": True,
+                                    "elasticsearch": {
+                                        "enabled": True,
+                                    },
                                 },
-                            }
+                            },
                         }
                     }
                 },
             )
-        assert "houston.loggingSidecar.elasticsearch.endpoint must be set" in excinfo.value.stderr.decode("utf-8")
+        assert "houston.logging.loggingSidecar.elasticsearch.endpoint must be set" in excinfo.value.stderr.decode("utf-8")
 
     def test_houston_sidecar_logging_elasticsearch_uses_explicit_endpoint(self, kube_version):
         docs = render_chart(
@@ -311,17 +319,19 @@ class TestHoustonSidecarLogging:
             values={
                 "astronomer": {
                     "houston": {
-                        "loggingSidecar": {
-                            "enabled": True,
-                            "elasticsearch": {
+                        "logging": {
+                            "loggingSidecar": {
                                 "enabled": True,
-                                "endpoint": "https://es.example.com:9200",
-                                "auth": {
-                                    "strategy": "basic",
-                                    "secretName": "houston-elasticsearch-creds",
+                                "elasticsearch": {
+                                    "enabled": True,
+                                    "endpoint": "https://es.example.com:9200",
+                                    "auth": {
+                                        "strategy": "basic",
+                                        "secretName": "houston-elasticsearch-creds",
+                                    },
                                 },
                             },
-                        }
+                        },
                     }
                 }
             },

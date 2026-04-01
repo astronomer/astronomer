@@ -2,6 +2,7 @@ import jmespath
 import pytest
 
 from tests import supported_k8s_versions
+from tests.utils import get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -73,3 +74,25 @@ class TestAstroUIDeployment:
         assert "emptyDir" in volumes["tmp"]
         assert "var-cache-nginx" in volumes
         assert "emptyDir" in volumes["var-cache-nginx"]
+
+    def test_astro_ui_user_provided_env_vars(self, kube_version):
+        """Test that user-provided env vars are injected into the astro-ui container."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "astroUI": {
+                        "env": [
+                            {"name": "MY_CUSTOM_VAR", "value": "custom-value"},
+                            {"name": "ANOTHER_VAR", "value": "another-value"},
+                        ],
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        astro_ui_container = get_containers_by_name(docs[0])["astro-ui"]
+        env_vars = get_env_vars_dict(astro_ui_container["env"])
+        assert env_vars["MY_CUSTOM_VAR"] == "custom-value"
+        assert env_vars["ANOTHER_VAR"] == "another-value"

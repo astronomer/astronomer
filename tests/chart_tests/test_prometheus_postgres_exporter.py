@@ -15,7 +15,7 @@ class TestPrometheusPostgresExporter:
             kube_version=kube_version,
             values={
                 "global": {
-                    "prometheusPostgresExporterEnabled": True,
+                    "prometheusPostgresExporter": {"enabled": True},
                 },
             },
             show_only=[
@@ -70,7 +70,7 @@ class TestPrometheusPostgresExporter:
         and tolerations with global values."""
         values = {
             "global": {
-                "prometheusPostgresExporterEnabled": True,
+                "prometheusPostgresExporter": {"enabled": True},
                 "platformNodePool": global_platform_node_pool_config,
             }
         }
@@ -91,7 +91,7 @@ class TestPrometheusPostgresExporter:
 
         global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-postgres-exporter"}
         values = {
-            "global": {"prometheusPostgresExporterEnabled": True},
+            "global": {"prometheusPostgresExporter": {"enabled": True}},
             "prometheus-postgres-exporter": global_platform_node_pool_config,
         }
         docs = render_chart(

@@ -32,7 +32,7 @@ class TestNSSelectorNetworkPolicies:
         """Test postgresql Service with namespace selector labels."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"networkNSLabels": {"enabled": True}, "postgresqlEnabled": True}},
+            values={"global": {"networkNSLabels": {"enabled": True}, "postgresql": {"enabled": True}}},
             show_only=[
                 "charts/postgresql/templates/networkpolicy.yaml",
             ],

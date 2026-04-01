@@ -379,6 +379,28 @@ astronomer:
       limits:
         cpu: "1000m"
         memory: "2048Mi"
+    config:
+      deployments:
+        dagProcessorEnabled: true
+        triggererEnabled: true
+        configureDagDeployment: true
+        gitSyncDagDeployment: false
+        nfsMountDagDeployment: false
+        enableListAllRuntimeVersions: false
+        enableUpdateDeploymentImageEndpoint: false
+        grafanaUIEnabled: true
+        hardDeleteDeployment: false
+        logHelmValues: false
+        manualReleaseNames: false
+        pgBouncerResourceCalculationStrategy: ~
+        serviceAccountAnnotationKey: ~
+        astroUnitsEnabled: false
+        resourceProvisioningStrategy:
+          astroUnitsEnabled: false
+        maxPodAu: 100
+        upsertDeploymentEnabled: true
+        canUpsertDeploymentFromUI: true
+        enableSystemAdminCanCreateDeprecatedAirflows: false
 
   commander:
     resources:

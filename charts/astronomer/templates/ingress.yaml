@@ -1,7 +1,7 @@
 ########################
 ## Astronomer Ingress ##
 ########################
-{{- if and .Values.global.baseDomain ( not .Values.global.enablePerHostIngress ) }}
+{{- if and .Values.global.baseDomain ( not .Values.global.perHostIngress.enabled ) }}
 {{- $planeDataMode := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
