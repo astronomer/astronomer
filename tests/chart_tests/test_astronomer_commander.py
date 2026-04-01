@@ -114,6 +114,7 @@ class TestAstronomerCommander:
         }
         assert not env_vars.get("COMMANDER_FLIGHTDECK_DSN")
         assert env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
+        assert "COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME" not in env_vars
 
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
         assert volume_mounts["tmp-workspace"] == "/tmp"

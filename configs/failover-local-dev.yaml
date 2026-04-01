@@ -1,9 +1,4 @@
 astronomer:
-  airflowChartVersion: 1.17.26-build39929
-  commander:
-    env:
-      - name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
-        value: secrets-backend-credentials
   dpLink:
     enabled: true
   flightDeck:
@@ -15,13 +10,10 @@ astronomer:
   images:
     astroUI:
       pullPolicy: Always
-      tag: feature_apc-dr
     commander:
       pullPolicy: Always
-      tag: feature_apc-dr
     houston:
       pullPolicy: Always
-      tag: feature_apc-dr
   navigator:
     enabled: true
     env:
@@ -34,6 +26,9 @@ external-secrets:
 global:
   dataPlaneFailover:
     enabled: true
+    externalSecretManagerSecretName: astronomer-cluster-secret-store
+  grafana:
+    enabled: false
   helmRepo: https://internal-helm.astronomer.io
   prometheusPostgresExporterEnabled: false
   rbacEnabled: true
@@ -42,4 +37,4 @@ global:
     mode: disable
 tags:
   logging: false
-  monitoring: false
+  monitoring: true

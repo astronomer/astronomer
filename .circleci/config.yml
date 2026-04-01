@@ -301,12 +301,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-35-0:
+  scenario-unified-1-35-1:
     machine:
       image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.35.0
+      KUBE_VERSION: v1.35.1
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -376,7 +376,7 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 
-      - scenario-unified-1-35-0:
+      - scenario-unified-1-35-1:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -395,7 +395,7 @@ workflows:
           requires:
             - approve-internal-release
             - scenario-unified-1-31-14
-            - scenario-unified-1-35-0
+            - scenario-unified-1-35-1
       - approve-upgrade-test:
           type: approval
           filters:

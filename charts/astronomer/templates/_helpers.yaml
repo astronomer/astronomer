@@ -285,6 +285,10 @@
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
+{{- if .Values.global.dataPlaneFailover.enabled }}
+- name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
+  value: {{ .Values.global.dataPlaneFailover.externalSecretManagerSecretName | quote }}
+{{- end }}
 {{- end }}
 {{- end }}
 
