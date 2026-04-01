@@ -174,9 +174,7 @@ class TestPartialOverrideMigration:
         assert deployments["deploymentImagesRegistry"]["updateDeploymentImageEndpoint"]["enabled"] is True
         assert deployments["metricsReporting"]["grafana"]["enabled"] is True
         assert deployments["deploymentLifecycle"]["hardDeleteDeployment"]["enabled"] is True
-        # logHelmValues is dropped by the migration due to self-referential key name
-        # in HoustonDeploymentBoolToNested (old_key == new_path[0])
-        assert "logHelmValues" not in deployments
+        assert deployments["logHelmValues"]["enabled"] is True
         assert deployments["namespaceManagement"]["manualReleaseNames"]["enabled"] is False
         # Move migrations
         assert deployments["databaseManagement"]["pgBouncerResourceCalculationStrategy"] == "airflowStratV2"
@@ -192,7 +190,6 @@ class TestPartialOverrideMigration:
             "enableUpdateDeploymentImageEndpoint",
             "grafanaUIEnabled",
             "hardDeleteDeployment",
-            "logHelmValues",
             "manualReleaseNames",
             "pgBouncerResourceCalculationStrategy",
             "serviceAccountAnnotationKey",
@@ -252,8 +249,7 @@ class TestFullValuesMigration:
         assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
         assert deployments["airflowComponents"]["triggerer"]["enabled"] is True
         assert deployments["deployMechanisms"]["configureDagDeployment"]["enabled"] is True
-        # logHelmValues dropped due to self-referential key name bug in HoustonDeploymentBoolToNested
-        assert "logHelmValues" not in deployments
+        assert deployments["logHelmValues"]["enabled"] is False
         assert "dagProcessorEnabled" not in deployments
         assert "triggererEnabled" not in deployments
         assert "configureDagDeployment" not in deployments

@@ -550,6 +550,8 @@ def expected_037x_new_partial_text() -> str:
                 deploymentLifecycle:
                   hardDeleteDeployment:
                     enabled: true
+                logHelmValues:
+                  enabled: true
                 namespaceManagement:
                   manualReleaseNames:
                     enabled: false
