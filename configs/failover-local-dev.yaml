@@ -1,8 +1,4 @@
 astronomer:
-  commander:
-    env:
-      - name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
-        value: secrets-backend-credentials
   dpLink:
     enabled: true
   flightDeck:
@@ -30,6 +26,7 @@ external-secrets:
 global:
   dataPlaneFailover:
     enabled: true
+    externalSecretManagerSecretName: secrets-backend-credentials
   helmRepo: https://internal-helm.astronomer.io
   prometheusPostgresExporterEnabled: false
   rbacEnabled: true
