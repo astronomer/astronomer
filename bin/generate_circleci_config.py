@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""This script is used to create the circle config file so that we can stay
-DRY."""
+"""Generate the CircleCI config."""
 
+import datetime
 import subprocess
 from pathlib import Path
 
@@ -12,7 +12,7 @@ git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".
 metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
-ci_runner_version = "2026-02"  # This should be the current YYYY-MM
+ci_runner_version = (datetime.datetime.now()).strftime("%Y-%m")
 machine_image_version = "ubuntu-2404:2025.09.1"  # https://circleci.com/developer/machine/image/ubuntu-2404
 
 
