@@ -1,5 +1,4 @@
 astronomer:
-  airflowChartVersion: 1.17.26-build39929
   commander:
     env:
       - name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
@@ -15,13 +14,10 @@ astronomer:
   images:
     astroUI:
       pullPolicy: Always
-      tag: feature_apc-dr
     commander:
       pullPolicy: Always
-      tag: feature_apc-dr
     houston:
       pullPolicy: Always
-      tag: feature_apc-dr
   navigator:
     enabled: true
     env:
