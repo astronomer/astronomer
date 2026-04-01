@@ -13,13 +13,16 @@ separation. It includes NATS + NATS Streaming (stan), Fluentd, Kibana, and
 the Prometheus blackbox exporter.
 
 Notes:
-- We do NOT modify `/etc/hosts` on the local machine (sudo). Print instructions at the end.
+- No `/etc/hosts` changes are needed. `localtest.me` is a public wildcard DNS that resolves
+  to 127.0.0.1, and port 443 is bound directly on the host. Adding a Docker-internal IP
+  to /etc/hosts will break access on macOS (Docker Desktop / OrbStack).
 - Safe to re-run: cluster/secrets/helm installs are done in an idempotent way.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import subprocess
@@ -30,6 +33,147 @@ from pathlib import Path
 
 HELPER_DIR = Path.home() / ".local" / "share" / "astronomer-software"
 HELPER_BIN_DIR = HELPER_DIR / "bin"
+REGISTRY_CONFIG_DIR = HELPER_DIR / "registry-configs"
+K3D_REGISTRY_CONFIG_PATH = HELPER_DIR / "k3d-registry.yaml"
+REGISTRY_IMAGE = "registry:2"
+
+
+# ---------------------------------------------------------------------------
+# Local pull-through registry helpers
+# (See bin/setup-local-registry.py for the standalone management script.)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class _RegistrySpec:
+    name: str
+    upstream: str
+    host_port: int
+
+
+_REGISTRY_SPECS: tuple[_RegistrySpec, ...] = (
+    _RegistrySpec(name="astronomer-registry-proxy-quay", upstream="https://quay.io", host_port=15001),
+    _RegistrySpec(name="astronomer-registry-proxy-docker", upstream="https://registry-1.docker.io", host_port=15002),
+    _RegistrySpec(name="astronomer-registry-proxy-elastic", upstream="https://docker.elastic.co", host_port=15003),
+    _RegistrySpec(name="astronomer-registry-proxy-k8s", upstream="https://registry.k8s.io", host_port=15004),
+)
+
+
+def _registry_docker_config(spec: _RegistrySpec) -> str:
+    return f"""\
+version: 0.1
+log:
+  level: warn
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+  delete:
+    enabled: true
+http:
+  addr: :5000
+proxy:
+  remoteurl: {spec.upstream}
+"""
+
+
+def _container_state(name: str) -> str | None:
+    proc = _run(["docker", "inspect", name, "--format", "{{.State.Status}}"], check=False)
+    if proc.returncode != 0:
+        return None
+    return (proc.stdout or "").strip() or None
+
+
+def _container_networks(name: str) -> list[str]:
+    proc = _run(["docker", "inspect", name, "--format", "{{json .NetworkSettings.Networks}}"], check=False)
+    if proc.returncode != 0:
+        return []
+    raw = (proc.stdout or "").strip()
+    if not raw:
+        return []
+    try:
+        return list(json.loads(raw).keys())
+    except json.JSONDecodeError:
+        return []
+
+
+def _ensure_registry(spec: _RegistrySpec, docker_network: str) -> None:
+    config_path = REGISTRY_CONFIG_DIR / f"{spec.name}.yml"
+    volume_name = f"{spec.name}-data"
+    state = _container_state(spec.name)
+
+    if state == "running":
+        if docker_network not in _container_networks(spec.name):
+            _run(["docker", "network", "connect", docker_network, spec.name])
+        return
+
+    if state is not None:
+        _print(f"  Starting stopped registry container: {spec.name}")
+        _run(["docker", "start", spec.name])
+        if docker_network not in _container_networks(spec.name):
+            _run(["docker", "network", "connect", docker_network, spec.name])
+        return
+
+    _print(f"  Creating registry proxy: {spec.name} -> {spec.upstream} (host port {spec.host_port})")
+    _run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            spec.name,
+            "--network",
+            docker_network,
+            "--restart",
+            "always",
+            "-p",
+            f"{spec.host_port}:5000",
+            "-v",
+            f"{volume_name}:/var/lib/registry",
+            "-v",
+            f"{config_path}:/etc/docker/registry/config.yml:ro",
+            REGISTRY_IMAGE,
+        ]
+    )
+
+
+def _ensure_local_registries(docker_network: str) -> None:
+    """Ensure all four pull-through registry proxy containers are running."""
+    REGISTRY_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    for spec in _REGISTRY_SPECS:
+        config_path = REGISTRY_CONFIG_DIR / f"{spec.name}.yml"
+        config_path.write_text(_registry_docker_config(spec))
+        _ensure_registry(spec, docker_network)
+
+
+def _get_registry_config_path(docker_network: str) -> Path:
+    """Write the k3d registry mirror config and return its path."""
+    proxy_quay = "astronomer-registry-proxy-quay"
+    proxy_docker = "astronomer-registry-proxy-docker"
+    proxy_elastic = "astronomer-registry-proxy-elastic"
+    proxy_k8s = "astronomer-registry-proxy-k8s"
+
+    content = f"""\
+mirrors:
+  "quay.io":
+    endpoint:
+      - "http://{proxy_quay}:5000"
+  "docker.io":
+    endpoint:
+      - "http://{proxy_docker}:5000"
+  "index.docker.io":
+    endpoint:
+      - "http://{proxy_docker}:5000"
+  "docker.elastic.co":
+    endpoint:
+      - "http://{proxy_elastic}:5000"
+  "registry.k8s.io":
+    endpoint:
+      - "http://{proxy_k8s}:5000"
+"""
+    HELPER_DIR.mkdir(parents=True, exist_ok=True)
+    K3D_REGISTRY_CONFIG_PATH.write_text(content)
+    return K3D_REGISTRY_CONFIG_PATH
+
 
 DEFAULT_CHART_VERSION = "0.37.7"
 HELM_REPO_NAME = "astronomer-internal"
@@ -338,6 +482,7 @@ def _k3d_create_cluster(
     docker_network: str,
     ports: list[str],
     mkcert_root_ca: Path,
+    registry_config: Path | None = None,
 ) -> None:
     """Create a k3d cluster with traefik disabled."""
     volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*"
@@ -353,6 +498,8 @@ def _k3d_create_cluster(
         "--volume",
         volume,
     ]
+    if registry_config is not None:
+        cmd.extend(["--registry-config", str(registry_config)])
     for p in ports:
         cmd.extend(["--port", p])
 
@@ -690,15 +837,30 @@ def _docker_inspect_ip(container: str) -> str:
 
 
 def _print_host_etc_hosts_instructions(settings: Settings) -> None:
-    """Print the recommended /etc/hosts entries for accessing the cluster from the host."""
-    serverlb = f"k3d-{settings.cluster_name}-serverlb"
-    lb_ip = _docker_inspect_ip(serverlb)
+    """Print DNS access instructions for the 0.37x single-cluster setup.
+
+    Unlike the CP/DP setup, NO /etc/hosts entry is needed here.
+
+    Reason: this cluster binds port 443 directly to 0.0.0.0:443 on the host, and
+    `localtest.me` is a public wildcard DNS that resolves *.localtest.me -> 127.0.0.1.
+    So https://app.localtest.me reaches the cluster via localhost:443 with no host
+    DNS overrides required.
+
+    Adding a /etc/hosts entry pointing to the Docker-internal container IP will
+    *break* access on macOS (Docker Desktop / OrbStack) because that IP is only
+    reachable inside the Docker network, not from the host.
+    """
     base = settings.base_domain
 
-    _print("\nAdd the following entry to your host `/etc/hosts`:\n")
     _print(
-        f"{lb_ip} {base} app.{base} houston.{base} grafana.{base} kibana.{base} "
-        f"prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}"
+        f"\n\u2139\ufe0f  No /etc/hosts changes needed for this setup.\n"
+        f"   `{base}` is a public wildcard DNS that resolves to 127.0.0.1,\n"
+        f"   and port {settings.https_port} is bound directly on localhost.\n"
+        f"\n"
+        f"   If you previously added a Docker IP to /etc/hosts for this domain,\n"
+        f"   remove it — it will cause connection timeouts on macOS:\n"
+        f"\n"
+        f"     sudo sed -i '' '/{base}/d' /etc/hosts\n"
     )
 
 
@@ -731,6 +893,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--helm-timeout", default=os.environ.get("HELM_TIMEOUT", "60m"))
     parser.add_argument("--helm-debug", action="store_true")
     parser.add_argument("--recreate-cluster", action="store_true", help="Delete and recreate k3d cluster if it exists")
+    parser.add_argument(
+        "--no-local-registry",
+        action="store_true",
+        help=(
+            "Skip the local pull-through registry proxy setup. "
+            "Images will be pulled directly from remote registries (may be rate-limited). "
+            "Use bin/setup-local-registry.py to manage the registry containers separately."
+        ),
+    )
 
     parser.add_argument("--skip-certs", action="store_true")
     parser.add_argument("--skip-cluster", action="store_true")
@@ -785,6 +956,15 @@ def main() -> int:
         _ensure_docker_network(settings.docker_network)
         ms.done(h)
 
+        registry_config: Path | None = None
+        if not args.no_local_registry:
+            h = ms.start("Ensure local pull-through registry proxy containers are running")
+            _ensure_local_registries(settings.docker_network)
+            registry_config = _get_registry_config_path(settings.docker_network)
+            ms.done(h, detail=f"config={registry_config}")
+        else:
+            ms.skip("Local registry proxy setup", reason="--no-local-registry set")
+
         cert_path: Path | None = None
         key_path: Path | None = None
         mkcert_root_ca: Path | None = None
@@ -816,6 +996,7 @@ def main() -> int:
                         f"{settings.http_port}:80@loadbalancer",
                     ],
                     mkcert_root_ca=mkcert_root_ca,
+                    registry_config=registry_config,
                 )
             else:
                 _debug(f"Cluster already exists, skipping: {settings.cluster_name}")
