@@ -15,7 +15,7 @@ def test_astronomer_bootstrap_secret_postgres_enabled():
     """Test the astronomer-bootstrap secret with postgresEnabled = True"""
     docs = render_chart(
         show_only="charts/postgresql/templates/astronomer-bootstrap-secret.yaml",
-        values={"global": {"postgresqlEnabled": True}},
+        values={"global": {"postgresql": {"enabled": True}}},
     )
 
     assert docs == [

@@ -142,11 +142,11 @@ class TestVector:
         all namespaces."""
         values = {
             "global": {
-                "manualNamespaceNamesEnabled": True,
                 "namespaceManagement": {
                     "namespacePools": {
                         "enabled": False,
-                    }
+                    },
+                    "manualNamespaceNames": {"enabled": True},
                 },
             }
         }
@@ -161,15 +161,15 @@ class TestVector:
         assert expected_rule in doc["data"]["vector-config.yaml"]
 
     def test_vector_configmap_manual_namespaces_and_namespacepools_disabled(self, kube_version):
-        """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default vector configmap
+        """Test that when namespace Pools and manualNamespaceNames are disabled, helm renders a default vector configmap
         looking at platform label."""
         values = {
             "global": {
-                "manualNamespaceNamesEnabled": False,
                 "namespaceManagement": {
                     "namespacePools": {
                         "enabled": False,
-                    }
+                    },
+                    "manualNamespaceNames": {"enabled": False},
                 },
             }
         }

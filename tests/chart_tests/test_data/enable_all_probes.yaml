@@ -333,8 +333,10 @@ global:
     enabled: true
   pgbouncer:
     enabled: true
-  postgresqlEnabled: true
-  prometheusPostgresExporterEnabled: true
+  postgresql:
+    enabled: true
+  prometheusPostgresExporter:
+    enabled: true
 grafana:
   bootstrapper:
     livenessProbe:
