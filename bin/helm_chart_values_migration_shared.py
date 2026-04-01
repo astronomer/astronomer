@@ -327,9 +327,15 @@ HOUSTON_DEPLOYMENTS_PREFIX = "astronomer.houston.config.deployments"
 HOUSTON_DEPLOYMENT_BOOL_RULES: list[BoolToNested] = [
     BoolToNested("dagProcessorEnabled", ["airflowComponents", "dagProcessor", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
     BoolToNested("triggererEnabled", ["airflowComponents", "triggerer", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested("configureDagDeployment", ["deployMechanisms", "configureDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested("gitSyncDagDeployment", ["deployMechanisms", "gitSyncDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested("nfsMountDagDeployment", ["deployMechanisms", "nfsMountDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
+    BoolToNested(
+        "configureDagDeployment", ["deployMechanisms", "configureDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
+    ),
+    BoolToNested(
+        "gitSyncDagDeployment", ["deployMechanisms", "gitSyncDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
+    ),
+    BoolToNested(
+        "nfsMountDagDeployment", ["deployMechanisms", "nfsMountDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
+    ),
     BoolToNested(
         "enableListAllRuntimeVersions",
         ["runtimeManagement", "listAllRuntimeVersions", "enabled"],
@@ -341,9 +347,13 @@ HOUSTON_DEPLOYMENT_BOOL_RULES: list[BoolToNested] = [
         path_prefix=HOUSTON_DEPLOYMENTS_PREFIX,
     ),
     BoolToNested("grafanaUIEnabled", ["metricsReporting", "grafana", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested("hardDeleteDeployment", ["deploymentLifecycle", "hardDeleteDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
+    BoolToNested(
+        "hardDeleteDeployment", ["deploymentLifecycle", "hardDeleteDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
+    ),
     BoolToNested("logHelmValues", ["logHelmValues", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested("manualReleaseNames", ["namespaceManagement", "manualReleaseNames", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
+    BoolToNested(
+        "manualReleaseNames", ["namespaceManagement", "manualReleaseNames", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
+    ),
 ]
 
 HOUSTON_DEPLOYMENT_MOVE_KEYS: list[tuple[str, list[str]]] = [
