@@ -26,7 +26,7 @@ external-secrets:
 global:
   dataPlaneFailover:
     enabled: true
-    externalSecretManagerSecretName: secrets-backend-credentials
+    externalSecretManagerSecretName: astronomer-cluster-secret-store
   helmRepo: https://internal-helm.astronomer.io
   prometheusPostgresExporterEnabled: true
   rbacEnabled: true
