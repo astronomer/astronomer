@@ -15,6 +15,11 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainPrefix: ""    # cluster-id
 
+  # Shared secret for internal service-to-service authentication (e.g. pilot -> commander gRPC).
+  # Auto-generated on install if empty; preserved across upgrades.
+  internalServiceAuth:
+    token: ""
+
   # Labels to add to every pod
   podLabels: {}
 
@@ -79,6 +84,13 @@ global:
         # if create is enabled, this helm chart will create the provided k8s namespaces
         create: false
         names: []
+
+  # dataPlaneFailover: master switch for DR failover
+  # On data plane (mode=data): enables pilot, flightDeck, and commander StartFlight RPC
+  # On control plane (mode=control): enables navigator, dp-link, and houston dispatcher
+  # On unified (mode=unified): no effect — enable components individually
+  dataPlaneFailover:
+    enabled: false
 
   # Metrics and reporting features
   metricsReporting:
@@ -207,6 +219,8 @@ global:
     enabled: false
 
   prometheusPostgresExporter:
+    enabled: false
+  nodeExporter:
     enabled: false
 
   # Used to enable nats-server
@@ -685,3 +699,9 @@ kube-state:
     limits:
       cpu: "500m"
       memory: "1024Mi"
+
+#################################
+## External Secrets configuration
+#################################
+external-secrets:
+  enabled: false

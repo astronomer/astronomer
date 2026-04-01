@@ -33,6 +33,10 @@ dependencies:
     condition: global.kubeState.enabled
     tags:
       - monitoring
+  - name: prometheus-node-exporter
+    condition: global.nodeExporter.enabled
+    tags:
+      - monitoring
   - name: prometheus-postgres-exporter
     condition: global.prometheusPostgresExporter.enabled
     tags:
@@ -80,3 +84,11 @@ dependencies:
     condition: global.airflowOperator.enabled
     tags:
       - airflow-operator
+
+  # External Secrets Operator
+  - name: external-secrets
+    condition: external-secrets.enabled
+    tags:
+      - eso
+      - external-secrets
+      - dp-failover

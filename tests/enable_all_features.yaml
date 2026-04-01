@@ -1,4 +1,19 @@
 astronomer:
+  dpLink:
+    enabled: true
+  flightDeck:
+    enabled: true
+  pilot:
+    enabled: true
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  navigator:
+    enabled: true
   houston:
     cleanupAirflowDb:
       enabled: true
@@ -55,6 +70,8 @@ global:
     enabled: true
   prometheusPostgresExporter:
     enabled: true
+  nodeExporter:
+    enabled: true
 nats:
   nats:
     exporter:
@@ -63,6 +80,8 @@ nats:
       enabled: true
     jetStream:
       enabled: true
+external-secrets:
+  enabled: true
 postgresql:
   replication:
     enabled: true

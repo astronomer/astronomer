@@ -100,6 +100,7 @@ class TestServiceAccounts:
                 "postgresql": {"enabled": True},
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporter": {"enabled": True},
+                "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
                 "airflowOperator": {"enabled": True},
             },
@@ -109,6 +110,7 @@ class TestServiceAccounts:
                 "configSyncer": {"serviceAccount": {"create": False}},
                 "houston": {"serviceAccount": {"create": False}},
                 "astroUI": {"serviceAccount": {"create": False}},
+                "dpLink": {"serviceAccount": {"create": False}},
             },
             "nats": {"nats": {"serviceAccount": {"create": False}}},
             "grafana": {"serviceAccount": {"create": False}},
@@ -116,6 +118,7 @@ class TestServiceAccounts:
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
+            "prometheus-node-exporter": {"serviceAccount": {"create": False}},
             "pgbouncer": {"serviceAccount": {"create": False}},
             "vector": {"serviceAccount": {"create": False}},
             "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
@@ -123,6 +126,12 @@ class TestServiceAccounts:
             "prometheus": {"serviceAccount": {"create": False}},
             "elasticsearch": {"common": {"serviceAccount": {"create": False}}},
             "airflow-operator": {"serviceAccount": {"create": False}},
+            "external-secrets": {
+                "enabled": True,
+                "serviceAccount": {"create": False},
+                "webhook": {"serviceAccount": {"create": False}},
+                "certController": {"serviceAccount": {"create": False}},
+            },
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -144,6 +153,7 @@ class TestServiceAccounts:
                 "postgresql": {"enabled": True},
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporter": {"enabled": True},
+                "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
                 "airflowOperator": {"enabled": True},
             },
@@ -153,6 +163,7 @@ class TestServiceAccounts:
                 "configSyncer": {"serviceAccount": {"create": True, "annotations": annotations}},
                 "houston": {"serviceAccount": {"create": True, "annotations": annotations}},
                 "astroUI": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "dpLink": {"serviceAccount": {"create": True, "annotations": annotations}},
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "grafana": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -160,6 +171,7 @@ class TestServiceAccounts:
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "prometheus-node-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "pgbouncer": {"serviceAccount": {"create": True, "annotations": annotations}},
             "vector": {"serviceAccount": {"create": True, "annotations": annotations}},
             "nginx": {
@@ -170,6 +182,12 @@ class TestServiceAccounts:
             "prometheus": {"serviceAccount": {"create": True, "annotations": annotations}},
             "elasticsearch": {"common": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "airflow-operator": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "external-secrets": {
+                "enabled": True,
+                "serviceAccount": {"create": True, "annotations": annotations},
+                "webhook": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "certController": {"serviceAccount": {"create": True, "annotations": annotations}},
+            },
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -249,11 +267,11 @@ class TestServiceAccounts:
 def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
-    default_serviceaccount_names_overrides = {
-        "global": {"rbac": {"enabled": False}},
-        "postgresql": {"serviceAccount": {"enabled": True}},
-    }
-    if "nginx-dp-deployment" in template_name or "prometheus-federation-auth-deployment" in template_name:
+    default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
+    if any(
+        substring in template_name
+        for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")
+    ):
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
@@ -282,6 +300,15 @@ custom_service_account_names = {
     },
     "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml": {
         "astronomer": {"configSyncer": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/dp-link/dp-link-deployment.yaml": {
+        "astronomer": {"dpLink": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/navigator/navigator-deployment.yaml": {
+        "astronomer": {"navigator": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/pilot/pilot-deployment.yaml": {
+        "astronomer": {"pilot": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
@@ -343,6 +370,9 @@ custom_service_account_names = {
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
+    "charts/external-secrets/templates/deployment.yaml": {
+        "external-secrets": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/nats/templates/jetstream-job.yaml": {
         "nats": {"nats": {"jetStream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
@@ -369,6 +399,9 @@ custom_service_account_names = {
     "charts/prometheus/templates/prometheus-federation-auth-deployment.yaml": {
         "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
+    "charts/prometheus-node-exporter/templates/daemonset.yaml": {
+        "prometheus-node-exporter": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/vector/templates/vector-daemonset.yaml": {
         "vector": {"serviceAccount": {"create": True, "name": "prothean"}},
     },
@@ -387,7 +420,10 @@ def test_custom_serviceaccount_names(template_name):
 
     values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
-    if "nginx-dp-deployment" in template_name or "prometheus-federation-auth-deployment" in template_name:
+    if any(
+        substring in template_name
+        for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")
+    ):
         plane_config = {"global": {"plane": {"mode": "data"}}}
         values = always_merger.merge(values, plane_config)
     values = always_merger.merge(values, enable_pgsql_sa)

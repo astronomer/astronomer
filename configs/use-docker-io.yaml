@@ -1,0 +1,101 @@
+alertmanager:
+  images:
+    alertmanager:
+      repository: docker.io/astronomerinc/ap-alertmanager
+astronomer:
+  images:
+    astroUI:
+      repository: docker.io/astronomerinc/ap-astro-ui
+    dbBootstrapper:
+      repository: docker.io/astronomerinc/ap-db-bootstrapper
+    registry:
+      repository: docker.io/astronomerinc/ap-registry
+elasticsearch:
+  images:
+    curator:
+      repository: docker.io/astronomerinc/ap-curator
+    es:
+      repository: docker.io/astronomerinc/ap-elasticsearch
+    exporter:
+      repository: docker.io/astronomerinc/ap-elasticsearch-exporter
+    init:
+      repository: docker.io/astronomerinc/ap-base
+    nginx:
+      repository: docker.io/astronomerinc/ap-nginx-es
+external-secrets:
+  certController:
+    image:
+      repository: docker.io/astronomerinc/ap-external-secrets
+  image:
+    repository: docker.io/astronomerinc/ap-external-secrets
+global:
+  airflow:
+    images:
+      gitSync:
+        repository: docker.io/astronomerinc/ap-git-sync
+      pgbouncer:
+        repository: docker.io/astronomerinc/ap-pgbouncer
+      pgbouncerExporter:
+        repository: docker.io/astronomerinc/ap-pgbouncer-exporter
+      redis:
+        repository: docker.io/astronomerinc/ap-redis
+      statsd:
+        repository: docker.io/astronomerinc/ap-statsd-exporter
+      xcom:
+        repository: docker.io/astronomerinc/ap-init
+  authSidecar:
+    repository: docker.io/astronomerinc/ap-auth-sidecar
+  dagOnlyDeployment:
+    repository: docker.io/astronomerinc/ap-dag-deploy
+  gitSyncRelay:
+    images:
+      gitDaemon:
+        repository: docker.io/astronomerinc/ap-git-daemon
+      gitSync:
+        repository: docker.io/astronomerinc/ap-git-sync-relay
+  loggingSidecar:
+    repository: docker.io/astronomerinc/ap-vector
+  privateCaCertsAddToHost:
+    certCopier:
+      repository: docker.io/astronomerinc/ap-base
+grafana:
+  images:
+    dbBootstrapper:
+      repository: docker.io/astronomerinc/ap-db-bootstrapper
+    grafana:
+      repository: docker.io/astronomerinc/ap-grafana
+kube-state:
+  images:
+    kubeState:
+      repository: docker.io/astronomerinc/ap-kube-state
+nats:
+  images:
+    dbBootstrapper:
+      repository: docker.io/astronomerinc/ap-db-bootstrapper
+    exporter:
+      repository: docker.io/astronomerinc/ap-nats-exporter
+    nats:
+      repository: docker.io/astronomerinc/ap-nats-server
+nginx:
+  images:
+    defaultBackend:
+      repository: docker.io/astronomerinc/ap-default-backend
+    nginx:
+      repository: docker.io/astronomerinc/ap-nginx
+prometheus:
+  images:
+    configReloader:
+      repository: docker.io/astronomerinc/ap-configmap-reloader
+    filesdReloader:
+      repository: docker.io/astronomerinc/ap-kuiper-reloader
+    prometheus:
+      repository: docker.io/astronomerinc/ap-prometheus
+    promproxy:
+      repository: docker.io/astronomerinc/ap-openresty
+prometheus-postgres-exporter:
+  image:
+    repository: docker.io/astronomerinc/ap-postgres-exporter
+vector:
+  vector:
+    image:
+      repository: docker.io/astronomerinc/ap-vector
