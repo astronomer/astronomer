@@ -501,7 +501,7 @@ workflows:
           context:
             - linear
           requires:
-            - sign-release-image
+            - release-to-internal
           filters:
             branches:
               only:
