@@ -391,14 +391,18 @@ RULE_TEST_CASES = [
     (
         "features.namespacePools",
         "global:\n  features:\n    namespacePools:\n      enabled: true\n      createRbac: true\n",
-        lambda g: g["namespaceManagement"]["namespacePools"]["enabled"] is True
-        and g["namespaceManagement"]["namespacePools"]["createRbac"] is True,
+        lambda g: (
+            g["namespaceManagement"]["namespacePools"]["enabled"] is True
+            and g["namespaceManagement"]["namespacePools"]["createRbac"] is True
+        ),
     ),
     (
         "dagOnlyDeployment",
         "global:\n  dagOnlyDeployment:\n    enabled: true\n    repository: test/repo\n",
-        lambda g: g["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
-        and g["deployMechanisms"]["dagOnlyDeployment"]["repository"] == "test/repo",
+        lambda g: (
+            g["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
+            and g["deployMechanisms"]["dagOnlyDeployment"]["repository"] == "test/repo"
+        ),
     ),
     (
         "loggingSidecar",
