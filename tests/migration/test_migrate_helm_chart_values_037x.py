@@ -955,14 +955,18 @@ RULE_TEST_CASES = [
     (
         "houston_dagProcessorEnabled",
         "astronomer:\n  houston:\n    config:\n      deployments:\n        dagProcessorEnabled: true\n",
-        lambda d: d["astronomer"]["houston"]["config"]["deployments"]["airflowComponents"]["dagProcessor"]["enabled"] is True
-        and "dagProcessorEnabled" not in d["astronomer"]["houston"]["config"]["deployments"],
+        lambda d: (
+            d["astronomer"]["houston"]["config"]["deployments"]["airflowComponents"]["dagProcessor"]["enabled"] is True
+            and "dagProcessorEnabled" not in d["astronomer"]["houston"]["config"]["deployments"]
+        ),
     ),
     (
         "houston_triggererEnabled",
         "astronomer:\n  houston:\n    config:\n      deployments:\n        triggererEnabled: false\n",
-        lambda d: d["astronomer"]["houston"]["config"]["deployments"]["airflowComponents"]["triggerer"]["enabled"] is False
-        and "triggererEnabled" not in d["astronomer"]["houston"]["config"]["deployments"],
+        lambda d: (
+            d["astronomer"]["houston"]["config"]["deployments"]["airflowComponents"]["triggerer"]["enabled"] is False
+            and "triggererEnabled" not in d["astronomer"]["houston"]["config"]["deployments"]
+        ),
     ),
     # HoustonDeploymentDeleteKey
     (

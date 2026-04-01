@@ -89,6 +89,39 @@ class TestDataPlaneFailoverFlag:
         env_vars = get_env_vars_dict(containers[0]["env"])
         assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED"] == "true"
 
+    def test_flag_data_mode_sets_external_secret_manager_secret_name_env(self, kube_version):
+        """Flag in data mode sets COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME on commander."""
+        values = {
+            "global": {
+                "plane": {"mode": "data"},
+                "dataPlaneFailover": {
+                    "enabled": True,
+                    "externalSecretManagerSecretName": "my-esm-secret",
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        containers = docs[0]["spec"]["template"]["spec"]["containers"]
+        env_vars = get_env_vars_dict(containers[0]["env"])
+        assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME"] == "my-esm-secret"
+
+    def test_flag_data_mode_disabled_no_external_secret_manager_secret_name_env(self, kube_version):
+        """When dataPlaneFailover is disabled, COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME is not set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}, "dataPlaneFailover": {"enabled": False}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        containers = docs[0]["spec"]["template"]["spec"]["containers"]
+        env_vars = get_env_vars_dict(containers[0]["env"])
+        assert "COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME" not in env_vars
+
     def test_flag_data_mode_sets_flightdeck_configmap(self, kube_version):
         """Flag in data mode renders flightdeck_db_name in cluster-local-data configmap."""
         docs = render_chart(
