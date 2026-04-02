@@ -149,6 +149,36 @@ def test_grafana_init_containers_disabled_with_custom_secret_name(kube_version, 
 
 @pytest.mark.parametrize("plane_mode", ["control", "unified"])
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
+def test_grafana_container_volume_mounts(kube_version, plane_mode):
+    """Test that the grafana container has the expected volume mounts."""
+    docs = render_chart(
+        kube_version=kube_version,
+        values={"global": {"plane": {"mode": plane_mode}}},
+        show_only=[DEPLOYMENT_FILE],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "Deployment"
+
+    c_by_name = get_containers_by_name(doc)
+    grafana_volume_mounts = c_by_name["grafana"]["volumeMounts"]
+
+    expected_volume_mounts = [
+        {"name": "grafana-dashboards", "mountPath": "/etc/grafana/provisioning/dashboards"},
+        {"name": "var-lib-grafana", "mountPath": "/var/lib/grafana"},
+        {"name": "grafana-datasource-volume", "mountPath": "/etc/grafana/provisioning/datasources"},
+        {"name": "tmp", "mountPath": "/tmp"},
+    ]
+    for mount in expected_volume_mounts:
+        assert mount in grafana_volume_mounts, f"Expected volume mount {mount} not found"
+
+    volumes = doc["spec"]["template"]["spec"]["volumes"]
+    assert {"name": "tmp", "emptyDir": {}} in volumes
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified"])
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
 def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
     """Test that the grafana deployment has correct volumes and volume mounts for auth sidecar."""
     # Test with auth sidecar enabled
@@ -200,7 +230,7 @@ def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
 @pytest.mark.parametrize("plane_mode", ["control", "unified"])
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 def test_grafana_auth_sidecar_disabled_no_sidecar_volumes(kube_version, plane_mode):
-    """Test that when auth sidecar is disabled, auth-proxy container and tmp volume are not present."""
+    """Test that when auth sidecar is disabled, auth-proxy container and sidecar-specific volumes are not present."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"plane": {"mode": plane_mode}, "authSidecar": {"enabled": False}}},
@@ -219,10 +249,9 @@ def test_grafana_auth_sidecar_disabled_no_sidecar_volumes(kube_version, plane_mo
     )
     assert auth_proxy_container is None
 
-    # Check that tmp volume is not present when auth sidecar is disabled
+    # Check that sidecar-specific volumes are not present when auth sidecar is disabled
     volumes = doc["spec"]["template"]["spec"]["volumes"]
-    tmp_volume = next(
-        (volume for volume in volumes if volume["name"] == "tmp"),
-        None,
-    )
-    assert tmp_volume is None
+    volume_names = [v["name"] for v in volumes]
+    assert "grafana-sidecar-conf" not in volume_names
+    assert "nginx-write-dir" not in volume_names
+    assert "nginx-run-dir" not in volume_names

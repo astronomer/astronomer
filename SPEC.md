@@ -141,23 +141,18 @@ If checks fail, fix the issues and run `prek` again until it passes.
 
 ## Testing Strategy
 
-### Overview
+See the [chart-tests skill](.agents/skills/chart-tests/SKILL.md) for the full testing guide, including:
+- Test organization and file structure
+- Writing tests: basic pattern, sub-chart values nesting, parametrization
+- Test utilities: `render_chart()`, `get_containers_by_name()`, `get_all_features()`
+- Running tests with `uv run pytest`
+- Kubernetes schema validation
 
-Testing uses **pytest** to verify:
-1. Helm template rendering correctness
-2. Kubernetes manifest schema compliance
-3. Feature interactions and configurations
-4. Security and best practices
+---
 
-**No `helm unittest` plugin is used** — all testing is pytest-based.
+## Values Documentation
 
-### Test Organization
-
-Tests are organized by component/feature:
-
-```
-tests/
-├── chart_tests/              # Helm template rendering tests
+### Helm-Docs Comment Pattern (to be adopted)
 │   ├── test_nginx.py         # One component per test file
 │   ├── test_astronomer_commander.py
 │   ├── test_*.py             # 60+ integration tests
