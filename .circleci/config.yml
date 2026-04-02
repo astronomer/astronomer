@@ -339,7 +339,61 @@ jobs:
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
+  create_linear_milestone:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Install jq
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y jq
 
+      - run:
+          name: Create Linear milestone
+          command: |
+            set -eo pipefail
+
+            : "${LINEAR_API_KEY:?LINEAR_API_KEY is required}"
+            BETA_VERSION=$(ls /tmp/workspace/astronomer-*.tgz | sed 's/.*astronomer-\(.*\)\.tgz/\1/')
+
+            GRAPHQL_URL="https://api.linear.app/graphql"
+            LINEAR_PROJECT_NAME="APC RC tracker"
+
+            # Fetch project ID by name
+            PROJECT_SEARCH_PAYLOAD=$(jq -n \
+              --arg name "$LINEAR_PROJECT_NAME" \
+              '{"query": "query FindProject($name: String!) { projects(filter: { name: { eq: $name } }) { nodes { id name } } }", "variables": { "name": $name }}')
+
+            PROJECT_RESPONSE=$(curl -sS -X POST "$GRAPHQL_URL" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: ${LINEAR_API_KEY}" \
+              --data "$PROJECT_SEARCH_PAYLOAD")
+
+            LINEAR_PROJECT_ID=$(echo "$PROJECT_RESPONSE" | jq -r '.data.projects.nodes[0].id // empty')
+
+            if [ -z "$LINEAR_PROJECT_ID" ]; then
+              echo "ERROR: Could not find Linear project: $LINEAR_PROJECT_NAME"
+              exit 1
+            fi
+            echo "Found project ID: $LINEAR_PROJECT_ID"
+
+            RELEASE_DATETIME=$(date -u '+%Y-%m-%d %H:%M UTC')
+            MILESTONE_NAME="BETA:${BETA_VERSION} - ${RELEASE_DATETIME}"
+
+            CREATE_MILESTONE_PAYLOAD=$(jq -n \
+              --arg projectId "$LINEAR_PROJECT_ID" \
+              --arg name "$MILESTONE_NAME" \
+              --arg description "New Beta chart is released" \
+              '{"query": "mutation CreateMilestone($projectId: String!, $name: String!, $description: String!) { projectMilestoneCreate(input: { projectId: $projectId, name: $name, description: $description }) { success projectMilestone { id name } } }", "variables": { "projectId": $projectId, "name": $name, "description": $description }}')
+
+            echo "Creating Linear milestone: $MILESTONE_NAME"
+            curl -sS -X POST "$GRAPHQL_URL" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: ${LINEAR_API_KEY}" \
+              --data "$CREATE_MILESTONE_PAYLOAD" | jq .
 workflows:
   version: 2.1
 
@@ -439,6 +493,15 @@ workflows:
             - software-cosign-keys
           requires:
             - release-to-public
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - create_linear_milestone:
+          context:
+            - linear
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:
