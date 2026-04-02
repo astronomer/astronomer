@@ -35,6 +35,8 @@ common:
   protocol: http
 
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a ServiceAccount should be created
     create: true
     # Annotations to add to the service account
