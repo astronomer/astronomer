@@ -5,6 +5,7 @@ from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
 DEPLOYMENT_FILE = "charts/grafana/templates/grafana-deployment.yaml"
+CONFIGMAP_FILE = "charts/grafana/templates/grafana-configmap.yaml"
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -175,6 +176,38 @@ def test_grafana_container_volume_mounts(kube_version, plane_mode):
 
     volumes = doc["spec"]["template"]["spec"]["volumes"]
     assert {"name": "tmp", "emptyDir": {}} in volumes
+    assert {
+        "name": "grafana-dashboards",
+        "configMap": {
+            "name": "release-name-grafana-dashboard-provisioner",
+            "items": [{"key": "dashboard.yaml", "path": "dashboard.yaml"}],
+        },
+    } in volumes
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified"])
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+def test_grafana_dashboard_provisioner_configmap(kube_version, plane_mode):
+    """Test that the grafana-dashboard-provisioner ConfigMap renders with the expected content."""
+    docs = render_chart(
+        kube_version=kube_version,
+        values={"global": {"plane": {"mode": plane_mode}}},
+        show_only=[CONFIGMAP_FILE],
+    )
+
+    provisioner_cm = next(
+        (d for d in docs if d.get("metadata", {}).get("name", "").endswith("-dashboard-provisioner")),
+        None,
+    )
+    assert provisioner_cm is not None
+    assert provisioner_cm["kind"] == "ConfigMap"
+
+    dashboard_yaml = provisioner_cm["data"]["dashboard.yaml"]
+    assert '- name: "default"' in dashboard_yaml
+    assert "org_id: 1" in dashboard_yaml
+    assert 'folder: ""' in dashboard_yaml
+    assert "type: file" in dashboard_yaml
+    assert "folder: /var/lib/grafana/dashboards" in dashboard_yaml
 
 
 @pytest.mark.parametrize("plane_mode", ["control", "unified"])

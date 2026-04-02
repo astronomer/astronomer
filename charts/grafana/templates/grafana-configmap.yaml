@@ -1,3 +1,27 @@
+###########################################
+## Grafana Dashboard Provisioner ConfigMap ##
+###########################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "grafana.fullname" . }}-dashboard-provisioner
+  labels:
+    tier: monitoring
+    component: grafana
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  dashboard.yaml: |-
+    - name: "default"
+      org_id: 1
+      folder: ""
+      type: file
+      options:
+        folder: /var/lib/grafana/dashboards
+{{- end }}
+---
 #######################
 ## Grafana ConfigMap ##
 #######################

@@ -231,7 +231,11 @@ spec:
         {{- end }}
       volumes:
         - name: grafana-dashboards
-          emptyDir: {}
+          configMap:
+            name: {{ template "grafana.fullname" . }}-dashboard-provisioner
+            items:
+              - key: dashboard.yaml
+                path: dashboard.yaml
         - name: var-lib-grafana
           emptyDir: {}
         - name: tmp
