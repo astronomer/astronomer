@@ -657,13 +657,14 @@ fluentd
 {{ define "jetstreamTLS" }}
 {{- $secretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 {{- if .Values.global.nats.jetStream.tls }}
-tlsEnabled: true
 tls:
+  enabled: true
   caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/ca.crt
   certFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.crt
   keyFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.key
 {{- else -}}
-tlsEnabled: false
+tls:
+  enabled: false
 {{- end }}
 {{- end }}
 

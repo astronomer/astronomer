@@ -658,7 +658,8 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
-    updateRuntimeCheckEnabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
+    updateRuntimeCheck:
+      enabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |
