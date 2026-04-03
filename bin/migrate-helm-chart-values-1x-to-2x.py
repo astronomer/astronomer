@@ -37,6 +37,7 @@ from helm_chart_values_migration_shared import (  # noqa: E402
     MigrationChange,
     SubtreeMove,  # noqa: F401
     apply_global_feature_flag_rules,
+    apply_houston_config_flag_migrations,
     apply_houston_deployment_migrations,
     dump_yaml,
     load_yaml,
@@ -63,6 +64,7 @@ def migrate_values(data: Any) -> list[MigrationChange]:
     global_section = data.get("global")
     global_cm = global_section if isinstance(global_section, CommentedMap) else None
     all_changes.extend(apply_global_feature_flag_rules(global_cm))
+    all_changes.extend(apply_houston_config_flag_migrations(data))
     all_changes.extend(apply_houston_deployment_migrations(data))
 
     return all_changes

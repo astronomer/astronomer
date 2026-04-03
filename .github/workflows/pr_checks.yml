@@ -36,7 +36,7 @@ jobs:
             ((errors += 1))
           fi
 
-          if [[ "${KTLO}" != "true" ]] && [[ "${AUTOMATED_PR}" != "true" ]] && [[ "${PR_BODY}" != *"astronomer/issues"* && "${PR_BODY}" != *"PINF-"* && "${PR_BODY}" != *"APC-"* && "${PR_BODY}" != *"PLA-"* ]] ; then
+          if [[ "${KTLO}" != "true" ]] && [[ "${AUTOMATED_PR}" != "true" ]] && [[ "${PR_BODY}" != *"astronomer/issue"* && "${PR_BODY}" != *"PINF-"* && "${PR_BODY}" != *"APC-"* && "${PR_BODY}" != *"PLA-"* ]] ; then
             echo "PR description does not contain an issue link"
             ((errors += 1))
           fi

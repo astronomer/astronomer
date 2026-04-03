@@ -36,6 +36,7 @@ from helm_chart_values_migration_shared import (  # noqa: E402
     HOUSTON_DEPLOYMENTS_PREFIX,
     MigrationChange,
     apply_global_feature_flag_rules,
+    apply_houston_config_flag_migrations,
     apply_houston_deployment_migrations,
     dump_yaml,
     load_yaml,
@@ -355,6 +356,7 @@ def migrate_values(data: Any) -> list[MigrationChange]:
     for rule in MIGRATIONS:
         all_changes.extend(rule.apply(data))
 
+    all_changes.extend(apply_houston_config_flag_migrations(data))
     all_changes.extend(apply_houston_deployment_migrations(data))
 
     return all_changes

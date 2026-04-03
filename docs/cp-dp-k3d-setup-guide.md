@@ -336,8 +336,10 @@ astronomer:
         cpu: "250m"
         memory: "512Mi"
     config:
-      emailConfirmation: false
-      publicSignups: false
+      emailConfirmation:
+        enabled: false
+      publicSignups:
+        enabled: false
       cors:
         allowedOrigins:
           - "https://app.localtest.me"
