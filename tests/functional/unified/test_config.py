@@ -70,10 +70,12 @@ def test_grafana_dashboard_provisioner_mounted(grafana):
     assert mounted_file.is_file, f"Expected {dashboard_yaml_path} to be a file"
 
     content = grafana.check_output(f"cat {dashboard_yaml_path}")
+    assert "apiVersion: 1" in content
+    assert "providers:" in content
     assert "default" in content
     assert "org_id: 1" in content
     assert "type: file" in content
-    assert "/var/lib/grafana/dashboards" in content
+    assert "path: /var/lib/grafana/dashboards" in content
 
 
 @pytest.mark.flaky(reruns=20, reruns_delay=10)

@@ -203,11 +203,14 @@ def test_grafana_dashboard_provisioner_configmap(kube_version, plane_mode):
     assert provisioner_cm["kind"] == "ConfigMap"
 
     dashboard_yaml = provisioner_cm["data"]["dashboard.yaml"]
+    assert "apiVersion: 1" in dashboard_yaml
+    assert "providers:" in dashboard_yaml
     assert '- name: "default"' in dashboard_yaml
     assert "org_id: 1" in dashboard_yaml
     assert 'folder: ""' in dashboard_yaml
     assert "type: file" in dashboard_yaml
-    assert "folder: /var/lib/grafana/dashboards" in dashboard_yaml
+    assert "folder: /var/lib/grafana/dashboards" not in dashboard_yaml
+    assert "path: /var/lib/grafana/dashboards" in dashboard_yaml
 
 
 @pytest.mark.parametrize("plane_mode", ["control", "unified"])
