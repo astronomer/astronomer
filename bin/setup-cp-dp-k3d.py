@@ -662,8 +662,10 @@ astronomer:
     worker:
       replicas: 1
     config:
-      emailConfirmation: false
-      publicSignups: false
+      emailConfirmation:
+        enabled: false
+      publicSignups:
+        enabled: false
       cors:
         allowedOrigins:
           - "https://app.{settings.base_domain}"

@@ -114,8 +114,43 @@ The script also migrates flat boolean flags under
 `astronomer.houston.config.deployments` to nested `.enabled` paths (for example
 `dagProcessorEnabled` → `airflowComponents.dagProcessor.enabled`), moves a few
 non-boolean keys to grouped sections, and deletes obsolete deployment config
-keys. Run `./bin/migrate-helm-chart-values-1x-to-2x.py --dry-run your-values.yaml`
+keys.
+
+Additionally, Houston config passthrough keys under `astronomer.houston.config`
+are migrated to match Houston's new nested `.enabled` schema. Common examples
+include `emailConfirmation` → `emailConfirmation.enabled` and
+`publicSignups` → `publicSignups.enabled`. Nested sub-section keys like
+`auth.openidConnect.idpGroupsImportEnabled` →
+`auth.openidConnect.idpGroupsImport.enabled` are also handled.
+
+Run `./bin/migrate-helm-chart-values-1x-to-2x.py --dry-run your-values.yaml`
 to see the exact list for your file.
+
+### Houston Config Passthrough Keys
+
+If your values file overrides Houston application config via
+`astronomer.houston.config`, these flat boolean flags are migrated to the
+new nested `.enabled` pattern that Houston 2.x expects:
+
+| Old Path (under `houston.config`) | New Path | Type |
+|---|---|---|
+| `emailConfirmation` (boolean) | `emailConfirmation.enabled` | boolean → nested |
+| `publicSignups` (boolean) | `publicSignups.enabled` | boolean → nested |
+| `updateRuntimeCheckEnabled` | `updateRuntimeCheck.enabled` | boolean → nested |
+| `updateAirflowCheckEnabled` | `updateAirflowCheck.enabled` | boolean → nested |
+| `subdomainHttpsEnabled` | `subdomainHttps.enabled` | boolean → nested |
+| `disableSSLVerify` | `sslVerification.enabled` | boolean → nested (inverted) |
+| `useAutoCompleteForSensitiveFields` | `autoCompleteForSensitiveFields.enabled` | boolean → nested |
+| `shouldLogUsername` | `logUsername.enabled` | boolean → nested |
+| `auth.openidConnect.idpGroupsImportEnabled` | `auth.openidConnect.idpGroupsImport.enabled` | boolean → nested |
+| `auth.openidConnect.idpGroupsRefreshEnabled` | `auth.openidConnect.idpGroupsRefresh.enabled` | boolean → nested |
+| `auth.openidConnect.insecureIDPTokenLog` | `auth.openidConnect.insecureIDPTokenLog.enabled` | boolean → nested |
+| `webserver.graphqlPlaygroundEnabled` | `webserver.graphqlPlayground.enabled` | boolean → nested |
+| `nats.tlsEnabled` | `nats.tls.enabled` | boolean → nested |
+| `apollo.auditMiddlewareEnabled` | `apollo.auditMiddleware.enabled` | boolean → nested |
+| `workers.dplink.debugEnabled` | `workers.dplink.debug.enabled` | boolean → nested |
+| `deployments.mockWebhook.krbEnabled` | `deployments.mockWebhook.krb.enabled` | boolean → nested |
+| `deployments.mockWebhook.krbRealm` | `deployments.mockWebhook.krb.realm` | key move |
 
 ### Unchanged Keys (No Migration Needed)
 
@@ -124,7 +159,7 @@ These keys already use the correct schema and are not modified:
 - `global.networkPolicy.enabled`
 - `global.authSidecar.*`
 - `global.airflowOperator.*`
-- Most keys under `astronomer` **outside** `astronomer.houston.config.deployments`
+- Most keys under `astronomer` **outside** `astronomer.houston.config`
 - All keys under `nginx`, `grafana`, `prometheus`,
   `elasticsearch`, `vector`, `kube-state`, `nats`, `tags`
 

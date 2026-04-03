@@ -600,7 +600,7 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateRuntimeCheckEnabled"] is True
+    assert prod["updateRuntimeCheck"]["enabled"] is True
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
@@ -619,7 +619,7 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateRuntimeCheckEnabled"] is False
+    assert prod["updateRuntimeCheck"]["enabled"] is False
 
 
 def test_houston_configmap_with_cleanup_airflow_db_enabled():

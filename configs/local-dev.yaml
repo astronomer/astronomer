@@ -72,7 +72,8 @@ astronomer:
         memory: "0Mi"
 
     config:
-      emailConfirmation: false
+      emailConfirmation:
+        enabled: false
       auth:
         local:
           enabled: true

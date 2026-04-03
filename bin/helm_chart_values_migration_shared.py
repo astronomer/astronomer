@@ -371,6 +371,44 @@ HOUSTON_DEPLOYMENT_DELETE_KEYS: list[str] = [
 ]
 
 
+HOUSTON_CONFIG_PREFIX = "astronomer.houston.config"
+
+_OIDC_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.auth.openidConnect"
+_WS_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.webserver"
+_NATS_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.nats"
+_DPLINK_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.workers.dplink"
+_APOLLO_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.apollo"
+_MOCK_WH_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.deployments.mockWebhook"
+
+HOUSTON_CONFIG_RULES: list[tuple[list[str], BoolToNested | InvertedBoolToNested]] = [
+    ([], BoolToNested("emailConfirmation", ["emailConfirmation", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX)),
+    ([], BoolToNested("publicSignups", ["publicSignups", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX)),
+    ([], BoolToNested("updateRuntimeCheckEnabled", ["updateRuntimeCheck", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX)),
+    ([], BoolToNested("updateAirflowCheckEnabled", ["updateAirflowCheck", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX)),
+    ([], BoolToNested("subdomainHttpsEnabled", ["subdomainHttps", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX)),
+    (
+        [],
+        BoolToNested(
+            "useAutoCompleteForSensitiveFields", ["autoCompleteForSensitiveFields", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX
+        ),
+    ),
+    ([], BoolToNested("shouldLogUsername", ["logUsername", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX)),
+    ([], InvertedBoolToNested("disableSSLVerify", ["sslVerification", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX)),
+    (["auth", "openidConnect"], BoolToNested("idpGroupsImportEnabled", ["idpGroupsImport", "enabled"], path_prefix=_OIDC_PREFIX)),
+    (["auth", "openidConnect"], BoolToNested("idpGroupsRefreshEnabled", ["idpGroupsRefresh", "enabled"], path_prefix=_OIDC_PREFIX)),
+    (["auth", "openidConnect"], BoolToNested("insecureIDPTokenLog", ["insecureIDPTokenLog", "enabled"], path_prefix=_OIDC_PREFIX)),
+    (["webserver"], BoolToNested("graphqlPlaygroundEnabled", ["graphqlPlayground", "enabled"], path_prefix=_WS_PREFIX)),
+    (["nats"], BoolToNested("tlsEnabled", ["tls", "enabled"], path_prefix=_NATS_PREFIX)),
+    (["workers", "dplink"], BoolToNested("debugEnabled", ["debug", "enabled"], path_prefix=_DPLINK_PREFIX)),
+    (["apollo"], BoolToNested("auditMiddlewareEnabled", ["auditMiddleware", "enabled"], path_prefix=_APOLLO_PREFIX)),
+    (["deployments", "mockWebhook"], BoolToNested("krbEnabled", ["krb", "enabled"], path_prefix=_MOCK_WH_PREFIX)),
+]
+
+HOUSTON_CONFIG_MOVE_KEYS: list[tuple[list[str], str, list[str]]] = [
+    (["deployments", "mockWebhook"], "krbRealm", ["krb", "realm"]),
+]
+
+
 def apply_global_feature_flag_rules(global_mapping: CommentedMap | None) -> list[MigrationChange]:
     """Apply global-section feature-flag migrations (1.x / 0.37.x -> 2.x).
 
@@ -426,6 +464,51 @@ def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationCha
             all_changes.append(MigrationChange(path_str, "(deleted)", f"Deleted obsolete key {path_str}"))
 
     return all_changes
+
+
+def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationChange]:
+    """Apply Houston ``config`` flag migrations (flat booleans -> nested ``.enabled``).
+
+    Handles passthrough config keys under ``astronomer.houston.config`` that
+    Houston PR #2417 migrated to nested ``.enabled`` paths, including keys in
+    nested sub-sections like ``auth.openidConnect`` and ``webserver``.
+
+    Parameters:
+        root: The parsed YAML document root.
+
+    Returns:
+        All migration changes applied under ``astronomer.houston.config``.
+    """
+    config = _get_nested_mapping(root, ["astronomer", "houston", "config"])
+    if config is None:
+        return []
+
+    changes: list[MigrationChange] = []
+
+    for section_path, rule in HOUSTON_CONFIG_RULES:
+        section = _get_nested_mapping(config, section_path) if section_path else config
+        if section is None:
+            continue
+        changes.extend(rule.apply(section))
+
+    for section_path, old_key, new_path in HOUSTON_CONFIG_MOVE_KEYS:
+        section = _get_nested_mapping(config, section_path) if section_path else config
+        if section is None or old_key not in section:
+            continue
+        prefix = HOUSTON_CONFIG_PREFIX + ("." + ".".join(section_path) if section_path else "")
+        old_str = f"{prefix}.{old_key}"
+        new_str = f"{prefix}.{'.'.join(new_path)}"
+        if _path_exists(section, new_path):
+            _delete_key(section, old_key)
+            changes.append(MigrationChange(old_str, new_str, f"Removed stale {old_str} (kept existing {new_str})"))
+        else:
+            value = section[old_key]
+            parent = _ensure_nested_key(section, new_path[:-1])
+            parent[new_path[-1]] = value
+            _delete_key(section, old_key)
+            changes.append(MigrationChange(old_str, new_str, f"Moved {old_str} -> {new_str}"))
+
+    return changes
 
 
 def load_yaml(input_path: Path) -> tuple[YAML, Any]:

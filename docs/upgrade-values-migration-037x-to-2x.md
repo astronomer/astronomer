@@ -222,6 +222,32 @@ structures:
 | `global.dagOnlyDeployment.*` | `global.deployMechanisms.dagOnlyDeployment.*` | subtree move |
 | `global.loggingSidecar.*` | `global.logging.loggingSidecar.*` | subtree move |
 
+### Houston Config Passthrough Keys
+
+If your values file overrides Houston application config via
+`astronomer.houston.config`, these flat boolean flags are migrated to the
+new nested `.enabled` pattern that Houston 2.x expects:
+
+| Old Path (under `houston.config`) | New Path | Type |
+|---|---|---|
+| `emailConfirmation` (boolean) | `emailConfirmation.enabled` | boolean → nested |
+| `publicSignups` (boolean) | `publicSignups.enabled` | boolean → nested |
+| `updateRuntimeCheckEnabled` | `updateRuntimeCheck.enabled` | boolean → nested |
+| `updateAirflowCheckEnabled` | `updateAirflowCheck.enabled` | boolean → nested |
+| `subdomainHttpsEnabled` | `subdomainHttps.enabled` | boolean → nested |
+| `disableSSLVerify` | `sslVerification.enabled` | boolean → nested (inverted) |
+| `useAutoCompleteForSensitiveFields` | `autoCompleteForSensitiveFields.enabled` | boolean → nested |
+| `shouldLogUsername` | `logUsername.enabled` | boolean → nested |
+| `auth.openidConnect.idpGroupsImportEnabled` | `auth.openidConnect.idpGroupsImport.enabled` | boolean → nested |
+| `auth.openidConnect.idpGroupsRefreshEnabled` | `auth.openidConnect.idpGroupsRefresh.enabled` | boolean → nested |
+| `auth.openidConnect.insecureIDPTokenLog` | `auth.openidConnect.insecureIDPTokenLog.enabled` | boolean → nested |
+| `webserver.graphqlPlaygroundEnabled` | `webserver.graphqlPlayground.enabled` | boolean → nested |
+| `nats.tlsEnabled` | `nats.tls.enabled` | boolean → nested |
+| `apollo.auditMiddlewareEnabled` | `apollo.auditMiddleware.enabled` | boolean → nested |
+| `workers.dplink.debugEnabled` | `workers.dplink.debug.enabled` | boolean → nested |
+| `deployments.mockWebhook.krbEnabled` | `deployments.mockWebhook.krb.enabled` | boolean → nested |
+| `deployments.mockWebhook.krbRealm` | `deployments.mockWebhook.krb.realm` | key move |
+
 ### Deleted Keys
 
 These keys are removed because the underlying features have been removed or
@@ -287,7 +313,8 @@ These keys already use the correct schema and are not modified:
 - `global.privateRegistry.*`
 - `global.airflow.*`
 - `global.gitSyncRelay.*`
-- All keys under `astronomer`, `nginx`, `grafana`, `prometheus`,
+- Most keys under `astronomer` **outside** `astronomer.houston.config`
+- All keys under `nginx`, `grafana`, `prometheus`,
   `elasticsearch`, `kube-state`, `nats` (except init resources)
 
 ## Rollback
