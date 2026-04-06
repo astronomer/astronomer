@@ -5,7 +5,7 @@ unique_versions=$(awk '/^(version|appVersion)/ {print $2}' Chart.yaml charts/ast
 
 if [[ "$unique_versions" -ne 1 ]]; then
   echo "ERROR: version/appVersion mismatch between Chart.yaml and charts/astronomer/Chart.yaml"
-  awk '/^(version|appVersion)/ {print FILENAME": "$0}' Chart.yaml charts/astronomer/Chart.yaml
+  grep -E '^(version|appVersion)' Chart.yaml charts/astronomer/Chart.yaml
   exit 1
 fi
 
