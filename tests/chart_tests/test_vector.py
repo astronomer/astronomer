@@ -115,7 +115,7 @@ class TestVector:
 
     def test_vector_clusterrolebinding_rbac_enabled(self, kube_version):
         """Test that helm renders a good ClusterRoleBinding template for vector when rbacEnabled=True."""
-        values = {"global": {"rbacEnabled": True}}
+        values = {"global": {"rbac": {"enabled": True}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -132,7 +132,7 @@ class TestVector:
 
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"rbacEnabled": False}},
+            values={"global": {"rbac": {"enabled": False}}},
             show_only=["charts/vector/templates/vector-clusterrolebinding.yaml"],
         )
         assert len(docs) == 0
@@ -142,11 +142,11 @@ class TestVector:
         all namespaces."""
         values = {
             "global": {
-                "manualNamespaceNamesEnabled": True,
-                "features": {
+                "namespaceManagement": {
                     "namespacePools": {
                         "enabled": False,
-                    }
+                    },
+                    "manualNamespaceNames": {"enabled": True},
                 },
             }
         }
@@ -161,15 +161,15 @@ class TestVector:
         assert expected_rule in doc["data"]["vector-config.yaml"]
 
     def test_vector_configmap_manual_namespaces_and_namespacepools_disabled(self, kube_version):
-        """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default vector configmap
+        """Test that when namespace Pools and manualNamespaceNames are disabled, helm renders a default vector configmap
         looking at platform label."""
         values = {
             "global": {
-                "manualNamespaceNamesEnabled": False,
-                "features": {
+                "namespaceManagement": {
                     "namespacePools": {
                         "enabled": False,
-                    }
+                    },
+                    "manualNamespaceNames": {"enabled": False},
                 },
             }
         }
@@ -222,7 +222,7 @@ class TestVector:
         """Test to validate vector index name prefix defaults in vector configmap."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"rbacEnabled": True}},
+            values={"global": {"rbac": {"enabled": True}}},
             show_only=[
                 "charts/vector/templates/vector-configmap.yaml",
             ],

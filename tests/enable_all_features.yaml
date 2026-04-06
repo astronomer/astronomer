@@ -1,4 +1,19 @@
 astronomer:
+  dpLink:
+    enabled: true
+  flightDeck:
+    enabled: true
+  pilot:
+    enabled: true
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  navigator:
+    enabled: true
   houston:
     cleanupAirflowDb:
       enabled: true
@@ -19,28 +34,44 @@ astronomer:
 global:
   airflowOperator:
     enabled: true
-  authSidecar:
-    enabled: true
   baseDomain: foo.com
   customLogging:
     awsSecretName: dummy
     enabled: true
-  dagOnlyDeployment:
-    enabled: true
-  loggingSidecar:
+  authSidecar:
     enabled: true
   networkPolicy:
     enabled: true
+  rbac:
+    enabled: true
+  namespaceManagement:
+    namespaceFreeFormEntry:
+      enabled: true
+  metricsReporting:
+    taskUsageMetrics:
+      enabled: true
+  deploymentLifecycle:
+    deployRollback:
+      enabled: true
+  deployMechanisms:
+    dagOnlyDeployment:
+      enabled: true
+  logging:
+    loggingSidecar:
+      enabled: true
   pgbouncer:
     enabled: true
-  podDisruptionBudgetsEnabled: true
-  postgresqlEnabled: true
+  podDisruptionBudgets:
+    enabled: true
+  postgresql:
+    enabled: true
   privateCaCertsAddToHost:
     addToContainerd: true
     enabled: true
-  prometheusPostgresExporterEnabled: true
-  rbacEnabled: true
-  taskUsageMetricsEnabled: true
+  prometheusPostgresExporter:
+    enabled: true
+  nodeExporter:
+    enabled: true
 nats:
   nats:
     exporter:
@@ -49,6 +80,8 @@ nats:
       enabled: true
     jetStream:
       enabled: true
+external-secrets:
+  enabled: true
 postgresql:
   replication:
     enabled: true

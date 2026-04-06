@@ -394,6 +394,11 @@ class TestExternalElasticSearch:
                     },
                     {"podSelector": {"matchLabels": {"component": "vector", "release": "release-name", "tier": "logging"}}},
                     {"podSelector": {"matchLabels": {"component": "houston", "release": "release-name", "tier": "astronomer"}}},
+                    {
+                        "podSelector": {
+                            "matchLabels": {"component": "houston-worker", "release": "release-name", "tier": "astronomer"}
+                        }
+                    },
                 ],
                 "ports": [{"port": 9201, "protocol": "TCP"}],
             },
@@ -405,13 +410,13 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "authSidecar": {"enabled": True},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
+                    "authSidecar": {"enabled": True},
                     "networkPolicy": {"enabled": True},
                     "plane": {"mode": "data"},
                 },
@@ -437,18 +442,18 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
                     "authSidecar": {
                         "enabled": True,
                         "ingressAllowedNamespaces": [
                             "test-namespace-1",
                             "test-namespace-2",
                         ],
-                    },
-                    "customLogging": {
-                        "enabled": True,
-                        "scheme": "https",
-                        "host": "esdemo.example.com",
-                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
                     "networkPolicy": {"enabled": True},
                     "plane": {"mode": "data"},
@@ -490,7 +495,7 @@ class TestExternalElasticSearch:
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                 },
             },
             show_only=[
@@ -593,8 +598,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "logging": {"indexNamePrefix": "astronomer"},
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"indexNamePrefix": "astronomer", "loggingSidecar": {"enabled": True}},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
@@ -621,7 +625,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
@@ -654,7 +658,7 @@ class TestExternalElasticSearch:
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                 },
             },
             show_only=[

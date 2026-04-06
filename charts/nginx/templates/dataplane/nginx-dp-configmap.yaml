@@ -12,6 +12,8 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
+  main-snippet: |
+    load_module /etc/nginx/modules/ngx_http_subs_filter_module.so;
   allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
   add-headers: {{ .Release.Namespace }}/{{ .Release.Name }}-dp-{{ template "nginx.name" . }}-ingress-controller-headers
   annotations-risk-level: Critical

@@ -99,6 +99,7 @@ class TestAllPodSpecContainers:
         "repository": private_repo,
     }
     private_values["global"]["authSidecar"] = {
+        **private_values["global"].get("authSidecar", {}),
         "enabled": True,
         "repository": f"{private_repo}/ap-auth-sidecar",
     }

@@ -53,7 +53,14 @@ def test_houston_configmap_defaults():
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
 
     assert not prod["deployments"].get("authSideCar")
-    assert not prod["deployments"].get("loggingSidecar")
+    assert not prod["deployments"]["logging"].get("loggingSidecar")
+
+    # Verify new unified feature flags
+    assert prod["deployments"]["logging"]["enabled"] is True
+    assert prod["deployments"]["logging"]["provider"] == "fluentd"
+    assert prod["deployments"]["logging"]["elasticsearch"]["enabled"] is True
+    assert prod["deployments"]["logging"]["elasticsearch"]["connection"]["port"] == 9200
+    assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
 
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
     git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
@@ -142,14 +149,14 @@ def test_houston_configmap_with_custom_images():
 
 def test_houston_configmap_with_namespaceFreeFormEntry_true():
     """Validate the houston configmap's embedded data with
-    namespaceFreeFormEntry=True."""
+    namespaceFreeFormEntry enabled."""
 
     docs = render_chart(
-        values={"global": {"namespaceFreeFormEntry": True}},
+        values={"global": {"namespaceManagement": {"namespaceFreeFormEntry": {"enabled": True}}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    assert prod["deployments"]["namespaceFreeFormEntry"] is True
+    assert prod["deployments"]["namespaceManagement"]["namespaceFreeFormEntry"]["enabled"] is True
 
 
 def test_houston_configmap_with_namespaceFreeFormEntry_defaults():
@@ -159,7 +166,7 @@ def test_houston_configmap_with_namespaceFreeFormEntry_defaults():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    assert prod["deployments"]["namespaceFreeFormEntry"] is False
+    assert prod["deployments"]["namespaceManagement"]["namespaceFreeFormEntry"]["enabled"] is False
 
 
 def test_houston_configmap_with_customlogging_enabled():
@@ -181,7 +188,7 @@ def test_houston_configmap_with_customlogging_enabled():
 def test_houston_configmapwith_scc_enabled():
     """Validate the houston configmap and its embedded data with sscEnabled."""
     docs = render_chart(
-        values={"global": {"sccEnabled": True}},
+        values={"global": {"scc": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
@@ -224,7 +231,7 @@ def test_houston_configmap_with_config_syncer_disabled():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert "extraVolumeMounts" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
     assert "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
-    assert not prod_yaml["deployments"].get("loggingSidecar")
+    assert not prod_yaml["deployments"]["logging"].get("loggingSidecar")
 
 
 def test_houston_configmap_with_vector_index_prefix_defaults():
@@ -261,10 +268,12 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "repository": "quay.io/astronomer/ap-vector",
-                    "tag": "0.22.3",
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "repository": "quay.io/astronomer/ap-vector",
+                        "tag": "0.22.3",
+                    },
                 },
             },
         },
@@ -276,13 +285,13 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    assert prod_yaml["deployments"]["loggingSidecar"] == {
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
     }
-    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
+    assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrides():
@@ -292,11 +301,13 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
     docs = render_chart(
         values={
             "global": {
-                "logging": {"indexNamePrefix": "test-index-name-prefix-999"},
-                "loggingSidecar": {
-                    "enabled": True,
-                    "repository": image.split(":")[0],
-                    "tag": image.split(":")[1],
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "repository": image.split(":")[0],
+                        "tag": image.split(":")[1],
+                    },
+                    "indexNamePrefix": "test-index-name-prefix-999",
                 },
             }
         },
@@ -308,14 +319,14 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    assert prod_yaml["deployments"]["loggingSidecar"] == {
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
         "image": image,
         "customConfig": False,
         "indexNamePrefix": "test-index-name-prefix-999",
     }
-    assert image in prod_yaml["deployments"]["loggingSidecar"]["image"]
+    assert image in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
@@ -325,13 +336,15 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": "quay.io/astronomer/ap-vector",
-                    "tag": "0.22.3",
-                }
-            }
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": "quay.io/astronomer/ap-vector",
+                        "tag": "0.22.3",
+                    },
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -341,13 +354,13 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    assert prod_yaml["deployments"]["loggingSidecar"] == {
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
     }
-    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
+    assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
@@ -359,14 +372,16 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": image_name.split(":")[0],
-                    "tag": image_name.split(":")[1],
-                    "indexPattern": indexPattern,
-                }
-            }
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": image_name.split(":")[0],
+                        "tag": image_name.split(":")[1],
+                        "indexPattern": indexPattern,
+                    },
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -376,7 +391,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    assert prod_yaml["deployments"]["loggingSidecar"] == {
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": image_name,
@@ -393,14 +408,16 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "customConfig": True,
-                    "repository": image_name.split(":")[0],
-                    "tag": image_name.split(":")[1],
-                }
-            }
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "customConfig": True,
+                        "repository": image_name.split(":")[0],
+                        "tag": image_name.split(":")[1],
+                    },
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -410,13 +427,13 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    assert prod_yaml["deployments"]["loggingSidecar"] == {
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": True,
     }
-    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
+    assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides():
@@ -427,33 +444,35 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": image_name.split(":")[0],
-                    "tag": image_name.split(":")[1],
-                    "extraEnv": [
-                        {
-                            "name": "ES_USER",
-                            "valueFrom": {
-                                "secretKeyRef": {
-                                    "name": "elastic-creds",
-                                    "key": "ESUSER",
-                                }
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": image_name.split(":")[0],
+                        "tag": image_name.split(":")[1],
+                        "extraEnv": [
+                            {
+                                "name": "ES_USER",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "name": "elastic-creds",
+                                        "key": "ESUSER",
+                                    }
+                                },
                             },
-                        },
-                        {
-                            "name": "ES_PASS",
-                            "valueFrom": {
-                                "secretKeyRef": {
-                                    "name": "elastic-creds",
-                                    "key": "ESPASS",
-                                }
+                            {
+                                "name": "ES_PASS",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "name": "elastic-creds",
+                                        "key": "ESPASS",
+                                    }
+                                },
                             },
-                        },
-                    ],
-                }
-            }
+                        ],
+                    },
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -462,7 +481,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    assert prod_yaml["deployments"]["loggingSidecar"] == {
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
@@ -479,7 +498,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
         ],
     }
 
-    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
+    assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides():
@@ -490,17 +509,19 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": f"{image_name['repository']}",
-                    "tag": f"{image_name['tag']}",
-                    "resources": {
-                        "requests": {"memory": "386Mi", "cpu": "100m"},
-                        "limits": {"memory": "386Mi", "cpu": "100m"},
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": f"{image_name['repository']}",
+                        "tag": f"{image_name['tag']}",
+                        "resources": {
+                            "requests": {"memory": "386Mi", "cpu": "100m"},
+                            "limits": {"memory": "386Mi", "cpu": "100m"},
+                        },
                     },
-                }
-            }
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -509,7 +530,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    assert prod_yaml["deployments"]["loggingSidecar"] == {
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
@@ -520,7 +541,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
         },
     }
 
-    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
+    assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_configured():
@@ -534,14 +555,16 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": sidecar_container_name,
-                    "repository": image_name.split(":")[0],
-                    "tag": image_name.split(":")[1],
-                    "securityContext": securityContext,
-                }
-            }
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": sidecar_container_name,
+                        "repository": image_name.split(":")[0],
+                        "tag": image_name.split(":")[1],
+                        "securityContext": securityContext,
+                    },
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -550,7 +573,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    assert prod_yaml["deployments"]["loggingSidecar"] == {
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:unittest-tag",
@@ -558,7 +581,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
         "securityContext": securityContext,
     }
 
-    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
+    assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
@@ -577,7 +600,7 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateRuntimeCheckEnabled"] is True
+    assert prod["updateRuntimeCheck"]["enabled"] is True
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
@@ -596,7 +619,7 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateRuntimeCheckEnabled"] is False
+    assert prod["updateRuntimeCheck"]["enabled"] is False
 
 
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
@@ -618,7 +641,7 @@ def test_houston_configmap_with_cleanup_airflow_db_enabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is True
+    assert prod["deployments"]["deploymentLifecycle"]["cleanupAirflowDb"]["enabled"] is True
 
 
 def test_houston_configmap_with_cleanup_airflow_db_disabled():
@@ -640,7 +663,7 @@ def test_houston_configmap_with_cleanup_airflow_db_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
+    assert prod["deployments"]["deploymentLifecycle"]["cleanupAirflowDb"]["enabled"] is False
 
 
 def test_houston_configmap_with_tls_secretname_overrides():
@@ -735,12 +758,14 @@ def test_houston_configmap_with_loggingsidecar_liveness_probe():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": "sidecar-log-test",
-                    "livenessProbe": liveness_probe,
-                }
-            }
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": "sidecar-log-test",
+                        "livenessProbe": liveness_probe,
+                    },
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -748,8 +773,8 @@ def test_houston_configmap_with_loggingsidecar_liveness_probe():
     assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert "livenessProbe" in prod_yaml["deployments"]["loggingSidecar"]
-    assert prod_yaml["deployments"]["loggingSidecar"]["livenessProbe"] == liveness_probe
+    assert "livenessProbe" in prod_yaml["deployments"]["logging"]["loggingSidecar"]
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"]["livenessProbe"] == liveness_probe
 
 
 def test_houston_configmap_with_loggingsidecar_readiness_probe():
@@ -770,12 +795,14 @@ def test_houston_configmap_with_loggingsidecar_readiness_probe():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                    "name": "sidecar-log-test",
-                    "readinessProbe": readiness_probe,
-                }
-            }
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "name": "sidecar-log-test",
+                        "readinessProbe": readiness_probe,
+                    },
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -783,8 +810,8 @@ def test_houston_configmap_with_loggingsidecar_readiness_probe():
     assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert "readinessProbe" in prod_yaml["deployments"]["loggingSidecar"]
-    assert prod_yaml["deployments"]["loggingSidecar"]["readinessProbe"] == readiness_probe
+    assert "readinessProbe" in prod_yaml["deployments"]["logging"]["loggingSidecar"]
+    assert prod_yaml["deployments"]["logging"]["loggingSidecar"]["readinessProbe"] == readiness_probe
 
 
 def test_houston_configmap_with_custom_airflow_ingress_annotation_with_authsidecar_disabled():
@@ -806,7 +833,10 @@ def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_
     """Validate the houston configmap does not include airflow ingress annotation."""
     docs = render_chart(
         values={
-            "global": {"authSidecar": {"enabled": True}, "extraAnnotations": {"route.openshift.io/termination": "passthrough"}}
+            "global": {
+                "extraAnnotations": {"route.openshift.io/termination": "passthrough"},
+                "authSidecar": {"enabled": True},
+            }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -849,7 +879,10 @@ def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces():
     assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod_yaml["deployments"]["authSideCar"].get("ingressAllowedNamespaces") == ["astronomer", "ingress-namespace"]
+    assert prod_yaml["deployments"]["authSideCar"].get("ingressAllowedNamespaces") == [
+        "astronomer",
+        "ingress-namespace",
+    ]
 
 
 def test_houston_configmap_with_plane_mode():
@@ -878,10 +911,12 @@ def test_houston_configmap_pod_mutation_hook_airflow_compatibility():
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {
-                    "enabled": True,
-                }
-            }
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                    },
+                },
+            },
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -910,3 +945,48 @@ def test_houston_configmap_pod_mutation_hook_airflow_compatibility():
 
     # Validate the Python code is syntactically correct
     ast.parse(airflow_local_settings.encode())
+
+
+def test_houston_configmap_features_elasticsearch_defaults():
+    """Validate that features.elasticsearch is emitted with default logging enabled."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    es = prod["deployments"]["logging"]["elasticsearch"]
+    assert es["enabled"] is True
+    assert es["connection"]["host"].endswith("-elasticsearch-nginx.default")
+    assert es["connection"]["port"] == 9200
+
+
+def test_houston_configmap_features_elasticsearch_custom_logging():
+    """Validate that features.elasticsearch uses external proxy host when customLogging is enabled."""
+    docs = render_chart(
+        values={"global": {"customLogging": {"enabled": True}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    es = prod["deployments"]["logging"]["elasticsearch"]
+    assert es["enabled"] is True
+    assert es["connection"]["host"].endswith("-external-es-proxy.default")
+    assert es["connection"]["port"] == 9200
+
+
+def test_houston_configmap_features_grafana_defaults():
+    """Validate that metricsReporting.grafana.enabled is always true."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
+
+
+def test_houston_configmap_features_logging_defaults():
+    """Validate that logging is emitted with defaults."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    log = prod["deployments"]["logging"]
+    assert log["enabled"] is True
+    assert log["provider"] == "fluentd"

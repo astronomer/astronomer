@@ -9,8 +9,8 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
     breaks pull-through caching proxies in use by various customers."""
 
     extra_globals = {
-        "postgresqlEnabled": True,
-        "prometheusPostgresExporterEnabled": True,
+        "postgresql": {"enabled": True},
+        "prometheusPostgresExporter": {"enabled": True},
     }
 
     repository = "quay.io/astronomer"

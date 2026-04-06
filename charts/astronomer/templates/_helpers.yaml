@@ -1,7 +1,7 @@
 {{ define "helm.globals" -}}
   {{- $globals := dict -}}
   {{- $_ := set $globals "baseDomain" (default "" .Values.global.baseDomain) -}}
-  {{- $_ := set $globals "rbacEnabled" .Values.global.rbacEnabled -}}
+  {{- $_ := set $globals "rbacEnabled" .Values.global.rbac.enabled -}}
   {{- $_ := set $globals "releaseName" (print .Release.Name | toString) -}}
   {{- $_ := set $globals "releaseNamespace" (print .Release.Namespace | toString) -}}
   {{- $_ := set $globals "releaseVersion" (print .Chart.Version | toString) -}}
@@ -17,7 +17,7 @@
 {{- end }}
 
 {{ define "commander.metadata.namespaceLabels" }}
-{{- if .Values.global.rbacEnabled -}}
+{{- if .Values.global.rbac.enabled -}}
 {{ .Values.global.namespaceLabels | toYaml | nindent 6 -}}
 {{- else -}}
 {}
@@ -63,6 +63,28 @@
 {{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
 {{- end }}
 {{- end }}
+
+{{ define "houston.logging.loggingSidecar.image" -}}
+{{- $images := .Values.images | default dict -}}
+{{- $vector := $images.vector | default dict -}}
+{{- $repo := default "quay.io/astronomer/ap-vector" $vector.repository -}}
+{{- $tag := default "0.52.0" $vector.tag -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ $tag }}
+{{- else -}}
+{{ $repo }}:{{ $tag }}
+{{- end }}
+{{- end }}
+
+{{- define "houston.logging.loggingSidecar.validate" -}}
+{{- if .Values.houston.logging.loggingSidecar.enabled -}}
+{{- $hasBuiltInSink := or .Values.houston.logging.loggingSidecar.cloudwatch.enabled .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled .Values.houston.logging.loggingSidecar.elasticsearch.enabled -}}
+{{- $hasExtraSinks := ne (trim (.Values.houston.logging.loggingSidecar.extraSinks | default "")) "" -}}
+{{- if not (or $hasBuiltInSink $hasExtraSinks) -}}
+{{- fail "houston.logging.loggingSidecar.enabled requires at least one sink: enable cloudwatch, gcpCloudLogging, elasticsearch, or set extraSinks" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
 
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
@@ -131,7 +153,7 @@
 {{- end }}
 
 {{ define "registry.serviceAccountName" -}}
-{{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.registry.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-registry" .Release.Name ) .Values.registry.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.registry.serviceAccount.name }}
@@ -139,15 +161,23 @@
 {{- end }}
 
 {{ define "astroUI.serviceAccountName" -}}
-{{- if and .Values.astroUI.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.astroUI.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-astro-ui" .Release.Name) .Values.astroUI.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.astroUI.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
+{{ define "flightdeck.bootstrapperServiceAccountName" -}}
+{{- if and .Values.flightdeck.serviceAccount.create .Values.global.rbacEnabled (not .Values.flightdeck.backendSecretName) (not .Values.flightdeck.backendConnection) }}
+{{- default (printf "%s-flightdeck-bootstrapper" .Release.Name ) .Values.flightdeck.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.flightdeck.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{ define "houston.bootstrapperServiceAccountName" -}}
-{{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+{{- if and .Values.houston.serviceAccount.create .Values.global.rbac.enabled (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
 {{- default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.houston.serviceAccount.name }}
@@ -155,7 +185,7 @@
 {{- end }}
 
 {{ define "commander.jwksServiceAccountName" -}}
-{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.commander.serviceAccount.name }}
@@ -163,7 +193,7 @@
 {{- end }}
 
 {{ define "configSyncer.serviceAccountName" -}}
-{{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.configSyncer.serviceAccount.name }}
@@ -171,10 +201,34 @@
 {{- end }}
 
 {{ define "commander.serviceAccountName" -}}
-{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-commander" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.commander.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "dpLink.serviceAccountName" -}}
+{{- if and .Values.dpLink.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-dp-link" .Release.Name ) .Values.dpLink.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.dpLink.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "navigator.serviceAccountName" -}}
+{{- if and .Values.navigator.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-navigator" .Release.Name ) .Values.navigator.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.navigator.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "pilot.serviceAccountName" -}}
+{{- if and .Values.pilot.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-pilot" .Release.Name ) .Values.pilot.serviceAccount.name }}
+{{- else -}}
+{{ default "default" .Values.pilot.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
@@ -221,10 +275,20 @@
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
   value: "{{ include "houston.authServiceURL" . }}"
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
-  value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
-{{- if .Values.global.features.namespacePools.enabled  }}
+  value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
+{{- if .Values.global.namespaceManagement.namespacePools.enabled  }}
 - name: COMMANDER_NAMESPACE_POOLS_LIST
-  value: {{ .Values.global.features.namespacePools.namespaces.names | join "," | quote }}
+  value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
+{{- end }}
+{{- if eq .Values.global.plane.mode "data" }}
+- name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
+  value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
+- name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
+  value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
+{{- if .Values.global.dataPlaneFailover.enabled }}
+- name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
+  value: {{ .Values.global.dataPlaneFailover.externalSecretManagerSecretName | quote }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -269,6 +333,69 @@ s3:
   regionendpoint: {{ .Values.registry.s3.regionendpoint }}
 {{- end }}
 
+{{- define "dp_link_environment" }}
+- name: NODE_ENV
+  value: "production"
+{{- /* Dynamically created envs */ -}}
+{{- range $i, $config := .Values.dpLink.env }}
+- name: {{ $config.name }}
+  value: {{ $config.value | quote }}
+{{- end }}
+{{- /* Dynamically created secret envs */ -}}
+{{- range $i, $config := .Values.dpLink.secret }}
+- name: {{ $config.envName }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $config.secretName }}
+      key: {{ default "value" $config.secretKey }}
+{{- end }}
+- name: DATABASE__CONNECTION
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "houston.backendSecret" . }}
+      key: connection
+- name: JWT__CERT_PATH
+  value: {{ template "houston.jwtCertificateDir" . }}
+- name: JWT__REGISTRY__CERT_PATH
+  value: {{ template "houston.jwtCertificateDir" . }}
+- name: JWT__REGISTRY__ISSUER
+  value: {{ .Values.registry.auth.issuer }}
+- name: JWT__REGISTRY__SERVICE
+  value: {{ .Values.registry.auth.service }}
+- name: DATABASE_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "houston.backendSecret" . }}
+      key: connection
+{{- if not (((.Values.houston.config.deployments).database).connection) }}
+- name: DEPLOYMENTS__DATABASE__CONNECTION
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "houston.airflowBackendSecret" . }}
+      key: connection
+{{ end }}
+# These are set here for Houston's entrypoint script
+- name: HOUSTON__HOST
+  value: {{ .Release.Name }}-houston
+- name: COMMANDER__HOST
+  value: {{ .Release.Name }}-commander
+- name: COMMANDER__PORT
+  value: {{ .Values.ports.commanderGRPC | quote }}
+- name: REGISTRY__HOST
+  value: {{ .Release.Name }}-registry
+- name: REGISTRY__PORT
+  value: {{ .Values.ports.registryHTTP | quote }}
+- name: COMMANDER_WAIT_ENABLED
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
+- name: REGISTRY_WAIT_ENABLED
+  value: "false"
+- name: NATS__SERVERS
+  value: {{ template "houston.nats.servers" . }}
+- name: NATS__CLUSTER_ID
+  value: {{ .Release.Name }}-stan
+{{- end }}
+
+
 {{- define "houston_environment" }}
 {{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.houston.env }}
@@ -310,7 +437,7 @@ s3:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
 {{- end }}
-  # These are set here for Houston's entrypoint script
+# These are set here for Houston's entrypoint script
 - name: HOUSTON__HOST
   value: {{ .Release.Name }}-houston
 - name: COMMANDER__HOST
@@ -332,6 +459,55 @@ s3:
 {{- if .Values.houston.updateRuntimeCheck.enabled }}
 - name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
   value: {{ .Values.houston.updateRuntimeCheck.url }}
+{{- end }}
+{{- /* Dispatcher configuration for houston-worker */ -}}
+{{- if .Values.houston.worker.dispatcher }}
+- name: DISPATCHER_ENABLED
+  value: {{ or .Values.houston.worker.dispatcher.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control")) | quote }}
+{{- if .Values.houston.worker.dispatcher.lease }}
+- name: DISPATCH_LEASE_TTL_SECONDS
+  value: {{ .Values.houston.worker.dispatcher.lease.ttlSeconds | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.batch }}
+- name: DISPATCH_BATCH_SIZE
+  value: {{ .Values.houston.worker.dispatcher.batch.size | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.inflight }}
+- name: DISPATCH_MAX_INFLIGHT
+  value: {{ .Values.houston.worker.dispatcher.inflight.max | quote }}
+- name: DISPATCH_MAX_INFLIGHT_PER_DP
+  value: {{ .Values.houston.worker.dispatcher.inflight.maxPerDp | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.poll }}
+- name: DISPATCH_POLL_SECONDS
+  value: {{ .Values.houston.worker.dispatcher.poll.seconds | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.maxAttemptsPerLease }}
+- name: DISPATCH_MAX_ATTEMPTS_PER_LEASE
+  value: {{ .Values.houston.worker.dispatcher.maxAttemptsPerLease | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.maxAttemptsPerFlight }}
+- name: DISPATCH_MAX_ATTEMPTS_PER_FLIGHT
+  value: {{ .Values.houston.worker.dispatcher.maxAttemptsPerFlight | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.retryCooloffPeriodSeconds }}
+- name: DISPATCH_RETRY_COOLOFF_PERIOD
+  value: {{ .Values.houston.worker.dispatcher.retryCooloffPeriodSeconds | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.rpc }}
+- name: IN_REGION_STARTFLIGHT_RPC_TIMEOUT
+  value: {{ .Values.houston.worker.dispatcher.rpc.inRegionTimeoutMs | quote }}
+- name: CROSS_REGION_STARTFLIGHT_RPC_TIMEOUT
+  value: {{ .Values.houston.worker.dispatcher.rpc.crossRegionTimeoutMs | quote }}
+{{- end }}
+{{- if .Values.houston.worker.dispatcher.circuitBreaker }}
+- name: CB_FAILURE_THRESHOLD
+  value: {{ .Values.houston.worker.dispatcher.circuitBreaker.failureThreshold | quote }}
+- name: CB_COOLOFF_SECONDS
+  value: {{ .Values.houston.worker.dispatcher.circuitBreaker.cooloffSeconds | quote }}
+- name: CB_PROBE_MAX_INFLIGHT
+  value: {{ .Values.houston.worker.dispatcher.circuitBreaker.probeMaxInflight | quote }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -481,13 +657,14 @@ fluentd
 {{ define "jetstreamTLS" }}
 {{- $secretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 {{- if .Values.global.nats.jetStream.tls }}
-tlsEnabled: true
 tls:
+  enabled: true
   caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/ca.crt
   certFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.crt
   keyFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.key
 {{- else -}}
-tlsEnabled: false
+tls:
+  enabled: false
 {{- end }}
 {{- end }}
 
@@ -496,10 +673,10 @@ tlsEnabled: false
 {{- end }}
 
 {{- define "dagOnlyDeployment.securityContexts" -}}
-{{- if or (eq ( toString ( .Values.global.dagOnlyDeployment.securityContexts.pod.fsGroup )) "auto") ( .Values.global.openshiftEnabled ) }}
-{{- omit .Values.global.dagOnlyDeployment.securityContexts.pod "fsGroup" | toYaml | nindent 10 }}
+{{- if or (eq ( toString ( .Values.global.deployMechanisms.dagOnlyDeployment.securityContexts.pod.fsGroup )) "auto") ( .Values.global.openshift.enabled ) }}
+{{- omit .Values.global.deployMechanisms.dagOnlyDeployment.securityContexts.pod "fsGroup" | toYaml | nindent 12 }}
 {{- else }}
-{{- .Values.global.dagOnlyDeployment.securityContexts | toYaml | nindent 10 }}
+{{- .Values.global.deployMechanisms.dagOnlyDeployment.securityContexts | toYaml | nindent 12 }}
 {{- end -}}
 {{- end }}
 
@@ -601,3 +778,36 @@ hostAliases:
 {{ toYaml .Values.commander.hostAliases }}
 {{- end }}
 {{- end -}}
+
+{{/*
+Auto-generate a shared internal-service-auth token on install,
+preserve across upgrades via lookup, or use a user-supplied value.
+Uses randBytes 32 (base64-encoded 32 random bytes) to match the
+entropy of a Fernet key.
+*/}}
+{{- define "astronomer.internalServiceToken" -}}
+  {{- if and .Values.global.internalServiceAuth .Values.global.internalServiceAuth.token -}}
+    {{- .Values.global.internalServiceAuth.token -}}
+  {{- else -}}
+    {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-internal-service-auth" .Release.Name) -}}
+    {{- if and $existing $existing.data.token -}}
+      {{- $existing.data.token | b64dec -}}
+    {{- else -}}
+      {{- randBytes 32 | b64enc -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "houston.logging.loggingSidecar.elasticsearch" -}}
+{{- required "houston.logging.loggingSidecar.elasticsearch.endpoint must be set when houston.logging.loggingSidecar.elasticsearch.enabled is true" .Values.houston.logging.loggingSidecar.elasticsearch.endpoint }}
+{{- end }}
+
+{{- define "houston.logging.loggingSidecar.securityContext" -}}
+{{- if or (eq ( toString ( .Values.houston.logging.loggingSidecar.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required (omit .Values.houston.logging.loggingSidecar.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required .Values.houston.logging.loggingSidecar.securityContext | toYaml }}
+{{- end -}}
+{{- end }}

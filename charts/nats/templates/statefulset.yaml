@@ -11,7 +11,7 @@ metadata:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     plane: {{ .Values.global.plane.mode }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
@@ -54,7 +54,7 @@ spec:
     spec:
       serviceAccountName: {{ template "nats.serviceAccountName" . }}
     {{- include "nats.imagePullSecrets" . | nindent 6 }}
-{{- if eq .Values.global.openshiftEnabled false }}
+{{- if eq .Values.global.openshift.enabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
 {{- end }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}

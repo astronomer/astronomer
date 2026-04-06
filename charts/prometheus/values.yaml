@@ -18,19 +18,19 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 3.8.1
+    tag: 3.10.0
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.15.0-1
+    tag: 0.15.0-3
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.16
+    tag: 0.1.19
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.27.1-8
+    tag: 1.29.2
     pullPolicy: IfNotPresent
 
 
@@ -203,6 +203,9 @@ extraFlags:
 # Convert lists to dicts for more explicit assignment.
 # Convert dashes to underscores for golang compatibility.
 config:
+  # Enables kubelet and cAdvisor scrape jobs for pod-level metrics
+  cadvisor:
+    enabled: false
   enableSelfScrape: false
   scrape_configs:
     kubernetes_apiservers:

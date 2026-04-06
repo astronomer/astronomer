@@ -64,7 +64,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "prometheusPostgresExporterEnabled": True,
+                    "prometheusPostgresExporter": {"enabled": True},
                 },
             },
         )[0]
@@ -156,7 +156,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             namespace=namespace,
             values={
-                "global": {"features": {"namespacePools": {"enabled": False}}},
+                "global": {"namespaceManagement": {"namespacePools": {"enabled": False}}},
                 "astronomer": {
                     "houston": {
                         "config": {"deployments": {"namespaceFreeFormEntry": False}},
@@ -185,7 +185,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             values={
-                "global": {"namespaceFreeFormEntry": True},
+                "global": {"namespaceManagement": {"namespaceFreeFormEntry": {"enabled": True}}},
             },
         )[0]
         self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
@@ -217,8 +217,10 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "features": {"namespacePools": {"enabled": True}},
-                    "namespaceFreeFormEntry": False,
+                    "namespaceManagement": {
+                        "namespacePools": {"enabled": True},
+                        "namespaceFreeFormEntry": {"enabled": False},
+                    },
                 }
             },
         )[0]
@@ -232,8 +234,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "features": {"namespacePools": {"enabled": False}},
-                    "manualNamespaceNamesEnabled": True,
+                    "namespaceManagement": {"namespacePools": {"enabled": False}, "manualNamespaceNames": {"enabled": True}},
                 }
             },
         )[0]

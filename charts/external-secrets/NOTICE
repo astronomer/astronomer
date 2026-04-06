@@ -1,0 +1,10 @@
+This product includes software originally developed by the External Secrets
+project (https://github.com/external-secrets/external-secrets/), licensed
+under the Apache License, Version 2.0 (the "License").
+
+You may obtain a copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+All files in this directory have been modified by Astronomer, Inc. engineering
+from the original upstream source.

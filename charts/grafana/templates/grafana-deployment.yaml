@@ -149,10 +149,14 @@ spec:
             periodSeconds: 10
           {{- end }}
           volumeMounts:
+            - name: grafana-dashboards
+              mountPath: /etc/grafana/provisioning/dashboards
             - name: var-lib-grafana
               mountPath: /var/lib/grafana
             - name: grafana-datasource-volume
               mountPath: /etc/grafana/provisioning/datasources
+            - name: tmp
+              mountPath: /tmp
             {{- $grafanadashboards := fromYaml (include "grafana.dashboards" .) }}
             {{- if $grafanadashboards }}
             {{- range $provider, $dashboards := $grafanadashboards }}
@@ -226,7 +230,15 @@ spec:
             mountPath: /run
         {{- end }}
       volumes:
+        - name: grafana-dashboards
+          configMap:
+            name: {{ template "grafana.fullname" . }}-dashboard-provisioner
+            items:
+              - key: dashboard.yaml
+                path: dashboard.yaml
         - name: var-lib-grafana
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
         - name: grafana-sidecar-conf

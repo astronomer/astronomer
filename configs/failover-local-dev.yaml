@@ -1,0 +1,40 @@
+astronomer:
+  dpLink:
+    enabled: true
+  flightDeck:
+    enabled: true
+  houston:
+    worker:
+      dispatcher:
+        enabled: true
+  images:
+    astroUI:
+      pullPolicy: Always
+    commander:
+      pullPolicy: Always
+    houston:
+      pullPolicy: Always
+  navigator:
+    enabled: true
+    env:
+      - name: DEBUG
+        value: "true"
+  pilot:
+    enabled: true
+external-secrets:
+  enabled: true
+global:
+  dataPlaneFailover:
+    enabled: true
+    externalSecretManagerSecretName: astronomer-cluster-secret-store
+  grafana:
+    enabled: false
+  helmRepo: https://internal-helm.astronomer.io
+  prometheusPostgresExporterEnabled: false
+  rbacEnabled: true
+  ssl:
+    enabled: true
+    mode: disable
+tags:
+  logging: false
+  monitoring: true

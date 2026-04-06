@@ -34,7 +34,7 @@ spec:
         matchLabels:
           tier: airflow
           component: api-server
-    {{- if .Values.global.loggingSidecar.enabled }}
+    {{- if .Values.global.logging.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:
         matchExpressions:
@@ -84,6 +84,11 @@ spec:
     - podSelector:
         matchLabels:
           component: houston
+          tier: astronomer
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          component: houston-worker
           tier: astronomer
           release: {{ .Release.Name }}
 
