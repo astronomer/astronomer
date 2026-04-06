@@ -36,7 +36,7 @@ repos:
       - id: check-chart-version-consistency
         language: script
         name: Ensure version and appVersion are consistent across Chart.yaml files
-        entry: bash -c '[[ $(awk "/^(version|appVersion)/ {print \$2}" Chart.yaml charts/astronomer/Chart.yaml | sort -u | wc -l) -eq 1 ]] && echo "Chart versions are consistent" || (echo "ERROR: version/appVersion mismatch between Chart.yaml and charts/astronomer/Chart.yaml" && exit 1)'
+        entry: bin/check-chart-version-consistency.sh
         files: 'Chart\.yaml$'
         pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
