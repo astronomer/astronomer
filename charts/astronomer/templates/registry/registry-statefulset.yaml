@@ -19,7 +19,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
@@ -64,7 +64,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
-{{- if eq .Values.global.openshiftEnabled false }}
+{{- if eq .Values.global.openshift.enabled false }}
       securityContext: {{ toYaml .Values.registry.podSecurityContext | nindent 8 }}
 {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}

@@ -41,7 +41,7 @@ class TestIngress:
     def test_astro_ui_per_host_ingress(self, mode, expected, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"enablePerHostIngress": True, "plane": {"mode": mode}}},
+            values={"global": {"perHostIngress": {"enabled": True}, "plane": {"mode": mode}}},
             show_only=[
                 "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
                 "charts/astronomer/templates/ingress.yaml",
@@ -67,7 +67,7 @@ class TestIngress:
     def test_registry_per_host_ingress(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"enablePerHostIngress": True}},
+            values={"global": {"perHostIngress": {"enabled": True}}},
             show_only=[
                 "charts/astronomer/templates/registry/registry-ingress.yaml",
                 "charts/astronomer/templates/ingress.yaml",
@@ -83,7 +83,7 @@ class TestIngress:
         assert docs[0]["spec"]["rules"] == expected_rules_v1
 
     def test_single_ingress_per_host(self, kube_version):
-        default_docs = render_chart(values={"global": {"enablePerHostIngress": True}})
+        default_docs = render_chart(values={"global": {"perHostIngress": {"enabled": True}}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
         assert len(ingresses) == 8
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)

@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.18
+    tag: 0.1.19
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
@@ -201,6 +201,9 @@ extraFlags:
 # Convert lists to dicts for more explicit assignment.
 # Convert dashes to underscores for golang compatibility.
 config:
+  # Enables kubelet and cAdvisor scrape jobs for pod-level metrics
+  cadvisor:
+    enabled: false
   enableSelfScrape: false
   scrape_configs:
     kubernetes_apiservers:

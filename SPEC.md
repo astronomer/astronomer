@@ -100,20 +100,15 @@ The chart is built using:
 ```bash
 helm template astronomer . \
   --values values.yaml \
-  --show-only=charts/astronomer/templates/commander/commander-deployment.yaml
+  --show-only=charts/astronomer/templates/commander/commander-role.yaml \
+  --show-only=charts/astronomer/templates/commander/commander-rolebinding.yaml
 ```
 
 ### Validating Changes
 
 #### Running Tests
 
-```bash
-# Run the full unit test suite
-pytest tests/chart_tests/ -v
-
-# Run specific unit test file
-pytest tests/chart_tests/test_nginx.py -v
-```
+See [Testing Strategy](#testing-strategy)
 
 #### Pre-Commit Checks with `prek`
 
@@ -146,204 +141,12 @@ If checks fail, fix the issues and run `prek` again until it passes.
 
 ## Testing Strategy
 
-### Overview
-
-Testing uses **pytest** to verify:
-1. Helm template rendering correctness
-2. Kubernetes manifest schema compliance
-3. Feature interactions and configurations
-4. Security and best practices
-
-**No `helm unittest` plugin is used** — all testing is pytest-based.
-
-### Test Organization
-
-Tests are organized by component/feature:
-
-```
-tests/
-├── chart_tests/              # Helm template rendering tests
-│   ├── test_nginx.py         # One component per test file
-│   ├── test_astronomer_commander.py
-│   ├── test_*.py             # 60+ integration tests
-│   ├── conftest.py           # Shared fixtures and configuration
-│   ├── test_data/            # Test data files (feature configs, expected outputs)
-│   └── README.md             # Testing documentation
-├── functional/               # End-to-end cluster tests
-│   ├── control/              # Control plane functional tests
-│   ├── data/                 # Data plane functional tests
-│   └── unified/              # Unified deployment tests
-├── k8s_schema/               # Kubernetes API schemas for validation
-└── utils/                    # Test utilities
-    ├── chart.py              # render_chart() and helpers
-    ├── fixtures.py           # Common test fixtures
-    └── __init__.py
-```
-
-### Writing Tests
-
-#### Basic Test Pattern
-
-```python
-import pytest
-from tests.utils.chart import render_chart
-
-def test_some_feature():
-    """Brief description of what is being tested."""
-    values = {"my_chart": {"enabled": True}}
-
-    docs = render_chart(
-        values=values,
-        show_only=["charts/my-chart/templates/my-resource.yaml"],
-    )
-
-    assert len(docs) == 1
-    assert docs[0]["kind"] == "Deployment"
-    assert docs[0]["metadata"]["name"] == "my-resource"
-```
-
-#### Using `show_only` to Target Specific Templates
-
-```python
-# Render only specific templates
-docs = render_chart(
-    show_only=[
-        "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
-        "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
-    ]
-)
-```
-
-#### Parametrized Tests
-
-```python
-@pytest.mark.parametrize(
-    "service_type,expected_traffic_policy",
-    [
-        ("ClusterIP", None),
-        ("LoadBalancer", "Local"),
-        ("NodePort", "Cluster"),
-    ],
-)
-def test_service_types(service_type, expected_traffic_policy):
-    """Test various service type configurations."""
-    docs = render_chart(
-        values={"nginx": {"serviceType": service_type}}
-    )
-    for doc in docs:
-        if doc["kind"] == "Service":
-            policy = doc["spec"].get("externalTrafficPolicy")
-            assert policy == expected_traffic_policy
-```
-
-#### Testing with All Features Enabled
-
-`get_all_features()` is a best effort to enable as many features as possible, but
-due to incompatibilities between different features, it is not able to enable all
-features simultaneously.
-
-```python
-from tests.utils import get_all_features
-
-def test_with_all_features():
-    """Test that all components work together."""
-    chart_values = get_all_features()
-    docs = render_chart(values=chart_values)
-
-    # Verify expected components are present
-    kinds = [doc["kind"] for doc in docs]
-    assert "Deployment" in kinds
-    assert "StatefulSet" in kinds
-```
-
-### Test Utilities
-
-#### `render_chart(values=None, show_only=None, kube_version=None, validate_objects=True)`
-
-Renders the Helm chart and returns parsed YAML documents.
-
-- **`values`** (dict): Values to pass to `helm template` (merged with defaults)
-- **`show_only`** (list): Templates to render (filters output)
-- **`kube_version`** (str): Kubernetes version for schema validation
-- **`validate_objects`** (bool): Validate manifests against K8s schemas
-
-```python
-from tests.utils.chart import render_chart
-
-docs = render_chart(
-    values={"nginx": {"enabled": True}},
-    show_only=["charts/nginx/templates/controlplane/nginx-cp-service.yaml"],
-    kube_version="1.31.0",
-    validate_objects=True,
-)
-```
-
-#### `get_all_features()`
-
-Returns a values dict with most components enabled. Not all components can be enabled,
-but this is the best effort to enable as many compatible components as possible.
-
-```python
-from tests.utils import get_all_features
-
-all_features = get_all_features()
-docs = render_chart(values=all_features)
-```
-
-#### `get_containers_by_name(docs, container_name)`
-
-Extracts containers from pods/deployments by name.
-
-```python
-from tests.utils import get_containers_by_name
-
-docs = render_chart(values=my_values)
-containers = get_containers_by_name(docs, "myapp")
-for container in containers:
-    assert "MY_ENV_VAR" in container.get("env", [])
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-uv run pytest tests/chart_tests/ -v
-
-# Run a specific test file
-uv run pytest tests/chart_tests/test_nginx.py -v
-
-# Run tests matching a pattern
-uv run pytest tests/chart_tests/ -k "test_service" -v
-
-# Run a single test
-uv run pytest tests/chart_tests/test_nginx.py::test_nginx_service_basics -v
-
-# Run with verbose output and stop on first failure
-uv run pytest tests/chart_tests/ -vvs -x
-
-# See test collection (without running)
-uv run pytest tests/chart_tests/ --collect-only
-```
-
-### Kubernetes Schema Validation
-
-Tests automatically validate rendered manifests against Kubernetes OpenAPI schemas. These schemas are cached locally in `tests/k8s_schema/v<version>-standalone/`.
-
-Schema validation happens by default unless `validate_objects=False` is passed to `render_chart()`.
-
-#### Writing Schema-Aware Tests
-
-```python
-def test_custom_resource():
-    """Test a custom K8s resource."""
-    docs = render_chart(
-        show_only=["charts/airflow-operator/templates/crds/airflow.yaml"],
-        validate_objects=True,  # Validate against schema
-    )
-
-    for doc in docs:
-        assert doc["kind"] == "CustomResourceDefinition"
-```
+See the [chart-tests skill](.agents/skills/chart-tests/SKILL.md) for the full testing guide, including:
+- Test organization and file structure
+- Writing tests: basic pattern, sub-chart values nesting, parametrization
+- Test utilities: `render_chart()`, `get_containers_by_name()`, `get_all_features()`
+- Running tests with `uv run pytest`
+- Kubernetes schema validation
 
 ---
 
@@ -509,6 +312,34 @@ charts/<component>/templates/<component>[-feature]-<k8s_object>.yaml
 3. **Comments**: Document non-obvious template logic
 4. **Indentation**: Use 2 spaces consistently
 5. **Scope management**: Use `with`, `range` scoping to keep templates readable
+6. **Probe Customization**: Every container should support customizable `livenessProbe` and `readinessProbe` to allow operators to tune health checks for their environments
+
+#### Probe Customization Pattern
+
+Always expose `livenessProbe` and `readinessProbe` as overridable values:
+
+```yaml
+# In deployment template
+{{- if .Values.myComponent.livenessProbe }}
+livenessProbe: {{ tpl (toYaml .Values.myComponent.livenessProbe) $ | nindent 12 }}
+{{- else }}
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+{{- end }}
+
+# In values.yaml
+myComponent:
+  # -- Custom liveness probe configuration (overrides default)
+  livenessProbe: {}
+  # -- Custom readiness probe configuration (overrides default)
+  readinessProbe: {}
+```
+
+**Why This Matters**: Different deployments have different operational requirements. Some may need longer initial delays due to slow startup, higher failure thresholds, or alternative probe methods (exec vs httpGet). Making probes customizable is a Kubernetes best practice.
 
 #### Common Helpers Pattern
 

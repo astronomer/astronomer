@@ -10,32 +10,14 @@ description: Use for Helm chart work - creating charts, modifying existing chart
 **See SPEC.md in the repository root for all APC-specific guidance:**
 
 - **Architecture**: Umbrella chart design, sub-chart organization, design principles
-- **Testing Strategy**: Pytest patterns, `render_chart()` utilities, test organization, running tests
+- **Template Best Practices**: See "Probe Customization Pattern" section
+  - **Critical**: Every container must support customizable livenessProbe and readinessProbe
+- **Testing Strategy**: See the [chart-tests skill](../chart-tests/SKILL.md) — load it when writing or running tests
+  - **Critical**: Values nesting for sub-charts, probe customization, and `uv run pytest` usage are all covered there
 - **Code Standards**: Naming conventions, template best practices, Python script standards
 - **Values Documentation**: Helm-docs adoption plan, JSON schema structure
 - **Refactoring Guidelines**: Modernization roadmap and improvement areas
 - **Development Workflow**: Setup, building, validating changes
-
-## Working on Other Helm Charts
-
-General Helm chart best practices and reference material follows below.
-
-## Keywords
-
-helm, chart, development, testing, values, schema, kubernetes, templates, versioning
-
-## Working on Other Helm Charts
-
-### Quick Reference
-
-| Task | Command |
-|------|---------|
-| Create chart | `helm create mychart` |
-| Lint chart | `helm lint mychart/ --strict` |
-| Template dry-run | `helm template myrelease mychart` |
-| Update dependencies | `helm dependency update mychart/` |
-| Validate K8s API versions | `helm template myrelease mychart/ \| pluto detect -` |
-| Security audit | `helm template myrelease mychart/ \| kubescape scan framework nsa -` |
 
 ### Values Documentation
 
@@ -88,15 +70,11 @@ Create `values.schema.json`:
 3. Provide sensible security defaults
 4. Include comprehensive values documentation
 5. Add values.schema.json for IDE support
+6. All changes must pass pre-commit checks with `prek run --all-files`
 
 ---
 
 **For the Astronomer APC repository, SPEC.md is the authoritative source.**
-image: {{ required "image.repository is required" .Values.image.repository }}
-
-# ❌ BAD: Silent failures
-image: {{ .Values.image.repository }}  # Empty if not set
-```
 
 ### Labels & Annotations
 
@@ -666,89 +644,6 @@ env:
 | Command not found  | Wrong base image         | Use image with required tools        |
 | Timeout            | Service startup too slow | Increase timeout or add retry logic  |
 
-### Test Anti-Patterns
-
-```yaml
-# Wrong - runs during install
-helm.sh/hook: post-install
-
-# Correct - runs with helm test
-helm.sh/hook: test-success
-
-# Wrong - Kubernetes guarantees this
-command: ["kubectl", "get", "pod", "|", "grep", "myapp"]
-
-# Correct - test application functionality
-command: ["curl", "http://myapp-service/health"]
-
-# Fragile - exact match
-response=$(curl http://service/health)
-[ "$response" == '{"status":"ok"}' ]
-
-# Robust - content check
-curl http://service/health | grep -q "status.*ok"
-
-# Avoid - waits 60 seconds
-for i in $(seq 1 60); do sleep 1; done
-
-# Prefer - quick check
-curl -f --max-time 10 http://service/health
-```
-
-### Helm-Unittest Plugin
-
-```yaml
-# tests/deployment_test.yaml
-suite: deployment tests
-templates:
-  - deployment.yaml
-tests:
-  - it: should create deployment with correct replicas
-    set:
-      replicaCount: 3
-    asserts:
-      - equal:
-          path: spec.replicas
-          value: 3
-
-  - it: should use correct image
-    set:
-      image:
-        repository: myapp
-        tag: v1.0.0
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: myapp:v1.0.0
-
-  - it: should have security context
-    asserts:
-      - isNotNull:
-          path: spec.template.spec.securityContext
-      - equal:
-          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
-          value: true
-
-  - it: should fail without required value
-    set:
-      image.repository: null
-    asserts:
-      - failedTemplate: {}
-```
-
-Running tests:
-
-```bash
-# Helm built-in test
-helm test myrelease
-
-# helm-unittest plugin
-helm unittest mychart/
-
-# With coverage
-helm unittest mychart/ --output-file results.xml --output-type JUnit
-```
-
 ---
 
 ## Review & Quality Assurance
@@ -896,8 +791,6 @@ helm lint mychart/ --strict
 # With values
 helm lint mychart/ -f values-production.yaml
 
-# Security scanning
-trivy config mychart/
 
 # Best practices
 helm template myrelease mychart/ | polaris audit --audit-path -
@@ -1019,18 +912,8 @@ jobs:
             helm template test $chart --debug
           done
 
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Trivy
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: "config"
-          scan-ref: "charts/"
-
   release:
-    needs: [lint, test, template, security]
+    needs: [lint, test, template]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -1106,6 +989,7 @@ image:
 # New (2.x)
 image:
   repository: myapp
+  tag: "2.3.4"
 ```
 ````
 

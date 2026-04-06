@@ -52,10 +52,10 @@ data:
         condition:
           type: "vrl"
           source: |
-            {{- if and .Values.global.features.namespacePools.enabled (gt (len .Values.global.features.namespacePools.namespaces.names) 0) }}
-            namespaces = [{{ range $i, $ns := .Values.global.features.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
+            {{- if and .Values.global.namespaceManagement.namespacePools.enabled (gt (len .Values.global.namespaceManagement.namespacePools.namespaces.names) 0) }}
+            namespaces = [{{ range $i, $ns := .Values.global.namespaceManagement.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
             includes(namespaces, .kubernetes.pod_namespace)
-            {{- else if or .Values.global.manualNamespaceNamesEnabled .Values.global.disableManageClusterScopedResources }}
+            {{- else if or .Values.global.namespaceManagement.manualNamespaceNames.enabled (not .Values.global.manageClusterScopedResources.enabled) }}
             match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
             {{- else }}
             .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"

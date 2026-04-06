@@ -10,6 +10,15 @@ from pathlib import Path
 
 import yaml
 
+# Helm is run once for each of these list items, and images from all runs are aggregated into
+# one list. This allows us to discover more images that would not be discovered due to mutually
+# incompatible configurations, like plane.mode.
+HELM_RUNS = [
+    {"label": "unified", "files": ["tests/enable_all_features.yaml"]},
+    {"label": "control", "files": ["configs/enable-all-features-control.yaml"]},
+    {"label": "data", "files": ["configs/enable-all-features-data.yaml"]},
+]
+
 
 def get_containers_from_spec(spec):
     """Return a list of images used in a kubernetes pod spec."""
@@ -71,14 +80,19 @@ def get_images_from_values_yaml():
     images = [f"{i['repository']}:{i['tag']}" for i in af_images.values()]
     images.extend(f"{image['repository']}:{image['tag']}" for image in af_images.values())
     images.append(f"{values['global']['authSidecar']['repository']}:{values['global']['authSidecar']['tag']}")
-    images.append(f"{values['global']['dagOnlyDeployment']['repository']}:{values['global']['dagOnlyDeployment']['tag']}")
+    images.append(
+        f"{values['global']['deployMechanisms']['dagOnlyDeployment']['repository']}:{values['global']['deployMechanisms']['dagOnlyDeployment']['tag']}"
+    )
     images.append(
         f"{values['global']['gitSyncRelay']['images']['gitDaemon']['repository']}:{values['global']['gitSyncRelay']['images']['gitDaemon']['tag']}"
     )
     images.append(
         f"{values['global']['gitSyncRelay']['images']['gitSync']['repository']}:{values['global']['gitSyncRelay']['images']['gitSync']['tag']}"
     )
-    images.append(f"{values['global']['loggingSidecar']['repository']}:{values['global']['loggingSidecar']['tag']}")
+    repository = values["global"].get("logging", {}).get("loggingSidecar", {}).get("repository")
+    tag = values["global"].get("logging", {}).get("loggingSidecar", {}).get("tag")
+    if repository and tag:
+        images.append(f"{repository}:{tag}")
     images.append(
         f"{values['global']['privateCaCertsAddToHost']['certCopier']['repository']}:{values['global']['privateCaCertsAddToHost']['certCopier']['tag']}"
     )
@@ -88,13 +102,19 @@ def get_images_from_values_yaml():
 
 def get_images_from_houston_configmap(doc, args):
     """Return a list of images used in the houston configmap."""
+    images = []
     houston_config = yaml.safe_load(doc["data"]["production.yaml"])
-    keepers = ("authSideCar", "loggingSidecar")
-    deployment_items = {k: v for k, v in houston_config["deployments"].items() if k in keepers}
-    auth_sidecar_image = f"{deployment_items['authSideCar']['repository']}:{deployment_items['authSideCar']['tag']}"
-    logging_sidecar_image = f"{deployment_items['loggingSidecar']['image']}"
-    dag_server_image = f"{houston_config['deployments']['dagDeploy']['images']['dagServer']['repository']}:{houston_config['deployments']['dagDeploy']['images']['dagServer']['tag']}"
-    images = [auth_sidecar_image, dag_server_image, logging_sidecar_image]
+    deployments = houston_config["deployments"]
+    auth_sidecar_repository = deployments["authSideCar"]["repository"]
+    auth_sidecar_tag = deployments["authSideCar"]["tag"]
+    if auth_sidecar_repository and auth_sidecar_tag:
+        images.append(f"{auth_sidecar_repository}:{auth_sidecar_tag}")
+    if logging_sidecar_image := deployments.get("logging", {}).get("loggingSidecar", {}).get("image"):
+        images.append(logging_sidecar_image)
+    dag_server_repository = deployments.get("dagDeploy", {}).get("images", {}).get("dagServer", {}).get("repository")
+    dag_server_tag = deployments.get("dagDeploy", {}).get("images", {}).get("dagServer", {}).get("tag")
+    if dag_server_repository and dag_server_tag:
+        images.append(f"{dag_server_repository}:{dag_server_tag}")
     if args.verbose and any("quay.io" in x for x in images):
         print(
             "Houston configmap uses quay.io instead of private registry",
@@ -107,23 +127,23 @@ def get_images_from_houston_configmap(doc, args):
     return images
 
 
-def helm_template(args):
-    """Run helm template and return the parsed yaml."""
+def helm_template(args, label, files):
+    """Run helm template for the given value files and return the parsed yaml."""
     GIT_ROOT = next(
         iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
         None,
     )
 
     command = "helm template . --set forceIncompatibleKubernetes=true"
-    if args.enable_all_features:
-        command += " -f tests/enable_all_features.yaml"
+    for f in files:
+        command += f" -f {f}"
     if args.private_registry:
         command += (
             " --set global.privateRegistry.repository=example.com/the-private-registry --set global.privateRegistry.enabled=True"
         )
 
     if args.verbose:
-        print(f"Running command: {command}", flush=True, file=sys.stderr)
+        print(f"Running helm template [{label}]: {command}", flush=True, file=sys.stderr)
     output = subprocess.check_output(command, shell=True, cwd=GIT_ROOT).decode("utf-8")
 
     return list(yaml.safe_load_all(output))
@@ -150,16 +170,11 @@ def main():
         action="store_true",
         help="only check for multiple tags for the same image, do not print the images",
     )
-    parser.add_argument(
-        "--no-enable-all-features",
-        dest="enable_all_features",
-        action="store_false",
-        help="Disable enable-all-features",
-    )
-
     args = parser.parse_args()
 
-    docs = helm_template(args)
+    docs = []
+    for run in HELM_RUNS:
+        docs.extend(helm_template(args, run["label"], run["files"]))
 
     containers = set()
 

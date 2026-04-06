@@ -2,8 +2,8 @@
 ## Kube State Deployment ##
 ###########################
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
-{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
-{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- $useRoles := or .Values.global.namespaceManagement.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- $namespaceList := join "," $namespaces }}
 kind: Deployment

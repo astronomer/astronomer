@@ -10,18 +10,9 @@ executors:
 
 orbs:
   slack: circleci/slack@4.10.1
-  python: circleci/python@2.1.1
   cosign: cpanato/cosign-orb@2.0.0
 
 parameters:
-  scan-docker-images:
-    type: boolean
-    default: false
-    description: "This will run docker image scan."
-  scan-docker-images-report-url:
-    type: string
-    default: ""
-    description: "The URN to report image scan result."
   qa-release:
     type: boolean
     default: false
@@ -66,66 +57,9 @@ jobs:
             # Execute the signing script with version from environment
             python bin/sign-images.py --version "${IMAGE_TAG}"
 
-  trivy-scan-docker:
-    docker:
-      - image: cimg/base:current-24.04
-    shell: /usr/bin/bash
-    parameters:
-      docker_image:
-        type: string
-      report_url:
-        type: string
-        default: ""
-      slack_notify:
-        type: boolean
-        default: false
-    environment:
-      SCAN_IMAGE: << parameters.docker_image >>
-      SCAN_TOOL: Trivy
-      BASH_ENV: /etc/profile
-      ASTRO_SEC_ENDPOINT: << parameters.report_url >>
-    steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: set -euo pipefail
-      - checkout
-      - run:
-          name: Pull Docker image
-          command: docker pull << parameters.docker_image >>
-      - run:
-          name: Install trivy
-          command: |
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-            date +%F > date
-      - restore_cache:
-          keys:
-            - trivy-cache-{{ checksum "date" }}
-      - run:
-          name: Scan the local image with trivy
-          command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
-      - when:
-          condition:
-            or:
-              - << parameters.slack_notify >>
-          steps:
-            - run:
-                name: Slack Init
-                command: |
-                  echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
-                  source $BASH_ENV
-                when: on_fail
-            - slack/notify:
-                event: fail
-                template: SLACK_MSG_TEMPLATE
-                channel: C03HS1H9G1E
-      - save_cache:
-          key: trivy-cache-{{ checksum "date" }}
-          paths:
-            - /tmp/workspace/trivy-cache
-
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-02
+      - image: quay.io/astronomer/ci-helm-release:2026-04
     steps:
       - checkout
       - run:
@@ -135,7 +69,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2026-02
+      - image: quay.io/astronomer/ci-pre-commit:2026-04
     resource_class: small
     steps:
       - checkout
@@ -143,7 +77,6 @@ jobs:
           name: Create pre-commit-cache-key.txt
           command: |
             cp .pre-commit-config.yaml /tmp/pre-commit-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/pre-commit-cache-key.txt
       - restore_cache:
           keys:
             - pre-commit-cache-{{ checksum "/tmp/pre-commit-cache-key.txt" }}
@@ -160,7 +93,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-02
+      - image: quay.io/astronomer/ci-helm-release:2026-04
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -169,17 +102,16 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Create venv
           command: |
             make venv
       - save_cache:
-          key: test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+          key: test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
           paths:
             - ~/.cache/uv
             - ~/.local/share/uv
@@ -190,13 +122,13 @@ jobs:
             mkdir test-results
             TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
             echo "TEST_FILES=\"$TEST_FILES\""
-            .venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
+            uv run pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-02
+      - image: quay.io/astronomer/ci-helm-release:2026-04
     parameters:
       qa_release:
         type: boolean
@@ -215,7 +147,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-02
+      - image: quay.io/astronomer/ci-helm-release:2026-04
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -254,7 +186,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-02
+      - image: quay.io/astronomer/ci-helm-release:2026-04
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -278,11 +210,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -305,11 +236,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -332,11 +262,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -359,11 +288,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -373,12 +301,12 @@ jobs:
             make test-functional-unified
       - store_test_results:
           path: test-results
-  scenario-unified-1-35-0:
+  scenario-unified-1-35-1:
     machine:
       image: ubuntu-2404:2025.09.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.35.0
+      KUBE_VERSION: v1.35.1
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -386,11 +314,10 @@ jobs:
       - run:
           name: Create venv-cache-key.txt
           command: |
-            cp tests/requirements.txt /tmp/requirements-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+            cp uv.lock /tmp/uv-lock-cache-key.txt
       - restore_cache:
           keys:
-            - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
       - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
@@ -416,64 +343,9 @@ jobs:
 workflows:
   version: 2.1
 
-  # This workflow is triggered by https://app.circleci.com/settings/project/github/astronomer/astronomer/triggers
-  scan-docker-images:
-    when:
-      and:
-        - << pipeline.parameters.scan-docker-images >>
-        - not: << pipeline.parameters.qa-release >>
-    jobs:
-      - trivy-scan-docker:
-          report_url: << pipeline.parameters.scan-docker-images-report-url >>
-          slack_notify: false
-          matrix:
-            parameters:
-              docker_image:
-                - quay.io/astronomer/airflow-operator-controller:1.5.2
-                - quay.io/astronomer/ap-alertmanager:0.31.1-1
-                - quay.io/astronomer/ap-astro-ui:1.1.0
-                - quay.io/astronomer/ap-auth-sidecar:1.29.5
-                - quay.io/astronomer/ap-awsesproxy:1.5.0-23
-                - quay.io/astronomer/ap-base:2026.02.25
-                - quay.io/astronomer/ap-commander:1.1.5
-                - quay.io/astronomer/ap-configmap-reloader:0.15.0-3
-                - quay.io/astronomer/ap-curator:8.0.21-9
-                - quay.io/astronomer/ap-dag-deploy:0.9.3
-                - quay.io/astronomer/ap-db-bootstrapper:1.1.1
-                - quay.io/astronomer/ap-default-backend:0.29.2
-                - quay.io/astronomer/ap-elasticsearch-exporter:1.10.0
-                - quay.io/astronomer/ap-elasticsearch:8.19.12
-                - quay.io/astronomer/ap-git-daemon:2026.2.25
-                - quay.io/astronomer/ap-git-sync-relay:0.2.4
-                - quay.io/astronomer/ap-git-sync:2026.2.25
-                - quay.io/astronomer/ap-grafana:12.4.1
-                - quay.io/astronomer/ap-houston-api:1.1.3
-                - quay.io/astronomer/ap-init:2026.2.25
-                - quay.io/astronomer/ap-kube-state:2.18.0
-                - quay.io/astronomer/ap-kuiper-reloader:0.1.18
-                - quay.io/astronomer/ap-nats-exporter:0.17.3-2
-                - quay.io/astronomer/ap-nats-server:2.12.5
-                - quay.io/astronomer/ap-nginx-es:1.29.6
-                - quay.io/astronomer/ap-nginx:1.14.4
-                - quay.io/astronomer/ap-openresty:1.29.2
-                - quay.io/astronomer/ap-pgbouncer-exporter:0.20.0-2
-                - quay.io/astronomer/ap-pgbouncer-krb:1.25.0-3
-                - quay.io/astronomer/ap-pgbouncer:1.24.1-5
-                - quay.io/astronomer/ap-postgres-exporter:0.19.1-1
-                - quay.io/astronomer/ap-postgresql:17.9.0-1
-                - quay.io/astronomer/ap-prometheus:3.10.0
-                - quay.io/astronomer/ap-redis:8.6.1
-                - quay.io/astronomer/ap-registry:3.0.0-6
-                - quay.io/astronomer/ap-statsd-exporter:0.29.0
-                - quay.io/astronomer/ap-vector:0.53.0
-          context:
-            - slack_team-software-infra-bot
-
   build-and-release-helm-chart:
     when:
-      and:
-        - not: << pipeline.parameters.scan-docker-images >>
-        - not: << pipeline.parameters.qa-release >>
+      not: << pipeline.parameters.qa-release >>
     jobs:
       - run_pre_commit
       - test-unit
@@ -504,7 +376,7 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 
-      - scenario-unified-1-35-0:
+      - scenario-unified-1-35-1:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -523,7 +395,7 @@ workflows:
           requires:
             - approve-internal-release
             - scenario-unified-1-31-14
-            - scenario-unified-1-35-0
+            - scenario-unified-1-35-1
       - approve-upgrade-test:
           type: approval
           filters:
@@ -585,10 +457,7 @@ workflows:
             - gcp-astronomer-prod
 
   qa-build-and-release-helm-chart:
-    when:
-      and:
-        - << pipeline.parameters.qa-release >>
-        - not: << pipeline.parameters.scan-docker-images >>
+    when: << pipeline.parameters.qa-release >>
     jobs:
       - build-artifact:
           qa_release: true
@@ -707,12 +576,3 @@ commands:
             set -xe
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository "$CIRCLE_PROJECT_REPONAME" --github-organization "$CIRCLE_PROJECT_USERNAME" --commitish "$CIRCLE_SHA1"
-
-  trivy-docker-test:
-    description: "Trivy: Vulnerability scan a Docker image"
-    parameters:
-      docker_image:
-        type: string
-    steps:
-      - trivy/vulnerability-scan:
-            docker-image: << parameters.docker_image >>
