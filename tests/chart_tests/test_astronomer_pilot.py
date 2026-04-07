@@ -232,7 +232,7 @@ class TestAstronomerPilot:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "rbacEnabled": False,
+                    "rbac": { "enabled": False },
                 },
                 "astronomer": {"pilot": {"enabled": True}},
             },
