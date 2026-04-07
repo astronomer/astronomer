@@ -21,9 +21,11 @@ astronomer:
         value: "true"
   pilot:
     enabled: true
+# Toggle external-secret chart rendering on
 external-secrets:
   enabled: true
 global:
+  # Enable the dataPlaneFailover feature
   dataPlaneFailover:
     enabled: true
     externalSecretManagerSecretName: astronomer-cluster-secret-store
