@@ -66,6 +66,7 @@ podSecurityContext:
 securityContext:
   runAsNonRoot: true
   readOnlyRootFilesystem: true
+  runAsUser: 65534
 
 # for deployments that have node_exporter deployed outside of the cluster, list
 # their addresses here
