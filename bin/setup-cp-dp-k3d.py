@@ -54,6 +54,7 @@ _REGISTRY_SPECS: tuple[_RegistrySpec, ...] = (
     _RegistrySpec(name="astronomer-registry-proxy-docker", upstream="https://registry-1.docker.io", host_port=15002),
     _RegistrySpec(name="astronomer-registry-proxy-elastic", upstream="https://docker.elastic.co", host_port=15003),
     _RegistrySpec(name="astronomer-registry-proxy-k8s", upstream="https://registry.k8s.io", host_port=15004),
+    _RegistrySpec(name="astronomer-registry-proxy-astrocrpublic", upstream="https://astrocrpublic.azurecr.io", host_port=15005),
 )
 
 
@@ -149,6 +150,7 @@ def _get_registry_config_path(docker_network: str) -> Path:
     proxy_docker = "astronomer-registry-proxy-docker"
     proxy_elastic = "astronomer-registry-proxy-elastic"
     proxy_k8s = "astronomer-registry-proxy-k8s"
+    proxy_astrocrpublic = "astronomer-registry-proxy-astrocrpublic"
 
     content = f"""\
 mirrors:
@@ -167,6 +169,9 @@ mirrors:
   "registry.k8s.io":
     endpoint:
       - "http://{proxy_k8s}:5000"
+  "astrocrpublic.azurecr.io":
+    endpoint:
+      - "http://{proxy_astrocrpublic}:5000"
 """
     HELPER_DIR.mkdir(parents=True, exist_ok=True)
     K3D_REGISTRY_CONFIG_PATH.write_text(content)

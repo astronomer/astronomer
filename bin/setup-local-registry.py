@@ -6,10 +6,11 @@ Runs four Docker Registry v2 containers (one per upstream) on the shared Docker 
 The containers survive k3d cluster destroy/recreate because they live outside any cluster.
 
 Registries managed:
-  astronomer-registry-proxy-quay     -> quay.io          (host port 15001)
-  astronomer-registry-proxy-docker   -> docker.io         (host port 15002)
-  astronomer-registry-proxy-elastic  -> docker.elastic.co (host port 15003)
-  astronomer-registry-proxy-k8s     -> registry.k8s.io   (host port 15004)
+  astronomer-registry-proxy-quay          -> quay.io                    (host port 15001)
+  astronomer-registry-proxy-docker        -> docker.io                  (host port 15002)
+  astronomer-registry-proxy-elastic       -> docker.elastic.co          (host port 15003)
+  astronomer-registry-proxy-k8s          -> registry.k8s.io             (host port 15004)
+  astronomer-registry-proxy-astrocrpublic -> astrocrpublic.azurecr.io   (host port 15005)
 
 Usage:
   python3 bin/setup-local-registry.py                    # ensure all registries are up
@@ -66,6 +67,11 @@ REGISTRY_SPECS: tuple[RegistrySpec, ...] = (
         name="astronomer-registry-proxy-k8s",
         upstream="https://registry.k8s.io",
         host_port=15004,
+    ),
+    RegistrySpec(
+        name="astronomer-registry-proxy-astrocrpublic",
+        upstream="https://astrocrpublic.azurecr.io",
+        host_port=15005,
     ),
 )
 
@@ -243,6 +249,7 @@ def _k3d_registry_config_yaml(docker_network: str = DEFAULT_DOCKER_NETWORK) -> s
     proxy_docker = "astronomer-registry-proxy-docker"
     proxy_elastic = "astronomer-registry-proxy-elastic"
     proxy_k8s = "astronomer-registry-proxy-k8s"
+    proxy_astrocrpublic = "astronomer-registry-proxy-astrocrpublic"
 
     return f"""\
 mirrors:
@@ -261,6 +268,9 @@ mirrors:
   "registry.k8s.io":
     endpoint:
       - "http://{proxy_k8s}:5000"
+  "astrocrpublic.azurecr.io":
+    endpoint:
+      - "http://{proxy_astrocrpublic}:5000"
 """
 
 

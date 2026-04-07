@@ -99,6 +99,7 @@ data:
       mode:
         operator:
           enabled: {{.Values.global.airflowOperator.enabled}}
+          inClusterPostgres: {{.Values.global.airflowOperator.inClusterPostgres | default false}}
 
       deployMechanisms:
         dagOnlyDeployment:

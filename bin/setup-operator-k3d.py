@@ -53,6 +53,7 @@ _REGISTRY_SPECS: tuple[_RegistrySpec, ...] = (
     _RegistrySpec(name="astronomer-registry-proxy-docker", upstream="https://registry-1.docker.io", host_port=15002),
     _RegistrySpec(name="astronomer-registry-proxy-elastic", upstream="https://docker.elastic.co", host_port=15003),
     _RegistrySpec(name="astronomer-registry-proxy-k8s", upstream="https://registry.k8s.io", host_port=15004),
+    _RegistrySpec(name="astronomer-registry-proxy-astrocrpublic", upstream="https://astrocrpublic.azurecr.io", host_port=15005),
 )
 
 
@@ -418,6 +419,7 @@ def _get_registry_config_path(docker_network: str) -> Path:
             "docker.io": {"endpoint": [f"http://{_REGISTRY_SPECS[1].name}:5000"]},
             "docker.elastic.co": {"endpoint": [f"http://{_REGISTRY_SPECS[2].name}:5000"]},
             "registry.k8s.io": {"endpoint": [f"http://{_REGISTRY_SPECS[3].name}:5000"]},
+            "astrocrpublic.azurecr.io": {"endpoint": [f"http://{_REGISTRY_SPECS[4].name}:5000"]},
         }
     }
     K3D_REGISTRY_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -663,7 +665,7 @@ def _generate_helm_values(s: Settings, values_dir: Path) -> Path:
             "plane": {"mode": "unified"},
             "baseDomain": s.base_domain,
             "tlsSecret": s.tls_secret_name,
-            "airflowOperator": {"enabled": True},
+            "airflowOperator": {"enabled": True, "inClusterPostgres": True},
             "postgresql": {"enabled": True},
             "rbac": {"enabled": True},
             "clusterRoles": True,

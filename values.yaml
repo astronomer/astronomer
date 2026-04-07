@@ -52,6 +52,7 @@ global:
   #Global flag to enable Operator based deployment
   airflowOperator:
     enabled: false
+    inClusterPostgres: false
 
   # Feature flags
   rbac:
