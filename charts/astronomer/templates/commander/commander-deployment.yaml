@@ -260,8 +260,8 @@ spec:
             - mountPath: /app/metadata.yaml
               name: metadata
               subPath: metadata.yaml
-            - name: internal-service-auth
-              mountPath: /etc/astronomer/internal-service-auth
+            - name: cluster-local-service-auth
+              mountPath: /etc/astronomer/cluster-local-service-auth
               readOnly: true
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           {{- if .Values.commander.volumeMounts }}
@@ -327,9 +327,9 @@ spec:
         - configMap:
             name: {{ .Release.Name }}-commander-metadata
           name: metadata
-        - name: internal-service-auth
+        - name: cluster-local-service-auth
           secret:
-            secretName: {{ .Release.Name }}-internal-service-auth
+            secretName: {{ .Release.Name }}-cluster-local-service-auth
         {{- include "custom_ca_volumes" . | nindent 8 }}
       {{- if .Values.commander.extraVolumes }}
       {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
