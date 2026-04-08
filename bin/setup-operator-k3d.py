@@ -77,6 +77,7 @@ class Settings:
     helm_timeout: str
     helm_debug: bool
     airflow_db: str
+    agents: int = 0
     helm_values_files: list[str] = field(default_factory=list)
 
 
@@ -481,7 +482,7 @@ def _create_cluster(s: Settings, *, registry_config: Path | None) -> None:
         return
 
     root_ca = _mkcert_root_ca_path()
-    volume = f"{root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*"
+    volume = f"{root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*;agent:*"
 
     cmd = [
         "k3d",
@@ -490,6 +491,8 @@ def _create_cluster(s: Settings, *, registry_config: Path | None) -> None:
         s.cluster_name,
         "--network",
         s.docker_network,
+        "--agents",
+        str(s.agents),
         "--k3s-arg",
         "--disable=traefik@server:0",
         "--volume",
@@ -622,6 +625,31 @@ def _install_cert_manager() -> None:
     _run(["kubectl", "apply", "-f", CERT_MANAGER_MANIFEST_URL], capture=False)
 
 
+def _pin_cert_manager_to_control_plane() -> None:
+    """Pin cert-manager webhook to the control-plane node.
+
+    The kube-apiserver calls cert-manager's admission webhook for Certificate/Issuer
+    resources.  If the webhook pod lands on an agent node (10.42.1.x), the apiserver
+    proxy can't reach it across the Flannel VXLAN overlay in k3d, causing 502 errors.
+    Pinning to the control-plane node (10.42.0.x) keeps webhook calls local.
+    """
+    node_selector_patch = '{"spec":{"template":{"spec":{"nodeSelector":{"node-role.kubernetes.io/control-plane":"true"}}}}}'
+    for deployment in ("cert-manager-webhook", "cert-manager-cainjector", "cert-manager"):
+        _run(
+            [
+                "kubectl",
+                "patch",
+                "deployment",
+                deployment,
+                "-n",
+                "cert-manager",
+                "--type=merge",
+                f"--patch={node_selector_patch}",
+            ],
+            check=False,  # tolerate if a deployment doesn't exist yet
+        )
+
+
 def _wait_for_cert_manager(timeout_s: int = 120) -> None:
     """Wait for cert-manager deployment to be available."""
     _print("Waiting for cert-manager to be ready...")
@@ -688,9 +716,16 @@ def _generate_helm_values(s: Settings, values_dir: Path) -> Path:
             },
             "manager": {
                 "replicas": 1,
+                # Pin the operator controller (which also serves the admission webhook) to
+                # the control-plane node.  The kube-apiserver runs on that same node and
+                # reaches webhook pods via its own pod-network (10.42.0.x).  If the
+                # controller lands on an agent node (10.42.1.x), the apiserver has to
+                # traverse the Flannel VXLAN overlay between Docker containers, which
+                # fails with "502 Bad Gateway" in k3d.
+                "nodeSelector": {"node-role.kubernetes.io/control-plane": "true"},
                 "resources": {
-                    "limits": {"cpu": "600m", "memory": "500Mi"},
-                    "requests": {"cpu": "200m", "memory": "128Mi"},
+                    "limits": {"cpu": "250m", "memory": "256Mi"},
+                    "requests": {"cpu": "100m", "memory": "128Mi"},
                 },
             },
         },
@@ -854,6 +889,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--helm-debug", action="store_true")
     p.add_argument("--helm-values", action="append", default=[], help="Extra values files (can repeat)")
     p.add_argument("--recreate-cluster", action="store_true")
+    p.add_argument(
+        "--agents",
+        type=int,
+        default=0,
+        help="Number of k3d agent (worker) nodes to create alongside the server node. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding agents — webhook pods on agent nodes cause 502s in k3d due to Flannel overlay limitations.",
+    )
     p.add_argument("--no-local-registry", action="store_true")
     p.add_argument("--skip-certs", action="store_true")
     p.add_argument("--skip-clusters", action="store_true")
@@ -885,6 +926,7 @@ def main() -> int:
         helm_timeout=args.helm_timeout,
         helm_debug=args.helm_debug,
         airflow_db=args.airflow_db,
+        agents=args.agents,
         helm_values_files=args.helm_values,
     )
 
@@ -954,6 +996,11 @@ Astronomer APC + Airflow Operator Setup
         if not args.skip_helm:
             h = ms.start(f"Install cert-manager {CERT_MANAGER_VERSION} (required by operator webhooks)")
             _install_cert_manager()
+            if s.agents > 0:
+                # Pin cert-manager deployments to the control-plane node so the
+                # kube-apiserver can reach their webhook pods without crossing the
+                # Flannel VXLAN overlay to an agent node (which causes 502 errors).
+                _pin_cert_manager_to_control_plane()
             _wait_for_cert_manager()
             ms.done(h)
         else:

@@ -183,6 +183,7 @@ class Settings:
     base_domain: str
     dp_domain_prefix: str
     dp_node_container: str
+    dp_agents: int
     cp_ingress_service: str
 
 
@@ -194,6 +195,7 @@ def _settings_from_env() -> Settings:
         base_domain=os.environ.get("BASE_DOMAIN", "localtest.me"),
         dp_domain_prefix=os.environ.get("DP_DOMAIN_PREFIX", "dp01"),
         dp_node_container=os.environ.get("DP_NODE_CONTAINER", "k3d-data-server-0"),
+        dp_agents=int(os.environ.get("DP_AGENTS", "0")),
         cp_ingress_service=os.environ.get("CP_INGRESS_SERVICE", "astronomer-cp-nginx"),
     )
 
@@ -238,12 +240,19 @@ def main() -> int:
     _kubectl_apply_json_via_stdin(s.cp_context, cp_coredns)
     _kubectl_delete_coredns_pods(s.cp_context)
 
-    # 3) Node-level DNS (kubelet/containerd) on the DP node for registry OAuth token calls
-    _ensure_container_hosts_mapping(s.dp_node_container, cp_ingress_ip, f"houston.{s.base_domain}")
+    # 3) Node-level DNS (kubelet/containerd) on ALL DP nodes for registry OAuth token calls.
+    # Pods can be scheduled on any node (server or agent), so every node needs the pin.
+    # DP_NODE_CONTAINER names the server node; agent nodes follow the k3d naming pattern.
+    dp_node_containers = [s.dp_node_container]
+    cluster_prefix = s.dp_node_container.rsplit("-server-", 1)[0]  # e.g. "k3d-data"
+    dp_node_containers += [f"{cluster_prefix}-agent-{i}" for i in range(s.dp_agents)]
+    for container in dp_node_containers:
+        _ensure_container_hosts_mapping(container, cp_ingress_ip, f"houston.{s.base_domain}")
 
     print("Reconciled k3d/OrbStack CP/DP networking:")
     print(f"- CP ingress LB IP: {cp_ingress_ip}")
     print(f"- DP node IP:      {dp_node_ip}")
+    print(f"- DP nodes patched: {', '.join(dp_node_containers)}")
     return 0
 
 

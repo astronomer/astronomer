@@ -208,6 +208,7 @@ class Settings:
     helm_timeout: str
     helm_debug: bool
     dp_airflow_db: str
+    agents: int = 0
 
 
 def _print(msg: str) -> None:
@@ -518,6 +519,7 @@ def _k3d_create_cluster(
     docker_network: str,
     ports: list[str],
     mkcert_root_ca: Path,
+    agents: int = 1,
     extra_k3s_args: list[str] | None = None,
     registry_config: Path | None = None,
 ) -> None:
@@ -526,7 +528,7 @@ def _k3d_create_cluster(
     Pass extra_k3s_args to forward additional --k3s-arg values (each applied @server:0).
     Pass registry_config to configure containerd pull-through mirrors on each node.
     """
-    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*"
+    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*;agent:*"
     cmd = [
         "k3d",
         "cluster",
@@ -534,6 +536,8 @@ def _k3d_create_cluster(
         name,
         "--network",
         docker_network,
+        "--agents",
+        str(agents),
         "--k3s-arg",
         "--disable=traefik@server:0",
         "--volume",
@@ -704,24 +708,27 @@ elasticsearch:
 
   master:
     replicas: 1
-    heapMemory: 256m
+    heapMemory: 128m
     resources:
       requests:
-        memory: 512Mi
+        cpu: "100m"
+        memory: 256Mi
 
   data:
     replicas: 1
-    heapMemory: 512m
-    resources:
-      requests:
-        memory: 1Gi
-
-  client:
-    replicas: 1
     heapMemory: 256m
     resources:
       requests:
+        cpu: "100m"
         memory: 512Mi
+
+  client:
+    replicas: 1
+    heapMemory: 128m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 256Mi
   images:
     es:
       repository: docker.elastic.co/elasticsearch/elasticsearch
@@ -790,24 +797,27 @@ elasticsearch:
 
   master:
     replicas: 1
-    heapMemory: 256m
+    heapMemory: 128m
     resources:
       requests:
-        memory: 512Mi
+        cpu: "100m"
+        memory: 256Mi
 
   data:
     replicas: 1
-    heapMemory: 512m
-    resources:
-      requests:
-        memory: 1Gi
-
-  client:
-    replicas: 1
     heapMemory: 256m
     resources:
       requests:
+        cpu: "100m"
         memory: 512Mi
+
+  client:
+    replicas: 1
+    heapMemory: 128m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 256Mi
   images:
     es:
       repository: docker.elastic.co/elasticsearch/elasticsearch
@@ -1026,6 +1036,7 @@ def _run_dns_reconcile(settings: Settings, dp: DataPlane) -> None:
             "BASE_DOMAIN": settings.base_domain,
             "DP_DOMAIN_PREFIX": dp.domain_prefix,
             "DP_NODE_CONTAINER": f"k3d-{dp.cluster_name}-server-0",
+            "DP_AGENTS": str(settings.agents),
             "CP_INGRESS_SERVICE": f"{settings.release_name}-cp-nginx",
         }
     )
@@ -1088,21 +1099,28 @@ def _ensure_container_hosts_mapping(container: str, ip: str, hostname: str) -> N
 
 def _ensure_dp_node_houston_hosts_pin(settings: Settings, dp: DataPlane) -> None:
     """
-    Ensure DP node container has node-level DNS pin for `houston.<baseDomain>` -> CP ingress LB IP.
+    Ensure all DP node containers (server + agents) have node-level DNS pin for
+    `houston.<baseDomain>` -> CP ingress LB IP.
 
     Why:
     - Pods resolve via CoreDNS, but node-level operations (kubelet/containerd image pulls) use node DNS + /etc/hosts.
     - If `houston.<baseDomain>` resolves incorrectly at the node level, registry auth can break.
+    - With agent nodes, pods can be scheduled on any node, so all nodes need the pin.
     """
     cp_context = f"k3d-{settings.cp_cluster_name}"
-    dp_node_container = f"k3d-{dp.cluster_name}-server-0"
     cp_nginx_svc = f"{settings.release_name}-cp-nginx"
 
     cp_nginx_lb_ip = _kubectl_get_service_lb_ip(cp_context, settings.namespace, cp_nginx_svc)
     houston_host = f"houston.{settings.base_domain}"
 
-    _ensure_container_hosts_mapping(dp_node_container, cp_nginx_lb_ip, houston_host)
-    _debug(f"Ensured DP node /etc/hosts pin: {cp_nginx_lb_ip} {houston_host}")
+    # Patch server node
+    node_containers = [f"k3d-{dp.cluster_name}-server-0"]
+    # Patch all agent nodes
+    node_containers += [f"k3d-{dp.cluster_name}-agent-{i}" for i in range(settings.agents)]
+
+    for container in node_containers:
+        _ensure_container_hosts_mapping(container, cp_nginx_lb_ip, houston_host)
+        _debug(f"Ensured /etc/hosts pin on {container}: {cp_nginx_lb_ip} {houston_host}")
 
 
 def _print_host_etc_hosts_instructions(settings: Settings) -> None:
@@ -1184,6 +1202,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--recreate-clusters", action="store_true", help="Delete and recreate k3d clusters if they exist")
     parser.add_argument(
+        "--agents",
+        type=int,
+        default=0,
+        help="Number of k3d agent (worker) nodes per cluster. Applies to both CP and DP clusters. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding agents.",
+    )
+    parser.add_argument(
         "--no-local-registry",
         action="store_true",
         help=(
@@ -1262,6 +1286,7 @@ def main() -> int:  # noqa: C901
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
         dp_airflow_db=args.dp_airflow_db,
+        agents=args.agents,
     )
 
     try:
@@ -1321,6 +1346,7 @@ def main() -> int:  # noqa: C901
                         f"{settings.ports.cp_http}:80@loadbalancer",
                     ],
                     mkcert_root_ca=mkcert_root_ca,
+                    agents=settings.agents,
                     # Expand NodePort range so postgres can be exposed as NodePort 5432.
                     extra_k3s_args=["--kube-apiserver-arg=--service-node-port-range=1024-65535@server:0"],
                     registry_config=registry_config,
@@ -1338,6 +1364,7 @@ def main() -> int:  # noqa: C901
                             f"{dp.http_port}:80@loadbalancer",
                         ],
                         mkcert_root_ca=mkcert_root_ca,
+                        agents=settings.agents,
                         registry_config=registry_config,
                     )
                 else:

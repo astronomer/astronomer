@@ -433,6 +433,7 @@ class Settings:
     chart_version: str
     helm_timeout: str
     helm_debug: bool
+    agents: int = 0
 
 
 def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
@@ -487,10 +488,11 @@ def _k3d_create_cluster(
     docker_network: str,
     ports: list[str],
     mkcert_root_ca: Path,
+    agents: int = 1,
     registry_config: Path | None = None,
 ) -> None:
     """Create a k3d cluster with traefik disabled."""
-    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*"
+    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*;agent:*"
     cmd = [
         "k3d",
         "cluster",
@@ -498,6 +500,8 @@ def _k3d_create_cluster(
         name,
         "--network",
         docker_network,
+        "--agents",
+        str(agents),
         "--k3s-arg",
         "--disable=traefik@server:0",
         "--volume",
@@ -643,11 +647,11 @@ astronomer:
     replicas: 1
     resources:
       requests:
-        cpu: "100m"
-        memory: "256Mi"
+        cpu: "50m"
+        memory: "128Mi"
       limits:
-        cpu: "500m"
-        memory: "1024Mi"
+        cpu: "250m"
+        memory: "512Mi"
   houston:
     replicas: 1
     worker:
@@ -663,11 +667,11 @@ astronomer:
         hardDeleteDeployment: true
     resources:
       requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
         cpu: "250m"
         memory: "512Mi"
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
   commander:
     replicas: 1
     resources:
@@ -691,20 +695,20 @@ nginx:
   replicasDefaultBackend: 1
   resources:
     requests:
-      cpu: "250m"
-      memory: "256Mi"
+      cpu: "50m"
+      memory: "128Mi"
     limits:
-      cpu: "500m"
-      memory: "512Mi"
+      cpu: "200m"
+      memory: "256Mi"
 
 grafana:
   resources:
     requests:
-      cpu: "100m"
-      memory: "256Mi"
+      cpu: "50m"
+      memory: "128Mi"
     limits:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "150m"
+      memory: "256Mi"
 
 prometheus:
   retention: 2d
@@ -713,11 +717,11 @@ prometheus:
     size: "10Gi"
   resources:
     requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
       cpu: "250m"
       memory: "1Gi"
-    limits:
-      cpu: "500m"
-      memory: "2Gi"
 
 nats:
   nats:
@@ -758,29 +762,29 @@ elasticsearch:
       NUMBER_OF_MASTERS: "1"
   master:
     replicas: 1
-    heapMemory: 256m
+    heapMemory: 128m
     resources:
       requests:
-        cpu: "250m"
-        memory: "512Mi"
+        cpu: "100m"
+        memory: "256Mi"
     persistence:
       size: "10Gi"
   data:
     replicas: 1
-    heapMemory: 512m
+    heapMemory: 256m
     resources:
       requests:
-        cpu: "250m"
-        memory: "1Gi"
+        cpu: "100m"
+        memory: "512Mi"
     persistence:
       size: "20Gi"
   client:
     replicas: 1
-    heapMemory: 256m
+    heapMemory: 128m
     resources:
       requests:
-        cpu: "250m"
-        memory: "512Mi"
+        cpu: "100m"
+        memory: "256Mi"
   images:
     es:
       repository: docker.elastic.co/elasticsearch/elasticsearch
@@ -789,31 +793,31 @@ elasticsearch:
 kibana:
   resources:
     requests:
-      cpu: "100m"
-      memory: "1Gi"
+      cpu: "50m"
+      memory: "256Mi"
     limits:
-      cpu: "500m"
-      memory: "2Gi"
+      cpu: "200m"
+      memory: "512Mi"
   env:
-    NODE_OPTIONS: "--max-old-space-size=768"
+    NODE_OPTIONS: "--max-old-space-size=384"
 
 fluentd:
   resources:
     requests:
-      cpu: "100m"
-      memory: "256Mi"
+      cpu: "50m"
+      memory: "128Mi"
     limits:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "150m"
+      memory: "256Mi"
 
 kube-state:
   resources:
     requests:
-      cpu: "100m"
-      memory: "256Mi"
+      cpu: "50m"
+      memory: "128Mi"
     limits:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "150m"
+      memory: "256Mi"
 
 prometheus-blackbox-exporter:
   resources:
@@ -899,6 +903,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--helm-debug", action="store_true")
     parser.add_argument("--recreate-cluster", action="store_true", help="Delete and recreate k3d cluster if it exists")
     parser.add_argument(
+        "--agents",
+        type=int,
+        default=0,
+        help="Number of k3d agent (worker) nodes to create alongside the server node. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding agents.",
+    )
+    parser.add_argument(
         "--no-local-registry",
         action="store_true",
         help=(
@@ -948,6 +958,7 @@ def main() -> int:
         chart_version=args.chart_version,
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
+        agents=args.agents,
     )
 
     context = f"k3d-{settings.cluster_name}"
@@ -1001,6 +1012,7 @@ def main() -> int:
                         f"{settings.http_port}:80@loadbalancer",
                     ],
                     mkcert_root_ca=mkcert_root_ca,
+                    agents=settings.agents,
                     registry_config=registry_config,
                 )
             else:
