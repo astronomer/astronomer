@@ -646,7 +646,7 @@ global:
   defaultDenyNetworkPolicy: false
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
-  loggingDaemonset:
+  daemonsetLogging:
     enabled: true
   dagOnlyDeployment:
     enabled: true
@@ -753,7 +753,7 @@ global:
   defaultDenyNetworkPolicy: false
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
-  loggingDaemonset:
+  daemonsetLogging:
     enabled: true
   dagOnlyDeployment:
     enabled: true

@@ -447,7 +447,7 @@ RULE_TEST_CASES = [
     (
         "vectorEnabled",
         "global:\n  vectorEnabled: true\n",
-        lambda g: g["loggingDaemonset"]["enabled"] is True and "vectorEnabled" not in g,
+        lambda g: g["daemonsetLogging"]["enabled"] is True and "vectorEnabled" not in g,
     ),
 ]
 
@@ -733,14 +733,14 @@ class TestConflictPrecedence:
         text = dedent("""\
             global:
               vectorEnabled: true
-              loggingDaemonset:
+              daemonsetLogging:
                 enabled: false
         """)
         data = _load_rt(text)
         changes = migrate_values(data)
         result = _to_plain(data)
 
-        assert result["global"]["loggingDaemonset"]["enabled"] is False
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
         assert "vectorEnabled" not in result["global"]
         assert len(changes) >= 1
 
