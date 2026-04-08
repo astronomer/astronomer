@@ -52,7 +52,7 @@ dependencies:
     tags:
       - logging
   - name: vector
-    condition: global.vector.enabled
+    condition: global.loggingDaemonset.enabled
     tags:
       - logging
 

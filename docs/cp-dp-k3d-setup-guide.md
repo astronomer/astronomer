@@ -301,7 +301,8 @@ global:
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
   # For local k3d: keep logging disabled (Elasticsearch fails in k3d due to seccomp limitations)
-  vectorEnabled: true
+  loggingDaemonset:
+    enabled: true
   elasticsearchEnabled: true
   dagOnlyDeployment:
     enabled: true
@@ -449,7 +450,8 @@ global:
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
   # For local k3d: keep logging disabled (Elasticsearch fails in k3d due to seccomp limitations)
-  vectorEnabled: true
+  loggingDaemonset:
+    enabled: true
   dagOnlyDeployment:
     enabled: true
 

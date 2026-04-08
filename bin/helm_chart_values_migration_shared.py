@@ -319,7 +319,7 @@ GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMov
     BoolToNested("kubeStateEnabled", ["kubeState", "enabled"]),
     BoolToNested("prometheusEnabled", ["prometheus", "enabled"]),
     BoolToNested("elasticsearchEnabled", ["elasticsearch", "enabled"]),
-    BoolToNested("vectorEnabled", ["vector", "enabled"]),
+    BoolToNested("vectorEnabled", ["loggingDaemonset", "enabled"]),
 ]
 
 HOUSTON_DEPLOYMENTS_PREFIX = "astronomer.houston.config.deployments"
