@@ -15,76 +15,124 @@ metadata:
 data:
   update-containerd-certs.sh: |
     #!/usr/bin/env sh
+    set -e
+
+    CONTAINERD_VERSION="{{ .Values.global.privateCaCertsAddToHost.containerdVersion }}"
+    REGISTRY_HOST="registry.{{ .Values.global.baseDomain }}"
+    CERTS_DIR="/hostcontainerd/certs.d/${REGISTRY_HOST}"
+
+    echo "Configured containerd version: ${CONTAINERD_VERSION}"
+
     if [ ! -f /hostcontainerd/config.toml ]; then
         echo "No /hostcontainerd/config.toml found, exiting. Is this a containerd node?";
         exit 1;
     fi
 
-    # backup the original ca certificates it is not already backed up
+    # backup the original config.toml if not already backed up
     if [ ! -f /hostcontainerd/config.toml.bak ]; then
-        # backup /hostcontainerd/config.toml
         cp /hostcontainerd/config.toml /hostcontainerd/config.toml.bak
     fi
 
-    # ensure hsotcontainerd/certs.d exists
-    if [ ! -d /hostcontainerd/certs.d ]; then
-        mkdir -p /hostcontainerd/certs.d;
-    fi
+    # ensure certs.d directory exists for this registry
+    mkdir -p "${CERTS_DIR}"
 
-    # check if config_path exists
-    echo "checking if config_path key exists in /hostcontainerd/config.toml"
-    export config_key="config_path"
-    grep -w  "$config_key" "/hostcontainerd/config.toml"
-    if [ $? -eq 0 ]; then
-      echo "The key '$config_key' exists in the configuration file."
-      export CONFIG_KEY=true
-      cat << EOF > /hostcontainerd/hosts.toml
-{{ include "containerd.configToml" . | indent 4 }}
-    EOF
+    # Determine the correct plugin namespace based on containerd version
+    if [ "${CONTAINERD_VERSION}" = "2" ]; then
+        PLUGIN_NS='plugins."io.containerd.cri.v1.images".registry'
     else
-      export CONFIG_KEY=false
+        PLUGIN_NS='plugins."io.containerd.grpc.v1.cri".registry'
+    fi
+    echo "Using plugin namespace: ${PLUGIN_NS}"
+
+    # Check if config_path is already set under the correct plugin namespace
+    export CONFIG_PATH_SET=false
+    if grep -q "config_path" "/hostcontainerd/config.toml"; then
+        echo "config_path key found in config.toml"
+        export CONFIG_PATH_SET=true
     fi
 
-    last_checksum="";
+    # For containerd 2.x: ensure config_path is set so certs.d/hosts.toml is honoured.
+    # For containerd 1.x with config_path already set: use hosts.toml path too.
+    # For containerd 1.x without config_path: fall back to inline config.toml modification.
+    if [ "${CONTAINERD_VERSION}" = "2" ] && [ "${CONFIG_PATH_SET}" = "false" ]; then
+        echo "containerd 2.x detected but config_path not set. Adding config_path to config.toml..."
+        cp /hostcontainerd/config.toml.bak /hostcontainerd/working
+        cat << TOML_EOF >> /hostcontainerd/working
+
+    [${PLUGIN_NS}]
+      config_path = "{{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}"
+    TOML_EOF
+        cp /hostcontainerd/working /hostcontainerd/config.toml
+        echo "Restarting containerd once to apply config_path..."
+        nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+        export CONFIG_PATH_SET=true
+        echo "config_path injected and containerd restarted."
+    fi
+
+    # Generate the hosts.toml content for the certs.d approach
+    generate_hosts_toml() {
+        cat << HOSTS_EOF
+    server = "https://${REGISTRY_HOST}"
+
+    [host."https://${REGISTRY_HOST}"]
+      capabilities = ["pull", "resolve"]
+      ca = ["${CERTS_DIR}/ca.crt"]
+    HOSTS_EOF
+    }
+
+    last_checksum=""
+    last_host_checksum=""
 
     while true; do
-        cp /hostcontainerd/config.toml.bak /hostcontainerd/working;
-        # loop through all /hostcontainerd/cert.d/*/*.crt using directory name as REGISTRY_HOST
+        # Copy CA certs from mounted secrets into the certs.d directory
         for dir in /private-ca-certs/*; do
-            cp $dir/*.pem /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/;
-            if [ "$CONFIG_KEY" = true ]; then
-               cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
-            else
-            cat << EOF >> /hostcontainerd/working
-{{ include "containerd.configToml" . | indent 4 }}
-    EOF
-            fi
+            [ -d "$dir" ] || continue
+            cp "$dir"/*.pem "${CERTS_DIR}/ca.crt"
         done
 
-        if [ "$CONFIG_KEY" = true ]; then
-          current_host_checksum=$(md5sum /hostcontainerd/hosts.toml | awk '{print $1}');
-          if [ "$current_host_checksum" != "$last_host_checksum" ]; then
-            cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
-            echo "Updated /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml";
-            last_host_checksum="$current_host_checksum";
-            echo "Skipping containerd restart.";
-            #nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
-          else
-            echo "no change in config sleep for 1 second";
-            sleep 1;
-          fi
+        if [ "${CONFIG_PATH_SET}" = "true" ]; then
+            # --- hosts.toml path (containerd 2.x, or 1.x with config_path set) ---
+            {{- if .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
+            # Use custom hosts.toml content from containerdConfigToml if provided
+            cat << CUSTOM_EOF > "${CERTS_DIR}/hosts.toml.new"
+{{ include "containerd.configToml" . | indent 8 }}
+            CUSTOM_EOF
+            {{- else }}
+            # Generate standard hosts.toml pointing to the CA cert
+            generate_hosts_toml > "${CERTS_DIR}/hosts.toml.new"
+            {{- end }}
+
+            current_host_checksum=$(md5sum "${CERTS_DIR}/hosts.toml.new" "${CERTS_DIR}/ca.crt" 2>/dev/null | md5sum | awk '{print $1}')
+            if [ "$current_host_checksum" != "$last_host_checksum" ]; then
+                mv "${CERTS_DIR}/hosts.toml.new" "${CERTS_DIR}/hosts.toml"
+                echo "Updated ${CERTS_DIR}/hosts.toml"
+                last_host_checksum="$current_host_checksum"
+                echo "No containerd restart required for hosts.toml updates."
+            else
+                rm -f "${CERTS_DIR}/hosts.toml.new"
+                echo "No change in hosts.toml, sleeping 1 second"
+                sleep 1
+            fi
         else
-          current_checksum=$(md5sum /hostcontainerd/working | awk '{print $1}');
-          if [ "$current_checksum" != "$last_checksum" ]; then
-              cp /hostcontainerd/working /hostcontainerd/config.toml;
-              echo "Updated /hostcontainerd/config.toml";
-              last_checksum="$current_checksum";
-              echo "Restarting containerd on node";
-              nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
-          else
-              echo "no change in config sleep for 1 second";
-              sleep 1;
-          fi
+            # --- Legacy inline config.toml path (containerd 1.x without config_path) ---
+            cp /hostcontainerd/config.toml.bak /hostcontainerd/working
+            {{- if .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
+            cat << LEGACY_EOF >> /hostcontainerd/working
+{{ include "containerd.configToml" . | indent 8 }}
+            LEGACY_EOF
+            {{- end }}
+
+            current_checksum=$(md5sum /hostcontainerd/working "${CERTS_DIR}/ca.crt" 2>/dev/null | md5sum | awk '{print $1}')
+            if [ "$current_checksum" != "$last_checksum" ]; then
+                cp /hostcontainerd/working /hostcontainerd/config.toml
+                echo "Updated /hostcontainerd/config.toml"
+                last_checksum="$current_checksum"
+                echo "Restarting containerd on node"
+                nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+            else
+                echo "No change in config, sleeping 1 second"
+                sleep 1
+            fi
         fi
     done
 {{- end }}

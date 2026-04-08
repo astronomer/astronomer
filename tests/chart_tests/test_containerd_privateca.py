@@ -244,3 +244,111 @@ class TestContainerdPrivateCaDaemonset:
         self.common_tests_daemonset(docs[0])
         assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
         assert tolerationSpec == docs[0]["spec"]["template"]["spec"]["tolerations"]
+
+    def test_containerd_v2_script_uses_cri_v1_images_plugin(self, kube_version):
+        """Test that containerdVersion 2 renders the script with the
+        io.containerd.cri.v1.images plugin namespace for GKE 1.33+."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+        # docs[1] is the ConfigMap with the script
+        configmap = docs[1]
+        assert configmap["kind"] == "ConfigMap"
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert 'CONTAINERD_VERSION="2"' in script
+        assert 'io.containerd.cri.v1.images' in script
+        assert 'io.containerd.grpc.v1.cri' not in script
+        # Should use hosts.toml approach and generate_hosts_toml
+        assert "generate_hosts_toml" in script
+        assert "registry.example.com" in script
+
+    def test_containerd_v1_script_uses_grpc_v1_cri_plugin(self, kube_version):
+        """Test that containerdVersion 1 renders the script with the
+        io.containerd.grpc.v1.cri plugin namespace for legacy containerd."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "1",
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+        configmap = docs[1]
+        assert configmap["kind"] == "ConfigMap"
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert 'CONTAINERD_VERSION="1"' in script
+        assert 'io.containerd.grpc.v1.cri' in script
+        assert 'io.containerd.cri.v1.images' not in script
+
+    def test_containerd_v2_default_generates_hosts_toml(self, kube_version):
+        """Test that when containerdVersion is 2 and containerdConfigToml is not
+        set, the script generates a standard hosts.toml with CA cert path."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                    },
+                }
+            },
+        )
+
+        configmap = docs[1]
+        script = configmap["data"]["update-containerd-certs.sh"]
+        # When containerdConfigToml is nil, the script should use generate_hosts_toml
+        assert "generate_hosts_toml" in script
+        assert "ca.crt" in script
+
+    def test_containerd_v2_custom_config_toml_override(self, kube_version):
+        """Test that when containerdConfigToml is set, the script uses the
+        custom content for hosts.toml instead of generating one."""
+        custom_toml = 'server = "https://custom.registry.io"\n[host."https://custom.registry.io"]\n  capabilities = ["pull"]\n  skip_verify = true'
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                        "containerdConfigToml": custom_toml,
+                    },
+                }
+            },
+        )
+
+        configmap = docs[1]
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert "custom.registry.io" in script
