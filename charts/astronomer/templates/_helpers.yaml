@@ -169,7 +169,7 @@
 {{- end }}
 
 {{ define "flightdeck.bootstrapperServiceAccountName" -}}
-{{- if and .Values.flightdeck.serviceAccount.create .Values.global.rbacEnabled (not .Values.flightdeck.backendSecretName) (not .Values.flightdeck.backendConnection) }}
+{{- if and .Values.flightdeck.serviceAccount.create .Values.global.rbac.enabled (not .Values.flightdeck.backendSecretName) (not .Values.flightdeck.backendConnection) }}
 {{- default (printf "%s-flightdeck-bootstrapper" .Release.Name ) .Values.flightdeck.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.flightdeck.serviceAccount.name }}
@@ -209,7 +209,7 @@
 {{- end }}
 
 {{ define "dpLink.serviceAccountName" -}}
-{{- if and .Values.dpLink.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.dpLink.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-dp-link" .Release.Name ) .Values.dpLink.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.dpLink.serviceAccount.name }}
@@ -217,7 +217,7 @@
 {{- end }}
 
 {{ define "navigator.serviceAccountName" -}}
-{{- if and .Values.navigator.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.navigator.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-navigator" .Release.Name ) .Values.navigator.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.navigator.serviceAccount.name }}
@@ -225,7 +225,7 @@
 {{- end }}
 
 {{ define "pilot.serviceAccountName" -}}
-{{- if and .Values.pilot.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.pilot.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-pilot" .Release.Name ) .Values.pilot.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.pilot.serviceAccount.name }}

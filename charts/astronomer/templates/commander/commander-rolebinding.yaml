@@ -2,7 +2,7 @@
 ## Astronomer Commander RoleBinding ##
 ######################################
 # Either:
-# 1. Do not create anything is rbacEnabled is disabled
+# 1. Do not create anything if rbac.enabled is disabled
 # 2. Create ClusterRoleBinding if clusterRoles enabled and namespacePools disabled
 # 3. Create RoleBinding for each namespace in the namespacePool (+ astronomer namespace) if enabled
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
