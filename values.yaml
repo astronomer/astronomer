@@ -222,6 +222,8 @@ global:
     enabled: false
   nodeExporter:
     enabled: false
+  cadvisor:
+    enabled: false
 
   # Used to enable nats-server
   nats:
