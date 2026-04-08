@@ -272,8 +272,8 @@ class TestContainerdPrivateCaDaemonset:
         assert 'CONTAINERD_VERSION="2"' in script
         # Both plugin namespaces are in the shell if/else, but the version variable
         # controls which branch is taken at runtime
-        assert 'io.containerd.cri.v1.images' in script
-        assert 'io.containerd.grpc.v1.cri' in script
+        assert "io.containerd.cri.v1.images" in script
+        assert "io.containerd.grpc.v1.cri" in script
         # Should use hosts.toml approach and generate_hosts_toml
         assert "generate_hosts_toml" in script
         assert "registry.example.com" in script
@@ -303,8 +303,8 @@ class TestContainerdPrivateCaDaemonset:
         script = configmap["data"]["update-containerd-certs.sh"]
         assert 'CONTAINERD_VERSION="1"' in script
         # Both plugin namespaces are in the shell if/else — runtime selection via CONTAINERD_VERSION
-        assert 'io.containerd.grpc.v1.cri' in script
-        assert 'io.containerd.cri.v1.images' in script
+        assert "io.containerd.grpc.v1.cri" in script
+        assert "io.containerd.cri.v1.images" in script
 
     def test_containerd_v2_default_generates_hosts_toml(self, kube_version):
         """Test that when containerdVersion is 2 and containerdConfigToml is not
