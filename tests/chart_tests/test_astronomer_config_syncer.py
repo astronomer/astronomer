@@ -61,10 +61,10 @@ class TestAstronomerConfigSyncer:
         assert job_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
 
     def test_astronomer_config_syncer_rbac_namespace_pools_disabled(self, kube_version):
-        """Test that if rbacEnabled but namespacePools disabled, helm renders
+        """Test that if rbac.enabled but namespacePools disabled, helm renders
         ClusterRole and ClusterRoleBinding resources for config syncer."""
 
-        # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        # First rbac.enabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -106,7 +106,7 @@ class TestAstronomerConfigSyncer:
         """Test that when namespacePools is enabled, helm renders a Role and a
         RoleBinding for each namespace in the pool + release namespace."""
 
-        # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
+        # rbac.enabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
         # and ignore the cluster role configuration
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
@@ -160,7 +160,7 @@ class TestAstronomerConfigSyncer:
             assert role_binding["subjects"][0] == expected_subject
 
     def test_astronomer_config_syncer_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled and namespacePools are disabled, we do not
+        """Test that if rbac.enabled and namespacePools are disabled, we do not
         create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
@@ -273,7 +273,7 @@ class TestAstronomerConfigSyncer:
     def test_astronomer_config_syncer_disabled(self, kube_version):
         """Test that config syncer is disabled."""
 
-        # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        # First rbac.enabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
             kube_version=kube_version,
             values={

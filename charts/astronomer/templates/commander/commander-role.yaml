@@ -2,8 +2,8 @@
 ## Astronomer Commander Role/ClusterRole
 ########################################
 # Here, we either:
-# 1. Do not create any resource if rbacEnabled is disabled
-# 2. Create a Cluster Role if clusterRoles and rbacEnabled are enabled and namespacePools is disabled
+# 1. Do not create any resource if rbac.enabled is disabled
+# 2. Create a Cluster Role if clusterRoles and rbac.enabled are enabled and namespacePools is disabled
 # 3. Create roles for each namespaces in the namespacePool (+ astronomer namespace) if enabled.
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $namespacepoolsRBACresources:= and .Values.global.namespaceManagement.namespacePools.createRbac .Values.global.namespaceManagement.namespacePools.enabled }}

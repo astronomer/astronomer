@@ -188,10 +188,10 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
     def test_commander_rbac_cluster_role_enabled(self, kube_version):
-        """Test that if rbacEnabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
+        """Test that if rbac.enabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
         ClusterRoleBinding resources."""
 
-        # First rbacEnabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        # First rbac.enabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -231,7 +231,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["subjects"] == expected_subjects
 
     def test_commander_rbac_cluster_roles_enabled_rbac_disabled(self, kube_version):
-        """Test that if rbacEnabled set to true, but clusterRoles and
+        """Test that if rbac.enabled set to true, but clusterRoles and
         namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
@@ -250,7 +250,7 @@ class TestAstronomerCommander:
         assert len(docs) == 0
 
     def test_commander_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
+        """Test that if rbac.enabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -269,7 +269,7 @@ class TestAstronomerCommander:
 
     def test_commander_rbac_cluster_role_disabled(self, kube_version):
         """Test that if clusterRoles and namespacePools are disabled but
-        rbacEnabled is enabled, helm does not render RBAC resources."""
+        rbac.enabled is true, helm does not render RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
