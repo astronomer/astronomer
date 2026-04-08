@@ -31,7 +31,8 @@ global:
     enabled: false
   helmRepo: https://internal-helm.astronomer.io
   prometheusPostgresExporterEnabled: false
-  rbacEnabled: true
+  rbac:
+    enabled: true
   ssl:
     enabled: true
     mode: disable
