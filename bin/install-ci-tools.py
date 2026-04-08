@@ -81,7 +81,7 @@ def install_helm():
     with tarfile.open(tgz, "r:gz") as tar:
         member = tar.getmember(f"{OS}-{ARCH}/helm")
         member.name = "helm"  # avoid path traversal
-        tar.extract(member, BIN_DIR, filter="data")
+        tar.extract(member, BIN_DIR)
         shutil.move(str(BIN_DIR / "helm"), dest)
 
 
