@@ -114,7 +114,7 @@ class TestVector:
         assert pod_spec["containers"][0]["volumeMounts"] == volume_mounts
 
     def test_vector_clusterrolebinding_rbac_enabled(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for vector when rbac.enabled=true."""
+        """Test that helm renders a good ClusterRoleBinding template for vector when rbac.enabled=True."""
         values = {"global": {"rbac": {"enabled": True}}}
         docs = render_chart(
             kube_version=kube_version,
