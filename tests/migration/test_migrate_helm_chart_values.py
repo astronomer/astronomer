@@ -444,6 +444,11 @@ RULE_TEST_CASES = [
         "global:\n  disableManageClusterScopedResources: false\n",
         lambda g: g["manageClusterScopedResources"]["enabled"] is True,
     ),
+    (
+        "vectorEnabled",
+        "global:\n  vectorEnabled: true\n",
+        lambda g: g["daemonsetLogging"]["enabled"] is True and "vectorEnabled" not in g,
+    ),
 ]
 
 
@@ -722,6 +727,22 @@ class TestConflictPrecedence:
         assert "sccEnabled" not in result["global"]
         assert "openshiftEnabled" not in result["global"]
         assert len(changes) == 3
+
+    def test_vector_enabled_conflict_keeps_new(self):
+        """vectorEnabled conflict with loggingDaemonset.enabled preserves the new-schema value."""
+        text = dedent("""\
+            global:
+              vectorEnabled: true
+              daemonsetLogging:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
+        assert "vectorEnabled" not in result["global"]
+        assert len(changes) >= 1
 
 
 # ---------------------------------------------------------------------------
