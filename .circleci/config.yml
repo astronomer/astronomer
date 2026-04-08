@@ -330,7 +330,6 @@ jobs:
 
   check-commander-airflow-version:
     docker:
-      # https://circleci.com/developer/images/image/cimg/base
       - image: cimg/base:current-24.04
     steps:
       - checkout
