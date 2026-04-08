@@ -39,7 +39,7 @@ class TestDataPlaneFailoverFlag:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "rbacEnabled": True,
+                    "rbac": {"enabled": True},
                     "dataPlaneFailover": {"enabled": True},
                 },
             },
@@ -164,7 +164,7 @@ class TestDataPlaneFailoverFlag:
             values={
                 "global": {
                     "plane": {"mode": "control"},
-                    "rbacEnabled": True,
+                    "rbac": {"enabled": True},
                     "dataPlaneFailover": {"enabled": True},
                 },
             },
