@@ -466,6 +466,28 @@ def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationCha
     return all_changes
 
 
+def apply_nginx_csp_policy_migrations(root: CommentedMap) -> list[MigrationChange]:
+    """Migrate ``nginx.cspPolicy.cdnEnabled`` to ``nginx.cspPolicy.cdn.enabled``.
+
+    Aligns customer Helm overrides with chart 2.x / PLX-300 unified nested
+    ``.enabled`` shape under ``nginx.cspPolicy``.
+
+    Parameters:
+        root: The parsed YAML document root.
+
+    Returns:
+        Migration changes applied under ``nginx.cspPolicy``, if any.
+    """
+    nginx = _get_nested_mapping(root, ["nginx"])
+    if nginx is None:
+        return []
+    csp_policy = _get_nested_mapping(nginx, ["cspPolicy"])
+    if csp_policy is None:
+        return []
+    rule = BoolToNested("cdnEnabled", ["cdn", "enabled"], path_prefix="nginx.cspPolicy")
+    return rule.apply(csp_policy)
+
+
 def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationChange]:
     """Apply Houston ``config`` flag migrations (flat booleans -> nested ``.enabled``).
 

@@ -236,6 +236,55 @@ class TestBoolToNested:
         assert len(changes) == 1
 
 
+class TestNginxCspPolicyMigration:
+    """``nginx.cspPolicy.cdnEnabled`` -> ``nginx.cspPolicy.cdn.enabled`` (PLX-300)."""
+
+    def test_migrates_cdn_enabled_to_nested(self) -> None:
+        """Full migrate_values rewrites flat cdnEnabled under nginx.cspPolicy."""
+        data = _load_rt(
+            dedent("""\
+                nginx:
+                  cspPolicy:
+                    cdnEnabled: false
+                    connectsrc: "cdn.example.com"
+            """)
+        )
+        changes = migrate_values(data)
+        result = _to_plain(data)
+        assert result["nginx"]["cspPolicy"]["cdn"]["enabled"] is False
+        assert "cdnEnabled" not in result["nginx"]["cspPolicy"]
+        assert result["nginx"]["cspPolicy"]["connectsrc"] == "cdn.example.com"
+        assert any(
+            c.old_path == "nginx.cspPolicy.cdnEnabled" and c.new_path == "nginx.cspPolicy.cdn.enabled"
+            for c in changes
+        )
+
+    def test_no_op_when_csp_policy_missing(self) -> None:
+        """No nginx.cspPolicy section produces no nginx CSP migration changes."""
+        data = _load_rt("nginx:\n  replicas: 2\n")
+        changes = migrate_values(data)
+        assert _to_plain(data)["nginx"]["replicas"] == 2
+        assert not any("nginx.cspPolicy" in c.old_path for c in changes)
+
+    def test_idempotent_when_already_nested(self) -> None:
+        """Second migration pass does not alter already-nested cdn.enabled."""
+        data = _load_rt(
+            dedent("""\
+                nginx:
+                  cspPolicy:
+                    cdn:
+                      enabled: true
+                    connectsrc: "x"
+            """)
+        )
+        migrate_values(data)
+        plain_after_first = _to_plain(data)
+        data2 = _load_rt(_dump_rt(data))
+        changes2 = migrate_values(data2)
+        assert _to_plain(data2) == plain_after_first
+        assert not any("nginx.cspPolicy.cdnEnabled" in c.old_path for c in changes2)
+
+
 class TestSubtreeMove:
     """Test the SubtreeMove rule type."""
 
