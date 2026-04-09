@@ -277,6 +277,10 @@ data:
             gitSync:
               repository: {{ .Values.global.gitSyncRelay.images.gitSync.repository }}
               tag: {{ .Values.global.gitSyncRelay.images.gitSync.tag }}
+          {{ if .Values.global.openshift.enabled }}
+          securityContext:
+              runAsNonRoot: true
+          {{ end }}
 
 
         airflow:
