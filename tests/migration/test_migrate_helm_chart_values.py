@@ -254,10 +254,7 @@ class TestNginxCspPolicyMigration:
         assert result["nginx"]["cspPolicy"]["cdn"]["enabled"] is False
         assert "cdnEnabled" not in result["nginx"]["cspPolicy"]
         assert result["nginx"]["cspPolicy"]["connectsrc"] == "cdn.example.com"
-        assert any(
-            c.old_path == "nginx.cspPolicy.cdnEnabled" and c.new_path == "nginx.cspPolicy.cdn.enabled"
-            for c in changes
-        )
+        assert any(c.old_path == "nginx.cspPolicy.cdnEnabled" and c.new_path == "nginx.cspPolicy.cdn.enabled" for c in changes)
 
     def test_no_op_when_csp_policy_missing(self) -> None:
         """No nginx.cspPolicy section produces no nginx CSP migration changes."""
