@@ -1,10 +1,28 @@
+{#- https://circleci.com/developer/images/image/cimg/python#image-tags -#}
+{%- set python_image_version = '3.13' -%}
+
+{#- https://circleci.com/docs/building-docker-images/#docker-version -#}
+{%- set circleci_docker_version = 'docker23' -%}
+
+{#- https://github.com/sigstore/cosign/releases -#}
+{%- set cosign_version = 'v2.5.0' -%}
+
+{#- https://circleci.com/developer/images/image/cimg/base#image-tags -#}
+{%- set base_image_version = 'current-24.04' -%}
+
+{#- https://github.com/astral-sh/uv/releases -#}
+{%- set uv_version = '0.11.3' -%}
+
+{#- https://circleci.com/developer/machine/image/ubuntu-2404#image-tags -#}
+{%- set machine_image_version = 'ubuntu-2404:2025.09.1' -%}
+
 version: 2.1
 executors:
   docker-executor:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.13
+      - image: cimg/python:{{ python_image_version }}
 
 orbs:
   slack: circleci/slack@4.10.1
@@ -23,9 +41,9 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: docker23
+          version: {{ circleci_docker_version }}
       - cosign/install:
-          version: "v2.5.0"
+          version: "{{ cosign_version }}"
       - run:
           name: Login to docker registry
           command: |
@@ -225,8 +243,7 @@ jobs:
 
   check-commander-airflow-version:
     docker:
-      # https://circleci.com/developer/images/image/cimg/base
-      - image: cimg/base:current-24.04
+      - image: cimg/base:{{ base_image_version }}
     steps:
       - checkout
       - setup_remote_docker:
