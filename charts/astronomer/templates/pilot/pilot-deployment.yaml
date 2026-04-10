@@ -89,8 +89,8 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
-            - name: internal-service-auth
-              mountPath: /etc/astronomer/internal-service-auth
+            - name: cluster-local-service-auth
+              mountPath: /etc/astronomer/cluster-local-service-auth
               readOnly: true
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
@@ -150,9 +150,9 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
-        - name: internal-service-auth
+        - name: cluster-local-service-auth
           secret:
-            secretName: {{ .Release.Name }}-internal-service-auth
+            secretName: {{ .Release.Name }}-cluster-local-service-auth
         {{- include "custom_ca_volumes" . | nindent 8 }}
         {{- if .Values.pilot.extraVolumes }}
         {{- tpl (toYaml .Values.pilot.extraVolumes) $ | nindent 8 }}
