@@ -355,3 +355,76 @@ class TestContainerdPrivateCaDaemonset:
         configmap = docs[1]
         script = configmap["data"]["update-containerd-certs.sh"]
         assert "custom.registry.io" in script
+
+    def test_containerd_data_plane_mode_uses_domain_prefix(self, kube_version):
+        """Test that in data plane mode the registry host includes the
+        domainPrefix to form the correct registry hostname."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {
+                        "mode": "data",
+                        "domainPrefix": "dp01",
+                    },
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+
+        # Verify the script uses the DP registry host
+        configmap = docs[1]
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert "registry.dp01.example.com" in script
+        assert 'REGISTRY_HOST="registry.dp01.example.com"' in script
+
+        # Verify the daemonset volume path uses the DP registry host
+        daemonset = docs[0]
+        volumes = daemonset["spec"]["template"]["spec"]["volumes"]
+        hostcerts_vol = next(v for v in volumes if v["name"] == "hostcerts")
+        assert hostcerts_vol["hostPath"]["path"] == "/etc/containerd/certs.d/registry.dp01.example.com/"
+
+    def test_containerd_unified_mode_uses_base_domain(self, kube_version):
+        """Test that in unified mode the registry host uses baseDomain
+        without domainPrefix."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {
+                        "mode": "unified",
+                        "domainPrefix": "",
+                    },
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+
+        # Verify the script uses the base registry host (no prefix)
+        configmap = docs[1]
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert 'REGISTRY_HOST="registry.example.com"' in script
+
+        # Verify the daemonset volume path
+        daemonset = docs[0]
+        volumes = daemonset["spec"]["template"]["spec"]["volumes"]
+        hostcerts_vol = next(v for v in volumes if v["name"] == "hostcerts")
+        assert hostcerts_vol["hostPath"]["path"] == "/etc/containerd/certs.d/registry.example.com/"

@@ -18,7 +18,11 @@ data:
     set -e
 
     CONTAINERD_VERSION="{{ .Values.global.privateCaCertsAddToHost.containerdVersion }}"
+    {{- if eq .Values.global.plane.mode "data" }}
+    REGISTRY_HOST="registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}"
+    {{- else }}
     REGISTRY_HOST="registry.{{ .Values.global.baseDomain }}"
+    {{- end }}
     CERTS_DIR="/hostcontainerd/certs.d/${REGISTRY_HOST}"
 
     echo "Configured containerd version: ${CONTAINERD_VERSION}"
@@ -95,7 +99,7 @@ data:
             {{- if .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
             # Use custom hosts.toml content from containerdConfigToml if provided
             cat << CUSTOM_EOF > "${CERTS_DIR}/hosts.toml.new"
-{{ include "containerd.configToml" . | indent 8 }}
+{{ include "containerd.configToml" . | nindent 8 }}
             CUSTOM_EOF
             {{- else }}
             # Generate standard hosts.toml pointing to the CA cert
@@ -118,7 +122,7 @@ data:
             cp /hostcontainerd/config.toml.bak /hostcontainerd/working
             {{- if .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
             cat << LEGACY_EOF >> /hostcontainerd/working
-{{ include "containerd.configToml" . | indent 8 }}
+{{ include "containerd.configToml" . | nindent 8 }}
             LEGACY_EOF
             {{- end }}
 
