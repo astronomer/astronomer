@@ -25,6 +25,7 @@ metadata:
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/load-balance: "least_conn"
     {{- end }}
     {{- if .Values.commander.ingress.annotation  }}
     {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
