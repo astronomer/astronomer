@@ -32,7 +32,9 @@ data:
         exit 1;
     fi
 
-    # backup the original config.toml if not already backed up
+    # backup config.toml with epoch timestamp so successive runs don't overwrite previous backups
+    cp /hostcontainerd/config.toml "/hostcontainerd/config.toml.bak.$(date +%s)"
+    # keep a stable .bak reference for the working copy logic below
     if [ ! -f /hostcontainerd/config.toml.bak ]; then
         cp /hostcontainerd/config.toml /hostcontainerd/config.toml.bak
     fi
