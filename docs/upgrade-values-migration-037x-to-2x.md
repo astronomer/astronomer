@@ -299,14 +299,12 @@ environment.**
 
 ### Nginx Content-Security-Policy toggle
 
-If your override sets `nginx.cspPolicy.cdnEnabled` or the intermediate
-`nginx.cspPolicy.cdn.enabled` shape, the migration script rewrites it to the
-flat `nginx.cspPolicy.enabled`.
+If your override sets `nginx.cspPolicy.cdnEnabled`, the migration script
+rewrites it to `nginx.cspPolicy.enabled`.
 
 | Old Path | New Path |
 |---|---|
 | `nginx.cspPolicy.cdnEnabled` | `nginx.cspPolicy.enabled` |
-| `nginx.cspPolicy.cdn.enabled` | `nginx.cspPolicy.enabled` |
 
 ### Unchanged Keys (No Migration Needed)
 
@@ -325,8 +323,8 @@ These keys already use the correct schema and are not modified:
 - `global.airflow.*`
 - `global.gitSyncRelay.*`
 - Most keys under `astronomer` **outside** `astronomer.houston.config`
-- Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled` and
-  `nginx.cspPolicy.cdn.enabled`, both migrated as above), `grafana`, `prometheus`,
+- Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled`, migrated as
+  above), `grafana`, `prometheus`,
   `elasticsearch`, `kube-state`, `nats` (except init resources)
 
 ## Rollback

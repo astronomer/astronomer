@@ -128,13 +128,12 @@ to see the exact list for your file.
 
 ### Nginx Content-Security-Policy toggle
 
-If your override sets the CSP toggle under `nginx.cspPolicy`, the migration
-script rewrites it to the flat `nginx.cspPolicy.enabled`:
+If your override sets `nginx.cspPolicy.cdnEnabled`, the migration script
+rewrites it to `nginx.cspPolicy.enabled`:
 
 | Old Path | New Path | Type |
 |---|---|---|
 | `nginx.cspPolicy.cdnEnabled` | `nginx.cspPolicy.enabled` | boolean → flat |
-| `nginx.cspPolicy.cdn.enabled` | `nginx.cspPolicy.enabled` | nested → flat |
 
 ### Houston Config Passthrough Keys
 
@@ -170,9 +169,9 @@ These keys already use the correct schema and are not modified:
 - `global.authSidecar.*`
 - `global.airflowOperator.*`
 - Most keys under `astronomer` **outside** `astronomer.houston.config`
-- Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled` and
-  `nginx.cspPolicy.cdn.enabled`, both migrated as described above), `grafana`,
-  `prometheus`, `elasticsearch`, `vector`, `kube-state`, `nats`, `tags`
+- Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled`, migrated as
+  described above), `grafana`, `prometheus`, `elasticsearch`, `vector`,
+  `kube-state`, `nats`, `tags`
 
 ## Rollback
 

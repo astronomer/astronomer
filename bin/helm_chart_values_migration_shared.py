@@ -467,12 +467,7 @@ def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationCha
 
 
 def apply_nginx_csp_policy_migrations(root: CommentedMap) -> list[MigrationChange]:
-    """Migrate legacy CSP toggle shapes to `nginx.cspPolicy.enabled`.
-
-    Handles two legacy shapes produced by earlier chart versions:
-
-    - `nginx.cspPolicy.cdnEnabled` (original) -> `nginx.cspPolicy.enabled`
-    - `nginx.cspPolicy.cdn.enabled` (PLX-300 intermediate) -> `nginx.cspPolicy.enabled`
+    """Migrate `nginx.cspPolicy.cdnEnabled` to `nginx.cspPolicy.enabled`.
 
     Parameters:
         root: The parsed YAML document root.
@@ -486,28 +481,8 @@ def apply_nginx_csp_policy_migrations(root: CommentedMap) -> list[MigrationChang
     csp_policy = _get_nested_mapping(nginx, ["cspPolicy"])
     if csp_policy is None:
         return []
-
-    changes: list[MigrationChange] = []
-
-    # Migrate flat cdnEnabled -> enabled
     rule = BoolToNested("cdnEnabled", ["enabled"], path_prefix="nginx.cspPolicy")
-    changes.extend(rule.apply(csp_policy))
-
-    # Migrate cdn.enabled (PLX-300 intermediate shape) -> enabled
-    cdn = _get_nested_mapping(csp_policy, ["cdn"])
-    if cdn is not None and "enabled" in cdn:
-        if "enabled" not in csp_policy:
-            csp_policy["enabled"] = cdn["enabled"]
-        _delete_key(csp_policy, "cdn")
-        changes.append(
-            MigrationChange(
-                "nginx.cspPolicy.cdn.enabled",
-                "nginx.cspPolicy.enabled",
-                "Moved nginx.cspPolicy.cdn.enabled -> nginx.cspPolicy.enabled",
-            )
-        )
-
-    return changes
+    return rule.apply(csp_policy)
 
 
 def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationChange]:

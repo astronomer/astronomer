@@ -257,24 +257,6 @@ class TestNginxCspPolicyMigration:
         assert result["nginx"]["cspPolicy"]["connectsrc"] == "cdn.example.com"
         assert any(c.old_path == "nginx.cspPolicy.cdnEnabled" and c.new_path == "nginx.cspPolicy.enabled" for c in changes)
 
-    def test_migrates_cdn_nested_enabled_to_flat(self) -> None:
-        """PLX-300 intermediate shape cdn.enabled is flattened to cspPolicy.enabled."""
-        data = _load_rt(
-            dedent("""\
-                nginx:
-                  cspPolicy:
-                    cdn:
-                      enabled: false
-                    connectsrc: "cdn.example.com"
-            """)
-        )
-        changes = migrate_values(data)
-        result = _to_plain(data)
-        assert result["nginx"]["cspPolicy"]["enabled"] is False
-        assert "cdn" not in result["nginx"]["cspPolicy"]
-        assert result["nginx"]["cspPolicy"]["connectsrc"] == "cdn.example.com"
-        assert any(c.old_path == "nginx.cspPolicy.cdn.enabled" and c.new_path == "nginx.cspPolicy.enabled" for c in changes)
-
     def test_no_op_when_csp_policy_missing(self) -> None:
         """No nginx.cspPolicy section produces no nginx CSP migration changes."""
         data = _load_rt("nginx:\n  replicas: 2\n")
