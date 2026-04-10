@@ -12,8 +12,10 @@ astronomer:
       pullPolicy: Always
     commander:
       pullPolicy: Always
+      tag: PINF-457-secret-sync-check-updates
     houston:
       pullPolicy: Always
+      tag: main
   navigator:
     enabled: true
     env:
