@@ -10,6 +10,8 @@ All values under `data` are base64-decoded before printing.
 Supports optional watch mode (-w) which streams updates as secrets change,
 and label selectors (-l) to filter secrets. When no secret name is given,
 all secrets in the namespace are printed.
+
+Example usage: bin/get-secret-info.py -n astronomer -w -l 'owner!=helm'
 """
 
 import argparse
@@ -32,7 +34,7 @@ def print_secret(secret):
 
 
 def main():  # noqa: C901
-    parser = argparse.ArgumentParser(description="Print resourceVersion and data.connection from a Kubernetes secret")
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("name", nargs="?", default=None, help="Secret name (omit to list all secrets)")
     parser.add_argument("-n", "--namespace", help="Namespace")
     parser.add_argument("--context", help="Kubernetes context")
