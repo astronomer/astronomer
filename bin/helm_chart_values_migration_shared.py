@@ -1,7 +1,7 @@
 """Shared migration helpers and rules for 1.x / 0.37.x -> 2.x Helm values.
 
-Used by ``migrate-helm-chart-values-1x-to-2x.py`` and
-``migrate-helm-chart-values-037x-to-2x.py`` so feature-flag restructuring stays
+Used by `migrate-helm-chart-values-1x-to-2x.py` and
+`migrate-helm-chart-values-037x-to-2x.py` so feature-flag restructuring stays
 in one place.
 """
 
@@ -413,10 +413,10 @@ def apply_global_feature_flag_rules(global_mapping: CommentedMap | None) -> list
     """Apply global-section feature-flag migrations (1.x / 0.37.x -> 2.x).
 
     Parameters:
-        global_mapping: The ``global`` key from values.yaml, or None.
+        global_mapping: The `global` key from values.yaml, or None.
 
     Returns:
-        All migration changes applied under ``global``.
+        All migration changes applied under `global`.
     """
     if global_mapping is None or not isinstance(global_mapping, CommentedMap):
         return []
@@ -427,13 +427,13 @@ def apply_global_feature_flag_rules(global_mapping: CommentedMap | None) -> list
 
 
 def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationChange]:
-    """Apply Houston ``config.deployments`` bool, move, and delete migrations.
+    """Apply Houston `config.deployments` bool, move, and delete migrations.
 
     Parameters:
         root: The parsed YAML document root.
 
     Returns:
-        All migration changes applied under ``astronomer.houston.config.deployments``.
+        All migration changes applied under `astronomer.houston.config.deployments`.
     """
     all_changes: list[MigrationChange] = []
     deployments = _get_nested_mapping(root, ["astronomer", "houston", "config", "deployments"])
@@ -467,16 +467,18 @@ def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationCha
 
 
 def apply_nginx_csp_policy_migrations(root: CommentedMap) -> list[MigrationChange]:
-    """Migrate ``nginx.cspPolicy.cdnEnabled`` to ``nginx.cspPolicy.cdn.enabled``.
+    """Migrate legacy CSP toggle shapes to `nginx.cspPolicy.enabled`.
 
-    Aligns customer Helm overrides with chart 2.x / PLX-300 unified nested
-    ``.enabled`` shape under ``nginx.cspPolicy``.
+    Handles two legacy shapes produced by earlier chart versions:
+
+    - `nginx.cspPolicy.cdnEnabled` (original) -> `nginx.cspPolicy.enabled`
+    - `nginx.cspPolicy.cdn.enabled` (PLX-300 intermediate) -> `nginx.cspPolicy.enabled`
 
     Parameters:
         root: The parsed YAML document root.
 
     Returns:
-        Migration changes applied under ``nginx.cspPolicy``, if any.
+        Migration changes applied under `nginx.cspPolicy`, if any.
     """
     nginx = _get_nested_mapping(root, ["nginx"])
     if nginx is None:
@@ -484,22 +486,42 @@ def apply_nginx_csp_policy_migrations(root: CommentedMap) -> list[MigrationChang
     csp_policy = _get_nested_mapping(nginx, ["cspPolicy"])
     if csp_policy is None:
         return []
-    rule = BoolToNested("cdnEnabled", ["cdn", "enabled"], path_prefix="nginx.cspPolicy")
-    return rule.apply(csp_policy)
+
+    changes: list[MigrationChange] = []
+
+    # Migrate flat cdnEnabled -> enabled
+    rule = BoolToNested("cdnEnabled", ["enabled"], path_prefix="nginx.cspPolicy")
+    changes.extend(rule.apply(csp_policy))
+
+    # Migrate cdn.enabled (PLX-300 intermediate shape) -> enabled
+    cdn = _get_nested_mapping(csp_policy, ["cdn"])
+    if cdn is not None and "enabled" in cdn:
+        if "enabled" not in csp_policy:
+            csp_policy["enabled"] = cdn["enabled"]
+        _delete_key(csp_policy, "cdn")
+        changes.append(
+            MigrationChange(
+                "nginx.cspPolicy.cdn.enabled",
+                "nginx.cspPolicy.enabled",
+                "Moved nginx.cspPolicy.cdn.enabled -> nginx.cspPolicy.enabled",
+            )
+        )
+
+    return changes
 
 
 def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationChange]:
-    """Apply Houston ``config`` flag migrations (flat booleans -> nested ``.enabled``).
+    """Apply Houston `config` flag migrations (flat booleans -> nested `.enabled`).
 
-    Handles passthrough config keys under ``astronomer.houston.config`` that
-    Houston PR #2417 migrated to nested ``.enabled`` paths, including keys in
-    nested sub-sections like ``auth.openidConnect`` and ``webserver``.
+    Handles passthrough config keys under `astronomer.houston.config` that
+    Houston PR #2417 migrated to nested `.enabled` paths, including keys in
+    nested sub-sections like `auth.openidConnect` and `webserver`.
 
     Parameters:
         root: The parsed YAML document root.
 
     Returns:
-        All migration changes applied under ``astronomer.houston.config``.
+        All migration changes applied under `astronomer.houston.config`.
     """
     config = _get_nested_mapping(root, ["astronomer", "houston", "config"])
     if config is None:

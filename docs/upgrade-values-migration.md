@@ -126,14 +126,15 @@ include `emailConfirmation` → `emailConfirmation.enabled` and
 Run `./bin/migrate-helm-chart-values-1x-to-2x.py --dry-run your-values.yaml`
 to see the exact list for your file.
 
-### Nginx Content-Security-Policy (CDN) toggle
+### Nginx Content-Security-Policy toggle
 
-If your override sets the flat CDN toggle under `nginx.cspPolicy`, the
-migration script rewrites it to the nested `.enabled` shape (see PLX-300):
+If your override sets the CSP toggle under `nginx.cspPolicy`, the migration
+script rewrites it to the flat `nginx.cspPolicy.enabled`:
 
 | Old Path | New Path | Type |
 |---|---|---|
-| `nginx.cspPolicy.cdnEnabled` | `nginx.cspPolicy.cdn.enabled` | boolean → nested |
+| `nginx.cspPolicy.cdnEnabled` | `nginx.cspPolicy.enabled` | boolean → flat |
+| `nginx.cspPolicy.cdn.enabled` | `nginx.cspPolicy.enabled` | nested → flat |
 
 ### Houston Config Passthrough Keys
 
@@ -169,9 +170,9 @@ These keys already use the correct schema and are not modified:
 - `global.authSidecar.*`
 - `global.airflowOperator.*`
 - Most keys under `astronomer` **outside** `astronomer.houston.config`
-- Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled`, which is
-  migrated as described above), `grafana`, `prometheus`,
-  `elasticsearch`, `vector`, `kube-state`, `nats`, `tags`
+- Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled` and
+  `nginx.cspPolicy.cdn.enabled`, both migrated as described above), `grafana`,
+  `prometheus`, `elasticsearch`, `vector`, `kube-state`, `nats`, `tags`
 
 ## Rollback
 
