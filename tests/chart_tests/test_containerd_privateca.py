@@ -244,3 +244,187 @@ class TestContainerdPrivateCaDaemonset:
         self.common_tests_daemonset(docs[0])
         assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
         assert tolerationSpec == docs[0]["spec"]["template"]["spec"]["tolerations"]
+
+    def test_containerd_v2_script_uses_cri_v1_images_plugin(self, kube_version):
+        """Test that containerdVersion 2 renders the script with the
+        io.containerd.cri.v1.images plugin namespace for GKE 1.33+."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+        # docs[1] is the ConfigMap with the script
+        configmap = docs[1]
+        assert configmap["kind"] == "ConfigMap"
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert 'CONTAINERD_VERSION="2"' in script
+        # Both plugin namespaces are in the shell if/else, but the version variable
+        # controls which branch is taken at runtime
+        assert "io.containerd.cri.v1.images" in script
+        assert "io.containerd.grpc.v1.cri" in script
+        # Should use hosts.toml approach and generate_hosts_toml
+        assert "generate_hosts_toml" in script
+        assert "registry.example.com" in script
+
+    def test_containerd_v1_script_uses_grpc_v1_cri_plugin(self, kube_version):
+        """Test that containerdVersion 1 renders the script with the
+        io.containerd.grpc.v1.cri plugin namespace for legacy containerd."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "1",
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+        configmap = docs[1]
+        assert configmap["kind"] == "ConfigMap"
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert 'CONTAINERD_VERSION="1"' in script
+        # Both plugin namespaces are in the shell if/else — runtime selection via CONTAINERD_VERSION
+        assert "io.containerd.grpc.v1.cri" in script
+        assert "io.containerd.cri.v1.images" in script
+
+    def test_containerd_v2_default_generates_hosts_toml(self, kube_version):
+        """Test that when containerdVersion is 2 and containerdConfigToml is not
+        set, the script generates a standard hosts.toml with CA cert path."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                    },
+                }
+            },
+        )
+
+        configmap = docs[1]
+        script = configmap["data"]["update-containerd-certs.sh"]
+        # When containerdConfigToml is nil, the script should use generate_hosts_toml
+        assert "generate_hosts_toml" in script
+        assert "ca.crt" in script
+
+    def test_containerd_v2_custom_config_toml_override(self, kube_version):
+        """Test that when containerdConfigToml is set, the script uses the
+        custom content for hosts.toml instead of generating one."""
+        custom_toml = 'server = "https://custom.registry.io"\n[host."https://custom.registry.io"]\n  capabilities = ["pull"]\n  skip_verify = true'
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                        "containerdConfigToml": custom_toml,
+                    },
+                }
+            },
+        )
+
+        configmap = docs[1]
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert "custom.registry.io" in script
+
+    def test_containerd_data_plane_mode_uses_domain_prefix(self, kube_version):
+        """Test that in data plane mode the registry host includes the
+        domainPrefix to form the correct registry hostname."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {
+                        "mode": "data",
+                        "domainPrefix": "dp01",
+                    },
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+
+        # Verify the script uses the DP registry host
+        configmap = docs[1]
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert "registry.dp01.example.com" in script
+        assert 'REGISTRY_HOST="registry.dp01.example.com"' in script
+
+        # Verify the daemonset volume path uses the DP registry host
+        daemonset = docs[0]
+        volumes = daemonset["spec"]["template"]["spec"]["volumes"]
+        hostcerts_vol = next(v for v in volumes if v["name"] == "hostcerts")
+        assert hostcerts_vol["hostPath"]["path"] == "/etc/containerd/certs.d/registry.dp01.example.com/"
+
+    def test_containerd_unified_mode_uses_base_domain(self, kube_version):
+        """Test that in unified mode the registry host uses baseDomain
+        without domainPrefix."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {
+                        "mode": "unified",
+                        "domainPrefix": "",
+                    },
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdVersion": "2",
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+
+        # Verify the script uses the base registry host (no prefix)
+        configmap = docs[1]
+        script = configmap["data"]["update-containerd-certs.sh"]
+        assert 'REGISTRY_HOST="registry.example.com"' in script
+
+        # Verify the daemonset volume path
+        daemonset = docs[0]
+        volumes = daemonset["spec"]["template"]["spec"]["volumes"]
+        hostcerts_vol = next(v for v in volumes if v["name"] == "hostcerts")
+        assert hostcerts_vol["hostPath"]["path"] == "/etc/containerd/certs.d/registry.example.com/"
