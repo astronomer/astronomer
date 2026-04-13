@@ -57,7 +57,7 @@ global:
     repository: docker.io/astronomerinc/ap-vector
   privateCaCertsAddToHost:
     certCopier:
-      repository: docker.io/astronomerinc/ap-base
+      repository: docker.io/astronomerinc/ap-db-bootstrapper
 grafana:
   images:
     dbBootstrapper:

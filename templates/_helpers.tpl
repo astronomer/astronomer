@@ -56,7 +56,7 @@ when containerdConfigToml is not set (nil). Prefer using containerdVersion: "2" 
 
 {{ define "certCopier.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
 {{- else -}}
 {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
 {{- end }}
