@@ -2,15 +2,9 @@
 ## NGINX Data Plane ConfigMap ##
 ################################
 {{- if eq .Values.global.plane.mode "data" }}
-{{- $cdn := .Values.cspPolicy.cdn | default dict }}
-{{- $cspPolicyEnabled := true }}
-{{- if hasKey $cdn "enabled" }}
-{{- $cspPolicyEnabled = $cdn.enabled }}
-{{- else if hasKey .Values.cspPolicy "cdnEnabled" }}
-{{- $cspPolicyEnabled = .Values.cspPolicy.cdnEnabled }}
-{{- end }}
-{{- $connectsrc :=  eq $cspPolicyEnabled true | ternary .Values.cspPolicy.connectsrc "" }}
-{{- $fontsrc := eq $cspPolicyEnabled true| ternary .Values.cspPolicy.fontsrc "" }}
+{{- $cspPolicyEnabled := .Values.cspPolicy.enabled }}
+{{- $connectsrc := eq $cspPolicyEnabled true | ternary .Values.cspPolicy.connectsrc "" }}
+{{- $fontsrc := eq $cspPolicyEnabled true | ternary .Values.cspPolicy.fontsrc "" }}
 {{- $scriptsrc := eq $cspPolicyEnabled true | ternary .Values.cspPolicy.scriptsrc "" }}
 kind: ConfigMap
 apiVersion: v1
