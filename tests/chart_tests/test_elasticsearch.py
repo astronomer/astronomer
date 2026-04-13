@@ -872,6 +872,67 @@ class TestElasticSearch:
         ]
 
     @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_elasticsearch_ingress_without_tls(self, kube_version, plane_mode):
+        """Test that elasticsearch ingress spec.rules is first field when tlsSecret is not set"""
+        domain_prefix = "cluster1" if plane_mode == "data" else ""
+        expected_host = f"elasticsearch.{domain_prefix}.example.com" if plane_mode == "data" else "elasticsearch.example.com"
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": plane_mode, "domainPrefix": domain_prefix},
+                    "tlsSecret": "",  # No TLS secret
+                }
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Ingress"
+
+        # When tlsSecret is not set, spec should start with "rules" (not "tls")
+        spec_keys = list(doc["spec"].keys())
+        assert spec_keys[0] == "rules", f"Expected first key to be 'rules', but got '{spec_keys[0]}'"
+        assert "tls" not in doc["spec"], "TLS should not be present when tlsSecret is not set"
+
+        # Verify rules structure is still correct
+        assert len(doc["spec"]["rules"]) == 1
+        assert doc["spec"]["rules"][0]["host"] == expected_host
+
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_elasticsearch_ingress_with_tls(self, kube_version, plane_mode):
+        """Test that elasticsearch ingress includes TLS configuration when tlsSecret is set"""
+        domain_prefix = "cluster1" if plane_mode == "data" else ""
+        expected_host = f"elasticsearch.{domain_prefix}.example.com" if plane_mode == "data" else "elasticsearch.example.com"
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": plane_mode, "domainPrefix": domain_prefix},
+                    "tlsSecret": "my-tls-secret",
+                }
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Ingress"
+
+        # When tlsSecret is set, tls field should be present
+        assert "tls" in doc["spec"], "TLS should be present when tlsSecret is set"
+        assert len(doc["spec"]["tls"]) == 1
+        assert doc["spec"]["tls"][0]["secretName"] == "my-tls-secret"
+        assert doc["spec"]["tls"][0]["hosts"] == [expected_host]
+
+        # rules should still be present
+        assert "rules" in doc["spec"]
+        assert len(doc["spec"]["rules"]) == 1
+
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
     def test_elasticsearch_client_network_policy(self, kube_version, plane_mode):
         """Test elasticsearch ingress configuration"""
         docs = render_chart(
