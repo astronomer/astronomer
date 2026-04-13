@@ -139,8 +139,7 @@ defaultBackend:
     name: ~
 
 cspPolicy:
-  cdn:
-    enabled: true
+  enabled: true
   connectsrc: "cdn.jsdelivr.net"
   fontsrc: "fonts.gstatic.com"
   scriptsrc: "fonts.googleapis.com cdn.jsdelivr.net"
