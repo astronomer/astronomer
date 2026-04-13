@@ -281,9 +281,11 @@ data:
           securityContext: {}
           gitDaemon:
             securityContext:
+                readOnlyRootFilesystem: true
                 runAsNonRoot: true
           gitSync:
             securityContext:
+                readOnlyRootFilesystem: true
                 runAsNonRoot: true
           {{ end }}
 
