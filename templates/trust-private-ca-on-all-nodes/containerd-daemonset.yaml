@@ -56,8 +56,26 @@ spec:
           - "sh"
           - "-c"
         args:
-          - sh /cert-copy-and-toml-update.sh
+          - |
+            # Copy the Python script to the host filesystem so nsenter can access it,
+            # then execute it using the host's Python interpreter.
+            cp /scripts/update-containerd-certs.py /hostcontainerd/update-containerd-certs.py
+            nsenter --target 1 --mount --uts --ipc --net --pid \
+              python3 {{ .Values.global.privateCaCertsAddToHost.containerdHostPath }}/update-containerd-certs.py
         imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.pullPolicy }}
+        env:
+        - name: REGISTRY_HOST
+          {{- if eq .Values.global.plane.mode "data" }}
+          value: "registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}"
+          {{- else }}
+          value: "registry.{{ .Values.global.baseDomain }}"
+          {{- end }}
+        - name: CONTAINERD_HOST_PATH
+          value: "/hostcontainerd"
+        - name: CERT_CONFIG_PATH
+          value: "{{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}"
+        - name: PRIVATE_CA_CERTS_DIR
+          value: "/private-ca-certs"
         securityContext:
           runAsUser: 0
           privileged: true
@@ -75,9 +93,9 @@ spec:
         - mountPath: /hostcontainerd
           name: hostcontainerd
           readOnly: false
-        - mountPath: /cert-copy-and-toml-update.sh
+        - mountPath: /scripts/update-containerd-certs.py
           name: cert-copy-and-toml-update
-          subPath: update-containerd-certs.sh
+          subPath: update-containerd-certs.py
         {{ range $secret_name := (.Values.global.privateCaCerts) }}
         - name: {{ $secret_name }}
           mountPath: /private-ca-certs/{{ $secret_name }}/{{ $secret_name }}.pem

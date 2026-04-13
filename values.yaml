@@ -41,10 +41,6 @@ global:
     addToDockerd: true
     containerdCertConfigPath: /etc/containerd/certs.d
     containerdHostPath: /etc/containerd
-    # containerd major version: "2" for containerd 2.x (GKE 1.33+), "1" for containerd 1.x (legacy).
-    # Determines which plugin namespace is used for registry config_path in config.toml.
-    # Default "2" since containerd 1.x is EOL (March 2026).
-    containerdVersion: "2"
     containerdConfigToml: ~
     containerdnodeAffinitys: []
     containerdTolerations: []
