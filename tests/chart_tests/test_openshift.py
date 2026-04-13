@@ -119,6 +119,7 @@ class TestOpenshift:
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
         }
+
     def test_openshift_disabled_houston_configmap_gitsyncrelay_no_security_overrides(self, kube_version):
         """Validate gitSyncRelay has no securityContext overrides when openshift is disabled."""
         docs = render_chart(
@@ -136,5 +137,3 @@ class TestOpenshift:
         assert "securityContext" not in gitSyncRelayConfig
         assert "gitDaemon" not in gitSyncRelayConfig
         assert "gitSync" not in gitSyncRelayConfig
-
-    
