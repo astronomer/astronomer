@@ -1,4 +1,5 @@
 astronomer:
+  airflowChartVersion: 1.17.28-build40412
   dpLink:
     enabled: true
   flightDeck:
@@ -12,7 +13,7 @@ astronomer:
       pullPolicy: Always
     commander:
       pullPolicy: Always
-      tag: PINF-457-secret-sync-check-updates
+      tag: master
     houston:
       pullPolicy: Always
       tag: main
