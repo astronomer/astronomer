@@ -39,6 +39,7 @@ from helm_chart_values_migration_shared import (  # noqa: E402
     apply_global_feature_flag_rules,
     apply_houston_config_flag_migrations,
     apply_houston_deployment_migrations,
+    apply_nginx_csp_policy_migrations,
     dump_yaml,
     load_yaml,
 )
@@ -66,6 +67,7 @@ def migrate_values(data: Any) -> list[MigrationChange]:
     all_changes.extend(apply_global_feature_flag_rules(global_cm))
     all_changes.extend(apply_houston_config_flag_migrations(data))
     all_changes.extend(apply_houston_deployment_migrations(data))
+    all_changes.extend(apply_nginx_csp_policy_migrations(data))
 
     return all_changes
 

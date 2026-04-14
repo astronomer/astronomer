@@ -297,6 +297,15 @@ environment.**
 | `nats.init.resources.limits.cpu` | `"250m"` | NATS init container CPU limit. | Override if your cluster needs different resource settings. |
 | `nats.init.resources.limits.memory` | `"100Mi"` | NATS init container memory limit. | Override if your cluster needs different resource settings. |
 
+### Nginx Content-Security-Policy toggle
+
+If your override sets `nginx.cspPolicy.cdnEnabled`, the migration script
+rewrites it to `nginx.cspPolicy.enabled`.
+
+| Old Path | New Path |
+|---|---|
+| `nginx.cspPolicy.cdnEnabled` | `nginx.cspPolicy.enabled` |
+
 ### Unchanged Keys (No Migration Needed)
 
 These keys already use the correct schema and are not modified:
@@ -314,7 +323,8 @@ These keys already use the correct schema and are not modified:
 - `global.airflow.*`
 - `global.gitSyncRelay.*`
 - Most keys under `astronomer` **outside** `astronomer.houston.config`
-- All keys under `nginx`, `grafana`, `prometheus`,
+- Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled`, migrated as
+  above), `grafana`, `prometheus`,
   `elasticsearch`, `kube-state`, `nats` (except init resources)
 
 ## Rollback

@@ -236,6 +236,52 @@ class TestBoolToNested:
         assert len(changes) == 1
 
 
+class TestNginxCspPolicyMigration:
+    """Legacy CSP toggle shapes -> `nginx.cspPolicy.enabled`."""
+
+    def test_migrates_cdnEnabled_to_flat_enabled(self) -> None:
+        """Full migrate_values rewrites flat cdnEnabled -> cspPolicy.enabled."""
+        data = _load_rt(
+            dedent("""\
+                nginx:
+                  cspPolicy:
+                    cdnEnabled: false
+                    connectsrc: "cdn.example.com"
+            """)
+        )
+        changes = migrate_values(data)
+        result = _to_plain(data)
+        assert result["nginx"]["cspPolicy"]["enabled"] is False
+        assert "cdnEnabled" not in result["nginx"]["cspPolicy"]
+        assert "cdn" not in result["nginx"]["cspPolicy"]
+        assert result["nginx"]["cspPolicy"]["connectsrc"] == "cdn.example.com"
+        assert any(c.old_path == "nginx.cspPolicy.cdnEnabled" and c.new_path == "nginx.cspPolicy.enabled" for c in changes)
+
+    def test_no_op_when_csp_policy_missing(self) -> None:
+        """No nginx.cspPolicy section produces no nginx CSP migration changes."""
+        data = _load_rt("nginx:\n  replicas: 2\n")
+        changes = migrate_values(data)
+        assert _to_plain(data)["nginx"]["replicas"] == 2
+        assert not any("nginx.cspPolicy" in c.old_path for c in changes)
+
+    def test_idempotent_when_already_flat_enabled(self) -> None:
+        """Second migration pass does not alter already-flat cspPolicy.enabled."""
+        data = _load_rt(
+            dedent("""\
+                nginx:
+                  cspPolicy:
+                    enabled: true
+                    connectsrc: "x"
+            """)
+        )
+        migrate_values(data)
+        plain_after_first = _to_plain(data)
+        data2 = _load_rt(_dump_rt(data))
+        changes2 = migrate_values(data2)
+        assert _to_plain(data2) == plain_after_first
+        assert not any("nginx.cspPolicy" in c.old_path for c in changes2)
+
+
 class TestSubtreeMove:
     """Test the SubtreeMove rule type."""
 
