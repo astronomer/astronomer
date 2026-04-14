@@ -130,7 +130,6 @@ class TestServiceAccounts:
                 "enabled": True,
                 "serviceAccount": {"create": False},
                 "webhook": {"serviceAccount": {"create": False}},
-                "certController": {"serviceAccount": {"create": False}},
             },
         }
         show_only = [
@@ -186,7 +185,6 @@ class TestServiceAccounts:
                 "enabled": True,
                 "serviceAccount": {"create": True, "annotations": annotations},
                 "webhook": {"serviceAccount": {"create": True, "annotations": annotations}},
-                "certController": {"serviceAccount": {"create": True, "annotations": annotations}},
             },
         }
         show_only = [

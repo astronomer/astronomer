@@ -157,6 +157,25 @@ class TestDataPlaneFailoverFlag:
         assert docs[0]["kind"] == "Deployment"
         assert docs[0]["metadata"]["name"] == "release-name-navigator"
 
+    def test_navigator_has_backend_secret_checksum_annotation(self, kube_version):
+        """Test that the navigator pod template has a checksum annotation for the houston backend secret.
+
+        Navigator has no bootstrapper init container, so it cannot self-heal a corrupted
+        DATABASE_URL. The checksum annotation ensures a rolling restart is triggered whenever
+        the backend secret template changes, so the pod picks up the correct secret value.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"navigator": {"enabled": True}}},
+            show_only=["charts/astronomer/templates/navigator/navigator-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert "checksum/houston-backend-secret" in annotations
+        checksum = annotations["checksum/houston-backend-secret"]
+        assert len(checksum) == 64
+        assert all(c in "0123456789abcdef" for c in checksum)
+
     def test_flag_control_mode_enables_navigator_serviceaccount(self, kube_version):
         """Flag in control mode renders navigator service account."""
         docs = render_chart(
