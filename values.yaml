@@ -245,7 +245,6 @@ global:
 
   logging:
     indexNamePrefix: ~
-    provider: ~
     loggingSidecar:
       enabled: false
       name: sidecar-log-consumer
@@ -376,6 +375,9 @@ global:
       # another: thing
     extraLabels: []
       # do-funky-injection: maybe
+  daemonsetLogging:
+    enabled: true
+
 
 #################################
 ## Default tagged groups enabled
