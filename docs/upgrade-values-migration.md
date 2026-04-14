@@ -126,6 +126,15 @@ include `emailConfirmation` → `emailConfirmation.enabled` and
 Run `./bin/migrate-helm-chart-values-1x-to-2x.py --dry-run your-values.yaml`
 to see the exact list for your file.
 
+### Nginx Content-Security-Policy toggle
+
+If your override sets `nginx.cspPolicy.cdnEnabled`, the migration script
+rewrites it to `nginx.cspPolicy.enabled`:
+
+| Old Path | New Path | Type |
+|---|---|---|
+| `nginx.cspPolicy.cdnEnabled` | `nginx.cspPolicy.enabled` | boolean → flat |
+
 ### Houston Config Passthrough Keys
 
 If your values file overrides Houston application config via
@@ -160,8 +169,9 @@ These keys already use the correct schema and are not modified:
 - `global.authSidecar.*`
 - `global.airflowOperator.*`
 - Most keys under `astronomer` **outside** `astronomer.houston.config`
-- All keys under `nginx`, `grafana`, `prometheus`,
-  `elasticsearch`, `vector`, `kube-state`, `nats`, `tags`
+- Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled`, migrated as
+  described above), `grafana`, `prometheus`, `elasticsearch`, `vector`,
+  `kube-state`, `nats`, `tags`
 
 ## Rollback
 
