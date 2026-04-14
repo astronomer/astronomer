@@ -23,9 +23,6 @@ elasticsearch:
     nginx:
       repository: docker.io/astronomerinc/ap-nginx-es
 external-secrets:
-  certController:
-    image:
-      repository: docker.io/astronomerinc/ap-external-secrets
   image:
     repository: docker.io/astronomerinc/ap-external-secrets
 global:

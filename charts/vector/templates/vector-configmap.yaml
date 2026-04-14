@@ -145,34 +145,6 @@ data:
           }
           .log_source = "airflow_3_file"
 
-      enrich_k8s_logs:
-        type: remap
-        inputs:
-          - filter_by_component
-        source: |
-          # airflow_k8s_logs source automatically populates pod labels
-          if exists(.kubernetes.pod_labels.component) {
-            .component = .kubernetes.pod_labels.component
-          }
-          if exists(.kubernetes.pod_labels.release) {
-            .release = .kubernetes.pod_labels.release
-          }
-          if exists(.kubernetes.pod_labels.workspace) {
-            .workspace = .kubernetes.pod_labels.workspace
-          }
-          if exists(.kubernetes.pod_namespace) {
-            .namespace = .kubernetes.pod_namespace
-          }
-          # Parse JSON messages
-          if is_string(.message) {
-            parsed = parse_json(.message) ?? {}
-            if is_object(parsed) {
-              . = merge!(., parsed)
-            }
-          }
-          .log_source = "kubernetes_logs"
-
-
       parse_airflowV3_path:
         type: remap
         inputs:
@@ -223,7 +195,6 @@ data:
         type: remap
         inputs:
           - enrich_file_logs
-          - enrich_k8s_logs
         source: |
           # Component from k8s labels if we have it
           if !exists(.component) && exists(.kubernetes.pod_labels.component) {
