@@ -210,3 +210,89 @@ class TestIngress:
         if expected_astro_ui:
             assert "nginx.ingress.kubernetes.io/configuration-snippet" in annotations
             assert "app.example.com" in annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+
+    def test_astro_ui_ingress_with_tls_secret(self, kube_version):
+        """Test that astro-ui per-host ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "my-tls-secret",
+                    "perHostIngress": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml"],
+        )
+
+        assert len(docs) == 2
+
+        astroui_ingress = docs[0]
+        tls = astroui_ingress["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert "app.example.com" in tls[0]["hosts"]
+
+        common_ingress = docs[1]
+        tls = common_ingress["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert "example.com" in tls[0]["hosts"]
+
+    def test_astro_ui_ingress_without_tls_secret(self, kube_version):
+        """Test that astro-ui per-host ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "",
+                    "perHostIngress": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml"],
+        )
+
+        assert len(docs) == 2
+        assert "tls" not in docs[0]["spec"]
+        assert "tls" not in docs[1]["spec"]
+
+    def test_registry_ingress_with_tls_secret(self, kube_version):
+        """Test that registry per-host ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "my-tls-secret",
+                    "perHostIngress": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/registry/registry-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert "registry.example.com" in tls[0]["hosts"]
+
+    def test_registry_ingress_without_tls_secret(self, kube_version):
+        """Test that registry per-host ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "",
+                    "perHostIngress": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/registry/registry-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]
