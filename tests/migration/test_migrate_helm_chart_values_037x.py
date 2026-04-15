@@ -1194,6 +1194,30 @@ class TestEdgeCases:
         assert "kibana" not in result
         assert "prometheus-blackbox-exporter" not in result
 
+    def test_nested_subchart_global_migrated(self):
+        """Nested subchart global blocks are migrated with 0.37.x-specific rules."""
+        text = dedent("""\
+            astronomer:
+              global:
+                networkNSLabels: false
+                singleNamespace: true
+                nodeExporterSccEnabled: true
+                pgbouncer:
+                  krb5ConfSecretName: nested-krb5
+                  servicePort: "5432"
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        nested_global = result["astronomer"]["global"]
+        assert nested_global["networkNSLabels"]["enabled"] is False
+        assert "singleNamespace" not in nested_global
+        assert "nodeExporterSccEnabled" not in nested_global
+        assert nested_global["pgbouncer"]["secretName"] == "nested-krb5"
+        assert nested_global["pgbouncer"]["servicePort"] == "6543"
+        assert any(c.old_path == "astronomer.global.singleNamespace" for c in changes)
+
 
 # ---------------------------------------------------------------------------
 # Conflict / precedence tests

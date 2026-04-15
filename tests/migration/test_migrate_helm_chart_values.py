@@ -653,6 +653,34 @@ class TestEdgeCases:
         assert result["global"]["namespaceManagement"]["namespacePools"]["enabled"] is True
         assert result["global"]["features"]["someOtherFeature"]["enabled"] is False
 
+    def test_nested_subchart_global_migrated(self):
+        """Nested subchart global blocks are migrated like the top-level global."""
+        text = dedent("""\
+            global:
+              rbacEnabled: true
+            astronomer:
+              global:
+                networkNSLabels: false
+                deployRollbackEnabled: true
+                loggingSidecar:
+                  enabled: true
+                  name: nested-sidecar
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["rbac"]["enabled"] is True
+        nested_global = result["astronomer"]["global"]
+        assert nested_global["networkNSLabels"]["enabled"] is False
+        assert nested_global["deploymentLifecycle"]["deployRollback"]["enabled"] is True
+        assert nested_global["logging"]["loggingSidecar"]["enabled"] is True
+        assert nested_global["logging"]["loggingSidecar"]["name"] == "nested-sidecar"
+        assert "networkNSLabels" not in {k for k, v in nested_global.items() if isinstance(v, bool)}
+        assert "deployRollbackEnabled" not in nested_global
+        assert "loggingSidecar" not in nested_global
+        assert any(c.old_path == "astronomer.global.networkNSLabels" for c in changes)
+
 
 # ---------------------------------------------------------------------------
 # Conflict / precedence tests
