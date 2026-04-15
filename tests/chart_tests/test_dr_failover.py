@@ -19,8 +19,6 @@ def failover_values(plane_mode):
 class TestDataPlaneFailoverFlag:
     """Tests for the global.dataPlaneFailover.enabled feature flag."""
 
-    # --- Data-plane components (mode=data) ---
-
     def test_flag_data_mode_enables_pilot(self, kube_version):
         """Flag in data mode renders pilot deployment without pilot.enabled."""
         docs = render_chart(
@@ -144,8 +142,6 @@ class TestDataPlaneFailoverFlag:
         env_vars = get_env_vars_dict(c_by_name["pilot"]["env"])
         assert "COMMANDER_FLIGHTDECK_DSN" in env_vars
 
-    # --- Control-plane components (mode=control) ---
-
     def test_flag_control_mode_enables_navigator(self, kube_version):
         """Flag in control mode renders navigator deployment without navigator.enabled."""
         docs = render_chart(
@@ -220,8 +216,6 @@ class TestDataPlaneFailoverFlag:
         env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
         assert env_vars["DISPATCHER_ENABLED"] == "true"
 
-    # --- Cross-mode isolation ---
-
     def test_flag_data_mode_does_not_enable_navigator(self, kube_version):
         """Flag in data mode does NOT render navigator."""
         docs = render_chart(
@@ -255,8 +249,6 @@ class TestDataPlaneFailoverFlag:
         )
         assert len(docs) == 0
 
-    # --- Unified mode: flag has no effect ---
-
     def test_flag_unified_mode_does_not_enable_pilot(self, kube_version):
         """Flag in unified mode does NOT auto-enable pilot."""
         docs = render_chart(
@@ -274,8 +266,6 @@ class TestDataPlaneFailoverFlag:
             show_only=["charts/astronomer/templates/navigator/navigator-deployment.yaml"],
         )
         assert len(docs) == 0
-
-    # --- Flag disabled: no effect ---
 
     def test_flag_disabled_no_pilot(self, kube_version):
         """With flag disabled, pilot is not rendered (pilot.enabled defaults to false)."""
