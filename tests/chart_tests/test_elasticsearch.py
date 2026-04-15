@@ -1045,3 +1045,29 @@ class TestElasticSearch:
         # Verify custom TTL settings
         assert "proxy_cache_valid 200 10m" in nginx_config
         assert "proxy_cache_valid 401 403 2m" in nginx_config
+
+    def test_elasticsearch_ingress_with_tls_secret(self, kube_version):
+        """Test that elasticsearch ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "tlsSecret": "my-tls-secret"}},
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert len(tls[0]["hosts"]) == 1
+
+    def test_elasticsearch_ingress_without_tls_secret(self, kube_version):
+        """Test that elasticsearch ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "tlsSecret": ""}},
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]
