@@ -46,6 +46,10 @@ class TestHoustonHookJob:
             "mountPath": "/houston/config/local-production.yaml",
             "subPath": "local-production.yaml",
         } in c_by_name["post-upgrade-job"]["volumeMounts"]
+        assert {
+            "name": "tmp",
+            "mountPath": "/houston/node_modules/.prisma",
+        } in c_by_name["houston-db-migrations-job"]["volumeMounts"]
 
     def test_upgrade_deployments_job_disabled(self, kube_version):
         """Test Upgrade Deployments Job when disabled."""
