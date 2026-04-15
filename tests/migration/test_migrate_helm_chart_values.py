@@ -160,6 +160,8 @@ class TestFullValuesMigration:
             "podDisruptionBudgetsEnabled",
             "postgresqlEnabled",
             "prometheusPostgresExporterEnabled",
+            "nodeExporterEnabled",
+            "fluentdEnabled",
             "manualNamespaceNamesEnabled",
             "enablePerHostIngress",
             "enableArgoCDAnnotation",
@@ -469,6 +471,16 @@ RULE_TEST_CASES = [
         "prometheusPostgresExporterEnabled",
         "global:\n  prometheusPostgresExporterEnabled: false\n",
         lambda g: g["prometheusPostgresExporter"]["enabled"] is False,
+    ),
+    (
+        "nodeExporterEnabled",
+        "global:\n  nodeExporterEnabled: true\n",
+        lambda g: g["nodeExporter"]["enabled"] is True,
+    ),
+    (
+        "fluentdEnabled",
+        "global:\n  fluentdEnabled: false\n",
+        lambda g: g["daemonsetLogging"]["enabled"] is False and "fluentdEnabled" not in g,
     ),
     (
         "manualNamespaceNamesEnabled",
@@ -788,6 +800,22 @@ class TestConflictPrecedence:
 
         assert result["global"]["daemonsetLogging"]["enabled"] is False
         assert "vectorEnabled" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_fluentd_enabled_conflict_keeps_new(self):
+        """fluentdEnabled conflict with daemonsetLogging.enabled preserves the new-schema value."""
+        text = dedent("""\
+            global:
+              fluentdEnabled: true
+              daemonsetLogging:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
+        assert "fluentdEnabled" not in result["global"]
         assert len(changes) >= 1
 
 

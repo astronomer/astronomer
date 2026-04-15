@@ -148,7 +148,9 @@ class RenameKey(MigrationRule):
 
     The path identifies the parent + old key name; new_name is the replacement.
 
-    Example: RenameKey(["fluentd"], "vector") renames the top-level fluentd key.
+    Example: RenameKey(["fluentd"], "vector") renames the top-level Fluentd config subtree.
+    The logging feature flag migration is separate:
+    global.fluentdEnabled -> global.daemonsetLogging.enabled
     Example: RenameKey(["global", "pgbouncer", "krb5ConfSecretName"], "secretName")
     """
 
@@ -323,7 +325,6 @@ MIGRATIONS: list[MigrationRule] = [
     AddKeyIfMissing(["global", "authHeaderSecretName"], value=None),
     AddKeyIfMissing(["global", "plane"], value={"mode": "unified", "domainPrefix": ""}),
     AddKeyIfMissing(["global", "podLabels"], value={}),
-    AddKeyIfMissing(["global", "logging", "provider"], value=None),
     AddKeyIfMissing(
         ["nats", "init"],
         value={

@@ -308,6 +308,7 @@ GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMov
     BoolToNested("podDisruptionBudgetsEnabled", ["podDisruptionBudgets", "enabled"]),
     BoolToNested("postgresqlEnabled", ["postgresql", "enabled"]),
     BoolToNested("prometheusPostgresExporterEnabled", ["prometheusPostgresExporter", "enabled"]),
+    BoolToNested("nodeExporterEnabled", ["nodeExporter", "enabled"]),
     BoolToNested("manualNamespaceNamesEnabled", ["namespaceManagement", "manualNamespaceNames", "enabled"]),
     BoolToNested("enablePerHostIngress", ["perHostIngress", "enabled"]),
     BoolToNested("enableArgoCDAnnotation", ["argoCD", "annotation", "enabled"]),
@@ -320,6 +321,7 @@ GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMov
     BoolToNested("prometheusEnabled", ["prometheus", "enabled"]),
     BoolToNested("elasticsearchEnabled", ["elasticsearch", "enabled"]),
     BoolToNested("vectorEnabled", ["daemonsetLogging", "enabled"]),
+    BoolToNested("fluentdEnabled", ["daemonsetLogging", "enabled"]),
 ]
 
 HOUSTON_DEPLOYMENTS_PREFIX = "astronomer.houston.config.deployments"

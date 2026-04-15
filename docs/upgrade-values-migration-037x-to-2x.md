@@ -40,8 +40,12 @@ deletion. Ensure your platform is in a quiet state before upgrading.
 ### Fluentd replaced by Vector
 
 Chart 2.x replaces Fluentd with **Vector** for log collection. The migration
-script renames the top-level `fluentd` key to `vector`, preserving resource
-requests and limits.
+script performs two separate logging migrations:
+
+- It renames the top-level `fluentd` key to `vector`, preserving resource
+  requests and limits.
+- It renames `global.fluentdEnabled` to `global.daemonsetLogging.enabled`,
+  which matches the chart dependency condition in 2.x.
 
 **Impact**: Resource values (CPU, memory) carry over. However, **custom Fluentd
 configuration** — such as custom pipelines, filters, output plugins, or parser
@@ -148,6 +152,7 @@ Found 28 migration(s) to apply:
   global.singleNamespace -> (deleted): Deleted obsolete key global.singleNamespace
   global.veleroEnabled -> (deleted): Deleted obsolete key global.veleroEnabled
   ...
+  global.fluentdEnabled -> global.daemonsetLogging.enabled: Moved ...
   fluentd -> vector: Renamed fluentd -> vector
   global.pgbouncer.krb5ConfSecretName -> global.pgbouncer.secretName: Renamed ...
   global.pgbouncer.servicePort -> global.pgbouncer.servicePort: Updated ... "5432" -> "6543"
@@ -188,8 +193,8 @@ attention to:
 - **New default values** — review the [New Keys Added with
   Defaults](#new-keys-added-with-defaults) table below and override any
   defaults that do not match your environment.
-- **Fluentd-to-Vector rename** — if you had custom Fluentd configuration, only
-  the resource values carry over.
+- **Logging migration** — verify both `global.daemonsetLogging.enabled` and the
+  top-level `vector` subtree after migration.
 - **PGBouncer port** — confirm the new port (6543) works for your setup, or
   override it back to 5432.
 
@@ -221,6 +226,8 @@ structures:
 | `global.features.namespacePools.*` | `global.namespaceManagement.namespacePools.*` | subtree move |
 | `global.dagOnlyDeployment.*` | `global.deployMechanisms.dagOnlyDeployment.*` | subtree move |
 | `global.loggingSidecar.*` | `global.logging.loggingSidecar.*` | subtree move |
+| `global.nodeExporterEnabled` | `global.nodeExporter.enabled` | boolean → nested |
+| `global.fluentdEnabled` | `global.daemonsetLogging.enabled` | boolean → nested |
 
 ### Houston Config Passthrough Keys
 
@@ -365,6 +372,9 @@ keeps `global.rbac.enabled: false` and deletes `global.rbacEnabled`.
 
 The same precedence applies to renames: if both `fluentd` and `vector` exist
 at the top level, the `vector` subtree is preserved and `fluentd` is deleted.
+Likewise, if both `global.fluentdEnabled` and
+`global.daemonsetLogging.enabled` exist, the script preserves
+`global.daemonsetLogging.enabled` and deletes `global.fluentdEnabled`.
 
 ### What if I have a full copy of values.yaml instead of just overrides?
 
@@ -403,9 +413,11 @@ only transforms the specific keys it knows about.
 
 ### I have custom Fluentd configuration. What do I do?
 
-The migration script only renames the `fluentd` key to `vector` and preserves
-the subtree (including resource settings). Any Fluentd-specific configuration
-(custom pipelines, filters, output plugins) will not work with Vector.
+The migration script renames the `fluentd` key to `vector`, preserves the
+subtree (including resource settings), and separately migrates
+`global.fluentdEnabled` to `global.daemonsetLogging.enabled`. Any
+Fluentd-specific configuration (custom pipelines, filters, output plugins) will
+not work with Vector.
 
 Before upgrading:
 
@@ -430,8 +442,8 @@ This overrides the script's update to `6543`.
 ### How does this differ from the 1.x-to-2.x migration?
 
 The 0.37.x-to-2.x migration is a superset of the 1.x-to-2.x migration. It
-includes all 10 feature flag restructuring rules from the 1.x migration, plus
-18 additional rules for:
+includes the shared 1.x-to-2.x feature-flag restructuring rules, plus
+additional 0.37.x-specific rules for:
 
 - Deleting 9 obsolete keys
 - Renaming 2 keys (fluentd → vector, pgbouncer secret name)

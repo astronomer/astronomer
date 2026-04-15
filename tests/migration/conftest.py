@@ -495,7 +495,6 @@ def expected_037x_new_partial_text() -> str:
               name: my-sidecar
               repository: custom-registry/vector
               tag: 0.50.0
-            provider:
           nats:
             enabled: true
             replicas: 3
@@ -633,7 +632,6 @@ def new_037x_schema_partial_text() -> str:
             loggingSidecar:
               enabled: true
               name: sidecar-log-consumer
-            provider: elasticsearch
           nats:
             enabled: true
             replicas: 3
