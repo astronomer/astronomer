@@ -339,10 +339,10 @@ global:
         tag: 8.6.2
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-6
+        tag: 1.24.1-7
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.20.0-3
+        tag: 0.20.0-4
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
         tag: 2026.4.15
