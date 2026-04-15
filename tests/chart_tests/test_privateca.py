@@ -63,7 +63,7 @@ class TestPrivateCaDaemonset:
         assert len(docs) == 1
         self.common_tests_daemonset(docs[0])
         cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
-        assert cert_copier["image"].startswith("quay.io/astronomer/ap-base:")
+        assert cert_copier["image"] == "quay.io/astronomer/ap-db-bootstrapper:1.1.2"
 
         volmounts = cert_copier["volumeMounts"]
 

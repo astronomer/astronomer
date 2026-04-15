@@ -1,0 +1,33 @@
+version = 2
+required_plugins = ["io.containerd.grpc.v1.cri"]
+# Kubernetes doesn't use containerd restart manager.
+disabled_plugins = ["io.containerd.internal.v1.restart"]
+oom_score = -999
+
+[debug]
+  level = "info"
+
+[grpc]
+  gid = 412
+
+[plugins."io.containerd.grpc.v1.cri"]
+  enable_cdi = true
+  stream_server_address = "127.0.0.1"
+  max_container_log_line_size = 262144
+  sandbox_image = "us-central1-artifactregistry.gcr.io/gke-release/gke-release/pause:3.8@sha256:880e63f94b145e46f1b1082bb71b85e21f16b99b180b9996407d61240ceb9830"
+  image_pull_progress_timeout = "5m"
+[plugins."io.containerd.grpc.v1.cri".cni]
+  bin_dir = "/home/kubernetes/bin"
+  conf_dir = "/etc/cni/net.d"
+  conf_template = "/home/containerd/cni.template"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  SystemdCgroup = true
+[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+  endpoint = ["https://mirror.gcr.io","https://registry-1.docker.io"]
+[metrics]
+ address = "127.0.0.1:1338"
+[plugins."io.containerd.grpc.v1.cri".containerd]
+  default_runtime_name = "runc"
+  discard_unpacked_layers = true
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  runtime_type = "io.containerd.runc.v2"
