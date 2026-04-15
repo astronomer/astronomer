@@ -160,6 +160,8 @@ spec:
               mountPath: /tmp
             - name: tmp
               mountPath: /houston/node_modules/.cache
+            - name: tmp
+              mountPath: /houston/node_modules/.prisma
           {{- include "houston_volume_mounts" . | indent 12 }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
       volumes:
