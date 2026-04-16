@@ -16,9 +16,14 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      component: dp-ingress-controller
       tier: nginx
       release: {{ .Release.Name }}
+    matchExpressions:
+      - key: component
+        operator: In
+        values:
+          - dp-ingress-controller
+          - ingress-controller
   policyTypes:
   - Ingress
   ingress:
