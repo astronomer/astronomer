@@ -176,6 +176,7 @@ mirrors:
 
 
 DEFAULT_CHART_VERSION = "0.37.7"
+DEFAULT_K3S_IMAGE = "rancher/k3s:v1.32.2-k3s1"
 HELM_REPO_NAME = "astronomer-internal"
 HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
 HELM_REPO_URL = "https://internal-helm.astronomer.io"
@@ -426,6 +427,7 @@ class Settings:
     mkcert_root_ca_secret_name: str
     mkcert_root_ca_secret_key: str
     chart_version: str
+    k3s_image: str
     helm_timeout: str
     helm_debug: bool
 
@@ -482,6 +484,7 @@ def _k3d_create_cluster(
     docker_network: str,
     ports: list[str],
     mkcert_root_ca: Path,
+    k3s_image: str,
     registry_config: Path | None = None,
 ) -> None:
     """Create a k3d cluster with traefik disabled."""
@@ -491,6 +494,8 @@ def _k3d_create_cluster(
         "cluster",
         "create",
         name,
+        "--image",
+        k3s_image,
         "--network",
         docker_network,
         "--k3s-arg",
@@ -595,8 +600,7 @@ def _values_yaml(settings: Settings) -> str:
 global:
   baseDomain: {settings.base_domain}
   tlsSecret: {settings.tls_secret_name}
-  postgresql:
-    enabled: true
+  postgresqlEnabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   rbacEnabled: true
@@ -890,6 +894,11 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_CHART_VERSION,
         help="Astronomer chart version to install. Default: '%(default)s'",
     )
+    parser.add_argument(
+        "--k3s-image",
+        default=DEFAULT_K3S_IMAGE,
+        help="k3s image to use for the k3d cluster. Default: '%(default)s'",
+    )
     parser.add_argument("--helm-timeout", default=os.environ.get("HELM_TIMEOUT", "60m"))
     parser.add_argument("--helm-debug", action="store_true")
     parser.add_argument("--recreate-cluster", action="store_true", help="Delete and recreate k3d cluster if it exists")
@@ -941,6 +950,7 @@ def main() -> int:
         mkcert_root_ca_secret_name=args.mkcert_root_ca_secret_name,
         mkcert_root_ca_secret_key=args.mkcert_root_ca_secret_key,
         chart_version=args.chart_version,
+        k3s_image=args.k3s_image,
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
     )
@@ -996,11 +1006,12 @@ def main() -> int:
                         f"{settings.http_port}:80@loadbalancer",
                     ],
                     mkcert_root_ca=mkcert_root_ca,
+                    k3s_image=settings.k3s_image,
                     registry_config=registry_config,
                 )
             else:
                 _debug(f"Cluster already exists, skipping: {settings.cluster_name}")
-            ms.done(h)
+            ms.done(h, detail=f"image={settings.k3s_image}")
         else:
             ms.skip(f"Ensure k3d cluster `{settings.cluster_name}` exists", reason="--skip-cluster set")
 
