@@ -17,10 +17,15 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      component: cp-ingress-controller
       tier: nginx
       plane: {{ .Values.global.plane.mode }}
       release: {{ .Release.Name }}
+    matchExpressions:
+      - key: component
+        operator: In
+        values:
+          - cp-ingress-controller
+          - ingress-controller
   policyTypes:
   - Ingress
   ingress:
