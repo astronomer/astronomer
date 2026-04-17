@@ -157,3 +157,20 @@ class TestVectorConfigmap:
         # Verify bulk settings
         assert "mode: bulk" in config_yaml
         assert "max_bytes: 10485760" in config_yaml
+
+    def test_vector_configmap_parse_json_messages_normalizes_level_to_string(self, kube_version):
+        """Test that parse_json_messages transform normalizes integer level to string."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        config_yaml = doc["data"]["vector-config.yaml"]
+
+        config_dict = yaml.safe_load(config_yaml)
+        source = config_dict["transforms"]["parse_json_messages"]["source"]
+
+        assert "is_integer(.level)" in source
+        assert ".level = to_string!(.level)" in source

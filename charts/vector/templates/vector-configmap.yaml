@@ -92,6 +92,10 @@ data:
               . = merge!(., parsed)
             }
           }
+          # Normalize level to string for all events
+          if exists(.level) && is_integer(.level) {
+            .level = to_string!(.level)
+          }
 
       transform_task_logs:
         type: remap
