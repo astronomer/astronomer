@@ -84,11 +84,43 @@
 {{- fail "houston.logging.loggingSidecar.enabled requires at least one sink: enable cloudwatch, gcpCloudLogging, elasticsearch, or set extraSinks" -}}
 {{- end -}}
 {{- if .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled -}}
-{{- required "houston.logging.loggingSidecar.gcpCloudLogging.projectId must be set when gcpCloudLogging.enabled is true" .Values.houston.logging.loggingSidecar.gcpCloudLogging.projectId -}}
-{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.location must be set when gcpCloudLogging.enabled is true" .Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.location -}}
-{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName must be set when gcpCloudLogging.enabled is true" .Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.projectId must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.projectId | default "" | trim) -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.location must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.location | default "" | trim) -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName | default "" | trim) -}}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "houston.logging.loggingSidecar.gcpCloudLogging.sink" -}}
+{{- $root := .root -}}
+{{- $gcp := $root.Values.houston.logging.loggingSidecar.gcpCloudLogging -}}
+gcp_cloud_logging:
+  type: gcp_stackdriver_logs
+  inputs:
+    - normalize_levels
+  project_id: {{ $gcp.projectId | default "" | trim | quote }}
+  log_id: {{ $gcp.logId | quote }}
+  severity_key: {{ $gcp.severityKey | quote }}
+{{- if not $gcp.useWorkloadIdentity }}
+  credentials_path: "/etc/gcp-credentials/{{ $gcp.credentialsSecretKey }}"
+{{- end }}
+  resource:
+    type: {{ $gcp.resource.type | quote }}
+    project_id: {{ $gcp.projectId | default "" | trim | quote }}
+    location: {{ $gcp.resource.location | default "" | trim | quote }}
+    namespace_name: "{{ "{{" }} kubernetes.pod_namespace {{ "}}" }}"
+    pod_name: "{{ "{{" }} kubernetes.pod_name {{ "}}" }}"
+    container_name: {{ .containerName | quote }}
+    cluster_name: {{ $gcp.resource.clusterName | default "" | trim | quote }}
+  labels:
+    component: {{ .componentName | quote }}
+  batch:
+    max_events: 100
+    timeout_secs: 5
+  buffer:
+    type: memory
+    max_events: 10000
+    when_full: block
 {{- end -}}
 
 {{ define "registry.docker.config" -}}
