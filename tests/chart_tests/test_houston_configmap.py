@@ -990,3 +990,46 @@ def test_houston_configmap_features_logging_defaults():
     log = prod["deployments"]["logging"]
     assert log["enabled"] is True
     assert log["provider"] == "fluentd"
+
+
+def test_houston_configmap_no_flat_enabled_flags_under_deployments():
+    """Guard the uniform flag pattern (PLX-254): no flat *Enabled keys may
+    appear directly under deployments in the rendered production.yaml.
+    New feature flags must be nested as <feature>.enabled."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    deployments = prod["deployments"]
+
+    violations = [key for key, value in deployments.items() if key.endswith("Enabled") and isinstance(value, bool)]
+    assert violations == [], (
+        f"Flat *Enabled keys found under deployments: {violations}. "
+        "Wrap each in a named object: deployments.<feature>.enabled: true"
+    )
+
+
+def test_houston_configmap_no_vector_enabled_key():
+    """Guard PLX-287: global.vectorEnabled must not reappear in the rendered
+    ConfigMap. The sidecar logging toggle lives at loggingSidecar.enabled."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    def _find_key(obj, needle, path=""):
+        hits = []
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                p = f"{path}.{k}" if path else k
+                if k == needle:
+                    hits.append(p)
+                hits.extend(_find_key(v, needle, p))
+        elif isinstance(obj, list):
+            for i, item in enumerate(obj):
+                hits.extend(_find_key(item, needle, f"{path}[{i}]"))
+        return hits
+
+    assert _find_key(prod, "vectorEnabled") == [], (
+        "Legacy vectorEnabled key reappeared in rendered ConfigMap. Use loggingSidecar.enabled instead."
+    )
