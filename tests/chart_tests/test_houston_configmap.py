@@ -1002,11 +1002,7 @@ def test_houston_configmap_no_flat_enabled_flags_under_deployments():
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     deployments = prod["deployments"]
 
-    violations = [
-        key
-        for key, value in deployments.items()
-        if key.endswith("Enabled") and isinstance(value, bool)
-    ]
+    violations = [key for key, value in deployments.items() if key.endswith("Enabled") and isinstance(value, bool)]
     assert violations == [], (
         f"Flat *Enabled keys found under deployments: {violations}. "
         "Wrap each in a named object: deployments.<feature>.enabled: true"
@@ -1035,6 +1031,5 @@ def test_houston_configmap_no_vector_enabled_key():
         return hits
 
     assert _find_key(prod, "vectorEnabled") == [], (
-        "Legacy vectorEnabled key reappeared in rendered ConfigMap. "
-        "Use loggingSidecar.enabled instead."
+        "Legacy vectorEnabled key reappeared in rendered ConfigMap. Use loggingSidecar.enabled instead."
     )
