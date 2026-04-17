@@ -439,6 +439,8 @@ astronomer:
           logId: "houston-audit"
           resource:
             type: "k8s_container"
+            location: ""
+            clusterName: ""
           severityKey: "level"
           useWorkloadIdentity: true
           credentialsSecretName: "houston-gcp-logging-creds"

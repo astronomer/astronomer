@@ -83,6 +83,11 @@
 {{- if not (or $hasBuiltInSink $hasExtraSinks) -}}
 {{- fail "houston.logging.loggingSidecar.enabled requires at least one sink: enable cloudwatch, gcpCloudLogging, elasticsearch, or set extraSinks" -}}
 {{- end -}}
+{{- if .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.projectId must be set when gcpCloudLogging.enabled is true" .Values.houston.logging.loggingSidecar.gcpCloudLogging.projectId -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.location must be set when gcpCloudLogging.enabled is true" .Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.location -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName must be set when gcpCloudLogging.enabled is true" .Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 

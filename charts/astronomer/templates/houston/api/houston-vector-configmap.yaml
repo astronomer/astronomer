@@ -133,11 +133,11 @@ data:
         resource:
           type: {{ .Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.type | quote }}
           project_id: {{ .Values.houston.logging.loggingSidecar.gcpCloudLogging.projectId | quote }}
-          location: "{{ "{{" }} kubernetes.pod_namespace {{ "}}" }}"
+          location: {{ .Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.location | quote }}
           namespace_name: "{{ "{{" }} kubernetes.pod_namespace {{ "}}" }}"
           pod_name: "{{ "{{" }} kubernetes.pod_name {{ "}}" }}"
           container_name: "houston"
-          cluster_name: {{ .Values.global.clusterName | default "unknown" | quote }}
+          cluster_name: {{ .Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName | quote }}
         labels:
           component: "houston-api"
         batch:

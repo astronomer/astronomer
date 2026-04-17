@@ -260,6 +260,12 @@ houston:
         # Monitored resource type. "k8s_container" is the standard for GKE pods.
         resource:
           type: "k8s_container"
+          # Required for k8s_container resources. This should be the GKE
+          # cluster location, for example "us-east4" or "us-east4-b".
+          location: ""
+          # Required for k8s_container resources. This should match the GKE
+          # cluster name as it appears in Cloud Logging.
+          clusterName: ""
         # Map the "level" field in log entries to GCP severity levels.
         severityKey: "level"
         # Use GKE Workload Identity for authentication (recommended).
