@@ -35,9 +35,10 @@ import helm_chart_values_migration_shared as _shared  # noqa: E402
 from helm_chart_values_migration_shared import (  # noqa: E402
     HOUSTON_DEPLOYMENTS_PREFIX,
     MigrationChange,
-    apply_global_feature_flag_rules,
+    apply_global_feature_flag_rules_to_all,
     apply_houston_config_flag_migrations,
     apply_houston_deployment_migrations,
+    apply_nginx_csp_policy_migrations,
     dump_yaml,
     load_yaml,
 )
@@ -147,7 +148,9 @@ class RenameKey(MigrationRule):
 
     The path identifies the parent + old key name; new_name is the replacement.
 
-    Example: RenameKey(["fluentd"], "vector") renames the top-level fluentd key.
+    Example: RenameKey(["fluentd"], "vector") renames the top-level Fluentd config subtree.
+    The logging feature flag migration is separate:
+    global.fluentdEnabled -> global.daemonsetLogging.enabled
     Example: RenameKey(["global", "pgbouncer", "krb5ConfSecretName"], "secretName")
     """
 
@@ -322,7 +325,6 @@ MIGRATIONS: list[MigrationRule] = [
     AddKeyIfMissing(["global", "authHeaderSecretName"], value=None),
     AddKeyIfMissing(["global", "plane"], value={"mode": "unified", "domainPrefix": ""}),
     AddKeyIfMissing(["global", "podLabels"], value={}),
-    AddKeyIfMissing(["global", "logging", "provider"], value=None),
     AddKeyIfMissing(
         ["nats", "init"],
         value={
@@ -333,6 +335,50 @@ MIGRATIONS: list[MigrationRule] = [
         },
     ),
 ]
+
+
+def _clone_rule_for_nested_global(rule: MigrationRule, global_path: list[str]) -> MigrationRule | None:
+    """Clone a root-global migration rule for a nested ``*.global`` mapping.
+
+    Parameters:
+        rule: The migration rule to clone.
+        global_path: The full path segments to the nested ``global`` mapping.
+
+    Returns:
+        A cloned rule scoped to the nested ``global`` path, or None if the rule
+        does not target ``global.*``.
+    """
+    match rule:
+        case DeleteKey(path=path) if path and path[0] == "global":
+            return DeleteKey([*global_path, *path[1:]])
+        case RenameKey(path=path, new_name=new_name) if path and path[0] == "global":
+            return RenameKey([*global_path, *path[1:]], new_name)
+        case SetValue(path=path, old_value=old_value, new_value=new_value) if path and path[0] == "global":
+            return SetValue([*global_path, *path[1:]], old_value=old_value, new_value=new_value)
+        case AddKeyIfMissing(path=path, value=value) if path and path[0] == "global":
+            return AddKeyIfMissing([*global_path, *path[1:]], value=value)
+        case _:
+            return None
+
+
+def apply_nested_global_migrations(root: CommentedMap) -> list[MigrationChange]:
+    """Apply 0.37.x root-global rules to nested ``*.global`` mappings.
+
+    Parameters:
+        root: The parsed YAML document root.
+
+    Returns:
+        All migration changes applied to nested ``*.global`` mappings.
+    """
+    changes: list[MigrationChange] = []
+    for global_path, _global_mapping in _shared.iter_global_mappings(root):
+        if global_path == ["global"]:
+            continue
+        for rule in MIGRATIONS:
+            nested_rule = _clone_rule_for_nested_global(rule, global_path)
+            if nested_rule is not None:
+                changes.extend(nested_rule.apply(root))
+    return changes
 
 
 def migrate_values(data: Any) -> list[MigrationChange]:
@@ -349,15 +395,15 @@ def migrate_values(data: Any) -> list[MigrationChange]:
 
     all_changes: list[MigrationChange] = []
 
-    global_section = data.get("global")
-    global_cm = global_section if isinstance(global_section, CommentedMap) else None
-    all_changes.extend(apply_global_feature_flag_rules(global_cm))
+    all_changes.extend(apply_global_feature_flag_rules_to_all(data))
 
     for rule in MIGRATIONS:
         all_changes.extend(rule.apply(data))
 
+    all_changes.extend(apply_nested_global_migrations(data))
     all_changes.extend(apply_houston_config_flag_migrations(data))
     all_changes.extend(apply_houston_deployment_migrations(data))
+    all_changes.extend(apply_nginx_csp_policy_migrations(data))
 
     return all_changes
 

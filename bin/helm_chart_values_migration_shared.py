@@ -1,7 +1,7 @@
 """Shared migration helpers and rules for 1.x / 0.37.x -> 2.x Helm values.
 
-Used by ``migrate-helm-chart-values-1x-to-2x.py`` and
-``migrate-helm-chart-values-037x-to-2x.py`` so feature-flag restructuring stays
+Used by `migrate-helm-chart-values-1x-to-2x.py` and
+`migrate-helm-chart-values-037x-to-2x.py` so feature-flag restructuring stays
 in one place.
 """
 
@@ -128,6 +128,47 @@ def _path_exists(mapping: CommentedMap, keys: list[str]) -> bool:
     return True
 
 
+def _path_to_str(path_segments: list[str]) -> str:
+    """Convert path segments into a dotted string path.
+
+    Parameters:
+        path_segments: Path segments to join.
+
+    Returns:
+        A dotted path string.
+    """
+    return ".".join(path_segments)
+
+
+def iter_global_mappings(node: Any, path: list[str] | None = None) -> list[tuple[list[str], CommentedMap]]:
+    """Find all mappings stored under keys named ``global``.
+
+    Parameters:
+        node: The current YAML node to inspect.
+        path: The path to ``node`` from the document root.
+
+    Returns:
+        A list of ``(path_segments, mapping)`` tuples for every ``global`` mapping.
+    """
+    current_path = [] if path is None else path
+    matches: list[tuple[list[str], CommentedMap]] = []
+
+    match node:
+        case CommentedMap():
+            for key, value in node.items():
+                child_path = [*current_path, str(key)]
+                if key == "global" and isinstance(value, CommentedMap):
+                    matches.append((child_path, value))
+                matches.extend(iter_global_mappings(value, child_path))
+        case list():
+            for idx, item in enumerate(node):
+                matches.extend(iter_global_mappings(item, [*current_path, f"[{idx}]"]))
+        case _:
+            return matches
+
+    return matches
+
+
 @dataclass
 class BoolToNested:
     """Migrate a flat boolean key to a nested .enabled structure.
@@ -245,6 +286,7 @@ class SubtreeMove:
 
     old_path: list[str] = field(default_factory=list)
     new_path: list[str] = field(default_factory=list)
+    path_prefix: str = "global"
 
     def apply(self, global_mapping: CommentedMap) -> list[MigrationChange]:
         """Apply the subtree-move migration rule.
@@ -266,8 +308,8 @@ class SubtreeMove:
             source_parents.append((source, key))
             source = source[key]
 
-        old_str = "global." + ".".join(self.old_path)
-        new_str = "global." + ".".join(self.new_path)
+        old_str = self.path_prefix + "." + ".".join(self.old_path)
+        new_str = self.path_prefix + "." + ".".join(self.new_path)
 
         if _path_exists(global_mapping, self.new_path):
             parent_map, key_to_delete = source_parents[-1]
@@ -308,6 +350,7 @@ GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMov
     BoolToNested("podDisruptionBudgetsEnabled", ["podDisruptionBudgets", "enabled"]),
     BoolToNested("postgresqlEnabled", ["postgresql", "enabled"]),
     BoolToNested("prometheusPostgresExporterEnabled", ["prometheusPostgresExporter", "enabled"]),
+    BoolToNested("nodeExporterEnabled", ["nodeExporter", "enabled"]),
     BoolToNested("manualNamespaceNamesEnabled", ["namespaceManagement", "manualNamespaceNames", "enabled"]),
     BoolToNested("enablePerHostIngress", ["perHostIngress", "enabled"]),
     BoolToNested("enableArgoCDAnnotation", ["argoCD", "annotation", "enabled"]),
@@ -319,7 +362,8 @@ GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMov
     BoolToNested("kubeStateEnabled", ["kubeState", "enabled"]),
     BoolToNested("prometheusEnabled", ["prometheus", "enabled"]),
     BoolToNested("elasticsearchEnabled", ["elasticsearch", "enabled"]),
-    BoolToNested("vectorEnabled", ["vector", "enabled"]),
+    BoolToNested("vectorEnabled", ["daemonsetLogging", "enabled"]),
+    BoolToNested("fluentdEnabled", ["daemonsetLogging", "enabled"]),
 ]
 
 HOUSTON_DEPLOYMENTS_PREFIX = "astronomer.houston.config.deployments"
@@ -409,31 +453,76 @@ HOUSTON_CONFIG_MOVE_KEYS: list[tuple[list[str], str, list[str]]] = [
 ]
 
 
-def apply_global_feature_flag_rules(global_mapping: CommentedMap | None) -> list[MigrationChange]:
+def _clone_global_feature_flag_rule(
+    rule: BoolToNested | InvertedBoolToNested | SubtreeMove,
+    path_prefix: str,
+) -> BoolToNested | InvertedBoolToNested | SubtreeMove:
+    """Clone a global feature-flag rule with a different path prefix.
+
+    Parameters:
+        rule: The rule to clone.
+        path_prefix: The dotted path prefix for change reporting.
+
+    Returns:
+        A cloned rule instance targeting the provided path prefix.
+    """
+    match rule:
+        case BoolToNested(old_key=old_key, new_path=new_path):
+            return BoolToNested(old_key, list(new_path), path_prefix=path_prefix)
+        case InvertedBoolToNested(old_key=old_key, new_path=new_path):
+            return InvertedBoolToNested(old_key, list(new_path), path_prefix=path_prefix)
+        case SubtreeMove(old_path=old_path, new_path=new_path):
+            return SubtreeMove(list(old_path), list(new_path), path_prefix=path_prefix)
+        case _:
+            raise TypeError(f"Unsupported global feature flag rule type: {type(rule)!r}")
+
+
+def apply_global_feature_flag_rules(
+    global_mapping: CommentedMap | None,
+    *,
+    path_prefix: str = "global",
+) -> list[MigrationChange]:
     """Apply global-section feature-flag migrations (1.x / 0.37.x -> 2.x).
 
     Parameters:
-        global_mapping: The ``global`` key from values.yaml, or None.
+        global_mapping: The `global` key from values.yaml, or None.
+        path_prefix: The dotted path prefix used for change reporting.
 
     Returns:
-        All migration changes applied under ``global``.
+        All migration changes applied under `global`.
     """
     if global_mapping is None or not isinstance(global_mapping, CommentedMap):
         return []
     changes: list[MigrationChange] = []
     for rule in GLOBAL_FEATURE_FLAG_RULES:
-        changes.extend(rule.apply(global_mapping))
+        cloned_rule = _clone_global_feature_flag_rule(rule, path_prefix)
+        changes.extend(cloned_rule.apply(global_mapping))
     return changes
 
 
-def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationChange]:
-    """Apply Houston ``config.deployments`` bool, move, and delete migrations.
+def apply_global_feature_flag_rules_to_all(root: CommentedMap) -> list[MigrationChange]:
+    """Apply shared global feature-flag migrations to all ``*.global`` mappings.
 
     Parameters:
         root: The parsed YAML document root.
 
     Returns:
-        All migration changes applied under ``astronomer.houston.config.deployments``.
+        All migration changes applied across every discovered ``global`` mapping.
+    """
+    changes: list[MigrationChange] = []
+    for path_segments, global_mapping in iter_global_mappings(root):
+        changes.extend(apply_global_feature_flag_rules(global_mapping, path_prefix=_path_to_str(path_segments)))
+    return changes
+
+
+def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationChange]:
+    """Apply Houston `config.deployments` bool, move, and delete migrations.
+
+    Parameters:
+        root: The parsed YAML document root.
+
+    Returns:
+        All migration changes applied under `astronomer.houston.config.deployments`.
     """
     all_changes: list[MigrationChange] = []
     deployments = _get_nested_mapping(root, ["astronomer", "houston", "config", "deployments"])
@@ -466,18 +555,37 @@ def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationCha
     return all_changes
 
 
-def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationChange]:
-    """Apply Houston ``config`` flag migrations (flat booleans -> nested ``.enabled``).
-
-    Handles passthrough config keys under ``astronomer.houston.config`` that
-    Houston PR #2417 migrated to nested ``.enabled`` paths, including keys in
-    nested sub-sections like ``auth.openidConnect`` and ``webserver``.
+def apply_nginx_csp_policy_migrations(root: CommentedMap) -> list[MigrationChange]:
+    """Migrate `nginx.cspPolicy.cdnEnabled` to `nginx.cspPolicy.enabled`.
 
     Parameters:
         root: The parsed YAML document root.
 
     Returns:
-        All migration changes applied under ``astronomer.houston.config``.
+        Migration changes applied under `nginx.cspPolicy`, if any.
+    """
+    nginx = _get_nested_mapping(root, ["nginx"])
+    if nginx is None:
+        return []
+    csp_policy = _get_nested_mapping(nginx, ["cspPolicy"])
+    if csp_policy is None:
+        return []
+    rule = BoolToNested("cdnEnabled", ["enabled"], path_prefix="nginx.cspPolicy")
+    return rule.apply(csp_policy)
+
+
+def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationChange]:
+    """Apply Houston `config` flag migrations (flat booleans -> nested `.enabled`).
+
+    Handles passthrough config keys under `astronomer.houston.config` that
+    Houston PR #2417 migrated to nested `.enabled` paths, including keys in
+    nested sub-sections like `auth.openidConnect` and `webserver`.
+
+    Parameters:
+        root: The parsed YAML document root.
+
+    Returns:
+        All migration changes applied under `astronomer.houston.config`.
     """
     config = _get_nested_mapping(root, ["astronomer", "houston", "config"])
     if config is None:

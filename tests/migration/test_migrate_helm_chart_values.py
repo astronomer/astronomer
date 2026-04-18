@@ -160,6 +160,8 @@ class TestFullValuesMigration:
             "podDisruptionBudgetsEnabled",
             "postgresqlEnabled",
             "prometheusPostgresExporterEnabled",
+            "nodeExporterEnabled",
+            "fluentdEnabled",
             "manualNamespaceNamesEnabled",
             "enablePerHostIngress",
             "enableArgoCDAnnotation",
@@ -234,6 +236,52 @@ class TestBoolToNested:
         result = _to_plain(data)
         assert result["global"]["networkNSLabels"]["enabled"] is True
         assert len(changes) == 1
+
+
+class TestNginxCspPolicyMigration:
+    """Legacy CSP toggle shapes -> `nginx.cspPolicy.enabled`."""
+
+    def test_migrates_cdnEnabled_to_flat_enabled(self) -> None:
+        """Full migrate_values rewrites flat cdnEnabled -> cspPolicy.enabled."""
+        data = _load_rt(
+            dedent("""\
+                nginx:
+                  cspPolicy:
+                    cdnEnabled: false
+                    connectsrc: "cdn.example.com"
+            """)
+        )
+        changes = migrate_values(data)
+        result = _to_plain(data)
+        assert result["nginx"]["cspPolicy"]["enabled"] is False
+        assert "cdnEnabled" not in result["nginx"]["cspPolicy"]
+        assert "cdn" not in result["nginx"]["cspPolicy"]
+        assert result["nginx"]["cspPolicy"]["connectsrc"] == "cdn.example.com"
+        assert any(c.old_path == "nginx.cspPolicy.cdnEnabled" and c.new_path == "nginx.cspPolicy.enabled" for c in changes)
+
+    def test_no_op_when_csp_policy_missing(self) -> None:
+        """No nginx.cspPolicy section produces no nginx CSP migration changes."""
+        data = _load_rt("nginx:\n  replicas: 2\n")
+        changes = migrate_values(data)
+        assert _to_plain(data)["nginx"]["replicas"] == 2
+        assert not any("nginx.cspPolicy" in c.old_path for c in changes)
+
+    def test_idempotent_when_already_flat_enabled(self) -> None:
+        """Second migration pass does not alter already-flat cspPolicy.enabled."""
+        data = _load_rt(
+            dedent("""\
+                nginx:
+                  cspPolicy:
+                    enabled: true
+                    connectsrc: "x"
+            """)
+        )
+        migrate_values(data)
+        plain_after_first = _to_plain(data)
+        data2 = _load_rt(_dump_rt(data))
+        changes2 = migrate_values(data2)
+        assert _to_plain(data2) == plain_after_first
+        assert not any("nginx.cspPolicy" in c.old_path for c in changes2)
 
 
 class TestSubtreeMove:
@@ -425,6 +473,16 @@ RULE_TEST_CASES = [
         lambda g: g["prometheusPostgresExporter"]["enabled"] is False,
     ),
     (
+        "nodeExporterEnabled",
+        "global:\n  nodeExporterEnabled: true\n",
+        lambda g: g["nodeExporter"]["enabled"] is True,
+    ),
+    (
+        "fluentdEnabled",
+        "global:\n  fluentdEnabled: false\n",
+        lambda g: g["daemonsetLogging"]["enabled"] is False and "fluentdEnabled" not in g,
+    ),
+    (
         "manualNamespaceNamesEnabled",
         "global:\n  manualNamespaceNamesEnabled: false\n",
         lambda g: g["namespaceManagement"]["manualNamespaceNames"]["enabled"] is False,
@@ -443,6 +501,11 @@ RULE_TEST_CASES = [
         "disableManageClusterScopedResources",
         "global:\n  disableManageClusterScopedResources: false\n",
         lambda g: g["manageClusterScopedResources"]["enabled"] is True,
+    ),
+    (
+        "vectorEnabled",
+        "global:\n  vectorEnabled: true\n",
+        lambda g: g["daemonsetLogging"]["enabled"] is True and "vectorEnabled" not in g,
     ),
 ]
 
@@ -590,6 +653,34 @@ class TestEdgeCases:
         assert result["global"]["namespaceManagement"]["namespacePools"]["enabled"] is True
         assert result["global"]["features"]["someOtherFeature"]["enabled"] is False
 
+    def test_nested_subchart_global_migrated(self):
+        """Nested subchart global blocks are migrated like the top-level global."""
+        text = dedent("""\
+            global:
+              rbacEnabled: true
+            astronomer:
+              global:
+                networkNSLabels: false
+                deployRollbackEnabled: true
+                loggingSidecar:
+                  enabled: true
+                  name: nested-sidecar
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["rbac"]["enabled"] is True
+        nested_global = result["astronomer"]["global"]
+        assert nested_global["networkNSLabels"]["enabled"] is False
+        assert nested_global["deploymentLifecycle"]["deployRollback"]["enabled"] is True
+        assert nested_global["logging"]["loggingSidecar"]["enabled"] is True
+        assert nested_global["logging"]["loggingSidecar"]["name"] == "nested-sidecar"
+        assert "networkNSLabels" not in {k for k, v in nested_global.items() if isinstance(v, bool)}
+        assert "deployRollbackEnabled" not in nested_global
+        assert "loggingSidecar" not in nested_global
+        assert any(c.old_path == "astronomer.global.networkNSLabels" for c in changes)
+
 
 # ---------------------------------------------------------------------------
 # Conflict / precedence tests
@@ -722,6 +813,38 @@ class TestConflictPrecedence:
         assert "sccEnabled" not in result["global"]
         assert "openshiftEnabled" not in result["global"]
         assert len(changes) == 3
+
+    def test_vector_enabled_conflict_keeps_new(self):
+        """vectorEnabled conflict with loggingDaemonset.enabled preserves the new-schema value."""
+        text = dedent("""\
+            global:
+              vectorEnabled: true
+              daemonsetLogging:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
+        assert "vectorEnabled" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_fluentd_enabled_conflict_keeps_new(self):
+        """fluentdEnabled conflict with daemonsetLogging.enabled preserves the new-schema value."""
+        text = dedent("""\
+            global:
+              fluentdEnabled: true
+              daemonsetLogging:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
+        assert "fluentdEnabled" not in result["global"]
+        assert len(changes) >= 1
 
 
 # ---------------------------------------------------------------------------

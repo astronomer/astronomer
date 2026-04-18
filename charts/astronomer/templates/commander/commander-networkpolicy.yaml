@@ -47,6 +47,13 @@ spec:
           component: dp-ingress-controller
           release: {{ .Release.Name }}
     {{- end }}
+    {{- if .Values.global.dataPlaneFailover.enabled }}
+    - podSelector:
+        matchLabels:
+          component: pilot
+          release: astronomer
+          tier: astronomer
+    {{- end }}
     {{- end }}
     {{- if (eq .Values.global.plane.mode "unified") }}
     - podSelector:

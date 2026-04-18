@@ -29,7 +29,8 @@ global:
     externalSecretManagerSecretName: astronomer-cluster-secret-store
   helmRepo: https://internal-helm.astronomer.io
   prometheusPostgresExporterEnabled: true
-  rbacEnabled: true
+  rbac:
+    enabled: true
   ssl:
     enabled: true
     mode: disable

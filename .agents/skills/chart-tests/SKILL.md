@@ -131,6 +131,40 @@ Every container must support customizable `livenessProbe` and `readinessProbe`. 
 
 ---
 
+## ConfigMap Scripts
+
+Scripts embedded in ConfigMaps must follow these conventions:
+
+1. **Static content only** — scripts must not use Helm templating to conditionally modify their content based on chart values. The rendered output must be identical regardless of what values are passed.
+
+2. **Environment variable inputs** — all runtime configuration must be passed as environment variables defined in the container spec (via `env` or `envFrom`), not baked into the script at render time.
+
+3. **Stored as files on disk** — scripts must be committed as real files in the repository (e.g. under `charts/<subchart>/files/`) so they can be linted and reviewed like any other source file.
+
+4. **Included via `.Files.Get`** — scripts must be included in ConfigMap templates using `.Files.Get`, not inline Helm template blocks:
+
+   ```yaml
+   # ✅ CORRECT
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: {{ include "chart.fullname" . }}-scripts
+   data:
+     my-script.sh: {{ .Files.Get "files/my-script.sh" | quote }}
+   ```
+
+   ```yaml
+   # ❌ WRONG — inline script with template logic
+   data:
+     my-script.sh: |
+       #!/bin/sh
+       {{- if .Values.someFlag }}
+       do_something
+       {{- end }}
+   ```
+
+---
+
 ## Test Utilities
 
 ### `render_chart(values, show_only, kube_version, validate_objects)`
@@ -186,6 +220,8 @@ from tests.utils import get_all_features
 
 ## Running Tests
 
+### Correct examples
+
 ```bash
 # Full suite in parallel (fastest — use for full runs)
 uv run pytest tests/chart_tests/ -n auto --quiet
@@ -210,6 +246,16 @@ uv run pytest tests/chart_tests/ --maxfail=1 --lf
 ```
 
 > **Tip**: `-n auto` uses all CPU cores. Omit it when running a single file to avoid subprocess overhead.
+
+### Incorrect examples
+
+```bash
+# ❌ WRONG — we do not need to activate the venv manually, and we do not run pytest without `uv run`
+.venv/bin/activate && pytest tests/chart_tests/
+
+# ❌ WRONG — do not create virtual environment with python, do not use pip install. Use `uv run` to run all python files in the repo.
+python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt && .venv/bin/python3 -m pytest tests/chart_tests/
+```
 
 ---
 

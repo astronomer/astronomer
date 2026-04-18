@@ -180,7 +180,6 @@ class TestServiceAccounts:
                 "enabled": True,
                 "serviceAccount": {"create": False},
                 "webhook": {"serviceAccount": {"create": False}},
-                "certController": {"serviceAccount": {"create": False}},
             },
         }
         show_only = [
@@ -236,7 +235,6 @@ class TestServiceAccounts:
                 "enabled": True,
                 "serviceAccount": {"create": True, "annotations": annotations},
                 "webhook": {"serviceAccount": {"create": True, "annotations": annotations}},
-                "certController": {"serviceAccount": {"create": True, "annotations": annotations}},
             },
         }
         show_only = [
@@ -317,7 +315,10 @@ class TestServiceAccounts:
 def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
-    default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
+    default_serviceaccount_names_overrides = {
+        "global": {"rbac": {"enabled": False}},
+        "postgresql": {"serviceAccount": {"enabled": True}},
+    }
     if any(
         substring in template_name
         for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")

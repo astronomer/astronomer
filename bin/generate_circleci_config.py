@@ -2,7 +2,6 @@
 """Generate the CircleCI config."""
 
 import datetime
-import subprocess
 from pathlib import Path
 
 import yaml
@@ -11,17 +10,7 @@ from jinja2 import Template
 git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
-
 ci_runner_version = (datetime.datetime.now()).strftime("%Y-%m")
-machine_image_version = "ubuntu-2404:2025.09.1"  # https://circleci.com/developer/machine/image/ubuntu-2404
-
-
-def list_docker_images():
-    command = f"{git_root_dir}/bin/show-docker-images.py --with-houston"
-    docker_images_output = subprocess.check_output(command, shell=True)
-    docker_image_list = [x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")]
-
-    return sorted(set(docker_image_list))
 
 
 def main():
@@ -33,15 +22,11 @@ def main():
     config_file_template_path = git_root_dir / ".circleci" / "config.yml.j2"
     config_file_path = git_root_dir / ".circleci" / "config.yml"
 
-    docker_images = list_docker_images()
-
     templated_file_content = config_file_template_path.read_text()
     template = Template(templated_file_content)
     config = template.render(
         ci_runner_version=ci_runner_version,
-        docker_images=docker_images,
         kube_versions=kube_versions,
-        machine_image_version=machine_image_version,
     )
     with open(config_file_path, "w") as circle_ci_config_file:
         warning_header = (
