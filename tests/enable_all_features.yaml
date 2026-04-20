@@ -34,12 +34,15 @@ astronomer:
 global:
   airflowOperator:
     enabled: true
+  authSidecar:
+    enabled: true
   baseDomain: foo.com
   customLogging:
     awsSecretName: dummy
     enabled: true
-  authSidecar:
+  dataPlaneFailover:
     enabled: true
+    externalSecretManagerSecretName: dummy-secret-name
   networkPolicy:
     enabled: true
   rbac:

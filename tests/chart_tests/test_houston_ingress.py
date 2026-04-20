@@ -75,3 +75,29 @@ class TestIngress:
         annotations = jmespath.search("metadata.annotations", doc)
         assert annotations["nginx.ingress.kubernetes.io/upstream-keepalive-connections"] == "9999"
         assert annotations["nginx.ingress.kubernetes.io/upstream-keepalive-timeout"] == "7777"
+
+    def test_houston_ingress_with_tls_secret(self, kube_version):
+        """Test that houston ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "tlsSecret": "my-tls-secret"}},
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert "houston.example.com" in tls[0]["hosts"]
+
+    def test_houston_ingress_without_tls_secret(self, kube_version):
+        """Test that houston ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "tlsSecret": ""}},
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]
