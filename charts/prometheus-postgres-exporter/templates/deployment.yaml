@@ -26,7 +26,7 @@ spec:
         tier: monitoring
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
-        component: prometheus-postgres-exporter
+        component: {{ template "prometheus-postgres-exporter.name" . }}
         {{- include "global.podLabels" . | nindent 8 }}
 {{- if .Values.podLabels }}
 {{ toYaml .Values.podLabels | trim | indent 8 }}
