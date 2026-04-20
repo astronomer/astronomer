@@ -35,9 +35,9 @@ spec:
   {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - {{ template "elasticsearch.ingressurl" . }}
+  {{- end }}
   rules:
     - host: {{ template "elasticsearch.ingressurl" . }}
       http:
