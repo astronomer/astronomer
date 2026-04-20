@@ -209,6 +209,8 @@ def expected_new_partial_text() -> str:
                     enabled: false
                 databaseManagement:
                   pgBouncerResourceCalculationStrategy: airflowStratV2
+            strictSchemaCheck:
+              enabled: false
     """)
 
 
@@ -287,6 +289,8 @@ def new_schema_partial_text() -> str:
                     enabled: true
                 logHelmValues:
                   enabled: true
+            strictSchemaCheck:
+              enabled: false
     """)
 
 
@@ -556,6 +560,8 @@ def expected_037x_new_partial_text() -> str:
                     enabled: false
                 databaseManagement:
                   pgBouncerResourceCalculationStrategy: airflowStratV2
+            strictSchemaCheck:
+              enabled: false
 
         vector:
           resources:
@@ -653,6 +659,8 @@ def new_037x_schema_partial_text() -> str:
                     enabled: true
                   triggerer:
                     enabled: true
+            strictSchemaCheck:
+              enabled: false
 
         tags:
           platform: true

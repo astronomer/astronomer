@@ -619,6 +619,37 @@ def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationCh
     return changes
 
 
+def apply_new_houston_defaults(root: CommentedMap) -> list[MigrationChange]:
+    """Inject new top-level houston keys introduced in 2.x with their default values.
+
+    Adds keys that are new in 2.x and must be present after migration.
+    Uses if-missing semantics — existing keys are never overwritten.
+
+    Parameters:
+        root: The parsed YAML document root.
+
+    Returns:
+        MigrationChange entries for every key that was injected.
+    """
+    changes: list[MigrationChange] = []
+
+    path = ["astronomer", "houston", "strictSchemaCheck"]
+    if not _path_exists(root, path):
+        parent = _ensure_nested_key(root, path[:-1])
+        cm = CommentedMap()
+        cm["enabled"] = False
+        parent[path[-1]] = cm
+        changes.append(
+            MigrationChange(
+                "(new)",
+                "astronomer.houston.strictSchemaCheck",
+                "Added astronomer.houston.strictSchemaCheck with default value",
+            )
+        )
+
+    return changes
+
+
 def load_yaml(input_path: Path) -> tuple[YAML, Any]:
     """Load a YAML file using round-trip mode.
 

@@ -444,6 +444,12 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+  # Strict schema validation for deploymentsConfigOverride.
+  # When disabled, Houston skips AJV schema checks on config overrides, allowing
+  # unknown keys and type mismatches to pass through.
+  strictSchemaCheck:
+    enabled: false
+
   # Populate daily task usage data
   # This runs as a CronJob
 
