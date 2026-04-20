@@ -28,5 +28,5 @@ spec:
       name: {{ .Values.service.name }}
       appProtocol: tcp
   selector:
-    app: {{ template "prometheus-postgres-exporter.name" . }}
+    component: {{ template "prometheus-postgres-exporter.name" . }}
     release: {{ .Release.Name }}
