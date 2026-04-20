@@ -583,7 +583,7 @@ class TestEdgeCases:
 
         result = _to_plain(data)
         assert result["astronomer"]["houston"]["replicas"] == 3
-        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is False
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
         assert len(changes) == 1
 
     def test_mixed_old_and_new_keys(self):
@@ -634,7 +634,7 @@ class TestEdgeCases:
         result = _to_plain(data)
 
         assert result["global"]["baseDomain"] == "example.com"
-        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is False
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
         assert len(changes) == 1
 
     def test_features_with_extra_keys_not_deleted(self):
@@ -692,12 +692,12 @@ class TestAddKeyIfMissingHouston:
     """Tests for AddKeyIfMissing rules applied to houston keys."""
 
     def test_adds_strict_schema_check_when_missing(self):
-        """Injects astronomer.houston.strictSchemaCheck: {enabled: false} when absent."""
+        """Injects astronomer.houston.strictSchemaCheck: {enabled: true} when absent."""
         data = _load_rt("global:\n  baseDomain: x.com\n")
         changes = migrate_values(data)
 
         result = _to_plain(data)
-        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is False
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
         assert any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
         assert len([c for c in changes if c.new_path == "astronomer.houston.strictSchemaCheck"]) == 1
 
@@ -710,13 +710,22 @@ class TestAddKeyIfMissingHouston:
         assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
         assert not any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
 
+    def test_does_not_overwrite_existing_strict_schema_check_when_disabled(self):
+        """Preserves astronomer.houston.strictSchemaCheck when the customer set enabled: false."""
+        data = _load_rt("astronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: false\n")
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is False
+        assert not any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
+
     def test_creates_astronomer_houston_subtree_when_absent(self):
         """Creates astronomer.houston path if neither key exists in the document."""
         data = _load_rt("global:\n  baseDomain: x.com\n")
         migrate_values(data)
 
         result = _to_plain(data)
-        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is False
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
 
 
 # ---------------------------------------------------------------------------

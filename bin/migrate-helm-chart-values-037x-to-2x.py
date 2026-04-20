@@ -288,7 +288,7 @@ MIGRATIONS: list[MigrationRule] = [
     AddKeyIfMissing(["global", "authHeaderSecretName"], value=None),
     AddKeyIfMissing(["global", "plane"], value={"mode": "unified", "domainPrefix": ""}),
     AddKeyIfMissing(["global", "podLabels"], value={}),
-    AddKeyIfMissing(["astronomer", "houston", "strictSchemaCheck"], value={"enabled": False}),
+    AddKeyIfMissing(["astronomer", "houston", "strictSchemaCheck"], value={"enabled": True}),
     AddKeyIfMissing(
         ["nats", "init"],
         value={

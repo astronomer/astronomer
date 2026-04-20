@@ -61,6 +61,7 @@ def test_houston_configmap_defaults():
     assert prod["deployments"]["logging"]["elasticsearch"]["enabled"] is True
     assert prod["deployments"]["logging"]["elasticsearch"]["connection"]["port"] == 9200
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
+    assert prod["strictSchemaCheck"]["enabled"] is True
 
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
     git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
@@ -642,7 +643,7 @@ def test_houston_configmap_strict_schema_check_enabled():
 
 
 def test_houston_configmap_strict_schema_check_disabled():
-    """Validate the houston configmap renders strictSchemaCheck.enabled: false (default)."""
+    """Validate the houston configmap renders strictSchemaCheck.enabled: false when disabled in values."""
     docs = render_chart(
         values={
             "astronomer": {

@@ -964,7 +964,7 @@ RULE_TEST_CASES = [
     (
         "add_houston_strictSchemaCheck",
         "global:\n  baseDomain: x.com\n",
-        lambda d: d["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is False,
+        lambda d: d["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True,
     ),
     # HoustonDeploymentBoolToNested
     (

@@ -67,7 +67,7 @@ def migrate_values(data: Any) -> list[MigrationChange]:
     all_changes.extend(apply_houston_config_flag_migrations(data))
     all_changes.extend(apply_houston_deployment_migrations(data))
     all_changes.extend(apply_nginx_csp_policy_migrations(data))
-    all_changes.extend(AddKeyIfMissing(["astronomer", "houston", "strictSchemaCheck"], value={"enabled": False}).apply(data))
+    all_changes.extend(AddKeyIfMissing(["astronomer", "houston", "strictSchemaCheck"], value={"enabled": True}).apply(data))
 
     return all_changes
 

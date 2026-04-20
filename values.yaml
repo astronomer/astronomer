@@ -471,7 +471,7 @@ astronomer:
         memory: "2048Mi"
 
     strictSchemaCheck:
-      enabled: false
+      enabled: true
 
   commander:
     resources:
