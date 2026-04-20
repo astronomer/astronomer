@@ -32,6 +32,7 @@ if str(_BIN) not in sys.path:
 from helm_chart_values_migration_shared import (  # noqa: E402
     GLOBAL_FEATURE_FLAG_RULES,
     HOUSTON_DEPLOYMENT_BOOL_RULES,
+    AddKeyIfMissing,
     BoolToNested,  # noqa: F401
     InvertedBoolToNested,  # noqa: F401
     MigrationChange,
@@ -39,7 +40,6 @@ from helm_chart_values_migration_shared import (  # noqa: E402
     apply_global_feature_flag_rules_to_all,
     apply_houston_config_flag_migrations,
     apply_houston_deployment_migrations,
-    apply_new_houston_defaults,
     apply_nginx_csp_policy_migrations,
     dump_yaml,
     load_yaml,
@@ -67,7 +67,7 @@ def migrate_values(data: Any) -> list[MigrationChange]:
     all_changes.extend(apply_houston_config_flag_migrations(data))
     all_changes.extend(apply_houston_deployment_migrations(data))
     all_changes.extend(apply_nginx_csp_policy_migrations(data))
-    all_changes.extend(apply_new_houston_defaults(data))
+    all_changes.extend(AddKeyIfMissing(["astronomer", "houston", "strictSchemaCheck"], value={"enabled": False}).apply(data))
 
     return all_changes
 

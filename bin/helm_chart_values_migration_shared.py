@@ -336,6 +336,44 @@ class SubtreeMove:
         return [MigrationChange(old_str, new_str, f"Moved subtree {old_str}.* -> {new_str}.*")]
 
 
+@dataclass
+class AddKeyIfMissing:
+    """Add a key with a default value only if it does not already exist.
+
+    Example: AddKeyIfMissing(["global", "plane"], {"mode": "unified", "domainPrefix": ""})
+    """
+
+    path: list[str] = field(default_factory=list)
+    value: Any = None
+
+    def apply(self, root: CommentedMap) -> list[MigrationChange]:
+        """Apply the add-key-if-missing rule."""
+        if _path_exists(root, self.path):
+            return []
+
+        parent_keys = self.path[:-1]
+        leaf = self.path[-1]
+
+        parent = _ensure_nested_key(root, parent_keys) if parent_keys else root
+
+        if isinstance(self.value, dict):
+            cm = CommentedMap()
+            for k, v in self.value.items():
+                if isinstance(v, dict):
+                    inner = CommentedMap()
+                    for ik, iv in v.items():
+                        inner[ik] = iv
+                    cm[k] = inner
+                else:
+                    cm[k] = v
+            parent[leaf] = cm
+        else:
+            parent[leaf] = self.value
+
+        path_str = ".".join(self.path)
+        return [MigrationChange("(new)", path_str, f"Added {path_str} with default value")]
+
+
 GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMove] = [
     BoolToNested("rbacEnabled", ["rbac", "enabled"]),
     BoolToNested("sccEnabled", ["scc", "enabled"]),
@@ -615,37 +653,6 @@ def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationCh
             parent[new_path[-1]] = value
             _delete_key(section, old_key)
             changes.append(MigrationChange(old_str, new_str, f"Moved {old_str} -> {new_str}"))
-
-    return changes
-
-
-def apply_new_houston_defaults(root: CommentedMap) -> list[MigrationChange]:
-    """Inject new top-level houston keys introduced in 2.x with their default values.
-
-    Adds keys that are new in 2.x and must be present after migration.
-    Uses if-missing semantics — existing keys are never overwritten.
-
-    Parameters:
-        root: The parsed YAML document root.
-
-    Returns:
-        MigrationChange entries for every key that was injected.
-    """
-    changes: list[MigrationChange] = []
-
-    path = ["astronomer", "houston", "strictSchemaCheck"]
-    if not _path_exists(root, path):
-        parent = _ensure_nested_key(root, path[:-1])
-        cm = CommentedMap()
-        cm["enabled"] = False
-        parent[path[-1]] = cm
-        changes.append(
-            MigrationChange(
-                "(new)",
-                "astronomer.houston.strictSchemaCheck",
-                "Added astronomer.houston.strictSchemaCheck with default value",
-            )
-        )
 
     return changes
 

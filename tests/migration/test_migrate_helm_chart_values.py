@@ -684,12 +684,12 @@ class TestEdgeCases:
 
 
 # ---------------------------------------------------------------------------
-# apply_new_houston_defaults tests
+# AddKeyIfMissing (houston) tests
 # ---------------------------------------------------------------------------
 
 
-class TestApplyNewHoustonDefaults:
-    """Tests for the apply_new_houston_defaults shared function."""
+class TestAddKeyIfMissingHouston:
+    """Tests for AddKeyIfMissing rules applied to houston keys."""
 
     def test_adds_strict_schema_check_when_missing(self):
         """Injects astronomer.houston.strictSchemaCheck: {enabled: false} when absent."""
