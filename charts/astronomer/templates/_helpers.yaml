@@ -326,6 +326,7 @@ gcp_cloud_logging:
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
   value: {{ .Values.global.dataPlaneFailover.externalSecretManagerSecretName | quote }}
 {{- end }}
+{{- end }}
 - name: COMMANDER_CUSTOM_LOGGING_ENABLED
   value: {{ ternary "true" "false" .Values.global.customLogging.enabled | quote }}
 {{- end }}
