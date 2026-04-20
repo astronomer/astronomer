@@ -42,32 +42,67 @@ def containerd_env(tmp_path):
     }
 
 
+def _completed_process(stdout: str, *, returncode: int = 0, stderr: str = "") -> MagicMock:
+    """Build a CompletedProcess-like mock for subprocess.run."""
+    return MagicMock(stdout=stdout, returncode=returncode, stderr=stderr)
+
+
+class TestValidateRegistryHost:
+    """Tests for REGISTRY_HOST validation."""
+
+    def test_accepts_typical_registry_hostname(self) -> None:
+        script.validate_registry_host("registry.example.com")
+
+    @pytest.mark.parametrize(
+        "bad_host",
+        [
+            "",
+            "   ",
+            "registry/bad",
+            "registry bad",
+            "..evil",
+            "toolong" + "x" * 300,
+        ],
+    )
+    def test_rejects_invalid_host(self, bad_host: str) -> None:
+        with pytest.raises(ValueError):
+            script.validate_registry_host(bad_host)
+
+
 class TestDetectContainerdVersion:
     """Tests for containerd version detection."""
 
     @patch("subprocess.run")
     def test_detects_containerd_1x(self, mock_run):
-        mock_run.return_value = MagicMock(
-            stdout="containerd github.com/containerd/containerd 1.7.29 442cb34bda9a6a0fed82a2ca7cade05c5c749582",
+        mock_run.return_value = _completed_process(
+            "containerd github.com/containerd/containerd 1.7.29 442cb34bda9a6a0fed82a2ca7cade05c5c749582",
         )
         assert script.detect_containerd_version() == 1
 
     @patch("subprocess.run")
     def test_detects_containerd_2x(self, mock_run):
-        mock_run.return_value = MagicMock(
-            stdout="containerd github.com/containerd/containerd/v2 2.0.7 4ac6c20c7bbf8177f29e46bbdc658fec02ffb8ad",
+        mock_run.return_value = _completed_process(
+            "containerd github.com/containerd/containerd/v2 2.0.7 4ac6c20c7bbf8177f29e46bbdc658fec02ffb8ad",
         )
         assert script.detect_containerd_version() == 2
 
     @patch("subprocess.run")
-    def test_defaults_to_2_on_failure(self, mock_run):
+    def test_raises_when_nsenter_unavailable(self, mock_run):
         mock_run.side_effect = FileNotFoundError("nsenter not available")
-        assert script.detect_containerd_version() == 2
+        with pytest.raises(RuntimeError, match="cannot detect containerd version"):
+            script.detect_containerd_version()
 
     @patch("subprocess.run")
-    def test_defaults_to_2_on_empty_output(self, mock_run):
-        mock_run.return_value = MagicMock(stdout="")
-        assert script.detect_containerd_version() == 2
+    def test_raises_on_nonzero_exit(self, mock_run):
+        mock_run.return_value = _completed_process("", returncode=126, stderr="Permission denied")
+        with pytest.raises(RuntimeError, match="containerd --version failed"):
+            script.detect_containerd_version()
+
+    @patch("subprocess.run")
+    def test_raises_on_unparseable_stdout(self, mock_run):
+        mock_run.return_value = _completed_process("not a version string")
+        with pytest.raises(RuntimeError, match="unrecognized containerd"):
+            script.detect_containerd_version()
 
 
 class TestConfigPathDetection:

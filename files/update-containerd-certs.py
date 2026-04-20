@@ -32,6 +32,7 @@ Requires: Python >= 3.8 (available on GKE nodes).
 import hashlib
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -64,15 +65,48 @@ PLUGIN_NS = {
 
 POLL_INTERVAL_SECONDS = 1
 
+# Hostname / FQDN for the image registry (e.g. registry.example.com). Conservative ASCII subset.
+_REGISTRY_HOST_PATTERN = re.compile(
+    r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$"
+)
+
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+def validate_registry_host(host: str) -> None:
+    """Ensure REGISTRY_HOST is non-empty and safe for paths and TOML.
+
+    Raises:
+        ValueError: If the value is empty, has unsafe characters, or fails validation.
+    """
+    if not host or not host.strip():
+        raise ValueError("REGISTRY_HOST is required and must be non-empty")
+    if host != host.strip():
+        raise ValueError("REGISTRY_HOST must not have leading or trailing whitespace")
+    if any(ch.isspace() for ch in host):
+        raise ValueError("REGISTRY_HOST must not contain whitespace")
+    if "/" in host or "\\" in host:
+        raise ValueError("REGISTRY_HOST must not contain path separators")
+    if ".." in host:
+        raise ValueError("REGISTRY_HOST must not contain '..'")
+    if len(host) > 253:
+        raise ValueError("REGISTRY_HOST is too long")
+    if not _REGISTRY_HOST_PATTERN.match(host):
+        raise ValueError(
+            "REGISTRY_HOST must be a valid DNS hostname (ASCII letters, digits, dots, hyphens)",
+        )
+
+
 def detect_containerd_version() -> int:
     """Detect the major version of containerd running on the host.
 
     Uses nsenter to run `containerd --version` in the host PID namespace.
-    Returns 1 or 2. Defaults to 2 if detection fails.
+    Returns 1 or 2.
+
+    Raises:
+        RuntimeError: If the version cannot be determined (missing binary, non-zero exit,
+            or unrecognized output).
     """
     try:
         result = subprocess.run(
@@ -81,23 +115,37 @@ def detect_containerd_version() -> int:
             text=True,
             timeout=10,
         )
-        version_output = result.stdout.strip()
-        log.info("containerd version output: %s", version_output)
+    except (OSError, subprocess.SubprocessError) as exc:
+        log.error("Failed to execute containerd --version on host: %s", exc)
+        raise RuntimeError("cannot detect containerd version") from exc
 
-        # Example outputs:
-        #   containerd github.com/containerd/containerd 1.7.29 ...
-        #   containerd github.com/containerd/containerd/v2 2.0.7 ...
-        for token in version_output.split():
-            if token and token[0].isdigit():
-                major = int(token.split(".")[0])
-                if major in (1, 2):
-                    log.info("Detected containerd major version: %d", major)
-                    return major
-    except (OSError, subprocess.SubprocessError, ValueError, IndexError) as exc:
-        log.warning("Failed to detect containerd version: %s", exc)
+    if result.returncode != 0:
+        stderr = (result.stderr or "").strip()
+        log.error(
+            "containerd --version exited with code %s: %s",
+            result.returncode,
+            stderr,
+        )
+        raise RuntimeError("containerd --version failed on host")
 
-    log.warning("Defaulting to containerd version 2")
-    return 2
+    version_output = result.stdout.strip()
+    log.info("containerd version output: %s", version_output)
+
+    # Example outputs:
+    #   containerd github.com/containerd/containerd 1.7.29 ...
+    #   containerd github.com/containerd/containerd/v2 2.0.7 ...
+    for token in version_output.split():
+        if token and token[0].isdigit():
+            try:
+                major = int(token.split(".", 1)[0])
+            except ValueError:
+                continue
+            if major in (1, 2):
+                log.info("Detected containerd major version: %d", major)
+                return major
+
+    log.error("Could not determine containerd major version from: %r", version_output)
+    raise RuntimeError("unrecognized containerd --version output")
 
 
 def checksum_of_files(*paths: Path) -> str:
@@ -185,8 +233,10 @@ def copy_ca_certs() -> None:
 # Main loop
 # ---------------------------------------------------------------------------
 def main() -> None:
-    if not REGISTRY_HOST:
-        log.error("REGISTRY_HOST environment variable is required")
+    try:
+        validate_registry_host(REGISTRY_HOST)
+    except ValueError as exc:
+        log.error("%s", exc)
         sys.exit(1)
 
     if not CONFIG_TOML.is_file():
@@ -195,7 +245,11 @@ def main() -> None:
 
     backup_config_toml()
 
-    containerd_version = detect_containerd_version()
+    try:
+        containerd_version = detect_containerd_version()
+    except RuntimeError:
+        sys.exit(1)
+
     log.info("Using containerd version %d strategy", containerd_version)
 
     config_text = CONFIG_TOML.read_text()
@@ -236,8 +290,7 @@ def main() -> None:
                 last_checksum = combined
                 log.info("No containerd restart required for hosts.toml updates.")
             else:
-                log.debug("No change, sleeping %ds", POLL_INTERVAL_SECONDS)
-                time.sleep(POLL_INTERVAL_SECONDS)
+                log.debug("No change in hosts.toml or CA certs")
 
         else:
             # --- Legacy inline config.toml path (containerd 1.x without config_path) ---
@@ -252,8 +305,9 @@ def main() -> None:
                 last_checksum = current_checksum
                 restart_containerd()
             else:
-                log.debug("No change, sleeping %ds", POLL_INTERVAL_SECONDS)
-                time.sleep(POLL_INTERVAL_SECONDS)
+                log.debug("No change in legacy config path")
+
+        time.sleep(POLL_INTERVAL_SECONDS)
 
 
 if __name__ == "__main__":
