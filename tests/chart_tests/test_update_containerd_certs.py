@@ -1,7 +1,7 @@
 """Integration tests for the update-containerd-certs.py script.
 
-These tests exercise the script logic against real GKE config.toml fixtures
-from containerd 1.x (GKE 1.32) and containerd 2.x (GKE 1.33) nodes.
+These tests exercise the script logic against real GKE config.toml samples
+in tests/data_files (containerd 1.x / GKE 1.32 and containerd 2.x / GKE 1.33).
 """
 
 # Import the script as a module
@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+DATA_FILES_DIR = Path(__file__).parent.parent / "data_files"
 SCRIPT_PATH = Path(__file__).parent.parent.parent / "files" / "update-containerd-certs.py"
 
 # Load the script module dynamically
@@ -81,11 +81,11 @@ class TestConfigPathDetection:
         assert script.config_path_is_set(config) is True
 
     def test_detects_config_path_absent(self):
-        config = (FIXTURES_DIR / "gke_1_32_containerd_1x_config.toml").read_text()
+        config = (DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml").read_text()
         assert script.config_path_is_set(config) is False
 
     def test_detects_config_path_absent_gke_133(self):
-        config = (FIXTURES_DIR / "gke_1_33_containerd_2x_config.toml").read_text()
+        config = (DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml").read_text()
         assert script.config_path_is_set(config) is False
 
 
@@ -167,7 +167,7 @@ class TestInjectConfigPath:
     """Tests for config_path injection into config.toml."""
 
     def test_injects_v2_plugin_namespace(self, containerd_env):
-        fixture = FIXTURES_DIR / "gke_1_33_containerd_2x_config.toml"
+        fixture = DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml"
         config_toml = containerd_env["containerd_dir"] / "config.toml"
         config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
         shutil.copy2(fixture, config_toml)
@@ -193,7 +193,7 @@ class TestInjectConfigPath:
             script.CERT_CONFIG_PATH = original_cert_path
 
     def test_injects_v1_plugin_namespace(self, containerd_env):
-        fixture = FIXTURES_DIR / "gke_1_32_containerd_1x_config.toml"
+        fixture = DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml"
         config_toml = containerd_env["containerd_dir"] / "config.toml"
         config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
         shutil.copy2(fixture, config_toml)

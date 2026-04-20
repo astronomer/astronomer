@@ -122,9 +122,8 @@ class TestContainerdPrivateCaDaemonset:
         assert volumemounts == expected_volumemounts
         assert volumes == expected_volumes
 
-    def test_containerd_privateca_daemonset_has_env_vars(self, kube_version):
-        """Test that the daemonset injects the required environment variables
-        for the Python script."""
+    def test_containerd_privateca_defaults(self, kube_version):
+        """Default daemonset env vars and ConfigMap Python script (single render_chart)."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -140,6 +139,7 @@ class TestContainerdPrivateCaDaemonset:
             },
         )
 
+        assert len(docs) == 2
         container = docs[0]["spec"]["template"]["spec"]["containers"][0]
         env = {e["name"]: e["value"] for e in container["env"]}
         assert env["REGISTRY_HOST"] == "registry.example.com"
@@ -147,26 +147,9 @@ class TestContainerdPrivateCaDaemonset:
         assert env["CERT_CONFIG_PATH"] == "/etc/containerd/certs.d"
         assert env["PRIVATE_CA_CERTS_DIR"] == "/private-ca-certs"
 
-    def test_containerd_privateca_configmap_uses_python_script(self, kube_version):
-        """Test that the ConfigMap contains the Python script loaded via .Files.Get."""
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=self.show_only,
-            values={
-                "global": {
-                    "privateCaCerts": ["private-ca-cert-foo"],
-                    "privateCaCertsAddToHost": {
-                        "enabled": True,
-                        "addToContainerd": True,
-                    },
-                }
-            },
-        )
-
         configmap = docs[1]
         assert configmap["kind"] == "ConfigMap"
         script = configmap["data"]["update-containerd-certs.py"]
-        # Verify it's the Python script with key features
         assert "detect_containerd_version" in script
         assert "generate_hosts_toml" in script
         assert "REGISTRY_HOST" in script
@@ -236,9 +219,22 @@ class TestContainerdPrivateCaDaemonset:
         self.common_tests_daemonset(docs[0])
         assert tolerationSpec == docs[0]["spec"]["template"]["spec"]["tolerations"]
 
-    def test_containerd_data_plane_mode_uses_domain_prefix(self, kube_version):
-        """Test that in data plane mode the registry host includes the
-        domainPrefix to form the correct registry hostname."""
+    @pytest.mark.parametrize(
+        "plane_mode,domain_prefix,expected_registry_host,expected_hostcerts_path",
+        [
+            ("data", "dp01", "registry.dp01.example.com", "/etc/containerd/certs.d/registry.dp01.example.com/"),
+            ("unified", "", "registry.example.com", "/etc/containerd/certs.d/registry.example.com/"),
+        ],
+    )
+    def test_containerd_registry_host_respects_plane(
+        self,
+        kube_version,
+        plane_mode,
+        domain_prefix,
+        expected_registry_host,
+        expected_hostcerts_path,
+    ):
+        """Registry hostname and hostcerts volume path follow plane mode (data vs unified)."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -246,8 +242,8 @@ class TestContainerdPrivateCaDaemonset:
                 "global": {
                     "baseDomain": "example.com",
                     "plane": {
-                        "mode": "data",
-                        "domainPrefix": "dp01",
+                        "mode": plane_mode,
+                        "domainPrefix": domain_prefix,
                     },
                     "privateCaCerts": ["private-ca-cert-foo"],
                     "privateCaCertsAddToHost": {
@@ -259,47 +255,9 @@ class TestContainerdPrivateCaDaemonset:
         )
 
         assert len(docs) == 2
-
-        # Verify the daemonset env var uses the DP registry host
         container = docs[0]["spec"]["template"]["spec"]["containers"][0]
         env = {e["name"]: e["value"] for e in container["env"]}
-        assert env["REGISTRY_HOST"] == "registry.dp01.example.com"
-
-        # Verify the daemonset volume path uses the DP registry host
+        assert env["REGISTRY_HOST"] == expected_registry_host
         volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
         hostcerts_vol = next(v for v in volumes if v["name"] == "hostcerts")
-        assert hostcerts_vol["hostPath"]["path"] == "/etc/containerd/certs.d/registry.dp01.example.com/"
-
-    def test_containerd_unified_mode_uses_base_domain(self, kube_version):
-        """Test that in unified mode the registry host uses baseDomain
-        without domainPrefix."""
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=self.show_only,
-            values={
-                "global": {
-                    "baseDomain": "example.com",
-                    "plane": {
-                        "mode": "unified",
-                        "domainPrefix": "",
-                    },
-                    "privateCaCerts": ["private-ca-cert-foo"],
-                    "privateCaCertsAddToHost": {
-                        "enabled": True,
-                        "addToContainerd": True,
-                    },
-                }
-            },
-        )
-
-        assert len(docs) == 2
-
-        # Verify the daemonset env var uses base registry host (no prefix)
-        container = docs[0]["spec"]["template"]["spec"]["containers"][0]
-        env = {e["name"]: e["value"] for e in container["env"]}
-        assert env["REGISTRY_HOST"] == "registry.example.com"
-
-        # Verify the daemonset volume path
-        volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
-        hostcerts_vol = next(v for v in volumes if v["name"] == "hostcerts")
-        assert hostcerts_vol["hostPath"]["path"] == "/etc/containerd/certs.d/registry.example.com/"
+        assert hostcerts_vol["hostPath"]["path"] == expected_hostcerts_path
