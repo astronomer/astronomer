@@ -996,10 +996,7 @@ RULE_TEST_CASES = [
         "astronomer:\n  houston:\n    config:\n      deployments:\n        canUpsertDeploymentFromUI: true\n        otherKey: true\n",
         lambda d: (
             "canUpsertDeploymentFromUI" not in d["astronomer"]["houston"]["config"]["deployments"]
-            and d["astronomer"]["houston"]["config"]["deployments"]["upsertDeployment"]["allowFromUi"][
-                "enabled"
-            ]
-            is True
+            and d["astronomer"]["houston"]["config"]["deployments"]["upsertDeployment"]["allowFromUi"]["enabled"] is True
         ),
     ),
     (
