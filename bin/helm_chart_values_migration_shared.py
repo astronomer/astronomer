@@ -336,6 +336,44 @@ class SubtreeMove:
         return [MigrationChange(old_str, new_str, f"Moved subtree {old_str}.* -> {new_str}.*")]
 
 
+@dataclass
+class AddKeyIfMissing:
+    """Add a key with a default value only if it does not already exist.
+
+    Example: AddKeyIfMissing(["global", "plane"], {"mode": "unified", "domainPrefix": ""})
+    """
+
+    path: list[str] = field(default_factory=list)
+    value: Any = None
+
+    def apply(self, root: CommentedMap) -> list[MigrationChange]:
+        """Apply the add-key-if-missing rule."""
+        if _path_exists(root, self.path):
+            return []
+
+        parent_keys = self.path[:-1]
+        leaf = self.path[-1]
+
+        parent = _ensure_nested_key(root, parent_keys) if parent_keys else root
+
+        if isinstance(self.value, dict):
+            cm = CommentedMap()
+            for k, v in self.value.items():
+                if isinstance(v, dict):
+                    inner = CommentedMap()
+                    for ik, iv in v.items():
+                        inner[ik] = iv
+                    cm[k] = inner
+                else:
+                    cm[k] = v
+            parent[leaf] = cm
+        else:
+            parent[leaf] = self.value
+
+        path_str = ".".join(self.path)
+        return [MigrationChange("(new)", path_str, f"Added {path_str} with default value")]
+
+
 GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMove] = [
     BoolToNested("rbacEnabled", ["rbac", "enabled"]),
     BoolToNested("sccEnabled", ["scc", "enabled"]),

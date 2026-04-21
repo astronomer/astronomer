@@ -470,6 +470,9 @@ astronomer:
         cpu: "1000m"
         memory: "2048Mi"
 
+    strictSchemaCheck:
+      enabled: true
+
   commander:
     resources:
       requests:
