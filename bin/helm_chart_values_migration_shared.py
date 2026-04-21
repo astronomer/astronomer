@@ -436,6 +436,11 @@ HOUSTON_DEPLOYMENT_BOOL_RULES: list[BoolToNested] = [
     BoolToNested(
         "manualReleaseNames", ["namespaceManagement", "manualReleaseNames", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
     ),
+    BoolToNested(
+        "canUpsertDeploymentFromUI",
+        ["upsertDeployment", "allowFromUi", "enabled"],
+        path_prefix=HOUSTON_DEPLOYMENTS_PREFIX,
+    ),
 ]
 
 HOUSTON_DEPLOYMENT_MOVE_KEYS: list[tuple[str, list[str]]] = [
@@ -448,7 +453,6 @@ HOUSTON_DEPLOYMENT_DELETE_KEYS: list[str] = [
     "resourceProvisioningStrategy",
     "maxPodAu",
     "upsertDeploymentEnabled",
-    "canUpsertDeploymentFromUI",
     "enableSystemAdminCanCreateDeprecatedAirflows",
 ]
 
