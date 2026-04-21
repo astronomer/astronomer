@@ -817,16 +817,16 @@ hostAliases:
 {{- end -}}
 
 {{/*
-Auto-generate a shared internal-service-auth token on install,
+Auto-generate a shared cluster-local-service-auth token on install,
 preserve across upgrades via lookup, or use a user-supplied value.
 Uses randBytes 32 (base64-encoded 32 random bytes) to match the
 entropy of a Fernet key.
 */}}
-{{- define "astronomer.internalServiceToken" -}}
-  {{- if and .Values.global.internalServiceAuth .Values.global.internalServiceAuth.token -}}
-    {{- .Values.global.internalServiceAuth.token -}}
+{{- define "astronomer.clusterLocalServiceToken" -}}
+  {{- if and .Values.global.clusterLocalServiceAuth .Values.global.clusterLocalServiceAuth.token -}}
+    {{- .Values.global.clusterLocalServiceAuth.token -}}
   {{- else -}}
-    {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-internal-service-auth" .Release.Name) -}}
+    {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-cluster-local-service-auth" .Release.Name) -}}
     {{- if and $existing $existing.data.token -}}
       {{- $existing.data.token | b64dec -}}
     {{- else -}}

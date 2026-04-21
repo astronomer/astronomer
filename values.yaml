@@ -17,7 +17,7 @@ global:
 
   # Shared secret for internal service-to-service authentication (e.g. pilot -> commander gRPC).
   # Auto-generated on install if empty; preserved across upgrades.
-  internalServiceAuth:
+  clusterLocalServiceAuth:
     token: ""
 
   # Labels to add to every pod

@@ -16,4 +16,6 @@ metadata:
 data:
   metadata.yaml: |-
     namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
+    customLogging:
+      enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
 {{- end }}
