@@ -45,7 +45,10 @@ class TestAstronomerCommander:
 
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
         if namespace_labels and rbac_enabled:
-            assert metadata_file_contents == {"namespaceLabels": namespace_labels}
+            assert metadata_file_contents == {
+                "namespaceLabels": namespace_labels,
+                "customLogging": {"enabled": False},
+            }
         else:
             assert metadata_file_contents == {"namespaceLabels": {}, "customLogging": {"enabled": False}}
 
