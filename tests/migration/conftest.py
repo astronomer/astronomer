@@ -209,6 +209,11 @@ def expected_new_partial_text() -> str:
                     enabled: false
                 databaseManagement:
                   pgBouncerResourceCalculationStrategy: airflowStratV2
+                upsertDeployment:
+                  allowFromUi:
+                    enabled: true
+            strictSchemaCheck:
+              enabled: true
     """)
 
 
@@ -556,6 +561,11 @@ def expected_037x_new_partial_text() -> str:
                     enabled: false
                 databaseManagement:
                   pgBouncerResourceCalculationStrategy: airflowStratV2
+                upsertDeployment:
+                  allowFromUi:
+                    enabled: true
+            strictSchemaCheck:
+              enabled: true
 
         vector:
           resources:

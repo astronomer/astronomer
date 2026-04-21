@@ -140,6 +140,7 @@ class TestFullValuesMigration:
         assert "maxPodAu" not in deployments
         assert "upsertDeploymentEnabled" not in deployments
         assert "canUpsertDeploymentFromUI" not in deployments
+        assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
         assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
 
     def test_old_keys_removed_after_migration(self, old_full_values_text: str):
@@ -1056,6 +1057,7 @@ class TestHoustonDeploymentMigration:
         assert "canUpsertDeploymentFromUI" not in deployments
         assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
         assert deployments["otherKey"] is True
+        assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
         assert len(changes) == 6
 
     def test_houston_config_absent(self):
