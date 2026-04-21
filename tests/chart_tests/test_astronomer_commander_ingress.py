@@ -120,3 +120,79 @@ class TestAstronomerCommanderIngress:
         annotations = doc["metadata"]["annotations"]
         assert annotations["nginx.ingress.kubernetes.io/rate-limit"] == "200"
         assert annotations["custom.metadata/test"] == "metadata-value"
+
+    def test_commander_grpc_ingress_with_tls_secret(self, kube_version):
+        """Test that commander grpc ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "baseDomain": "example.com",
+                    "tlsSecret": "my-tls-secret",
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert len(tls[0]["hosts"]) == 1
+
+    def test_commander_grpc_ingress_without_tls_secret(self, kube_version):
+        """Test that commander grpc ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "baseDomain": "example.com",
+                    "tlsSecret": "",
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]
+
+    def test_commander_metadata_ingress_with_tls_secret(self, kube_version):
+        """Test that commander metadata ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "baseDomain": "example.com",
+                    "tlsSecret": "my-tls-secret",
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert len(tls[0]["hosts"]) == 1
+
+    def test_commander_metadata_ingress_without_tls_secret(self, kube_version):
+        """Test that commander metadata ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "baseDomain": "example.com",
+                    "tlsSecret": "",
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]

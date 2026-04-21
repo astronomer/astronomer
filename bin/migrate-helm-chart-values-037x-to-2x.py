@@ -34,8 +34,9 @@ if str(_BIN) not in sys.path:
 import helm_chart_values_migration_shared as _shared  # noqa: E402
 from helm_chart_values_migration_shared import (  # noqa: E402
     HOUSTON_DEPLOYMENTS_PREFIX,
+    AddKeyIfMissing,
     MigrationChange,
-    apply_global_feature_flag_rules,
+    apply_global_feature_flag_rules_to_all,
     apply_houston_config_flag_migrations,
     apply_houston_deployment_migrations,
     apply_nginx_csp_policy_migrations,
@@ -148,7 +149,9 @@ class RenameKey(MigrationRule):
 
     The path identifies the parent + old key name; new_name is the replacement.
 
-    Example: RenameKey(["fluentd"], "vector") renames the top-level fluentd key.
+    Example: RenameKey(["fluentd"], "vector") renames the top-level Fluentd config subtree.
+    The logging feature flag migration is separate:
+    global.fluentdEnabled -> global.daemonsetLogging.enabled
     Example: RenameKey(["global", "pgbouncer", "krb5ConfSecretName"], "secretName")
     """
 
@@ -228,44 +231,6 @@ class SetValue(MigrationRule):
 
 
 @dataclass
-class AddKeyIfMissing(MigrationRule):
-    """Add a key with a default value only if it does not already exist.
-
-    Example: AddKeyIfMissing(["global", "plane"], {"mode": "unified", "domainPrefix": ""})
-    """
-
-    path: list[str] = field(default_factory=list)
-    value: Any = None
-
-    def apply(self, root: CommentedMap) -> list[MigrationChange]:
-        """Apply the add-key-if-missing rule."""
-        if _shared._path_exists(root, self.path):
-            return []
-
-        parent_keys = self.path[:-1]
-        leaf = self.path[-1]
-
-        parent = _shared._ensure_nested_key(root, parent_keys) if parent_keys else root
-
-        if isinstance(self.value, dict):
-            cm = CommentedMap()
-            for k, v in self.value.items():
-                if isinstance(v, dict):
-                    inner = CommentedMap()
-                    for ik, iv in v.items():
-                        inner[ik] = iv
-                    cm[k] = inner
-                else:
-                    cm[k] = v
-            parent[leaf] = cm
-        else:
-            parent[leaf] = self.value
-
-        path_str = ".".join(self.path)
-        return [MigrationChange("(new)", path_str, f"Added {path_str} with default value")]
-
-
-@dataclass
 class HoustonDeploymentBoolToNested(MigrationRule):
     """Migrate a flat boolean under ``astronomer.houston.config.deployments`` to nested ``.enabled``."""
 
@@ -323,7 +288,7 @@ MIGRATIONS: list[MigrationRule] = [
     AddKeyIfMissing(["global", "authHeaderSecretName"], value=None),
     AddKeyIfMissing(["global", "plane"], value={"mode": "unified", "domainPrefix": ""}),
     AddKeyIfMissing(["global", "podLabels"], value={}),
-    AddKeyIfMissing(["global", "logging", "provider"], value=None),
+    AddKeyIfMissing(["astronomer", "houston", "strictSchemaCheck"], value={"enabled": True}),
     AddKeyIfMissing(
         ["nats", "init"],
         value={
@@ -334,6 +299,50 @@ MIGRATIONS: list[MigrationRule] = [
         },
     ),
 ]
+
+
+def _clone_rule_for_nested_global(rule: MigrationRule, global_path: list[str]) -> MigrationRule | None:
+    """Clone a root-global migration rule for a nested ``*.global`` mapping.
+
+    Parameters:
+        rule: The migration rule to clone.
+        global_path: The full path segments to the nested ``global`` mapping.
+
+    Returns:
+        A cloned rule scoped to the nested ``global`` path, or None if the rule
+        does not target ``global.*``.
+    """
+    match rule:
+        case DeleteKey(path=path) if path and path[0] == "global":
+            return DeleteKey([*global_path, *path[1:]])
+        case RenameKey(path=path, new_name=new_name) if path and path[0] == "global":
+            return RenameKey([*global_path, *path[1:]], new_name)
+        case SetValue(path=path, old_value=old_value, new_value=new_value) if path and path[0] == "global":
+            return SetValue([*global_path, *path[1:]], old_value=old_value, new_value=new_value)
+        case AddKeyIfMissing(path=path, value=value) if path and path[0] == "global":
+            return AddKeyIfMissing([*global_path, *path[1:]], value=value)
+        case _:
+            return None
+
+
+def apply_nested_global_migrations(root: CommentedMap) -> list[MigrationChange]:
+    """Apply 0.37.x root-global rules to nested ``*.global`` mappings.
+
+    Parameters:
+        root: The parsed YAML document root.
+
+    Returns:
+        All migration changes applied to nested ``*.global`` mappings.
+    """
+    changes: list[MigrationChange] = []
+    for global_path, _global_mapping in _shared.iter_global_mappings(root):
+        if global_path == ["global"]:
+            continue
+        for rule in MIGRATIONS:
+            nested_rule = _clone_rule_for_nested_global(rule, global_path)
+            if nested_rule is not None:
+                changes.extend(nested_rule.apply(root))
+    return changes
 
 
 def migrate_values(data: Any) -> list[MigrationChange]:
@@ -350,13 +359,12 @@ def migrate_values(data: Any) -> list[MigrationChange]:
 
     all_changes: list[MigrationChange] = []
 
-    global_section = data.get("global")
-    global_cm = global_section if isinstance(global_section, CommentedMap) else None
-    all_changes.extend(apply_global_feature_flag_rules(global_cm))
+    all_changes.extend(apply_global_feature_flag_rules_to_all(data))
 
     for rule in MIGRATIONS:
         all_changes.extend(rule.apply(data))
 
+    all_changes.extend(apply_nested_global_migrations(data))
     all_changes.extend(apply_houston_config_flag_migrations(data))
     all_changes.extend(apply_houston_deployment_migrations(data))
     all_changes.extend(apply_nginx_csp_policy_migrations(data))

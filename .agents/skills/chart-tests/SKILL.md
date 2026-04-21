@@ -220,6 +220,8 @@ from tests.utils import get_all_features
 
 ## Running Tests
 
+### Correct examples
+
 ```bash
 # Full suite in parallel (fastest — use for full runs)
 uv run pytest tests/chart_tests/ -n auto --quiet
@@ -244,6 +246,16 @@ uv run pytest tests/chart_tests/ --maxfail=1 --lf
 ```
 
 > **Tip**: `-n auto` uses all CPU cores. Omit it when running a single file to avoid subprocess overhead.
+
+### Incorrect examples
+
+```bash
+# ❌ WRONG — we do not need to activate the venv manually, and we do not run pytest without `uv run`
+.venv/bin/activate && pytest tests/chart_tests/
+
+# ❌ WRONG — do not create virtual environment with python, do not use pip install. Use `uv run` to run all python files in the repo.
+python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt && .venv/bin/python3 -m pytest tests/chart_tests/
+```
 
 ---
 

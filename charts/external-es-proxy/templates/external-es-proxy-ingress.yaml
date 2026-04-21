@@ -33,9 +33,9 @@ spec:
   {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - {{ template "es-proxy.url" . }}
+  {{- end }}
   rules:
     - host: {{ template "es-proxy.url" . }}
       http:

@@ -277,6 +277,17 @@ data:
             gitSync:
               repository: {{ .Values.global.gitSyncRelay.images.gitSync.repository }}
               tag: {{ .Values.global.gitSyncRelay.images.gitSync.tag }}
+          {{ if .Values.global.openshift.enabled }}
+          securityContext: {}
+          gitDaemon:
+            securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+          gitSync:
+            securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+          {{ end }}
 
 
         airflow:
@@ -660,6 +671,8 @@ data:
       host: {{ printf "%s-prometheus" .Release.Name }}
     updateRuntimeCheck:
       enabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
+    strictSchemaCheck:
+      enabled: {{ .Values.houston.strictSchemaCheck.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |
