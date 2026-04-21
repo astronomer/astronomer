@@ -30,7 +30,7 @@ HoustonDeploymentDeleteKey = migrate_mod.HoustonDeploymentDeleteKey
 MIGRATIONS = migrate_mod.MIGRATIONS
 main = migrate_mod.main
 
-TOTAL_RULES_ON_FULL_037X = 53
+TOTAL_RULES_ON_FULL_037X = 54
 
 
 def _load_rt(text: str):
@@ -197,10 +197,11 @@ class TestPartialOverrideMigration:
             "resourceProvisioningStrategy",
             "maxPodAu",
             "upsertDeploymentEnabled",
-            "canUpsertDeploymentFromUI",
             "enableSystemAdminCanCreateDeprecatedAirflows",
         ]:
             assert old_key not in deployments, f"Old key '{old_key}' should have been removed"
+        assert "canUpsertDeploymentFromUI" not in deployments
+        assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -259,6 +260,7 @@ class TestFullValuesMigration:
         assert "maxPodAu" not in deployments
         assert "upsertDeploymentEnabled" not in deployments
         assert "canUpsertDeploymentFromUI" not in deployments
+        assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
         assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
 
     def test_old_keys_removed_after_migration(self, old_037x_full_values_text: str):
@@ -961,6 +963,11 @@ RULE_TEST_CASES = [
     ("add_plane", "global:\n  baseDomain: x.com\n", lambda d: d["global"]["plane"]["mode"] == "unified"),
     ("add_podLabels", "global:\n  baseDomain: x.com\n", lambda d: "podLabels" in d["global"]),
     ("add_nats_init", "nats:\n  nats:\n    resources: {}\n", lambda d: d["nats"]["init"]["resources"]["requests"]["cpu"] == "75m"),
+    (
+        "add_houston_strictSchemaCheck",
+        "global:\n  baseDomain: x.com\n",
+        lambda d: d["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True,
+    ),
     # HoustonDeploymentBoolToNested
     (
         "houston_dagProcessorEnabled",
@@ -990,9 +997,12 @@ RULE_TEST_CASES = [
         lambda d: "upsertDeploymentEnabled" not in d["astronomer"]["houston"]["config"]["deployments"],
     ),
     (
-        "houston_delete_canUpsertDeploymentFromUI",
+        "houston_migrate_canUpsertDeploymentFromUI",
         "astronomer:\n  houston:\n    config:\n      deployments:\n        canUpsertDeploymentFromUI: true\n        otherKey: true\n",
-        lambda d: "canUpsertDeploymentFromUI" not in d["astronomer"]["houston"]["config"]["deployments"],
+        lambda d: (
+            "canUpsertDeploymentFromUI" not in d["astronomer"]["houston"]["config"]["deployments"]
+            and d["astronomer"]["houston"]["config"]["deployments"]["upsertDeployment"]["allowFromUi"]["enabled"] is True
+        ),
     ),
     (
         "houston_delete_enableSystemAdminCanCreateDeprecatedAirflows",

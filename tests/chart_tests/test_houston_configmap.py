@@ -61,6 +61,7 @@ def test_houston_configmap_defaults():
     assert prod["deployments"]["logging"]["elasticsearch"]["enabled"] is True
     assert prod["deployments"]["logging"]["elasticsearch"]["connection"]["port"] == 9200
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
+    assert prod["strictSchemaCheck"]["enabled"] is True
 
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
     git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
@@ -620,6 +621,44 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["updateRuntimeCheck"]["enabled"] is False
+
+
+def test_houston_configmap_strict_schema_check_enabled():
+    """Validate the houston configmap renders strictSchemaCheck.enabled: true."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "strictSchemaCheck": {"enabled": True},
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["strictSchemaCheck"]["enabled"] is True
+
+
+def test_houston_configmap_strict_schema_check_disabled():
+    """Validate the houston configmap renders strictSchemaCheck.enabled: false when disabled in values."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "strictSchemaCheck": {"enabled": False},
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["strictSchemaCheck"]["enabled"] is False
 
 
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
