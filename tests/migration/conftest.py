@@ -292,6 +292,8 @@ def new_schema_partial_text() -> str:
                     enabled: true
                 logHelmValues:
                   enabled: true
+            strictSchemaCheck:
+              enabled: true
     """)
 
 
@@ -663,6 +665,8 @@ def new_037x_schema_partial_text() -> str:
                     enabled: true
                   triggerer:
                     enabled: true
+            strictSchemaCheck:
+              enabled: true
 
         tags:
           platform: true

@@ -70,7 +70,7 @@ class TestPartialOverrideMigration:
         expected = _to_plain(_load_rt(expected_new_partial_text))
 
         assert result == expected
-        assert len(changes) == 36
+        assert len(changes) == 37
 
     def test_non_global_sections_preserved(self, old_partial_override_text: str):
         """Sections outside global (astronomer, nginx, etc.) are not modified."""
@@ -118,7 +118,7 @@ class TestFullValuesMigration:
         assert g["perHostIngress"]["enabled"] is False
         assert g["argoCD"]["annotation"]["enabled"] is False
         assert g["manageClusterScopedResources"]["enabled"] is True
-        assert len(changes) == 36
+        assert len(changes) == 37
 
     def test_houston_config_migrated(self, old_full_values_text: str):
         """Houston config deployment flags are restructured and obsolete keys deleted."""
@@ -577,14 +577,15 @@ class TestEdgeCases:
         assert len(changes) == 0
 
     def test_no_global_section(self):
-        """YAML without a global key passes through unchanged."""
+        """YAML without a global key still gets new houston defaults injected."""
         text = "astronomer:\n  houston:\n    replicas: 3\n"
         data = _load_rt(text)
         changes = migrate_values(data)
 
         result = _to_plain(data)
         assert result["astronomer"]["houston"]["replicas"] == 3
-        assert len(changes) == 0
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert len(changes) == 1
 
     def test_mixed_old_and_new_keys(self):
         """File with some old keys and some new keys migrates only the old ones."""
@@ -607,22 +608,22 @@ class TestEdgeCases:
         assert result["global"]["networkNSLabels"]["enabled"] is True
         assert "rbacEnabled" not in result["global"]
         assert "openshiftEnabled" not in result["global"]
-        assert len(changes) == 2
+        assert len(changes) == 3
 
     def test_global_section_empty(self):
-        """global section that is empty does not crash."""
+        """global section that is empty does not crash; new houston defaults are still injected."""
         data = _load_rt("global: {}\n")
         changes = migrate_values(data)
-        assert len(changes) == 0
+        assert len(changes) == 1
 
     def test_global_section_null(self):
-        """global section set to null does not crash."""
+        """global section set to null does not crash; new houston defaults are still injected."""
         data = _load_rt("global:\n")
         changes = migrate_values(data)
-        assert len(changes) == 0
+        assert len(changes) == 1
 
     def test_only_unrelated_global_keys(self):
-        """global section with only unrelated keys is not modified."""
+        """global section with only unrelated keys is not modified; new houston defaults are injected."""
         text = dedent("""\
             global:
               baseDomain: example.com
@@ -630,12 +631,12 @@ class TestEdgeCases:
               privateCaCerts: []
         """)
         data = _load_rt(text)
-        original = _dump_rt(data)
         changes = migrate_values(data)
-        after = _dump_rt(data)
+        result = _to_plain(data)
 
-        assert original == after
-        assert len(changes) == 0
+        assert result["global"]["baseDomain"] == "example.com"
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert len(changes) == 1
 
     def test_features_with_extra_keys_not_deleted(self):
         """If features has keys besides namespacePools, features is kept."""
@@ -681,6 +682,51 @@ class TestEdgeCases:
         assert "deployRollbackEnabled" not in nested_global
         assert "loggingSidecar" not in nested_global
         assert any(c.old_path == "astronomer.global.networkNSLabels" for c in changes)
+
+
+# ---------------------------------------------------------------------------
+# AddKeyIfMissing (houston) tests
+# ---------------------------------------------------------------------------
+
+
+class TestAddKeyIfMissingHouston:
+    """Tests for AddKeyIfMissing rules applied to houston keys."""
+
+    def test_adds_strict_schema_check_when_missing(self):
+        """Injects astronomer.houston.strictSchemaCheck: {enabled: true} when absent."""
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
+        assert len([c for c in changes if c.new_path == "astronomer.houston.strictSchemaCheck"]) == 1
+
+    def test_does_not_overwrite_existing_strict_schema_check(self):
+        """Does not overwrite astronomer.houston.strictSchemaCheck if already present."""
+        data = _load_rt("astronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: true\n")
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert not any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
+
+    def test_does_not_overwrite_existing_strict_schema_check_when_disabled(self):
+        """Preserves astronomer.houston.strictSchemaCheck when the customer set enabled: false."""
+        data = _load_rt("astronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: false\n")
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is False
+        assert not any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
+
+    def test_creates_astronomer_houston_subtree_when_absent(self):
+        """Creates astronomer.houston path if neither key exists in the document."""
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
 
 
 # ---------------------------------------------------------------------------

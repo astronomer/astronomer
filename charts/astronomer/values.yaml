@@ -444,6 +444,10 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+  # When true, Houston rejects deployment config overrides that fail JSON-schema validation.
+  strictSchemaCheck:
+    enabled: true
+
   # Populate daily task usage data
   # This runs as a CronJob
 

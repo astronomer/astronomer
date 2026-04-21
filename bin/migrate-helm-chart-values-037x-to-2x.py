@@ -34,6 +34,7 @@ if str(_BIN) not in sys.path:
 import helm_chart_values_migration_shared as _shared  # noqa: E402
 from helm_chart_values_migration_shared import (  # noqa: E402
     HOUSTON_DEPLOYMENTS_PREFIX,
+    AddKeyIfMissing,
     MigrationChange,
     apply_global_feature_flag_rules_to_all,
     apply_houston_config_flag_migrations,
@@ -230,44 +231,6 @@ class SetValue(MigrationRule):
 
 
 @dataclass
-class AddKeyIfMissing(MigrationRule):
-    """Add a key with a default value only if it does not already exist.
-
-    Example: AddKeyIfMissing(["global", "plane"], {"mode": "unified", "domainPrefix": ""})
-    """
-
-    path: list[str] = field(default_factory=list)
-    value: Any = None
-
-    def apply(self, root: CommentedMap) -> list[MigrationChange]:
-        """Apply the add-key-if-missing rule."""
-        if _shared._path_exists(root, self.path):
-            return []
-
-        parent_keys = self.path[:-1]
-        leaf = self.path[-1]
-
-        parent = _shared._ensure_nested_key(root, parent_keys) if parent_keys else root
-
-        if isinstance(self.value, dict):
-            cm = CommentedMap()
-            for k, v in self.value.items():
-                if isinstance(v, dict):
-                    inner = CommentedMap()
-                    for ik, iv in v.items():
-                        inner[ik] = iv
-                    cm[k] = inner
-                else:
-                    cm[k] = v
-            parent[leaf] = cm
-        else:
-            parent[leaf] = self.value
-
-        path_str = ".".join(self.path)
-        return [MigrationChange("(new)", path_str, f"Added {path_str} with default value")]
-
-
-@dataclass
 class HoustonDeploymentBoolToNested(MigrationRule):
     """Migrate a flat boolean under ``astronomer.houston.config.deployments`` to nested ``.enabled``."""
 
@@ -325,6 +288,7 @@ MIGRATIONS: list[MigrationRule] = [
     AddKeyIfMissing(["global", "authHeaderSecretName"], value=None),
     AddKeyIfMissing(["global", "plane"], value={"mode": "unified", "domainPrefix": ""}),
     AddKeyIfMissing(["global", "podLabels"], value={}),
+    AddKeyIfMissing(["astronomer", "houston", "strictSchemaCheck"], value={"enabled": True}),
     AddKeyIfMissing(
         ["nats", "init"],
         value={

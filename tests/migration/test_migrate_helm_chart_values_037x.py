@@ -30,7 +30,7 @@ HoustonDeploymentDeleteKey = migrate_mod.HoustonDeploymentDeleteKey
 MIGRATIONS = migrate_mod.MIGRATIONS
 main = migrate_mod.main
 
-TOTAL_RULES_ON_FULL_037X = 53
+TOTAL_RULES_ON_FULL_037X = 54
 
 
 def _load_rt(text: str):
@@ -963,6 +963,11 @@ RULE_TEST_CASES = [
     ("add_plane", "global:\n  baseDomain: x.com\n", lambda d: d["global"]["plane"]["mode"] == "unified"),
     ("add_podLabels", "global:\n  baseDomain: x.com\n", lambda d: "podLabels" in d["global"]),
     ("add_nats_init", "nats:\n  nats:\n    resources: {}\n", lambda d: d["nats"]["init"]["resources"]["requests"]["cpu"] == "75m"),
+    (
+        "add_houston_strictSchemaCheck",
+        "global:\n  baseDomain: x.com\n",
+        lambda d: d["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True,
+    ),
     # HoustonDeploymentBoolToNested
     (
         "houston_dagProcessorEnabled",
