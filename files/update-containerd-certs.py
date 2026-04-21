@@ -98,6 +98,25 @@ def validate_registry_host(host: str) -> None:
         )
 
 
+def ensure_nsenter_available() -> None:
+    """Verify nsenter is on PATH before attempting host-namespace operations.
+
+    The DaemonSet relies on nsenter to enter the host's namespaces for
+    `containerd --version` and `systemctl restart containerd`. If nsenter is
+    missing, every downstream operation will fail with confusing errors — so we
+    preflight here and die with an actionable message instead.
+
+    Raises:
+        RuntimeError: If nsenter is not available on PATH.
+    """
+    if shutil.which("nsenter") is None:
+        log.error(
+            "nsenter is not available on PATH. This script must run in a container "
+            "image that provides util-linux (nsenter)"
+        )
+        raise RuntimeError("nsenter not available; cannot manage containerd on host")
+
+
 def detect_containerd_version() -> int:
     """Detect the major version of containerd running on the host.
 
@@ -237,6 +256,11 @@ def main() -> None:
         validate_registry_host(REGISTRY_HOST)
     except ValueError as exc:
         log.error("%s", exc)
+        sys.exit(1)
+
+    try:
+        ensure_nsenter_available()
+    except RuntimeError:
         sys.exit(1)
 
     if not CONFIG_TOML.is_file():

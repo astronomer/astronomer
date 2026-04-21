@@ -72,6 +72,20 @@ class TestValidateRegistryHost:
 class TestDetectContainerdVersion:
     """Tests for containerd version detection."""
 
+    @pytest.fixture(autouse=True)
+    def _nsenter_on_path(self, request):
+        """Make `shutil.which("nsenter")` return a fake path for every test in
+        this class by default. Individual tests that explicitly verify the
+        preflight behaviour opt out by not relying on this fixture's state."""
+        if request.node.name in {
+            "test_raises_with_actionable_message_when_nsenter_missing",
+            "test_proceeds_when_nsenter_on_path",
+        }:
+            yield
+            return
+        with patch.object(script.shutil, "which", return_value="/usr/bin/nsenter"):
+            yield
+
     @patch("subprocess.run")
     def test_detects_containerd_1x(self, mock_run):
         mock_run.return_value = _completed_process(
@@ -86,11 +100,21 @@ class TestDetectContainerdVersion:
         )
         assert script.detect_containerd_version() == 2
 
-    @patch("subprocess.run")
-    def test_raises_when_nsenter_unavailable(self, mock_run):
-        mock_run.side_effect = FileNotFoundError("nsenter not available")
-        with pytest.raises(RuntimeError, match="cannot detect containerd version"):
-            script.detect_containerd_version()
+    def test_raises_with_actionable_message_when_nsenter_missing(self, caplog):
+        """When nsenter is not on PATH, the preflight must fail fast with a
+        message that tells operators what's wrong and where to look."""
+        with patch.object(script.shutil, "which", return_value=None):
+            with pytest.raises(RuntimeError, match="nsenter not available"):
+                script.ensure_nsenter_available()
+
+        combined = " ".join(record.getMessage() for record in caplog.records)
+        assert "nsenter is not available on PATH" in combined
+        assert "util-linux" in combined
+
+    def test_proceeds_when_nsenter_on_path(self):
+        """Preflight should not short-circuit when nsenter exists."""
+        with patch.object(script.shutil, "which", return_value="/usr/bin/nsenter"):
+            script.ensure_nsenter_available()
 
     @patch("subprocess.run")
     def test_raises_on_nonzero_exit(self, mock_run):
