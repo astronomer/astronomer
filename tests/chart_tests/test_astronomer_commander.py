@@ -47,7 +47,7 @@ class TestAstronomerCommander:
         if namespace_labels and rbac_enabled:
             assert metadata_file_contents == {"namespaceLabels": namespace_labels}
         else:
-            assert metadata_file_contents == {"namespaceLabels": {}, "customLogging": {"enabled": "false"}}
+            assert metadata_file_contents == {"namespaceLabels": {}, "customLogging": {"enabled": False}}
 
     @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
     def test_commander_metadata_custom_logging(self, kube_version, enabled):
@@ -69,7 +69,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "v1"
 
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
-        assert metadata_file_contents == {"namespaceLabels": {}, "customLogging": {"enabled": str(enabled).lower()}}
+        assert metadata_file_contents == {"namespaceLabels": {}, "customLogging": {"enabled": enabled}}
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
