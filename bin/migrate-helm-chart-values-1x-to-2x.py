@@ -31,7 +31,7 @@ if str(_BIN) not in sys.path:
 
 from helm_chart_values_migration_shared import (  # noqa: E402
     GLOBAL_FEATURE_FLAG_RULES,
-    HOUSTON_DEPLOYMENT_BOOL_RULES,
+    HOUSTON_DEPLOYMENT_PATH_MIGRATIONS,
     AddKeyIfMissing,
     BoolToNested,  # noqa: F401
     InvertedBoolToNested,  # noqa: F401
@@ -46,7 +46,7 @@ from helm_chart_values_migration_shared import (  # noqa: E402
 )
 
 MIGRATIONS = GLOBAL_FEATURE_FLAG_RULES
-HOUSTON_DEPLOYMENT_MIGRATIONS = HOUSTON_DEPLOYMENT_BOOL_RULES
+HOUSTON_DEPLOYMENT_MIGRATIONS = HOUSTON_DEPLOYMENT_PATH_MIGRATIONS
 
 
 def migrate_values(data: Any) -> list[MigrationChange]:
