@@ -140,20 +140,66 @@ class TestDetectContainerdVersion:
 class TestConfigPathDetection:
     """Tests for config_path detection in config.toml."""
 
-    def test_detects_config_path_present(self, script):
-        config = textwrap.dedent("""\
-            [plugins."io.containerd.grpc.v1.cri".registry]
-              config_path = "/etc/containerd/certs.d"
-        """)
-        assert script.config_path_is_set(config) is True
+    def _write(self, tmp_path, content: str) -> Path:
+        p = tmp_path / "config.toml"
+        p.write_text(content)
+        return p
 
-    def test_detects_config_path_absent(self, script):
-        config = (DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml").read_text()
-        assert script.config_path_is_set(config) is False
+    def test_detects_config_path_present_v1(self, script, tmp_path):
+        config = self._write(
+            tmp_path,
+            textwrap.dedent("""\
+                [plugins."io.containerd.grpc.v1.cri".registry]
+                  config_path = "/etc/containerd/certs.d"
+            """),
+        )
+        assert script.config_path_is_set(config, 1) is True
+
+    def test_detects_config_path_present_v2(self, script, tmp_path):
+        config = self._write(
+            tmp_path,
+            textwrap.dedent("""\
+                [plugins."io.containerd.cri.v1.images".registry]
+                  config_path = "/etc/containerd/certs.d"
+            """),
+        )
+        assert script.config_path_is_set(config, 2) is True
+
+    def test_v1_set_does_not_false_match_v2(self, script, tmp_path):
+        """config_path under the 1.x namespace must not satisfy the 2.x check."""
+        config = self._write(
+            tmp_path,
+            textwrap.dedent("""\
+                [plugins."io.containerd.grpc.v1.cri".registry]
+                  config_path = "/etc/containerd/certs.d"
+            """),
+        )
+        assert script.config_path_is_set(config, 2) is False
+
+    def test_ignores_config_path_in_comment(self, script, tmp_path):
+        """A `config_path` substring inside a comment must not false-match."""
+        config = self._write(
+            tmp_path,
+            textwrap.dedent("""\
+                # config_path is intentionally not set here
+                [plugins."io.containerd.cri.v1.images".registry]
+                  other_key = "value"
+            """),
+        )
+        assert script.config_path_is_set(config, 2) is False
+
+    def test_detects_config_path_absent_gke_132(self, script):
+        config = DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml"
+        assert script.config_path_is_set(config, 1) is False
 
     def test_detects_config_path_absent_gke_133(self, script):
-        config = (DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml").read_text()
-        assert script.config_path_is_set(config) is False
+        config = DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml"
+        assert script.config_path_is_set(config, 2) is False
+
+    def test_raises_on_malformed_toml(self, script, tmp_path):
+        config = self._write(tmp_path, "this is not [ valid toml")
+        with pytest.raises(RuntimeError, match="cannot parse"):
+            script.config_path_is_set(config, 2)
 
 
 class TestGenerateHostsToml:
@@ -207,8 +253,7 @@ class TestBackupConfigToml:
 class TestInjectConfigPath:
     """Tests for config_path injection into config.toml."""
 
-    def test_injects_v2_plugin_namespace(self, script, containerd_env):
-        fixture = DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml"
+    def _prepare(self, script, containerd_env, fixture: Path) -> tuple[Path, Path]:
         config_toml = containerd_env["containerd_dir"] / "config.toml"
         config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
         shutil.copy2(fixture, config_toml)
@@ -217,31 +262,65 @@ class TestInjectConfigPath:
         script.CONFIG_TOML = config_toml
         script.CONFIG_TOML_BAK = config_toml_bak
         script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
+        return config_toml, config_toml_bak
+
+    def test_injects_v2_plugin_namespace(self, script, containerd_env):
+        config_toml, _ = self._prepare(
+            script, containerd_env, DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml"
+        )
 
         with patch.object(script, "restart_containerd"):
             script.inject_config_path(containerd_version=2)
 
-        result = config_toml.read_text()
-        assert 'plugins."io.containerd.cri.v1.images".registry' in result
-        assert 'config_path = "/etc/containerd/certs.d"' in result
+        # The result must still parse as TOML, and the parsed tree must contain
+        # config_path under the 2.x plugin namespace — regardless of which TOML
+        # form the script chose to emit.
+        import tomllib as _tomllib
+        parsed = _tomllib.loads(config_toml.read_text())
+        assert (
+            parsed["plugins"]["io.containerd.cri.v1.images"]["registry"]["config_path"]
+            == "/etc/containerd/certs.d"
+        )
 
-    def test_injects_v1_plugin_namespace(self, script, containerd_env):
-        fixture = DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml"
+    def test_injects_v1_plugin_namespace_preserving_existing_subsections(self, script, containerd_env):
+        """On GKE 1.32, `[plugins."io.containerd.grpc.v1.cri".registry.mirrors...]`
+        already exists, which implicitly creates the parent registry table. The
+        injector must add config_path without redefining the table."""
+        config_toml, _ = self._prepare(
+            script, containerd_env, DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml"
+        )
+
+        with patch.object(script, "restart_containerd"):
+            script.inject_config_path(containerd_version=1)
+
+        import tomllib as _tomllib
+        parsed = _tomllib.loads(config_toml.read_text())
+        registry = parsed["plugins"]["io.containerd.grpc.v1.cri"]["registry"]
+        assert registry["config_path"] == "/etc/containerd/certs.d"
+        # Pre-existing sibling subsections survive
+        assert "mirrors" in registry
+
+    def test_no_op_when_config_path_already_set(self, script, containerd_env):
+        """If config_path is already set under the correct namespace, injection
+        is a no-op (no restart, no file rewrite)."""
         config_toml = containerd_env["containerd_dir"] / "config.toml"
         config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
-        shutil.copy2(fixture, config_toml)
-        shutil.copy2(fixture, config_toml_bak)
+        preexisting = textwrap.dedent("""\
+            [plugins."io.containerd.cri.v1.images".registry]
+              config_path = "/already/set"
+        """)
+        config_toml.write_text(preexisting)
+        config_toml_bak.write_text(preexisting)
 
         script.CONFIG_TOML = config_toml
         script.CONFIG_TOML_BAK = config_toml_bak
         script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
 
-        with patch.object(script, "restart_containerd"):
-            script.inject_config_path(containerd_version=1)
+        with patch.object(script, "restart_containerd") as mock_restart:
+            script.inject_config_path(containerd_version=2)
+            mock_restart.assert_not_called()
 
-        result = config_toml.read_text()
-        assert 'plugins."io.containerd.grpc.v1.cri".registry' in result
-        assert 'config_path = "/etc/containerd/certs.d"' in result
+        assert config_toml.read_text() == preexisting
 
 
 class TestCopyCaCerts:

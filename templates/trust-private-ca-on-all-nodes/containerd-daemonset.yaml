@@ -57,11 +57,7 @@ spec:
           - "-c"
         args:
           - |
-            # Copy the Python script to the host filesystem so nsenter can access it,
-            # then execute it using the host's Python interpreter.
-            cp /scripts/update-containerd-certs.py /hostcontainerd/update-containerd-certs.py
-            nsenter --target 1 --mount --uts --ipc --net --pid \
-              python3 {{ .Values.global.privateCaCertsAddToHost.containerdHostPath }}/update-containerd-certs.py
+            python3 /scripts/update-containerd-certs.py
         imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.pullPolicy }}
         env:
         - name: REGISTRY_HOST

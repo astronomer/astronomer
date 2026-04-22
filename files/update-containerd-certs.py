@@ -26,7 +26,8 @@ Environment variables (injected by the Helm daemonset):
   CERT_CONFIG_PATH      - Host path to containerd certs.d dir (default: /etc/containerd/certs.d)
   PRIVATE_CA_CERTS_DIR  - Path to mounted CA cert secrets (default: /private-ca-certs)
 
-Requires: Python >= 3.8 (available on GKE nodes).
+Requires: Python >= 3.11 (for stdlib tomllib). The DaemonSet runs this script
+with the cert-copier image's Python
 """
 
 import hashlib
@@ -37,6 +38,7 @@ import shutil
 import subprocess
 import sys
 import time
+import tomllib
 from pathlib import Path
 
 logging.basicConfig(
@@ -57,10 +59,21 @@ CONFIG_TOML = CONTAINERD_HOST_PATH / "config.toml"
 CONFIG_TOML_BAK = CONTAINERD_HOST_PATH / "config.toml.bak"
 CERTS_DIR = CONTAINERD_HOST_PATH / "certs.d" / REGISTRY_HOST
 
-# Plugin namespaces per containerd major version
+# Plugin namespaces per containerd major version.
+#   header:   the TOML section header we write (quoted form, as it appears in config.toml)
+#   keypath:  the sequence of keys we traverse in a parsed TOML dict to reach the
+#             registry subtree (tomllib returns dotted-quoted plugin names as
+#             nested dicts keyed by each segment, with interior-quoted names
+#             collapsed into a single key — see containerd docs for the layout).
 PLUGIN_NS = {
-    1: 'plugins."io.containerd.grpc.v1.cri".registry',
-    2: 'plugins."io.containerd.cri.v1.images".registry',
+    1: {
+        "header": 'plugins."io.containerd.grpc.v1.cri".registry',
+        "keypath": ("plugins", "io.containerd.grpc.v1.cri", "registry"),
+    },
+    2: {
+        "header": 'plugins."io.containerd.cri.v1.images".registry',
+        "keypath": ("plugins", "io.containerd.cri.v1.images", "registry"),
+    },
 }
 
 POLL_INTERVAL_SECONDS = 1
@@ -199,24 +212,93 @@ def backup_config_toml() -> None:
         log.info("Created stable backup: %s", CONFIG_TOML_BAK)
 
 
-def config_path_is_set(config_text: str) -> bool:
-    """Check if config_path is set anywhere in the config.toml content."""
-    return "config_path" in config_text
+def _parse_config_toml(path: Path) -> dict:
+    """Parse a containerd config.toml into a dict using the stdlib TOML reader.
+
+    Raises:
+        RuntimeError: If the file cannot be parsed as TOML. We fail loudly rather
+            than silently falling back to string handling, because an unparseable
+            config.toml means we cannot make structural decisions about it.
+    """
+    try:
+        with path.open("rb") as fh:
+            return tomllib.load(fh)
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        log.error("Failed to parse %s: %s", path, exc)
+        raise RuntimeError(f"cannot parse {path}") from exc
+
+
+def _registry_subtree(config: dict, containerd_version: int) -> dict | None:
+    """Walk the parsed config dict down to the plugin's registry table.
+
+    Returns the subtree dict, or None if the plugin namespace isn't present.
+    """
+    node = config
+    for key in PLUGIN_NS[containerd_version]["keypath"]:
+        if not isinstance(node, dict) or key not in node:
+            return None
+        node = node[key]
+    return node if isinstance(node, dict) else None
+
+
+def config_path_is_set(config_path_file: Path, containerd_version: int) -> bool:
+    """Check whether `config_path` is set under the version-appropriate plugin namespace.
+
+    Parses config.toml so:
+      * A `config_path` under a different plugin namespace doesn't false-match.
+      * A `config_path` in a comment doesn't false-match.
+      * Malformed TOML fails loudly instead of producing a silent wrong answer.
+    """
+    config = _parse_config_toml(config_path_file)
+    subtree = _registry_subtree(config, containerd_version)
+    return bool(subtree) and "config_path" in subtree
 
 
 def inject_config_path(containerd_version: int) -> None:
-    """Add config_path to config.toml under the correct plugin namespace.
+    """Add config_path under the correct plugin namespace and restart containerd once.
 
-    This triggers a one-time containerd restart.
+    Safety:
+      * No-op if `config_path` is already present under the target namespace.
+      * After writing, parses the resulting text and confirms that
+        `config_path` resolves to the expected value under the expected namespace.
+        If the parse fails, or the key doesn't land where we expect, the original
+        file is left untouched.
+
+    We append a `[<plugin>.registry]` section header followed by the key. TOML
+    allows promoting an implicitly-declared table (e.g. via a pre-existing
+    `[...registry.mirrors."docker.io"]` on GKE 1.32) to an explicit one, so this
+    form is valid whether or not the namespace was implicitly touched by
+    earlier sections.
     """
-    plugin_ns = PLUGIN_NS[containerd_version]
-    stanza = f'\n[{plugin_ns}]\n  config_path = "{CERT_CONFIG_PATH}"\n'
+    plugin = PLUGIN_NS[containerd_version]
+    keypath = plugin["keypath"]
+    parsed = _parse_config_toml(CONFIG_TOML_BAK)
+    subtree = _registry_subtree(parsed, containerd_version)
+    if subtree is not None and "config_path" in subtree:
+        log.info("config_path already set under [%s]; nothing to inject", plugin["header"])
+        return
 
-    content = CONFIG_TOML_BAK.read_text()
-    content += stanza
+    stanza = f'\n[{plugin["header"]}]\n  config_path = "{CERT_CONFIG_PATH}"\n'
+    candidate = CONFIG_TOML_BAK.read_text() + stanza
 
-    CONFIG_TOML.write_text(content)
-    log.info("Injected config_path under [%s]", plugin_ns)
+    try:
+        reparsed = tomllib.loads(candidate)
+    except tomllib.TOMLDecodeError as exc:
+        log.error("Refusing to write: injected config.toml would be invalid TOML: %s", exc)
+        raise RuntimeError("injected config.toml would be invalid TOML") from exc
+
+    node = reparsed
+    for key in keypath:
+        if not isinstance(node, dict) or key not in node:
+            log.error("Post-inject parse did not find %s in expected location", ".".join(keypath))
+            raise RuntimeError("post-inject validation: keypath missing")
+        node = node[key]
+    if not isinstance(node, dict) or node.get("config_path") != CERT_CONFIG_PATH:
+        log.error("Post-inject parse did not find config_path=%r under %s", CERT_CONFIG_PATH, keypath)
+        raise RuntimeError("post-inject validation: config_path missing or wrong value")
+
+    CONFIG_TOML.write_text(candidate)
+    log.info("Injected config_path under [%s]", plugin["header"])
     restart_containerd()
 
 
@@ -276,13 +358,18 @@ def main() -> None:
 
     log.info("Using containerd version %d strategy", containerd_version)
 
-    config_text = CONFIG_TOML.read_text()
-    has_config_path = config_path_is_set(config_text)
+    try:
+        has_config_path = config_path_is_set(CONFIG_TOML, containerd_version)
+    except RuntimeError:
+        sys.exit(1)
 
     # For containerd 2.x: ensure config_path is set so certs.d/hosts.toml works
     if containerd_version == 2 and not has_config_path:
-        log.info("config_path not found in config.toml, injecting...")
-        inject_config_path(containerd_version)
+        log.info("config_path not found under correct plugin namespace, injecting...")
+        try:
+            inject_config_path(containerd_version)
+        except RuntimeError:
+            sys.exit(1)
         has_config_path = True
 
     # For containerd 1.x with config_path already set: use hosts.toml too
