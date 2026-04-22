@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-cert-copy-and-toml-update
+  name: {{ .Release.Name }}-containerd-ca-config
   labels:
     component: houston
     tier: astronomer

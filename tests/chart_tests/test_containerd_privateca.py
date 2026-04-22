@@ -86,8 +86,8 @@ class TestContainerdPrivateCaDaemonset:
                 "hostPath": {"path": "/etc/containerd/certs.d/registry.example.com/"},
             },
             {
-                "name": "cert-copy-and-toml-update",
-                "configMap": {"name": "release-name-cert-copy-and-toml-update"},
+                "name": "containerd-ca-config",
+                "configMap": {"name": "release-name-containerd-ca-config"},
             },
             {
                 "name": "private-ca-cert-foo",
@@ -108,7 +108,7 @@ class TestContainerdPrivateCaDaemonset:
             },
             {
                 "mountPath": "/scripts/update-containerd-certs.py",
-                "name": "cert-copy-and-toml-update",
+                "name": "containerd-ca-config",
                 "subPath": "update-containerd-certs.py",
             },
             {
@@ -160,9 +160,7 @@ class TestContainerdPrivateCaDaemonset:
 
         assert "containerd-config-toml" not in configmap["data"]
         volume_mounts = container["volumeMounts"]
-        assert not any(
-            vm.get("mountPath") == "/config/containerd-config-toml" for vm in volume_mounts
-        )
+        assert not any(vm.get("mountPath") == "/config/containerd-config-toml" for vm in volume_mounts)
 
     def test_containerd_privateca_containerd_config_toml_mounted_from_configmap(self, kube_version):
         """When `global.privateCaCertsAddToHost.containerdConfigToml` is set,
@@ -208,7 +206,7 @@ class TestContainerdPrivateCaDaemonset:
             None,
         )
         assert blob_mount is not None
-        assert blob_mount["name"] == "cert-copy-and-toml-update"
+        assert blob_mount["name"] == "containerd-ca-config"
         assert blob_mount["subPath"] == "containerd-config-toml"
 
         # No stale env var — the blob must not be passed through env.

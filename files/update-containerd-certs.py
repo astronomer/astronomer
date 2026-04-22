@@ -72,9 +72,7 @@ REGISTRY_HOST = os.environ.get("REGISTRY_HOST", "")
 CONTAINERD_HOST_PATH = Path(os.environ.get("CONTAINERD_HOST_PATH", "/hostcontainerd"))
 CERT_CONFIG_PATH = os.environ.get("CERT_CONFIG_PATH", "/etc/containerd/certs.d")
 PRIVATE_CA_CERTS_DIR = Path(os.environ.get("PRIVATE_CA_CERTS_DIR", "/private-ca-certs"))
-CONTAINERD_CONFIG_TOML_FILE = Path(
-    os.environ.get("CONTAINERD_CONFIG_TOML_FILE", "/config/containerd-config-toml")
-)
+CONTAINERD_CONFIG_TOML_FILE = Path(os.environ.get("CONTAINERD_CONFIG_TOML_FILE", "/config/containerd-config-toml"))
 
 CONFIG_TOML = CONTAINERD_HOST_PATH / "config.toml"
 CONFIG_TOML_BAK = CONTAINERD_HOST_PATH / "config.toml.bak"

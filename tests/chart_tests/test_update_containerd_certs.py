@@ -72,11 +72,11 @@ class TestValidateRegistryHost:
             "registry.example.com",
             "registry.us-east-1.example.com",
             "private-registry-01.internal.example.io",
-            "a.b",                        # minimum shape: two single-char labels
-            "host",                       # single-label hostname
-            "a-b-c.example.com",          # hyphens inside labels
-            "r.example.io",               # shortest subdomain form
-            "a" * 63 + ".example.com",    # maximum legal label length (63)
+            "a.b",  # minimum shape: two single-char labels
+            "host",  # single-label hostname
+            "a-b-c.example.com",  # hyphens inside labels
+            "r.example.io",  # shortest subdomain form
+            "a" * 63 + ".example.com",  # maximum legal label length (63)
         ],
     )
     def test_accepts_valid_registry_hostname(self, script, good_host: str) -> None:
@@ -88,26 +88,26 @@ class TestValidateRegistryHost:
             # Emptiness / whitespace
             "",
             "   ",
-            " registry.example.com",       # leading whitespace
-            "registry.example.com ",       # trailing whitespace
-            "registry .example.com",       # internal whitespace
+            " registry.example.com",  # leading whitespace
+            "registry.example.com ",  # trailing whitespace
+            "registry .example.com",  # internal whitespace
             # Path-escape characters
             "registry/bad",
             "registry\\bad",
-            "..evil",                      # traversal-style
-            "registry..example.com",       # empty label
+            "..evil",  # traversal-style
+            "registry..example.com",  # empty label
             # Length cap (DNS limit is 253 chars)
             "toolong" + "x" * 300,
             # Non-hostname forms we deliberately don't support:
-            "registry.example.com:5000",                # ports belong elsewhere
-            "https://registry.example.com",             # scheme prefix
-            "user@registry.example.com",                # user@host
-            "user:pass@registry.example.com",           # user:pass@host
+            "registry.example.com:5000",  # ports belong elsewhere
+            "https://registry.example.com",  # scheme prefix
+            "user@registry.example.com",  # user@host
+            "user:pass@registry.example.com",  # user:pass@host
             # DNS label shape errors
-            "-registry.example.com",                    # label starts with hyphen
-            "registry-.example.com",                    # label ends with hyphen
-            "registry.example.com-",                    # trailing-hyphen on apex
-            ("a" * 64) + ".example.com",                # label over 63-char cap
+            "-registry.example.com",  # label starts with hyphen
+            "registry-.example.com",  # label ends with hyphen
+            "registry.example.com-",  # trailing-hyphen on apex
+            ("a" * 64) + ".example.com",  # label over 63-char cap
         ],
     )
     def test_rejects_invalid_host(self, script, bad_host: str) -> None:

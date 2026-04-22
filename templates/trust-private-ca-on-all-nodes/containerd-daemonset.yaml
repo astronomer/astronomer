@@ -86,11 +86,11 @@ spec:
           name: hostcontainerd
           readOnly: false
         - mountPath: /scripts/update-containerd-certs.py
-          name: cert-copy-and-toml-update
+          name: containerd-ca-config
           subPath: update-containerd-certs.py
         {{- if .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
         - mountPath: /config/containerd-config-toml
-          name: cert-copy-and-toml-update
+          name: containerd-ca-config
           subPath: containerd-config-toml
         {{- end }}
         {{ range $secret_name := (.Values.global.privateCaCerts) }}
@@ -109,9 +109,9 @@ spec:
       - name: hostcerts
         hostPath:
           path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/{{ include "containerd.registryHost" . }}/
-      - name: cert-copy-and-toml-update
+      - name: containerd-ca-config
         configMap:
-          name: {{ .Release.Name }}-cert-copy-and-toml-update
+          name: {{ .Release.Name }}-containerd-ca-config
       {{ range $secret_name := (.Values.global.privateCaCerts) }}
       - name: {{ $secret_name }}
         secret:
