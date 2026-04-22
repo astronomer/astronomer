@@ -4,6 +4,7 @@ from subprocess import CalledProcessError
 import pytest
 
 from tests import supported_k8s_versions
+from tests.utils import get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -68,7 +69,9 @@ class TestContainerdPrivateCaDaemonset:
         assert len(docs) == 2
         self.common_tests_daemonset(docs[0])
         cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
-        assert cert_copier["image"] == "quay.io/astronomer/ap-db-bootstrapper:2.0.1"
+        image = cert_copier["image"]
+        assert image.startswith("quay.io/astronomer/ap-db-bootstrapper:")
+        assert image.split(":", 1)[1]  # non-empty tag
 
         volumemounts = cert_copier["volumeMounts"]
         volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
@@ -142,7 +145,7 @@ class TestContainerdPrivateCaDaemonset:
 
         assert len(docs) == 2
         container = docs[0]["spec"]["template"]["spec"]["containers"][0]
-        env = {e["name"]: e["value"] for e in container["env"]}
+        env = get_env_vars_dict(container["env"])
         assert env["REGISTRY_HOST"] == "registry.example.com"
         assert env["CONTAINERD_HOST_PATH"] == "/hostcontainerd"
         assert env["CERT_CONFIG_PATH"] == "/etc/containerd/certs.d"
@@ -186,7 +189,7 @@ class TestContainerdPrivateCaDaemonset:
         )
 
         container = docs[0]["spec"]["template"]["spec"]["containers"][0]
-        env = {e["name"]: e["value"] for e in container["env"]}
+        env = get_env_vars_dict(container["env"])
         assert "CONTAINERD_CONFIG_TOML" in env
         # The blob must reach the container byte-for-byte (modulo block-scalar
         # trailing-newline normalization). The script parses it as TOML, so any
@@ -297,7 +300,7 @@ class TestContainerdPrivateCaDaemonset:
 
         assert len(docs) == 2
         container = docs[0]["spec"]["template"]["spec"]["containers"][0]
-        env = {e["name"]: e["value"] for e in container["env"]}
+        env = get_env_vars_dict(container["env"])
         assert env["REGISTRY_HOST"] == expected_registry_host
         volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
         hostcerts_vol = next(v for v in volumes if v["name"] == "hostcerts")

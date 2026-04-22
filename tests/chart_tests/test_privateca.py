@@ -63,7 +63,11 @@ class TestPrivateCaDaemonset:
         assert len(docs) == 1
         self.common_tests_daemonset(docs[0])
         cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
-        assert cert_copier["image"] == "quay.io/astronomer/ap-db-bootstrapper:2.0.1"
+        # Only assert repository (and that there is a tag). The tag changes on
+        # every cert-copier release and isn't what this test is guarding.
+        image = cert_copier["image"]
+        assert image.startswith("quay.io/astronomer/ap-db-bootstrapper:")
+        assert image.split(":", 1)[1]  # non-empty tag
 
         volmounts = cert_copier["volumeMounts"]
 
