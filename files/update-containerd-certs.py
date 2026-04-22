@@ -4,32 +4,44 @@
 This script is deployed as a DaemonSet on every node and continuously monitors
 for CA certificate changes, updating the containerd configuration accordingly.
 
-Behaviour (same for both containerd 1.x and 2.x — only the plugin namespace
-differs, auto-detected via `containerd --version`):
+The containerd major version dictates BOTH the plugin namespace AND the
+trust-configuration strategy. They cannot be unified because containerd 1.x
+forbids mixing `config_path` (hosts.d) with `mirrors` entries in config.toml —
+and GKE 1.32's default config.toml ships a `mirrors."docker.io"` block. Writing
+`config_path` there would prevent containerd from starting.
 
-  Plugin namespace:
-    - containerd 1.x (GKE <= 1.32): io.containerd.grpc.v1.cri
-    - containerd 2.x (GKE >= 1.33): io.containerd.cri.v1.images
+  containerd 1.x (GKE <= 1.32):
+    - Plugin namespace:  io.containerd.grpc.v1.cri
+    - Strategy:          pasted operator-supplied TOML blob (the value of the
+                         Helm value `privateCaCertsAddToHost.containerdConfigToml`)
+                         is appended to config.toml. The script does not
+                         generate registry-trust TOML itself on 1.x — the
+                         operator owns the schema choice (typically
+                         `configs.<registry>.tls.ca_file`).
+    - Restart:           on every CA change (config.toml mutation requires it).
+    - Certs still copied to certs.d/<registry>/ so the operator blob can
+      reference them by known paths.
 
-  On startup:
-    - If `config_path` is already set under the version's plugin namespace,
-      nothing changes in config.toml.
-    - Otherwise, inject `config_path = "<certs.d>"` under the correct namespace
-      and restart containerd ONCE so it picks up the hosts.d layout.
-
-  Steady state (both versions):
-    - certs.d/<registry>/<secret>.pem per mounted CA.
-    - certs.d/<registry>/hosts.toml referencing every PEM in its `ca = [...]` key.
-    - No further containerd restarts on cert rotation.
+  containerd 2.x (GKE >= 1.33):
+    - Plugin namespace:  io.containerd.cri.v1.images
+    - Strategy:          inject `config_path` once, then manage hosts.d files
+                         (certs.d/<registry>/hosts.toml + per-CA PEMs). 2.x
+                         removed the inline-mirrors schema so this conflict
+                         doesn't exist. The operator's `containerdConfigToml`
+                         is ignored — it is not needed on 2.x.
+    - Restart:           ONCE at first setup (the `config_path` injection). All
+                         subsequent cert rotations are hosts.toml rewrites and
+                         require no restart.
 
 Environment variables (injected by the Helm daemonset):
-  REGISTRY_HOST         - Registry hostname (e.g. registry.example.com)
-  CONTAINERD_HOST_PATH  - Host path to containerd config dir (default: /etc/containerd)
-  CERT_CONFIG_PATH      - Host path to containerd certs.d dir (default: /etc/containerd/certs.d)
-  PRIVATE_CA_CERTS_DIR  - Path to mounted CA cert secrets (default: /private-ca-certs)
+  REGISTRY_HOST          - Registry hostname (e.g. registry.example.com)
+  CONTAINERD_HOST_PATH   - Host path to containerd config dir (default: /etc/containerd)
+  CERT_CONFIG_PATH       - Host path to containerd certs.d dir (default: /etc/containerd/certs.d)
+  PRIVATE_CA_CERTS_DIR   - Path to mounted CA cert secrets (default: /private-ca-certs)
+  CONTAINERD_CONFIG_TOML - Operator-supplied TOML blob for containerd 1.x (unused on 2.x)
 
 Requires: Python >= 3.11 (for stdlib tomllib). The DaemonSet runs this script
-with the cert-copier image's Python
+with the cert-copier image's Python.
 """
 
 import hashlib
@@ -56,17 +68,16 @@ REGISTRY_HOST = os.environ.get("REGISTRY_HOST", "")
 CONTAINERD_HOST_PATH = Path(os.environ.get("CONTAINERD_HOST_PATH", "/hostcontainerd"))
 CERT_CONFIG_PATH = os.environ.get("CERT_CONFIG_PATH", "/etc/containerd/certs.d")
 PRIVATE_CA_CERTS_DIR = Path(os.environ.get("PRIVATE_CA_CERTS_DIR", "/private-ca-certs"))
+CONTAINERD_CONFIG_TOML = os.environ.get("CONTAINERD_CONFIG_TOML", "")
 
 CONFIG_TOML = CONTAINERD_HOST_PATH / "config.toml"
 CONFIG_TOML_BAK = CONTAINERD_HOST_PATH / "config.toml.bak"
-CERTS_DIR = CONTAINERD_HOST_PATH / "certs.d" / REGISTRY_HOST
 
-# Plugin namespaces per containerd major version.
-#   header:   the TOML section header we write (quoted form, as it appears in config.toml)
-#   keypath:  the sequence of keys we traverse in a parsed TOML dict to reach the
-#             registry subtree (tomllib returns dotted-quoted plugin names as
-#             nested dicts keyed by each segment, with interior-quoted names
-#             collapsed into a single key — see containerd docs for the layout).
+CERTS_DIR_CONTAINER = CONTAINERD_HOST_PATH / "certs.d" / REGISTRY_HOST
+CERTS_DIR_HOST = Path(CERT_CONFIG_PATH) / REGISTRY_HOST
+
+CERTS_DIR = CERTS_DIR_CONTAINER
+
 PLUGIN_NS = {
     1: {
         "header": 'plugins."io.containerd.grpc.v1.cri".registry',
@@ -80,11 +91,9 @@ PLUGIN_NS = {
 
 POLL_INTERVAL_SECONDS = 1
 
-# Hostname / FQDN for the image registry (e.g. registry.example.com). Conservative ASCII subset.
 _REGISTRY_HOST_PATTERN = re.compile(
     r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$"
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -116,11 +125,6 @@ def validate_registry_host(host: str) -> None:
 def ensure_nsenter_available() -> None:
     """Verify nsenter is on PATH before attempting host-namespace operations.
 
-    The DaemonSet relies on nsenter to enter the host's namespaces for
-    `containerd --version` and `systemctl restart containerd`. If nsenter is
-    missing, every downstream operation will fail with confusing errors — so we
-    preflight here and die with an actionable message instead.
-
     Raises:
         RuntimeError: If nsenter is not available on PATH.
     """
@@ -134,9 +138,6 @@ def ensure_nsenter_available() -> None:
 
 def detect_containerd_version() -> int:
     """Detect the major version of containerd running on the host.
-
-    Uses nsenter to run `containerd --version` in the host PID namespace.
-    Returns 1 or 2.
 
     Raises:
         RuntimeError: If the version cannot be determined (missing binary, non-zero exit,
@@ -256,32 +257,93 @@ def config_path_is_set(config_path_file: Path, containerd_version: int) -> bool:
     return bool(subtree) and "config_path" in subtree
 
 
+_LEGACY_MIRRORS_HEADER_RE = re.compile(
+    r'^\[plugins\."io\.containerd\.(grpc\.v1\.cri|cri\.v1\.images)"\.registry\.mirrors\.[^\]]+\]\s*$'
+)
+
+
+def _strip_registry_mirrors_blocks(text: str) -> str:
+    """Remove every `[plugins."...".registry.mirrors.<host>]` section (+ its body)
+    from config.toml source text.
+
+    Why: `mirrors` and `config_path` are mutually exclusive under a containerd
+    registry namespace. On containerd 1.x this combination prevents the daemon
+    from starting ("mirrors cannot be set when config_path is provided"). On
+    containerd 2.x, the daemon silently blanks `config_path` instead, producing
+    a subtler failure — hosts.toml is written but never read by containerd, so
+    private-CA trust silently doesn't work.
+    """
+    lines = text.splitlines(keepends=True)
+    output: list[str] = []
+    in_mirrors_block = False
+    for line in lines:
+        stripped = line.lstrip()
+        if _LEGACY_MIRRORS_HEADER_RE.match(stripped):
+            in_mirrors_block = True
+            continue
+        if in_mirrors_block:
+            # A new top-level section header ends the mirrors block.
+            if stripped.startswith("["):
+                in_mirrors_block = False
+                output.append(line)
+            # Otherwise: skip the body line (indented entries like `endpoint = ...`).
+            continue
+        output.append(line)
+    return "".join(output)
+
+
+def _config_has_legacy_mirrors(config: dict) -> bool:
+    """Report whether config.toml has a `registry.mirrors.*` block under either
+    the 1.x or the 2.x CRI plugin namespace.
+
+    Both matter because containerd 2.x transposes 1.x-namespace mirrors into the
+    2.x namespace at startup; the conflict with `config_path` happens post-
+    transpose, so either source is a problem.
+    """
+    for version in (1, 2):
+        subtree = _registry_subtree(config, version)
+        if subtree is not None and "mirrors" in subtree:
+            return True
+    return False
+
+
 def inject_config_path(containerd_version: int) -> None:
     """Add config_path under the correct plugin namespace and restart containerd once.
 
-    Safety:
-      * No-op if `config_path` is already present under the target namespace.
-      * After writing, parses the resulting text and confirms that
-        `config_path` resolves to the expected value under the expected namespace.
-        If the parse fails, or the key doesn't land where we expect, the original
-        file is left untouched.
-
-    We append a `[<plugin>.registry]` section header followed by the key. TOML
-    allows promoting an implicitly-declared table (e.g. via a pre-existing
-    `[...registry.mirrors."docker.io"]` on GKE 1.32) to an explicit one, so this
-    form is valid whether or not the namespace was implicitly touched by
-    earlier sections.
+    Primarily the containerd 2.x strategy. See module docstring for why 1.x uses
+    a different path.
     """
     plugin = PLUGIN_NS[containerd_version]
     keypath = plugin["keypath"]
-    parsed = _parse_config_toml(CONFIG_TOML_BAK)
+    parsed = _parse_config_toml(CONFIG_TOML)
     subtree = _registry_subtree(parsed, containerd_version)
-    if subtree is not None and "config_path" in subtree:
-        log.info("config_path already set under [%s]; nothing to inject", plugin["header"])
+
+    has_config_path = subtree is not None and "config_path" in subtree
+    has_mirrors = _config_has_legacy_mirrors(parsed)
+
+    if has_config_path and not has_mirrors:
+        log.info(
+            "config_path already set under [%s] and no legacy mirrors to strip; "
+            "nothing to do.",
+            plugin["header"],
+        )
         return
 
-    stanza = f'\n[{plugin["header"]}]\n  config_path = "{CERT_CONFIG_PATH}"\n'
-    candidate = CONFIG_TOML_BAK.read_text() + stanza
+    source_text = CONFIG_TOML.read_text()
+    stripped_text = _strip_registry_mirrors_blocks(source_text)
+    if stripped_text != source_text:
+        log.info(
+            "Stripped legacy `registry.mirrors.*` block(s) from config.toml "
+            "(incompatible with config_path under containerd 2.x)."
+        )
+
+    # Only append config_path if it isn't already there — avoids producing
+    # duplicate `config_path` keys under the same table.
+    if has_config_path:
+        candidate = stripped_text
+    else:
+        stanza = f'\n[{plugin["header"]}]\n  config_path = "{CERT_CONFIG_PATH}"\n'
+        candidate = stripped_text + stanza
 
     try:
         reparsed = tomllib.loads(candidate)
@@ -300,8 +362,58 @@ def inject_config_path(containerd_version: int) -> None:
         raise RuntimeError("post-inject validation: config_path missing or wrong value")
 
     CONFIG_TOML.write_text(candidate)
-    log.info("Injected config_path under [%s]", plugin["header"])
+    log.info("Reconciled config.toml: config_path=%s, mirrors removed.", CERT_CONFIG_PATH)
     restart_containerd()
+
+
+def write_customer_config_toml(blob: str) -> bool:
+    """Append an operator-supplied TOML blob to config.toml, containerd 1.x style.
+
+    This is the containerd 1.x strategy. We do NOT generate registry-trust TOML
+    ourselves here; the operator supplies the fragment via the Helm value
+    `privateCaCertsAddToHost.containerdConfigToml`, and we paste it verbatim
+    into config.toml.
+
+    The typical blob looks like:
+
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."<registry>".tls]
+          ca_file = "/etc/containerd/certs.d/<registry>/<ca>.pem"
+
+    Raises:
+        RuntimeError: blob is empty (nothing to apply) or produces invalid TOML.
+    """
+    if not blob.strip():
+        log.error(
+            "CONTAINERD_CONFIG_TOML is empty. On containerd 1.x, the operator "
+            "must set `global.privateCaCertsAddToHost.containerdConfigToml` to "
+            "a TOML fragment that tells containerd to trust the mounted CA. "
+            "Upgrade to GKE 1.33+ (containerd 2.x) to let the script manage "
+            "this automatically.",
+        )
+        raise RuntimeError("containerdConfigToml is required on containerd 1.x")
+
+    # Ensure the appended blob starts on a fresh line so it can't accidentally
+    # merge into a pre-existing key on the last line of config.toml.
+    candidate = CONFIG_TOML_BAK.read_text().rstrip() + "\n\n" + blob.rstrip() + "\n"
+
+    try:
+        tomllib.loads(candidate)
+    except tomllib.TOMLDecodeError as exc:
+        log.error(
+            "Refusing to write: containerdConfigToml produces invalid TOML: %s. "
+            "Check the value of global.privateCaCertsAddToHost.containerdConfigToml.",
+            exc,
+        )
+        raise RuntimeError("containerdConfigToml produces invalid TOML") from exc
+
+    # Skip the write + restart if the file already matches — keeps steady-state
+    # ticks cheap.
+    if CONFIG_TOML.is_file() and CONFIG_TOML.read_text() == candidate:
+        return False
+
+    CONFIG_TOML.write_text(candidate)
+    log.info("Applied operator-supplied containerdConfigToml (%d bytes)", len(blob))
+    return True
 
 
 def generate_hosts_toml(ca_files: list[Path]) -> str:
@@ -328,8 +440,11 @@ def copy_ca_certs() -> list[Path]:
     file per CA. The hosts.toml written elsewhere in this script lists every
     PEM under its `ca = [...]` key, which is how containerd trusts all of them.
 
-    Returns the sorted list of PEM paths now present on disk. Callers use this
-    to build the `ca` list in hosts.toml so the two stay in sync.
+    Returns the sorted list of **host-side** PEM paths (CERTS_DIR_HOST / name).
+    Callers embed these straight into config.toml / hosts.toml, both of which
+    are read by containerd running on the host — so the paths must be what the
+    host sees, not the container mount. For filesystem I/O (checksumming the
+    written files), callers can convert via `_host_to_container_path()`.
     """
     if not PRIVATE_CA_CERTS_DIR.is_dir():
         return []
@@ -343,14 +458,24 @@ def copy_ca_certs() -> list[Path]:
     if not sources:
         return []
 
-    CERTS_DIR.mkdir(parents=True, exist_ok=True)
-    copied: list[Path] = []
+    CERTS_DIR_CONTAINER.mkdir(parents=True, exist_ok=True)
+    host_paths: list[Path] = []
     for pem_file in sources:
-        dest = CERTS_DIR / pem_file.name
-        shutil.copy2(pem_file, dest)
-        copied.append(dest)
-        log.info("Copied %s -> %s", pem_file, dest)
-    return copied
+        dest_container = CERTS_DIR_CONTAINER / pem_file.name
+        dest_host = CERTS_DIR_HOST / pem_file.name
+        shutil.copy2(pem_file, dest_container)
+        host_paths.append(dest_host)
+        log.info("Copied %s -> %s (host path: %s)", pem_file, dest_container, dest_host)
+    return host_paths
+
+
+def _host_to_container_path(host_path: Path) -> Path:
+    """Translate a host-absolute path under CERT_CONFIG_PATH to the container's
+    view through the CONTAINERD_HOST_PATH hostPath mount.
+
+    Used for filesystem I/O (checksumming) on paths returned by copy_ca_certs().
+    """
+    return CERTS_DIR_CONTAINER / host_path.name
 
 
 def source_pem_checksum() -> str:
@@ -368,6 +493,80 @@ def source_pem_checksum() -> str:
 # ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
+def _startup(containerd_version: int) -> None:
+    """
+    One-time setup that must complete before we enter the poll loop.
+    """
+    if containerd_version != 2:
+        return
+    try:
+        inject_config_path(containerd_version)
+    except RuntimeError:
+        sys.exit(1)
+
+
+def _apply_v2_hosts_toml(ca_files: list[Path], last_output_checksum: str) -> str:
+    """Write certs.d/<registry>/hosts.toml for the 2.x strategy. Returns the
+    checksum of what's now on disk so the loop can short-circuit next tick.
+
+    `ca_files` are host-side paths (what we wrote into hosts.toml). For the
+    on-disk checksum we translate to the container view because file I/O only
+    works through the hostPath mount, not through the host-absolute path.
+    """
+    hosts_content = generate_hosts_toml(ca_files)
+    hosts_toml_path = CERTS_DIR_CONTAINER / "hosts.toml"
+
+    container_paths = [_host_to_container_path(p) for p in ca_files]
+    current_checksum = checksum_of_files(*container_paths)
+    content_checksum = hashlib.sha256(hosts_content.encode()).hexdigest()
+    combined = current_checksum + content_checksum
+
+    if combined != last_output_checksum:
+        hosts_toml_path.write_text(hosts_content)
+        log.info("Updated %s", hosts_toml_path)
+        return combined
+    log.debug("No change in hosts.toml or CA certs")
+    return last_output_checksum
+
+
+def _apply_v1_customer_toml() -> None:
+    """Append the operator-supplied TOML blob to config.toml for 1.x; restart if changed.
+
+    The CA PEMs are copied to certs.d/ by the caller (so the operator's blob
+    can reference them by path), but we don't inspect or transform them here —
+    the blob owns the registry trust schema on 1.x.
+    """
+    try:
+        changed = write_customer_config_toml(CONTAINERD_CONFIG_TOML)
+    except RuntimeError:
+        sys.exit(1)
+    if changed:
+        restart_containerd()
+
+
+def _poll_loop(containerd_version: int) -> None:
+    """Main reconcile loop — polls mounted PEMs, applies the version-specific
+    strategy, and sleeps. Short-circuits on unchanged sources."""
+    last_source_checksum = ""
+    last_output_checksum = ""
+
+    while True:
+        current_source = source_pem_checksum()
+        if current_source == last_source_checksum:
+            time.sleep(POLL_INTERVAL_SECONDS)
+            continue
+        last_source_checksum = current_source
+
+        ca_files = copy_ca_certs()
+
+        if containerd_version == 2:
+            last_output_checksum = _apply_v2_hosts_toml(ca_files, last_output_checksum)
+        else:
+            _apply_v1_customer_toml()
+
+        time.sleep(POLL_INTERVAL_SECONDS)
+
+
 def main() -> None:
     try:
         validate_registry_host(REGISTRY_HOST)
@@ -391,56 +590,14 @@ def main() -> None:
     except RuntimeError:
         sys.exit(1)
 
-    log.info("Using containerd version %d strategy", containerd_version)
+    strategy = (
+        "operator-supplied containerdConfigToml" if containerd_version == 1
+        else "hosts.d (config_path + hosts.toml)"
+    )
+    log.info("Detected containerd %d.x; using %s strategy", containerd_version, strategy)
 
-    try:
-        has_config_path = config_path_is_set(CONFIG_TOML, containerd_version)
-    except RuntimeError:
-        sys.exit(1)
-
-    # Ensure config_path is set under the version's plugin namespace so
-    # certs.d/hosts.toml is honoured. Same approach for 1.x and 2.x — the only
-    # thing that differs is the plugin namespace, which `inject_config_path`
-    # looks up via PLUGIN_NS.
-    if not has_config_path:
-        log.info("config_path not found under correct plugin namespace, injecting...")
-        try:
-            inject_config_path(containerd_version)
-        except RuntimeError:
-            sys.exit(1)
-
-    log.info("Using certs.d/hosts.toml approach (no restarts on cert rotation)")
-
-    last_source_checksum = ""
-    last_output_checksum = ""
-
-    while True:
-        # Cheap short-circuit: if the mounted PEMs haven't changed since the last
-        # tick, there's nothing to do. Skips the disk churn of re-copying certs
-        # and re-writing hosts.toml every poll interval.
-        current_source = source_pem_checksum()
-        if current_source == last_source_checksum:
-            time.sleep(POLL_INTERVAL_SECONDS)
-            continue
-        last_source_checksum = current_source
-
-        ca_files = copy_ca_certs()
-
-        hosts_content = generate_hosts_toml(ca_files)
-        hosts_toml_path = CERTS_DIR / "hosts.toml"
-
-        current_checksum = checksum_of_files(*ca_files)
-        content_checksum = hashlib.sha256(hosts_content.encode()).hexdigest()
-        combined = current_checksum + content_checksum
-
-        if combined != last_output_checksum:
-            hosts_toml_path.write_text(hosts_content)
-            log.info("Updated %s", hosts_toml_path)
-            last_output_checksum = combined
-        else:
-            log.debug("No change in hosts.toml or CA certs")
-
-        time.sleep(POLL_INTERVAL_SECONDS)
+    _startup(containerd_version)
+    _poll_loop(containerd_version)
 
 
 if __name__ == "__main__":

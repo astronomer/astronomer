@@ -1,3 +1,4 @@
+import textwrap
 from subprocess import CalledProcessError
 
 import pytest
@@ -146,6 +147,11 @@ class TestContainerdPrivateCaDaemonset:
         assert env["CONTAINERD_HOST_PATH"] == "/hostcontainerd"
         assert env["CERT_CONFIG_PATH"] == "/etc/containerd/certs.d"
         assert env["PRIVATE_CA_CERTS_DIR"] == "/private-ca-certs"
+        # CONTAINERD_CONFIG_TOML must be omitted when containerdConfigToml is
+        # not set — the Python script treats empty/absent as "2.x only" and
+        # refuses to run on 1.x without it. Accidentally emitting a blank env
+        # var would mask the config error.
+        assert "CONTAINERD_CONFIG_TOML" not in env
 
         configmap = docs[1]
         assert configmap["kind"] == "ConfigMap"
@@ -153,6 +159,41 @@ class TestContainerdPrivateCaDaemonset:
         assert "detect_containerd_version" in script
         assert "generate_hosts_toml" in script
         assert "REGISTRY_HOST" in script
+
+    def test_containerd_privateca_containerd_config_toml_env_var(self, kube_version):
+        """When `global.privateCaCertsAddToHost.containerdConfigToml` is set,
+        it must surface in the container env as CONTAINERD_CONFIG_TOML verbatim.
+        This is how the operator-supplied TOML blob reaches the Python script
+        on containerd 1.x."""
+        operator_blob = textwrap.dedent("""\
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."registry.example.com".tls]
+              ca_file = "/etc/containerd/certs.d/registry.example.com/private-ca-cert-foo.pem"
+        """)
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdConfigToml": operator_blob,
+                    },
+                }
+            },
+        )
+
+        container = docs[0]["spec"]["template"]["spec"]["containers"][0]
+        env = {e["name"]: e["value"] for e in container["env"]}
+        assert "CONTAINERD_CONFIG_TOML" in env
+        # The blob must reach the container byte-for-byte (modulo block-scalar
+        # trailing-newline normalization). The script parses it as TOML, so any
+        # mangling would produce a containerd parse error at runtime.
+        rendered = env["CONTAINERD_CONFIG_TOML"]
+        assert 'plugins."io.containerd.grpc.v1.cri".registry.configs."registry.example.com".tls' in rendered
+        assert 'ca_file = "/etc/containerd/certs.d/registry.example.com/private-ca-cert-foo.pem"' in rendered
 
     def test_containerd_privateca_daemonset_host_path_overrides(self, kube_version):
         """Test that the daemonset is rendered with custom hostPath."""

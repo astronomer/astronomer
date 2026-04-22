@@ -61,17 +61,18 @@ spec:
         imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.pullPolicy }}
         env:
         - name: REGISTRY_HOST
-          {{- if eq .Values.global.plane.mode "data" }}
-          value: "registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}"
-          {{- else }}
-          value: "registry.{{ .Values.global.baseDomain }}"
-          {{- end }}
+          value: {{ include "containerd.registryHost" . | quote }}
         - name: CONTAINERD_HOST_PATH
           value: "/hostcontainerd"
         - name: CERT_CONFIG_PATH
           value: "{{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}"
         - name: PRIVATE_CA_CERTS_DIR
           value: "/private-ca-certs"
+        {{- with .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
+        - name: CONTAINERD_CONFIG_TOML
+          value: |-
+{{ include "containerd.configToml" $ | indent 12 }}
+        {{- end }}
         securityContext:
           runAsUser: 0
           privileged: true
@@ -107,11 +108,7 @@ spec:
         name: hostcontainerd
       - name: hostcerts
         hostPath:
-          {{- if eq .Values.global.plane.mode "data" }}
-          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}/
-          {{- else }}
-          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/registry.{{ .Values.global.baseDomain }}/
-          {{- end }}
+          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/{{ include "containerd.registryHost" . }}/
       - name: cert-copy-and-toml-update
         configMap:
           name: {{ .Release.Name }}-cert-copy-and-toml-update
