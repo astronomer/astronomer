@@ -1107,13 +1107,31 @@ class TestHoustonDeploymentMigration:
         assert len(changes) == 6
 
     def test_houston_config_absent(self):
-        """Missing astronomer.houston.config.deployments section produces no changes."""
+        """With only ``global`` present, no Houston deployments; strict schema key may be added."""
         text = "global:\n  rbacEnabled: true\n"
         data = _load_rt(text)
         changes = migrate_values(data)
         result = _to_plain(data)
 
         assert result["global"]["rbac"]["enabled"] is True
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert len(changes) == 2
+
+    def test_helm_rbac_enabled_migrated(self):
+        """``astronomer.houston.config.helm.rbacEnabled`` becomes ``helm.rbac.enabled`` (doc §1.8)."""
+        text = dedent("""\
+            astronomer:
+              houston:
+                config:
+                  helm:
+                    rbacEnabled: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+        helm = result["astronomer"]["houston"]["config"]["helm"]
+        assert helm["rbac"]["enabled"] is True
+        assert "rbacEnabled" not in helm
         assert len(changes) == 1
 
     def test_houston_config_already_migrated(self):
@@ -1173,7 +1191,8 @@ class TestHoustonDeploymentMigration:
         deployments = result["astronomer"]["houston"]["config"]["deployments"]
         assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
         assert "dagProcessorEnabled" not in deployments
-        assert len(changes) == 2
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert len(changes) == 3
 
 
 # ---------------------------------------------------------------------------
@@ -1223,13 +1242,17 @@ class TestCLI:
         assert result.returncode == 0
         assert "global.rbacEnabled -> global.rbac.enabled" in result.stderr
         assert "global.sccEnabled -> global.scc.enabled" in result.stderr
-        assert "2 migration(s)" in result.stderr
+        assert "3 migration(s)" in result.stderr
+        assert "strictSchemaCheck" in result.stderr
         assert input_file.read_text() == original_text
 
     def test_dry_run_no_changes(self, tmp_path: Path):
         """--dry-run on an already-migrated file reports no changes."""
         input_file = tmp_path / "values.yaml"
-        input_file.write_text("global:\n  rbac:\n    enabled: true\n")
+        input_file.write_text(
+            "global:\n  rbac:\n    enabled: true\n"
+            "astronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: true\n"
+        )
 
         import subprocess
 
