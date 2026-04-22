@@ -629,7 +629,7 @@ class TestWriteCustomerConfigToml:
         with an empty blob must fail loudly rather than silently doing nothing."""
         self._prepare(script, containerd_env)
 
-        with pytest.raises(RuntimeError, match="required on containerd 1.x"):
+        with pytest.raises(RuntimeError, match=r"required on containerd 1\.x"):
             script.write_customer_config_toml("")
 
         combined = " ".join(r.getMessage() for r in caplog.records)

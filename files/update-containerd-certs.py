@@ -218,7 +218,7 @@ def _parse_config_toml(path: Path) -> dict:
 
     Raises:
         RuntimeError: If the file cannot be parsed as TOML. We fail loudly rather
-            than silently falling back to string handling, because an unparseable
+            than silently falling back to string handling, because an unparsable
             config.toml means we cannot make structural decisions about it.
     """
     try:
