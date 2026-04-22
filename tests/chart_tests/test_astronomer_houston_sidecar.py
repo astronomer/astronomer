@@ -230,39 +230,35 @@ class TestHoustonSidecarLogging:
         assert c_by_name["vector"]["image"].startswith("quay.io/astronomer/ap-vector:")
         assert c_by_name["vector"]["resources"] == resource_defaults
 
-    def test_houston_sidecar_logging_supports_multiple_sinks(self, kube_version):
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=[
-                "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
-                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
-            ],
-            values={
-                "astronomer": {
-                    "houston": {
-                        "logging": {
-                            "loggingSidecar": {
-                                "enabled": True,
-                                "cloudwatch": {
+    def test_houston_sidecar_logging_rejects_multiple_sinks(self, kube_version):
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                show_only=[
+                    "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                ],
+                values={
+                    "astronomer": {
+                        "houston": {
+                            "logging": {
+                                "loggingSidecar": {
                                     "enabled": True,
-                                    "region": "us-east-2",
-                                },
-                                "elasticsearch": {
-                                    "enabled": True,
-                                    "endpoint": "https://es.example.com:9200",
+                                    "cloudwatch": {
+                                        "enabled": True,
+                                        "region": "us-east-2",
+                                    },
+                                    "elasticsearch": {
+                                        "enabled": True,
+                                        "endpoint": "https://es.example.com:9200",
+                                    },
                                 },
                             },
-                        },
+                        }
                     }
-                }
-            },
-        )
-
-        assert len(docs) == 2
-        for doc in docs:
-            vector_config = doc["data"]["vector.yaml"]
-            assert "cloudwatch:" in vector_config
-            assert "elasticsearch:" in vector_config
+                },
+            )
+        stderr = excinfo.value.stderr.decode("utf-8")
+        assert "houston.logging.loggingSidecar supports exactly one sink at a time" in stderr
 
     def test_houston_sidecar_logging_requires_at_least_one_sink(self, kube_version):
         with pytest.raises(CalledProcessError) as excinfo:
@@ -283,7 +279,9 @@ class TestHoustonSidecarLogging:
                     }
                 },
             )
-        assert "houston.logging.loggingSidecar.enabled requires at least one sink" in excinfo.value.stderr.decode("utf-8")
+        stderr = excinfo.value.stderr.decode("utf-8")
+        assert "houston.logging.loggingSidecar.enabled requires at least one supported sink" in stderr
+        assert "extraSinks" not in stderr
 
     def test_houston_sidecar_logging_elasticsearch_requires_endpoint(self, kube_version):
         with pytest.raises(CalledProcessError) as excinfo:

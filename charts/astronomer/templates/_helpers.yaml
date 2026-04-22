@@ -78,10 +78,12 @@
 
 {{- define "houston.logging.loggingSidecar.validate" -}}
 {{- if .Values.houston.logging.loggingSidecar.enabled -}}
-{{- $hasBuiltInSink := or .Values.houston.logging.loggingSidecar.cloudwatch.enabled .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled .Values.houston.logging.loggingSidecar.elasticsearch.enabled -}}
-{{- $hasExtraSinks := ne (trim (.Values.houston.logging.loggingSidecar.extraSinks | default "")) "" -}}
-{{- if not (or $hasBuiltInSink $hasExtraSinks) -}}
-{{- fail "houston.logging.loggingSidecar.enabled requires at least one sink: enable cloudwatch, gcpCloudLogging, elasticsearch, or set extraSinks" -}}
+{{- $enabledSinkCount := add (ternary 1 0 .Values.houston.logging.loggingSidecar.cloudwatch.enabled) (ternary 1 0 .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled) (ternary 1 0 .Values.houston.logging.loggingSidecar.elasticsearch.enabled) -}}
+{{- if eq $enabledSinkCount 0 -}}
+{{- fail "houston.logging.loggingSidecar.enabled requires at least one supported sink: enable cloudwatch, gcpCloudLogging, or elasticsearch" -}}
+{{- end -}}
+{{- if gt $enabledSinkCount 1 -}}
+{{- fail "houston.logging.loggingSidecar supports exactly one sink at a time: choose cloudwatch, gcpCloudLogging, or elasticsearch" -}}
 {{- end -}}
 {{- if .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled -}}
 {{- required "houston.logging.loggingSidecar.gcpCloudLogging.projectId must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.projectId | default "" | trim) -}}

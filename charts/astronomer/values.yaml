@@ -219,9 +219,11 @@ houston:
     # Vector sidecar for audit log shipping from Houston API and worker.
     # When enabled, a Vector sidecar container is added to both Houston API
     # and Houston Worker pods, along with a log wrapper script that redirects
-    # stdout/stderr to files which Vector reads and ships to the configured sink(s).
-    # CloudWatch, GCP Cloud Logging, Elasticsearch, and extra sinks can be enabled
-    # together when desired.
+    # stdout/stderr to files which Vector reads and ships to the configured sink.
+    # Choose exactly one supported sink for Houston audit logging:
+    # - CloudWatch on EKS
+    # - GCP Cloud Logging on GKE
+    # - Elasticsearch to an external ES cluster
     loggingSidecar:
       enabled: false
 
@@ -237,25 +239,25 @@ houston:
           memory: "256Mi"
           cpu: "200m"
 
-      # AWS CloudWatch Logs configuration
+      # AWS CloudWatch Logs configuration for Houston audit logging on EKS.
       cloudwatch:
         enabled: false
         region: ""
         logGroupName: "/astronomer/houston/audit"
-        # Use IRSA (IAM Roles for Service Accounts) for authentication.
+        # Use IRSA (IAM Roles for Service Accounts) for authentication on EKS.
         # When true, no access keys are needed; the service account must be
         # annotated with eks.amazonaws.com/role-arn via houston.serviceAccount.annotations.
         useIRSA: true
         # Secret containing aws_access_key_id and aws_secret_access_key keys.
-        # Only used when useIRSA is false.
+        # Use this fallback when IRSA is unavailable for the EKS deployment.
         secretName: "houston-cloudwatch-creds"
 
-      # GCP Cloud Logging (formerly Stackdriver) configuration
+      # GCP Cloud Logging configuration for Houston audit logging on GKE.
       gcpCloudLogging:
         enabled: false
         # GCP project ID to which logs are published (required).
         projectId: ""
-        # Custom log ID that identifies this log stream in Cloud Logging.
+        # Custom log ID that identifies this Houston audit stream in Cloud Logging.
         logId: "houston-audit"
         # Monitored resource type. "k8s_container" is the standard for GKE pods.
         resource:
@@ -274,11 +276,11 @@ houston:
         # houston.serviceAccount.annotations.
         useWorkloadIdentity: true
         # Name of the K8s Secret containing a GCP service account JSON key file.
-        # Only used when useWorkloadIdentity is false.
+        # Use this fallback when Workload Identity is unavailable for the GKE deployment.
         credentialsSecretName: "houston-gcp-logging-creds"
         credentialsSecretKey: "key.json"
 
-      # Elasticsearch configuration
+      # Elasticsearch configuration for Houston audit logging to an external cluster.
       elasticsearch:
         enabled: false
         # External endpoint URL for the Elasticsearch cluster.
@@ -294,11 +296,6 @@ houston:
         tls:
           enabled: false
           caSecretName: ""
-
-      # Additional Vector sinks to append under the `sinks:` section.
-      # Provide as a YAML snippet with sink keys at the same indentation level
-      # as other sinks (e.g., `my_sink:`). Supports templating via `tpl`.
-      extraSinks: ""
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
