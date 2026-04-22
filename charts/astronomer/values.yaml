@@ -15,24 +15,24 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 2.0.8
+    tag: 2.0.11
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.0.0-8
+    tag: 3.0.0-9
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 2.0.12
+    tag: 2.0.13
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 2.0.3
+    tag: 2.0.4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.0
+    tag: 2.0.1
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
@@ -443,6 +443,10 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+
+  # When true, Houston rejects deployment config overrides that fail JSON-schema validation.
+  strictSchemaCheck:
+    enabled: true
 
   # Populate daily task usage data
   # This runs as a CronJob

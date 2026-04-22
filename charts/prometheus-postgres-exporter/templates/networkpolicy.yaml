@@ -17,7 +17,7 @@ spec:
   podSelector:
     matchLabels:
       tier: monitoring
-      app: {{ template "prometheus-postgres-exporter.name" . }}
+      component: {{ template "prometheus-postgres-exporter.name" . }}
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
