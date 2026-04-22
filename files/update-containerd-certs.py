@@ -4,21 +4,23 @@
 This script is deployed as a DaemonSet on every node and continuously monitors
 for CA certificate changes, updating the containerd configuration accordingly.
 
-Behaviour by containerd version (auto-detected via `containerd --version`):
+Behaviour (same for both containerd 1.x and 2.x — only the plugin namespace
+differs, auto-detected via `containerd --version`):
 
-  containerd 1.x (GKE <= 1.32):
-    - Plugin namespace: io.containerd.grpc.v1.cri
-    - If config_path is already set in config.toml under the correct plugin
-      namespace, uses the certs.d/hosts.toml approach (no restart on cert updates).
-    - If config_path is NOT set, falls back to inline config.toml modification
-      and restarts containerd on every cert change.
+  Plugin namespace:
+    - containerd 1.x (GKE <= 1.32): io.containerd.grpc.v1.cri
+    - containerd 2.x (GKE >= 1.33): io.containerd.cri.v1.images
 
-  containerd 2.x (GKE >= 1.33):
-    - Plugin namespace: io.containerd.cri.v1.images
-    - Always uses the certs.d/hosts.toml approach.
-    - If config_path is not already set in config.toml, injects it under the
-      correct plugin namespace and restarts containerd ONCE on first setup.
-    - Subsequent cert rotations update hosts.toml only (no restart).
+  On startup:
+    - If `config_path` is already set under the version's plugin namespace,
+      nothing changes in config.toml.
+    - Otherwise, inject `config_path = "<certs.d>"` under the correct namespace
+      and restart containerd ONCE so it picks up the hosts.d layout.
+
+  Steady state (both versions):
+    - certs.d/<registry>/<secret>.pem per mounted CA.
+    - certs.d/<registry>/hosts.toml referencing every PEM in its `ca = [...]` key.
+    - No further containerd restarts on cert rotation.
 
 Environment variables (injected by the Helm daemonset):
   REGISTRY_HOST         - Registry hostname (e.g. registry.example.com)
@@ -302,32 +304,65 @@ def inject_config_path(containerd_version: int) -> None:
     restart_containerd()
 
 
-def generate_hosts_toml() -> str:
-    """Generate a hosts.toml file for the registry with CA trust."""
-    ca_path = CERTS_DIR / "ca.crt"
+def generate_hosts_toml(ca_files: list[Path]) -> str:
+    """Generate a hosts.toml that trusts every CA PEM in `ca_files`.
+
+    containerd's `ca` key accepts a list of paths, so multiple CAs are
+    expressed as a TOML array rather than a single path.
+    """
+    ca_list = ", ".join(f'"{p}"' for p in ca_files)
     return (
         f'server = "https://{REGISTRY_HOST}"\n'
         f"\n"
         f'[host."https://{REGISTRY_HOST}"]\n'
         f'  capabilities = ["pull", "resolve"]\n'
-        f'  ca = ["{ca_path}"]\n'
+        f"  ca = [{ca_list}]\n"
     )
 
 
-def copy_ca_certs() -> None:
-    """Copy CA certificate PEM files from mounted secrets into the certs.d directory."""
+def copy_ca_certs() -> list[Path]:
+    """Copy each mounted CA PEM into certs.d/<registry>/ under its source filename.
+
+    `global.privateCaCerts` is a list, so customers can mount multiple CA
+    secrets. Each PEM keeps its own filename on disk so containerd sees one
+    file per CA. The hosts.toml written elsewhere in this script lists every
+    PEM under its `ca = [...]` key, which is how containerd trusts all of them.
+
+    Returns the sorted list of PEM paths now present on disk. Callers use this
+    to build the `ca` list in hosts.toml so the two stay in sync.
+    """
     if not PRIVATE_CA_CERTS_DIR.is_dir():
-        return
+        return []
 
-    CERTS_DIR.mkdir(parents=True, exist_ok=True)
-    ca_dest = CERTS_DIR / "ca.crt"
-
-    for secret_dir in PRIVATE_CA_CERTS_DIR.iterdir():
+    sources: list[Path] = []
+    for secret_dir in sorted(PRIVATE_CA_CERTS_DIR.iterdir()):
         if not secret_dir.is_dir():
             continue
-        for pem_file in secret_dir.glob("*.pem"):
-            shutil.copy2(pem_file, ca_dest)
-            log.info("Copied %s -> %s", pem_file, ca_dest)
+        sources.extend(sorted(secret_dir.glob("*.pem")))
+
+    if not sources:
+        return []
+
+    CERTS_DIR.mkdir(parents=True, exist_ok=True)
+    copied: list[Path] = []
+    for pem_file in sources:
+        dest = CERTS_DIR / pem_file.name
+        shutil.copy2(pem_file, dest)
+        copied.append(dest)
+        log.info("Copied %s -> %s", pem_file, dest)
+    return copied
+
+
+def source_pem_checksum() -> str:
+    """Checksum every PEM under PRIVATE_CA_CERTS_DIR.
+
+    Used as a cheap "has anything changed upstream?" check so the main loop can
+    skip the CA-copy + hosts.toml churn on ticks where secrets haven't rotated.
+    """
+    if not PRIVATE_CA_CERTS_DIR.is_dir():
+        return ""
+    pems = sorted(PRIVATE_CA_CERTS_DIR.glob("*/*.pem"))
+    return checksum_of_files(*pems)
 
 
 # ---------------------------------------------------------------------------
@@ -363,60 +398,47 @@ def main() -> None:
     except RuntimeError:
         sys.exit(1)
 
-    # For containerd 2.x: ensure config_path is set so certs.d/hosts.toml works
-    if containerd_version == 2 and not has_config_path:
+    # Ensure config_path is set under the version's plugin namespace so
+    # certs.d/hosts.toml is honoured. Same approach for 1.x and 2.x — the only
+    # thing that differs is the plugin namespace, which `inject_config_path`
+    # looks up via PLUGIN_NS.
+    if not has_config_path:
         log.info("config_path not found under correct plugin namespace, injecting...")
         try:
             inject_config_path(containerd_version)
         except RuntimeError:
             sys.exit(1)
-        has_config_path = True
 
-    # For containerd 1.x with config_path already set: use hosts.toml too
-    use_hosts_toml = has_config_path
+    log.info("Using certs.d/hosts.toml approach (no restarts on cert rotation)")
 
-    if use_hosts_toml:
-        log.info("Using certs.d/hosts.toml approach (no restarts on cert changes)")
-    else:
-        log.info("Using legacy inline config.toml approach (containerd 1.x fallback)")
-
-    last_checksum = ""
+    last_source_checksum = ""
+    last_output_checksum = ""
 
     while True:
-        copy_ca_certs()
+        # Cheap short-circuit: if the mounted PEMs haven't changed since the last
+        # tick, there's nothing to do. Skips the disk churn of re-copying certs
+        # and re-writing hosts.toml every poll interval.
+        current_source = source_pem_checksum()
+        if current_source == last_source_checksum:
+            time.sleep(POLL_INTERVAL_SECONDS)
+            continue
+        last_source_checksum = current_source
 
-        if use_hosts_toml:
-            # --- hosts.toml path ---
-            hosts_content = generate_hosts_toml()
-            hosts_toml_path = CERTS_DIR / "hosts.toml"
-            ca_crt_path = CERTS_DIR / "ca.crt"
+        ca_files = copy_ca_certs()
 
-            current_checksum = checksum_of_files(ca_crt_path)
-            content_checksum = hashlib.sha256(hosts_content.encode()).hexdigest()
-            combined = current_checksum + content_checksum
+        hosts_content = generate_hosts_toml(ca_files)
+        hosts_toml_path = CERTS_DIR / "hosts.toml"
 
-            if combined != last_checksum:
-                hosts_toml_path.write_text(hosts_content)
-                log.info("Updated %s", hosts_toml_path)
-                last_checksum = combined
-                log.info("No containerd restart required for hosts.toml updates.")
-            else:
-                log.debug("No change in hosts.toml or CA certs")
+        current_checksum = checksum_of_files(*ca_files)
+        content_checksum = hashlib.sha256(hosts_content.encode()).hexdigest()
+        combined = current_checksum + content_checksum
 
+        if combined != last_output_checksum:
+            hosts_toml_path.write_text(hosts_content)
+            log.info("Updated %s", hosts_toml_path)
+            last_output_checksum = combined
         else:
-            # --- Legacy inline config.toml path (containerd 1.x without config_path) ---
-            working = CONFIG_TOML_BAK.read_text()
-            ca_crt_path = CERTS_DIR / "ca.crt"
-
-            current_checksum = checksum_of_files(ca_crt_path, CONFIG_TOML_BAK)
-
-            if current_checksum != last_checksum:
-                CONFIG_TOML.write_text(working)
-                log.info("Updated %s", CONFIG_TOML)
-                last_checksum = current_checksum
-                restart_containerd()
-            else:
-                log.debug("No change in legacy config path")
+            log.debug("No change in hosts.toml or CA certs")
 
         time.sleep(POLL_INTERVAL_SECONDS)
 
