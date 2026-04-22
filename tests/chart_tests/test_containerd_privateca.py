@@ -150,11 +150,6 @@ class TestContainerdPrivateCaDaemonset:
         assert env["CONTAINERD_HOST_PATH"] == "/hostcontainerd"
         assert env["CERT_CONFIG_PATH"] == "/etc/containerd/certs.d"
         assert env["PRIVATE_CA_CERTS_DIR"] == "/private-ca-certs"
-        # CONTAINERD_CONFIG_TOML must be omitted when containerdConfigToml is
-        # not set — the Python script treats empty/absent as "2.x only" and
-        # refuses to run on 1.x without it. Accidentally emitting a blank env
-        # var would mask the config error.
-        assert "CONTAINERD_CONFIG_TOML" not in env
 
         configmap = docs[1]
         assert configmap["kind"] == "ConfigMap"
@@ -163,11 +158,21 @@ class TestContainerdPrivateCaDaemonset:
         assert "generate_hosts_toml" in script
         assert "REGISTRY_HOST" in script
 
-    def test_containerd_privateca_containerd_config_toml_env_var(self, kube_version):
+        assert "containerd-config-toml" not in configmap["data"]
+        volume_mounts = container["volumeMounts"]
+        assert not any(
+            vm.get("mountPath") == "/config/containerd-config-toml" for vm in volume_mounts
+        )
+
+    def test_containerd_privateca_containerd_config_toml_mounted_from_configmap(self, kube_version):
         """When `global.privateCaCertsAddToHost.containerdConfigToml` is set,
-        it must surface in the container env as CONTAINERD_CONFIG_TOML verbatim.
-        This is how the operator-supplied TOML blob reaches the Python script
-        on containerd 1.x."""
+        the blob lands in the ConfigMap under the `containerd-config-toml` key
+        and is mounted into the container at /config/containerd-config-toml
+        via subPath. The Python script reads it from there on containerd 1.x.
+
+        A ConfigMap mount is used rather than an env var so multi-line TOML
+        renders cleanly (both in the chart template and in `kubectl describe
+        pod` output) and the reader contract is a simple file read."""
         operator_blob = textwrap.dedent("""\
             [plugins."io.containerd.grpc.v1.cri".registry.configs."registry.example.com".tls]
               ca_file = "/etc/containerd/certs.d/registry.example.com/private-ca-cert-foo.pem"
@@ -188,15 +193,27 @@ class TestContainerdPrivateCaDaemonset:
             },
         )
 
-        container = docs[0]["spec"]["template"]["spec"]["containers"][0]
+        daemonset, configmap = docs
+        container = daemonset["spec"]["template"]["spec"]["containers"][0]
+
+        # Blob lives in the ConfigMap under a well-known key.
+        blob_in_cm = configmap["data"]["containerd-config-toml"]
+        assert 'plugins."io.containerd.grpc.v1.cri".registry.configs."registry.example.com".tls' in blob_in_cm
+        assert 'ca_file = "/etc/containerd/certs.d/registry.example.com/private-ca-cert-foo.pem"' in blob_in_cm
+
+        # Container mounts that key as a single file at the path the script reads.
+        volume_mounts = container["volumeMounts"]
+        blob_mount = next(
+            (vm for vm in volume_mounts if vm.get("mountPath") == "/config/containerd-config-toml"),
+            None,
+        )
+        assert blob_mount is not None
+        assert blob_mount["name"] == "cert-copy-and-toml-update"
+        assert blob_mount["subPath"] == "containerd-config-toml"
+
+        # No stale env var — the blob must not be passed through env.
         env = get_env_vars_dict(container["env"])
-        assert "CONTAINERD_CONFIG_TOML" in env
-        # The blob must reach the container byte-for-byte (modulo block-scalar
-        # trailing-newline normalization). The script parses it as TOML, so any
-        # mangling would produce a containerd parse error at runtime.
-        rendered = env["CONTAINERD_CONFIG_TOML"]
-        assert 'plugins."io.containerd.grpc.v1.cri".registry.configs."registry.example.com".tls' in rendered
-        assert 'ca_file = "/etc/containerd/certs.d/registry.example.com/private-ca-cert-foo.pem"' in rendered
+        assert "CONTAINERD_CONFIG_TOML" not in env
 
     def test_containerd_privateca_daemonset_host_path_overrides(self, kube_version):
         """Test that the daemonset is rendered with custom hostPath."""

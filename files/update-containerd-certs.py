@@ -34,11 +34,15 @@ and GKE 1.32's default config.toml ships a `mirrors."docker.io"` block. Writing
                          require no restart.
 
 Environment variables (injected by the Helm daemonset):
-  REGISTRY_HOST          - Registry hostname (e.g. registry.example.com)
-  CONTAINERD_HOST_PATH   - Host path to containerd config dir (default: /etc/containerd)
-  CERT_CONFIG_PATH       - Host path to containerd certs.d dir (default: /etc/containerd/certs.d)
-  PRIVATE_CA_CERTS_DIR   - Path to mounted CA cert secrets (default: /private-ca-certs)
-  CONTAINERD_CONFIG_TOML - Operator-supplied TOML blob for containerd 1.x (unused on 2.x)
+  REGISTRY_HOST               - Registry hostname (e.g. registry.example.com)
+  CONTAINERD_HOST_PATH        - Host path to containerd config dir (default: /etc/containerd)
+  CERT_CONFIG_PATH            - Host path to containerd certs.d dir (default: /etc/containerd/certs.d)
+  PRIVATE_CA_CERTS_DIR        - Path to mounted CA cert secrets (default: /private-ca-certs)
+  CONTAINERD_CONFIG_TOML_FILE - Path to the ConfigMap-mounted TOML blob for
+                                containerd 1.x (default: /config/containerd-config-toml).
+                                File is absent when the operator hasn't set
+                                `privateCaCertsAddToHost.containerdConfigToml`.
+                                Unused on 2.x.
 
 Requires: Python >= 3.11 (for stdlib tomllib). The DaemonSet runs this script
 with the cert-copier image's Python.
@@ -68,7 +72,9 @@ REGISTRY_HOST = os.environ.get("REGISTRY_HOST", "")
 CONTAINERD_HOST_PATH = Path(os.environ.get("CONTAINERD_HOST_PATH", "/hostcontainerd"))
 CERT_CONFIG_PATH = os.environ.get("CERT_CONFIG_PATH", "/etc/containerd/certs.d")
 PRIVATE_CA_CERTS_DIR = Path(os.environ.get("PRIVATE_CA_CERTS_DIR", "/private-ca-certs"))
-CONTAINERD_CONFIG_TOML = os.environ.get("CONTAINERD_CONFIG_TOML", "")
+CONTAINERD_CONFIG_TOML_FILE = Path(
+    os.environ.get("CONTAINERD_CONFIG_TOML_FILE", "/config/containerd-config-toml")
+)
 
 CONFIG_TOML = CONTAINERD_HOST_PATH / "config.toml"
 CONFIG_TOML_BAK = CONTAINERD_HOST_PATH / "config.toml.bak"
@@ -101,7 +107,6 @@ _REGISTRY_HOST_PATTERN = re.compile(
 # ---------------------------------------------------------------------------
 def validate_registry_host(host: str) -> None:
     """Ensure REGISTRY_HOST is non-empty and safe for paths and TOML.
-
     Raises:
         ValueError: If the value is empty, has unsafe characters, or fails validation.
     """
@@ -227,6 +232,19 @@ def _parse_config_toml(path: Path) -> dict:
     except (OSError, tomllib.TOMLDecodeError) as exc:
         log.error("Failed to parse %s: %s", path, exc)
         raise RuntimeError(f"cannot parse {path}") from exc
+
+
+def _read_containerd_config_toml() -> str:
+    """Read the operator-supplied TOML blob from the mounted ConfigMap file.
+
+    Returns "" if the file doesn't exist — that's the expected state when the
+    operator hasn't set `privateCaCertsAddToHost.containerdConfigToml`. The
+    caller treats empty-string as "unset" and fails loudly on 1.x where it's
+    required.
+    """
+    if not CONTAINERD_CONFIG_TOML_FILE.is_file():
+        return ""
+    return CONTAINERD_CONFIG_TOML_FILE.read_text()
 
 
 def _registry_subtree(config: dict, containerd_version: int) -> dict | None:
@@ -533,7 +551,7 @@ def _apply_v1_customer_toml() -> None:
     the blob owns the registry trust schema on 1.x.
     """
     try:
-        changed = write_customer_config_toml(CONTAINERD_CONFIG_TOML)
+        changed = write_customer_config_toml(_read_containerd_config_toml())
     except RuntimeError:
         sys.exit(1)
     if changed:

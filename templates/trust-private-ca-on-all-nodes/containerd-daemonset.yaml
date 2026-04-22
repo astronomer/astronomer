@@ -68,11 +68,6 @@ spec:
           value: "{{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}"
         - name: PRIVATE_CA_CERTS_DIR
           value: "/private-ca-certs"
-        {{- with .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
-        - name: CONTAINERD_CONFIG_TOML
-          value: |-
-{{ include "containerd.configToml" $ | indent 12 }}
-        {{- end }}
         securityContext:
           runAsUser: 0
           privileged: true
@@ -93,6 +88,11 @@ spec:
         - mountPath: /scripts/update-containerd-certs.py
           name: cert-copy-and-toml-update
           subPath: update-containerd-certs.py
+        {{- if .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
+        - mountPath: /config/containerd-config-toml
+          name: cert-copy-and-toml-update
+          subPath: containerd-config-toml
+        {{- end }}
         {{ range $secret_name := (.Values.global.privateCaCerts) }}
         - name: {{ $secret_name }}
           mountPath: /private-ca-certs/{{ $secret_name }}/{{ $secret_name }}.pem

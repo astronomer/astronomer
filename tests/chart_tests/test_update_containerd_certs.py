@@ -56,20 +56,58 @@ def _completed_process(stdout: str, *, returncode: int = 0, stderr: str = "") ->
 
 
 class TestValidateRegistryHost:
-    """Tests for REGISTRY_HOST validation."""
+    """Tests for REGISTRY_HOST validation.
 
-    def test_accepts_typical_registry_hostname(self, script) -> None:
-        script.validate_registry_host("registry.example.com")
+    Covers DNS-hostname shapes we expect to see in the wild (apex + subdomains,
+    hyphens, long labels, minimum-legal hostnames) and explicitly locks in that
+    non-hostname forms — ports, URL schemes, and user:pass@ credentials — are
+    rejected. The validator is intentionally strict: REGISTRY_HOST is
+    interpolated into TOML section headers and directory paths, so anything
+    beyond a plain DNS hostname could corrupt config.toml or escape a path.
+    """
+
+    @pytest.mark.parametrize(
+        "good_host",
+        [
+            "registry.example.com",
+            "registry.us-east-1.example.com",
+            "private-registry-01.internal.example.io",
+            "a.b",                        # minimum shape: two single-char labels
+            "host",                       # single-label hostname
+            "a-b-c.example.com",          # hyphens inside labels
+            "r.example.io",               # shortest subdomain form
+            "a" * 63 + ".example.com",    # maximum legal label length (63)
+        ],
+    )
+    def test_accepts_valid_registry_hostname(self, script, good_host: str) -> None:
+        script.validate_registry_host(good_host)
 
     @pytest.mark.parametrize(
         "bad_host",
         [
+            # Emptiness / whitespace
             "",
             "   ",
+            " registry.example.com",       # leading whitespace
+            "registry.example.com ",       # trailing whitespace
+            "registry .example.com",       # internal whitespace
+            # Path-escape characters
             "registry/bad",
-            "registry bad",
-            "..evil",
+            "registry\\bad",
+            "..evil",                      # traversal-style
+            "registry..example.com",       # empty label
+            # Length cap (DNS limit is 253 chars)
             "toolong" + "x" * 300,
+            # Non-hostname forms we deliberately don't support:
+            "registry.example.com:5000",                # ports belong elsewhere
+            "https://registry.example.com",             # scheme prefix
+            "user@registry.example.com",                # user@host
+            "user:pass@registry.example.com",           # user:pass@host
+            # DNS label shape errors
+            "-registry.example.com",                    # label starts with hyphen
+            "registry-.example.com",                    # label ends with hyphen
+            "registry.example.com-",                    # trailing-hyphen on apex
+            ("a" * 64) + ".example.com",                # label over 63-char cap
         ],
     )
     def test_rejects_invalid_host(self, script, bad_host: str) -> None:
@@ -595,7 +633,12 @@ class TestWriteCustomerConfigToml:
           ca_file = "/etc/containerd/certs.d/registry.example.com/my-ca.pem"
     """)
 
-    def _prepare(self, script, containerd_env) -> tuple[Path, Path]:
+    @pytest.fixture(autouse=True)
+    def gke_132_config(self, script, containerd_env) -> tuple[Path, Path]:
+        """Wire the script's config.toml and .bak to copies of the real GKE 1.32
+        fixture. Runs automatically for every test in this class (autouse=True).
+        Tests that need to assert against the paths can receive the returned
+        `(config_toml, bak)` tuple by naming `gke_132_config` as a parameter."""
         config_toml = containerd_env["containerd_dir"] / "config.toml"
         config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
         shutil.copy2(DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml", config_toml)
@@ -604,10 +647,10 @@ class TestWriteCustomerConfigToml:
         script.CONFIG_TOML_BAK = config_toml_bak
         return config_toml, config_toml_bak
 
-    def test_appends_blob_and_parses_cleanly(self, script, containerd_env):
+    def test_appends_blob_and_parses_cleanly(self, script, gke_132_config):
         """Happy path: the blob is appended and the combined file is valid TOML
         with the expected ca_file under the expected key path."""
-        config_toml, _ = self._prepare(script, containerd_env)
+        config_toml, _ = gke_132_config
 
         changed = script.write_customer_config_toml(self._BLOB)
 
@@ -624,11 +667,9 @@ class TestWriteCustomerConfigToml:
         # and combining mirrors with config_path breaks containerd)
         assert "config_path" not in v1
 
-    def test_empty_blob_raises_with_actionable_message(self, script, containerd_env, caplog):
+    def test_empty_blob_raises_with_actionable_message(self, script, caplog):
         """On 1.x the operator is expected to set containerdConfigToml. Running
         with an empty blob must fail loudly rather than silently doing nothing."""
-        self._prepare(script, containerd_env)
-
         with pytest.raises(RuntimeError, match=r"required on containerd 1\.x"):
             script.write_customer_config_toml("")
 
@@ -636,10 +677,10 @@ class TestWriteCustomerConfigToml:
         assert "containerdConfigToml" in combined
         assert "GKE 1.33" in combined
 
-    def test_invalid_toml_raises_and_leaves_file_untouched(self, script, containerd_env):
+    def test_invalid_toml_raises_and_leaves_file_untouched(self, script, gke_132_config):
         """Syntactically broken blob must not be written (containerd would fail
         to start). config.toml must remain exactly as before the call."""
-        config_toml, _ = self._prepare(script, containerd_env)
+        config_toml, _ = gke_132_config
         original = config_toml.read_text()
 
         with pytest.raises(RuntimeError, match="invalid TOML"):
@@ -647,21 +688,17 @@ class TestWriteCustomerConfigToml:
 
         assert config_toml.read_text() == original
 
-    def test_idempotent_on_second_call(self, script, containerd_env):
+    def test_idempotent_on_second_call(self, script):
         """Same blob twice → second call reports no change, so caller skips
         the containerd restart."""
-        self._prepare(script, containerd_env)
-
         first = script.write_customer_config_toml(self._BLOB)
         second = script.write_customer_config_toml(self._BLOB)
 
         assert first is True
         assert second is False
 
-    def test_changed_blob_triggers_rewrite(self, script, containerd_env):
+    def test_changed_blob_triggers_rewrite(self, script):
         """Different blob value → reports change (caller will restart)."""
-        self._prepare(script, containerd_env)
-
         other_blob = self._BLOB.replace("my-ca.pem", "rotated-ca.pem")
 
         script.write_customer_config_toml(self._BLOB)
@@ -734,13 +771,17 @@ class TestMainEndToEnd:
         script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
         _wire_certs_dir(script, containerd_env["certs_dir"])
         script.PRIVATE_CA_CERTS_DIR = containerd_env["private_certs_dir"]
-        # Default: no customer blob. Tests that exercise the 1.x path override.
-        script.CONTAINERD_CONFIG_TOML = ""
+        # Default: no customer blob — point the ConfigMap-file path at a
+        # non-existent location so the script sees "operator didn't set the
+        # value." Tests that exercise the 1.x path override by writing to this
+        # file.
+        script.CONTAINERD_CONFIG_TOML_FILE = containerd_env["tmp_path"] / "containerd-config-toml"
 
         return {
             "config_toml": config_toml,
             "config_toml_bak": config_toml_bak,
             "certs_dir": containerd_env["certs_dir"],
+            "containerd_config_toml_file": script.CONTAINERD_CONFIG_TOML_FILE,
         }
 
     def _run_main_once(self, script, subprocess_stdout: str):
@@ -777,7 +818,7 @@ class TestMainEndToEnd:
             [plugins."io.containerd.grpc.v1.cri".registry.configs."registry.example.com".tls]
               ca_file = "/etc/containerd/certs.d/registry.example.com/my-ca.pem"
         """)
-        script.CONTAINERD_CONFIG_TOML = blob
+        wired["containerd_config_toml_file"].write_text(blob)
 
         mock_restart = self._run_main_once(
             script,
@@ -810,8 +851,7 @@ class TestMainEndToEnd:
         """If the operator hasn't set `containerdConfigToml`, the script must
         exit loudly — on 1.x we have no way to generate trust config ourselves."""
         shutil.copy2(DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml", wired["config_toml"])
-        # Fixture already defaults CONTAINERD_CONFIG_TOML = "" — reaffirm:
-        script.CONTAINERD_CONFIG_TOML = ""
+        assert not wired["containerd_config_toml_file"].exists()
 
         which_stub = "/usr/bin/nsenter"
         run_stub = _completed_process("containerd github.com/containerd/containerd 1.7.29 abcdef")
