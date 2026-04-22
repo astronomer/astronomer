@@ -207,9 +207,7 @@ class TestGenerateHostsToml:
 
     def test_single_ca(self, script):
         script.REGISTRY_HOST = "registry.example.com"
-        result = script.generate_hosts_toml(
-            [Path("/etc/containerd/certs.d/registry.example.com/my-ca.pem")]
-        )
+        result = script.generate_hosts_toml([Path("/etc/containerd/certs.d/registry.example.com/my-ca.pem")])
         assert 'server = "https://registry.example.com"' in result
         assert '[host."https://registry.example.com"]' in result
         assert 'capabilities = ["pull", "resolve"]' in result
@@ -285,9 +283,7 @@ class TestInjectConfigPath:
         return config_toml, config_toml_bak
 
     def test_injects_v2_plugin_namespace(self, script, containerd_env):
-        config_toml, _ = self._prepare(
-            script, containerd_env, DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml"
-        )
+        config_toml, _ = self._prepare(script, containerd_env, DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml")
 
         with patch.object(script, "restart_containerd"):
             script.inject_config_path(containerd_version=2)
@@ -296,30 +292,25 @@ class TestInjectConfigPath:
         # config_path under the 2.x plugin namespace — regardless of which TOML
         # form the script chose to emit.
         import tomllib as _tomllib
-        parsed = _tomllib.loads(config_toml.read_text())
-        assert (
-            parsed["plugins"]["io.containerd.cri.v1.images"]["registry"]["config_path"]
-            == "/etc/containerd/certs.d"
-        )
 
-    def test_strips_legacy_mirrors_before_injecting_on_real_gke_132_config(
-        self, script, containerd_env
-    ):
+        parsed = _tomllib.loads(config_toml.read_text())
+        assert parsed["plugins"]["io.containerd.cri.v1.images"]["registry"]["config_path"] == "/etc/containerd/certs.d"
+
+    def test_strips_legacy_mirrors_before_injecting_on_real_gke_132_config(self, script, containerd_env):
         """GKE 1.32's default config.toml ships a
         `[plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]`
         block. Containerd 2.x transposes that into its own `cri.v1.images`
         namespace and silently blanks `config_path` when both coexist — the
         exact failure mode observed on a live GKE 1.33 upgrade. Inject must
         strip the mirrors block so config_path actually takes effect."""
-        config_toml, _ = self._prepare(
-            script, containerd_env, DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml"
-        )
+        config_toml, _ = self._prepare(script, containerd_env, DATA_FILES_DIR / "gke_1_32_containerd_1x_config.toml")
 
         with patch.object(script, "restart_containerd") as mock_restart:
             script.inject_config_path(containerd_version=2)
             mock_restart.assert_called_once()
 
         import tomllib as _tomllib
+
         parsed = _tomllib.loads(config_toml.read_text())
         v2_reg = parsed["plugins"]["io.containerd.cri.v1.images"]["registry"]
         assert v2_reg["config_path"] == "/etc/containerd/certs.d"
@@ -329,20 +320,17 @@ class TestInjectConfigPath:
         assert "mirrors" not in v1_reg
         assert "mirrors" not in v2_reg
 
-    def test_strips_legacy_mirrors_block_on_real_gke_133_config(
-        self, script, containerd_env
-    ):
+    def test_strips_legacy_mirrors_block_on_real_gke_133_config(self, script, containerd_env):
         """The live failure from the cluster: GKE 1.33's config.toml also ships
         the grpc.v1.cri mirrors block. This test uses the 1.33 fixture to lock
         in the fix end-to-end."""
-        config_toml, _ = self._prepare(
-            script, containerd_env, DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml"
-        )
+        config_toml, _ = self._prepare(script, containerd_env, DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml")
 
         with patch.object(script, "restart_containerd"):
             script.inject_config_path(containerd_version=2)
 
         import tomllib as _tomllib
+
         parsed = _tomllib.loads(config_toml.read_text())
         v2_reg = parsed["plugins"]["io.containerd.cri.v1.images"]["registry"]
         assert v2_reg["config_path"] == "/etc/containerd/certs.d"
@@ -372,6 +360,7 @@ class TestInjectConfigPath:
             script.inject_config_path(containerd_version=2)
 
         import tomllib as _tomllib
+
         parsed = _tomllib.loads(config_toml.read_text())
         v2_reg = parsed["plugins"]["io.containerd.cri.v1.images"]["registry"]
         assert v2_reg["config_path"] == "/etc/containerd/certs.d"
@@ -434,6 +423,7 @@ class TestInjectConfigPath:
             mock_restart.assert_called_once()
 
         import tomllib as _tomllib
+
         parsed = _tomllib.loads(config_toml.read_text())
         v2_reg = parsed["plugins"]["io.containerd.cri.v1.images"]["registry"]
         assert v2_reg["config_path"] == "/etc/containerd/certs.d"
@@ -496,9 +486,7 @@ class TestCopyCaCerts:
 
         second = containerd_env["private_certs_dir"] / "other-ca"
         second.mkdir()
-        (second / "other-ca.pem").write_text(
-            "-----BEGIN CERTIFICATE-----\nOTHERCERT\n-----END CERTIFICATE-----\n"
-        )
+        (second / "other-ca.pem").write_text("-----BEGIN CERTIFICATE-----\nOTHERCERT\n-----END CERTIFICATE-----\n")
 
         copied = script.copy_ca_certs()
 
@@ -514,9 +502,7 @@ class TestCopyCaCerts:
 
         second = containerd_env["private_certs_dir"] / "other-ca"
         second.mkdir()
-        (second / "other-ca.pem").write_text(
-            "-----BEGIN CERTIFICATE-----\nOTHERCERT\n-----END CERTIFICATE-----\n"
-        )
+        (second / "other-ca.pem").write_text("-----BEGIN CERTIFICATE-----\nOTHERCERT\n-----END CERTIFICATE-----\n")
 
         first_run = script.copy_ca_certs()
         second_run = script.copy_ca_certs()
@@ -627,6 +613,7 @@ class TestWriteCustomerConfigToml:
 
         assert changed is True
         import tomllib as _tomllib
+
         parsed = _tomllib.loads(config_toml.read_text())
         v1 = parsed["plugins"]["io.containerd.grpc.v1.cri"]["registry"]
         tls = v1["configs"]["registry.example.com"]["tls"]
@@ -766,10 +753,12 @@ class TestMainEndToEnd:
         which_stub = "/usr/bin/nsenter"
         run_stub = _completed_process(subprocess_stdout)
 
-        with patch.object(script.shutil, "which", return_value=which_stub), \
-             patch.object(script, "restart_containerd") as mock_restart, \
-             patch("subprocess.run", return_value=run_stub), \
-             patch.object(script.time, "sleep", side_effect=_StopLoop):
+        with (
+            patch.object(script.shutil, "which", return_value=which_stub),
+            patch.object(script, "restart_containerd") as mock_restart,
+            patch("subprocess.run", return_value=run_stub),
+            patch.object(script.time, "sleep", side_effect=_StopLoop),
+        ):
             with pytest.raises(_StopLoop):
                 script.main()
         return mock_restart
@@ -796,6 +785,7 @@ class TestMainEndToEnd:
         )
 
         import tomllib as _tomllib
+
         parsed = _tomllib.loads(wired["config_toml"].read_text())
         v1 = parsed["plugins"]["io.containerd.grpc.v1.cri"]["registry"]
 
@@ -824,22 +814,20 @@ class TestMainEndToEnd:
         script.CONTAINERD_CONFIG_TOML = ""
 
         which_stub = "/usr/bin/nsenter"
-        run_stub = _completed_process(
-            "containerd github.com/containerd/containerd 1.7.29 abcdef"
-        )
+        run_stub = _completed_process("containerd github.com/containerd/containerd 1.7.29 abcdef")
 
-        with patch.object(script.shutil, "which", return_value=which_stub), \
-             patch.object(script, "restart_containerd"), \
-             patch("subprocess.run", return_value=run_stub), \
-             patch.object(script.time, "sleep", side_effect=_StopLoop):
+        with (
+            patch.object(script.shutil, "which", return_value=which_stub),
+            patch.object(script, "restart_containerd"),
+            patch("subprocess.run", return_value=run_stub),
+            patch.object(script.time, "sleep", side_effect=_StopLoop),
+        ):
             # Missing blob → _apply_v1_customer_toml calls sys.exit(1).
             with pytest.raises(SystemExit) as excinfo:
                 script.main()
             assert excinfo.value.code == 1
 
-    def test_gke_133_containerd_2x_injects_v2_namespace_and_writes_hosts_toml(
-        self, script, wired
-    ):
+    def test_gke_133_containerd_2x_injects_v2_namespace_and_writes_hosts_toml(self, script, wired):
         """Parallel assertion for containerd 2.x — different plugin namespace,
         everything else the same. Proves the two versions really do share a
         single code path post-unification."""
@@ -851,6 +839,7 @@ class TestMainEndToEnd:
         )
 
         import tomllib as _tomllib
+
         parsed = _tomllib.loads(wired["config_toml"].read_text())
         v2 = parsed["plugins"]["io.containerd.cri.v1.images"]["registry"]
         assert v2["config_path"] == "/etc/containerd/certs.d"

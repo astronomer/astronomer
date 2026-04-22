@@ -95,6 +95,7 @@ _REGISTRY_HOST_PATTERN = re.compile(
     r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$"
 )
 
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -129,10 +130,7 @@ def ensure_nsenter_available() -> None:
         RuntimeError: If nsenter is not available on PATH.
     """
     if shutil.which("nsenter") is None:
-        log.error(
-            "nsenter is not available on PATH. This script must run in a container "
-            "image that provides util-linux (nsenter)"
-        )
+        log.error("nsenter is not available on PATH. This script must run in a container image that provides util-linux (nsenter)")
         raise RuntimeError("nsenter not available; cannot manage containerd on host")
 
 
@@ -323,8 +321,7 @@ def inject_config_path(containerd_version: int) -> None:
 
     if has_config_path and not has_mirrors:
         log.info(
-            "config_path already set under [%s] and no legacy mirrors to strip; "
-            "nothing to do.",
+            "config_path already set under [%s] and no legacy mirrors to strip; nothing to do.",
             plugin["header"],
         )
         return
@@ -333,8 +330,7 @@ def inject_config_path(containerd_version: int) -> None:
     stripped_text = _strip_registry_mirrors_blocks(source_text)
     if stripped_text != source_text:
         log.info(
-            "Stripped legacy `registry.mirrors.*` block(s) from config.toml "
-            "(incompatible with config_path under containerd 2.x)."
+            "Stripped legacy `registry.mirrors.*` block(s) from config.toml (incompatible with config_path under containerd 2.x)."
         )
 
     # Only append config_path if it isn't already there — avoids producing
@@ -590,10 +586,7 @@ def main() -> None:
     except RuntimeError:
         sys.exit(1)
 
-    strategy = (
-        "operator-supplied containerdConfigToml" if containerd_version == 1
-        else "hosts.d (config_path + hosts.toml)"
-    )
+    strategy = "operator-supplied containerdConfigToml" if containerd_version == 1 else "hosts.d (config_path + hosts.toml)"
     log.info("Detected containerd %d.x; using %s strategy", containerd_version, strategy)
 
     _startup(containerd_version)

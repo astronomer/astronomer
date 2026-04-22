@@ -31,9 +31,9 @@ when containerdConfigToml is not set (nil). Prefer using containerdVersion: "2" 
 {{- end }}
 
 {{/*
-Registry hostname differs between unified and data-plane installs 
+Registry hostname differs between unified and data-plane installs
 because data-plane clusters prefix the base domain with
-`global.plane.domainPrefix`. 
+`global.plane.domainPrefix`.
 */}}
 {{- define "containerd.registryHost" -}}
 {{- if eq .Values.global.plane.mode "data" -}}
