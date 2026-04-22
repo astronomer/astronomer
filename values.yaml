@@ -45,8 +45,8 @@ global:
     containerdnodeAffinitys: []
     containerdTolerations: []
     certCopier:
-      repository: quay.io/astronomer/ap-base
-      tag: 2026.04.22
+      repository: quay.io/astronomer/ap-db-bootstrapper
+      tag: 2.0.1
       pullPolicy: IfNotPresent
     priorityClassName: ~
   #Global flag to enable Operator based deployment

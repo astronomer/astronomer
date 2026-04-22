@@ -56,8 +56,18 @@ spec:
           - "sh"
           - "-c"
         args:
-          - sh /cert-copy-and-toml-update.sh
+          - |
+            python3 /scripts/update-containerd-certs.py
         imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.pullPolicy }}
+        env:
+        - name: REGISTRY_HOST
+          value: {{ include "containerd.registryHost" . | quote }}
+        - name: CONTAINERD_HOST_PATH
+          value: "/hostcontainerd"
+        - name: CERT_CONFIG_PATH
+          value: "{{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}"
+        - name: PRIVATE_CA_CERTS_DIR
+          value: "/private-ca-certs"
         securityContext:
           runAsUser: 0
           privileged: true
@@ -75,9 +85,14 @@ spec:
         - mountPath: /hostcontainerd
           name: hostcontainerd
           readOnly: false
-        - mountPath: /cert-copy-and-toml-update.sh
-          name: cert-copy-and-toml-update
-          subPath: update-containerd-certs.sh
+        - mountPath: /scripts/update-containerd-certs.py
+          name: containerd-ca-config
+          subPath: update-containerd-certs.py
+        {{- if .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
+        - mountPath: /config/containerd-config-toml
+          name: containerd-ca-config
+          subPath: containerd-config-toml
+        {{- end }}
         {{ range $secret_name := (.Values.global.privateCaCerts) }}
         - name: {{ $secret_name }}
           mountPath: /private-ca-certs/{{ $secret_name }}/{{ $secret_name }}.pem
@@ -93,10 +108,10 @@ spec:
         name: hostcontainerd
       - name: hostcerts
         hostPath:
-          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/registry.{{ .Values.global.baseDomain }}/
-      - name: cert-copy-and-toml-update
+          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/{{ include "containerd.registryHost" . }}/
+      - name: containerd-ca-config
         configMap:
-          name: {{ .Release.Name }}-cert-copy-and-toml-update
+          name: {{ .Release.Name }}-containerd-ca-config
       {{ range $secret_name := (.Values.global.privateCaCerts) }}
       - name: {{ $secret_name }}
         secret:
