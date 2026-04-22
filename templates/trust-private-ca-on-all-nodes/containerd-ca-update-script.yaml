@@ -17,6 +17,6 @@ data:
 {{ .Files.Get "files/update-containerd-certs.py" | indent 4 }}
   {{- with .Values.global.privateCaCertsAddToHost.containerdConfigToml }}
   containerd-config-toml: |-
-{{ include "containerd.configToml" $ | indent 4 }}
+    {{- include "containerd.configToml" $ | nindent 4 }}
   {{- end }}
 {{- end }}
