@@ -1250,8 +1250,7 @@ class TestCLI:
         """--dry-run on an already-migrated file reports no changes."""
         input_file = tmp_path / "values.yaml"
         input_file.write_text(
-            "global:\n  rbac:\n    enabled: true\n"
-            "astronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: true\n"
+            "global:\n  rbac:\n    enabled: true\nastronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: true\n"
         )
 
         import subprocess
