@@ -29,6 +29,7 @@ class TestAstronomerCommanderIngress:
         assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
         assert annotations["nginx.ingress.kubernetes.io/custom-http-errors"] == "404"
         assert annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] == "16k"
+        assert annotations["nginx.ingress.kubernetes.io/load-balance"] == "least_conn"
 
     def test_commander_grpc_ingress_unified_mode(self, kube_version):
         """Test that helm renders GRPC ingress template for unified plane mode."""
