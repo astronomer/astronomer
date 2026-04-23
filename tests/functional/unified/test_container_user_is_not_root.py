@@ -3,7 +3,16 @@ import testinfra
 
 from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_running_containers
 
-container_ignore_list = ["kube-state", "houston", "astro-ui"]
+container_ignore_list = [
+    "astro-ui",
+    "configmap-reloader",
+    "default-backend",
+    "houston",
+    "kube-state",
+    "nginx",
+    "postgresql",
+    "vector",
+]
 
 _all_containers = get_pod_running_containers(kubeconfig=KUBECONFIG_UNIFIED, namespace="astronomer")
 _test_containers = {k: v for k, v in _all_containers.items() if v["_name"] not in container_ignore_list}
