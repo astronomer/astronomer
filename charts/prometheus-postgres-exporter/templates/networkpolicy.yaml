@@ -9,7 +9,6 @@ metadata:
   name: {{ .Release.Name }}-prometheus-postgresql-exporter-policy
   labels:
     tier: monitoring
-    app: {{ template "prometheus-postgres-exporter.name" . }}
     component: postgresql-exporter-policy
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

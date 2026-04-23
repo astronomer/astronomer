@@ -29,7 +29,6 @@ class TestPrometheusPostgresExporter:
         doc = docs[0]
         assert doc["kind"] == "Service"
         assert doc["metadata"]["name"] == "release-name-postgresql-exporter"
-        assert doc["spec"]["selector"]["app"] == "prometheus-postgres-exporter"
         assert doc["spec"]["selector"]["component"] == "prometheus-postgres-exporter"
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"] == [

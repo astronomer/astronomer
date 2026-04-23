@@ -10,7 +10,6 @@ spec:
   maxUnavailable: 1
   selector:
     matchLabels:
-      app: {{ template "prometheus-postgres-exporter.name" . }}
       component: {{ template "prometheus-postgres-exporter.name" . }}
       release: {{ .Release.Name }}
 {{- end }}
