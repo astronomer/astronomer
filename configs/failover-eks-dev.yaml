@@ -1,26 +1,26 @@
-# astronomer:
-#   dpLink:
-#     enabled: true
-#   flightDeck:
-#     enabled: true
-#   houston:
-#     worker:
-#       dispatcher:
-#         enabled: true
-#   images:
-#     astroUI:
-#       pullPolicy: Always
-#     commander:
-#       pullPolicy: Always
-#     houston:
-#       pullPolicy: Always
-#   navigator:
-#     enabled: true
-#     env:
-#       - name: DEBUG
-#         value: "true"
-#   pilot:
-#     enabled: true
+astronomer:
+  dpLink:
+    enabled: true
+  flightDeck:
+    enabled: true
+  houston:
+    worker:
+      dispatcher:
+        enabled: true
+  images:
+    astroUI:
+      pullPolicy: Always
+    commander:
+      pullPolicy: Always
+    houston:
+      pullPolicy: Always
+  navigator:
+    enabled: true
+    env:
+      - name: DEBUG
+        value: "true"
+  pilot:
+    enabled: true
 external-secrets:
   enabled: true
 global:

@@ -79,6 +79,29 @@ class TestAllPodSpecContainers:
         pod_manager_docs,
         ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
     )
+    def test_selector_matches_pod_template_labels(self, doc):
+        """Test that spec.selector.matchLabels is a subset of spec.template.metadata.labels.
+
+        Kubernetes requires that the selector matches the pod template labels, otherwise
+        the Deployment/StatefulSet/DaemonSet will be rejected by the API server.
+        """
+        match_labels = doc["spec"]["selector"]["matchLabels"]
+        template_labels = doc["spec"]["template"]["metadata"]["labels"]
+        for key, value in match_labels.items():
+            assert key in template_labels, (
+                f"{doc['kind']}/{doc['metadata']['name']}: selector.matchLabels key '{key}' "
+                f"is missing from spec.template.metadata.labels"
+            )
+            assert template_labels[key] == value, (
+                f"{doc['kind']}/{doc['metadata']['name']}: selector.matchLabels['{key}']={value!r} "
+                f"does not match template label value {template_labels[key]!r}"
+            )
+
+    @pytest.mark.parametrize(
+        "doc",
+        pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
+    )
     def test_default_chart_with_basedomain(self, doc):
         """Test that each container in each pod spec renders and has some required fields."""
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
