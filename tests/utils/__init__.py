@@ -1,4 +1,4 @@
-from tests.utils.chart import render_chart
+from tests.utils.chart import render_chart  # noqa: F401
 
 
 def get_env_vars_dict(container_env):
