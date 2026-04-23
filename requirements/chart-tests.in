@@ -14,3 +14,4 @@ pytest-xdist
 PyYAML
 requests
 typing-extensions # transient
+yamllint
