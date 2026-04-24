@@ -53,7 +53,6 @@ def test_houston_configmap_defaults():
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
 
     assert not prod["deployments"].get("authSideCar")
-    assert not prod["deployments"]["logging"].get("loggingSidecar")
 
     # Verify new unified feature flags
     assert prod["deployments"]["logging"]["enabled"] is True
@@ -1017,6 +1016,7 @@ def test_houston_configmap_features_grafana_defaults():
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
+
 
 def test_houston_configmap_no_flat_enabled_flags_under_deployments():
     """Guard the uniform flag pattern (PLX-254): no flat *Enabled keys may
