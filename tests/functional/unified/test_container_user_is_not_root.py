@@ -5,12 +5,12 @@ from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_running_containers
 
 container_ignore_list = [
     "astro-ui",
+    "astronomer-postgresql",
     "configmap-reloader",
     "default-backend",
     "houston",
     "kube-state",
     "nginx",
-    "postgresql",
     "vector",
 ]
 
