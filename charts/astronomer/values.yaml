@@ -223,7 +223,7 @@ houston:
     # Choose exactly one supported sink for Houston audit logging:
     # - CloudWatch on EKS
     # - GCP Cloud Logging on GKE
-    # - Elasticsearch to an external ES cluster
+    # - External Elasticsearch from EKS or GKE
     loggingSidecar:
       enabled: false
 
