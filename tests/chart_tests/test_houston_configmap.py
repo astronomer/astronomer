@@ -992,7 +992,7 @@ def test_houston_configmap_features_elasticsearch_defaults():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    es = prod["deployments"]["logging"]["elasticsearch"]
+    es = prod["deployments"]["helm"]["airflow"]["elasticsearch"]
     assert es["enabled"] is True
     assert es["connection"]["host"].endswith("-elasticsearch-nginx.default")
     assert es["connection"]["port"] == 9200
@@ -1005,7 +1005,7 @@ def test_houston_configmap_features_elasticsearch_custom_logging():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    es = prod["deployments"]["logging"]["elasticsearch"]
+    es = prod["deployments"]["helm"]["airflow"]["elasticsearch"]
     assert es["enabled"] is True
     assert es["connection"]["host"].endswith("-external-es-proxy.default")
     assert es["connection"]["port"] == 9200
