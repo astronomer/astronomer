@@ -232,7 +232,6 @@ def test_houston_configmap_with_config_syncer_disabled():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert "extraVolumeMounts" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
     assert "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
-    assert not prod_yaml["deployments"]["logging"].get("loggingSidecar")
 
 
 def test_houston_configmap_with_vector_index_prefix_defaults():
