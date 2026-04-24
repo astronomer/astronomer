@@ -101,6 +101,8 @@ global:
   deploymentLifecycle:
     deployRollback:
       enabled: false
+      dagTarballVersionValidation:
+        enabled: true
 
   # Deploy mechanisms
   deployMechanisms:
