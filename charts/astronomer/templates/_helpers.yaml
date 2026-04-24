@@ -68,7 +68,7 @@
 {{- $images := .Values.images | default dict -}}
 {{- $vector := $images.vector | default dict -}}
 {{- $repo := default "quay.io/astronomer/ap-vector" $vector.repository -}}
-{{- $tag := default "0.52.0" $vector.tag -}}
+{{- $tag := default "0.54.0" $vector.tag -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-vector:{{ $tag }}
 {{- else -}}
