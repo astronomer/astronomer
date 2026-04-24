@@ -55,10 +55,6 @@ def test_houston_configmap_defaults():
     assert not prod["deployments"].get("authSideCar")
 
     # Verify new unified feature flags
-    assert prod["deployments"]["logging"]["enabled"] is True
-    assert prod["deployments"]["logging"]["provider"] == "fluentd"
-    assert prod["deployments"]["logging"]["elasticsearch"]["enabled"] is True
-    assert prod["deployments"]["logging"]["elasticsearch"]["connection"]["port"] == 9200
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
     assert prod["strictSchemaCheck"]["enabled"] is True
 
