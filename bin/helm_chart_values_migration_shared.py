@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
@@ -406,55 +406,330 @@ GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMov
 
 HOUSTON_DEPLOYMENTS_PREFIX = "astronomer.houston.config.deployments"
 
-HOUSTON_DEPLOYMENT_BOOL_RULES: list[BoolToNested] = [
-    BoolToNested("dagProcessorEnabled", ["airflowComponents", "dagProcessor", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested("triggererEnabled", ["airflowComponents", "triggerer", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested(
-        "configureDagDeployment", ["deployMechanisms", "configureDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
-    ),
-    BoolToNested(
-        "gitSyncDagDeployment", ["deployMechanisms", "gitSyncDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
-    ),
-    BoolToNested(
-        "nfsMountDagDeployment", ["deployMechanisms", "nfsMountDagDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
-    ),
-    BoolToNested(
+# Renders houston-api ``DEPLOYMENTS_PATH_MIGRATIONS`` for Helm
+# (``src/lib/deployments-config-path-migration/index.js``). Order is significant.
+HOUSTON_DEPLOYMENT_PATH_MIGRATIONS: list[tuple[str, str | None, str]] = [
+    ("performanceOptimizationModeEnabled", "performanceOptimization.enabled", "boolean-to-enabled"),
+    ("upsertExtraIniAllowed", "upsertDeployment.extraIniAllowed", "move"),
+    ("logHelmValues", "logHelmValues.enabled", "boolean-to-enabled"),
+    ("airflowV3", "runtimeManagement.airflowV3", "boolean-to-airflowV3"),
+    ("customImageShaEnabled", "runtimeManagement.customImageSha.enabled", "boolean-to-enabled"),
+    (
         "enableListAllRuntimeVersions",
-        ["runtimeManagement", "listAllRuntimeVersions", "enabled"],
-        path_prefix=HOUSTON_DEPLOYMENTS_PREFIX,
+        "runtimeManagement.listAllRuntimeVersions.enabled",
+        "boolean-to-enabled",
     ),
-    BoolToNested(
+    (
+        "runtimeEnvOverideSemverCheck",
+        "runtimeManagement.runtimeEnvOverrideSemverCheck",
+        "move",
+    ),
+    ("astroRuntimeReleasesFile", "runtimeManagement.astroRuntimeReleasesFile", "move"),
+    (
+        "airflowMinimumAstroRuntimeVersion",
+        "runtimeManagement.airflowMinimumAstroRuntimeVersion",
+        "move",
+    ),
+    ("loggingSidecar", "logging.loggingSidecar", "move"),
+    ("elasticsearch", "logging.elasticsearch", "move"),
+    (
+        "configureDagDeployment",
+        "deployMechanisms.configureDagDeployment.enabled",
+        "boolean-to-enabled",
+    ),
+    ("dagOnlyDeployment", "deployMechanisms.dagOnlyDeployment.enabled", "boolean-to-enabled"),
+    (
+        "nfsMountDagDeployment",
+        "deployMechanisms.nfsMountDagDeployment.enabled",
+        "boolean-to-enabled",
+    ),
+    (
+        "gitSyncDagDeployment",
+        "deployMechanisms.gitSyncDagDeployment.enabled",
+        "boolean-to-enabled",
+    ),
+    ("gitSyncRelay", "deployMechanisms.gitSyncRelay", "move"),
+    ("triggererEnabled", "airflowComponents.triggerer.enabled", "boolean-to-enabled"),
+    ("dagProcessorEnabled", "airflowComponents.dagProcessor.enabled", "boolean-to-enabled"),
+    (
+        "disableManageResourceQuotasAndLimitRanges",
+        "resourceManagement.resourceQuotas.enabled",
+        "invert-to-enabled",
+    ),
+    ("components", "resourceManagement.components", "move"),
+    ("executors", "resourceManagement.executors", "move"),
+    ("astroUnit", "resourceManagement.astroUnit", "move"),
+    ("maxExtraCapacity", "resourceManagement.maxExtraCapacity", "move"),
+    ("maxPodCapacity", "resourceManagement.maxPodCapacity", "move"),
+    ("sidecars", "resourceManagement.sidecars", "move"),
+    (
+        "overProvisioningFactorMem",
+        "resourceManagement.overProvisioningFactorMem",
+        "move",
+    ),
+    (
+        "overProvisioningFactorCPU",
+        "resourceManagement.overProvisioningFactorCPU",
+        "move",
+    ),
+    (
+        "overProvisioningComponents",
+        "resourceManagement.overProvisioningComponents",
+        "move",
+    ),
+    (
+        "manualReleaseNames",
+        "namespaceManagement.manualReleaseNames.enabled",
+        "boolean-to-enabled",
+    ),
+    (
+        "manualNamespaceNames",
+        "namespaceManagement.manualNamespaceNames.enabled",
+        "boolean-to-enabled",
+    ),
+    (
+        "namespaceFreeFormEntry",
+        "namespaceManagement.namespaceFreeFormEntry",
+        "object-or-boolean-to-nested",
+    ),
+    (
+        "preDeploymentValidationHook",
+        "namespaceManagement.namespaceFreeFormEntry.preDeploymentValidationHook",
+        "move",
+    ),
+    (
+        "preDeploymentValidationHookTimeout",
+        "namespaceManagement.namespaceFreeFormEntry.preDeploymentValidationHookTimeout",
+        "move",
+    ),
+    ("namespaceLabels", "namespaceManagement.namespaceLabels", "move"),
+    (
+        "preCreatedNamespaces",
+        "namespaceManagement.preCreatedNamespaces",
+        "move",
+    ),
+    (
+        "deployRollback",
+        "deploymentLifecycle.deployRollback",
+        "object-or-boolean-to-nested",
+    ),
+    (
+        "hardDeleteDeployment",
+        "deploymentLifecycle.hardDeleteDeployment.enabled",
+        "boolean-to-enabled",
+    ),
+    (
+        "cleanupAirflowDb",
+        "deploymentLifecycle.cleanupAirflowDb",
+        "object-or-boolean-to-nested",
+    ),
+    ("database", "databaseManagement.database", "move"),
+    (
+        "manualConnectionStrings",
+        "databaseManagement.manualConnectionStrings.enabled",
+        "boolean-to-enabled",
+    ),
+    (
+        "pgBouncerResourceCalculationStrategy",
+        "databaseManagement.pgBouncerResourceCalculationStrategy",
+        "move",
+    ),
+    (
+        "exposeDockerWebhookEndpoint",
+        "deploymentImagesRegistry.exposeDockerWebhookEndpoint.enabled",
+        "boolean-to-enabled",
+    ),
+    (
         "enableUpdateDeploymentImageEndpoint",
-        ["deploymentImagesRegistry", "updateDeploymentImageEndpoint", "enabled"],
-        path_prefix=HOUSTON_DEPLOYMENTS_PREFIX,
+        "deploymentImagesRegistry.updateDeploymentImageEndpoint.enabled",
+        "boolean-to-enabled",
     ),
-    BoolToNested("grafanaUIEnabled", ["metricsReporting", "grafana", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested(
-        "hardDeleteDeployment", ["deploymentLifecycle", "hardDeleteDeployment", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
+    (
+        "enableUpdateDeploymentImageEndpointDockerValidation",
+        "deploymentImagesRegistry.updateDeploymentImageEndpointDockerValidation.enabled",
+        "boolean-to-enabled",
     ),
-    BoolToNested("logHelmValues", ["logHelmValues", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX),
-    BoolToNested(
-        "manualReleaseNames", ["namespaceManagement", "manualReleaseNames", "enabled"], path_prefix=HOUSTON_DEPLOYMENTS_PREFIX
+    (
+        "serviceAccountAnnotationKey",
+        "deploymentImagesRegistry.serviceAccountAnnotationKey",
+        "move",
     ),
-    BoolToNested(
+    ("grafanaUIEnabled", "metricsReporting.grafana.enabled", "boolean-to-enabled"),
+    ("taskUsageReport", "metricsReporting.taskUsageMetrics", "taskUsageReport-to-taskUsageMetrics"),
+    ("pagination", "metricsReporting.pagination", "move"),
+    ("upsertDeploymentEnabled", None, "deprecated-unset"),
+    (
         "canUpsertDeploymentFromUI",
-        ["upsertDeployment", "allowFromUi", "enabled"],
-        path_prefix=HOUSTON_DEPLOYMENTS_PREFIX,
+        "upsertDeployment.allowFromUi.enabled",
+        "boolean-to-enabled",
     ),
+    ("enableSystemAdminCanCreateDeprecatedAirflows", None, "deprecated-unset"),
+    ("defaultDistribution", None, "deprecated-unset"),
 ]
 
-HOUSTON_DEPLOYMENT_MOVE_KEYS: list[tuple[str, list[str]]] = [
-    ("pgBouncerResourceCalculationStrategy", ["databaseManagement", "pgBouncerResourceCalculationStrategy"]),
-    ("serviceAccountAnnotationKey", ["deploymentImagesRegistry", "serviceAccountAnnotationKey"]),
-]
+HOUSTON_DEPLOYMENT_CHART_ONLY_DELETE_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "astroUnitsEnabled",
+        "resourceProvisioningStrategy",
+        "maxPodAu",
+    }
+)
 
-HOUSTON_DEPLOYMENT_DELETE_KEYS: list[str] = [
-    "astroUnitsEnabled",
-    "resourceProvisioningStrategy",
-    "maxPodAu",
-    "upsertDeploymentEnabled",
-    "enableSystemAdminCanCreateDeprecatedAirflows",
-]
+
+def _cfg_get(obj: Any, key: str) -> Any:
+    """Read a key from a ``dict`` or ``CommentedMap`` if present; else ``None``."""
+    if isinstance(obj, (dict, CommentedMap)) and key in obj:
+        return obj[key]
+    return None
+
+
+def _set_dotted_path_in_mapping(root: CommentedMap, dotted: str, value: Any) -> None:
+    """Set ``value`` at a dotted key path, creating ``CommentedMap`` parents and replacing
+    non-mapping intermediates, mirroring lodash ``set`` behavior.
+    """
+    parts = dotted.split(".")
+    if not parts:
+        return
+    current: Any = root
+    for i, part in enumerate(parts):
+        is_last = i == len(parts) - 1
+        if is_last:
+            if not isinstance(current, CommentedMap):
+                return
+            current[part] = value
+        else:
+            if not isinstance(current, CommentedMap) or part not in current or not isinstance(current[part], CommentedMap):
+                if not isinstance(current, CommentedMap):
+                    return
+                current[part] = CommentedMap()
+            current = current[part]
+
+
+def _tdv_boolean_to_enabled(value: Any) -> Any:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (dict, CommentedMap)) and "enabled" in value:
+        return value["enabled"]
+    return value
+
+
+def _tdv_invert_to_enabled(value: Any) -> Any:
+    if isinstance(value, bool):
+        return not value
+    if value is not None and isinstance(value, (dict, CommentedMap)) and "enabled" in value:
+        return not value["enabled"]
+    return (not value) if value is not None else True
+
+
+def _tdv_boolean_to_airflow_v3(value: Any) -> Any:
+    if isinstance(value, bool):
+        m = CommentedMap()
+        m["enabled"] = value
+        m["minimumAstroRuntimeVersion"] = "3.1-2"
+        return m
+    if value is not None and isinstance(value, (dict, CommentedMap)):
+        e = _cfg_get(value, "enabled")
+        mv = _cfg_get(value, "minimumAstroRuntimeVersion")
+        out = CommentedMap()
+        out["enabled"] = True if e is None else e
+        out["minimumAstroRuntimeVersion"] = "3.1-2" if mv is None else mv
+        return out
+    m2 = CommentedMap()
+    m2["enabled"] = bool(value)
+    m2["minimumAstroRuntimeVersion"] = "3.1-2"
+    return m2
+
+
+def _tdv_object_or_boolean_to_nested(value: Any) -> Any:
+    if isinstance(value, bool):
+        o = CommentedMap()
+        o["enabled"] = value
+        return o
+    if value is not None and isinstance(value, (dict, CommentedMap)):
+        o2 = CommentedMap()
+        for k, v in value.items():
+            o2[k] = v
+        e = _cfg_get(value, "enabled")
+        o2["enabled"] = True if e is None else e
+        return o2
+    o3 = CommentedMap()
+    o3["enabled"] = bool(value)
+    return o3
+
+
+def _tdv_task_usage_report_to_metrics(value: Any) -> Any:
+    if isinstance(value, bool):
+        t = CommentedMap()
+        t["enabled"] = value
+        t["reportNumberOfDays"] = 90
+        return t
+    if value is not None and isinstance(value, (dict, CommentedMap)):
+        tme = _cfg_get(value, "taskUsageMetricsEnabled")
+        en = _cfg_get(value, "enabled")
+        tdays = _cfg_get(value, "taskUsageReportNumberOfDays")
+        rdays = _cfg_get(value, "reportNumberOfDays")
+        out2 = CommentedMap()
+        out2["enabled"] = tme if tme is not None else (en if en is not None else True)
+        out2["reportNumberOfDays"] = tdays if tdays is not None else (rdays if rdays is not None else 90)
+        return out2
+    t2 = CommentedMap()
+    t2["enabled"] = bool(value)
+    t2["reportNumberOfDays"] = 90
+    return t2
+
+
+def _transform_houston_deployment_value(value: Any, transform: str) -> Any:
+    """Mirror ``transformValue`` in ``deployments-config-path-migration/index.js``."""
+    match transform:
+        case "boolean-to-enabled":
+            return _tdv_boolean_to_enabled(value)
+        case "invert-to-enabled":
+            return _tdv_invert_to_enabled(value)
+        case "move":
+            return value
+        case "boolean-to-airflowV3":
+            return _tdv_boolean_to_airflow_v3(value)
+        case "object-or-boolean-to-nested":
+            return _tdv_object_or_boolean_to_nested(value)
+        case "taskUsageReport-to-taskUsageMetrics":
+            return _tdv_task_usage_report_to_metrics(value)
+        case "deprecated-unset":
+            return None
+        case _:
+            return value
+
+
+def _apply_houston_deployments_path_migrations(
+    deployments: CommentedMap,
+) -> list[MigrationChange]:
+    """Rewrite flat ``deployments`` keys the same as ``migrateDeploymentsConfig`` in houston-api."""
+    changes: list[MigrationChange] = []
+    for old_key, new_dotted, transform in HOUSTON_DEPLOYMENT_PATH_MIGRATIONS:
+        if old_key not in deployments:
+            continue
+        if transform == "deprecated-unset":
+            _delete_key(deployments, old_key)
+            p = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{old_key}"
+            changes.append(MigrationChange(p, "(deleted)", f"Deprecated key removed: {p}"))
+            continue
+        if not new_dotted:
+            continue
+        if _path_exists(deployments, new_dotted.split(".")):
+            if not new_dotted.startswith(f"{old_key}."):
+                _delete_key(deployments, old_key)
+                p_old = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{old_key}"
+                p_new = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{new_dotted}"
+                changes.append(MigrationChange(p_old, p_new, f"Removed stale {p_old} (kept existing {p_new})"))
+            continue
+        old_value = deployments[old_key]
+        new_value = _transform_houston_deployment_value(old_value, transform)
+        _set_dotted_path_in_mapping(deployments, new_dotted, new_value)
+        p_old = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{old_key}"
+        p_new = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{new_dotted}"
+        if not new_dotted.startswith(f"{old_key}."):
+            _delete_key(deployments, old_key)
+        changes.append(MigrationChange(p_old, p_new, f"Migrated {p_old} -> {p_new}"))
+    return changes
 
 
 HOUSTON_CONFIG_PREFIX = "astronomer.houston.config"
@@ -465,6 +740,7 @@ _NATS_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.nats"
 _DPLINK_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.workers.dplink"
 _APOLLO_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.apollo"
 _MOCK_WH_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.deployments.mockWebhook"
+_HELM_PREFIX = f"{HOUSTON_CONFIG_PREFIX}.helm"
 
 HOUSTON_CONFIG_RULES: list[tuple[list[str], BoolToNested | InvertedBoolToNested]] = [
     ([], BoolToNested("emailConfirmation", ["emailConfirmation", "enabled"], path_prefix=HOUSTON_CONFIG_PREFIX)),
@@ -488,6 +764,7 @@ HOUSTON_CONFIG_RULES: list[tuple[list[str], BoolToNested | InvertedBoolToNested]
     (["workers", "dplink"], BoolToNested("debugEnabled", ["debug", "enabled"], path_prefix=_DPLINK_PREFIX)),
     (["apollo"], BoolToNested("auditMiddlewareEnabled", ["auditMiddleware", "enabled"], path_prefix=_APOLLO_PREFIX)),
     (["deployments", "mockWebhook"], BoolToNested("krbEnabled", ["krb", "enabled"], path_prefix=_MOCK_WH_PREFIX)),
+    (["helm"], BoolToNested("rbacEnabled", ["rbac", "enabled"], path_prefix=_HELM_PREFIX)),
 ]
 
 HOUSTON_CONFIG_MOVE_KEYS: list[tuple[list[str], str, list[str]]] = [
@@ -558,7 +835,11 @@ def apply_global_feature_flag_rules_to_all(root: CommentedMap) -> list[Migration
 
 
 def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationChange]:
-    """Apply Houston `config.deployments` bool, move, and delete migrations.
+    """Apply Houston `config.deployments` path rewrites and chart-only deletions.
+
+    Renders the same key order and transforms as
+    `migrateDeploymentsConfig` in houston-api, plus deletions of keys
+    that do not have a 2.x equivalent in Helm (see chart-only set).
 
     Parameters:
         root: The parsed YAML document root.
@@ -571,24 +852,9 @@ def apply_houston_deployment_migrations(root: CommentedMap) -> list[MigrationCha
     if deployments is None:
         return all_changes
 
-    for rule in HOUSTON_DEPLOYMENT_BOOL_RULES:
-        all_changes.extend(rule.apply(deployments))
+    all_changes.extend(_apply_houston_deployments_path_migrations(deployments))
 
-    for old_key, new_path in HOUSTON_DEPLOYMENT_MOVE_KEYS:
-        if old_key not in deployments:
-            continue
-        if _path_exists(deployments, new_path):
-            _delete_key(deployments, old_key)
-        else:
-            value = deployments[old_key]
-            parent = _ensure_nested_key(deployments, new_path[:-1])
-            parent[new_path[-1]] = value
-            _delete_key(deployments, old_key)
-        old_str = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{old_key}"
-        new_str = HOUSTON_DEPLOYMENTS_PREFIX + "." + ".".join(new_path)
-        all_changes.append(MigrationChange(old_str, new_str, f"Moved {old_str} -> {new_str}"))
-
-    for key in HOUSTON_DEPLOYMENT_DELETE_KEYS:
+    for key in HOUSTON_DEPLOYMENT_CHART_ONLY_DELETE_KEYS:
         if key in deployments:
             _delete_key(deployments, key)
             path_str = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{key}"

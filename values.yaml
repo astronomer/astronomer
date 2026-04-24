@@ -45,8 +45,8 @@ global:
     containerdnodeAffinitys: []
     containerdTolerations: []
     certCopier:
-      repository: quay.io/astronomer/ap-base
-      tag: 2026.04.15
+      repository: quay.io/astronomer/ap-db-bootstrapper
+      tag: 2.0.1
       pullPolicy: IfNotPresent
     priorityClassName: ~
   #Global flag to enable Operator based deployment
@@ -339,21 +339,21 @@ global:
         tag: 8.6.2
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-7
+        tag: 1.24.1-8
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.20.0-4
+        tag: 0.20.0-5
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.4.15
+        tag: 2026.4.22
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.4.15
+        tag: 2026.4.22
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.4.15
+        tag: 2026.4.22
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.2.7
@@ -459,8 +459,6 @@ astronomer:
           tls:
             enabled: false
             caSecretName: ""
-
-        extraSinks: ""
 
     resources:
       requests:

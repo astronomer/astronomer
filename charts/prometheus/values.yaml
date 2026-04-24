@@ -18,19 +18,19 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 3.10.0
+    tag: 3.10.0-1
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.15.0-3
+    tag: 0.15.0-4
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.20
+    tag: 0.1.22
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.29.2
+    tag: 1.29.2-1
     pullPolicy: IfNotPresent
 
 

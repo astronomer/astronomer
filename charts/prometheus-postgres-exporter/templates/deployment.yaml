@@ -10,6 +10,7 @@ kind: Deployment
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
   labels:
+    app: {{ template "prometheus-postgres-exporter.name" . }}
     component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     release: {{ .Release.Name }}
@@ -18,6 +19,7 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
+      app: {{ template "prometheus-postgres-exporter.name" . }}
       component: {{ template "prometheus-postgres-exporter.name" . }}
       release: {{ .Release.Name }}
   template:
@@ -27,6 +29,7 @@ spec:
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
         component: {{ template "prometheus-postgres-exporter.name" . }}
+        app: {{ template "prometheus-postgres-exporter.name" . }}
         {{- include "global.podLabels" . | nindent 8 }}
 {{- if .Values.podLabels }}
 {{ toYaml .Values.podLabels | trim | indent 8 }}
