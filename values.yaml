@@ -409,7 +409,10 @@ astronomer:
     # Vector sidecar for audit log shipping from Houston API and worker.
     # This mirrors charts/astronomer/values.yaml for customers who install
     # or upgrade the umbrella chart from the repo root or packaged release.
-    # When enabled, Vector can ship to one or more sinks at the same time.
+    # Choose exactly one supported sink for Houston audit logging:
+    # - CloudWatch on EKS
+    # - GCP Cloud Logging on GKE
+    # - External Elasticsearch from EKS or GKE
     logging:
       loggingSidecar:
         enabled: false
