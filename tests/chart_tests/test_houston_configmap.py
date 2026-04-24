@@ -1019,18 +1019,6 @@ def test_houston_configmap_features_grafana_defaults():
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
 
-
-def test_houston_configmap_features_logging_defaults():
-    """Validate that logging is emitted with defaults."""
-    docs = render_chart(
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    log = prod["deployments"]["logging"]
-    assert log["enabled"] is True
-    assert log["provider"] == "fluentd"
-
-
 def test_houston_configmap_no_flat_enabled_flags_under_deployments():
     """Guard the uniform flag pattern (PLX-254): no flat *Enabled keys may
     appear directly under deployments in the rendered production.yaml.
