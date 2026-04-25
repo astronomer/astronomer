@@ -109,7 +109,7 @@ def get_images_from_houston_configmap(doc, args):
     auth_sidecar_tag = deployments["authSideCar"]["tag"]
     if auth_sidecar_repository and auth_sidecar_tag:
         images.append(f"{auth_sidecar_repository}:{auth_sidecar_tag}")
-    if logging_sidecar_image := deployments.get("logging", {}).get("loggingSidecar", {}).get("image"):
+    if logging_sidecar_image := (deployments.get("logging") or {}).get("loggingSidecar", {}).get("image"):
         images.append(logging_sidecar_image)
     dag_server_repository = deployments.get("dagDeploy", {}).get("images", {}).get("dagServer", {}).get("repository")
     dag_server_tag = deployments.get("dagDeploy", {}).get("images", {}).get("dagServer", {}).get("tag")
