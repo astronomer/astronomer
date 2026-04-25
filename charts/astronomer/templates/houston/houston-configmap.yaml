@@ -115,6 +115,8 @@ data:
         deployRollback:
           enabled: {{ .Values.global.deploymentLifecycle.deployRollback.enabled }}
           deployRevisionReportNumberOfDays: {{ .Values.houston.cleanupDeployRevisions.olderThan}}
+          dagTarballVersionValidation:
+            enabled: {{ .Values.global.deploymentLifecycle.deployRollback.dagTarballVersionValidation.enabled }}
         cleanupAirflowDb:
           enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
 

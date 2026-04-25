@@ -56,6 +56,8 @@ global:
   deploymentLifecycle:
     deployRollback:
       enabled: true
+      dagTarballVersionValidation:
+        enabled: true
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true
