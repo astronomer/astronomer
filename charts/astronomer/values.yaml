@@ -795,8 +795,8 @@ pilot:
   maxAttemptsPerLease: 3
 
   # -- Maximum retry attempts per flight
-  # @default -- 25
-  maxAttemptsPerFlight: 25
+  # @default -- 5
+  maxAttemptsPerFlight: 5
 
   # -- Retry base interval in milliseconds
   # @default -- 250
