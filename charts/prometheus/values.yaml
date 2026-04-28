@@ -207,6 +207,8 @@ config:
     kubernetes_apiservers:
       tls_config:
         insecure_skip_verify: false
+    federated_dataplanes:
+      scrape_interval: 15s
 
 rbac:
   role:
