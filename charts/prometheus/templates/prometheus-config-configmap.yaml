@@ -72,7 +72,7 @@ data:
         metrics_path: '/federate'
         scheme: https
         scrape_interval: {{ .Values.config.scrape_configs.federated_dataplanes.scrape_interval }}
-        scrape_timeout: 15s
+        scrape_timeout: {{ .Values.config.scrape_configs.federated_dataplanes.scrape_timeout }}
         params:
           'match[]':
             - '{job=~".*-kube-state$|airflow|kubernetes-nodes-cadvisor|node-exporter"}'

@@ -209,6 +209,7 @@ config:
         insecure_skip_verify: false
     federated_dataplanes:
       scrape_interval: 15s
+      scrape_timeout: 15s
 
 rbac:
   role:
