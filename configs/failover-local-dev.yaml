@@ -32,7 +32,7 @@ global:
   # Enable the dataPlaneFailover feature
   dataPlaneFailover:
     enabled: true
-    externalSecretManagerSecretName: astronomer-cluster-secret-store
+    externalSecretManagerName: astronomer-cluster-secret-store
   grafana:
     enabled: false
   helmRepo: https://internal-helm.astronomer.io

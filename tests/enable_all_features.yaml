@@ -42,7 +42,7 @@ global:
     enabled: true
   dataPlaneFailover:
     enabled: true
-    externalSecretManagerSecretName: dummy-secret-name
+    externalSecretManagerName: dummy-esm-name
   networkPolicy:
     enabled: true
   rbac:

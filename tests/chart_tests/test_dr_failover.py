@@ -94,7 +94,7 @@ class TestDataPlaneFailoverFlag:
                 "plane": {"mode": "data"},
                 "dataPlaneFailover": {
                     "enabled": True,
-                    "externalSecretManagerSecretName": "my-esm-secret",
+                    "externalSecretManagerName": "my-esm-name",
                 },
             },
         }
@@ -106,7 +106,7 @@ class TestDataPlaneFailoverFlag:
         assert len(docs) == 1
         containers = docs[0]["spec"]["template"]["spec"]["containers"]
         env_vars = get_env_vars_dict(containers[0]["env"])
-        assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME"] == "my-esm-secret"
+        assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME"] == "my-esm-name"
 
     def test_flag_data_mode_disabled_no_external_secret_manager_secret_name_env(self, kube_version):
         """When dataPlaneFailover is disabled, COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME is not set."""
