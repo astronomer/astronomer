@@ -367,8 +367,8 @@ class TestPrometheusConfigConfigmap:
         assert federated[0]["scrape_interval"] == "15s"
         assert federated[0]["scrape_timeout"] == "10s"
 
-    def test_federated_dataplanes_custom_scrape_interval(self, kube_version):
-        """Test that federated-dataplanes scrape_interval is configurable."""
+    def test_federated_dataplanes_custom_scrape_settings(self, kube_version):
+        """Test that federated-dataplanes scrape_interval and scrape_timeout are configurable."""
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -377,7 +377,10 @@ class TestPrometheusConfigConfigmap:
                 "prometheus": {
                     "config": {
                         "scrape_configs": {
-                            "federated_dataplanes": {"scrape_interval": "30s"},
+                            "federated_dataplanes": {
+                                "scrape_interval": "30s",
+                                "scrape_timeout": "5s",
+                            },
                         },
                     },
                 },
@@ -388,25 +391,4 @@ class TestPrometheusConfigConfigmap:
 
         assert len(federated) == 1
         assert federated[0]["scrape_interval"] == "30s"
-
-    def test_federated_dataplanes_custom_scrape_timeout(self, kube_version):
-        """Test that federated-dataplanes scrape_timeout is configurable."""
-        doc = render_chart(
-            kube_version=kube_version,
-            show_only=self.show_only,
-            name="astronomer",
-            values={
-                "prometheus": {
-                    "config": {
-                        "scrape_configs": {
-                            "federated_dataplanes": {"scrape_timeout": "5s"},
-                        },
-                    },
-                },
-            },
-        )[0]
-        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
-        federated = [s for s in scrape_configs if s["job_name"] == "federated-dataplanes"]
-
-        assert len(federated) == 1
         assert federated[0]["scrape_timeout"] == "5s"
