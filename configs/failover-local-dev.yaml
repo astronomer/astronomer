@@ -1,4 +1,7 @@
-# astronomer:
+astronomer:
+  houston:
+    strictSchemaCheck:
+      enabled: true
 #   airflowChartVersion: 1.17.28-build40412
 #   dpLink:
 #     enabled: true
@@ -36,12 +39,13 @@ global:
   grafana:
     enabled: false
   helmRepo: https://internal-helm.astronomer.io
-  prometheusPostgresExporterEnabled: false
   rbac:
     enabled: true
   ssl:
     enabled: true
     mode: disable
+  prometheusPostgresExporter:
+    enabled: false
 tags:
   logging: false
   monitoring: true

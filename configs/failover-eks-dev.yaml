@@ -1,4 +1,7 @@
-# astronomer:
+astronomer:
+  houston:
+    strictSchemaCheck:
+      enabled: true
 #   dpLink:
 #     enabled: true
 #   flightDeck:
@@ -12,8 +15,10 @@
 #       pullPolicy: Always
 #     commander:
 #       pullPolicy: Always
+#       tag: master
 #     houston:
 #       pullPolicy: Always
+#       tag: main
 #   navigator:
 #     enabled: true
 #     env:
@@ -28,12 +33,13 @@ global:
     enabled: true
     externalSecretManagerName: astronomer-cluster-secret-store
   helmRepo: https://internal-helm.astronomer.io
-  prometheusPostgresExporterEnabled: true
   rbac:
     enabled: true
   ssl:
     enabled: true
     mode: disable
+  prometheusPostgresExporter:
+    enabled: true
 tags:
   logging: true
   monitoring: true
