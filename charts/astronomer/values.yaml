@@ -796,7 +796,7 @@ pilot:
 
   # -- Maximum retry attempts per flight
   # @default -- 5
-  maxAttemptsPerFlight: 5
+  maxAttemptsPerFlight: 15
 
   # -- Retry base interval in milliseconds
   # @default -- 250
