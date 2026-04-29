@@ -98,6 +98,7 @@ class TestAstronomerPilot:
         assert env_vars["PILOT_RETRY_COOLOFF_SECONDS"] == "30"
         assert env_vars["PILOT_RETRY_MULTIPLIER"] == "2"
         assert env_vars["PILOT_RETRY_JITTER_PCT"] == "0.2"
+        assert env_vars["PILOT_MAX_INFRA_TAKEOVER_CEILING"] == "50"
 
         # Circuit breaker knobs
         assert env_vars["PILOT_CB_FAILURE_THRESHOLD"] == "10"

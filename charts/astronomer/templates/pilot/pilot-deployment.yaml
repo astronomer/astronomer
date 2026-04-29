@@ -135,6 +135,8 @@ spec:
               value: {{ .Values.pilot.retryMultiplier | quote }}
             - name: PILOT_RETRY_JITTER_PCT
               value: {{ .Values.pilot.retryJitterPct | quote }}
+            - name: PILOT_MAX_INFRA_TAKEOVER_CEILING
+              value: {{ .Values.pilot.maxInfraTakeoverCeiling | quote }}
             # Circuit breaker knobs
             - name: PILOT_CB_FAILURE_THRESHOLD
               value: {{ .Values.pilot.cbFailureThreshold | quote }}

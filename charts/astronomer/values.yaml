@@ -818,6 +818,14 @@ pilot:
   # @default -- 0.2
   retryJitterPct: 0.2
 
+  # -- Hard upper bound on lease_takeovers before reporting FAILED, applied
+  # only when the prior failure was NOT classified as an infra-wide outage.
+  # During an ongoing infra outage takeovers are always forgiven. Raise this
+  # for environments with frequent long commander outages; lower it to kill
+  # genuinely stuck flights faster.
+  # @default -- 50
+  maxInfraTakeoverCeiling: 50
+
   # Circuit breaker knobs
   # -- Circuit breaker failure threshold
   # @default -- 10
