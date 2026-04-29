@@ -1,3 +1,5 @@
+from ensurepip import version
+
 import jmespath
 import pytest
 import yaml
@@ -30,7 +32,10 @@ class TestAstronomerCommander:
             "global": {
                 "rbac": {"enabled": rbac_enabled},
                 "namespaceLabels": namespace_labels,
-            }
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "3.0.1-9"}},
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -47,10 +52,11 @@ class TestAstronomerCommander:
         if namespace_labels and rbac_enabled:
             assert metadata_file_contents == {
                 "namespaceLabels": namespace_labels,
+                "registry": {"version": "3.0.1-9"},
                 "customLogging": {"enabled": False},
             }
         else:
-            assert metadata_file_contents == {"namespaceLabels": {}, "customLogging": {"enabled": False}}
+            assert metadata_file_contents == {"namespaceLabels": {}, "registry": {"version": "3.0.1-9"}, "customLogging": {"enabled": False}}
 
     @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
     def test_commander_metadata_custom_logging(self, kube_version, enabled):
@@ -58,7 +64,10 @@ class TestAstronomerCommander:
         values = {
             "global": {
                 "customLogging": {"enabled": enabled},
-            }
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "3.0.1-10"}},
+                },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -72,7 +81,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "v1"
 
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
-        assert metadata_file_contents == {"namespaceLabels": {}, "customLogging": {"enabled": enabled}}
+        assert metadata_file_contents == {"namespaceLabels": {}, "customLogging": {"enabled": enabled}, "registry": {"version": "3.0.1-10"}}
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
