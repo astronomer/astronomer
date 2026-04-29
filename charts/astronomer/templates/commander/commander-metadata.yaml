@@ -15,6 +15,8 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   metadata.yaml: |-
+    registry:
+      version: {{ .Values.images.registry.tag }}
     namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
     customLogging:
       enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
