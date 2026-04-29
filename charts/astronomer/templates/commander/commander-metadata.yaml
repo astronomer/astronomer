@@ -16,7 +16,7 @@ metadata:
 data:
   metadata.yaml: |-
     registry:
-      version: {{ .Values.images.registry.tag }}
+      version: {{ .Values.images.registry.tag | quote}}
     namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
     customLogging:
       enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
