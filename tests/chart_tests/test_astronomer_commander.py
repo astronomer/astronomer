@@ -32,7 +32,7 @@ class TestAstronomerCommander:
                 "namespaceLabels": namespace_labels,
             },
             "astronomer": {
-                "images": {"registry": {"tag": "3.0.1-9"}},
+                "images": {"registry": {"tag": "99.88.77"}},
             },
         }
         docs = render_chart(
@@ -50,13 +50,13 @@ class TestAstronomerCommander:
         if namespace_labels and rbac_enabled:
             assert metadata_file_contents == {
                 "namespaceLabels": namespace_labels,
-                "registry": {"version": "3.0.1-9"},
+                "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
             }
         else:
             assert metadata_file_contents == {
                 "namespaceLabels": {},
-                "registry": {"version": "3.0.1-9"},
+                "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
             }
 
@@ -68,7 +68,7 @@ class TestAstronomerCommander:
                 "customLogging": {"enabled": enabled},
             },
             "astronomer": {
-                "images": {"registry": {"tag": "3.0.1-10"}},
+                "images": {"registry": {"tag": "99.88.77"}},
             },
         }
         docs = render_chart(
@@ -86,7 +86,7 @@ class TestAstronomerCommander:
         assert metadata_file_contents == {
             "namespaceLabels": {},
             "customLogging": {"enabled": enabled},
-            "registry": {"version": "3.0.1-10"},
+            "registry": {"version": "99.88.77"},
         }
 
     def test_commander_deployment_default(self, kube_version):
