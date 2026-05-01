@@ -91,6 +91,8 @@ global:
   # On unified (mode=unified): no effect — enable components individually
   dataPlaneFailover:
     enabled: false
+    # The name of a manually created ClusterSecretStore
+    # externalSecretManagerName: your-css-name
 
   # Metrics and reporting features
   metricsReporting:
@@ -771,4 +773,5 @@ kube-state:
 ## External Secrets configuration
 #################################
 external-secrets:
+  # Enable external-secrets to install ESO CRDs needed for dataPlaneFailover
   enabled: false
