@@ -48,6 +48,7 @@ spec:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
             - --web.listen-address=$(HOST_IP):{{ .Values.service.port }}
+            - --no-collector.kernel_hung
 {{- if .Values.extraArgs }}
 {{ toYaml .Values.extraArgs | indent 12 }}
 {{- end }}
