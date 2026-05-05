@@ -110,7 +110,7 @@ class TestOpenshift:
 
         gitSyncRelayConfig = prod["deployments"]["helm"]["gitSyncRelay"]
 
-        assert gitSyncRelayConfig["securityContext"] == None
+        assert gitSyncRelayConfig["securityContext"] is None
         assert gitSyncRelayConfig["gitDaemon"]["securityContext"] == {
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
