@@ -129,7 +129,7 @@ ls -la "${MKCERT_ROOT_CA}"
 If you regenerated the TLS cert/key (for `dp01.localtest.me` + `*.dp01.localtest.me`), update the `astronomer-tls` secret in both clusters:
 
 ```bash
-for CTX in k3d-control k3d-data; do
+for CTX in k3d-cp01 k3d-dp01; do
   kubectl --context "$CTX" -n astronomer create secret tls astronomer-tls \
     --cert="$HOME/.local/share/astronomer-software/certs/astronomer-tls.pem" \
     --key="$HOME/.local/share/astronomer-software/certs/astronomer-tls.key" \
@@ -137,8 +137,8 @@ for CTX in k3d-control k3d-data; do
 done
 
 # Restart nginx in both clusters to reload the updated certificate
-kubectl --context k3d-control -n astronomer rollout restart deployment -l tier=nginx
-kubectl --context k3d-data -n astronomer rollout restart deployment -l tier=nginx
+kubectl --context k3d-cp01 -n astronomer rollout restart deployment -l tier=nginx
+kubectl --context k3d-dp01 -n astronomer rollout restart deployment -l tier=nginx
 ```
 
 ---
@@ -154,8 +154,8 @@ k3d uses Flannel by default, which properly routes traffic to external networks.
 
 ```bash
 # Delete any existing clusters with these names
-k3d cluster delete control 2>/dev/null || true
-k3d cluster delete data 2>/dev/null || true
+k3d cluster delete cp01 2>/dev/null || true
+k3d cluster delete dp01 2>/dev/null || true
 
 # mkcert root CA path (generated in Step 2)
 MKCERT_CAROOT="$($HOME/.local/share/astronomer-software/bin/mkcert -CAROOT)"
@@ -164,7 +164,7 @@ MKCERT_ROOT_CA="${MKCERT_CAROOT}/rootCA.pem"
 # Create Control Plane cluster
 # --network: puts both clusters on the same Docker network
 # --port: maps container ports to host for external access
-k3d cluster create control \
+k3d cluster create cp01 \
   --network astronomer-net \
   --port "8443:443@loadbalancer" \
   --port "8080:80@loadbalancer" \
@@ -172,7 +172,7 @@ k3d cluster create control \
   --k3s-arg "--disable=traefik@server:0"
 
 # Create Data Plane cluster on the same network
-k3d cluster create data \
+k3d cluster create dp01 \
   --network astronomer-net \
   --port "8444:443@loadbalancer" \
   --port "8081:80@loadbalancer" \
@@ -194,17 +194,17 @@ If you need the node itself to trust mkcert (for example, debugging from inside 
 
 ```bash
 # Append mkcert root CA into the node CA bundle (Control Plane + Data Plane nodes)
-docker exec k3d-control-server-0 sh -c 'cat /etc/ssl/certs/mkcert-rootCA.pem >> /etc/ssl/certs/ca-certificates.crt'
-docker exec k3d-data-server-0 sh -c 'cat /etc/ssl/certs/mkcert-rootCA.pem >> /etc/ssl/certs/ca-certificates.crt'
+docker exec k3d-cp01-server-0 sh -c 'cat /etc/ssl/certs/mkcert-rootCA.pem >> /etc/ssl/certs/ca-certificates.crt'
+docker exec k3d-dp01-server-0 sh -c 'cat /etc/ssl/certs/mkcert-rootCA.pem >> /etc/ssl/certs/ca-certificates.crt'
 
 # Verify the file exists
-docker exec k3d-control-server-0 ls -la /etc/ssl/certs/mkcert-rootCA.pem
-docker exec k3d-data-server-0 ls -la /etc/ssl/certs/mkcert-rootCA.pem
+docker exec k3d-cp01-server-0 ls -la /etc/ssl/certs/mkcert-rootCA.pem
+docker exec k3d-dp01-server-0 ls -la /etc/ssl/certs/mkcert-rootCA.pem
 ```
 
 > **Note:** This optional node-level trust does **not** replace Step 5. Pods trust Houston’s TLS via `global.privateCaCerts` and the chart’s `update-ca-certificates` step.
 
-The clusters will have contexts named `k3d-control` and `k3d-data`.
+The clusters will have contexts named `k3d-cp01` and `k3d-dp01`.
 
 ---
 
@@ -212,11 +212,11 @@ The clusters will have contexts named `k3d-control` and `k3d-data`.
 
 ```bash
 # Get Control Plane node IP
-CP_NODE_IP=$(docker inspect k3d-control-server-0 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+CP_NODE_IP=$(docker inspect k3d-cp01-server-0 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
 echo "Control Plane Node IP: $CP_NODE_IP"
 
 # Get Data Plane node IP
-DP_NODE_IP=$(docker inspect k3d-data-server-0 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+DP_NODE_IP=$(docker inspect k3d-dp01-server-0 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
 echo "Data Plane Node IP: $DP_NODE_IP"
 
 # Get Docker network subnet
@@ -231,42 +231,42 @@ docker network inspect astronomer-net -f '{{range .IPAM.Config}}{{.Subnet}} {{en
 
 ```bash
 # Create namespace
-kubectl --context k3d-control create namespace astronomer
+kubectl --context k3d-cp01 create namespace astronomer
 
 # Create TLS secret
-kubectl --context k3d-control -n astronomer create secret tls astronomer-tls \
+kubectl --context k3d-cp01 -n astronomer create secret tls astronomer-tls \
   --cert=$HOME/.local/share/astronomer-software/certs/astronomer-tls.pem \
   --key=$HOME/.local/share/astronomer-software/certs/astronomer-tls.key
 
 # Create mkcert root CA secret (CRITICAL: enables pods to trust the self-signed TLS chain)
 MKCERT_CAROOT="$($HOME/.local/share/astronomer-software/bin/mkcert -CAROOT)"
 MKCERT_ROOT_CA="${MKCERT_CAROOT}/rootCA.pem"
-kubectl --context k3d-control -n astronomer create secret generic mkcert-root-ca \
+kubectl --context k3d-cp01 -n astronomer create secret generic mkcert-root-ca \
   --from-file=cert.pem="${MKCERT_ROOT_CA}"
 
 # Verify secrets
-kubectl --context k3d-control -n astronomer get secrets
+kubectl --context k3d-cp01 -n astronomer get secrets
 ```
 
 ### Data Plane Cluster
 
 ```bash
 # Create namespace
-kubectl --context k3d-data create namespace astronomer
+kubectl --context k3d-dp01 create namespace astronomer
 
 # Create TLS secret
-kubectl --context k3d-data -n astronomer create secret tls astronomer-tls \
+kubectl --context k3d-dp01 -n astronomer create secret tls astronomer-tls \
   --cert=$HOME/.local/share/astronomer-software/certs/astronomer-tls.pem \
   --key=$HOME/.local/share/astronomer-software/certs/astronomer-tls.key
 
 # Create mkcert root CA secret (CRITICAL: enables pods to trust the self-signed TLS chain)
 MKCERT_CAROOT="$($HOME/.local/share/astronomer-software/bin/mkcert -CAROOT)"
 MKCERT_ROOT_CA="${MKCERT_CAROOT}/rootCA.pem"
-kubectl --context k3d-data -n astronomer create secret generic mkcert-root-ca \
+kubectl --context k3d-dp01 -n astronomer create secret generic mkcert-root-ca \
   --from-file=cert.pem="${MKCERT_ROOT_CA}"
 
 # Verify secrets
-kubectl --context k3d-data -n astronomer get secrets
+kubectl --context k3d-dp01 -n astronomer get secrets
 ```
 
 ---
@@ -550,7 +550,7 @@ helm dependency update .
 echo "Installing Astronomer Control Plane..."
 helm install astronomer . \
   --namespace astronomer \
-  --kube-context k3d-control \
+  --kube-context k3d-cp01 \
   --values /tmp/cp-values.yaml \
   --timeout 60m \
   --wait --debug
@@ -560,10 +560,10 @@ helm install astronomer . \
 
 ```bash
 # Check all CP pods are running
-kubectl --context k3d-control -n astronomer get pods
+kubectl --context k3d-cp01 -n astronomer get pods
 
 # Get CP nginx service
-kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx
+kubectl --context k3d-cp01 -n astronomer get svc astronomer-cp-nginx
 ```
 
 Wait until all pods show `Running` or `Completed` status before proceeding.
@@ -579,7 +579,7 @@ With k3d/Flannel, pods CAN reach external IPs. We just need to configure DNS.
 ```bash
 # IMPORTANT: Use the Control Plane nginx LoadBalancer IP for inter-cluster calls.
 # Do NOT use the node container IP, otherwise you may hit the wrong ingress and get 404s for Houston endpoints.
-CP_NGINX_LB_IP=$(kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+CP_NGINX_LB_IP=$(kubectl --context k3d-cp01 -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo "CP nginx LoadBalancer IP: $CP_NGINX_LB_IP"
 ```
 
@@ -591,13 +591,13 @@ echo "CP nginx LoadBalancer IP: $CP_NGINX_LB_IP"
 
 ```bash
 # Backup CoreDNS ConfigMap
-kubectl --context k3d-data -n kube-system get configmap coredns -o yaml > /tmp/coredns-dp-backup.yaml
+kubectl --context k3d-dp01 -n kube-system get configmap coredns -o yaml > /tmp/coredns-dp-backup.yaml
 
 # Create the coredns-custom ConfigMap if it doesn't exist (required by k3d)
-kubectl --context k3d-data -n kube-system create configmap coredns-custom 2>/dev/null || true
+kubectl --context k3d-dp01 -n kube-system create configmap coredns-custom 2>/dev/null || true
 
 # Edit CoreDNS ConfigMap
-kubectl --context k3d-data -n kube-system edit configmap coredns
+kubectl --context k3d-dp01 -n kube-system edit configmap coredns
 ```
 
 Add your custom DNS entries to the `NodeHosts` section (at the end of the data section):
@@ -629,10 +629,10 @@ data:
     import /etc/coredns/custom/*.server
   NodeHosts: |
     192.168.147.1 host.k3d.internal
-    192.168.147.4 k3d-data-serverlb
-    192.168.147.5 k3d-control-serverlb
-    192.168.147.2 k3d-data-server-0
-    192.168.147.3 k3d-control-server-0
+    192.168.147.4 k3d-dp01-serverlb
+    192.168.147.5 k3d-cp01-serverlb
+    192.168.147.2 k3d-dp01-server-0
+    192.168.147.3 k3d-cp01-server-0
     <CP_NGINX_LB_IP> localtest.me houston.localtest.me app.localtest.me grafana.localtest.me
 ```
 
@@ -642,23 +642,23 @@ Replace `<CP_NGINX_LB_IP>` with the actual CP nginx LoadBalancer IP (e.g., `192.
 
 ```bash
 # Restart CoreDNS to pick up changes
-kubectl --context k3d-data -n kube-system delete pod -l k8s-app=kube-dns
-kubectl --context k3d-data -n kube-system wait --for=condition=ready pod -l k8s-app=kube-dns --timeout=60s
+kubectl --context k3d-dp01 -n kube-system delete pod -l k8s-app=kube-dns
+kubectl --context k3d-dp01 -n kube-system wait --for=condition=ready pod -l k8s-app=kube-dns --timeout=60s
 ```
 
 ### Verify DNS and Connectivity from DP
 
 ```bash
 # Test DNS resolution
-kubectl --context k3d-data run test-dns --rm -it --restart=Never --image=busybox -- nslookup houston.localtest.me
+kubectl --context k3d-dp01 run test-dns --rm -it --restart=Never --image=busybox -- nslookup houston.localtest.me
 
 # Test actual connectivity (this should work with k3d!)
-kubectl --context k3d-data run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
+kubectl --context k3d-dp01 run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
   curl -v -k --connect-timeout 10 https://houston.localtest.me/v1/healthz
 
 # IMPORTANT: The registry uses https://houston.<baseDomain>/v1/registry/authorization for OAuth tokens (no port),
 # so this must NOT be a 404 from the DP cluster:
-kubectl --context k3d-data run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
+kubectl --context k3d-dp01 run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
   curl -v -k --connect-timeout 10 "https://houston.localtest.me/v1/registry/authorization"
 ```
 
@@ -675,7 +675,7 @@ kubectl --context k3d-data run test-curl --rm -it --restart=Never --image=curlim
 echo "Installing Astronomer Data Plane..."
 helm install astronomer . \
   --namespace astronomer \
-  --kube-context k3d-data \
+  --kube-context k3d-dp01 \
   --values /tmp/dp-values.yaml \
   --timeout 60m \
   --wait --debug
@@ -687,14 +687,14 @@ helm install astronomer . \
 
 ```bash
 # Get DP node IP
-DP_NODE_IP=$(docker inspect k3d-data-server-0 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+DP_NODE_IP=$(docker inspect k3d-dp01-server-0 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
 echo "DP Node IP: $DP_NODE_IP"
 
 # Create the coredns-custom ConfigMap if it doesn't exist (required by k3d)
-kubectl --context k3d-control -n kube-system create configmap coredns-custom 2>/dev/null || true
+kubectl --context k3d-cp01 -n kube-system create configmap coredns-custom 2>/dev/null || true
 
 # Edit CoreDNS in CP cluster
-kubectl --context k3d-control -n kube-system edit configmap coredns
+kubectl --context k3d-cp01 -n kube-system edit configmap coredns
 ```
 
 Add DP entries to the `NodeHosts` section (same approach as DP cluster):
@@ -709,8 +709,8 @@ Replace `<DP_NODE_IP>` with the actual DP node IP (e.g., `192.168.147.2`).
 
 ```bash
 # Restart CoreDNS
-kubectl --context k3d-control -n kube-system delete pod -l k8s-app=kube-dns
-kubectl --context k3d-control -n kube-system wait --for=condition=ready pod -l k8s-app=kube-dns --timeout=60s
+kubectl --context k3d-cp01 -n kube-system delete pod -l k8s-app=kube-dns
+kubectl --context k3d-cp01 -n kube-system wait --for=condition=ready pod -l k8s-app=kube-dns --timeout=60s
 ```
 
 ---
@@ -748,7 +748,7 @@ sudo bash -c 'echo "127.0.0.1 dp01.localtest.me deployments.dp01.localtest.me re
 # Option B (only if your host can route to the LB IPs): map hostnames to the k3d LoadBalancer IPs
 # You can test routability from your macOS host:
 #
-#   CP_LB_IP=$(kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+#   CP_LB_IP=$(kubectl --context k3d-cp01 -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 #   curl -vk --connect-timeout 3 "https://${CP_LB_IP}/healthz"
 #
 # If this succeeds, you can map /etc/hosts to the LB IPs and use 443 with no port.
@@ -762,22 +762,22 @@ sudo bash -c 'echo "127.0.0.1 dp01.localtest.me deployments.dp01.localtest.me re
 
 ```bash
 echo "=== Control Plane Pods ==="
-kubectl --context k3d-control -n astronomer get pods
+kubectl --context k3d-cp01 -n astronomer get pods
 
 echo ""
 echo "=== Data Plane Pods ==="
-kubectl --context k3d-data -n astronomer get pods
+kubectl --context k3d-dp01 -n astronomer get pods
 ```
 
 ### Test Cross-Cluster Communication
 
 ```bash
 # From DP pod, test connectivity to CP
-kubectl --context k3d-data run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
+kubectl --context k3d-dp01 run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
   curl -k https://houston.localtest.me/v1/healthz
 
 # From CP pod, test connectivity to DP
-kubectl --context k3d-control run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
+kubectl --context k3d-cp01 run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
   curl -k https://dp01.localtest.me/healthz
 ```
 
@@ -817,8 +817,8 @@ python3 bin/reconcile-k3d-orbstack-network.py
 ```
 
 Defaults assumed by the script:
-- CP context: `k3d-control`
-- DP context: `k3d-data`
+- CP context: `k3d-cp01`
+- DP context: `k3d-dp01`
 - Namespace: `astronomer`
 - Base domain: `localtest.me`
 - DP domain prefix: `dp01`
@@ -826,8 +826,8 @@ Defaults assumed by the script:
 Override via env vars (example):
 
 ```bash
-CP_CONTEXT=k3d-control \
-DP_CONTEXT=k3d-data \
+CP_CONTEXT=k3d-cp01 \
+DP_CONTEXT=k3d-dp01 \
 BASE_DOMAIN=localtest.me \
 DP_DOMAIN_PREFIX=dp01 \
 python3 bin/reconcile-k3d-orbstack-network.py
@@ -837,14 +837,14 @@ python3 bin/reconcile-k3d-orbstack-network.py
 
 ```bash
 # Has the CP ingress LB IP changed?
-kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx
+kubectl --context k3d-cp01 -n astronomer get svc astronomer-cp-nginx
 
 # Can a DP pod still reach Houston?
-kubectl --context k3d-data run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
+kubectl --context k3d-dp01 run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
   curl -vk -k --connect-timeout 5 https://houston.localtest.me/v1/healthz
 
 # Does the DP node container resolve Houston correctly (node-level DNS)?
-docker exec k3d-data-server-0 sh -c 'grep -n "houston.localtest.me" /etc/hosts || true'
+docker exec k3d-dp01-server-0 sh -c 'grep -n "houston.localtest.me" /etc/hosts || true'
 ```
 
 ### Browser works but CLI (`astro`, `curl`) fails
@@ -901,17 +901,17 @@ If a **pod** in the Data Plane can reach Houston, the problem is usually **node-
 **Check from the DP node container**:
 
 ```bash
-docker exec k3d-data-server-0 sh -c 'nslookup houston.localtest.me || true'
+docker exec k3d-dp01-server-0 sh -c 'nslookup houston.localtest.me || true'
 ```
 
 If it resolves to `127.0.0.1` / `::1`, fix it by pinning `houston.localtest.me` to the **CP nginx LoadBalancer IP** in the node’s `/etc/hosts`:
 
 ```bash
-CP_NGINX_LB_IP=$(kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-docker exec k3d-data-server-0 sh -c "echo \"$CP_NGINX_LB_IP houston.localtest.me\" >> /etc/hosts"
+CP_NGINX_LB_IP=$(kubectl --context k3d-cp01 -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+docker exec k3d-dp01-server-0 sh -c "echo \"$CP_NGINX_LB_IP houston.localtest.me\" >> /etc/hosts"
 
 # Verify: should be 401 (or 403), but NOT 404
-docker exec k3d-data-server-0 sh -c 'apk add --no-cache curl >/dev/null 2>&1 || true; curl -4sk --connect-timeout 3 -o /dev/null -w "%{http_code}\n" "https://houston.localtest.me/v1/registry/authorization?service=docker-registry&scope=repository:test/test:pull"'
+docker exec k3d-dp01-server-0 sh -c 'apk add --no-cache curl >/dev/null 2>&1 || true; curl -4sk --connect-timeout 3 -o /dev/null -w "%{http_code}\n" "https://houston.localtest.me/v1/registry/authorization?service=docker-registry&scope=repository:test/test:pull"'
 ```
 
 For a permanent solution, recreate k3d clusters using k3d’s host-alias support so these `/etc/hosts` entries are injected at cluster creation time.
@@ -920,22 +920,22 @@ For a permanent solution, recreate k3d clusters using k3d’s host-alias support
 
 ```bash
 # Control Plane Houston logs
-kubectl --context k3d-control -n astronomer logs -l component=houston -f
+kubectl --context k3d-cp01 -n astronomer logs -l component=houston -f
 
 # Data Plane Commander logs
-kubectl --context k3d-data -n astronomer logs -l component=commander -f
+kubectl --context k3d-dp01 -n astronomer logs -l component=commander -f
 ```
 
 ### Delete and Recreate
 
 ```bash
 # Delete helm releases
-helm --kube-context k3d-control uninstall astronomer -n astronomer
-helm --kube-context k3d-data uninstall astronomer -n astronomer
+helm --kube-context k3d-cp01 uninstall astronomer -n astronomer
+helm --kube-context k3d-dp01 uninstall astronomer -n astronomer
 
 # Delete clusters entirely
-k3d cluster delete control
-k3d cluster delete data
+k3d cluster delete cp01
+k3d cluster delete dp01
 ```
 
 ---
