@@ -307,6 +307,57 @@ class TestHoustonSidecarLogging:
             )
         assert "houston.logging.loggingSidecar.elasticsearch.endpoint must be set" in excinfo.value.stderr.decode("utf-8")
 
+    def test_houston_log_wrapper_refreshes_ca_certificates(self, kube_version):
+        """
+        The shared log-wrapper ConfigMap must run update-ca-certificates so
+        certs from global.privateCaCerts are trusted by Node
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-log-wrapper-configmap.yaml",
+            ],
+            values={
+                "astronomer": {
+                    "houston": {
+                        "logging": {
+                            "loggingSidecar": {
+                                "enabled": True,
+                                "cloudwatch": {"enabled": True, "region": "us-east-2"},
+                            },
+                        },
+                    }
+                }
+            },
+        )
+
+        assert len(docs) == 1
+        wrapper_sh = docs[0]["data"]["wrapper.sh"]
+
+        marker_idx = wrapper_sh.find('echo "update ca certs on startup..."')
+        update_idx = wrapper_sh.find("update-ca-certificates")
+        exec_idx = wrapper_sh.find('exec "$@"')
+
+        assert marker_idx != -1, "startup marker missing from wrapper.sh"
+        assert update_idx != -1, "update-ca-certificates missing from wrapper.sh"
+        assert exec_idx != -1, "exec line missing from wrapper.sh"
+        assert marker_idx < update_idx < exec_idx, (
+            "wrapper.sh must echo the marker and run update-ca-certificates before exec"
+        )
+
+    def test_houston_log_wrapper_not_rendered_when_sidecar_disabled(self, kube_version):
+        """
+        The log-wrapper ConfigMap should only render when the sidecar is enabled.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-log-wrapper-configmap.yaml",
+            ],
+            values={},
+        )
+        assert len(docs) == 0
+
     def test_houston_sidecar_logging_elasticsearch_uses_explicit_endpoint(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
