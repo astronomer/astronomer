@@ -201,15 +201,11 @@ extraFlags:
 # Convert lists to dicts for more explicit assignment.
 # Convert dashes to underscores for golang compatibility.
 config:
-  # Enables kubelet and cAdvisor scrape jobs for pod-level metrics
   enableSelfScrape: false
   scrape_configs:
     kubernetes_apiservers:
       tls_config:
         insecure_skip_verify: false
-    federated_dataplanes:
-      scrape_interval: 15s
-      scrape_timeout: 10s
 
 rbac:
   role:
