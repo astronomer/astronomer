@@ -341,9 +341,7 @@ class TestHoustonSidecarLogging:
         assert marker_idx != -1, "startup marker missing from wrapper.sh"
         assert update_idx != -1, "update-ca-certificates missing from wrapper.sh"
         assert exec_idx != -1, "exec line missing from wrapper.sh"
-        assert marker_idx < update_idx < exec_idx, (
-            "wrapper.sh must echo the marker and run update-ca-certificates before exec"
-        )
+        assert marker_idx < update_idx < exec_idx, "wrapper.sh must echo the marker and run update-ca-certificates before exec"
 
     def test_houston_log_wrapper_not_rendered_when_sidecar_disabled(self, kube_version):
         """
