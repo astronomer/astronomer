@@ -161,3 +161,50 @@ class TestPrometheusNodeExporterDaemonset:
         assert len(spec["tolerations"]) > 0
         assert spec["nodeSelector"] == values["prometheus-node-exporter"]["nodeSelector"]
         assert spec["tolerations"] == values["prometheus-node-exporter"]["tolerations"]
+
+    def test_prometheus_node_exporter_daemonset_extra_args(self, kube_version):
+        """Test to validate node exporter with extraArgs configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                **enable_node_exporter,
+                "prometheus-node-exporter": {
+                    "extraArgs": [
+                        "--something-to-test",
+                    ],
+                },
+            },
+            show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        self.node_exporter_common_tests(doc)
+
+        c_by_name = get_containers_by_name(doc)
+        args = c_by_name["node-exporter"]["args"]
+        assert "--path.procfs=/host/proc" in args
+        assert "--path.sysfs=/host/sys" in args
+        assert "--web.listen-address=$(HOST_IP):9100" in args
+        assert "--no-collector.kernel_hung" in args
+        assert "--something-to-test" in args
+
+    def test_prometheus_node_exporter_daemonset_no_extra_args(self, kube_version):
+        """Test to validate node exporter without extraArgs has only default args."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=enable_node_exporter,
+            show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        self.node_exporter_common_tests(doc)
+
+        c_by_name = get_containers_by_name(doc)
+        args = c_by_name["node-exporter"]["args"]
+        assert len(args) == 4
+        assert "--path.procfs=/host/proc" in args
+        assert "--path.sysfs=/host/sys" in args
+        assert "--web.listen-address=$(HOST_IP):9100" in args
+        assert "--no-collector.kernel_hung" in args
