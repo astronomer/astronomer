@@ -149,21 +149,28 @@ jobs:
       qa_release:
         type: boolean
         default: false
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - checkout
       - run:
           name: Package the Astronomer chart
           command: |
             bin/install-ci-tools.py
-            bin/build-helm-chart.sh << parameters.qa_release >>
+            bin/build-helm-chart.sh << parameters.qa_release >> << parameters.artifact_subdir >>
       - persist_to_workspace:
           root: "."
           paths:
-            - "./*.tgz"
+            - "<< parameters.artifact_subdir >>/*.tgz"
 
   release-to-internal:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
+    parameters:
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -172,7 +179,7 @@ jobs:
           name: Release the Astronomer chart to internal
           command: |
             set -e
-            bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
+            bin/release-helm-chart /tmp/workspace/<< parameters.artifact_subdir >>/astronomer-*.tgz
 
   trigger-upgrade-test:
     executor: docker-executor
@@ -187,18 +194,25 @@ jobs:
             set -e
             bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
 
-  trigger-feature-stack-release:
+  trigger-stage-cluster-build:
     executor: docker-executor
     resource_class: small
+    parameters:
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Triggering update to feature cluster
+          name: Triggering update to stage cluster
           command: |
             set -e
-            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
+            bin/trigger_stage_cluster_update.py \
+              --astro_path=/tmp/workspace/<< parameters.artifact_subdir >> \
+              --circleci_token=$CIRCLECI_API_KEY_TEST \
+              --branch=$CIRCLE_BRANCH
 
   release-to-public:
     docker:
@@ -279,6 +293,41 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}
+      - approve-stage-cluster-test:
+          type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - build-artifact:
+          name: build-artifact-stage-cluster
+          qa_release: true
+          artifact_subdir: qa
+          requires:
+            - approve-stage-cluster-release
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - release-to-internal:
+          name: release-to-internal-stage-cluster
+          artifact_subdir: qa
+          context:
+            - gcp-astronomer-prod
+          requires:
+            - build-artifact-stage-cluster
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - trigger-stage-cluster-build:
+          artifact_subdir: qa
+          requires:
+            - release-to-internal-stage-cluster
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - approve-internal-release:
           type: approval
           filters:
@@ -371,7 +420,7 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
-      - trigger-feature-stack-release:
+      - trigger-stage-cluster-build:
           requires:
             - release-to-internal
           filters:
