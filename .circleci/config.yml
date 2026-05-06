@@ -464,17 +464,9 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - build-artifact
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - trigger-stage-cluster-build:
           requires:
             - release-to-internal
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
 
 commands:
   push-to-quay-io:
