@@ -282,12 +282,20 @@ workflows:
 {% endif %}{% endfor %}
       - approve-stage-cluster-test:
           type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - build-artifact:
           name: build-artifact-stage-cluster
           qa_release: true
           artifact_subdir: qa
           requires:
             - approve-stage-cluster-test
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - release-to-internal:
           name: release-to-internal-stage-cluster
           artifact_subdir: qa
@@ -295,10 +303,18 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - build-artifact-stage-cluster
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - trigger-stage-cluster-build:
           artifact_subdir: qa
           requires:
             - release-to-internal-stage-cluster
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - approve-internal-release:
           type: approval
           filters:
