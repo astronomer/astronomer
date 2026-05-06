@@ -267,7 +267,8 @@ data:
               repository: {{ .Values.global.gitSyncRelay.images.gitSync.repository }}
               tag: {{ .Values.global.gitSyncRelay.images.gitSync.tag }}
           {{ if .Values.global.openshift.enabled }}
-          securityContext: null # We have to set this to null to override the default security context that is not compatible with OpenShift. The individual containers have their own security contexts that are compatible with OpenShift.
+      # We have to set this to null to override the default security context that is not compatible with OpenShift. The individual containers have their own security contexts that are compatible with OpenShift.
+      securityContext: null
           gitDaemon:
             securityContext:
                 readOnlyRootFilesystem: true
