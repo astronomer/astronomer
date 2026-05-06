@@ -41,14 +41,9 @@ This guide walks you through setting up Astronomer with a Control Plane (CP) and
 ## Step 1: Install Prerequisites
 
 ```bash
-# Navigate to the astronomer directory
-cd /Users/karankhanchandani/codebase/python/astronomer
-
-# Activate the existing virtual environment
-source venv/bin/activate
-
-# Install required Python packages
-pip install -r tests/requirements.in
+# Set this to wherever you cloned astronomer/astronomer; the rest of this guide uses it.
+export ASTRONOMER_REPO="${ASTRONOMER_REPO:-$HOME/astronomer/astronomer}"
+cd "$ASTRONOMER_REPO"
 
 # Install k3d
 curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
@@ -70,7 +65,7 @@ kubectl version --client
 ## Step 2: Generate TLS Certificates
 
 ```bash
-cd /Users/karankhanchandani/codebase/python/astronomer
+cd "$ASTRONOMER_REPO"
 
 # Install mkcert if not already installed
 # macOS: brew install mkcert
@@ -278,11 +273,12 @@ kubectl --context k3d-data -n astronomer get secrets
 ```bash
 cat > /tmp/cp-values.yaml << 'EOF'
 # Control Plane Helm Values for k3d
-# Control Plane Helm Values for k3d
 global:
   baseDomain: localtest.me
   plane:
-    mode: unified
+    # mode: control matches the CP/DP architecture in this guide. Use mode: unified
+    # only if you intentionally want CP + DP components in one cluster.
+    mode: control
     domainPrefix: ""
   tlsSecret: astronomer-tls
   postgresqlEnabled: true
@@ -300,7 +296,7 @@ global:
   # Feature flags
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
-  # For local k3d: keep logging disabled (Elasticsearch fails in k3d due to seccomp limitations)
+  # Logging stack (Vector daemonset on each cluster, Elasticsearch on the CP)
   daemonsetLogging:
     enabled: true
   elasticsearchEnabled: true
@@ -309,7 +305,6 @@ global:
 
 tags:
   platform: true
-  # For local k3d: disable logging to avoid Elasticsearch/seccomp issues
   logging: true
   monitoring: true
   postgresql: true
@@ -318,12 +313,6 @@ tags:
 astronomer:
   astroUI:
     replicas: 1
-    # Explicitly set API endpoints used by the UI (useful when running behind custom DNS/ports)
-    env:
-      - name: APP_API_LOC_HTTPS
-        value: "https://houston.localtest.me/v1"
-      - name: APP_API_LOC_WSS
-        value: "wss://houston.localtest.me/ws"
     resources:
       requests:
         cpu: "100m"
@@ -337,10 +326,12 @@ astronomer:
         cpu: "250m"
         memory: "512Mi"
     config:
-      emailConfirmation:
-        enabled: false
-      publicSignups:
-        enabled: false
+      # Use flat Boolean form for these two fields — the nested form
+      # (publicSignups: { enabled: false }) trips a resolver bug in Houston
+      # 1.1.x where AuthConfig.publicSignup is declared Boolean but the
+      # resolver returns the wrapper object, breaking the login page.
+      emailConfirmation: false
+      publicSignups: false
       cors:
         allowedOrigins:
           - "https://app.localtest.me"
@@ -449,7 +440,8 @@ global:
   # Feature flags
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
-  # For local k3d: keep logging disabled (Elasticsearch fails in k3d due to seccomp limitations)
+  # Vector ships per-deployment Airflow logs from this DP to the CP's
+  # Elasticsearch via the cross-cluster ES hostname (configured in Step 8).
   daemonsetLogging:
     enabled: true
   dagOnlyDeployment:
@@ -457,7 +449,6 @@ global:
 
 tags:
   platform: true
-  # For local k3d: disable logging to avoid Elasticsearch/seccomp issues
   logging: true
   monitoring: true
   postgresql: true
@@ -491,9 +482,6 @@ prometheus:
       cpu: "250m"
       memory: "1Gi"
 
-vector:
-  enabled: true
-
 nats:
   cluster:
     enabled: false
@@ -502,37 +490,6 @@ nats:
     requests:
       cpu: "50m"
       memory: "64Mi"
-
-
-elasticsearch:
-  common:
-    env:
-      NUMBER_OF_MASTERS: "1"
-
-  master:
-    replicas: 1
-    heapMemory: 256m
-    resources:
-      requests:
-        memory: 512Mi
-
-  data:
-    replicas: 1
-    heapMemory: 512m
-    resources:
-      requests:
-        memory: 1Gi
-
-  client:
-    replicas: 1
-    heapMemory: 256m
-    resources:
-      requests:
-        memory: 512Mi
-  images:
-    es:
-      repository: docker.elastic.co/elasticsearch/elasticsearch
-      tag: "8.18.6"
 EOF
 ```
 
@@ -541,7 +498,7 @@ EOF
 ## Step 7: Install Astronomer Control Plane
 
 ```bash
-cd /Users/karankhanchandani/codebase/python/astronomer
+cd "$ASTRONOMER_REPO"
 
 # Update helm dependencies
 helm dependency update .
@@ -574,85 +531,27 @@ Wait until all pods show `Running` or `Completed` status before proceeding.
 
 With k3d/Flannel, pods CAN reach external IPs. We just need to configure DNS.
 
-### Get Control Plane ingress IP (for DP -> CP calls)
+The repo ships a helper script that pins the right IPs in **both** clusters' CoreDNS
+`NodeHosts` and in the DP node container's `/etc/hosts` (the latter matters for
+kubelet/containerd image pulls, which do NOT use CoreDNS):
 
 ```bash
-# IMPORTANT: Use the Control Plane nginx LoadBalancer IP for inter-cluster calls.
-# Do NOT use the node container IP, otherwise you may hit the wrong ingress and get 404s for Houston endpoints.
-CP_NGINX_LB_IP=$(kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-echo "CP nginx LoadBalancer IP: $CP_NGINX_LB_IP"
+cd "$ASTRONOMER_REPO"
+python3 bin/reconcile-k3d-orbstack-network.py
 ```
 
-### Configure CoreDNS in Data Plane
+The script is idempotent and re-runnable. Use it now (before DP install in Step 9)
+so that DP pods boot with working name resolution to Houston, and re-run it any
+time OrbStack restarts (see Troubleshooting → "OrbStack restart breaks CP/DP
+networking").
 
-> **IMPORTANT:** k3d's CoreDNS uses a `hosts` plugin that reads from the `NodeHosts` data in the ConfigMap.
-> Do NOT add a second `hosts` block - CoreDNS doesn't allow two `hosts` plugins in the same server block.
-> Instead, add your custom entries to the `NodeHosts` section.
-
-```bash
-# Backup CoreDNS ConfigMap
-kubectl --context k3d-data -n kube-system get configmap coredns -o yaml > /tmp/coredns-dp-backup.yaml
-
-# Create the coredns-custom ConfigMap if it doesn't exist (required by k3d)
-kubectl --context k3d-data -n kube-system create configmap coredns-custom 2>/dev/null || true
-
-# Edit CoreDNS ConfigMap
-kubectl --context k3d-data -n kube-system edit configmap coredns
-```
-
-Add your custom DNS entries to the `NodeHosts` section (at the end of the data section):
-
-```yaml
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-          pods insecure
-          fallthrough in-addr.arpa ip6.arpa
-        }
-        hosts /etc/coredns/NodeHosts {
-          ttl 60
-          reload 15s
-          fallthrough
-        }
-        prometheus :9153
-        cache 30
-        loop
-        reload
-        loadbalance
-        import /etc/coredns/custom/*.override
-        forward . /etc/resolv.conf
-    }
-    import /etc/coredns/custom/*.server
-  NodeHosts: |
-    192.168.147.1 host.k3d.internal
-    192.168.147.4 k3d-data-serverlb
-    192.168.147.5 k3d-control-serverlb
-    192.168.147.2 k3d-data-server-0
-    192.168.147.3 k3d-control-server-0
-    <CP_NGINX_LB_IP> localtest.me houston.localtest.me app.localtest.me grafana.localtest.me
-```
-
-Replace `<CP_NGINX_LB_IP>` with the actual CP nginx LoadBalancer IP (e.g., `192.168.147.2`).
-
-> **Note:** The existing NodeHosts entries will vary based on your k3d setup. Just add your custom line at the end.
-
-```bash
-# Restart CoreDNS to pick up changes
-kubectl --context k3d-data -n kube-system delete pod -l k8s-app=kube-dns
-kubectl --context k3d-data -n kube-system wait --for=condition=ready pod -l k8s-app=kube-dns --timeout=60s
-```
-
-### Verify DNS and Connectivity from DP
+### Verify DNS and connectivity from DP
 
 ```bash
 # Test DNS resolution
 kubectl --context k3d-data run test-dns --rm -it --restart=Never --image=busybox -- nslookup houston.localtest.me
 
-# Test actual connectivity (this should work with k3d!)
+# Test actual connectivity from inside the DP cluster
 kubectl --context k3d-data run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
   curl -v -k --connect-timeout 10 https://houston.localtest.me/v1/healthz
 
@@ -665,6 +564,39 @@ kubectl --context k3d-data run test-curl --rm -it --restart=Never --image=curlim
 **Expected result for** `/v1/registry/authorization`:
 - A bare request often returns **`401`**, which is OK (it means the endpoint exists and is protected).
 - The critical thing is: it must **NOT** be `404`. A `404` here will break DP registry auth and image pulls.
+
+<details>
+<summary>Manual fallback: edit CoreDNS by hand</summary>
+
+If the helper script doesn't fit your setup, you can edit each cluster's CoreDNS
+`NodeHosts` directly. k3d's CoreDNS uses the `hosts` plugin reading from
+`data.NodeHosts` in the `kube-system/coredns` ConfigMap; do **not** add a second
+`hosts` block — CoreDNS rejects two `hosts` plugins in the same server block.
+
+```bash
+# Get the CP nginx LB IP and DP node IP
+CP_NGINX_LB_IP=$(kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+DP_NODE_IP=$(docker inspect k3d-data-server-0 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+
+# DP CoreDNS: pin CP hostnames -> CP nginx LB IP
+kubectl --context k3d-data -n kube-system edit configmap coredns
+# add to data.NodeHosts:
+#   <CP_NGINX_LB_IP> localtest.me houston.localtest.me app.localtest.me grafana.localtest.me
+
+# CP CoreDNS: pin DP hostnames -> DP node IP
+kubectl --context k3d-control -n kube-system edit configmap coredns
+# add to data.NodeHosts:
+#   <DP_NODE_IP> dp01.localtest.me deployments.dp01.localtest.me registry.dp01.localtest.me commander.dp01.localtest.me elasticsearch.dp01.localtest.me prom-proxy.dp01.localtest.me prometheus.dp01.localtest.me
+
+# Restart CoreDNS in both clusters
+kubectl --context k3d-data    -n kube-system delete pod -l k8s-app=kube-dns
+kubectl --context k3d-control -n kube-system delete pod -l k8s-app=kube-dns
+```
+
+After OrbStack restart, the IPs change and the manual edits go stale. The helper
+script handles this correctly; the manual flow does not.
+
+</details>
 
 ---
 
@@ -683,76 +615,85 @@ helm install astronomer . \
 
 ---
 
-## Step 10: Configure CP CoreDNS to Reach DP
+## Step 10: Verify CP -> DP Connectivity
+
+The reconcile script in Step 8 already pinned DP hostnames in CP's CoreDNS, so
+Houston (CP) can call commander (DP). Verify:
 
 ```bash
-# Get DP node IP
-DP_NODE_IP=$(docker inspect k3d-data-server-0 -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
-echo "DP Node IP: $DP_NODE_IP"
+# DNS resolution from inside CP
+kubectl --context k3d-control run test-dns --rm -it --restart=Never --image=busybox -- nslookup commander.dp01.localtest.me
 
-# Create the coredns-custom ConfigMap if it doesn't exist (required by k3d)
-kubectl --context k3d-control -n kube-system create configmap coredns-custom 2>/dev/null || true
-
-# Edit CoreDNS in CP cluster
-kubectl --context k3d-control -n kube-system edit configmap coredns
+# TLS connectivity from inside CP
+kubectl --context k3d-control run test-curl --rm -it --restart=Never --image=curlimages/curl -- \
+  curl -v -k --connect-timeout 10 https://commander.dp01.localtest.me/healthz
 ```
 
-Add DP entries to the `NodeHosts` section (same approach as DP cluster):
-
-```yaml
-  NodeHosts: |
-    ... existing entries ...
-    <DP_NODE_IP> dp01.localtest.me registry.dp01.localtest.me commander.dp01.localtest.me elasticsearch.dp01.localtest.me prom-proxy.dp01.localtest.me prometheus.dp01.localtest.me
-```
-
-Replace `<DP_NODE_IP>` with the actual DP node IP (e.g., `192.168.147.2`).
-
-```bash
-# Restart CoreDNS
-kubectl --context k3d-control -n kube-system delete pod -l k8s-app=kube-dns
-kubectl --context k3d-control -n kube-system wait --for=condition=ready pod -l k8s-app=kube-dns --timeout=60s
-```
+If either fails, re-run `python3 bin/reconcile-k3d-orbstack-network.py` from
+`$ASTRONOMER_REPO`.
 
 ---
 
 ## Step 11: Configure Local Machine DNS
 
-```bash
-# IMPORTANT: host access on OrbStack (macOS)
-# - In OrbStack, the k3d "LoadBalancer EXTERNAL-IP" (often 192.168.147.x) may be reachable from OTHER containers,
-#   but NOT routable from your macOS host. If you see "No route to host" from the host, this is why.
-# - Browsers and CLIs can appear to behave differently if they're resolving to different IPs (DoH / cache / IPv6),
-#   or if you're testing in the browser with a host-mapped port (e.g. :8443) but the CLI is trying :443.
-#
-# Because you are running *two* clusters, you also cannot have both clusters claim host :443 at the same time
-# without an SNI reverse-proxy on your host (see Troubleshooting below).
+The URLs Houston builds for the UI's "Open Airflow" link (and similar) are
+port-less — `https://deployments.dp01.localtest.me/<release>/airflow`. For those
+links to work in your browser without manual edits, your host needs to resolve
+each hostname to an IP that already serves on `:443`. On OrbStack, that's the
+LB IP of each cluster's nginx — so we map hostnames to those IPs in `/etc/hosts`.
 
-# Option A (recommended on OrbStack): use host-mapped ports
-# - Map hostnames to 127.0.0.1
-# - Access CP via https://houston.localtest.me:8443 (browser) and DP via https://deployments.dp01.localtest.me:8444
-# - For Astro CLI, pass the port explicitly (recommended): `astro login https://houston.localtest.me:8443`
-#
-# NOTE: This assumes you created clusters with distinct host ports (example):
-# - CP: 8443->443, 8080->80
-# - DP: 8444->443, 8081->80
+### Option A (recommended): map hostnames to k3d LoadBalancer IPs
+
+This works on OrbStack because OrbStack auto-routes the docker subnet to the
+host. Each cluster's nginx serves its own `:443`, so the browser reaches CP and
+DP on standard ports without any port-mapping or SNI demux.
+
+```bash
+# Look up the LB IPs
+CP_NGINX_LB_IP=$(kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+DP_NGINX_LB_IP=$(kubectl --context k3d-data    -n astronomer get svc astronomer-dp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "CP nginx LB IP: $CP_NGINX_LB_IP"
+echo "DP nginx LB IP: $DP_NGINX_LB_IP"
+
+# Confirm your host can route to them (expect HTTP/2 200 from each)
+curl -vk --connect-timeout 3 "https://${CP_NGINX_LB_IP}/healthz" 2>&1 | grep -E "^< HTTP"
+curl -vk --connect-timeout 3 "https://${DP_NGINX_LB_IP}/healthz" 2>&1 | grep -E "^< HTTP"
+
+# If both succeed, append to /etc/hosts:
+sudo bash -c "cat <<EOF >> /etc/hosts
+
+# === astronomer local-k3d (LB-IP routing) ===
+${CP_NGINX_LB_IP} localtest.me app.localtest.me houston.localtest.me grafana.localtest.me
+${DP_NGINX_LB_IP} dp01.localtest.me deployments.dp01.localtest.me registry.dp01.localtest.me commander.dp01.localtest.me
+EOF"
+```
+
+You can now access the platform port-less:
+
+- UI: `https://app.localtest.me`
+- Houston: `https://houston.localtest.me`
+- Per-deployment Airflow: `https://deployments.dp01.localtest.me/<release-name>/airflow/`
+- Astro CLI: `astro login https://houston.localtest.me`
+
+### Option B (fallback): host-mapped ports
+
+If the routability check above fails (some Docker Desktop or non-OrbStack
+configurations don't expose the docker subnet to the host), fall back to host
+port-forwarding via the `--port` mappings from Step 3. You will need to type
+`:8443` / `:8444` in URLs manually, and Houston's "Open Airflow" link won't
+work without a per-dataplane `baseDomain` override or an SNI reverse-proxy on
+host `:443`.
+
+```bash
 sudo bash -c 'echo "127.0.0.1 localtest.me app.localtest.me houston.localtest.me grafana.localtest.me" >> /etc/hosts'
 sudo bash -c 'echo "127.0.0.1 dp01.localtest.me deployments.dp01.localtest.me registry.dp01.localtest.me commander.dp01.localtest.me" >> /etc/hosts'
-
-# Optional: if you *must* use https://houston.localtest.me (no port) from your host,
-# you need an SNI reverse-proxy on your host that routes:
-# - app/houston/grafana -> 127.0.0.1:8443
-# - deployments/registry/commander -> 127.0.0.1:8444
-#
-# A plain `socat` 443->8443 will break DP hostnames on :443 because it can’t route by hostname.
-#
-# Option B (only if your host can route to the LB IPs): map hostnames to the k3d LoadBalancer IPs
-# You can test routability from your macOS host:
-#
-#   CP_LB_IP=$(kubectl --context k3d-control -n astronomer get svc astronomer-cp-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-#   curl -vk --connect-timeout 3 "https://${CP_LB_IP}/healthz"
-#
-# If this succeeds, you can map /etc/hosts to the LB IPs and use 443 with no port.
 ```
+
+Then access via:
+
+- UI: `https://app.localtest.me:8443`
+- Per-deployment Airflow: `https://deployments.dp01.localtest.me:8444/<release-name>/airflow/`
+- Astro CLI: `astro login https://houston.localtest.me:8443`
 
 ---
 
@@ -787,15 +728,22 @@ kubectl --context k3d-control run test-curl --rm -it --restart=Never --image=cur
 
 ### Access URLs
 
+If you used Option A in Step 11 (LB-IP routing — recommended):
+
 | Component | URL |
 |-----------|-----|
-| Astro UI (CP) | https://app.localtest.me:8443 |
-| Houston API (CP) | https://houston.localtest.me:8443 |
-| Grafana (CP) | https://grafana.localtest.me:8443 |
-| Deployments (DP) | https://deployments.dp01.localtest.me:8444 |
-| Registry (DP) | https://registry.dp01.localtest.me:8444 |
+| Astro UI (CP) | https://app.localtest.me |
+| Houston API (CP) | https://houston.localtest.me |
+| Grafana (CP) | https://grafana.localtest.me |
+| Deployments (DP) | https://deployments.dp01.localtest.me |
+| Registry (DP) | https://registry.dp01.localtest.me |
 
-> **Note**: Accept the certificate warning in your browser (self-signed cert).
+If you used Option B (host-mapped ports), append `:8443` for CP and `:8444`
+for DP hostnames.
+
+> **Note**: Because the certificates are mkcert-signed, your browser should
+> trust them automatically once `mkcert -install` has been run (Step 2). If
+> you see a warning, re-run `mkcert -install` or accept the self-signed cert.
 
 ---
 
@@ -812,7 +760,7 @@ If CP/DP communication “randomly” breaks **after restarting OrbStack**, it�
 **Fix (recommended):** re-sync the pinned entries and restart CoreDNS using the helper script:
 
 ```bash
-cd /Users/karankhanchandani/codebase/python/astronomer
+cd "$ASTRONOMER_REPO"
 python3 bin/reconcile-k3d-orbstack-network.py
 ```
 
@@ -874,12 +822,11 @@ GODEBUG=netdns=go+1 astro login localtest.me
 ```
 
 - **Fixes that reliably work on OrbStack**
-  - **Use the port explicitly**: `astro login https://houston.localtest.me:8443`
-  - **Or forward host :443 → :8443**:
-
-```bash
-sudo socat TCP-LISTEN:443,fork,reuseaddr TCP:127.0.0.1:8443
-```
+  - **Recommended**: use Step 11 Option A (LB-IP routing). Hostnames resolve
+    directly to each cluster's nginx LB IP and serve on `:443` natively, so
+    browsers and CLIs hit the same endpoint without port hackery.
+  - **If you stayed on Option B (host-mapped ports)**: pass the port to the
+    CLI explicitly, e.g. `astro login https://houston.localtest.me:8443`.
 
 If you want the browser to follow `/etc/hosts`, disable Secure DNS in your browser settings or test with `curl` (which uses the OS resolver).
 
@@ -915,6 +862,40 @@ docker exec k3d-data-server-0 sh -c 'apk add --no-cache curl >/dev/null 2>&1 || 
 ```
 
 For a permanent solution, recreate k3d clusters using k3d’s host-alias support so these `/etc/hosts` entries are injected at cluster creation time.
+
+### `helm install` hung or failed: stuck `pending-install` release
+
+If `helm install --wait` times out, the release sits in `pending-install` and
+subsequent installs fail with `cannot re-use a name that is still in use` or
+`release exists`. Clean up before retrying:
+
+```bash
+# Replace <ctx> with k3d-control or k3d-data depending on which install hung.
+helm --kube-context <ctx> -n astronomer status astronomer | head
+helm --kube-context <ctx> -n astronomer uninstall astronomer
+
+# If uninstall complains the release is in pending-install, force it:
+kubectl --context <ctx> -n astronomer delete secret -l owner=helm,name=astronomer
+
+# Then retry the install from Step 7 / Step 9.
+```
+
+### Pods can't find the `astronomer-bootstrap` secret
+
+If you see `secret "astronomer-bootstrap" not found` in init containers, the
+**postgres subchart didn't deploy successfully**. The bootstrap secret is
+generated by the postgres subchart's hooks; if postgres failed to deploy, the
+secret doesn't exist and downstream pods stall. Don't create the secret
+manually — fix postgres first:
+
+```bash
+# Check postgres pod and logs
+kubectl --context <ctx> -n astronomer get pods -l role=astronomer-postgresql
+kubectl --context <ctx> -n astronomer logs astronomer-postgresql-0 --previous
+
+# Common causes: subchart conditions disabled (check `global.postgresqlEnabled: true`
+# in your values file), or the persistent volume claim got stuck.
+```
 
 ### View Pod Logs
 
