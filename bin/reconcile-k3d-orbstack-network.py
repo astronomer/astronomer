@@ -188,12 +188,12 @@ class Settings:
 
 def _settings_from_env() -> Settings:
     return Settings(
-        cp_context=os.environ.get("CP_CONTEXT", "k3d-control"),
-        dp_context=os.environ.get("DP_CONTEXT", "k3d-data"),
+        cp_context=os.environ.get("CP_CONTEXT", "k3d-cp01"),
+        dp_context=os.environ.get("DP_CONTEXT", "k3d-dp01"),
         platform_namespace=os.environ.get("PLATFORM_NAMESPACE", "astronomer"),
         base_domain=os.environ.get("BASE_DOMAIN", "localtest.me"),
         dp_domain_prefix=os.environ.get("DP_DOMAIN_PREFIX", "dp01"),
-        dp_node_container=os.environ.get("DP_NODE_CONTAINER", "k3d-data-server-0"),
+        dp_node_container=os.environ.get("DP_NODE_CONTAINER", "k3d-dp01-server-0"),
         cp_ingress_service=os.environ.get("CP_INGRESS_SERVICE", "astronomer-cp-nginx"),
     )
 
