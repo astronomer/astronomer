@@ -107,6 +107,7 @@ def main(circleci_token: str, astro_path: str, branch: str):
     # Printing Info
     print(f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}")
 
+    time.sleep(10)
     wait_for_pipeline_completion(circleci_token=circleci_token, pipeline_id=pipeline_id)
 
 
