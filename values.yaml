@@ -91,6 +91,8 @@ global:
   # On unified (mode=unified): no effect — enable components individually
   dataPlaneFailover:
     enabled: false
+    # The name of a manually created ClusterSecretStore
+    # externalSecretManagerName: your-css-name
 
   # Metrics and reporting features
   metricsReporting:
@@ -101,13 +103,15 @@ global:
   deploymentLifecycle:
     deployRollback:
       enabled: false
+      dagTarballVersionValidation:
+        enabled: true
 
   # Deploy mechanisms
   deployMechanisms:
     dagOnlyDeployment:
       enabled: false
       repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.9.4
+      tag: 0.9.5
       securityContexts:
         pod:
           fsGroup: 50000
@@ -409,7 +413,10 @@ astronomer:
     # Vector sidecar for audit log shipping from Houston API and worker.
     # This mirrors charts/astronomer/values.yaml for customers who install
     # or upgrade the umbrella chart from the repo root or packaged release.
-    # When enabled, Vector can ship to one or more sinks at the same time.
+    # Choose exactly one supported sink for Houston audit logging:
+    # - CloudWatch on EKS
+    # - GCP Cloud Logging on GKE
+    # - External Elasticsearch from EKS or GKE
     logging:
       loggingSidecar:
         enabled: false
@@ -766,4 +773,5 @@ kube-state:
 ## External Secrets configuration
 #################################
 external-secrets:
+  # Enable external-secrets to install ESO CRDs needed for dataPlaneFailover
   enabled: false

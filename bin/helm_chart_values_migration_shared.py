@@ -406,7 +406,8 @@ GLOBAL_FEATURE_FLAG_RULES: list[BoolToNested | InvertedBoolToNested | SubtreeMov
 
 HOUSTON_DEPLOYMENTS_PREFIX = "astronomer.houston.config.deployments"
 
-# Renders houston-api ``DEPLOYMENTS_PATH_MIGRATIONS`` for Helm
+# Renders houston-api ``DEPLOYMENTS_PATH_MIGRATIONS`` and
+# ``HOUSTON_DEPLOYMENT_NESTED_PATH_MIGRATIONS`` for Helm
 # (``src/lib/deployments-config-path-migration/index.js``). Order is significant.
 HOUSTON_DEPLOYMENT_PATH_MIGRATIONS: list[tuple[str, str | None, str]] = [
     ("performanceOptimizationModeEnabled", "performanceOptimization.enabled", "boolean-to-enabled"),
@@ -567,6 +568,17 @@ HOUSTON_DEPLOYMENT_PATH_MIGRATIONS: list[tuple[str, str | None, str]] = [
     ("defaultDistribution", None, "deprecated-unset"),
 ]
 
+# Nested renames under ``deployments`` (old path → new path). Kept in sync with
+# ``DEPLOYMENTS_NESTED_PATH_MIGRATIONS`` in houston-api
+# ``src/lib/deployments-config-path-migration/index.js``.
+HOUSTON_DEPLOYMENT_NESTED_PATH_MIGRATIONS: list[tuple[str, str, str]] = [
+    (
+        "deploymentLifecycle.deployRollback.enableDagTarballVersionValidation",
+        "deploymentLifecycle.deployRollback.dagTarballVersionValidation.enabled",
+        "boolean-to-enabled",
+    ),
+]
+
 HOUSTON_DEPLOYMENT_CHART_ONLY_DELETE_KEYS: Final[frozenset[str]] = frozenset(
     {
         "astroUnitsEnabled",
@@ -581,6 +593,32 @@ def _cfg_get(obj: Any, key: str) -> Any:
     if isinstance(obj, (dict, CommentedMap)) and key in obj:
         return obj[key]
     return None
+
+
+def _get_dotted_value(mapping: CommentedMap, dotted: str) -> Any:
+    """Return the value at a dotted path, or None if any segment is missing."""
+    parts = dotted.split(".")
+    current: Any = mapping
+    for part in parts:
+        if not isinstance(current, CommentedMap) or part not in current:
+            return None
+        current = current[part]
+    return current
+
+
+def _unset_dotted_path(mapping: CommentedMap, dotted: str) -> None:
+    """Delete the leaf key at a dotted path; no-op if the path is invalid."""
+    parts = dotted.split(".")
+    if not parts:
+        return
+    *parents, last = parts
+    current: Any = mapping
+    for p in parents:
+        if not isinstance(current, CommentedMap) or p not in current:
+            return
+        current = current[p]
+    if isinstance(current, CommentedMap) and last in current:
+        del current[last]
 
 
 def _set_dotted_path_in_mapping(root: CommentedMap, dotted: str, value: Any) -> None:
@@ -728,6 +766,30 @@ def _apply_houston_deployments_path_migrations(
         p_new = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{new_dotted}"
         if not new_dotted.startswith(f"{old_key}."):
             _delete_key(deployments, old_key)
+        changes.append(MigrationChange(p_old, p_new, f"Migrated {p_old} -> {p_new}"))
+    for old_dotted, new_dotted, transform in HOUSTON_DEPLOYMENT_NESTED_PATH_MIGRATIONS:
+        old_keys = old_dotted.split(".")
+        if not _path_exists(deployments, old_keys):
+            continue
+        new_keys = new_dotted.split(".")
+        if _path_exists(deployments, new_keys):
+            _unset_dotted_path(deployments, old_dotted)
+            p_old = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{old_dotted}"
+            p_new = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{new_dotted}"
+            changes.append(
+                MigrationChange(
+                    p_old,
+                    p_new,
+                    f"Removed stale {p_old} (kept existing {p_new})",
+                )
+            )
+            continue
+        old_value = _get_dotted_value(deployments, old_dotted)
+        new_value = _transform_houston_deployment_value(old_value, transform)
+        _set_dotted_path_in_mapping(deployments, new_dotted, new_value)
+        _unset_dotted_path(deployments, old_dotted)
+        p_old = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{old_dotted}"
+        p_new = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{new_dotted}"
         changes.append(MigrationChange(p_old, p_new, f"Migrated {p_old} -> {p_new}"))
     return changes
 

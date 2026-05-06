@@ -143,6 +143,25 @@ class TestFullValuesMigration:
         assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
         assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
 
+    def test_houston_deployments_migrates_enableDagTarballVersionValidation(self) -> None:
+        """Nested ``enableDagTarballVersionValidation`` becomes ``dagTarballVersionValidation.enabled``."""
+        text = """
+astronomer:
+  houston:
+    config:
+      deployments:
+        deploymentLifecycle:
+          deployRollback:
+            enabled: true
+            enableDagTarballVersionValidation: false
+"""
+        data = _load_rt(text)
+        migrate_values(data)
+        d = _to_plain(data)["astronomer"]["houston"]["config"]["deployments"]
+        dr = d["deploymentLifecycle"]["deployRollback"]
+        assert dr["dagTarballVersionValidation"]["enabled"] is False
+        assert "enableDagTarballVersionValidation" not in dr
+
     def test_old_keys_removed_after_migration(self, old_full_values_text: str):
         """Old flat keys no longer exist at the global root after migration."""
         data = _load_rt(old_full_values_text)

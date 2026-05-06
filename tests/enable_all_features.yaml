@@ -42,7 +42,7 @@ global:
     enabled: true
   dataPlaneFailover:
     enabled: true
-    externalSecretManagerSecretName: dummy-secret-name
+    externalSecretManagerName: dummy-esm-name
   networkPolicy:
     enabled: true
   rbac:
@@ -56,6 +56,8 @@ global:
   deploymentLifecycle:
     deployRollback:
       enabled: true
+      dagTarballVersionValidation:
+        enabled: true
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true

@@ -53,13 +53,8 @@ def test_houston_configmap_defaults():
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
 
     assert not prod["deployments"].get("authSideCar")
-    assert not prod["deployments"]["logging"].get("loggingSidecar")
 
     # Verify new unified feature flags
-    assert prod["deployments"]["logging"]["enabled"] is True
-    assert prod["deployments"]["logging"]["provider"] == "fluentd"
-    assert prod["deployments"]["logging"]["elasticsearch"]["enabled"] is True
-    assert prod["deployments"]["logging"]["elasticsearch"]["connection"]["port"] == 9200
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
     assert prod["strictSchemaCheck"]["enabled"] is True
 
@@ -232,7 +227,6 @@ def test_houston_configmap_with_config_syncer_disabled():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert "extraVolumeMounts" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
     assert "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
-    assert not prod_yaml["deployments"]["logging"].get("loggingSidecar")
 
 
 def test_houston_configmap_with_vector_index_prefix_defaults():
@@ -992,7 +986,7 @@ def test_houston_configmap_features_elasticsearch_defaults():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    es = prod["deployments"]["logging"]["elasticsearch"]
+    es = prod["deployments"]["helm"]["airflow"]["elasticsearch"]
     assert es["enabled"] is True
     assert es["connection"]["host"].endswith("-elasticsearch-nginx.default")
     assert es["connection"]["port"] == 9200
@@ -1005,7 +999,7 @@ def test_houston_configmap_features_elasticsearch_custom_logging():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    es = prod["deployments"]["logging"]["elasticsearch"]
+    es = prod["deployments"]["helm"]["airflow"]["elasticsearch"]
     assert es["enabled"] is True
     assert es["connection"]["host"].endswith("-external-es-proxy.default")
     assert es["connection"]["port"] == 9200
@@ -1018,17 +1012,6 @@ def test_houston_configmap_features_grafana_defaults():
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
-
-
-def test_houston_configmap_features_logging_defaults():
-    """Validate that logging is emitted with defaults."""
-    docs = render_chart(
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    log = prod["deployments"]["logging"]
-    assert log["enabled"] is True
-    assert log["provider"] == "fluentd"
 
 
 def test_houston_configmap_no_flat_enabled_flags_under_deployments():

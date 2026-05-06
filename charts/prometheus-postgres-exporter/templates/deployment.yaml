@@ -20,7 +20,6 @@ spec:
   selector:
     matchLabels:
       app: {{ template "prometheus-postgres-exporter.name" . }}
-      component: {{ template "prometheus-postgres-exporter.name" . }}
       release: {{ .Release.Name }}
   template:
     metadata:
