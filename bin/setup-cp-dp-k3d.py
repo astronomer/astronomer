@@ -1146,7 +1146,7 @@ def parse_args() -> argparse.Namespace:
         "--cp-count",
         type=int,
         default=1,
-        choices=range(1, 5),
+        choices=range(1, 2),
         help="Number of control plane clusters to create. Clusters are named cp01, cp02, … Default: '%(default)s'",
     )
     parser.add_argument(
