@@ -146,3 +146,41 @@ sidecarVolumeMount: []
 
 
 priorityClassName: ~
+
+disabledCollectors:
+  - kernel_hung
+  - arp
+  - bcache
+  - bonding
+  - btrfs
+  - conntrack
+  - cpufreq
+  - dmi
+  - edac
+  - entropy
+  - fibrechannel
+  - hwmon
+  - infiniband
+  - ipvs
+  - mdadm
+  - netstat
+  - nfs
+  - nfsd
+  - nvme
+  - os
+  - powersupplyclass
+  - pressure
+  - rapl
+  - schedstat
+  - selinux
+  - sockstat
+  - softnet
+  - stat
+  - tapestats
+  - textfile
+  - thermal_zone
+  - udp_queues
+  - uname
+  - watchdog
+  - xfs
+  - zfs
