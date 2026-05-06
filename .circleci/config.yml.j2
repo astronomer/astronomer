@@ -181,19 +181,6 @@ jobs:
             set -e
             bin/release-helm-chart /tmp/workspace/<< parameters.artifact_subdir >>/astronomer-*.tgz
 
-  trigger-upgrade-test:
-    executor: docker-executor
-    resource_class: small
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: Triggering testing for upgrade path
-          command: |
-            set -e
-            bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
-
   trigger-stage-cluster-build:
     executor: docker-executor
     resource_class: small
@@ -295,20 +282,12 @@ workflows:
 {% endif %}{% endfor %}
       - approve-stage-cluster-test:
           type: approval
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - build-artifact:
           name: build-artifact-stage-cluster
           qa_release: true
           artifact_subdir: qa
           requires:
             - approve-stage-cluster-test
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - release-to-internal:
           name: release-to-internal-stage-cluster
           artifact_subdir: qa
@@ -316,50 +295,20 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - build-artifact-stage-cluster
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - trigger-stage-cluster-build:
           artifact_subdir: qa
           requires:
             - release-to-internal-stage-cluster
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - approve-internal-release:
           type: approval
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - release-to-internal:
           context:
             - gcp-astronomer-prod
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
           requires:
             - approve-internal-release
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
-      - approve-upgrade-test:
-          type: approval
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
-      - trigger-upgrade-test:
-          requires:
-            - release-to-internal
-            - approve-upgrade-test
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
