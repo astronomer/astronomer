@@ -403,7 +403,7 @@ workflows:
           qa_release: true
           artifact_subdir: qa
           requires:
-            - approve-stage-cluster-release
+            - approve-stage-cluster-test
           filters:
             branches:
               only:
