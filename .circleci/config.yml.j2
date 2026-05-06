@@ -179,8 +179,7 @@ jobs:
           name: Release the Astronomer chart to internal
           command: |
             set -e
-            echo "Releasing the Astronomer chart to internal with the following artifact: /tmp/workspace/<< parameters.artifact_subdir >>/astronomer-*.tgz"
-            ls -l /tmp/workspace/<< parameters.artifact_subdir >>/astronomer-*.tgz
+            bin/release-helm-chart /tmp/workspace/<< parameters.artifact_subdir >>/astronomer-*.tgz
 
   trigger-stage-cluster-build:
     executor: docker-executor
@@ -302,9 +301,17 @@ workflows:
             - release-to-internal-stage-cluster
       - approve-internal-release:
           type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - release-to-internal:
           context:
             - gcp-astronomer-prod
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
           requires:
             - approve-internal-release
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
@@ -366,9 +373,17 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - build-artifact
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - trigger-stage-cluster-build:
           requires:
             - release-to-internal
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
 
 commands:
   push-to-quay-io:
