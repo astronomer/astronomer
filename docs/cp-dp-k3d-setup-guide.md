@@ -866,7 +866,7 @@ For a permanent solution, recreate k3d clusters using k3d’s host-alias support
 ### `helm install` hung or failed: stuck `pending-install` release
 
 If `helm install --wait` times out, the release sits in `pending-install` and
-subsequent installs fail with `cannot re-use a name that is still in use` or
+subsequent installs fail with `cannot reuse a name that is still in use` or
 `release exists`. Clean up before retrying:
 
 ```bash
