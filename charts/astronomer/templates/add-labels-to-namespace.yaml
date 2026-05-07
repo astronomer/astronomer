@@ -68,6 +68,7 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-labeller
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: label-platform-namespace
         image: {{ template "dbBootstrapper.image" . }}
