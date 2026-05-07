@@ -41,7 +41,7 @@ class TestNSSelectorNetworkPolicies:
         """Labeller hook Job and supporting RBAC must render when networkNSLabels is enabled."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"networkNSLabels": {"enabled": True}}},
+            values={"global": {"networkNSLabels": True}},
             show_only=["charts/astronomer/templates/add-labels-to-namespace.yaml"],
         )
 
@@ -59,7 +59,7 @@ class TestNSSelectorNetworkPolicies:
             kube_version=kube_version,
             values={
                 "global": {
-                    "networkNSLabels": {"enabled": True},
+                    "networkNSLabels": True,
                     "privateRegistry": {"enabled": True, "secretName": "private-registry-secret"},
                 }
             },
