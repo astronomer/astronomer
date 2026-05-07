@@ -11,7 +11,10 @@
         "ms-python.vscode-pylance",
         "ms-vscode-remote.remote-containers",
         "ms-vscode.makefile-tools"
-      ]
+      ],
+      "settings": {
+        "ruff.path": ["/root/.local/bin/ruff"]
+      }
     }
   }
 }
