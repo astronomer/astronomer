@@ -100,7 +100,7 @@ class TestOpenshift:
         """Validate gitSyncRelay securityContext in houston configmap when openshift is enabled."""
         docs = render_chart(
             values={
-                "global": {"openshift": {"enabled": True}},
+                "global": {"openshiftEnabled": True},
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
@@ -124,7 +124,7 @@ class TestOpenshift:
         """Validate gitSyncRelay has no securityContext overrides when openshift is disabled."""
         docs = render_chart(
             values={
-                "global": {"openshift": {"enabled": False}},
+                "global": {"openshiftEnabled": False},
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
