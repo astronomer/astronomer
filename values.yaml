@@ -154,7 +154,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.55.0
+    tag: 0.54.0
     customConfig: false
     indexPattern: ~
     extraEnv: []
