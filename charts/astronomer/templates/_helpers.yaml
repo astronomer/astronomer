@@ -218,8 +218,16 @@
   value: {{ include "commander.dataplaneURL" . | quote }}
 - name: COMMANDER_DATAPLANE_MODE
   value: {{ .Values.global.plane.mode | quote }}
+{{- $jwksOverridden := false -}}
+{{- range $.Values.commander.env -}}
+  {{- if eq .name "COMMANDER_HOUSTON_JWKS_ENDPOINT" -}}
+    {{- $jwksOverridden = true -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $jwksOverridden }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
-  value: "{{ include "houston.authServiceURL" . }}"
+  value: "{{ include "houston.authServiceURL" $ }}"
+{{- end }}
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
   value: {{ ternary "true" "false" .Values.global.features.namespacePools.enabled | quote  }}
 {{- if .Values.global.features.namespacePools.enabled  }}
@@ -569,7 +577,7 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 {{- if (eq .Values.global.plane.mode "data") -}}
 https://houston.{{ .Values.global.baseDomain }}
 {{- else -}}
-http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}:{{ .Values.ports.houstonHTTP }}
+http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}
 {{- end }}
 {{- end -}}
 

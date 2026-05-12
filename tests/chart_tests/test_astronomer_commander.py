@@ -226,7 +226,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.default.svc.cluster.local.:9200"
-        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
+        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default.svc.cluster.local:8871"
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
@@ -742,3 +742,63 @@ class TestAstronomerCommander:
         assert docs[0]["kind"] == "Deployment"
         spec = docs[0]["spec"]["template"]["spec"]
         assert spec["hostAliases"] == hostAliasSpec
+
+    @pytest.mark.parametrize(
+        "plane_mode,expected_jwks_endpoint",
+        [
+            ("data", "https://houston.example.com"),
+            ("unified", "http://release-name-houston.default.svc.cluster.local:8871"),
+        ],
+        ids=["data_plane", "unified_plane"],
+    )
+    def test_commander_houston_auth_service_url(self, kube_version, plane_mode, expected_jwks_endpoint):
+        """Test that COMMANDER_HOUSTON_JWKS_ENDPOINT is set from houston.authServiceURL.
+
+        Data plane uses the external Houston URL (https://houston.<baseDomain>).
+        Unified plane uses the in-cluster service URL with .svc.cluster.local to
+        avoid DNS resolution timeouts (PLX-426).
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        commander_env = get_containers_by_name(docs[0])["commander"]["env"]
+        jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
+        assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
+        assert jwks_entries[0]["value"] == expected_jwks_endpoint
+
+    @pytest.mark.parametrize(
+        "plane_mode",
+        ["data", "unified"],
+        ids=["data_plane", "unified_plane"],
+    )
+    def test_commander_env_override_jwks_endpoint(self, kube_version, plane_mode):
+        """Test that commander.env can override COMMANDER_HOUSTON_JWKS_ENDPOINT with no duplicate env var entries.
+
+        Regression test for PLX-426: the override was silently ignored because
+        commander_metadataEnv was rendered after commander.env, causing the
+        default value to always win.
+
+        Duplicate env var names with the same merge key cause Kubernetes strategic
+        merge patch to fail on helm upgrade, so we also assert exactly one entry.
+        """
+        custom_jwks_url = "http://astronomer-houston.af-rdfnp-cp.svc.cluster.local.:8871"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": plane_mode}},
+                "astronomer": {
+                    "commander": {
+                        "env": [{"name": "COMMANDER_HOUSTON_JWKS_ENDPOINT", "value": custom_jwks_url}],
+                    },
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        commander_env = get_containers_by_name(docs[0])["commander"]["env"]
+        jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
+        assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
+        assert jwks_entries[0]["value"] == custom_jwks_url

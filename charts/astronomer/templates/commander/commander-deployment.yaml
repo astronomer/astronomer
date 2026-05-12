@@ -126,10 +126,6 @@ spec:
             periodSeconds: 10
           {{- end }}
           env:
-            {{- range $i, $config := .Values.commander.env }}
-            - name: {{ $config.name }}
-              value: {{ $config.value | quote }}
-            {{- end }}
             - name: HELM_CACHE_HOME
               value: /tmp/helm-cache
             - name: HELM_CONFIG_HOME
@@ -163,6 +159,10 @@ spec:
               value: "true"
             {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
+            {{- range $i, $config := .Values.commander.env }}
+            - name: {{ $config.name }}
+              value: {{ $config.value | quote }}
+            {{- end }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
