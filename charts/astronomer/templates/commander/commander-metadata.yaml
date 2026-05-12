@@ -15,5 +15,11 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   metadata.yaml: |-
+    registry:
+      version: {{ .Values.images.registry.tag | quote }}
     namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
+    customLogging:
+      enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
+    openshift:
+      enabled: {{ ternary "true" "false" .Values.global.openshiftEnabled }}
 {{- end }}
