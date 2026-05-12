@@ -28,7 +28,10 @@ class TestAstronomerCommander:
             "global": {
                 "rbacEnabled": rbac_enabled,
                 "namespaceLabels": namespace_labels,
-            }
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -43,9 +46,49 @@ class TestAstronomerCommander:
 
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
         if namespace_labels and rbac_enabled:
-            assert metadata_file_contents == {"namespaceLabels": namespace_labels}
+            assert metadata_file_contents == {
+                "namespaceLabels": namespace_labels,
+                "registry": {"version": "99.88.77"},
+                "customLogging": {"enabled": False},
+                "openshift": {"enabled": False},
+            }
         else:
-            assert metadata_file_contents == {"namespaceLabels": {}}
+            assert metadata_file_contents == {
+                "namespaceLabels": {},
+                "registry": {"version": "99.88.77"},
+                "customLogging": {"enabled": False},
+                "openshift": {"enabled": False},
+            }
+
+    @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
+    def test_commander_metadata_custom_logging(self, kube_version, enabled):
+        """Test that helm renders custom logging in metadata.yaml template for astronomer/commander."""
+        values = {
+            "global": {
+                "customLogging": {"enabled": enabled},
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+
+        metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
+        assert metadata_file_contents == {
+            "namespaceLabels": {},
+            "customLogging": {"enabled": enabled},
+            "registry": {"version": "99.88.77"},
+            "openshift": {"enabled": False},
+        }
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
