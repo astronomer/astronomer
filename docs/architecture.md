@@ -190,7 +190,6 @@ flowchart TB
 
 - [`Chart.yaml`](../Chart.yaml) — canonical list of sub-charts with their `condition` and `tags`.
 - [`values.yaml`](../values.yaml) — `global.plane.*`, `global.tlsSecret`, `global.authHeaderSecretName`, `global.privateCaCerts`, and the `*.enabled` flags referenced above.
-- [`charts/astronomer/templates/_helpers.yaml`](../charts/astronomer/templates/_helpers.yaml) — hostname helpers (`commander.dataplaneURL`, `elasticsearch.url`, `registry.ingressURL`, …) that encode the `<domainPrefix>.<baseDomain>` pattern.
-- [`docs/cp-dp-k3d-setup-guide.md`](cp-dp-k3d-setup-guide.md) — worked example of a split deployment on k3d, with the CoreDNS and TLS wiring spelled out.
+- [`docs/cp-dp-k3d-setup-guide.md`](cp-dp-k3d-setup-guide.md) — working example of a split deployment on k3d, with the CoreDNS and TLS wiring spelled out.
 - [`docs/local-development.md`](local-development.md) — quick-start for chart development and local clusters.
 - `astronomer/airflow-chart` repo — the chart that Commander instantiates per user deployment.
