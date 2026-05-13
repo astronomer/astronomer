@@ -756,7 +756,7 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- if eq .Values.global.plane.mode "data" -}}
 es-proxy.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else if eq .Values.global.plane.mode "unified" -}}
-{{ .Release.Name }}-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
+{{ .Release.Name }}-external-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
 {{- end -}}
 {{- end -}}
 
