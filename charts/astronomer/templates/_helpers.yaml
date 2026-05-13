@@ -68,7 +68,7 @@
 {{- $images := .Values.images | default dict -}}
 {{- $vector := $images.vector | default dict -}}
 {{- $repo := default "quay.io/astronomer/ap-vector" $vector.repository -}}
-{{- $tag := default "0.52.0" $vector.tag -}}
+{{- $tag := default "0.54.0" $vector.tag -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-vector:{{ $tag }}
 {{- else -}}
@@ -78,12 +78,51 @@
 
 {{- define "houston.logging.loggingSidecar.validate" -}}
 {{- if .Values.houston.logging.loggingSidecar.enabled -}}
-{{- $hasBuiltInSink := or .Values.houston.logging.loggingSidecar.cloudwatch.enabled .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled .Values.houston.logging.loggingSidecar.elasticsearch.enabled -}}
-{{- $hasExtraSinks := ne (trim (.Values.houston.logging.loggingSidecar.extraSinks | default "")) "" -}}
-{{- if not (or $hasBuiltInSink $hasExtraSinks) -}}
-{{- fail "houston.logging.loggingSidecar.enabled requires at least one sink: enable cloudwatch, gcpCloudLogging, elasticsearch, or set extraSinks" -}}
+{{- $enabledSinkCount := add (ternary 1 0 .Values.houston.logging.loggingSidecar.cloudwatch.enabled) (ternary 1 0 .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled) (ternary 1 0 .Values.houston.logging.loggingSidecar.elasticsearch.enabled) -}}
+{{- if eq $enabledSinkCount 0 -}}
+{{- fail "houston.logging.loggingSidecar.enabled requires at least one supported sink: enable cloudwatch, gcpCloudLogging, or elasticsearch" -}}
+{{- end -}}
+{{- if gt $enabledSinkCount 1 -}}
+{{- fail "houston.logging.loggingSidecar supports exactly one sink at a time: choose cloudwatch, gcpCloudLogging, or elasticsearch" -}}
+{{- end -}}
+{{- if .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.projectId must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.projectId | default "" | trim) -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.location must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.location | default "" | trim) -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName | default "" | trim) -}}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "houston.logging.loggingSidecar.gcpCloudLogging.sink" -}}
+{{- $root := .root -}}
+{{- $gcp := $root.Values.houston.logging.loggingSidecar.gcpCloudLogging -}}
+gcp_cloud_logging:
+  type: gcp_stackdriver_logs
+  inputs:
+    - normalize_levels
+  project_id: {{ $gcp.projectId | default "" | trim | quote }}
+  log_id: {{ $gcp.logId | quote }}
+  severity_key: {{ $gcp.severityKey | quote }}
+{{- if not $gcp.useWorkloadIdentity }}
+  credentials_path: "/etc/gcp-credentials/{{ $gcp.credentialsSecretKey }}"
+{{- end }}
+  resource:
+    type: {{ $gcp.resource.type | quote }}
+    project_id: {{ $gcp.projectId | default "" | trim | quote }}
+    location: {{ $gcp.resource.location | default "" | trim | quote }}
+    namespace_name: "{{ "{{" }} kubernetes.pod_namespace {{ "}}" }}"
+    pod_name: "{{ "{{" }} kubernetes.pod_name {{ "}}" }}"
+    container_name: {{ .containerName | quote }}
+    cluster_name: {{ $gcp.resource.clusterName | default "" | trim | quote }}
+  labels:
+    component: {{ .componentName | quote }}
+  batch:
+    max_events: 100
+    timeout_secs: 5
+  buffer:
+    type: memory
+    max_events: 10000
+    when_full: block
 {{- end -}}
 
 {{ define "registry.docker.config" -}}
@@ -169,7 +208,7 @@
 {{- end }}
 
 {{ define "flightdeck.bootstrapperServiceAccountName" -}}
-{{- if and .Values.flightdeck.serviceAccount.create .Values.global.rbacEnabled (not .Values.flightdeck.backendSecretName) (not .Values.flightdeck.backendConnection) }}
+{{- if and .Values.flightdeck.serviceAccount.create .Values.global.rbac.enabled (not .Values.flightdeck.backendSecretName) (not .Values.flightdeck.backendConnection) }}
 {{- default (printf "%s-flightdeck-bootstrapper" .Release.Name ) .Values.flightdeck.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.flightdeck.serviceAccount.name }}
@@ -209,7 +248,7 @@
 {{- end }}
 
 {{ define "dpLink.serviceAccountName" -}}
-{{- if and .Values.dpLink.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.dpLink.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-dp-link" .Release.Name ) .Values.dpLink.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.dpLink.serviceAccount.name }}
@@ -217,7 +256,7 @@
 {{- end }}
 
 {{ define "navigator.serviceAccountName" -}}
-{{- if and .Values.navigator.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.navigator.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-navigator" .Release.Name ) .Values.navigator.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.navigator.serviceAccount.name }}
@@ -225,7 +264,7 @@
 {{- end }}
 
 {{ define "pilot.serviceAccountName" -}}
-{{- if and .Values.pilot.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.pilot.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-pilot" .Release.Name ) .Values.pilot.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.pilot.serviceAccount.name }}
@@ -285,6 +324,10 @@
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
+{{- if .Values.global.dataPlaneFailover.enabled }}
+- name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
+  value: {{ .Values.global.dataPlaneFailover.externalSecretManagerName | quote }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -653,13 +696,14 @@ fluentd
 {{ define "jetstreamTLS" }}
 {{- $secretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 {{- if .Values.global.nats.jetStream.tls }}
-tlsEnabled: true
 tls:
+  enabled: true
   caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/ca.crt
   certFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.crt
   keyFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.key
 {{- else -}}
-tlsEnabled: false
+tls:
+  enabled: false
 {{- end }}
 {{- end }}
 
@@ -741,7 +785,7 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 {{- if (eq .Values.global.plane.mode "data") -}}
 https://houston.{{ .Values.global.baseDomain }}
 {{- else -}}
-http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}:{{ .Values.ports.houstonHTTP }}
+http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}
 {{- end }}
 {{- end -}}
 
@@ -775,16 +819,16 @@ hostAliases:
 {{- end -}}
 
 {{/*
-Auto-generate a shared internal-service-auth token on install,
+Auto-generate a shared cluster-local-service-auth token on install,
 preserve across upgrades via lookup, or use a user-supplied value.
 Uses randBytes 32 (base64-encoded 32 random bytes) to match the
 entropy of a Fernet key.
 */}}
-{{- define "astronomer.internalServiceToken" -}}
-  {{- if and .Values.global.internalServiceAuth .Values.global.internalServiceAuth.token -}}
-    {{- .Values.global.internalServiceAuth.token -}}
+{{- define "astronomer.clusterLocalServiceToken" -}}
+  {{- if and .Values.global.clusterLocalServiceAuth .Values.global.clusterLocalServiceAuth.token -}}
+    {{- .Values.global.clusterLocalServiceAuth.token -}}
   {{- else -}}
-    {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-internal-service-auth" .Release.Name) -}}
+    {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-cluster-local-service-auth" .Release.Name) -}}
     {{- if and $existing $existing.data.token -}}
       {{- $existing.data.token | b64dec -}}
     {{- else -}}

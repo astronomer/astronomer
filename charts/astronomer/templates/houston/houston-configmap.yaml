@@ -115,23 +115,12 @@ data:
         deployRollback:
           enabled: {{ .Values.global.deploymentLifecycle.deployRollback.enabled }}
           deployRevisionReportNumberOfDays: {{ .Values.houston.cleanupDeployRevisions.olderThan}}
+          dagTarballVersionValidation:
+            enabled: {{ .Values.global.deploymentLifecycle.deployRollback.dagTarballVersionValidation.enabled }}
         cleanupAirflowDb:
           enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
 
       logging:
-        enabled: true
-        provider: {{ default "fluentd" .Values.global.logging.provider | quote }}
-        elasticsearch:
-          enabled: true
-        {{- if .Values.global.customLogging.enabled }}
-          connection:
-            host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
-            port: 9200
-        {{- else }}
-          connection:
-            host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
-            port: 9200
-        {{- end }}
         {{- if .Values.global.logging.loggingSidecar.enabled }}
         loggingSidecar:
           enabled: true
@@ -277,6 +266,18 @@ data:
             gitSync:
               repository: {{ .Values.global.gitSyncRelay.images.gitSync.repository }}
               tag: {{ .Values.global.gitSyncRelay.images.gitSync.tag }}
+          {{- if .Values.global.openshift.enabled }}
+          # We have to set this to null to override the default security context that is not compatible with OpenShift. The individual containers have their own security contexts that are compatible with OpenShift.
+          securityContext: null
+          gitDaemon:
+            securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+          gitSync:
+            securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+          {{- end }}
 
 
         airflow:
@@ -658,7 +659,10 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
-    updateRuntimeCheckEnabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
+    updateRuntimeCheck:
+      enabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
+    strictSchemaCheck:
+      enabled: {{ .Values.houston.strictSchemaCheck.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |

@@ -30,7 +30,10 @@ class TestAstronomerCommander:
             "global": {
                 "rbac": {"enabled": rbac_enabled},
                 "namespaceLabels": namespace_labels,
-            }
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -45,9 +48,46 @@ class TestAstronomerCommander:
 
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
         if namespace_labels and rbac_enabled:
-            assert metadata_file_contents == {"namespaceLabels": namespace_labels}
+            assert metadata_file_contents == {
+                "namespaceLabels": namespace_labels,
+                "registry": {"version": "99.88.77"},
+                "customLogging": {"enabled": False},
+            }
         else:
-            assert metadata_file_contents == {"namespaceLabels": {}}
+            assert metadata_file_contents == {
+                "namespaceLabels": {},
+                "registry": {"version": "99.88.77"},
+                "customLogging": {"enabled": False},
+            }
+
+    @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
+    def test_commander_metadata_custom_logging(self, kube_version, enabled):
+        """Test that helm renders custom logging in metadata.yaml template for astronomer/commander."""
+        values = {
+            "global": {
+                "customLogging": {"enabled": enabled},
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+
+        metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
+        assert metadata_file_contents == {
+            "namespaceLabels": {},
+            "customLogging": {"enabled": enabled},
+            "registry": {"version": "99.88.77"},
+        }
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
@@ -114,6 +154,7 @@ class TestAstronomerCommander:
         }
         assert not env_vars.get("COMMANDER_FLIGHTDECK_DSN")
         assert env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
+        assert "COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME" not in env_vars
 
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
         assert volume_mounts["tmp-workspace"] == "/tmp"
@@ -162,7 +203,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.default.svc.cluster.local.:9200"
-        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
+        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default.svc.cluster.local:8871"
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
@@ -187,10 +228,10 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
     def test_commander_rbac_cluster_role_enabled(self, kube_version):
-        """Test that if rbacEnabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
+        """Test that if rbac.enabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
         ClusterRoleBinding resources."""
 
-        # First rbacEnabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        # First rbac.enabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -230,7 +271,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["subjects"] == expected_subjects
 
     def test_commander_rbac_cluster_roles_enabled_rbac_disabled(self, kube_version):
-        """Test that if rbacEnabled set to true, but clusterRoles and
+        """Test that if rbac.enabled set to true, but clusterRoles and
         namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
@@ -249,7 +290,7 @@ class TestAstronomerCommander:
         assert len(docs) == 0
 
     def test_commander_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
+        """Test that if rbac.enabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -268,7 +309,7 @@ class TestAstronomerCommander:
 
     def test_commander_rbac_cluster_role_disabled(self, kube_version):
         """Test that if clusterRoles and namespacePools are disabled but
-        rbacEnabled is enabled, helm does not render RBAC resources."""
+        rbac.enabled is true, helm does not render RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -873,3 +914,29 @@ class TestAstronomerCommander:
         env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
         assert env_vars["MY_CUSTOM_VAR"] == "custom-value"
         assert env_vars["ANOTHER_VAR"] == "another-value"
+
+    @pytest.mark.parametrize(
+        "plane_mode,expected_jwks_endpoint",
+        [
+            ("data", "https://houston.example.com"),
+            ("unified", "http://release-name-houston.default.svc.cluster.local:8871"),
+        ],
+        ids=["data_plane", "unified_plane"],
+    )
+    def test_commander_houston_auth_service_url(self, kube_version, plane_mode, expected_jwks_endpoint):
+        """Test that COMMANDER_HOUSTON_JWKS_ENDPOINT is set from houston.authServiceURL.
+
+        Data plane uses the external Houston URL (https://houston.<baseDomain>).
+        Unified plane uses the in-cluster service URL with .svc.cluster.local to
+        avoid DNS resolution timeouts (PLX-426).
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        commander_env = get_containers_by_name(docs[0])["commander"]["env"]
+        jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
+        assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
+        assert jwks_entries[0]["value"] == expected_jwks_endpoint

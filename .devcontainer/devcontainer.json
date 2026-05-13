@@ -8,10 +8,13 @@
       "extensions": [
         "charliermarsh.ruff",
         "ms-python.python",
-        "ms-python.vscode-pylancea",
+        "ms-python.vscode-pylance",
         "ms-vscode-remote.remote-containers",
         "ms-vscode.makefile-tools"
-      ]
+      ],
+      "settings": {
+        "ruff.path": ["/root/.local/bin/ruff"]
+      }
     }
   }
 }

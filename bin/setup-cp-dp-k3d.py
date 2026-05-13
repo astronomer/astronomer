@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-One-shot local CP/DP setup for Astronomer using two k3d clusters.
+One-shot local CP/DP setup for Astronomer using k3d clusters.
 
 This script automates the workflow documented in `docs/cp-dp-k3d-setup-guide.md`:
 - Generate TLS certs (mkcert) with the right SANs for CP + DP subdomains
@@ -174,9 +174,10 @@ mirrors:
 
 
 @dataclass(frozen=True)
-class Ports:
-    cp_https: int
-    cp_http: int
+class ControlPlane:
+    cluster_name: str
+    https_port: int
+    http_port: int
 
 
 @dataclass(frozen=True)
@@ -194,8 +195,7 @@ class Settings:
     release_name: str
     docker_network: str
     cp_mode: str
-    cp_cluster_name: str
-    ports: Ports
+    control_planes: tuple[ControlPlane, ...]
     data_planes: tuple[DataPlane, ...]
     tls_secret_name: str
     mkcert_root_ca_secret_name: str
@@ -646,7 +646,8 @@ global:
   defaultDenyNetworkPolicy: false
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
-  vectorEnabled: true
+  daemonsetLogging:
+    enabled: true
   dagOnlyDeployment:
     enabled: true
 
@@ -662,8 +663,10 @@ astronomer:
     worker:
       replicas: 1
     config:
-      emailConfirmation: false
-      publicSignups: false
+      emailConfirmation:
+        enabled: false
+      publicSignups:
+        enabled: false
       cors:
         allowedOrigins:
           - "https://app.{settings.base_domain}"
@@ -750,7 +753,8 @@ global:
   defaultDenyNetworkPolicy: false
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
-  vectorEnabled: true
+  daemonsetLogging:
+    enabled: true
   dagOnlyDeployment:
     enabled: true
 
@@ -1005,7 +1009,7 @@ def _helm_upgrade_install(
     _run(cmd, check=True, capture=False)
 
 
-def _run_dns_reconcile(settings: Settings, dp: DataPlane) -> None:
+def _run_dns_reconcile(settings: Settings, cp: ControlPlane, dp: DataPlane) -> None:
     """
     Run the existing reconcile helper to pin CoreDNS NodeHosts and the DP node's /etc/hosts.
     """
@@ -1013,7 +1017,7 @@ def _run_dns_reconcile(settings: Settings, dp: DataPlane) -> None:
     env = dict(os.environ)
     env.update(
         {
-            "CP_CONTEXT": f"k3d-{settings.cp_cluster_name}",
+            "CP_CONTEXT": f"k3d-{cp.cluster_name}",
             "DP_CONTEXT": f"k3d-{dp.cluster_name}",
             "PLATFORM_NAMESPACE": settings.namespace,
             "BASE_DOMAIN": settings.base_domain,
@@ -1087,7 +1091,8 @@ def _ensure_dp_node_houston_hosts_pin(settings: Settings, dp: DataPlane) -> None
     - Pods resolve via CoreDNS, but node-level operations (kubelet/containerd image pulls) use node DNS + /etc/hosts.
     - If `houston.<baseDomain>` resolves incorrectly at the node level, registry auth can break.
     """
-    cp_context = f"k3d-{settings.cp_cluster_name}"
+    primary_cp = settings.control_planes[0]
+    cp_context = f"k3d-{primary_cp.cluster_name}"
     dp_node_container = f"k3d-{dp.cluster_name}-server-0"
     cp_nginx_svc = f"{settings.release_name}-cp-nginx"
 
@@ -1103,12 +1108,9 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
     Print the recommended /etc/hosts entries for accessing CP/DP from the host machine.
 
     This uses the Docker IPs of the k3d `*-serverlb` containers:
-    - k3d-control-serverlb (CP ingress)
-    - k3d-<name>-serverlb (DP ingress, one per data plane)
+    - k3d-cp0X-serverlb (CP ingress, one per control plane)
+    - k3d-dp0X-serverlb (DP ingress, one per data plane)
     """
-    cp_serverlb = f"k3d-{settings.cp_cluster_name}-serverlb"
-    cp_nginx_lb_ip = _docker_inspect_ip(cp_serverlb)
-
     base = settings.base_domain
 
     _print("\nAdd the following entries to your host `/etc/hosts`:\n")
@@ -1119,9 +1121,12 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
         _print(
             f"{dp_nginx_lb_ip} {prefix}.{base} deployments.{prefix}.{base} registry.{prefix}.{base} commander.{prefix}.{base} prometheus.{prefix}.{base} prom-proxy.{prefix}.{base} elasticsearch.{prefix}.{base}"
         )
-    _print(
-        f"{cp_nginx_lb_ip} {base} app.{base} houston.{base} grafana.{base} prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}"
-    )
+    for cp in settings.control_planes:
+        cp_serverlb = f"k3d-{cp.cluster_name}-serverlb"
+        cp_nginx_lb_ip = _docker_inspect_ip(cp_serverlb)
+        _print(
+            f"{cp_nginx_lb_ip} {base} app.{base} houston.{base} grafana.{base} prometheus.{base} elasticsearch.{base} alertmanager.{base} registry.{base}"
+        )
 
 
 def _validate_prereqs() -> None:
@@ -1137,30 +1142,47 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--namespace", default="astronomer")
     parser.add_argument("--release-name", default="astronomer")
     parser.add_argument("--docker-network", default="astronomer-net")
-    parser.add_argument("--cp-cluster-name", default="control")
+    parser.add_argument(
+        "--cp-count",
+        type=int,
+        default=1,
+        choices=range(1, 2),
+        help="Number of control plane clusters to create. Clusters are named cp01, cp02, … Default: '%(default)s'",
+    )
     parser.add_argument(
         "--dp-count",
         type=int,
         default=1,
-        help="Number of data plane clusters to create. Clusters are named data-1, data-2, … Default: '%(default)s'",
+        choices=range(1, 5),
+        help="Number of data plane clusters to create. Clusters are named dp01, dp02, … Default: '%(default)s'",
     )
 
     parser.add_argument(
         "--cp-mode", type=str, default="unified", help="Control plane mode to install (unified, control) Default: '%(default)s'"
     )
-    parser.add_argument("--cp-https-port", type=int, default=8443, help="Control plane HTTPS port. Default: '%(default)s'")
-    parser.add_argument("--cp-http-port", type=int, default=8080, help="Control plane HTTP port. Default: '%(default)s'")
+    parser.add_argument(
+        "--cp-base-https-port",
+        type=int,
+        default=8443,
+        help="Base HTTPS port for the first control plane; subsequent control planes increment by 1. Default: '%(default)s'",
+    )
+    parser.add_argument(
+        "--cp-base-http-port",
+        type=int,
+        default=8080,
+        help="Base HTTP port for the first control plane; subsequent control planes increment by 1. Default: '%(default)s'",
+    )
     parser.add_argument(
         "--dp-base-https-port",
         type=int,
-        default=8444,
-        help="Base HTTPS port for the first data plane; subsequent data planes increment by 1. Default: '%(default)s'",
+        default=None,
+        help="Base HTTPS port for the first data plane; subsequent data planes increment by 1. Defaults to --cp-base-https-port + cp-count.",
     )
     parser.add_argument(
         "--dp-base-http-port",
         type=int,
-        default=8081,
-        help="Base HTTP port for the first data plane; subsequent data planes increment by 1. Default: '%(default)s'",
+        default=None,
+        help="Base HTTP port for the first data plane; subsequent data planes increment by 1. Defaults to --cp-base-http-port + cp-count.",
     )
 
     parser.add_argument("--tls-secret-name", default="astronomer-tls")
@@ -1230,12 +1252,24 @@ def main() -> int:  # noqa: C901
 
     ms = Milestones()
 
+    dp_base_https = args.dp_base_https_port if args.dp_base_https_port is not None else (args.cp_base_https_port + args.cp_count)
+    dp_base_http = args.dp_base_http_port if args.dp_base_http_port is not None else (args.cp_base_http_port + args.cp_count)
+
+    control_planes = tuple(
+        ControlPlane(
+            cluster_name=f"cp{i:02d}",
+            https_port=args.cp_base_https_port + (i - 1),
+            http_port=args.cp_base_http_port + (i - 1),
+        )
+        for i in range(1, args.cp_count + 1)
+    )
+
     data_planes = tuple(
         DataPlane(
-            cluster_name=f"data-{i}",
+            cluster_name=f"dp{i:02d}",
             domain_prefix=f"dp{i:02d}",
-            https_port=args.dp_base_https_port + (i - 1),
-            http_port=args.dp_base_http_port + (i - 1),
+            https_port=dp_base_https + (i - 1),
+            http_port=dp_base_http + (i - 1),
         )
         for i in range(1, args.dp_count + 1)
     )
@@ -1246,8 +1280,7 @@ def main() -> int:  # noqa: C901
         release_name=args.release_name,
         docker_network=args.docker_network,
         cp_mode=args.cp_mode,
-        cp_cluster_name=args.cp_cluster_name,
-        ports=Ports(cp_https=args.cp_https_port, cp_http=args.cp_http_port),
+        control_planes=control_planes,
         data_planes=data_planes,
         tls_secret_name=args.tls_secret_name,
         mkcert_root_ca_secret_name=args.mkcert_root_ca_secret_name,
@@ -1297,29 +1330,32 @@ def main() -> int:  # noqa: C901
             raise RuntimeError("mkcert root CA path not available")
 
         # Step: clusters
+        cp_names = ", ".join(cp.cluster_name for cp in settings.control_planes)
         dp_names = ", ".join(dp.cluster_name for dp in settings.data_planes)
         if not args.skip_clusters:
-            h = ms.start(f"Ensure k3d clusters exist (CP={settings.cp_cluster_name}, DP={dp_names})")
+            h = ms.start(f"Ensure k3d clusters exist (CP={cp_names}, DP={dp_names})")
             if args.recreate_clusters:
-                _delete_k3d_cluster(settings.cp_cluster_name)
+                for cp in settings.control_planes:
+                    _delete_k3d_cluster(cp.cluster_name)
                 for dp in settings.data_planes:
                     _delete_k3d_cluster(dp.cluster_name)
 
-            if not _k3d_cluster_exists(settings.cp_cluster_name):
-                _k3d_create_cluster(
-                    name=settings.cp_cluster_name,
-                    docker_network=settings.docker_network,
-                    ports=[
-                        f"{settings.ports.cp_https}:443@loadbalancer",
-                        f"{settings.ports.cp_http}:80@loadbalancer",
-                    ],
-                    mkcert_root_ca=mkcert_root_ca,
-                    # Expand NodePort range so postgres can be exposed as NodePort 5432.
-                    extra_k3s_args=["--kube-apiserver-arg=--service-node-port-range=1024-65535@server:0"],
-                    registry_config=registry_config,
-                )
-            else:
-                _debug(f"Cluster already exists, skipping: {settings.cp_cluster_name}")
+            for cp in settings.control_planes:
+                if not _k3d_cluster_exists(cp.cluster_name):
+                    _k3d_create_cluster(
+                        name=cp.cluster_name,
+                        docker_network=settings.docker_network,
+                        ports=[
+                            f"{cp.https_port}:443@loadbalancer",
+                            f"{cp.http_port}:80@loadbalancer",
+                        ],
+                        mkcert_root_ca=mkcert_root_ca,
+                        # Expand NodePort range so postgres can be exposed as NodePort 5432.
+                        extra_k3s_args=["--kube-apiserver-arg=--service-node-port-range=1024-65535@server:0"],
+                        registry_config=registry_config,
+                    )
+                else:
+                    _debug(f"Cluster already exists, skipping: {cp.cluster_name}")
 
             for dp in settings.data_planes:
                 if not _k3d_cluster_exists(dp.cluster_name):
@@ -1338,19 +1374,19 @@ def main() -> int:  # noqa: C901
             ms.done(h)
         else:
             ms.skip(
-                f"Ensure k3d clusters exist (CP={settings.cp_cluster_name}, DP={dp_names})",
+                f"Ensure k3d clusters exist (CP={cp_names}, DP={dp_names})",
                 reason="--skip-clusters set",
             )
 
-        cp_context = f"k3d-{settings.cp_cluster_name}"
-
         # Step: namespace + secrets
         if not args.skip_secrets:
-            h = ms.start(f"Apply namespace + secrets in both clusters (ns={settings.namespace})")
+            h = ms.start(f"Apply namespace + secrets in all clusters (ns={settings.namespace})")
             if cert_path is None or key_path is None:
                 raise RuntimeError("TLS cert/key paths not available; cannot create secrets")
 
-            for ctx in [cp_context] + [f"k3d-{dp.cluster_name}" for dp in settings.data_planes]:
+            for ctx in [f"k3d-{cp.cluster_name}" for cp in settings.control_planes] + [
+                f"k3d-{dp.cluster_name}" for dp in settings.data_planes
+            ]:
                 _kubectl_create_namespace(ctx, settings.namespace)
                 _kubectl_apply_tls_secret(
                     context=ctx,
@@ -1368,7 +1404,7 @@ def main() -> int:  # noqa: C901
                 )
             ms.done(h, detail=f"tlsSecret={settings.tls_secret_name} caSecret={settings.mkcert_root_ca_secret_name}")
         else:
-            ms.skip("Apply namespace + secrets in both clusters", reason="--skip-secrets set")
+            ms.skip("Apply namespace + secrets in all clusters", reason="--skip-secrets set")
 
         # Step: deploy MySQL in DP clusters (when --dp-airflow-db=mysql)
         # Bootstrap secrets (postgres or mysql) are created later in a dedicated step after CP helm install.
@@ -1388,8 +1424,11 @@ def main() -> int:  # noqa: C901
         else:
             values_dir = Path(tempfile.mkdtemp(prefix="astro-k3d-"))
 
-        cp_values = values_dir / "cp-values.yaml"
-        _write_values_file(cp_values, _cp_values_yaml(settings))
+        cp_values_files: dict[str, Path] = {}
+        for cp in settings.control_planes:
+            cp_values_path = values_dir / f"cp-{cp.cluster_name}-values.yaml"
+            _write_values_file(cp_values_path, _cp_values_yaml(settings))
+            cp_values_files[cp.cluster_name] = cp_values_path
         dp_values_files: dict[str, Path] = {}
         for dp in settings.data_planes:
             dp_values_path = values_dir / f"dp-{dp.cluster_name}-values.yaml"
@@ -1406,21 +1445,22 @@ def main() -> int:  # noqa: C901
             else:
                 ms.skip("Helm dependency update", reason="Disabled by default (vendored local charts)")
 
-            h = ms.start(f"Helm install/upgrade Control Plane (context={cp_context})")
-            _helm_upgrade_install(
-                context=cp_context,
-                chart_dir=GIT_ROOT_DIR,
-                release_name=settings.release_name,
-                namespace=settings.namespace,
-                values_file=cp_values,
-                extra_values_files=[Path(f) for f in args.helm_values],
-                timeout=settings.helm_timeout,
-                debug=settings.helm_debug,
-            )
-            ms.done(h)
+            for cp in settings.control_planes:
+                h = ms.start(f"Helm install/upgrade Control Plane (context=k3d-{cp.cluster_name})")
+                _helm_upgrade_install(
+                    context=f"k3d-{cp.cluster_name}",
+                    chart_dir=GIT_ROOT_DIR,
+                    release_name=settings.release_name,
+                    namespace=settings.namespace,
+                    values_file=cp_values_files[cp.cluster_name],
+                    extra_values_files=[Path(f) for f in args.helm_values],
+                    timeout=settings.helm_timeout,
+                    debug=settings.helm_debug,
+                )
+                ms.done(h)
 
             # Step: create astronomer-bootstrap secrets in all DP clusters.
-            # Postgres mode: point to the CP's shared postgres NodePort on the CP node Docker IP.
+            # Postgres mode: point to the primary CP's (cp01) shared postgres NodePort on the CP node Docker IP.
             # MySQL mode: point to each DP's own MySQL service.
             h = ms.start("Create DP astronomer-bootstrap secrets")
             if settings.dp_airflow_db == "mysql":
@@ -1431,7 +1471,8 @@ def main() -> int:  # noqa: C901
                         release_name=settings.release_name,
                     )
             else:
-                cp_node_ip = _docker_inspect_ip(f"k3d-{settings.cp_cluster_name}-server-0")
+                primary_cp = settings.control_planes[0]
+                cp_node_ip = _docker_inspect_ip(f"k3d-{primary_cp.cluster_name}-server-0")
                 for dp in settings.data_planes:
                     _create_astronomer_bootstrap_secret_postgres(
                         context=f"k3d-{dp.cluster_name}",
@@ -1446,7 +1487,7 @@ def main() -> int:  # noqa: C901
                 dp_ctx = f"k3d-{dp.cluster_name}"
                 if not args.skip_dns_reconcile:
                     h = ms.start(f"Pre-DP: update {dp.cluster_name} CoreDNS NodeHosts for CP ingress")
-                    _run_dns_reconcile(settings, dp)
+                    _run_dns_reconcile(settings, settings.control_planes[0], dp)
                     ms.done(h)
                 else:
                     ms.skip(f"Pre-DP: update {dp.cluster_name} CoreDNS NodeHosts for CP ingress", reason="--skip-dns-reconcile set")
@@ -1466,11 +1507,11 @@ def main() -> int:  # noqa: C901
         else:
             ms.skip("Helm dependency update + CP/DP install", reason="--skip-helm set")
 
-        # Step: DNS reconcile (final, once per DP)
+        # Step: DNS reconcile (final, once per DP against the primary CP)
         for dp in settings.data_planes:
             if not args.skip_dns_reconcile:
                 h = ms.start(f"Reconcile cross-cluster DNS + node-level hosts pins ({dp.cluster_name})")
-                _run_dns_reconcile(settings, dp)
+                _run_dns_reconcile(settings, settings.control_planes[0], dp)
                 ms.done(h)
             else:
                 ms.skip(

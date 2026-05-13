@@ -209,6 +209,11 @@ def expected_new_partial_text() -> str:
                     enabled: false
                 databaseManagement:
                   pgBouncerResourceCalculationStrategy: airflowStratV2
+                upsertDeployment:
+                  allowFromUi:
+                    enabled: true
+            strictSchemaCheck:
+              enabled: true
     """)
 
 
@@ -287,6 +292,8 @@ def new_schema_partial_text() -> str:
                     enabled: true
                 logHelmValues:
                   enabled: true
+            strictSchemaCheck:
+              enabled: true
     """)
 
 
@@ -495,7 +502,6 @@ def expected_037x_new_partial_text() -> str:
               name: my-sidecar
               repository: custom-registry/vector
               tag: 0.50.0
-            provider:
           nats:
             enabled: true
             replicas: 3
@@ -557,6 +563,11 @@ def expected_037x_new_partial_text() -> str:
                     enabled: false
                 databaseManagement:
                   pgBouncerResourceCalculationStrategy: airflowStratV2
+                upsertDeployment:
+                  allowFromUi:
+                    enabled: true
+            strictSchemaCheck:
+              enabled: true
 
         vector:
           resources:
@@ -633,7 +644,6 @@ def new_037x_schema_partial_text() -> str:
             loggingSidecar:
               enabled: true
               name: sidecar-log-consumer
-            provider: elasticsearch
           nats:
             enabled: true
             replicas: 3
@@ -655,6 +665,8 @@ def new_037x_schema_partial_text() -> str:
                     enabled: true
                   triggerer:
                     enabled: true
+            strictSchemaCheck:
+              enabled: true
 
         tags:
           platform: true

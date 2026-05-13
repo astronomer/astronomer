@@ -207,3 +207,29 @@ class TestAlertmanager:
 
         assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
         assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+    def test_alertmanager_ingress_with_tls_secret(self, kube_version):
+        """Test that alertmanager ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/alertmanager/templates/ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "tlsSecret": "my-tls-secret"}},
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert len(tls[0]["hosts"]) == 1
+
+    def test_alertmanager_ingress_without_tls_secret(self, kube_version):
+        """Test that alertmanager ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/alertmanager/templates/ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "tlsSecret": ""}},
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]

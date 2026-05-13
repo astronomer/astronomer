@@ -12,9 +12,8 @@ description: Use for Helm chart work - creating charts, modifying existing chart
 - **Architecture**: Umbrella chart design, sub-chart organization, design principles
 - **Template Best Practices**: See "Probe Customization Pattern" section
   - **Critical**: Every container must support customizable livenessProbe and readinessProbe
-- **Testing Strategy**: Pytest patterns, `render_chart()` utilities, test organization, running tests
-  - **Critical**: Read the "Testing Sub-Chart Values" section in SPEC.md for proper values nesting in tests
-  - **Critical**: Read "Testing Probe Customization" section - must add probes to `enable_all_probes.yaml` test data
+- **Testing Strategy**: See the [chart-tests skill](../chart-tests/SKILL.md) — load it when writing or running tests
+  - **Critical**: Values nesting for sub-charts, probe customization, and `uv run pytest` usage are all covered there
 - **Code Standards**: Naming conventions, template best practices, Python script standards
 - **Values Documentation**: Helm-docs adoption plan, JSON schema structure
 - **Refactoring Guidelines**: Modernization roadmap and improvement areas

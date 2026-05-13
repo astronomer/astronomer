@@ -2,7 +2,7 @@ import ast
 
 import yaml
 
-from tests.utils.chart import render_chart
+from tests.utils.chart import find_key_paths, render_chart
 
 
 def common_test_cases(docs):
@@ -53,14 +53,10 @@ def test_houston_configmap_defaults():
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
 
     assert not prod["deployments"].get("authSideCar")
-    assert not prod["deployments"]["logging"].get("loggingSidecar")
 
     # Verify new unified feature flags
-    assert prod["deployments"]["logging"]["enabled"] is True
-    assert prod["deployments"]["logging"]["provider"] == "fluentd"
-    assert prod["deployments"]["logging"]["elasticsearch"]["enabled"] is True
-    assert prod["deployments"]["logging"]["elasticsearch"]["connection"]["port"] == 9200
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
+    assert prod["strictSchemaCheck"]["enabled"] is True
 
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
     git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
@@ -231,7 +227,6 @@ def test_houston_configmap_with_config_syncer_disabled():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert "extraVolumeMounts" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
     assert "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
-    assert not prod_yaml["deployments"]["logging"].get("loggingSidecar")
 
 
 def test_houston_configmap_with_vector_index_prefix_defaults():
@@ -600,7 +595,7 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateRuntimeCheckEnabled"] is True
+    assert prod["updateRuntimeCheck"]["enabled"] is True
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
@@ -619,7 +614,45 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateRuntimeCheckEnabled"] is False
+    assert prod["updateRuntimeCheck"]["enabled"] is False
+
+
+def test_houston_configmap_strict_schema_check_enabled():
+    """Validate the houston configmap renders strictSchemaCheck.enabled: true."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "strictSchemaCheck": {"enabled": True},
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["strictSchemaCheck"]["enabled"] is True
+
+
+def test_houston_configmap_strict_schema_check_disabled():
+    """Validate the houston configmap renders strictSchemaCheck.enabled: false when disabled in values."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "strictSchemaCheck": {"enabled": False},
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["strictSchemaCheck"]["enabled"] is False
 
 
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
@@ -953,7 +986,7 @@ def test_houston_configmap_features_elasticsearch_defaults():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    es = prod["deployments"]["logging"]["elasticsearch"]
+    es = prod["deployments"]["helm"]["airflow"]["elasticsearch"]
     assert es["enabled"] is True
     assert es["connection"]["host"].endswith("-elasticsearch-nginx.default")
     assert es["connection"]["port"] == 9200
@@ -966,7 +999,7 @@ def test_houston_configmap_features_elasticsearch_custom_logging():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    es = prod["deployments"]["logging"]["elasticsearch"]
+    es = prod["deployments"]["helm"]["airflow"]["elasticsearch"]
     assert es["enabled"] is True
     assert es["connection"]["host"].endswith("-external-es-proxy.default")
     assert es["connection"]["port"] == 9200
@@ -981,12 +1014,31 @@ def test_houston_configmap_features_grafana_defaults():
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
 
 
-def test_houston_configmap_features_logging_defaults():
-    """Validate that logging is emitted with defaults."""
+def test_houston_configmap_no_flat_enabled_flags_under_deployments():
+    """Guard the uniform flag pattern (PLX-254): no flat *Enabled keys may
+    appear directly under deployments in the rendered production.yaml.
+    New feature flags must be nested as <feature>.enabled."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    log = prod["deployments"]["logging"]
-    assert log["enabled"] is True
-    assert log["provider"] == "fluentd"
+    deployments = prod["deployments"]
+
+    violations = [key for key, value in deployments.items() if key.endswith("Enabled") and isinstance(value, bool)]
+    assert violations == [], (
+        f"Flat *Enabled keys found under deployments: {violations}. "
+        "Wrap each in a named object: deployments.<feature>.enabled: true"
+    )
+
+
+def test_houston_configmap_no_vector_enabled_key():
+    """Guard PLX-287: global.vectorEnabled must not reappear in the rendered
+    ConfigMap. The sidecar logging toggle lives at loggingSidecar.enabled."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert find_key_paths(prod, "vectorEnabled") == [], (
+        "Legacy vectorEnabled key reappeared in rendered ConfigMap. Use loggingSidecar.enabled instead."
+    )

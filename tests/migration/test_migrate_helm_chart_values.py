@@ -70,7 +70,7 @@ class TestPartialOverrideMigration:
         expected = _to_plain(_load_rt(expected_new_partial_text))
 
         assert result == expected
-        assert len(changes) == 36
+        assert len(changes) == 37
 
     def test_non_global_sections_preserved(self, old_partial_override_text: str):
         """Sections outside global (astronomer, nginx, etc.) are not modified."""
@@ -118,7 +118,7 @@ class TestFullValuesMigration:
         assert g["perHostIngress"]["enabled"] is False
         assert g["argoCD"]["annotation"]["enabled"] is False
         assert g["manageClusterScopedResources"]["enabled"] is True
-        assert len(changes) == 36
+        assert len(changes) == 37
 
     def test_houston_config_migrated(self, old_full_values_text: str):
         """Houston config deployment flags are restructured and obsolete keys deleted."""
@@ -140,7 +140,27 @@ class TestFullValuesMigration:
         assert "maxPodAu" not in deployments
         assert "upsertDeploymentEnabled" not in deployments
         assert "canUpsertDeploymentFromUI" not in deployments
+        assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
         assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
+
+    def test_houston_deployments_migrates_enableDagTarballVersionValidation(self) -> None:
+        """Nested ``enableDagTarballVersionValidation`` becomes ``dagTarballVersionValidation.enabled``."""
+        text = """
+astronomer:
+  houston:
+    config:
+      deployments:
+        deploymentLifecycle:
+          deployRollback:
+            enabled: true
+            enableDagTarballVersionValidation: false
+"""
+        data = _load_rt(text)
+        migrate_values(data)
+        d = _to_plain(data)["astronomer"]["houston"]["config"]["deployments"]
+        dr = d["deploymentLifecycle"]["deployRollback"]
+        assert dr["dagTarballVersionValidation"]["enabled"] is False
+        assert "enableDagTarballVersionValidation" not in dr
 
     def test_old_keys_removed_after_migration(self, old_full_values_text: str):
         """Old flat keys no longer exist at the global root after migration."""
@@ -160,6 +180,8 @@ class TestFullValuesMigration:
             "podDisruptionBudgetsEnabled",
             "postgresqlEnabled",
             "prometheusPostgresExporterEnabled",
+            "nodeExporterEnabled",
+            "fluentdEnabled",
             "manualNamespaceNamesEnabled",
             "enablePerHostIngress",
             "enableArgoCDAnnotation",
@@ -234,6 +256,52 @@ class TestBoolToNested:
         result = _to_plain(data)
         assert result["global"]["networkNSLabels"]["enabled"] is True
         assert len(changes) == 1
+
+
+class TestNginxCspPolicyMigration:
+    """Legacy CSP toggle shapes -> `nginx.cspPolicy.enabled`."""
+
+    def test_migrates_cdnEnabled_to_flat_enabled(self) -> None:
+        """Full migrate_values rewrites flat cdnEnabled -> cspPolicy.enabled."""
+        data = _load_rt(
+            dedent("""\
+                nginx:
+                  cspPolicy:
+                    cdnEnabled: false
+                    connectsrc: "cdn.example.com"
+            """)
+        )
+        changes = migrate_values(data)
+        result = _to_plain(data)
+        assert result["nginx"]["cspPolicy"]["enabled"] is False
+        assert "cdnEnabled" not in result["nginx"]["cspPolicy"]
+        assert "cdn" not in result["nginx"]["cspPolicy"]
+        assert result["nginx"]["cspPolicy"]["connectsrc"] == "cdn.example.com"
+        assert any(c.old_path == "nginx.cspPolicy.cdnEnabled" and c.new_path == "nginx.cspPolicy.enabled" for c in changes)
+
+    def test_no_op_when_csp_policy_missing(self) -> None:
+        """No nginx.cspPolicy section produces no nginx CSP migration changes."""
+        data = _load_rt("nginx:\n  replicas: 2\n")
+        changes = migrate_values(data)
+        assert _to_plain(data)["nginx"]["replicas"] == 2
+        assert not any("nginx.cspPolicy" in c.old_path for c in changes)
+
+    def test_idempotent_when_already_flat_enabled(self) -> None:
+        """Second migration pass does not alter already-flat cspPolicy.enabled."""
+        data = _load_rt(
+            dedent("""\
+                nginx:
+                  cspPolicy:
+                    enabled: true
+                    connectsrc: "x"
+            """)
+        )
+        migrate_values(data)
+        plain_after_first = _to_plain(data)
+        data2 = _load_rt(_dump_rt(data))
+        changes2 = migrate_values(data2)
+        assert _to_plain(data2) == plain_after_first
+        assert not any("nginx.cspPolicy" in c.old_path for c in changes2)
 
 
 class TestSubtreeMove:
@@ -391,14 +459,18 @@ RULE_TEST_CASES = [
     (
         "features.namespacePools",
         "global:\n  features:\n    namespacePools:\n      enabled: true\n      createRbac: true\n",
-        lambda g: g["namespaceManagement"]["namespacePools"]["enabled"] is True
-        and g["namespaceManagement"]["namespacePools"]["createRbac"] is True,
+        lambda g: (
+            g["namespaceManagement"]["namespacePools"]["enabled"] is True
+            and g["namespaceManagement"]["namespacePools"]["createRbac"] is True
+        ),
     ),
     (
         "dagOnlyDeployment",
         "global:\n  dagOnlyDeployment:\n    enabled: true\n    repository: test/repo\n",
-        lambda g: g["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
-        and g["deployMechanisms"]["dagOnlyDeployment"]["repository"] == "test/repo",
+        lambda g: (
+            g["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
+            and g["deployMechanisms"]["dagOnlyDeployment"]["repository"] == "test/repo"
+        ),
     ),
     (
         "loggingSidecar",
@@ -421,6 +493,16 @@ RULE_TEST_CASES = [
         lambda g: g["prometheusPostgresExporter"]["enabled"] is False,
     ),
     (
+        "nodeExporterEnabled",
+        "global:\n  nodeExporterEnabled: true\n",
+        lambda g: g["nodeExporter"]["enabled"] is True,
+    ),
+    (
+        "fluentdEnabled",
+        "global:\n  fluentdEnabled: false\n",
+        lambda g: g["daemonsetLogging"]["enabled"] is False and "fluentdEnabled" not in g,
+    ),
+    (
         "manualNamespaceNamesEnabled",
         "global:\n  manualNamespaceNamesEnabled: false\n",
         lambda g: g["namespaceManagement"]["manualNamespaceNames"]["enabled"] is False,
@@ -439,6 +521,11 @@ RULE_TEST_CASES = [
         "disableManageClusterScopedResources",
         "global:\n  disableManageClusterScopedResources: false\n",
         lambda g: g["manageClusterScopedResources"]["enabled"] is True,
+    ),
+    (
+        "vectorEnabled",
+        "global:\n  vectorEnabled: true\n",
+        lambda g: g["daemonsetLogging"]["enabled"] is True and "vectorEnabled" not in g,
     ),
 ]
 
@@ -509,14 +596,15 @@ class TestEdgeCases:
         assert len(changes) == 0
 
     def test_no_global_section(self):
-        """YAML without a global key passes through unchanged."""
+        """YAML without a global key still gets new houston defaults injected."""
         text = "astronomer:\n  houston:\n    replicas: 3\n"
         data = _load_rt(text)
         changes = migrate_values(data)
 
         result = _to_plain(data)
         assert result["astronomer"]["houston"]["replicas"] == 3
-        assert len(changes) == 0
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert len(changes) == 1
 
     def test_mixed_old_and_new_keys(self):
         """File with some old keys and some new keys migrates only the old ones."""
@@ -539,22 +627,22 @@ class TestEdgeCases:
         assert result["global"]["networkNSLabels"]["enabled"] is True
         assert "rbacEnabled" not in result["global"]
         assert "openshiftEnabled" not in result["global"]
-        assert len(changes) == 2
+        assert len(changes) == 3
 
     def test_global_section_empty(self):
-        """global section that is empty does not crash."""
+        """global section that is empty does not crash; new houston defaults are still injected."""
         data = _load_rt("global: {}\n")
         changes = migrate_values(data)
-        assert len(changes) == 0
+        assert len(changes) == 1
 
     def test_global_section_null(self):
-        """global section set to null does not crash."""
+        """global section set to null does not crash; new houston defaults are still injected."""
         data = _load_rt("global:\n")
         changes = migrate_values(data)
-        assert len(changes) == 0
+        assert len(changes) == 1
 
     def test_only_unrelated_global_keys(self):
-        """global section with only unrelated keys is not modified."""
+        """global section with only unrelated keys is not modified; new houston defaults are injected."""
         text = dedent("""\
             global:
               baseDomain: example.com
@@ -562,12 +650,12 @@ class TestEdgeCases:
               privateCaCerts: []
         """)
         data = _load_rt(text)
-        original = _dump_rt(data)
         changes = migrate_values(data)
-        after = _dump_rt(data)
+        result = _to_plain(data)
 
-        assert original == after
-        assert len(changes) == 0
+        assert result["global"]["baseDomain"] == "example.com"
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert len(changes) == 1
 
     def test_features_with_extra_keys_not_deleted(self):
         """If features has keys besides namespacePools, features is kept."""
@@ -585,6 +673,79 @@ class TestEdgeCases:
 
         assert result["global"]["namespaceManagement"]["namespacePools"]["enabled"] is True
         assert result["global"]["features"]["someOtherFeature"]["enabled"] is False
+
+    def test_nested_subchart_global_migrated(self):
+        """Nested subchart global blocks are migrated like the top-level global."""
+        text = dedent("""\
+            global:
+              rbacEnabled: true
+            astronomer:
+              global:
+                networkNSLabels: false
+                deployRollbackEnabled: true
+                loggingSidecar:
+                  enabled: true
+                  name: nested-sidecar
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["rbac"]["enabled"] is True
+        nested_global = result["astronomer"]["global"]
+        assert nested_global["networkNSLabels"]["enabled"] is False
+        assert nested_global["deploymentLifecycle"]["deployRollback"]["enabled"] is True
+        assert nested_global["logging"]["loggingSidecar"]["enabled"] is True
+        assert nested_global["logging"]["loggingSidecar"]["name"] == "nested-sidecar"
+        assert "networkNSLabels" not in {k for k, v in nested_global.items() if isinstance(v, bool)}
+        assert "deployRollbackEnabled" not in nested_global
+        assert "loggingSidecar" not in nested_global
+        assert any(c.old_path == "astronomer.global.networkNSLabels" for c in changes)
+
+
+# ---------------------------------------------------------------------------
+# AddKeyIfMissing (houston) tests
+# ---------------------------------------------------------------------------
+
+
+class TestAddKeyIfMissingHouston:
+    """Tests for AddKeyIfMissing rules applied to houston keys."""
+
+    def test_adds_strict_schema_check_when_missing(self):
+        """Injects astronomer.houston.strictSchemaCheck: {enabled: true} when absent."""
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
+        assert len([c for c in changes if c.new_path == "astronomer.houston.strictSchemaCheck"]) == 1
+
+    def test_does_not_overwrite_existing_strict_schema_check(self):
+        """Does not overwrite astronomer.houston.strictSchemaCheck if already present."""
+        data = _load_rt("astronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: true\n")
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert not any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
+
+    def test_does_not_overwrite_existing_strict_schema_check_when_disabled(self):
+        """Preserves astronomer.houston.strictSchemaCheck when the customer set enabled: false."""
+        data = _load_rt("astronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: false\n")
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is False
+        assert not any(c.new_path == "astronomer.houston.strictSchemaCheck" for c in changes)
+
+    def test_creates_astronomer_houston_subtree_when_absent(self):
+        """Creates astronomer.houston path if neither key exists in the document."""
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        migrate_values(data)
+
+        result = _to_plain(data)
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -718,6 +879,38 @@ class TestConflictPrecedence:
         assert "sccEnabled" not in result["global"]
         assert "openshiftEnabled" not in result["global"]
         assert len(changes) == 3
+
+    def test_vector_enabled_conflict_keeps_new(self):
+        """vectorEnabled conflict with loggingDaemonset.enabled preserves the new-schema value."""
+        text = dedent("""\
+            global:
+              vectorEnabled: true
+              daemonsetLogging:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
+        assert "vectorEnabled" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_fluentd_enabled_conflict_keeps_new(self):
+        """fluentdEnabled conflict with daemonsetLogging.enabled preserves the new-schema value."""
+        text = dedent("""\
+            global:
+              fluentdEnabled: true
+              daemonsetLogging:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
+        assert "fluentdEnabled" not in result["global"]
+        assert len(changes) >= 1
 
 
 # ---------------------------------------------------------------------------
@@ -929,16 +1122,35 @@ class TestHoustonDeploymentMigration:
         assert "canUpsertDeploymentFromUI" not in deployments
         assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
         assert deployments["otherKey"] is True
+        assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
         assert len(changes) == 6
 
     def test_houston_config_absent(self):
-        """Missing astronomer.houston.config.deployments section produces no changes."""
+        """With only ``global`` present, no Houston deployments; strict schema key may be added."""
         text = "global:\n  rbacEnabled: true\n"
         data = _load_rt(text)
         changes = migrate_values(data)
         result = _to_plain(data)
 
         assert result["global"]["rbac"]["enabled"] is True
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert len(changes) == 2
+
+    def test_helm_rbac_enabled_migrated(self):
+        """``astronomer.houston.config.helm.rbacEnabled`` becomes ``helm.rbac.enabled`` (doc §1.8)."""
+        text = dedent("""\
+            astronomer:
+              houston:
+                config:
+                  helm:
+                    rbacEnabled: true
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+        helm = result["astronomer"]["houston"]["config"]["helm"]
+        assert helm["rbac"]["enabled"] is True
+        assert "rbacEnabled" not in helm
         assert len(changes) == 1
 
     def test_houston_config_already_migrated(self):
@@ -998,7 +1210,8 @@ class TestHoustonDeploymentMigration:
         deployments = result["astronomer"]["houston"]["config"]["deployments"]
         assert deployments["airflowComponents"]["dagProcessor"]["enabled"] is True
         assert "dagProcessorEnabled" not in deployments
-        assert len(changes) == 2
+        assert result["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True
+        assert len(changes) == 3
 
 
 # ---------------------------------------------------------------------------
@@ -1048,13 +1261,16 @@ class TestCLI:
         assert result.returncode == 0
         assert "global.rbacEnabled -> global.rbac.enabled" in result.stderr
         assert "global.sccEnabled -> global.scc.enabled" in result.stderr
-        assert "2 migration(s)" in result.stderr
+        assert "3 migration(s)" in result.stderr
+        assert "strictSchemaCheck" in result.stderr
         assert input_file.read_text() == original_text
 
     def test_dry_run_no_changes(self, tmp_path: Path):
         """--dry-run on an already-migrated file reports no changes."""
         input_file = tmp_path / "values.yaml"
-        input_file.write_text("global:\n  rbac:\n    enabled: true\n")
+        input_file.write_text(
+            "global:\n  rbac:\n    enabled: true\nastronomer:\n  houston:\n    strictSchemaCheck:\n      enabled: true\n"
+        )
 
         import subprocess
 

@@ -19,8 +19,6 @@ def failover_values(plane_mode):
 class TestDataPlaneFailoverFlag:
     """Tests for the global.dataPlaneFailover.enabled feature flag."""
 
-    # --- Data-plane components (mode=data) ---
-
     def test_flag_data_mode_enables_pilot(self, kube_version):
         """Flag in data mode renders pilot deployment without pilot.enabled."""
         docs = render_chart(
@@ -39,7 +37,7 @@ class TestDataPlaneFailoverFlag:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "rbacEnabled": True,
+                    "rbac": {"enabled": True},
                     "dataPlaneFailover": {"enabled": True},
                 },
             },
@@ -89,6 +87,39 @@ class TestDataPlaneFailoverFlag:
         env_vars = get_env_vars_dict(containers[0]["env"])
         assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED"] == "true"
 
+    def test_flag_data_mode_sets_external_secret_manager_secret_name_env(self, kube_version):
+        """Flag in data mode sets COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME on commander."""
+        values = {
+            "global": {
+                "plane": {"mode": "data"},
+                "dataPlaneFailover": {
+                    "enabled": True,
+                    "externalSecretManagerName": "my-esm-name",
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        containers = docs[0]["spec"]["template"]["spec"]["containers"]
+        env_vars = get_env_vars_dict(containers[0]["env"])
+        assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME"] == "my-esm-name"
+
+    def test_flag_data_mode_disabled_no_external_secret_manager_secret_name_env(self, kube_version):
+        """When dataPlaneFailover is disabled, COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME is not set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}, "dataPlaneFailover": {"enabled": False}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        containers = docs[0]["spec"]["template"]["spec"]["containers"]
+        env_vars = get_env_vars_dict(containers[0]["env"])
+        assert "COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME" not in env_vars
+
     def test_flag_data_mode_sets_flightdeck_configmap(self, kube_version):
         """Flag in data mode renders flightdeck_db_name in cluster-local-data configmap."""
         docs = render_chart(
@@ -111,8 +142,6 @@ class TestDataPlaneFailoverFlag:
         env_vars = get_env_vars_dict(c_by_name["pilot"]["env"])
         assert "COMMANDER_FLIGHTDECK_DSN" in env_vars
 
-    # --- Control-plane components (mode=control) ---
-
     def test_flag_control_mode_enables_navigator(self, kube_version):
         """Flag in control mode renders navigator deployment without navigator.enabled."""
         docs = render_chart(
@@ -124,6 +153,25 @@ class TestDataPlaneFailoverFlag:
         assert docs[0]["kind"] == "Deployment"
         assert docs[0]["metadata"]["name"] == "release-name-navigator"
 
+    def test_navigator_has_backend_secret_checksum_annotation(self, kube_version):
+        """Test that the navigator pod template has a checksum annotation for the houston backend secret.
+
+        Navigator has no bootstrapper init container, so it cannot self-heal a corrupted
+        DATABASE_URL. The checksum annotation ensures a rolling restart is triggered whenever
+        the backend secret template changes, so the pod picks up the correct secret value.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"navigator": {"enabled": True}}},
+            show_only=["charts/astronomer/templates/navigator/navigator-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert "checksum/houston-backend-secret" in annotations
+        checksum = annotations["checksum/houston-backend-secret"]
+        assert len(checksum) == 64
+        assert all(c in "0123456789abcdef" for c in checksum)
+
     def test_flag_control_mode_enables_navigator_serviceaccount(self, kube_version):
         """Flag in control mode renders navigator service account."""
         docs = render_chart(
@@ -131,7 +179,7 @@ class TestDataPlaneFailoverFlag:
             values={
                 "global": {
                     "plane": {"mode": "control"},
-                    "rbacEnabled": True,
+                    "rbac": {"enabled": True},
                     "dataPlaneFailover": {"enabled": True},
                 },
             },
@@ -168,8 +216,6 @@ class TestDataPlaneFailoverFlag:
         env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
         assert env_vars["DISPATCHER_ENABLED"] == "true"
 
-    # --- Cross-mode isolation ---
-
     def test_flag_data_mode_does_not_enable_navigator(self, kube_version):
         """Flag in data mode does NOT render navigator."""
         docs = render_chart(
@@ -203,8 +249,6 @@ class TestDataPlaneFailoverFlag:
         )
         assert len(docs) == 0
 
-    # --- Unified mode: flag has no effect ---
-
     def test_flag_unified_mode_does_not_enable_pilot(self, kube_version):
         """Flag in unified mode does NOT auto-enable pilot."""
         docs = render_chart(
@@ -222,8 +266,6 @@ class TestDataPlaneFailoverFlag:
             show_only=["charts/astronomer/templates/navigator/navigator-deployment.yaml"],
         )
         assert len(docs) == 0
-
-    # --- Flag disabled: no effect ---
 
     def test_flag_disabled_no_pilot(self, kube_version):
         """With flag disabled, pilot is not rendered (pilot.enabled defaults to false)."""
