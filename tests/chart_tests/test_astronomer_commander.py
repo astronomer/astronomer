@@ -586,7 +586,7 @@ class TestAstronomerCommander:
             (
                 "unified",
                 True,
-                "http://release-name-es-proxy.default.svc.cluster.local:9201",
+                "http://release-name-external-es-proxy.default.svc.cluster.local:9201",
             ),
             (
                 "unified",
