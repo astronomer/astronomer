@@ -768,4 +768,3 @@ class TestAstronomerCommander:
         jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
         assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
         assert jwks_entries[0]["value"] == expected_jwks_endpoint
-
