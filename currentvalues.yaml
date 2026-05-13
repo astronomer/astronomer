@@ -1,0 +1,106 @@
+USER-SUPPLIED VALUES:
+alertmanager:
+  disableClustering: true
+astronomer:
+  commander:
+    airGapped:
+      enabled: true
+    env:
+    - name: COMMANDER_MANUAL_NAMESPACE_NAMES
+      value: false
+    replicas: 2
+  houston:
+    config:
+      allowedSystemLevelDomains:
+      - astronomer.io
+      auth:
+        github:
+          enabled: true
+        local:
+          enabled: true
+        openidConnect:
+          google:
+            enabled: true
+      deployments:
+        airflowV3:
+          enabled: true
+        configureDagDeployment: true
+        disableManageClusterScopedResources: true
+        gitSyncDagDeployment: true
+        hardDeleteDeployment: true
+        helm:
+          airflow:
+            defaultAirflowRepository: quay.io/astronomer/ap-airflow
+            images:
+              airflow:
+                pullPolicy: IfNotPresent
+                repository: quay.io/astronomer/ap-airflow
+              flower:
+                pullPolicy: IfNotPresent
+                repository: quay.io/astronomer/ap-airflow
+          defaultRuntimeRepository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+          runtimeImages:
+            airflow:
+              repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+            flower:
+              repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+          runtimeImagesV3:
+            airflow:
+              repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+            flower:
+              repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+        logHelmValues: true
+        manualReleaseNames: true
+        sysAdminScalabilityImprovementsEnabled: true
+        triggererEnabled: true
+      email:
+        enabled: false
+      emailConfirmation: false
+      publicSignups: true
+elasticsearch:
+  sysctlInitContainer:
+    enabled: false
+forceIncompatibleKubernetes: true
+global:
+  authSidecar:
+    enabled: true
+    ingressAllowedNamespaces:
+    - astronomer
+  baseDomain: release-1.astronomer-azuredev.com
+  clusterRoles: true
+  dagOnlyDeployment:
+    enabled: true
+  deployRollbackEnabled: true
+  disableManageClusterScopedResources: true
+  extraAnnotations:
+    kubernetes.io/ingress.class: openshift-default
+    route.openshift.io/termination: edge
+  fluentdEnabled: false
+  helmRepo: https://internal-helm.astronomer.io
+  logging:
+    indexNamePrefix: ocptestting
+  loggingSidecar:
+    enabled: true
+  nginxEnabled: false
+  nodeExporterEnabled: false
+  openshiftEnabled: true
+  plane:
+    mode: unified
+  postgresqlEnabled: false
+  rbacEnabled: true
+  sccEnabled: false
+  serviceAccount:
+    create: true
+  ssl:
+    enabled: true
+    mode: prefer
+  tlsSecret: astronomer-tls
+  vectorEnabled: false
+prometheus:
+  resources:
+    limits:
+      cpu: 3000m
+      memory: 12Gi
+    requests:
+      cpu: 2000m
+      memory: 4Gi

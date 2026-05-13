@@ -1,0 +1,1300 @@
+USER-SUPPLIED VALUES:
+airflow:
+  airflowLocalSettings: |
+    # This pod mutation hook runs for all pods dynamically created by Airflow
+    # in Kubernetes (K8s). This includes K8s executor Airflow-workers, which is
+    # an alternative executor to Celery, and K8s Pod Operator (KPO) pods, which is
+    # an Airflow operator that launches a task in a K8s cluster.
+    #
+    # This function is responsible for two things. It assigns labels to disambiguate
+    # between KPO and K8s executor pods. Also, it handles writing the entrypoint for
+    # K8s executor pods. Why we do this second part, you can read below.
+    import warnings
+    from airflow.configuration import conf
+    from airflow.version import version
+    xcom_sidecar_image = "quay.io/astronomer/ap-init:2026.3.18"
+    try:
+      from airflow.providers.cncf.kubernetes.utils.xcom_sidecar import PodDefaults
+      PodDefaults.SIDECAR_CONTAINER.image = xcom_sidecar_image
+    except ImportError:
+      warnings.warn(
+        """Airflow CNCF Provider not installed by default.
+        This will bypass custom images for xcom and defaults to alpine.
+        Refer https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/index.html
+        to install the provider.
+        """
+      )
+    def pod_mutation_hook_deprecated(pod):
+      from airflow.contrib.kubernetes.pod import Pod
+      extra_labels = {
+          "kubernetes-pod-operator": "False"
+      }
+      if 'airflow-worker' in pod.labels.keys() and \
+              conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
+          # extra_labels["kubernetes-executor"] = "True"
+          # By default, Airflow overwrites the entrypoint
+          # of KPO and K8s executor Airflow-worker pods.
+          # K8s worker pods are Airflow containers, and we can assume these
+          # Airflow containers are vendored by Astronomer. Astronomer provides
+          # an entrypoint in these containers to handle waiting for the network
+          # and the database to be ready, so we do not want this entrypoint
+          # to be overwritten. This helps with the stability of the K8s executor.
+          if "1.10" in version:
+              if not pod.args:
+                  pod.args = []
+              pod.args = pod.cmds + pod.args
+          pod.cmds = ["tini", "--", "/entrypoint"]
+      else:
+          # In the case of KPO, we allow Airflow to overwrite the entrypoint
+          # because we do not know what the container will be (and it's probably
+          # not a container vendored by Astronomer, and it's definitely not
+          # an Airflow container).
+          extra_labels["kubernetes-pod-operator"] = "True"
+          extra_labels["kubernetes-executor"] = "False"
+      pod.labels.update(extra_labels)
+    def pod_mutation_hook_new(pod):
+      extra_labels = {
+          "kubernetes-pod-operator": "False"
+      }
+      if 'airflow-worker' in pod.metadata.labels.keys() and \
+              conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
+          # extra_labels["kubernetes-executor"] = "True"
+          # By default, Airflow overwrites the entrypoint
+          # of KPO and K8s executor Airflow-worker pods.
+          # K8s worker pods are Airflow containers, and we can assume these
+          # Airflow containers are vendored by Astronomer. Astronomer provides
+          # an entrypoint in these containers to handle waiting for the network
+          # and the database to be ready, so we do not want this entrypoint
+          # to be overwritten. This helps with the stability of the K8s executor.
+          container = pod.spec.containers[0]
+          if "1.10" in version:
+              if not container.args:
+                  container.args = []
+              container.args = container.command + container.args
+          container.command = ["tini", "--", "/entrypoint"]
+          pod.spec.containers[0] = container
+
+          # For sidecar logging we override the default entrypoint to redirect logs to
+          # files that are consumed by the sidecar container. The command ends by creating
+          # the file /var/log/sidecar-log-consumer/finished, which signals the sidecar log
+          # consumer to exit.
+          from textwrap import dedent
+          import shlex
+          cmd_init = dedent(
+              r"""
+              echo '
+              import signal
+              import sys
+              import subprocess
+              import time
+              from pathlib import Path
+              process = subprocess.Popen(sys.argv[1:])
+              def handler(signum, frame):
+                  process.kill()
+                  print("Process killed")
+              signal.signal(signal.SIGINT, handler)
+              while True:
+                  time.sleep(5)
+                  with open("/var/log/sidecar-log-consumer/heartbeat", "w") as f:
+                      f.write(f"{time.time()}\n")
+                  if process.poll() is not None:
+                      break
+              print("Process exited")
+              Path("/var/log/sidecar-log-consumer/finished").touch()
+              ' | python3 - """
+          )
+          log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "
+          if container.args[0:3] == ["airflow", "tasks", "run"] or (int(version.split('.')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]):
+              container.command = ["tini", "--"]
+              new_args = ["bash", "-c"]
+              command_str = (
+                  cmd_init
+                  + " /entrypoint "
+                  + shlex.join([str(arg) for arg in container.args])
+                  + log_cmd
+              )
+              new_args.append(command_str)
+              container.args = new_args
+
+      else:
+          # In the case of KPO, we allow Airflow to overwrite the entrypoint
+          # because we do not know what the container will be (and it's probably
+          # not a container vendored by Astronomer, and it's definitely not
+          # an Airflow container).
+          extra_labels["kubernetes-pod-operator"] = "True"
+          extra_labels["kubernetes-executor"] = "False"
+      pod.metadata.labels.update(extra_labels)
+    def pod_mutation_hook(pod):
+      try:
+        pod_mutation_hook_new(pod)
+      except Exception as e:
+        pod_mutation_hook_deprecated(pod)
+  airflowPodAnnotations:
+    checksum/airflow-secrets: b25b294cb4deb69ea00a4c3cf3113904801b6015e5956bd019a8570b1fe1d6040e944ef3cdee16d0a46503ca6e659a25f21cf9ceddc13f352a3c98138c15d6af
+  airflowVersion: 3.2.1
+  allowPodLaunching: true
+  apiServer:
+    args:
+    - bash
+    - -c
+    - exec airflow api-server 1> >( tee -a /var/log/sidecar-log-consumer/out.log )
+      2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )
+    extraContainers:
+    - image: quay.io/astronomer/ap-auth-sidecar:1.29.5
+      imagePullPolicy: IfNotPresent
+      name: auth-proxy
+      ports:
+      - containerPort: 8084
+        name: auth-proxy
+        protocol: TCP
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1024Mi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /etc/nginx/nginx.conf
+        name: nginx-sidecar-conf
+        subPath: nginx.conf
+      - mountPath: /var/lib/nginx/tmp
+        name: nginx-tmp
+      - mountPath: /var/cache/nginx
+        name: nginx-cache
+      - mountPath: /tmp
+        name: nginx-proxy-cache
+      - mountPath: /var/lib/nginx/logs
+        name: nginx-access-logs
+    - env:
+      - name: VECTOR_CONFIG
+        value: /etc/sidecar-logging/vector-config.yaml
+      - name: SIDECAR_LOGS
+        value: /var/log/sidecar-log-consumer
+      - name: COMPONENT
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['component']
+      - name: RELEASE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['release']
+      - name: WORKSPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workspace']
+      image: quay.io/astronomer/ap-vector:0.53.0
+      imagePullPolicy: IfNotPresent
+      name: sidecar-log-consumer
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /etc/sidecar-logging
+        name: config-volume
+      - mountPath: /var/log/sidecar-log-consumer
+        name: sidecar-log-consumer
+        readOnly: false
+    extraInitContainers: []
+    extraVolumeMounts:
+    - mountPath: /var/log/sidecar-log-consumer
+      name: sidecar-log-consumer
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - configMap:
+        name: testss-api-server-nginx-conf
+      name: nginx-sidecar-conf
+    - emptyDir: {}
+      name: sidecar-log-consumer
+    - configMap:
+        name: testss-sidecar-config
+      name: config-volume
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    networkPolicy:
+      ingress:
+        from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+        - namespaceSelector:
+            matchExpressions:
+            - key: kubernetes.io/metadata.name
+              operator: In
+              values:
+              - astronomer
+        ports:
+        - port: 8084
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+    replicas: 1
+    resources:
+      limits:
+        cpu: 1000m
+        ephemeral-storage: 2Gi
+        memory: 3840Mi
+      requests:
+        cpu: 1000m
+        ephemeral-storage: 1Gi
+        memory: 3840Mi
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+    service:
+      ports:
+      - name: auth-proxy
+        port: 8084
+        protocol: TCP
+      - name: api-server
+        port: "8080"
+        protocol: TCP
+  cleanup:
+    args: []
+    command:
+    - airflow-cleanup-pods
+    - --namespace={{ .Release.Namespace }}
+    enabled: false
+    schedule: '{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * *
+      * *'
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+    serviceAccount:
+      create: true
+  config:
+    api:
+      auth_backend: airflow.api.auth.backend.default
+      base_url: https://deployments.release-1.astronomer-azuredev.com/testss/airflow
+      enable_proxy_fix: true
+      expose_config: non-sensitive-only
+    astronomer:
+      jwt_audience: deployments.release-1.astronomer-azuredev.com/testss
+    celery:
+      flower_url_prefix: testss/flower
+    core:
+      execution_api_server_url: http://testss-api-server:8080/testss/airflow/execution/
+    webserver:
+      base_url: https://deployments.release-1.astronomer-azuredev.com/testss/airflow
+  createUserJob:
+    extraVolumeMounts:
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+  dagDeployment:
+    nfsLocation: ""
+    type: image
+  dagProcessor:
+    args:
+    - bash
+    - -c
+    - exec airflow dag-processor 1> >( tee -a /var/log/sidecar-log-consumer/out.log
+      ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )
+    enabled: true
+    extraContainers:
+    - env:
+      - name: VECTOR_CONFIG
+        value: /etc/sidecar-logging/vector-config.yaml
+      - name: SIDECAR_LOGS
+        value: /var/log/sidecar-log-consumer
+      - name: COMPONENT
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['component']
+      - name: RELEASE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['release']
+      - name: WORKSPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workspace']
+      image: quay.io/astronomer/ap-vector:0.53.0
+      imagePullPolicy: IfNotPresent
+      name: sidecar-log-consumer
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /etc/sidecar-logging
+        name: config-volume
+      - mountPath: /var/log/sidecar-log-consumer
+        name: sidecar-log-consumer
+        readOnly: false
+    extraInitContainers: []
+    extraVolumeMounts:
+    - mountPath: /var/log/sidecar-log-consumer
+      name: sidecar-log-consumer
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: sidecar-log-consumer
+    - configMap:
+        name: testss-sidecar-config
+      name: config-volume
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    logGroomerSidecar:
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+    replicas: 1
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 3840Mi
+      requests:
+        cpu: 1000m
+        memory: 3840Mi
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+  dags:
+    gitSync:
+      enabled: false
+      securityContexts:
+        container:
+          runAsNonRoot: true
+  data:
+    metadataConnection:
+      db: testss_airflow
+      host: release-1-postgresql-flexible-server.postgres.database.azure.com
+      pass: izb98Q~xskS~wD.Ou7ot~Q33u-.P-uCV
+      port: 5432
+      protocol: postgresql
+      sslmode: prefer
+      user: testss_airflow
+    resultBackendConnection:
+      db: testss_airflow
+      host: release-1-postgresql-flexible-server.postgres.database.azure.com
+      pass: tkjZ5hK!Lo8KN6nxj3c.nttbbKv_gB~7
+      port: 5432
+      protocol: postgresql
+      sslmode: prefer
+      user: testss_celery
+  defaultAirflowRepository: quay.io/astronomer/ap-airflow
+  defaultAirflowTag: 3.2-4
+  elasticsearch:
+    connection:
+      host: astronomer-elasticsearch-nginx.astronomer
+      pass: YWnfVM8uocrgX3WDBpncwfJkkuSReGh3
+      port: 9200
+      user: testss
+    enabled: true
+  env:
+  - name: AIRFLOW__ASTRONOMER__HOUSTON_JWK_URL
+    value: http://astronomer-houston.astronomer.svc.cluster.local:8871/v1/.well-known/jwks.json
+  - name: EXECUTOR_TYPE
+    value: CeleryExecutor
+  - name: SCARF_NO_ANALYTICS
+    value: "True"
+  - name: DO_NOT_TRACK
+    value: "True"
+  - name: ASTRONOMER_ENVIRONMENT
+    value: software
+  - name: AIRFLOW__WEBSERVER__UPDATE_FAB_PERMS
+    value: "True"
+  - name: AIRFLOW__SCHEDULER__STANDALONE_DAG_PROCESSOR
+    value: "True"
+  - name: AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER
+    value: ""
+  executor: CeleryExecutor
+  extraEnvFrom: |-
+    - secretRef:
+        name: 'testss-env'
+  fernetKey: V1NVMllzZmdpenJwcjQ4OG1jM2RiM1Y5cHQwNU5OM0o=
+  flower:
+    enabled: true
+    extraContainers:
+    - image: quay.io/astronomer/ap-auth-sidecar:1.29.5
+      imagePullPolicy: IfNotPresent
+      name: auth-proxy
+      ports:
+      - containerPort: 8084
+        name: auth-proxy
+        protocol: TCP
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1024Mi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /etc/nginx/nginx.conf
+        name: nginx-sidecar-conf
+        subPath: nginx.conf
+      - mountPath: /var/lib/nginx/tmp
+        name: nginx-tmp
+      - mountPath: /var/cache/nginx
+        name: nginx-cache
+      - mountPath: /tmp
+        name: nginx-proxy-cache
+      - mountPath: /var/lib/nginx/logs
+        name: nginx-access-logs
+    extraVolumeMounts:
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - configMap:
+        name: testss-flower-nginx-conf
+      name: nginx-sidecar-conf
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    networkPolicy:
+      ingress:
+        from:
+        - namespaceSelector:
+            matchLabels:
+              network.openshift.io/policy-group: ingress
+        - namespaceSelector:
+            matchExpressions:
+            - key: kubernetes.io/metadata.name
+              operator: In
+              values:
+              - astronomer
+        ports:
+        - port: 8084
+    resources:
+      limits:
+        cpu: 200m
+        memory: 768Mi
+      requests:
+        cpu: 200m
+        memory: 768Mi
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+    service:
+      ports:
+      - name: auth-proxy
+        port: 8084
+        protocol: TCP
+      - name: api-server
+        port: "8080"
+        protocol: TCP
+  gid: 50000
+  images:
+    airflow:
+      pullPolicy: IfNotPresent
+      repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+    flower:
+      pullPolicy: IfNotPresent
+      repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+    gitSync:
+      repository: quay.io/astronomer/ap-git-sync
+      tag: 2026.3.18
+    pgbouncer:
+      repository: quay.io/astronomer/ap-pgbouncer
+      tag: 1.24.1-6
+    pgbouncerExporter:
+      repository: quay.io/astronomer/ap-pgbouncer-exporter
+      tag: 0.20.0-3
+    pod_template:
+      repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+    redis:
+      repository: quay.io/astronomer/ap-redis
+      tag: 8.6.1
+    statsd:
+      repository: quay.io/astronomer/ap-statsd-exporter
+      tag: 0.29.0
+    useDefaultImageForMigration: false
+  isDatabaseConnectionStoredInSecrets: false
+  labels:
+    platform: astronomer
+    workspace: cmp3pi9c20008fs1bzc8ie5x4
+  limits:
+  - max:
+      cpu: 3500m
+      memory: 13440Mi
+    type: Pod
+  - default:
+      cpu: 100m
+      memory: 384Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 384Mi
+    type: Container
+  migrateDatabaseJob:
+    extraVolumeMounts:
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+    resources:
+      limits:
+        cpu: 500m
+        memory: 2000Mi
+      requests:
+        cpu: 500m
+        memory: 2000Mi
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+  networkPolicies:
+    enabled: true
+  pgbouncer:
+    command:
+    - pgbouncer
+    - /etc/pgbouncer/pgbouncer.ini
+    enabled: true
+    extraIni: ""
+    extraNetworkPolicies:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: prometheus
+          release: astronomer
+          tier: monitoring
+    extraVolumeMounts:
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: tmp
+    maxClientConn: 265
+    metadataPoolSize: 26
+    metricsExporterSidecar:
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+      securityContexts:
+        container:
+          readOnlyRootFilesystem: true
+      sslmode: disable
+    podDisruptionBudget:
+      config:
+        maxUnavailable: 1
+      enabled: false
+    resources:
+      limits:
+        cpu: 200m
+        memory: 768Mi
+      requests:
+        cpu: 200m
+        memory: 768Mi
+    securityContexts:
+      container:
+        readOnlyRootFilesystem: true
+      pod:
+        runAsNonRoot: true
+    service:
+      extraAnnotations:
+        astronomer.io/platform-release: astronomer
+    sslmode: prefer
+  podMutation:
+    tolerations: []
+  postgresql:
+    enabled: false
+  quotas:
+    limits.cpu: 17100m
+    limits.ephemeral-storage: 50Gi
+    limits.memory: 57616Mi
+    pods: 20
+    requests.cpu: 17100m
+    requests.ephemeral-storage: 50Gi
+    requests.memory: 57616Mi
+  rbac:
+    create: true
+  readReplicas:
+    extraVolumeMounts:
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+  redis:
+    resources:
+      limits:
+        cpu: 200m
+        memory: 768Mi
+      requests:
+        cpu: 200m
+        memory: 768Mi
+    safeToEvict: true
+    securityContexts:
+      container:
+        readOnlyRootFilesystem: true
+      pod:
+        runAsNonRoot: true
+  registry:
+    connection:
+      email: admin@release-1.astronomer-azuredev.com
+      host: registry.release-1.astronomer-azuredev.com
+      pass: AI3mX74eS2roxwW5pqP9UaInulyGUln1
+      user: testss
+    secretName: null
+  scheduler:
+    args:
+    - bash
+    - -c
+    - exec airflow scheduler 1> >( tee -a /var/log/sidecar-log-consumer/out.log )
+      2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )
+    extraContainers:
+    - env:
+      - name: VECTOR_CONFIG
+        value: /etc/sidecar-logging/vector-config.yaml
+      - name: SIDECAR_LOGS
+        value: /var/log/sidecar-log-consumer
+      - name: COMPONENT
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['component']
+      - name: RELEASE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['release']
+      - name: WORKSPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workspace']
+      image: quay.io/astronomer/ap-vector:0.53.0
+      imagePullPolicy: IfNotPresent
+      name: sidecar-log-consumer
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /etc/sidecar-logging
+        name: config-volume
+      - mountPath: /var/log/sidecar-log-consumer
+        name: sidecar-log-consumer
+        readOnly: false
+      - mountPath: /usr/local/airflow/logs
+        name: logs-testss
+        readOnly: false
+    extraInitContainers: []
+    extraVolumeMounts:
+    - mountPath: /var/log/sidecar-log-consumer
+      name: sidecar-log-consumer
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: sidecar-log-consumer
+    - configMap:
+        name: testss-sidecar-config
+      name: config-volume
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    logGroomerSidecar:
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+    podDisruptionBudget:
+      config:
+        maxUnavailable: 1
+      enabled: false
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+    replicas: 1
+    resources:
+      limits:
+        cpu: 500m
+        ephemeral-storage: 2Gi
+        memory: 1920Mi
+      requests:
+        cpu: 500m
+        ephemeral-storage: 1Gi
+        memory: 1920Mi
+    safeToEvict: true
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+    strategy:
+      rollingUpdate:
+        maxUnavailable: 1
+      type: RollingUpdate
+  securityContexts:
+    containers:
+      readOnlyRootFilesystem: true
+  skipAirflowDatabaseProvisioning: false
+  statsd:
+    extraNetworkPolicies:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: prometheus
+          release: astronomer
+          tier: monitoring
+    resources:
+      limits:
+        cpu: 200m
+        memory: 768Mi
+      requests:
+        cpu: 200m
+        memory: 768Mi
+    securityContexts:
+      container:
+        readOnlyRootFilesystem: true
+      pod:
+        runAsNonRoot: true
+    service:
+      extraAnnotations:
+        astronomer.io/platform-release: astronomer
+  triggerer:
+    args:
+    - bash
+    - -c
+    - exec airflow triggerer 1> >( tee -a /var/log/sidecar-log-consumer/out.log )
+      2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )
+    extraContainers:
+    - env:
+      - name: VECTOR_CONFIG
+        value: /etc/sidecar-logging/vector-config.yaml
+      - name: SIDECAR_LOGS
+        value: /var/log/sidecar-log-consumer
+      - name: COMPONENT
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['component']
+      - name: RELEASE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['release']
+      - name: WORKSPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workspace']
+      image: quay.io/astronomer/ap-vector:0.53.0
+      imagePullPolicy: IfNotPresent
+      name: sidecar-log-consumer
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /etc/sidecar-logging
+        name: config-volume
+      - mountPath: /var/log/sidecar-log-consumer
+        name: sidecar-log-consumer
+        readOnly: false
+      - mountPath: /usr/local/airflow/logs
+        name: logs-testss
+        readOnly: false
+    extraInitContainers: []
+    extraVolumeMounts:
+    - mountPath: /var/log/sidecar-log-consumer
+      name: sidecar-log-consumer
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: sidecar-log-consumer
+    - configMap:
+        name: testss-sidecar-config
+      name: config-volume
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    logGroomerSidecar:
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+    replicas: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1920Mi
+      requests:
+        cpu: 500m
+        memory: 1920Mi
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+  uid: 50000
+  useAstroSecurityManager: true
+  webserver:
+    defaultUser:
+      enabled: false
+    extraVolumeMounts:
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+    resources:
+      limits:
+        cpu: 500m
+        ephemeral-storage: 2Gi
+        memory: 1920Mi
+      requests:
+        cpu: 500m
+        ephemeral-storage: 1Gi
+        memory: 1920Mi
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+  workers:
+    args:
+    - bash
+    - -c
+    - exec airflow celery worker 1> >( tee -a /var/log/sidecar-log-consumer/out.log
+      ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )
+    extraContainers:
+    - env:
+      - name: VECTOR_CONFIG
+        value: /etc/sidecar-logging/vector-config.yaml
+      - name: SIDECAR_LOGS
+        value: /var/log/sidecar-log-consumer
+      - name: COMPONENT
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['component']
+      - name: RELEASE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['release']
+      - name: WORKSPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['workspace']
+      image: quay.io/astronomer/ap-vector:0.53.0
+      imagePullPolicy: IfNotPresent
+      name: sidecar-log-consumer
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /etc/sidecar-logging
+        name: config-volume
+      - mountPath: /var/log/sidecar-log-consumer
+        name: sidecar-log-consumer
+        readOnly: false
+      - mountPath: /usr/local/airflow/logs
+        name: logs-testss
+        readOnly: false
+    extraInitContainers: []
+    extraVolumeMounts:
+    - mountPath: /var/log/sidecar-log-consumer
+      name: sidecar-log-consumer
+    - mountPath: /usr/local/airflow
+      name: usr-local-airflow
+    - mountPath: /tmp
+      name: tmp
+    extraVolumes:
+    - emptyDir: {}
+      name: sidecar-log-consumer
+    - configMap:
+        name: testss-sidecar-config
+      name: config-volume
+    - emptyDir: {}
+      name: usr-local-airflow
+    - emptyDir: {}
+      name: tmp
+    - emptyDir: {}
+      name: nginx-cache
+    - emptyDir: {}
+      name: nginx-tmp
+    - emptyDir: {}
+      name: nginx-proxy-cache
+    - emptyDir: {}
+      name: nginx-access-logs
+    logGroomerSidecar:
+      resources:
+        limits:
+          cpu: 100m
+          memory: 384Mi
+        requests:
+          cpu: 100m
+          memory: 384Mi
+    persistence:
+      enabled: false
+    preAirflowExtraInitContainers:
+    - command:
+      - sh
+      - -c
+      - cp -rvx /usr/local/airflow/. /usr_local_airflow_copy/
+      image: core.harbor.astro-qa.link/astrocloud/astro-runtime:3.2-4
+      name: usr-local-airflow-copier
+      securityContext:
+        readOnlyRootFilesystem: true
+      volumeMounts:
+      - mountPath: /usr_local_airflow_copy
+        name: usr-local-airflow
+    replicas: 1
+    resources:
+      limits:
+        cpu: 1000m
+        ephemeral-storage: 2Gi
+        memory: 3840Mi
+      requests:
+        cpu: 1000m
+        ephemeral-storage: 1Gi
+        memory: 3840Mi
+    safeToEvict: true
+    securityContexts:
+      pod:
+        runAsNonRoot: true
+    terminationGracePeriodSeconds: 600
+airflowPodAnnotations:
+  checksum/airflow-secrets: b25b294cb4deb69ea00a4c3cf3113904801b6015e5956bd019a8570b1fe1d6040e944ef3cdee16d0a46503ca6e659a25f21cf9ceddc13f352a3c98138c15d6af
+authSidecar:
+  annotations:
+    kubernetes.io/ingress.class: openshift-default
+    route.openshift.io/termination: edge
+  enabled: true
+  ingressAllowedNamespaces:
+  - astronomer
+  livenessProbe: {}
+  port: 8084
+  pullPolicy: IfNotPresent
+  readinessProbe: {}
+  repository: quay.io/astronomer/ap-auth-sidecar
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  securityContext:
+    readOnlyRootFilesystem: true
+  tag: 1.29.5
+dagDeploy:
+  enabled: false
+defaultRuntimeRepository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+extraObjects: []
+gitSyncRelay:
+  enabled: false
+  images:
+    gitDaemon:
+      repository: quay.io/astronomer/ap-git-daemon
+      tag: 2026.3.18
+    gitSync:
+      repository: quay.io/astronomer/ap-git-sync-relay
+      tag: 0.2.5
+helmValuesRevisionId: 1
+ingress:
+  baseDomain: release-1.astronomer-azuredev.com
+  class: astronomer-nginx
+  dagServerAnnotations:
+    kubernetes.io/ingress.class: astronomer-nginx
+    nginx.ingress.kubernetes.io/auth-signin: https://app.release-1.astronomer-azuredev.com/login
+    nginx.ingress.kubernetes.io/auth-url: http://astronomer-houston.astronomer.svc.cluster.local:8871/v1/authorization
+    nginx.ingress.kubernetes.io/proxy-cookie-path: / /testss/
+    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+  enabled: true
+  extraIngressAnnotations: {}
+  flowerAnnotations:
+    kubernetes.io/ingress.class: astronomer-nginx
+    nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+    nginx.ingress.kubernetes.io/auth-signin: https://app.release-1.astronomer-azuredev.com/login
+    nginx.ingress.kubernetes.io/auth-url: http://astronomer-houston.astronomer.svc.cluster.local:8871/v1/authorization
+    nginx.ingress.kubernetes.io/custom-http-errors: 403,404,502,503
+    nginx.ingress.kubernetes.io/proxy-cookie-path: / /testss/
+  gitSyncRelayAnnotations:
+    kubernetes.io/ingress.class: astronomer-nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  tlsSecretName: astronomer-tls
+  webserverAnnotations:
+    kubernetes.io/ingress.class: astronomer-nginx
+    nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+    nginx.ingress.kubernetes.io/auth-signin: https://app.release-1.astronomer-azuredev.com/login
+    nginx.ingress.kubernetes.io/auth-url: http://astronomer-houston.astronomer.svc.cluster.local:8871/v1/authorization
+    nginx.ingress.kubernetes.io/configuration-snippet: |2-
+
+                   if ($host = 'astronomer-airflow.release-1.astronomer-azuredev.com' ) {
+                     return 308 https://deployments.release-1.astronomer-azuredev.com/testss/airflow/$request_uri;
+                   }
+    nginx.ingress.kubernetes.io/custom-http-errors: 403,404,502,503
+    nginx.ingress.kubernetes.io/proxy-cookie-path: / /testss/
+    nginx.ingress.kubernetes.io/server-snippet: |2-
+
+                   location ^~ /api/ {
+                     if ($host = 'deployments.release-1.astronomer-azuredev.com' ) {
+                       return 404;
+                     }
+                     proxy_pass https://deployments.release-1.astronomer-azuredev.com/testss/airflow/$request_uri;
+                   }
+loggingSidecar:
+  customConfig: false
+  enabled: true
+  image: quay.io/astronomer/ap-vector:0.53.0
+  indexNamePrefix: ocptestting
+  indexPattern: '%Y.%m.%d'
+  livenessProbe: {}
+  readinessProbe: {}
+  resources:
+    limits:
+      cpu: 100m
+      memory: 384Mi
+    requests:
+      cpu: 100m
+      memory: 384Mi
+mountAllFromSecretName: testss-env
+networkNSLabels: false
+openshift:
+  enabled: false
+platform:
+  controlPlaneBaseDomain: release-1.astronomer-azuredev.com
+  dataPlaneBaseDomain: release-1.astronomer-azuredev.com
+  houstonAuthServiceEndpointUrl: http://astronomer-houston.astronomer.svc.cluster.local:8871/v1/authorization
+  mode: unified
+  namespace: astronomer
+  release: astronomer
+runtimeImages:
+  airflow:
+    repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+  flower:
+    repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+runtimeImagesV3:
+  airflow:
+    repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+  flower:
+    repository: core.harbor.astro-qa.link/astrocloud/astro-runtime
+sccEnabled: false
+sslmode: prefer
