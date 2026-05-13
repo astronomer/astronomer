@@ -311,16 +311,8 @@ gcp_cloud_logging:
   value: {{ include "commander.dataplaneURL" . | quote }}
 - name: COMMANDER_DATAPLANE_MODE
   value: {{ .Values.global.plane.mode | quote }}
-{{- $jwksOverridden := false -}}
-{{- range $.Values.commander.env -}}
-  {{- if eq .name "COMMANDER_HOUSTON_JWKS_ENDPOINT" -}}
-    {{- $jwksOverridden = true -}}
-  {{- end -}}
-{{- end -}}
-{{- if not $jwksOverridden }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
-  value: "{{ include "houston.authServiceURL" $ }}"
-{{- end }}
+  value: "{{ include "houston.authServiceURL" . }}"
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
   value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
 {{- if .Values.global.namespaceManagement.namespacePools.enabled  }}
