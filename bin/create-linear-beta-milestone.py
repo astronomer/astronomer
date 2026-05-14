@@ -12,7 +12,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 import requests
@@ -87,9 +87,7 @@ def extract_chart_version(archive_path: Path) -> str:
     """
     match = re.fullmatch(r"astronomer-(.+)\.tgz", archive_path.name)
     if not match:
-        raise ValueError(
-            f"Expected filename matching astronomer-<version>.tgz; got {archive_path.name!r}"
-        )
+        raise ValueError(f"Expected filename matching astronomer-<version>.tgz; got {archive_path.name!r}")
     return match.group(1)
 
 
@@ -116,9 +114,7 @@ def find_chart_archive(workspace: Path) -> Path:
     if len(matches) == 1:
         return matches[0]
     names = ", ".join(p.name for p in matches)
-    raise RuntimeError(
-        f"Expected exactly one astronomer-*.tgz in {workspace}; found {len(matches)}: {names}"
-    )
+    raise RuntimeError(f"Expected exactly one astronomer-*.tgz in {workspace}; found {len(matches)}: {names}")
 
 
 def linear_graphql(url: str, api_key: str, payload: dict) -> dict:
@@ -229,7 +225,7 @@ def main() -> None:
     project_id = find_project_id(args.graphql_url, api_key, args.project_name)
     print(f"Found project ID: {project_id}")
 
-    release_dt = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    release_dt = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     milestone_name = f"{beta_version} - {release_dt}"
     print(f"Creating Linear milestone: {milestone_name}")
     result = create_milestone(
