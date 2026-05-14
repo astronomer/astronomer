@@ -19,7 +19,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.0.0-9
+    tag: 3.1.1
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
@@ -32,11 +32,11 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.1
+    tag: 2.0.3
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.54.0"
+    tag: "0.54.0-1"
     pullPolicy: IfNotPresent
 
 
