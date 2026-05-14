@@ -2,7 +2,7 @@
 
 This repository contains the helm charts for deploying [Astro Private Cloud (APC)](https://www.astronomer.io/product/astro-private-cloud/) into a Kubernetes cluster.
 
-Astro Private Cloud is your Kubernetes hosted enterprise data platform. Source code is made available for the benefit of our customers, if you'd like to use the platform, [contact our sales team](https://www.astronomer.io/get-astronomer).
+Astro Private Cloud is your Kubernetes hosted enterprise data platform. Source code is made available for the benefit of our customers. [Contact our sales team](https://www.astronomer.io/get-astronomer) if you'd like to use the platform.
 
 ## Documentation
 
