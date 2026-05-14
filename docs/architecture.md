@@ -26,16 +26,17 @@ The table below lists components installed by this chart and the modes in which 
 
 These render when `global.plane.mode` is `control` or `unified`.
 
-| Component          | Role                                                                        | Gate                                                      |
-| ------------------ | --------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Houston API        | GraphQL/REST API; source of truth for users, workspaces, and deployments    | `global.astronomer.enabled`                               |
-| Houston worker     | Async job processor; invokes Commander to create/update Airflow deployments | `global.astronomer.enabled`                               |
-| Astro UI           | Web UI for the platform                                                     | `global.astronomer.enabled`                               |
-| Navigator          | Multi-DP coordinator (used for DP failover)                                 | `navigator.enabled` or `global.dataPlaneFailover.enabled` |
-| dp-link            | CP-side endpoint for DP-link traffic (DP failover path)                     | `dpLink.enabled` or `global.dataPlaneFailover.enabled`    |
-| nginx (CP variant) | Ingress for CP hostnames at `<baseDomain>`                                  | `global.nginx.enabled`                                    |
-| Alertmanager       | Alert routing for platform Prometheus                                       | `global.alertmanager.enabled`                             |
-| Grafana            | Dashboards backed by CP Prometheus                                          | `global.grafana.enabled`                                  |
+| Component          | Role                                                                              | Gate                                                      |
+| ------------------ | --------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Houston API        | GraphQL/REST API; source of truth for users, workspaces, and deployments          | `global.astronomer.enabled`                               |
+| Houston worker     | Async job processor; invokes Commander to create/update Airflow deployments       | `global.astronomer.enabled`                               |
+| Astro UI           | Web UI for the platform                                                           | `global.astronomer.enabled`                               |
+| Navigator          | Multi-DP coordinator (used for DP failover)                                       | `navigator.enabled` or `global.dataPlaneFailover.enabled` |
+| dp-link            | CP-side endpoint for DP-link traffic (DP failover path)                           | `dpLink.enabled` or `global.dataPlaneFailover.enabled`    |
+| nginx (CP variant) | Ingress for CP hostnames at `<baseDomain>`                                        | `global.nginx.enabled`                                    |
+| Alertmanager       | Alert routing for platform Prometheus                                             | `global.alertmanager.enabled`                             |
+| Grafana            | Dashboards backed by CP Prometheus                                                | `global.grafana.enabled`                                  |
+| NATS               | Message bus for Houston / Navigator / dp-link; multi-node cluster with JetStream  | `global.nats.enabled`                                     |
 
 ### Data-plane components
 
@@ -50,23 +51,22 @@ These render when `global.plane.mode` is `data` or `unified`.
 | nginx (DP variant)          | Ingress for DP hostnames at `<domainPrefix>.<baseDomain>`                 | `global.nginx.enabled`                                |
 | Prometheus federation proxy | Auth-protected `/federate` endpoint that CP Prometheus scrapes            | rendered only when `mode=data`                        |
 | external-es-proxy           | Forwards logs to an external Elasticsearch                                | `global.customLogging.enabled`                        |
+| Elasticsearch               | Log storage (master / data / client tiers all gated to DP)                | `global.elasticsearch.enabled`                        |
+| Vector                      | Daemonset log collector                                                   | `global.daemonsetLogging.enabled`                     |
+| kube-state                  | Kubernetes object metrics                                                 | `global.kubeState.enabled`                            |
 
 ### Plane-agnostic infrastructure
 
 These render in every mode (subject to their own enable flag) and run independently in each cluster.
 
-| Component                    | Role                                                                | Gate                                        |
-| ---------------------------- | ------------------------------------------------------------------- | ------------------------------------------- |
-| Prometheus                   | Metrics collection (per-plane instance)                             | `global.prometheus.enabled`                 |
-| Elasticsearch                | Log storage                                                         | `global.elasticsearch.enabled`              |
-| Vector                       | Daemonset log collector                                             | `global.daemonsetLogging.enabled`           |
-| NATS                         | Local message bus (one cluster per plane; not federated by default) | `global.nats.enabled`                       |
-| kube-state                   | Kubernetes object metrics                                           | `global.kubeState.enabled`                  |
-| PostgreSQL                   | In-cluster database for dev/test (production should use external)   | `global.postgresql.enabled`                 |
-| PgBouncer                    | Connection pooling in front of Postgres                             | `global.pgbouncer.enabled`                  |
-| prometheus-postgres-exporter | Database metrics                                                    | `global.prometheusPostgresExporter.enabled` |
-| airflow-operator             | Optional CRD-based Airflow management                               | `global.airflowOperator.enabled`            |
-| external-secrets (ESO)       | Secret synchronization                                              | `external-secrets.enabled`                  |
+| Component                    | Role                                                              | Gate                                        |
+| ---------------------------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| Prometheus                   | Metrics collection (per-plane instance)                           | `global.prometheus.enabled`                 |
+| PostgreSQL                   | In-cluster database for dev/test (production should use external) | `global.postgresql.enabled`                 |
+| PgBouncer                    | Connection pooling in front of Postgres                           | `global.pgbouncer.enabled`                  |
+| prometheus-postgres-exporter | Database metrics                                                  | `global.prometheusPostgresExporter.enabled` |
+| airflow-operator             | Optional CRD-based Airflow management                             | `global.airflowOperator.enabled`            |
+| external-secrets (ESO)       | Secret synchronization                                            | `external-secrets.enabled`                  |
 
 `Chart.yaml` is the canonical source for conditions and tags; `values.yaml` is the canonical source for `global.plane.*` defaults.
 
@@ -108,9 +108,9 @@ In `control` + `data` deployments, the two planes are wired together through ing
 - **Private CA trust.** `global.privateCaCerts` is a list of Secret names containing CA bundles; pods mount them at `/usr/local/share/ca-certificates/` and run `update-ca-certificates` on start (controlled via `UPDATE_CA_CERTS`). `global.privateCaCertsAddToHost` extends the trust to the node so kubelet/containerd can pull from registries signed by the same CA.
 - **Cluster-local service auth.** `global.clusterLocalServiceAuth.token` is auto-generated and shared between intra-plane services (e.g. Pilot ↔ Commander) for gRPC authentication.
 
-### NATS
+### NATS is not cross-plane
 
-NATS runs locally inside each plane (one cluster per plane) and is **not federated** by default. The `leafnode` and `gateway` configuration knobs in `charts/nats/values.yaml` exist for environments that want to bridge planes, but the stock chart ships them disabled.
+NATS runs only on the Control Plane (templates are gated to `control` and `unified`). It is the internal message bus for Houston, Navigator, and dp-link, and the Data Plane does not run or call it. The chart ships NATS as a multi-node cluster with JetStream enabled (`global.nats.replicas`, default 3); the `leafnode` and `gateway` knobs in `charts/nats/values.yaml` exist for advanced setups but are not used by the stock chart.
 
 ## Topology
 
@@ -125,16 +125,18 @@ flowchart TB
             ui["Astro UI"]
             alertmanager["Alertmanager"]
             grafana["Grafana"]
+            nats["NATS"]
         end
         subgraph dp_components["Data-plane components"]
             commander["Commander"]
             registry["Registry"]
-        end
-        subgraph shared["Plane-agnostic"]
-            prom["Prometheus"]
             es["Elasticsearch"]
             vector["Vector"]
-            nats["NATS"]
+            kube_state["kube-state"]
+        end
+        subgraph infra["Plane-agnostic"]
+            prom["Prometheus"]
+            pg["postgres · pgbouncer"]
         end
         nginx["nginx → &lt;baseDomain&gt;"]
         airflow["N × Airflow Helm releases<br/>(one per user deployment)"]
@@ -152,7 +154,8 @@ flowchart LR
         cp_link["Navigator · dp-link"]
         cp_alerts["Alertmanager · Grafana"]
         cp_prom["Prometheus (CP)"]
-        cp_shared["Elasticsearch · Vector · NATS<br/>kube-state · postgres/pgbouncer"]
+        cp_nats["NATS"]
+        cp_shared["postgres / pgbouncer (if enabled)"]
         cp_nginx["nginx (CP)"]
     end
     subgraph dp["DP cluster (mode=data, domainPrefix=dp01) → dp01.&lt;baseDomain&gt;"]
@@ -161,7 +164,8 @@ flowchart LR
         dp_reg["Registry"]
         dp_pilot["Pilot · config-syncer"]
         dp_prom["Prometheus (DP)<br/>+ federation-auth proxy"]
-        dp_shared["Elasticsearch · Vector · NATS<br/>kube-state · postgres/pgbouncer"]
+        dp_logs["Elasticsearch · Vector · kube-state"]
+        dp_shared["postgres / pgbouncer (if enabled)"]
         dp_nginx["nginx (DP)"]
         dp_airflow["N × Airflow Helm releases"]
     end
