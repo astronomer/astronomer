@@ -16,7 +16,7 @@ The single chart can be installed in three modes, controlled by `global.plane.mo
 
 ### Why the modes exist
 
-The CP/DP split is an infrastructure separation of concerns. It lets operators scale the Data Plane horizontally without touching the Control Plane, and lets a single CP manage Data Planes that live in heterogeneous environments — for example one DP in Azure ARO, another in GCP, and another on-prem alongside physical devices. Unified mode is the simpler shape for environments where this separation isn't needed.
+The CP/DP split is an infrastructure separation of concerns. It lets operators scale the Data Plane horizontally without touching the Control Plane, and lets a single CP manage Data Planes that live in heterogeneous environments — for example one DP in Azure ARO, another in GCP, and another on-prem alongside physical devices. Unified mode is used primarily as a migration path from older versions that did not have a CP/DP split, and is not recommended for new installations.
 
 ## Component inventory
 
