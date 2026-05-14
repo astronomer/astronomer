@@ -255,7 +255,7 @@ jobs:
 
   create_linear_milestone:
     docker:
-      - image: cimg/base:{{ base_image_version }}
+      - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
     steps:
       - attach_workspace:
           at: /tmp/workspace
