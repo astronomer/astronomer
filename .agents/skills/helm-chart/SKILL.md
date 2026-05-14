@@ -11,25 +11,36 @@ APC is an umbrella chart: templates live at the umbrella level (under `templates
 
 For testing, use the [chart-tests skill](../chart-tests/SKILL.md) — it covers `render_chart()`, sub-chart values nesting, parametrized tests, and `uv run pytest` usage.
 
-### Template naming conventions
+### Template layout
 
-Template files in this repo follow:
+Three filename styles coexist in this repo. When adding a new template, follow whichever style the surrounding chart already uses — we do not retroactively rename existing files.
+
+**Style 1 — component-prefixed bare files.** Used in single-component sub-charts: `alertmanager`, `external-es-proxy`, `external-secrets`, `grafana`, `kube-state`, `pgbouncer`, `prometheus`, `vector`. Filenames are `<chart>[-feature]-<k8s_object>.yaml` directly under `templates/`.
 
 ```
-charts/<component>/templates/<component>[-feature]-<k8s_object>.yaml
+charts/alertmanager/templates/alertmanager-statefulset.yaml
+charts/prometheus/templates/prometheus-alerts-configmap.yaml
+charts/vector/templates/vector-daemonset.yaml
 ```
 
-- Lowercase with hyphens (Helm standard)
-- Start with the component name
-- Include the Kubernetes object type when it isn't obvious from context
-- Use subdirectories for logical grouping (`controlplane/`, `dataplane/`, `webhooks/`, …)
+**Style 2 — bare object-name files.** Used in sub-charts derived from upstream third-party charts: `postgresql`, `nats`, `prometheus-postgres-exporter`. Filenames are just `<k8s_object>.yaml`. Keep this style for these charts so future re-syncs with upstream stay easy.
 
-Examples:
+```
+charts/postgresql/templates/statefulset.yaml
+charts/nats/templates/configmap.yaml
+charts/prometheus-postgres-exporter/templates/deployment.yaml
+```
 
-- `charts/nginx/templates/controlplane/nginx-cp-deployment.yaml`
-- `charts/postgresql/templates/statefulset.yaml`
-- `charts/prometheus/templates/prometheus-alerts-configmap.yaml`
-- `charts/astronomer/templates/commander/commander-deployment.yaml`
+**Style 3 — sub-component subdirectories.** Used in charts that contain multiple distinct sub-components: `astronomer` (Houston, Commander, Astro UI, Registry, Pilot, …), `nginx` (controlplane / dataplane variants), `elasticsearch` (master / data / client / curator / exporter), `airflow-operator` (rbac / manager / webhooks / …). Each sub-component lives in its own subdirectory and the sub-component name is repeated in the filename — the redundancy keeps the file identifiable from its basename alone.
+
+```
+charts/astronomer/templates/commander/commander-deployment.yaml
+charts/astronomer/templates/houston/api/houston-deployment.yaml
+charts/nginx/templates/controlplane/nginx-cp-deployment.yaml
+charts/elasticsearch/templates/master/es-master-statefulset.yaml
+```
+
+In all three styles: lowercase with hyphens, helpers live in `_helpers.yaml` (or `_helpers.tpl`), and the K8s object kind (`deployment`, `configmap`, `networkpolicy`, `service`, `serviceaccount`, `role`, `rolebinding`, `ingress`, …) is part of the filename so resources are easy to locate.
 
 ### Probe customization
 
