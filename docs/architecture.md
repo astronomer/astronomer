@@ -72,15 +72,36 @@ These render in every mode (subject to their own enable flag) and run independen
 
 ## How user Airflow deployments fit in
 
-The platform installed by this chart is the _runtime_ that creates Airflow. Each user-facing Airflow deployment is a separate Helm release living alongside the platform release in the same DP cluster:
+The platform installed by this chart is the _runtime_ that creates Airflow. Each user-facing Airflow deployment is a separate Helm release living alongside the platform release in the same DP cluster.
 
-1. A user creates a deployment via the Astro UI or Houston API.
-2. Houston persists the deployment definition in its database.
-3. The Houston worker emits a job that calls Commander over gRPC.
-4. Commander runs `helm install` (or `helm upgrade`) using the chart referenced by `astronomer.houston.config.deployments.helm.airflow` — the external `astronomer/airflow-chart` — into a dedicated namespace.
+### Houston API and Houston worker
+
+Houston is two cooperating deployments, both rendered only when `global.plane.mode` is `control` or `unified`:
+
+- **Houston API** (`node dist/index.js`) — the synchronous GraphQL/REST endpoint that user-facing clients hit. It authenticates the request, validates it, writes the deployment row to Postgres, and hands the long-running work off to the queue.
+- **Houston worker** (`yarn worker`) — a background process that subscribes to the queue, picks up jobs the API enqueued, and performs the slow operations (calling Commander, tracking helm-release status, retrying failures). The worker is also the gRPC client of Commander (its container env carries `GRPC_VERBOSITY` / `GRPC_TRACE`).
+
+Both deployments run from the same Houston image and receive identical NATS configuration via the `houston_environment` helper:
+
+```
+NATS__SERVERS      = "<release>-nats-0.<release>-nats.<ns>.svc:4222", "<release>-nats-1...", "<release>-nats-2..."
+NATS__CLUSTER_ID   = <release>-stan
+```
+
+The `-stan` suffix names a STAN cluster (NATS Streaming, the legacy persistent-messaging subsystem). The chart also enables NATS JetStream by default (`global.nats.jetStream.enabled: true`); when on, Houston's `production.yaml` gains a `nats:` block (with TLS material if `global.nats.jetStream.tls` is set, mounted at `/etc/houston/jetstream/tls`). Which subsystem actually carries the deployment-job queue is an application-level decision in the Houston codebase — the chart just stands up the infrastructure for both.
+
+### End-to-end flow
+
+1. A user mutates a deployment via the Astro UI, Houston API, or CLI.
+2. **Houston API** validates the request, persists the deployment row to Postgres, and publishes a job on NATS.
+3. **Houston worker** consumes the job from NATS and makes a gRPC call to Commander. In `unified` mode that's the in-cluster service (`<release>-commander:<ports.commanderGRPC>`); in split mode it crosses to the DP at `commander.<domainPrefix>.<baseDomain>:9091`. The chart sets `COMMANDER_WAIT_ENABLED=true` only in `unified` mode, so in split mode the worker assumes Commander is reachable externally rather than waiting on a local readiness signal.
+4. **Commander** runs `helm install` / `helm upgrade` against the chart referenced by `astronomer.houston.config.deployments.helm.airflow` — the external `astronomer/airflow-chart` — into a dedicated namespace.
 5. The new Airflow release runs alongside (but independently of) the APC platform release.
 
-This is why a healthy DP cluster contains **one APC Helm release plus N Airflow Helm releases**, one per user deployment. The chart's RBAC (`charts/astronomer/templates/commander/commander-role.yaml`), network policies, and registry are sized to accommodate many sibling Airflow releases that this chart never templates directly.
+Two consequences worth noting:
+
+- The API never blocks on Helm operations. A failed install does not fail the user-facing API call; the worker reconciles against state in Postgres and retries.
+- A healthy DP cluster contains **one APC Helm release plus N Airflow Helm releases**, one per user deployment. The chart's RBAC (`charts/astronomer/templates/commander/commander-role.yaml`), network policies, and registry are sized to accommodate many sibling Airflow releases that this chart never templates directly.
 
 ## Cross-plane communication
 
