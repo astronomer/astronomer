@@ -54,15 +54,15 @@ The script is safe to re-run; cluster, secret, and helm install steps are idempo
 
 See `bin/setup-cp-dp-k3d.py --help` for the full list of flags. Some commonly useful ones:
 
-| Flag | Purpose |
-|------|---------|
-| `--dp-count {1,2,3,4}` | Spin up multiple data planes (`dp01`, `dp02`, …) |
-| `--cp-mode CP_MODE` | `unified` (default) or `control` |
-| `--recreate-clusters` | Delete and recreate existing k3d clusters |
-| `--helm-values FILE` | Extra helm values file (repeatable) for both CP and DP |
-| `--dp-airflow-db {postgres,mysql}` | Database backing Airflow on the DP |
-| `--no-local-registry` | Skip the pull-through registry proxy |
-| `--skip-certs` / `--skip-clusters` / `--skip-secrets` / `--skip-helm` | Resume after a partial run |
+| Flag                                                                  | Purpose                                                |
+| --------------------------------------------------------------------- | ------------------------------------------------------ |
+| `--dp-count {1,2,3,4}`                                                | Spin up multiple data planes (`dp01`, `dp02`, …)       |
+| `--cp-mode CP_MODE`                                                   | `unified` (default) or `control`                       |
+| `--recreate-clusters`                                                 | Delete and recreate existing k3d clusters              |
+| `--helm-values FILE`                                                  | Extra helm values file (repeatable) for both CP and DP |
+| `--dp-airflow-db {postgres,mysql}`                                    | Database backing Airflow on the DP                     |
+| `--no-local-registry`                                                 | Skip the pull-through registry proxy                   |
+| `--skip-certs` / `--skip-clusters` / `--skip-secrets` / `--skip-helm` | Resume after a partial run                             |
 
 ### After setup
 
@@ -109,6 +109,7 @@ Each time you run the script, the platform will be fully reset to the current he
 #### Turn on or off parts of the platform
 
 Modify the "tags:" in configs/local-dev.yaml
+
 - platform: core Astronomer components
 - logging (large impact on RAM use): ElasticSearch, Vector
 - monitoring: Prometheus
@@ -133,9 +134,7 @@ Find the corresponding deployment, daemonset, or statefulset
 kubectl get deployment -n astronomer
 ```
 
-Replace the pod with the new image
-Look for "image" on the appropriate container and replace with the local tag,
-and set the pull policy to "Never".
+Replace the pod with the new image. Look for "image" on the appropriate container and replace with the local tag, and set the pull policy to "Never".
 
 ```sh
 kubectl edit deployment -n astronomer <your deployment>
@@ -146,21 +145,6 @@ kubectl edit deployment -n astronomer <your deployment>
 ```sh
 bin/reset-local-dev -K 1.28.6
 ```
-
-## How to upgrade airflow chart json schema
-
-Every time we upgrade the airflow chart we will also need to update the json schema file with the list of acceptable top level params (eventually this will be fixed on the OSS side but for now this needs to be a manual step https://github.com/astronomer/issues/issues/3774). Additionally the json schema url will need to be updated to something of the form https://raw.githubusercontent.com/apache/airflow/helm-chart/1.x.x/chart/values.schema.json. This param is found in astronomer/values.schema.json at the astronomer.houston.config.deployments.helm.airflow.$ref parameter
-
-To get a list of the top level params it is best to switch to the apache/airflow tagged commit for that chart release. Then run the ag command to get a list of all top level params.
-
-Example:
-
-```
-git checkout tags/helm-chart/1.2.0
-git grep -ho "\.Values\.\w\+" | sort -u
-```
-
-The values output by this command will need to be inserted manually into astronomer/values.schema.json at the `astronomer.houston.config.deployments.helm.airflow.allOf` parameter. There are two additional params that need to be at this location outside of what is returned from above. They are `podMutation` and `useAstroSecurityManager`. These can be found by running the same ag command against the astronomer/airflow-chart values.yaml file.
 
 ## Searching code
 
