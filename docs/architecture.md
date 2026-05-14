@@ -112,15 +112,18 @@ In `control` + `data` deployments, the two planes are wired together through ing
 | Wire                                                                 | Purpose                                        |
 | -------------------------------------------------------------------- | ---------------------------------------------- |
 | Houston worker → `commander.<domainPrefix>.<baseDomain>:9091` (gRPC) | Drives Airflow deployment lifecycle on the DP  |
-| Houston/UI → Commander metadata HTTP ingress                         | Reads DP-side cluster and deployment state     |
+| Houston → `https://<domainPrefix>.<baseDomain>/metadata` (HTTP)      | Reads DP-side cluster and deployment metadata  |
 | CP Prometheus → `prometheus.<domainPrefix>.<baseDomain>/federate`    | Aggregates DP metrics into platform dashboards |
 
 ### DP → CP
 
-| Wire                                                                        | Purpose                                          |
-| --------------------------------------------------------------------------- | ------------------------------------------------ |
-| Kubelet/containerd in DP → `houston.<baseDomain>/v1/registry/authorization` | Authorizes image pulls from the DP registry      |
-| config-syncer (DP) → Houston HTTPS                                          | Pulls platform configuration into the DP cluster |
+| Wire                                                                        | Purpose                                                                                                                  |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `commander-jwks-hook` Job → `houston.<baseDomain>/v1/.well-known/jwks.json` | One-shot pre-install / pre-upgrade fetch of Houston's JWT signing public key into a DP Secret (used in the next row)     |
+| Kubelet/containerd in DP → `houston.<baseDomain>/v1/registry/authorization` | Image-pull authorization: Houston returns a signed JWT that the DP Registry then verifies against the JWKS from the hook |
+| config-syncer (DP) → Houston HTTPS                                          | Pulls platform configuration into the DP cluster                                                                         |
+
+The two authorization rows are halves of the same flow. The first happens once, at install/upgrade time, on a DP pre-install Helm hook (`charts/astronomer/templates/commander/jwks-hooks/commander-jwks-hooks.yaml`, gated to `mode=data`). The script `charts/astronomer/files/commander-jwks.py` writes Houston's signing key into `<release>-houston-jwt-signing-certificate`. The second happens at runtime, every time the DP needs to authorize an image pull: Houston signs a JWT, and the DP Registry uses the cached JWKS to verify it. If the install-time fetch fails (commonly because the DP doesn't trust Houston's TLS chain via `global.privateCaCerts`), image pulls fail at runtime with no obvious link back to the missing hook.
 
 ### Shared trust and auth
 
