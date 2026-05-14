@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Create a Linear project milestone when a beta Astronomer Helm chart tarball is published.
+Create a Linear project milestone when a beta/RC Astronomer Helm chart tarball is published.
 
 Reads chart version from an astronomer-*.tgz file in the workspace and calls the Linear GraphQL API.
 """
@@ -19,7 +19,7 @@ import requests
 
 DEFAULT_GRAPHQL_URL = "https://api.linear.app/graphql"
 DEFAULT_PROJECT_NAME = "APC RC tracker"
-DEFAULT_MILESTONE_DESCRIPTION = "New Beta chart is released"
+DEFAULT_MILESTONE_DESCRIPTION = "New Beta/RC chart is released"
 REQUEST_TIMEOUT_SEC = 60
 
 _FIND_PROJECT_QUERY = """
@@ -111,16 +111,14 @@ def find_chart_archive(workspace: Path) -> Path:
         raise FileNotFoundError(f"Workspace directory does not exist: {workspace}")
 
     matches = sorted(workspace.glob("astronomer-*.tgz"))
-    match len(matches):
-        case 0:
-            raise FileNotFoundError(f"No astronomer-*.tgz found under {workspace}")
-        case 1:
-            return matches[0]
-        case _:
-            names = ", ".join(p.name for p in matches)
-            raise RuntimeError(
-                f"Expected exactly one astronomer-*.tgz in {workspace}; found {len(matches)}: {names}"
-            )
+    if not matches:
+        raise FileNotFoundError(f"No astronomer-*.tgz found under {workspace}")
+    if len(matches) == 1:
+        return matches[0]
+    names = ", ".join(p.name for p in matches)
+    raise RuntimeError(
+        f"Expected exactly one astronomer-*.tgz in {workspace}; found {len(matches)}: {names}"
+    )
 
 
 def linear_graphql(url: str, api_key: str, payload: dict) -> dict:
@@ -232,7 +230,7 @@ def main() -> None:
     print(f"Found project ID: {project_id}")
 
     release_dt = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    milestone_name = f"BETA:{beta_version} - {release_dt}"
+    milestone_name = f"{beta_version} - {release_dt}"
     print(f"Creating Linear milestone: {milestone_name}")
     result = create_milestone(
         args.graphql_url,
