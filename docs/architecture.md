@@ -8,11 +8,11 @@ APC is delivered as a single umbrella Helm chart in this repository. One Helm re
 
 The single chart can be installed in three modes, controlled by `global.plane.mode` in `values.yaml`:
 
-| Mode | What it installs | When to use |
-|------|------------------|-------------|
-| `unified` (default) | Control Plane and Data Plane components co-located in one cluster | Local development, single-cluster deployments, the v0.x compatibility shape |
-| `control` | Control Plane only | Multi-cluster deployments where one CP manages one or more remote DPs |
-| `data` | Data Plane only, identified by `global.plane.domainPrefix` (e.g. `dp01`) | Each DP cluster attached to a remote CP |
+| Mode                | What it installs                                                         | When to use                                                                 |
+| ------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `unified` (default) | Control Plane and Data Plane components co-located in one cluster        | Local development, single-cluster deployments, the v0.x compatibility shape |
+| `control`           | Control Plane only                                                       | Multi-cluster deployments where one CP manages one or more remote DPs       |
+| `data`              | Data Plane only, identified by `global.plane.domainPrefix` (e.g. `dp01`) | Each DP cluster attached to a remote CP                                     |
 
 ### Why the modes exist
 
@@ -26,53 +26,53 @@ The table below lists components installed by this chart and the modes in which 
 
 These render when `global.plane.mode` is `control` or `unified`.
 
-| Component | Role | Gate |
-|-----------|------|------|
-| Houston API | GraphQL/REST API; source of truth for users, workspaces, and deployments | `global.astronomer.enabled` |
-| Houston worker | Async job processor; invokes Commander to create/update Airflow deployments | `global.astronomer.enabled` |
-| Astro UI | Web UI for the platform | `global.astronomer.enabled` |
-| Navigator | Multi-DP coordinator (used for DP failover) | `navigator.enabled` or `global.dataPlaneFailover.enabled` |
-| dp-link | CP-side endpoint for DP-link traffic (DP failover path) | `dpLink.enabled` or `global.dataPlaneFailover.enabled` |
-| nginx (CP variant) | Ingress for CP hostnames at `<baseDomain>` | `global.nginx.enabled` |
-| Alertmanager | Alert routing for platform Prometheus | `global.alertmanager.enabled` |
-| Grafana | Dashboards backed by CP Prometheus | `global.grafana.enabled` |
+| Component          | Role                                                                        | Gate                                                      |
+| ------------------ | --------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Houston API        | GraphQL/REST API; source of truth for users, workspaces, and deployments    | `global.astronomer.enabled`                               |
+| Houston worker     | Async job processor; invokes Commander to create/update Airflow deployments | `global.astronomer.enabled`                               |
+| Astro UI           | Web UI for the platform                                                     | `global.astronomer.enabled`                               |
+| Navigator          | Multi-DP coordinator (used for DP failover)                                 | `navigator.enabled` or `global.dataPlaneFailover.enabled` |
+| dp-link            | CP-side endpoint for DP-link traffic (DP failover path)                     | `dpLink.enabled` or `global.dataPlaneFailover.enabled`    |
+| nginx (CP variant) | Ingress for CP hostnames at `<baseDomain>`                                  | `global.nginx.enabled`                                    |
+| Alertmanager       | Alert routing for platform Prometheus                                       | `global.alertmanager.enabled`                             |
+| Grafana            | Dashboards backed by CP Prometheus                                          | `global.grafana.enabled`                                  |
 
 ### Data-plane components
 
 These render when `global.plane.mode` is `data` or `unified`.
 
-| Component | Role | Gate |
-|-----------|------|------|
-| Commander | gRPC service that runs `helm install/upgrade` per user Airflow deployment | `global.astronomer.enabled` |
-| Registry | Docker registry for user-built Airflow images | `global.astronomer.enabled` |
-| Pilot | DP-side health/failover agent | `pilot.enabled` or `global.dataPlaneFailover.enabled` |
-| config-syncer | CronJob that pulls Houston configuration into the local cluster | `configSyncer.enabled` |
-| nginx (DP variant) | Ingress for DP hostnames at `<domainPrefix>.<baseDomain>` | `global.nginx.enabled` |
-| Prometheus federation proxy | Auth-protected `/federate` endpoint that CP Prometheus scrapes | rendered only when `mode=data` |
-| external-es-proxy | Forwards logs to an external Elasticsearch | `global.customLogging.enabled` |
+| Component                   | Role                                                                      | Gate                                                  |
+| --------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Commander                   | gRPC service that runs `helm install/upgrade` per user Airflow deployment | `global.astronomer.enabled`                           |
+| Registry                    | Docker registry for user-built Airflow images                             | `global.astronomer.enabled`                           |
+| Pilot                       | DP-side health/failover agent                                             | `pilot.enabled` or `global.dataPlaneFailover.enabled` |
+| config-syncer               | CronJob that pulls Houston configuration into the local cluster           | `configSyncer.enabled`                                |
+| nginx (DP variant)          | Ingress for DP hostnames at `<domainPrefix>.<baseDomain>`                 | `global.nginx.enabled`                                |
+| Prometheus federation proxy | Auth-protected `/federate` endpoint that CP Prometheus scrapes            | rendered only when `mode=data`                        |
+| external-es-proxy           | Forwards logs to an external Elasticsearch                                | `global.customLogging.enabled`                        |
 
 ### Plane-agnostic infrastructure
 
 These render in every mode (subject to their own enable flag) and run independently in each cluster.
 
-| Component | Role | Gate |
-|-----------|------|------|
-| Prometheus | Metrics collection (per-plane instance) | `global.prometheus.enabled` |
-| Elasticsearch | Log storage | `global.elasticsearch.enabled` |
-| Vector | Daemonset log collector | `global.daemonsetLogging.enabled` |
-| NATS | Local message bus (one cluster per plane; not federated by default) | `global.nats.enabled` |
-| kube-state | Kubernetes object metrics | `global.kubeState.enabled` |
-| PostgreSQL | In-cluster database for dev/test (production should use external) | `global.postgresql.enabled` |
-| PgBouncer | Connection pooling in front of Postgres | `global.pgbouncer.enabled` |
-| prometheus-postgres-exporter | Database metrics | `global.prometheusPostgresExporter.enabled` |
-| airflow-operator | Optional CRD-based Airflow management | `global.airflowOperator.enabled` |
-| external-secrets (ESO) | Secret synchronization | `external-secrets.enabled` |
+| Component                    | Role                                                                | Gate                                        |
+| ---------------------------- | ------------------------------------------------------------------- | ------------------------------------------- |
+| Prometheus                   | Metrics collection (per-plane instance)                             | `global.prometheus.enabled`                 |
+| Elasticsearch                | Log storage                                                         | `global.elasticsearch.enabled`              |
+| Vector                       | Daemonset log collector                                             | `global.daemonsetLogging.enabled`           |
+| NATS                         | Local message bus (one cluster per plane; not federated by default) | `global.nats.enabled`                       |
+| kube-state                   | Kubernetes object metrics                                           | `global.kubeState.enabled`                  |
+| PostgreSQL                   | In-cluster database for dev/test (production should use external)   | `global.postgresql.enabled`                 |
+| PgBouncer                    | Connection pooling in front of Postgres                             | `global.pgbouncer.enabled`                  |
+| prometheus-postgres-exporter | Database metrics                                                    | `global.prometheusPostgresExporter.enabled` |
+| airflow-operator             | Optional CRD-based Airflow management                               | `global.airflowOperator.enabled`            |
+| external-secrets (ESO)       | Secret synchronization                                              | `external-secrets.enabled`                  |
 
 `Chart.yaml` is the canonical source for conditions and tags; `values.yaml` is the canonical source for `global.plane.*` defaults.
 
 ## How user Airflow deployments fit in
 
-The platform installed by this chart is the *runtime* that creates Airflow. Each user-facing Airflow deployment is a separate Helm release living alongside the platform release in the same DP cluster:
+The platform installed by this chart is the _runtime_ that creates Airflow. Each user-facing Airflow deployment is a separate Helm release living alongside the platform release in the same DP cluster:
 
 1. A user creates a deployment via the Astro UI or Houston API.
 2. Houston persists the deployment definition in its database.
@@ -88,18 +88,18 @@ In `control` + `data` deployments, the two planes are wired together through ing
 
 ### CP → DP
 
-| Wire | Purpose |
-|------|---------|
-| Houston worker → `commander.<domainPrefix>.<baseDomain>:9091` (gRPC) | Drives Airflow deployment lifecycle on the DP |
-| Houston/UI → Commander metadata HTTP ingress | Reads DP-side cluster and deployment state |
-| CP Prometheus → `prometheus.<domainPrefix>.<baseDomain>/federate` | Aggregates DP metrics into platform dashboards |
+| Wire                                                                 | Purpose                                        |
+| -------------------------------------------------------------------- | ---------------------------------------------- |
+| Houston worker → `commander.<domainPrefix>.<baseDomain>:9091` (gRPC) | Drives Airflow deployment lifecycle on the DP  |
+| Houston/UI → Commander metadata HTTP ingress                         | Reads DP-side cluster and deployment state     |
+| CP Prometheus → `prometheus.<domainPrefix>.<baseDomain>/federate`    | Aggregates DP metrics into platform dashboards |
 
 ### DP → CP
 
-| Wire | Purpose |
-|------|---------|
-| Kubelet/containerd in DP → `houston.<baseDomain>/v1/registry/authorization` | Authorizes image pulls from the DP registry |
-| config-syncer (DP) → Houston HTTPS | Pulls platform configuration into the DP cluster |
+| Wire                                                                        | Purpose                                          |
+| --------------------------------------------------------------------------- | ------------------------------------------------ |
+| Kubelet/containerd in DP → `houston.<baseDomain>/v1/registry/authorization` | Authorizes image pulls from the DP registry      |
+| config-syncer (DP) → Houston HTTPS                                          | Pulls platform configuration into the DP cluster |
 
 ### Shared trust and auth
 
