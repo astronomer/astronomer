@@ -102,7 +102,7 @@ spec:
             mountPath: /var/run
 
 {{- if .Values.astroUI.volumeMounts }}
-{{- tpl (toYaml .Values.astroUI.volumeMounts) $ | nindent 12 }}
+{{- tpl (toYaml .Values.astroUI.volumeMounts) $ | nindent 10 }}
 {{- end }}
 {{- if .Values.astroUI.extraContainers }}
 {{- tpl (toYaml .Values.astroUI.extraContainers) $ | nindent 8 }}
