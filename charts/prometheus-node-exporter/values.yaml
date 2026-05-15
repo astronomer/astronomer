@@ -146,3 +146,15 @@ sidecarVolumeMount: []
 
 
 priorityClassName: ~
+
+collectors:
+  - cpu
+  - diskstats
+  - filesystem
+  - loadavg
+  - meminfo
+  - netclass
+  - netdev
+  - time
+  - timex
+  - vmstat
