@@ -340,6 +340,26 @@ jobs:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
 
+  create_linear_milestone:
+    docker:
+      - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Install uv
+          command: |
+            set -eo pipefail
+            export UV_VERSION="0.11.3"
+            curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create Linear milestone
+          command: |
+            set -eo pipefail
+            export PATH="$HOME/.local/bin:$PATH"
+            uv run python bin/create-linear-beta-milestone.py --workspace /tmp/workspace
+
 workflows:
   version: 2.1
 
@@ -460,6 +480,15 @@ workflows:
             - software-cosign-keys
           requires:
             - release-to-public
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - create_linear_milestone:
+          context:
+            - linear
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:
