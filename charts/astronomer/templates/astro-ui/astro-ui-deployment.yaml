@@ -96,13 +96,12 @@ spec:
               value: "wss://houston.{{ .Values.global.baseDomain }}/ws"
             {{- end }}
           volumeMounts:
-          - name: tmp
-            mountPath: /tmp
-          - name: var-cache-nginx
-            mountPath: /var/run
-
+            - name: tmp
+              mountPath: /tmp
+            - name: var-cache-nginx
+              mountPath: /var/run
 {{- if .Values.astroUI.volumeMounts }}
-{{- tpl (toYaml .Values.astroUI.volumeMounts) $ | nindent 10 }}
+{{- tpl (toYaml .Values.astroUI.volumeMounts) $ | nindent 12 }}
 {{- end }}
 {{- if .Values.astroUI.extraContainers }}
 {{- tpl (toYaml .Values.astroUI.extraContainers) $ | nindent 8 }}
