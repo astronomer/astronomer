@@ -62,6 +62,7 @@ Task C and D both build on the gap inventory in [`../03-gap-analysis.md`](../03-
 
 | Doc | Project / context | Relationship |
 |-----|------|--------------|
+| [`reference-0.37-operator-mode.md`](reference-0.37-operator-mode.md) | This project — reference | Deep-dive on how operator-mode actually works in APC 0.37 (Houston ↔ Commander). Read this before working on any M2 / M3 task. |
 | [`../01-codebase-changes.md`](../01-codebase-changes.md) | Install APC using an Operator (APC 2.0) | Reference for "what exists today" across repos. |
 | [`../02-local-setup.md`](../02-local-setup.md) | Install APC using an Operator (APC 2.0) | Local dev environment for testing operator-mode deployments. |
 | [`../03-gap-analysis.md`](../03-gap-analysis.md) | Install APC using an Operator (APC 2.0) | 19-gap inventory; feeds M3 Tasks C & D. |
