@@ -87,6 +87,7 @@ class TestPrometheusNodeExporterDaemonset:
         assert c_by_name["node-exporter"]["securityContext"] == {
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
 
     def test_prometheus_node_exporter_daemonset_with_security_context_overrides(self, kube_version):
@@ -111,6 +112,7 @@ class TestPrometheusNodeExporterDaemonset:
             "allowPrivilegeEscalation": False,
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
 
     def test_node_exporter_priorityclass_defaults(self, kube_version):

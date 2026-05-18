@@ -11,6 +11,7 @@ metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
   labels:
     app: {{ template "prometheus-postgres-exporter.name" . }}
+    component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -24,10 +25,10 @@ spec:
     metadata:
       labels:
         tier: monitoring
-        app: {{ template "prometheus-postgres-exporter.name" . }}
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
-        component: prometheus-postgres-exporter
+        component: {{ template "prometheus-postgres-exporter.name" . }}
+        app: {{ template "prometheus-postgres-exporter.name" . }}
         {{- include "global.podLabels" . | nindent 8 }}
 {{- if .Values.podLabels }}
 {{ toYaml .Values.podLabels | trim | indent 8 }}

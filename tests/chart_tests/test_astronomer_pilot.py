@@ -92,7 +92,7 @@ class TestAstronomerPilot:
 
         # Retry knobs
         assert env_vars["PILOT_MAX_ATTEMPTS_PER_LEASE"] == "3"
-        assert env_vars["PILOT_MAX_ATTEMPTS_PER_FLIGHT"] == "25"
+        assert env_vars["PILOT_MAX_ATTEMPTS_PER_FLIGHT"] == "15"
         assert env_vars["PILOT_RETRY_BASE_INTERVAL_MS"] == "250"
         assert env_vars["PILOT_RETRY_MAX_INTERVAL_MS"] == "5000"
         assert env_vars["PILOT_RETRY_COOLOFF_SECONDS"] == "30"
@@ -214,7 +214,7 @@ class TestAstronomerPilot:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "rbacEnabled": True,
+                    "rbac": {"enabled": True},
                 },
                 "astronomer": {"pilot": {"enabled": True}},
             },
@@ -232,7 +232,7 @@ class TestAstronomerPilot:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "rbacEnabled": False,
+                    "rbac": {"enabled": False},
                 },
                 "astronomer": {"pilot": {"enabled": True}},
             },

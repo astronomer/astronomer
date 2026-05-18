@@ -20,8 +20,27 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{- end }}
 
 
+{{/*
+DEPRECATED: containerd.configToml is retained as an escape hatch for operators who need
+to supply fully custom TOML/hosts.toml content via containerdConfigToml.
+For containerd 2.x (GKE 1.33+), the daemonset script auto-generates a correct hosts.toml
+when containerdConfigToml is not set (nil). Prefer using containerdVersion: "2" instead.
+*/}}
 {{ define "containerd.configToml" -}}
 {{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
+{{- end }}
+
+{{/*
+Registry hostname differs between unified and data-plane installs
+because data-plane clusters prefix the base domain with
+`global.plane.domainPrefix`.
+*/}}
+{{- define "containerd.registryHost" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+registry.{{ .Values.global.baseDomain }}
+{{- end -}}
 {{- end }}
 
 {{ define "dagOnlyDeployment.image" -}}
@@ -50,7 +69,7 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "certCopier.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
 {{- else -}}
 {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
 {{- end }}

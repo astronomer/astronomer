@@ -25,9 +25,9 @@ Four **Docker Registry v2 pull-through caching containers** run as persistent Do
 
 ```
 Docker network: astronomer-net
-├── k3d-control-server-0 \
-├── k3d-data-1-server-0   }── k3d cluster nodes (destroyed/recreated)
-├── ...                  /
+├── k3d-cp01-server-0 \
+├── k3d-dp01-server-0  }── k3d cluster nodes (destroyed/recreated)
+├── ...                /
 │
 ├── astronomer-registry-proxy-quay     → caches quay.io          (host: localhost:15001)
 ├── astronomer-registry-proxy-docker   → caches docker.io         (host: localhost:15002)

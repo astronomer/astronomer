@@ -161,7 +161,7 @@ spec:
             # Defaults to false, which means information is retrieved from the master node.
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
-          initialDelaySeconds: 5
+          initialDelaySeconds: 30
         {{- end }}
         {{- if .Values.master.livenessProbe }}
         livenessProbe: {{- tpl (toYaml .Values.master.livenessProbe) . | nindent 10 }}
@@ -169,6 +169,7 @@ spec:
         livenessProbe:
           tcpSocket:
             port: {{ .Values.common.ports.transport }}
+          initialDelaySeconds: 30
         {{- end }}
         volumeMounts:
         - name: tmp

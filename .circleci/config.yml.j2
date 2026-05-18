@@ -1,10 +1,28 @@
+{#- https://circleci.com/developer/images/image/cimg/python#image-tags -#}
+{%- set python_image_version = '3.13' -%}
+
+{#- https://circleci.com/docs/building-docker-images/#docker-version -#}
+{%- set circleci_docker_version = 'docker23' -%}
+
+{#- https://github.com/sigstore/cosign/releases -#}
+{%- set cosign_version = 'v2.5.0' -%}
+
+{#- https://circleci.com/developer/images/image/cimg/base#image-tags -#}
+{%- set base_image_version = 'current-24.04' -%}
+
+{#- https://github.com/astral-sh/uv/releases -#}
+{%- set uv_version = '0.11.3' -%}
+
+{#- https://circleci.com/developer/machine/image/ubuntu-2404#image-tags -#}
+{%- set machine_image_version = 'ubuntu-2404:2025.09.1' -%}
+
 version: 2.1
 executors:
   docker-executor:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.13
+      - image: cimg/python:{{ python_image_version }}
 
 orbs:
   slack: circleci/slack@4.10.1
@@ -23,9 +41,9 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: docker23
+          version: {{ circleci_docker_version }}
       - cosign/install:
-          version: "v2.5.0"
+          version: "{{ cosign_version }}"
       - run:
           name: Login to docker registry
           command: |
@@ -131,21 +149,28 @@ jobs:
       qa_release:
         type: boolean
         default: false
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - checkout
       - run:
           name: Package the Astronomer chart
           command: |
             bin/install-ci-tools.py
-            bin/build-helm-chart.sh << parameters.qa_release >>
+            bin/build-helm-chart.sh << parameters.qa_release >> << parameters.artifact_subdir >>
       - persist_to_workspace:
           root: "."
           paths:
-            - "./*.tgz"
+            - "<< parameters.artifact_subdir >>/*.tgz"
 
   release-to-internal:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
+    parameters:
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -154,33 +179,27 @@ jobs:
           name: Release the Astronomer chart to internal
           command: |
             set -e
-            bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
+            bin/release-helm-chart /tmp/workspace/<< parameters.artifact_subdir >>/astronomer-*.tgz
 
-  trigger-upgrade-test:
+  trigger-stage-cluster-build:
     executor: docker-executor
     resource_class: small
+    parameters:
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Triggering testing for upgrade path
+          name: Triggering update to stage cluster
           command: |
             set -e
-            bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
-
-  trigger-feature-stack-release:
-    executor: docker-executor
-    resource_class: small
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: Triggering update to feature cluster
-          command: |
-            set -e
-            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
+            bin/trigger_stage_cluster_update.py \
+              --astro_path=/tmp/workspace/<< parameters.artifact_subdir >> \
+              --circleci_token=$CIRCLECI_API_KEY_TEST \
+              --branch=$CIRCLE_BRANCH
 
   release-to-public:
     docker:
@@ -225,8 +244,7 @@ jobs:
 
   check-commander-airflow-version:
     docker:
-      # https://circleci.com/developer/images/image/cimg/base
-      - image: cimg/base:current-24.04
+      - image: cimg/base:{{ base_image_version }}
     steps:
       - checkout
       - setup_remote_docker:
@@ -262,6 +280,41 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}
+      - approve-stage-cluster-test:
+          type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - build-artifact:
+          name: build-artifact-stage-cluster
+          qa_release: true
+          artifact_subdir: qa
+          requires:
+            - approve-stage-cluster-test
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - release-to-internal:
+          name: release-to-internal-stage-cluster
+          artifact_subdir: qa
+          context:
+            - gcp-astronomer-prod
+          requires:
+            - build-artifact-stage-cluster
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - trigger-stage-cluster-build:
+          artifact_subdir: qa
+          requires:
+            - release-to-internal-stage-cluster
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - approve-internal-release:
           type: approval
           filters:
@@ -280,20 +333,6 @@ workflows:
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
-      - approve-upgrade-test:
-          type: approval
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
-      - trigger-upgrade-test:
-          requires:
-            - release-to-internal
-            - approve-upgrade-test
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
@@ -354,7 +393,7 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
-      - trigger-feature-stack-release:
+      - trigger-stage-cluster-build:
           requires:
             - release-to-internal
           filters:

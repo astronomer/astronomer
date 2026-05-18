@@ -14,7 +14,7 @@ class TestAstronomerNamespacePools:
     def test_namespace_pools_rbac(self, kube_version):
         """Test that helm renders astronomer/commander RBAC resources properly when working with namespace pools."""
 
-        # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
+        # rbac.enabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
         # and ignore the cluster role configuration
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(

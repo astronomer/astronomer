@@ -50,6 +50,25 @@ def get_job_state(circleci_token: str, pipeline_id: str):
     return resp
 
 
+def wait_for_pipeline_completion(circleci_token: str, pipeline_id: str, wait_time_min: int = 120, check_interval_sec: int = 30):
+    elapsed_time = 0
+    while elapsed_time < wait_time_min * 60:
+        job_state_resp = get_job_state(circleci_token=circleci_token, pipeline_id=pipeline_id)
+        pipeline_state = json.loads(job_state_resp)["items"][0]["status"]
+
+        if pipeline_state == "success":
+            print("INFO: Pipeline completed successfully.")
+            return pipeline_state
+
+        if pipeline_state not in ["pending", "running"]:
+            raise RuntimeError(f"ERROR: Pipeline failed with status: {pipeline_state}")
+
+        time.sleep(check_interval_sec)
+        elapsed_time += check_interval_sec
+
+    raise TimeoutError(f"Pipeline did not complete within {wait_time_min} minutes.")
+
+
 def main(circleci_token: str, astro_path: str, branch: str):
     # Getting Astronomer Helm Chart - FileName
     file_list = os.listdir(astro_path)
@@ -88,23 +107,8 @@ def main(circleci_token: str, astro_path: str, branch: str):
     # Printing Info
     print(f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}")
 
-    print("INFO: Waiting until pipeline starts running. It will wait for 5 min.")
-    pipeline_state = "pending"
-    counter = 0
-
-    while "pending" == pipeline_state:
-        time.sleep(10)
-        job_state_resp = get_job_state(circleci_token=circleci_token, pipeline_id=pipeline_id)
-        pipeline_state = json.loads(job_state_resp)["items"][0]["status"]
-        counter = counter + 1
-
-        if counter == 6:
-            break
-
-    if "success" != pipeline_state and "running" != pipeline_state:
-        print(f"Error: Failed to run pipeline. Last Status: {pipeline_state}")
-        raise SystemError(1)
-    raise SystemExit(0)
+    time.sleep(10)
+    wait_for_pipeline_completion(circleci_token=circleci_token, pipeline_id=pipeline_id)
 
 
 if __name__ == "__main__":

@@ -230,6 +230,10 @@ spec:
                 secretKeyRef:
                   name: {{ template "registry.authHeaderSecret" . }}
                   key: token
+          {{- if .Values.global.cadvisor.enabled }}
+            - name: PROMETHEUS__CADVISOR__ENABLED
+              value: "true"
+          {{- end }}
           {{- if .Values.houston.extraContainers }}
           {{- tpl (toYaml .Values.houston.extraContainers) $ | nindent 8 }}
           {{- end }}

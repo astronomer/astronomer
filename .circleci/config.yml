@@ -59,7 +59,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-04
+      - image: quay.io/astronomer/ci-helm-release:2026-05
     steps:
       - checkout
       - run:
@@ -69,7 +69,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2026-04
+      - image: quay.io/astronomer/ci-pre-commit:2026-05
     resource_class: small
     steps:
       - checkout
@@ -93,7 +93,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-04
+      - image: quay.io/astronomer/ci-helm-release:2026-05
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -128,26 +128,33 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-04
+      - image: quay.io/astronomer/ci-helm-release:2026-05
     parameters:
       qa_release:
         type: boolean
         default: false
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - checkout
       - run:
           name: Package the Astronomer chart
           command: |
             bin/install-ci-tools.py
-            bin/build-helm-chart.sh << parameters.qa_release >>
+            bin/build-helm-chart.sh << parameters.qa_release >> << parameters.artifact_subdir >>
       - persist_to_workspace:
           root: "."
           paths:
-            - "./*.tgz"
+            - "<< parameters.artifact_subdir >>/*.tgz"
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-04
+      - image: quay.io/astronomer/ci-helm-release:2026-05
+    parameters:
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -156,37 +163,31 @@ jobs:
           name: Release the Astronomer chart to internal
           command: |
             set -e
-            bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
+            bin/release-helm-chart /tmp/workspace/<< parameters.artifact_subdir >>/astronomer-*.tgz
 
-  trigger-upgrade-test:
+  trigger-stage-cluster-build:
     executor: docker-executor
     resource_class: small
+    parameters:
+      artifact_subdir:
+        type: string
+        default: "."
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Triggering testing for upgrade path
+          name: Triggering update to stage cluster
           command: |
             set -e
-            bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
-
-  trigger-feature-stack-release:
-    executor: docker-executor
-    resource_class: small
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: Triggering update to feature cluster
-          command: |
-            set -e
-            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
+            bin/trigger_stage_cluster_update.py \
+              --astro_path=/tmp/workspace/<< parameters.artifact_subdir >> \
+              --circleci_token=$CIRCLECI_API_KEY_TEST \
+              --branch=$CIRCLE_BRANCH
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-04
+      - image: quay.io/astronomer/ci-helm-release:2026-05
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -330,7 +331,6 @@ jobs:
 
   check-commander-airflow-version:
     docker:
-      # https://circleci.com/developer/images/image/cimg/base
       - image: cimg/base:current-24.04
     steps:
       - checkout
@@ -379,6 +379,41 @@ workflows:
       - scenario-unified-1-35-1:
           requires:
             - build-artifact
+      - approve-stage-cluster-test:
+          type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - build-artifact:
+          name: build-artifact-stage-cluster
+          qa_release: true
+          artifact_subdir: qa
+          requires:
+            - approve-stage-cluster-test
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - release-to-internal:
+          name: release-to-internal-stage-cluster
+          artifact_subdir: qa
+          context:
+            - gcp-astronomer-prod
+          requires:
+            - build-artifact-stage-cluster
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
+      - trigger-stage-cluster-build:
+          artifact_subdir: qa
+          requires:
+            - release-to-internal-stage-cluster
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - approve-internal-release:
           type: approval
           filters:
@@ -396,20 +431,6 @@ workflows:
             - approve-internal-release
             - scenario-unified-1-31-14
             - scenario-unified-1-35-1
-      - approve-upgrade-test:
-          type: approval
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
-      - trigger-upgrade-test:
-          requires:
-            - release-to-internal
-            - approve-upgrade-test
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
@@ -470,7 +491,7 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
-      - trigger-feature-stack-release:
+      - trigger-stage-cluster-build:
           requires:
             - release-to-internal
           filters:

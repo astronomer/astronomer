@@ -37,7 +37,8 @@ global:
     addToContainerd: true
     enabled: true
   prometheusPostgresExporterEnabled: true
-  rbacEnabled: true
+  rbac:
+    enabled: true
   taskUsageMetricsEnabled: true
 nats:
   nats:

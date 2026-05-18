@@ -34,12 +34,15 @@ astronomer:
 global:
   airflowOperator:
     enabled: true
+  authSidecar:
+    enabled: true
   baseDomain: foo.com
   customLogging:
     awsSecretName: dummy
     enabled: true
-  authSidecar:
+  dataPlaneFailover:
     enabled: true
+    externalSecretManagerName: dummy-esm-name
   networkPolicy:
     enabled: true
   rbac:
@@ -53,6 +56,8 @@ global:
   deploymentLifecycle:
     deployRollback:
       enabled: true
+      dagTarballVersionValidation:
+        enabled: true
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true

@@ -197,10 +197,11 @@ class TestPartialOverrideMigration:
             "resourceProvisioningStrategy",
             "maxPodAu",
             "upsertDeploymentEnabled",
-            "canUpsertDeploymentFromUI",
             "enableSystemAdminCanCreateDeprecatedAirflows",
         ]:
             assert old_key not in deployments, f"Old key '{old_key}' should have been removed"
+        assert "canUpsertDeploymentFromUI" not in deployments
+        assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -259,6 +260,7 @@ class TestFullValuesMigration:
         assert "maxPodAu" not in deployments
         assert "upsertDeploymentEnabled" not in deployments
         assert "canUpsertDeploymentFromUI" not in deployments
+        assert deployments["upsertDeployment"]["allowFromUi"]["enabled"] is True
         assert "enableSystemAdminCanCreateDeprecatedAirflows" not in deployments
 
     def test_old_keys_removed_after_migration(self, old_037x_full_values_text: str):
@@ -280,6 +282,7 @@ class TestFullValuesMigration:
             "veleroEnabled",
             "enableHoustonInternalAuthorization",
             "nodeExporterSccEnabled",
+            "nodeExporterEnabled",
             "podDisruptionBudgetsEnabled",
             "postgresqlEnabled",
             "prometheusPostgresExporterEnabled",
@@ -353,7 +356,6 @@ class TestFullValuesMigration:
         assert g["plane"]["mode"] == "unified"
         assert g["plane"]["domainPrefix"] == ""
         assert "podLabels" in g
-        assert g["logging"]["provider"] is None
         assert result["nats"]["init"]["resources"]["requests"]["cpu"] == "75m"
 
     def test_unchanged_keys_preserved(self, old_037x_full_values_text: str):
@@ -623,22 +625,22 @@ class TestAddKeyIfMissing:
     def test_add_creates_parents(self):
         """AddKeyIfMissing creates parent keys if needed."""
         data = _load_rt("global:\n  baseDomain: x.com\n")
-        rule = AddKeyIfMissing(["global", "logging", "provider"], value=None)
+        rule = AddKeyIfMissing(["global", "logging", "indexNamePrefix"], value="platform")
         changes = rule.apply(data)
 
         result = _to_plain(data)
-        assert result["global"]["logging"]["provider"] is None
+        assert result["global"]["logging"]["indexNamePrefix"] == "platform"
         assert len(changes) == 1
 
     def test_add_to_existing_parent(self):
         """AddKeyIfMissing adds to an existing parent without overwriting siblings."""
         data = _load_rt("global:\n  logging:\n    indexNamePrefix: my-prefix\n")
-        rule = AddKeyIfMissing(["global", "logging", "provider"], value=None)
+        rule = AddKeyIfMissing(["global", "logging", "loggingSidecar"], value={"enabled": False})
         changes = rule.apply(data)
 
         result = _to_plain(data)
         assert result["global"]["logging"]["indexNamePrefix"] == "my-prefix"
-        assert result["global"]["logging"]["provider"] is None
+        assert result["global"]["logging"]["loggingSidecar"]["enabled"] is False
         assert len(changes) == 1
 
 
@@ -874,6 +876,11 @@ RULE_TEST_CASES = [
         lambda d: d["global"]["prometheusPostgresExporter"]["enabled"] is False,
     ),
     (
+        "nodeExporterEnabled",
+        "global:\n  nodeExporterEnabled: true\n",
+        lambda d: d["global"]["nodeExporter"]["enabled"] is True,
+    ),
+    (
         "manualNamespaceNamesEnabled",
         "global:\n  manualNamespaceNamesEnabled: false\n",
         lambda d: d["global"]["namespaceManagement"]["manualNamespaceNames"]["enabled"] is False,
@@ -892,6 +899,16 @@ RULE_TEST_CASES = [
         "disableManageClusterScopedResources",
         "global:\n  disableManageClusterScopedResources: false\n",
         lambda d: d["global"]["manageClusterScopedResources"]["enabled"] is True,
+    ),
+    (
+        "fluentdEnabled",
+        "global:\n  fluentdEnabled: true\n",
+        lambda d: d["global"]["daemonsetLogging"]["enabled"] is True,
+    ),
+    (
+        "vectorEnabled",
+        "global:\n  vectorEnabled: true\n",
+        lambda d: d["global"]["daemonsetLogging"]["enabled"] is True,
     ),
     # DeleteKey
     (
@@ -945,12 +962,12 @@ RULE_TEST_CASES = [
     ("add_authHeaderSecretName", "global:\n  baseDomain: x.com\n", lambda d: "authHeaderSecretName" in d["global"]),
     ("add_plane", "global:\n  baseDomain: x.com\n", lambda d: d["global"]["plane"]["mode"] == "unified"),
     ("add_podLabels", "global:\n  baseDomain: x.com\n", lambda d: "podLabels" in d["global"]),
-    (
-        "add_logging_provider",
-        "global:\n  baseDomain: x.com\n",
-        lambda d: "logging" in d["global"] and "provider" in d["global"]["logging"],
-    ),
     ("add_nats_init", "nats:\n  nats:\n    resources: {}\n", lambda d: d["nats"]["init"]["resources"]["requests"]["cpu"] == "75m"),
+    (
+        "add_houston_strictSchemaCheck",
+        "global:\n  baseDomain: x.com\n",
+        lambda d: d["astronomer"]["houston"]["strictSchemaCheck"]["enabled"] is True,
+    ),
     # HoustonDeploymentBoolToNested
     (
         "houston_dagProcessorEnabled",
@@ -980,9 +997,12 @@ RULE_TEST_CASES = [
         lambda d: "upsertDeploymentEnabled" not in d["astronomer"]["houston"]["config"]["deployments"],
     ),
     (
-        "houston_delete_canUpsertDeploymentFromUI",
+        "houston_migrate_canUpsertDeploymentFromUI",
         "astronomer:\n  houston:\n    config:\n      deployments:\n        canUpsertDeploymentFromUI: true\n        otherKey: true\n",
-        lambda d: "canUpsertDeploymentFromUI" not in d["astronomer"]["houston"]["config"]["deployments"],
+        lambda d: (
+            "canUpsertDeploymentFromUI" not in d["astronomer"]["houston"]["config"]["deployments"]
+            and d["astronomer"]["houston"]["config"]["deployments"]["upsertDeployment"]["allowFromUi"]["enabled"] is True
+        ),
     ),
     (
         "houston_delete_enableSystemAdminCanCreateDeprecatedAirflows",
@@ -1184,6 +1204,30 @@ class TestEdgeCases:
         assert "kibana" not in result
         assert "prometheus-blackbox-exporter" not in result
 
+    def test_nested_subchart_global_migrated(self):
+        """Nested subchart global blocks are migrated with 0.37.x-specific rules."""
+        text = dedent("""\
+            astronomer:
+              global:
+                networkNSLabels: false
+                singleNamespace: true
+                nodeExporterSccEnabled: true
+                pgbouncer:
+                  krb5ConfSecretName: nested-krb5
+                  servicePort: "5432"
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        nested_global = result["astronomer"]["global"]
+        assert nested_global["networkNSLabels"]["enabled"] is False
+        assert "singleNamespace" not in nested_global
+        assert "nodeExporterSccEnabled" not in nested_global
+        assert nested_global["pgbouncer"]["secretName"] == "nested-krb5"
+        assert nested_global["pgbouncer"]["servicePort"] == "6543"
+        assert any(c.old_path == "astronomer.global.singleNamespace" for c in changes)
+
 
 # ---------------------------------------------------------------------------
 # Conflict / precedence tests
@@ -1263,6 +1307,38 @@ class TestConflictPrecedence:
         result = _to_plain(data)
         assert result["global"]["pgbouncer"]["servicePort"] == "6543"
         assert len(changes) == 0
+
+    def test_vector_enabled_conflict_keeps_new(self):
+        """vectorEnabled preserves the existing global.daemonsetLogging.enabled value."""
+        text = dedent("""\
+            global:
+              vectorEnabled: true
+              daemonsetLogging:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
+        assert "vectorEnabled" not in result["global"]
+        assert len(changes) >= 1
+
+    def test_fluentd_enabled_conflict_keeps_new(self):
+        """fluentdEnabled preserves the existing global.daemonsetLogging.enabled value."""
+        text = dedent("""\
+            global:
+              fluentdEnabled: true
+              daemonsetLogging:
+                enabled: false
+        """)
+        data = _load_rt(text)
+        changes = migrate_values(data)
+        result = _to_plain(data)
+
+        assert result["global"]["daemonsetLogging"]["enabled"] is False
+        assert "fluentdEnabled" not in result["global"]
+        assert len(changes) >= 1
 
 
 # ---------------------------------------------------------------------------
@@ -1391,8 +1467,6 @@ class TestCLI:
               plane:
                 mode: unified
               podLabels: {}
-              logging:
-                provider: es
             nats:
               init:
                 resources:

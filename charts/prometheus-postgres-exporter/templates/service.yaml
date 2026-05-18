@@ -12,7 +12,7 @@ metadata:
 {{ toYaml .Values.service.annotations | indent 4 }}
 {{- end }}
   labels:
-    app: {{ template "prometheus-postgres-exporter.name" . }}
+    component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -28,5 +28,5 @@ spec:
       name: {{ .Values.service.name }}
       appProtocol: tcp
   selector:
-    app: {{ template "prometheus-postgres-exporter.name" . }}
+    component: {{ template "prometheus-postgres-exporter.name" . }}
     release: {{ .Release.Name }}
