@@ -7,7 +7,7 @@ repos:
         name: "Ensure we're using 'rolebinding' and not 'role-binding'"
         entry: "role-binding"
         pass_filenames: true
-        exclude: "^(.pre-commit-config.yaml|SPEC.md)$"
+        exclude: "^.pre-commit-config.yaml$"
       - id: ensure-liveness-not-liveliness
         language: pygrep
         name: "Ensure we're using 'liveness' and not 'liveliness'"
