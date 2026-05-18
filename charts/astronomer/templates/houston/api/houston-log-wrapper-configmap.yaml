@@ -21,6 +21,8 @@ data:
     #!/bin/sh
     # Wrapper script to redirect Houston logs to files for Vector sidecar
     # stdout/stderr are tee'd to log files so kubectl logs still works
+    echo "update ca certs on startup..."
+    update-ca-certificates
     exec "$@" \
       1> >(tee -a /var/log/sidecar-log-consumer/out.log) \
       2> >(tee -a /var/log/sidecar-log-consumer/err.log)
