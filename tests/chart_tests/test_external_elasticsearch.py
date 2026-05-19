@@ -773,6 +773,7 @@ class TestExternalElasticSearch:
             },
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+                "charts/elasticsearch/templates/es-ingress.yaml",
             ],
         )
 
