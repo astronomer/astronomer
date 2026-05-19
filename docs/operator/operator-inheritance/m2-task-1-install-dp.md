@@ -10,13 +10,26 @@
 
 ---
 
+## Assumptions
+
+This task assumes the following starting state. Any deviation invalidates the design.
+
+- **A working APC control plane already exists in a separate cluster.** Houston, Astro UI, registry, ES, NATS, and the Houston DB are all up, healthy, and reachable from the network the customer's operator cluster lives in. Provisioning the CP is **out of scope** for this task — and out of scope for the entire Operator Inheritance project.
+- **The CP is running in `split` mode** (`global.plane.mode: control` per [`astronomer/values.yaml:9-15`](../../../values.yaml#L9-L15)). Unified-mode install onto the operator cluster is **not** considered here.
+- **The customer's operator cluster has the Astro Runtime Operator installed**, with one or more `Airflow` CRs already running DAGs.
+- **CP ↔ DP network reachability is solved.** Houston's gRPC client can reach Commander's gRPC port over TLS (firewall, VPN, mTLS, etc. are pre-arranged).
+- **CP credentials/tokens are available** to mint whatever Commander needs to authenticate back to Houston (registry pull tokens, cross-plane auth header — see `global.authHeaderSecretName` at [`astronomer/values.yaml:7-8`](../../../values.yaml#L7-L8)).
+
+Anything to do with bringing up a fresh CP, or running CP and DP in the same cluster (unified), is **explicitly out of scope** for this task.
+
 ## Goal
 
-Take a Kubernetes cluster that already hosts the Astro Runtime Operator (and its Airflow CRs) and bring it under APC management by installing the APC data plane. Deliverable: a documented, repeatable process — at minimum a generator script and a `values.yaml` recipe — that:
+Take a Kubernetes cluster that already hosts the Astro Runtime Operator (and its Airflow CRs), assume an APC control plane is already running elsewhere, and bring the operator cluster under that CP's management by installing the APC data plane onto it. Deliverable: a documented, repeatable process — at minimum a generator script and a `values.yaml` recipe — that:
 
-1. Installs the DP components without disrupting existing Airflow workloads.
-2. Co-exists with whatever observability the customer already has (their own Prometheus, their own log shipper, their own ES) rather than duplicating it.
-3. Leaves the existing operator install in place (no reinstall, no version bump as part of this task — version bump is [M3 / Task B](m3-task-b-upgrade-operator-v16.md)).
+1. Installs the DP components onto the operator cluster without disrupting existing Airflow workloads.
+2. Registers the new DP with the pre-existing CP (cross-plane auth, registry pull, gRPC reachability).
+3. Co-exists with whatever observability the customer already has (their own Prometheus, their own log shipper, their own ES) rather than duplicating it.
+4. Leaves the existing operator install in place (no reinstall, no version bump as part of this task — version bump is [M3 / Task B](m3-task-b-upgrade-operator-v16.md)).
 
 ## Background — what APC supports today
 
@@ -80,23 +93,23 @@ Before installing anything, the generator script inspects the cluster and emits 
 
 > TODO: choose the implementation. Bash + `kubectl` is portable; a Go binary embedded in `astro-cli` is nicer DX but heavier to ship. _TBD._
 
-### Step 2 — Decide DP topology
+### Step 2 — Confirm CP reachability and credentials
 
-Based on the survey, the script (or operator) picks one of:
+Per the assumptions above, the CP already exists. Before installing the DP, the script verifies:
 
-| Topology | When |
-|----------|------|
-| Unified plane (CP also lands here) | Customer has no external CP cluster and is OK running both planes in the same cluster. |
-| Split plane (DP only) | Customer has an existing CP cluster, or wants CP in a higher-trust environment. |
+- CP gRPC endpoint is reachable from the operator cluster (probe Houston's external/internal endpoint).
+- Cross-plane auth secret material is on hand (the `global.authHeaderSecretName` content, registry pull credentials, any TLS chain the DP needs to trust).
+- CP's `baseDomain` and TLS posture are known so the DP values can point at them.
 
-Both flow through the same chart, just with different `global.plane.mode`.
+If any of these are missing, abort with a clear error — DP install without CP is not a supported state.
 
 ### Step 3 — Generate `values.yaml`
 
-The script generates a values file with:
+The script generates a DP-only values file (`global.plane.mode: data`) with:
 
-- `global.plane.mode: data` (or `unified`)
-- `global.baseDomain`, `global.tlsSecret`, `global.privateCaCerts` — collected interactively or from flags.
+- `global.plane.mode: data` — **not** `unified`. Unified is out of scope per the assumptions.
+- `global.baseDomain`, `global.tlsSecret`, `global.privateCaCerts` — collected interactively or from flags; baseDomain should match the CP's view of this DP.
+- `global.authHeaderSecretName` and any cross-plane shared-secret material wiring the DP to the existing CP.
 - `global.airflowOperator.enabled: true` — but `airflow-operator.enabled: false` at the subchart level, since the operator is already installed. _(See open question below.)_
 - Observability toggles, set based on the survey:
 
@@ -116,7 +129,8 @@ The script generates a values file with:
 ### Step 5 — Post-install verification
 
 - All DP pods Ready.
-- Commander gRPC reachable from the CP (split) or from Houston in-cluster (unified).
+- Commander gRPC reachable from the **already-running CP** (Houston in the CP cluster can resolve and call Commander in the DP cluster).
+- DP registered against the CP — verify Houston sees the new DP cluster in its cluster-list.
 - Existing Airflow CRs untouched (kubectl get airflows -A → identical to pre-install snapshot).
 - Existing DAGs still scheduling (sample dag run).
 - Prometheus scrape targets include Commander; operator controller-manager metrics either scraped by APC's Prometheus or the customer's.
@@ -149,6 +163,8 @@ The script generates a values file with:
 
 ## Out of scope for this task
 
+- **Provisioning the control plane.** The CP is assumed to already exist (see Assumptions). No CP install steps are covered here.
+- **Unified-plane install** onto the operator cluster. Only split-mode DP install is in scope.
 - Connecting Commander to existing CRs → [Task 2](m2-task-2-connect-operator-to-commander.md).
 - Creating Houston deployment records → [Task 3](m2-task-3-migrate-deployments-to-cp.md).
 - Upgrading the operator version → [M3 / Task B](m3-task-b-upgrade-operator-v16.md).
