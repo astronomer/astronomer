@@ -111,7 +111,7 @@ global:
     dagOnlyDeployment:
       enabled: false
       repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.9.5
+      tag: 0.9.6
       securityContexts:
         pod:
           fsGroup: 50000
@@ -346,7 +346,7 @@ global:
         tag: 1.24.1-9
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.20.0-5
+        tag: 0.20.0-6
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
         tag: 2026.5.12
@@ -360,7 +360,7 @@ global:
         tag: 2026.5.12
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.7
+        tag: 0.2.9
     metrics:
       enabled: false
 
