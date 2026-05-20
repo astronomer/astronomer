@@ -249,9 +249,7 @@ class TestContainerdPrivateCaDaemonset:
         self.common_tests_daemonset(docs[0])
         volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
         hostcerts_volume = next(v for v in volumes if v["name"] == "hostcerts")
-        assert hostcerts_volume["hostPath"] == {
-            "path": "/etc/containerd/certs.d/registry.cluster-1.example.com/"
-        }
+        assert hostcerts_volume["hostPath"] == {"path": "/etc/containerd/certs.d/registry.cluster-1.example.com/"}
 
     def test_containerd_privateca_daemonset_control_plane_hostcerts_path(self, kube_version):
         """Test that the hostcerts hostPath uses the base domain registry hostname
@@ -279,9 +277,7 @@ class TestContainerdPrivateCaDaemonset:
         self.common_tests_daemonset(docs[0])
         volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
         hostcerts_volume = next(v for v in volumes if v["name"] == "hostcerts")
-        assert hostcerts_volume["hostPath"] == {
-            "path": "/etc/containerd/certs.d/registry.example.com/"
-        }
+        assert hostcerts_volume["hostPath"] == {"path": "/etc/containerd/certs.d/registry.example.com/"}
 
     def test_containerd_privateca_daemonset_enabled_with_affinity_and_toleration(self, kube_version):
         """Test that the containerd daemonset is rendered with affinity and toleration when enabled."""
