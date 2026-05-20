@@ -24,6 +24,19 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
 {{- end }}
 
+{{/*
+Registry hostname differs between unified and data-plane installs
+because data-plane clusters prefix the base domain with
+`global.plane.domainPrefix`.
+*/}}
+{{- define "containerd.registryHost" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+registry.{{ .Values.global.baseDomain }}
+{{- end -}}
+{{- end }}
+
 {{ define "dagOnlyDeployment.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.dagOnlyDeployment.tag }}
