@@ -261,12 +261,6 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Install uv
-          command: |
-            set -eo pipefail
-            export UV_VERSION="{{ uv_version }}"
-            curl -fsSL https://astral.sh/uv/install.sh | sh
-      - run:
           name: Create Linear milestone
           command: |
             set -eo pipefail
