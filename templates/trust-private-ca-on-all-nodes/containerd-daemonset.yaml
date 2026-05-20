@@ -93,7 +93,7 @@ spec:
         name: hostcontainerd
       - name: hostcerts
         hostPath:
-          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/registry.{{ .Values.global.baseDomain }}/
+          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/{{ include "containerd.registryHost" . }}/
       - name: cert-copy-and-toml-update
         configMap:
           name: {{ .Release.Name }}-cert-copy-and-toml-update

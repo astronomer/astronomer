@@ -223,6 +223,62 @@ class TestContainerdPrivateCaDaemonset:
         cert_copier["image"].startswith("alpine:3")
         assert "high-priority" == docs[0]["spec"]["template"]["spec"]["priorityClassName"]
 
+    def test_containerd_privateca_daemonset_data_plane_hostcerts_path(self, kube_version):
+        """Test that the hostcerts hostPath uses the data-plane registry hostname
+        (prefixed with global.plane.domainPrefix) when plane.mode is 'data'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {
+                        "mode": "data",
+                        "domainPrefix": "cluster-1",
+                    },
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+        self.common_tests_daemonset(docs[0])
+        volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
+        hostcerts_volume = next(v for v in volumes if v["name"] == "hostcerts")
+        assert hostcerts_volume["hostPath"] == {"path": "/etc/containerd/certs.d/registry.cluster-1.example.com/"}
+
+    def test_containerd_privateca_daemonset_control_plane_hostcerts_path(self, kube_version):
+        """Test that the hostcerts hostPath uses the base domain registry hostname
+        (no domainPrefix) when plane.mode is 'control'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {
+                        "mode": "control",
+                        "domainPrefix": "cluster-1",
+                    },
+                    "privateCaCerts": ["private-ca-cert-foo"],
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                    },
+                }
+            },
+        )
+
+        assert len(docs) == 2
+        self.common_tests_daemonset(docs[0])
+        volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
+        hostcerts_volume = next(v for v in volumes if v["name"] == "hostcerts")
+        assert hostcerts_volume["hostPath"] == {"path": "/etc/containerd/certs.d/registry.example.com/"}
+
     def test_containerd_privateca_daemonset_enabled_with_affinity_and_toleration(self, kube_version):
         """Test that the containerd daemonset is rendered with affinity and toleration when enabled."""
         tolerationSpec = [{"key": "special-purpose", "operator": "Equal", "value": "workers-spot-vms", "effect": "NoExecute"}]
