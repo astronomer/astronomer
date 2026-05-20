@@ -9,7 +9,7 @@ replicaCount: 2
 
 image:
   repository: quay.io/astronomer/ap-postgres-exporter
-  tag: 0.19.1-5
+  tag: 0.19.1-6
   pullPolicy: IfNotPresent
 
 
@@ -34,6 +34,8 @@ rbac:
   create: true
 
 serviceAccount:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
   # Specifies whether a ServiceAccount should be created
   create: true
   # Annotations to add to the service account
