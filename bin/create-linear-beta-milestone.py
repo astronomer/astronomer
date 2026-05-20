@@ -12,7 +12,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--workspace",
         type=Path,
-        default=Path("/tmp/workspace"),
+        default=Path("/tmp/workspace"),  # noqa: S108
         help="Directory containing astronomer-*.tgz (default: /tmp/workspace)",
     )
     parser.add_argument(
