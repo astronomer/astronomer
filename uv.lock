@@ -2,6 +2,10 @@ version = 1
 revision = 3
 requires-python = ">=3.13"
 
+[options]
+exclude-newer = "2026-05-06T10:56:21.343943Z"
+exclude-newer-span = "P7D"
+
 [[package]]
 name = "apc-dev-env"
 version = "0.1.0"
