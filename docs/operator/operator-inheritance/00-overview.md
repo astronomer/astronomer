@@ -63,6 +63,8 @@ Task C and D both build on the gap inventory in [`../03-gap-analysis.md`](../03-
 | Doc | Project / context | Relationship |
 |-----|------|--------------|
 | [`reference-0.37-operator-mode.md`](reference-0.37-operator-mode.md) | This project — reference | Deep-dive on how operator-mode actually works in APC 0.37 (Houston ↔ Commander). Read this before working on any M2 / M3 task. |
+| [`reference-cr-mapping-walkthrough.md`](reference-cr-mapping-walkthrough.md) | This project — worked example | Real 0.37 Airflow CR walked field-by-field into the Houston upsert payload, working backwards from only the cluster + namespace. Corrects several assumptions in the generic Task 3 mapping. Includes the CRD extension-surface table. |
+| [`examples/production-airflow.yaml`](examples/production-airflow.yaml) | This project — example CR | Production-flavoured `Airflow` CR for the standalone operator: external Postgres + SSL, remote logging (ES), statsd + Datadog forwarder, HA scheduler/pgbouncer, KEDA, IRSA, custom pod mutation, plugins. README in same folder. |
 | [`../01-codebase-changes.md`](../01-codebase-changes.md) | Install APC using an Operator (APC 2.0) | Reference for "what exists today" across repos. |
 | [`../02-local-setup.md`](../02-local-setup.md) | Install APC using an Operator (APC 2.0) | Local dev environment for testing operator-mode deployments. |
 | [`../03-gap-analysis.md`](../03-gap-analysis.md) | Install APC using an Operator (APC 2.0) | 19-gap inventory; feeds M3 Tasks C & D. |

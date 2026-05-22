@@ -91,7 +91,20 @@ The existing **`config` JSONB column** is the most natural place to dump fields 
 
 ### Phase A — Catalogue an existing `Airflow` CR
 
-Given a CR (read from the cluster via Commander's new `ListCustomResources` RPC from [Task 2](m2-task-2-connect-operator-to-commander.md)), reduce its fields into Houston's deployment-creation input. A first cut of the mapping table:
+The operator running the adoption (or a wrapper script) sources the `Airflow` CR spec from the DP cluster directly — `kubectl get airflow <name> -n <ns> -o json` — plus the namespace metadata and one or two referenced Secrets, and feeds it into the `adoptDeployment` mutation. **No Commander list/discovery RPC is required for v1**; see [Task 2 § Discovery / association](m2-task-2-connect-operator-to-commander.md#discovery--association) for the trade-off.
+
+> **Worked example available.** [`reference-cr-mapping-walkthrough.md`](reference-cr-mapping-walkthrough.md) walks a real 0.37 CR through this mapping field by field, starting from only the cluster context + namespace name. It surfaces several corrections to the generic table below.
+
+Houston catalogue-maps the supplied spec into deployment-creation input. **Key extraction sources** beyond the CR `.spec`:
+
+| What | Where to read it from | Why it's not in the CR |
+|---|---|---|
+| `workspaceId` | namespace label `workspace=…` (also on pod template labels) | The CR itself doesn't record workspace anywhere. |
+| `revision` | namespace label `revision=…` | Tracked by Houston, written onto the namespace. |
+| `platformRelease` | namespace label `platform-release=…` | Tells us which CP originally provisioned. |
+| Customer env var **values** | `Secret/<releaseName>-env` data keys | CR `env[]` only has `secretKeyRef` references, not values. |
+| Metadata / result-backend DB URIs | `Secret/<releaseName>-metadata`, `Secret/<releaseName>-result-backend` | Same — only references in CR. |
+| Actual public URL | `spec.webserver.ingress.host` + `.path` (path-based in 0.37, not subdomain) | The chart's URL helpers don't always match the live ingress. |
 
 | CR field | Houston field | Notes |
 |----------|---------------|-------|
@@ -115,32 +128,62 @@ Given a CR (read from the cluster via Commander's new `ListCustomResources` RPC 
 
 Anything not in this table goes into `Deployment.config.adoption.rawCRSnapshot` (JSON), and we file a follow-up to add a first-class column.
 
-### Phase B — Discover and propose
+### Phase B — Inspect (optional, deferred)
 
-A new GraphQL query and CLI command perform discovery without committing:
+Bulk Houston-driven discovery of `Airflow` CRs across the DP cluster (`discoverOperatorDeployments` query + `astro deployment discover` CLI command) is **out of scope for v1**. The operator enumerates CRs externally via `kubectl get airflows -A -o json` and pipes them into per-CR adoptions.
 
-- New query: `discoverOperatorDeployments(clusterId: ID!, namespacePattern: String, labelSelector: String): [DiscoveredDeployment!]!`
-  - Houston calls Commander's `ListCustomResources` and runs the catalogue mapping.
-  - Returns each candidate plus a compatibility report: `compatible | partial | incompatible`, and per-field flags.
-- New CLI: `astro deployment discover --cluster <id> --namespace <pattern>` — prints the same output.
-- The CRD spec → Houston field mapping logic lives in **one** place. _Open question:_ Houston-side (TypeScript) or Commander-side (Go)? Same call-site question as M3 / Task A.
+Once we have signal that customers want a UI-driven discovery flow (M2.1 or later), we can add either:
+- A single-CR `GetCustomResource` RPC in Commander + Houston-side iteration over operator-supplied names, or
+- A full `ListCustomResources` RPC in Commander.
+
+See [Task 2 § Discovery / association](m2-task-2-connect-operator-to-commander.md#discovery--association) for the three approaches.
 
 ### Phase C — Adopt
 
-New GraphQL mutation: `adoptDeployment(input: AdoptDeploymentInput!): Deployment!` — or extend `upsertDeployment` with an `adoptFromCR: ID` argument (per the milestone description: *"upsert deployment with some flag called migrate"*).
+New GraphQL mutation: `adoptDeployment(input: AdoptDeploymentInput!): Deployment!` — or extend `upsertDeployment` with an `adoptFromCR: Boolean` argument (per the milestone description: *"upsert deployment with some flag called migrate"*).
 
-Either way the resolver:
+```graphql
+input AdoptDeploymentInput {
+  workspaceUuid: ID!
+  clusterId:     ID!
+  crNamespace:   String!
+  crName:        String!
+  crSpec:        JSON!            # the operator-supplied `Airflow` spec (kubectl -o json)
+  label:         String           # optional override of CR name as display label
+  webserverUrl:  String           # customer's existing webserver URL (Task 1 / Option B/C/D)
+  flowerUrl:     String           # customer's existing flower URL (optional)
+  acceptIncompatibilities: Boolean
+}
+```
 
-1. Validates the CR exists in the cluster (calls Commander).
-2. Resolves / creates a workspace per `workspaceId` (or default workspace if not provided).
-3. Builds the upsert payload using Phase A's mapping.
-4. Marks the deployment as adopted (likely a flag inside the `config` JSONB column — see Task 2 Option B).
+Resolver:
+
+1. **(Optional defensive check.)** If `GetCustomResource` is implemented in Commander, fetch the live CR and compare against `crSpec`; reject on mismatch. Otherwise trust the operator-supplied spec.
+2. Resolves / creates a workspace per `workspaceUuid` (or default workspace if not provided).
+3. Runs the Phase A catalogue map on `crSpec` to build the upsert payload.
+4. Marks the deployment as adopted in `Deployment.config.adoption` JSONB (see Task 2 Option B). Stores `webserverUrl` / `flowerUrl` under `config.adoption.urls`.
 5. Inserts the `Deployment` row **without** firing the standard create-worker that would `ApplyCustomResource` over the existing CR. Either:
    - Skip the publish, or
    - Publish a new event `DEPLOYMENT_ADOPTED_FROM_CR` that the workers know to handle differently.
 6. Returns the new Deployment record.
 
 The skipped-publish path is safer initially; the dedicated event lets us evolve later.
+
+CLI shape:
+
+```sh
+# the operator drives the loop
+kubectl get airflows -A -o json | jq -c '.items[] | {namespace: .metadata.namespace, name: .metadata.name, spec: .spec}' | \
+  while read cr; do
+    astro deployment adopt \
+      --cluster <cluster-id> \
+      --workspace <workspace-id> \
+      --cr "$cr" \
+      --webserver-url "https://airflow-prod.acme.com"
+  done
+```
+
+A higher-level wrapper (e.g. `astro deployment adopt-all --cluster X`) is a follow-up, not a v1 requirement.
 
 ### Phase D — User and role migration
 
@@ -167,25 +210,24 @@ Sub-questions (from the milestone description's bullets):
 
 - [`houston-api/prisma/schema.prisma`](../../../../houston-api/prisma/schema.prisma) — likely **no new columns** if we use `Deployment.config` JSONB; otherwise add `adoptedAt: DateTime?` and `adoptionSource: String?`. **Migration TBD.**
 - [`houston-api/src/schema/mutation.js`](../../../../houston-api/src/schema/mutation.js) — add `adoptDeployment` (or extend `upsertDeployment`).
-- [`houston-api/src/schema/query.js`](../../../../houston-api/src/schema/query.js) — add `discoverOperatorDeployments`.
+- [`houston-api/src/schema/query.js`](../../../../houston-api/src/schema/query.js) — **deferred for v1.** `discoverOperatorDeployments` is out of scope until we add a Houston-driven discovery UI.
 - New resolver: `houston-api/src/resolvers/mutation/adopt-deployment/index.ts` (or modify `upsert-deployment/index.ts`).
-- New resolver: `houston-api/src/resolvers/query/discover-operator-deployments/index.ts`.
 - New module: `houston-api/src/lib/deployments/operator/cr-to-deployment.ts` — the catalogue mapping from §Phase A.
 - [`houston-api/src/workers/deployment-upserted-for-create/index.js`](../../../../houston-api/src/workers/deployment-upserted-for-create/index.js) — branch on adopted-flag (already covered in Task 2).
 - _(If we add bulk user invite)_ new mutation under `houston-api/src/resolvers/mutation/bulk-invite-users/`.
 
 ### Commander
 
-- New `ListCustomResources` RPC + (optionally) `InspectCustomResource` — see Task 2.
+- **Optional** single-CR `GetCustomResource` RPC for defensive validation. **`ListCustomResources` is deferred — not v1.** See Task 2 § Discovery / association.
 
 ### Astro CLI
 
-- [`astro-cli/cmd/software/deployment.go`](../../../../astro-cli/cmd/software/deployment.go) — add `astro deployment discover` and `astro deployment adopt` subcommands near `newDeploymentCreateCmd` (line ~141).
+- [`astro-cli/cmd/software/deployment.go`](../../../../astro-cli/cmd/software/deployment.go) — add `astro deployment adopt` subcommand near `newDeploymentCreateCmd` (line ~141). Takes `--cluster`, `--workspace`, and `--cr` (operator-supplied JSON spec) flags. **`astro deployment discover` is deferred — not v1.**
 - New file under `astro-cli/houston/` for the new GraphQL operations.
 
 ### APC UI
 
-- New entry point in `apc-ui/src/components/DeploymentUpdateForm/` (or a separate `DeploymentAdoptionWizard/` directory) with steps: select cluster → list discovered CRs → preview mapping → pick workspace → confirm.
+- New entry point in `apc-ui/src/components/DeploymentUpdateForm/` (or a separate `DeploymentAdoptionWizard/` directory). For v1 the wizard accepts a pasted CR JSON spec (from `kubectl get airflow ... -o json`); steps are: paste spec → preview catalogue-mapped fields → pick workspace → enter customer webserver/flower URLs → confirm. UI-driven cluster-wide discovery is deferred.
 - Adopted-status badge on the deployment list/detail pages.
 
 ## Open questions
@@ -209,8 +251,7 @@ Sub-questions (from the milestone description's bullets):
 
 ## Acceptance criteria (draft)
 
-- [ ] `discoverOperatorDeployments` query returns the list of `Airflow` CRs in a cluster.
-- [ ] `astro deployment discover` CLI prints the same.
+- [ ] `astro deployment adopt --cr <json>` accepts an operator-supplied CR spec and creates a Houston `Deployment` row. (Bulk discovery deferred.)
 - [ ] `adoptDeployment` mutation creates a `Deployment` row with `mode=operator` and an adopted flag, *without* publishing the standard create-worker event.
 - [ ] The adopted deployment is visible in `listDeployments`, in Astro UI, and via `astro deployment list`.
 - [ ] At least one role-binding from the system admin exists for the adopted deployment.

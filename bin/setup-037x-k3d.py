@@ -185,6 +185,35 @@ HELM_REPO_NAME = "astronomer-internal"
 HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
 HELM_REPO_URL = "https://internal-helm.astronomer.io"
 
+CERT_MANAGER_VERSION = "v1.5.4"
+CERT_MANAGER_MANIFEST_URL = (
+    f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
+)
+
+
+def _install_cert_manager(context: str) -> None:
+    """Install cert-manager CRDs + controller. Idempotent (kubectl apply)."""
+    _run(["kubectl", "--context", context, "apply", "-f", CERT_MANAGER_MANIFEST_URL], capture=False)
+
+
+def _wait_for_cert_manager(context: str, timeout_s: int = 180) -> None:
+    for deployment in ("cert-manager", "cert-manager-webhook", "cert-manager-cainjector"):
+        _run(
+            [
+                "kubectl",
+                "--context",
+                context,
+                "wait",
+                "-n",
+                "cert-manager",
+                f"deployment/{deployment}",
+                "--for",
+                "condition=available",
+                f"--timeout={timeout_s}s",
+            ],
+            capture=False,
+        )
+
 
 def _print(msg: str) -> None:
     print(msg, flush=True)
@@ -602,10 +631,11 @@ def _values_yaml(settings: Settings) -> str:
     """Generate 0.37.x-schema values for a local single-cluster deployment."""
     return f"""\
 global:
+  airflowOperator:
+    enabled: true
   baseDomain: {settings.base_domain}
   tlsSecret: {settings.tls_secret_name}
-  postgresql:
-    enabled: true
+  postgresqlEnabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   rbacEnabled: true
@@ -638,6 +668,7 @@ global:
 
 tags:
   platform: true
+  postgresql: true
   monitoring: true
   logging: true
   stan: true
@@ -668,10 +699,10 @@ astronomer:
     resources:
       requests:
         cpu: "100m"
-        memory: "256Mi"
-      limits:
-        cpu: "250m"
         memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1536Mi"
   commander:
     replicas: 1
     resources:
@@ -831,6 +862,12 @@ prometheus-blackbox-exporter:
 postgresql:
   postgresqlUsername: postgres
   postgresqlPassword: postgres
+
+airflow-operator:
+  crd:
+    create: true
+  certManager:
+    enabled: true
 """
 
 
@@ -1046,6 +1083,11 @@ def main() -> int:
             ms.skip("Apply namespace + secrets", reason="--skip-secrets set")
 
         if not args.skip_helm:
+            h = ms.start(f"Install cert-manager {CERT_MANAGER_VERSION} (required by airflow-operator webhooks)")
+            _install_cert_manager(context)
+            _wait_for_cert_manager(context)
+            ms.done(h)
+
             h = ms.start(f"Ensure Helm repo `{HELM_REPO_NAME}` is up-to-date")
             _ensure_helm_repo()
             ms.done(h)

@@ -19,6 +19,7 @@ This task assumes the following starting state. Any deviation invalidates the de
 - **The customer's operator cluster has the Astro Runtime Operator installed**, with one or more `Airflow` CRs already running DAGs.
 - **CP ↔ DP network reachability is solved.** Houston's gRPC client can reach Commander's gRPC port over TLS (firewall, VPN, mTLS, etc. are pre-arranged).
 - **CP credentials/tokens are available** to mint whatever Commander needs to authenticate back to Houston (registry pull tokens, cross-plane auth header — see `global.authHeaderSecretName` at [`astronomer/values.yaml:7-8`](../../../values.yaml#L7-L8)).
+- **Hard requirement — CP and DP must share the same `baseDomain`.** Houston's cluster registration and downstream URL generation assume the CP's `helm.baseDomain` and the DP's `clusterMetadata.baseDomain` are the same. If the customer's operator cluster terminates traffic at a different domain today, that has to be reconciled before install — either by adopting the CP's baseDomain on the operator cluster, or by introducing a new domain for both. Mixed-baseDomain installs are not supported.
 
 Anything to do with bringing up a fresh CP, or running CP and DP in the same cluster (unified), is **explicitly out of scope** for this task.
 
@@ -126,14 +127,168 @@ The script generates a DP-only values file (`global.plane.mode: data`) with:
 
 `helm upgrade --install` the umbrella chart with the generated values. The chart already validates plane mode; CRDs from the operator are not re-applied because the `airflow-operator` subchart is gated off.
 
-### Step 5 — Post-install verification
+### Step 5 — Register the DP with the CP
+
+After the helm install brings up Commander and its public `/metadata` endpoint, the operator cluster has to be registered with the CP so Houston knows about it. This is done by calling Houston's existing `registerCluster` GraphQL mutation — the same path used today for adding a new DP to an APC install.
+
+| Component | Location |
+|---|---|
+| GraphQL mutation declaration | [`houston-api/src/schema/mutation.js:834-853`](../../../../houston-api/src/schema/mutation.js#L834-L853) |
+| Mutation resolver | [`houston-api/src/resolvers/mutation/register-cluster/index.js`](../../../../houston-api/src/resolvers/mutation/register-cluster/index.js) |
+| Library function | [`houston-api/src/lib/clusters/index.js:441`](../../../../houston-api/src/lib/clusters/index.js#L441) — `registerCluster()` |
+| Metadata fetch | [`houston-api/src/lib/clusters/index.js:852`](../../../../houston-api/src/lib/clusters/index.js#L852) — `fetchClusterMetadata()` GETs `<dataplaneUrl>/metadata` |
+| Metadata schema (ajv) | [`houston-api/src/lib/clusters/index.js:775-841`](../../../../houston-api/src/lib/clusters/index.js#L775-L841) — required fields include `baseDomain`, `dataplaneUrl`, `commander.{url,version,airflowChartVersion}`, `releaseName`, `releaseNamespace`, etc. |
+| Persisted columns | [`lib/clusters/index.js:376-405`](../../../../houston-api/src/lib/clusters/index.js#L376-L405) — `baseDomain` is one of them, with a `@unique` constraint (P2002 fails with *"A cluster with this base domain already exists"*) |
+
+Required mutation arguments:
+
+```graphql
+mutation RegisterDataPlane(
+  $name: String!
+  $metadataUrl: String!
+  $deploymentsConfigOverride: JSON
+) {
+  registerCluster(
+    name: $name
+    metadataUrl: $metadataUrl
+    deploymentsConfigOverride: $deploymentsConfigOverride
+  ) {
+    id
+    name
+    baseDomain
+    status
+  }
+}
+```
+
+- `name` — human-readable cluster name (free-form; trimmed).
+- `metadataUrl` — public URL of Commander's `/metadata` endpoint on the new DP. Houston `axios.get`s `<metadataUrl>/metadata` (trailing slashes stripped per [`lib/clusters/index.js:856-859`](../../../../houston-api/src/lib/clusters/index.js#L856-L859)).
+- `deploymentsConfigOverride` — optional JSON merged into the cluster's `config.deployments` block. Useful for per-cluster overrides (e.g. different runtime versions list); see `mergeConfigs()` call at [`lib/clusters/index.js:465-468`](../../../../houston-api/src/lib/clusters/index.js#L465-L468).
+
+The generator script (Step 3) should print the exact mutation invocation, including the `metadataUrl` it computed from `global.baseDomain` + commander ingress host, so the operator runs one command to register.
+
+> The `baseDomain` returned by Commander's `/metadata` is persisted on the `Cluster` row (`baseDomain` column). Every downstream URL helper — `deploymentsSubdomain()`, `airflowSubdomain()`, `flowerSubdomain()`, `deploymentsUrl()` — reads from `clusterDetails.baseDomain`. See the "Deployment URL handling" section below for what this means when the customer's CRs are reachable at a different URL.
+
+### Step 6 — Post-install verification
 
 - All DP pods Ready.
 - Commander gRPC reachable from the **already-running CP** (Houston in the CP cluster can resolve and call Commander in the DP cluster).
-- DP registered against the CP — verify Houston sees the new DP cluster in its cluster-list.
+- DP registered against the CP — verify the new `Cluster` row exists in Houston and `listClusters` returns it.
+- `clusterDetails.baseDomain` matches the CP's `helm.baseDomain` (per the hard prerequisite).
 - Existing Airflow CRs untouched (kubectl get airflows -A → identical to pre-install snapshot).
 - Existing DAGs still scheduling (sample dag run).
 - Prometheus scrape targets include Commander; operator controller-manager metrics either scraped by APC's Prometheus or the customer's.
+
+## Deployment URL handling — adopted CRs
+
+Once an existing `Airflow` CR is adopted (M2 / Task 3), Houston will render that deployment's webserver / flower / airflow URLs using the helpers at [`houston-api/src/lib/utilities/index.js:116-157`](../../../../houston-api/src/lib/utilities/index.js#L116-L157):
+
+```js
+// utilities/index.js
+export function deploymentsSubdomain({ globalDeploymentsConfig, clusterDetails }) {
+  const baseDomain = clusterDetails.baseDomain;                  // line 120 — from Cluster row
+  const subdomain  = get(globalDeploymentsConfig, "subdomain");  // line 121
+  return `${subdomain}.${baseDomain}`;                            // line 122
+}
+
+export function flowerSubdomain({ clusterDetails }) {                // line 129
+  return `${clusterDetails.config.dataplane.releaseName}-flower.${clusterDetails.baseDomain}`;
+}
+
+export function airflowSubdomain({ clusterDetails }) {               // line 139
+  return `${clusterDetails.config.dataplane.releaseName}-airflow.${clusterDetails.baseDomain}`;
+}
+
+export function deploymentsUrl({ globalDeploymentsConfig, clusterDetails }) {  // line 149
+  return `${scheme()}://${deploymentsSubdomain({ globalDeploymentsConfig, clusterDetails })}`;
+}
+```
+
+**The problem.** These helpers compute the URL from the cluster's `baseDomain` + the deployment's `releaseName`. For a CR APC just created, those line up — APC's nginx Ingress on the DP routes `<releaseName>-airflow.<baseDomain>` to the right service. For an **adopted** CR the customer's airflow is most likely reachable today at a completely different URL (their own subdomain, possibly a different domain entirely, served by their LB), and APC's nginx has no Ingress rules for it. Result: Houston UI shows a URL the customer can't open.
+
+**The bigger problem — browser auth is scoped to `helm.baseDomain`.** Even if Houston is willing to *render* the customer's URL, the auth cookie that the Airflow webserver needs is set against `helm.baseDomain`, so the browser refuses to send it to a host on a different domain. Two places in the code anchor on this:
+
+- **Houston sets the JWT cookie with `domain = .${helm.baseDomain}`** ([`houston-api/src/lib/jwt/index.js:81-96`](../../../../houston-api/src/lib/jwt/index.js#L81-L96)):
+
+  ```js
+  export function setJWTCookie({ response, token }) {
+    return response.cookie(getCookieName(), token, {
+      domain: `.${config.get("helm.baseDomain")}`,   // <- scoped to leading-dot baseDomain
+      path: "/",
+      expires: expiresAt,
+      secure: ...,
+      httpOnly: true
+    });
+  }
+  ```
+
+  And `clearJWTCookie()` at [lines 190-196](../../../../houston-api/src/lib/jwt/index.js#L190-L196) uses the same domain. The browser only sends this cookie to hosts ending in `.${helm.baseDomain}` — anything off-domain is unauthenticated.
+
+- **The UI's OAuth redirect validator rejects off-domain URLs** ([`apc-ui/src/utils/sso.tsx:36-40`](../../../../apc-ui/src/utils/sso.tsx#L36-L40)):
+
+  ```ts
+  const dotIndex = appHostname.indexOf('.');
+  if (dotIndex === -1) return false;
+  const baseDomain = appHostname.substring(dotIndex); // ".astro.acme.com"
+  return url.hostname.endsWith(baseDomain);
+  ```
+
+  Any post-login redirect to a hostname that doesn't end in the app's root domain is treated as unsafe and discarded.
+
+**Net effect.** The customer's Airflow webserver hostname **must be a subdomain of the CP's `helm.baseDomain` at any depth** (e.g. if `helm.baseDomain = astro.acme.com`, then `airflow-prod.astro.acme.com` and `airflow-prod.eu.astro.acme.com` both work; `airflow.acme.com` does not). Without that, browser auth and OAuth callbacks break — Option B isn't really viable for a customer whose existing URL is on a totally different root domain.
+
+This re-frames the options below.
+
+There are no good auto-detect options — Houston can't infer the customer's chosen URL from the CR. So this is a deliberate decision at adoption time. Four options:
+
+### Option A — Force migration to APC-managed URL ("clean cut")
+
+The customer reconfigures their own LB / DNS so the existing Airflow is reachable at `<releaseName>-airflow.<baseDomain>` via APC's nginx. The customer's old LB rules / DNS entries are removed once cutover completes.
+
+- **Cookie/SSO compatibility.** ✅ Works — URL is under `.${helm.baseDomain}`.
+- **Pros.** No code changes. Houston's existing URL helpers work unchanged. Long-term one canonical URL pattern.
+- **Cons.** Customer DNS / cert / LB work — high-touch, risky for production tenants. Cutover window during which the old URL stops working. Hard sell for "zero downtime" customers.
+- **When this fits.** New-ish customers who haven't published their Airflow URL widely, or customers whose existing URL already matches APC's pattern.
+
+### Option B — Per-deployment URL override on the `Deployment` row
+
+Store the customer's existing URLs in `Deployment.config.adoption.urls = { webserver, flower }`. Modify the helpers above to prefer the override when present, falling back to the computed URL otherwise. APC's nginx **does not** add Ingress rules for adopted deployments — the customer's existing LB keeps serving them.
+
+- **Cookie/SSO compatibility.** ⚠️ Only viable if the customer's existing webserver hostname is *already* a subdomain (at any depth) of `helm.baseDomain` (e.g. `airflow-prod.eu.astro.acme.com` when `helm.baseDomain = astro.acme.com`). If the customer's URL is on a different root domain entirely, this option cannot deliver a working login flow.
+- **Pros.** Zero DNS / LB change for the customer. Customer-facing URL preserved exactly. Minimal disruption.
+- **Cons.** Code change in the four helper functions + every consumer (UI, CLI, audit, alerting). Houston's nginx-rules-creation code path must learn to skip adopted CRs. Two URL patterns to support indefinitely.
+- **When this fits.** Customers whose existing webserver hostname *already* ends in the CP's baseDomain — e.g. they used the same DNS zone for their operator install as APC will use for the CP.
+
+### Option C — Reverse-proxy through APC nginx to the customer's LB
+
+APC's nginx Ingress for adopted CRs serves `<releaseName>-airflow.<baseDomain>` and proxies through to the customer's existing internal/external URL where the Airflow webserver actually lives. Houston URLs are unchanged.
+
+- **Cookie/SSO compatibility.** ✅ Works — the public URL the browser hits is under `.${helm.baseDomain}`, so cookies + OAuth redirects work. The fact that nginx proxies further is invisible to the browser.
+- **Pros.** Single URL pattern at the Houston / browser layer. Customer's pods don't move, customer's internal URL keeps working for their existing tooling.
+- **Cons.** Extra network hop. Per-CR nginx config. TLS chain complications if the customer's LB terminates with a different cert than APC.
+- **When this fits.** Customer's Airflow lives on a non-shared domain *and* they're OK with end-users hitting the new APC URL — but they still want their pods reachable at the old URL internally.
+
+### Option D — Remove rules from APC LB, expose only customer URL
+
+A variant of B. APC's nginx never creates Ingress / Service rules for adopted CRs. Houston is configured to display the customer's URL as the only URL.
+
+- **Cookie/SSO compatibility.** ⚠️ Same constraint as B — only works if the customer's URL is under `.${helm.baseDomain}`.
+- **Pros.** Even less APC-side wiring than B.
+- **Cons.** Same Houston changes as B. Operationally the customer must hand us the URL during adoption.
+
+### Recommendation
+
+Default depends on where the customer's existing webserver URL lives relative to `helm.baseDomain`:
+
+| Customer's existing URL | Recommendation |
+|---|---|
+| Already a subdomain of the CP's `helm.baseDomain` | **Option B** — render the existing URL directly, skip nginx rules. |
+| On a different root domain entirely | **Option C** — proxy through APC's nginx so the public URL is on the shared domain. Avoids forcing customer DNS changes while keeping auth working. |
+| Customer is willing to migrate DNS | **Option A** — cleanest long-term. |
+
+Either way, the operator-driven install runbook captures the customer's existing webserver/flower URLs per CR during the `adoptDeployment` flow (M2 / Task 3) and stores them in `Deployment.config.adoption.urls`. Picking Option C means we *also* spin up nginx rules at registration time.
+
+> Option B and Option D, despite being the lowest-touch from a chart perspective, **cannot** make browser auth work for a customer whose existing URL is off the CP's baseDomain. This is a hard constraint from the JWT cookie scope and the UI's OAuth redirect validator — not something we can sweep over without rewriting auth.
 
 ## Affected files (initial estimate)
 
@@ -145,6 +300,8 @@ The script generates a DP-only values file (`global.plane.mode: data`) with:
 | [`astronomer/values.yaml`](../../../values.yaml) | Likely no chart-side changes for this task — only consumed by the generator. |
 | [`astronomer/charts/astronomer/templates/houston/houston-configmap.yaml:99-101`](../../../charts/astronomer/templates/houston/houston-configmap.yaml) | Already passes `deployments.mode.operator.enabled` — verify it's correct for DP-only installs. |
 | [`astronomer/charts/airflow-operator/values.yaml`](../../../charts/airflow-operator/values.yaml) | Add an `enabled: false` knob so the subchart is skipped when the cluster already has the operator. _(Open question — see below.)_ |
+| [`houston-api/src/lib/utilities/index.js:116-157`](../../../../houston-api/src/lib/utilities/index.js#L116-L157) | Extend `deploymentsSubdomain()`, `airflowSubdomain()`, `flowerSubdomain()`, `deploymentsUrl()` to prefer `deployment.config.adoption.urls.*` when present (Option B). |
+| `houston-api/src/lib/deployments/` (nginx rule creation, TBD specific file) | Skip Ingress / Service rule emission for deployments where `config.adoption.adopted === true`. |
 | `astronomer/docs/operator/operator-inheritance/` | This folder, plus a user-facing how-to-install runbook (separate doc, _TBD_). |
 
 ## Open questions
@@ -160,6 +317,10 @@ The script generates a DP-only values file (`global.plane.mode: data`) with:
 - [ ] **Generator output format.** YAML file only, or also a wrapper Helm chart? Whether the generator should be runnable in CI matters for the "managed onboarding" use case.
 - [ ] **Idempotency / rerun.** What happens if the script is re-run? Especially relevant if it both inspects and installs.
 - [ ] **Failure recovery.** If install partially fails (e.g., nginx hostPort already taken), how do we cleanly roll back without touching the operator's resources?
+- [ ] **`baseDomain` enforcement.** Houston validates uniqueness of `baseDomain` per cluster ([`lib/clusters/index.js:552-557`](../../../../houston-api/src/lib/clusters/index.js#L552-L557)) but does **not** today validate equality with the CP's `helm.baseDomain`. Should we add an explicit equality check at registration time, or rely on operator runbook discipline?
+- [ ] **`registerCluster` from a service account.** The mutation accepts both user and service-account callers ([`lib/clusters/index.js:457-463`](../../../../houston-api/src/lib/clusters/index.js#L457-L463)). What credential should the install script use? Bootstrap a per-DP service account, or require a CP admin token?
+- [ ] **Deployment URL handling for adopted CRs.** Which option (A/B/C/D in the "Deployment URL handling" section) ships for v1? Default recommendation is B (override on `Deployment.config.adoption.urls`), but needs product/UX signoff. **Owner: TBD.**
+- [ ] **Adopted-deployment URL collection during onboarding.** If we go with Option B/D, where does the customer's per-CR URL come from? The CR itself doesn't carry it explicitly. Inferring from the customer's Ingress / Route resources is possible but fragile. Most likely answer: operator collects it interactively as part of the adopt step (M2 / Task 3).
 
 ## Out of scope for this task
 
@@ -175,5 +336,8 @@ The script generates a DP-only values file (`global.plane.mode: data`) with:
 - [ ] Script exists at `astronomer/bin/<name>.py` (or equivalent) and runs against a cluster with the operator pre-installed.
 - [ ] Script emits a survey artefact + a generated `values.yaml`.
 - [ ] `helm upgrade --install` against the generated values brings DP pods to Ready without touching the operator or its CRs.
+- [ ] CP and DP `baseDomain` equality is enforced (either by the script before install or by Houston at `registerCluster` time).
+- [ ] Calling `registerCluster(name, metadataUrl)` from the install runbook successfully creates a `Cluster` row visible to `listClusters`.
+- [ ] Houston URL helpers either show the APC-pattern URL (Option A/C) or the customer's existing URL (Option B/D) — per the option chosen for v1 — and no broken-link UI surfaces.
 - [ ] Existing Airflow deployments continue to schedule and run DAGs throughout.
 - [ ] Documented in a runbook under `astronomer/docs/operator/operator-inheritance/`.

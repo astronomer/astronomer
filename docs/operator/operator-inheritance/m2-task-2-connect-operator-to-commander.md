@@ -129,21 +129,31 @@ Combine **A + B**:
 
 Separate from "how do we update", there's "how does Commander find an existing CR to bind to?" Two sub-problems:
 
-1. **Which CRs exist in the cluster?** Commander already runs in-cluster with enough RBAC to list `airflow.apache.org/v1beta1/airflows` cluster-wide (operator subchart RBAC; see [`astronomer/charts/astronomer/templates/commander/commander-role.yaml:44-48`](../../../charts/astronomer/templates/commander/commander-role.yaml#L44-L48)).
-2. **Which Houston deployment does each CR map to?** Today the mapping is `Deployment.releaseName ↔ CR.metadata.name` (per [`houston-api/prisma/schema.prisma`](../../../../houston-api/prisma/schema.prisma) — `releaseName String? @unique`). For adopted CRs we have to **accept whatever name they have** and persist it as `releaseName`. See Task 3 for the migration of this mapping.
+1. **Which CRs exist in the cluster?** Commander has cluster-wide RBAC for `airflow.apache.org/v1beta1/airflows` today (operator subchart RBAC; see [`astronomer/charts/astronomer/templates/commander/commander-role.yaml:44-48`](../../../charts/astronomer/templates/commander/commander-role.yaml#L44-L48)) but **no `List` RPC exists** in the existing proto. Existing RPCs (per [`commander/_proto/commander.proto:15-28`](../../../../commander/_proto/commander.proto#L15-L28)): `Ping`, the helm-mode `*Deployment` family, `*Secret`, `*Configmap`, `ApplyCustomResource`, `DeleteCustomResource`, `AirflowMetaCleanup`. No list or get for CRs.
+2. **Which Houston deployment does each CR map to?** Today the mapping is `Deployment.releaseName ↔ CR.metadata.name` (per [`houston-api/prisma/schema.prisma`](../../../../houston-api/prisma/schema.prisma) — `releaseName String? @unique`). For adopted CRs we accept whatever name they have and persist it as `releaseName`. See Task 3 for the migration of this mapping.
 
-Proposal: add a new gRPC method `Commander.ListCustomResources(group, version, kind, namespaceSelector)` that Houston (or a `astro-cli` adopt command) calls to enumerate existing CRs. Mapping to deployments happens in Task 3.
+**Do we need a new RPC for v1?** No. The operator installing APC already knows what CRs exist — `kubectl get airflows -A -o json` produces the full list in one command. Houston-driven bulk discovery is nice UX but not a v1 requirement.
+
+Three approaches, ordered by engineering cost:
+
+| # | Approach | Commander change | Notes |
+|---|----------|------------------|-------|
+| 1 | **Operator passes CR spec into `adoptDeployment` mutation as JSON input.** Houston catalogue-maps it directly. | **None.** | Lowest cost. Loses the ability for Houston to defensively re-read the CR. Operator must paste accurate JSON. |
+| 2 | **Add a single-CR ****`GetCustomResource(group, version, plural, namespace, name)`**** RPC** that Commander forwards to the dynamic client's `Get()`. Houston fetches just the CR being adopted. | Small. One proto message, one handler, ~20 lines. | Houston-side validation works; no list semantics to design (selectors, paging, RBAC scoping). |
+| 3 | **Add a full ****`ListCustomResources(group, version, plural, namespaceSelector)`**** RPC** for Houston-driven UI discovery across the whole cluster. | Moderate. Proto + handler + dynamic client `List()` + selector parsing. | Justified only when we add a UI-driven "find my deployments" flow. Defer to M2.1 / M3. |
+
+**Recommendation for M2 v1: approach 2** — `GetCustomResource` is the smallest defensive addition that lets Houston validate the CR exists and read its spec, without committing to a list design before we know the UX. The operator still drives "which CRs to adopt" externally (kubectl + scripted loop, or one CLI call per CR).
 
 ## Affected files (initial inventory)
 
 ### Proto changes
 
-- [`commander/_proto/custom_resource.proto`](../../../../commander/_proto/custom_resource.proto) — add fields for `field_manager`, `force_apply`, and a new `ListCustomResources` RPC. _(Use the `grpc-readme-updater` skill when changing these.)_
+- [`commander/_proto/custom_resource.proto`](../../../../commander/_proto/custom_resource.proto) — add fields for `field_manager`, `force_apply` on `ApplyCustomResourceRequest`, and **(if approach 2 above)** a new `GetCustomResource` RPC. **`ListCustomResources` is deferred — not part of v1.** _(Use the `grpc-readme-updater` skill when changing these.)_
 - [`commander/_proto/commander.proto`](../../../../commander/_proto/commander.proto) — register the new RPC.
 
 ### Commander code
 
-- [`commander/api/custom_resource.go`](../../../../commander/api/custom_resource.go) — new handler entry for `ListCustomResources`.
+- [`commander/api/custom_resource.go`](../../../../commander/api/custom_resource.go) — **(if approach 2)** new handler entry for `GetCustomResource`.
 - [`commander/kubernetes/custom_resource.go`](../../../../commander/kubernetes/custom_resource.go) — switch apply path; add list method.
 - _(If Option A:)_ replace `Create()` / `Update()` block (lines 35–48) with `Patch` server-side apply.
 - _(If Option B:)_ branch on a new request field `adopted bool` to skip the apply.
