@@ -199,8 +199,6 @@ global:
   namespaceLabels: {}
     # To enforce PSA baseline policy, use the following values:
     # pod-security.kubernetes.io/enforce: baseline
-  # Use kube-lego
-  acme: false
 
   # whether to create pod disruption budgets by default for platform components
   podDisruptionBudgets:
