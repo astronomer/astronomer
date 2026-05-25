@@ -125,6 +125,16 @@ Combine **A + B**:
 - B (adoption flag) lets us ship safely without touching every existing customer.
 - A (server-side apply) is the longer-term direction even for non-adopted deployments — it makes Commander's behaviour predictable and avoids the silent stomp.
 
+### Emergency rollback — install-wide freeze
+
+If A or B misbehave in the field, we need a way to stop APC from touching adopted CRs without rolling back the whole deployment. The lever: a new Houston env flag `OPERATOR_INHERITANCE_FREEZE_EDITS` (default `false`). When `true`, every worker that calls Commander checks `deployment.config.adoption.adopted` first and short-circuits — no `ApplyCustomResource`, no `DeleteCustomResource`. The CR keeps running, reconciled by the operator alone, until we fix the bug and flip the flag back.
+
+Implementation lives in the workers, not Commander — Commander stays a dumb pipe, Houston decides whether to call it. Detailed semantics, including the safety net for the delete path, in [Task 3 § Phase F](m2-task-3-migrate-deployments-to-cp.md#phase-f--rollback--un-adopt).
+
+Companion install-wide flag `OPERATOR_INHERITANCE_ENABLED` (default `false`) gates **new adoptions** — existing adopted deployments are not affected by `_ENABLED` alone. Both flags are independent and combine as you'd expect.
+
+> Don't add a separate `COMMANDER_ALLOW_SSA` kill-switch. SSA is invoked only when Houston sends `field_manager`, which Houston only does for adopted deployments — both flags above already gate that.
+
 ## Discovery / association
 
 Separate from "how do we update", there's "how does Commander find an existing CR to bind to?" Two sub-problems:
@@ -132,28 +142,28 @@ Separate from "how do we update", there's "how does Commander find an existing C
 1. **Which CRs exist in the cluster?** Commander has cluster-wide RBAC for `airflow.apache.org/v1beta1/airflows` today (operator subchart RBAC; see [`astronomer/charts/astronomer/templates/commander/commander-role.yaml:44-48`](../../../charts/astronomer/templates/commander/commander-role.yaml#L44-L48)) but **no `List` RPC exists** in the existing proto. Existing RPCs (per [`commander/_proto/commander.proto:15-28`](../../../../commander/_proto/commander.proto#L15-L28)): `Ping`, the helm-mode `*Deployment` family, `*Secret`, `*Configmap`, `ApplyCustomResource`, `DeleteCustomResource`, `AirflowMetaCleanup`. No list or get for CRs.
 2. **Which Houston deployment does each CR map to?** Today the mapping is `Deployment.releaseName ↔ CR.metadata.name` (per [`houston-api/prisma/schema.prisma`](../../../../houston-api/prisma/schema.prisma) — `releaseName String? @unique`). For adopted CRs we accept whatever name they have and persist it as `releaseName`. See Task 3 for the migration of this mapping.
 
-**Do we need a new RPC for v1?** No. The operator installing APC already knows what CRs exist — `kubectl get airflows -A -o json` produces the full list in one command. Houston-driven bulk discovery is nice UX but not a v1 requirement.
+**Do we need a new RPC for v1?** Yes — but a single-CR `Get`, not a full `List`. The operator enumerates CRs locally via `kubectl get airflows -A` (Houston-driven bulk discovery is not v1), but when they call `adoptDeployment(crNamespace, crName, ...)`, Houston needs to read the live CR spec from the DP to catalogue-map it. Houston fetches it via Commander, not by having the operator round-trip the JSON through the client (stale-paste risk).
 
 Three approaches, ordered by engineering cost:
 
 | # | Approach | Commander change | Notes |
 |---|----------|------------------|-------|
-| 1 | **Operator passes CR spec into `adoptDeployment` mutation as JSON input.** Houston catalogue-maps it directly. | **None.** | Lowest cost. Loses the ability for Houston to defensively re-read the CR. Operator must paste accurate JSON. |
-| 2 | **Add a single-CR ****`GetCustomResource(group, version, plural, namespace, name)`**** RPC** that Commander forwards to the dynamic client's `Get()`. Houston fetches just the CR being adopted. | Small. One proto message, one handler, ~20 lines. | Houston-side validation works; no list semantics to design (selectors, paging, RBAC scoping). |
-| 3 | **Add a full ****`ListCustomResources(group, version, plural, namespaceSelector)`**** RPC** for Houston-driven UI discovery across the whole cluster. | Moderate. Proto + handler + dynamic client `List()` + selector parsing. | Justified only when we add a UI-driven "find my deployments" flow. Defer to M2.1 / M3. |
+| 1 | **Operator passes CR spec into `adoptDeployment` mutation as JSON input.** Houston catalogue-maps it directly. | **None.** | Lowest engineering cost — but the operator round-trips the spec via the client, and a stale paste (between `kubectl get` and the mutation call) silently adopts the wrong shape. **Rejected** in favour of approach 2. |
+| 2 | **Add a single-CR ****`GetCustomResource(group, version, plural, namespace, name)`**** RPC** that Commander forwards to the dynamic client's `Get()`. Houston fetches the live CR on the resolver side. | Small. One proto message, one handler, ~20 lines. | Houston is the source of truth for the spec used in catalogue-mapping; operator only supplies identity. **Adopted for v1.** |
+| 3 | **Add a full ****`ListCustomResources(group, version, plural, namespaceSelector)`**** RPC** for Houston-driven UI discovery across the whole cluster. | Moderate. Proto + handler + dynamic client `List()` + selector parsing. | Justified only when we add a UI-driven "find my deployments" flow. Not part of v1; revisit once customer feedback warrants it. |
 
-**Recommendation for M2 v1: approach 2** — `GetCustomResource` is the smallest defensive addition that lets Houston validate the CR exists and read its spec, without committing to a list design before we know the UX. The operator still drives "which CRs to adopt" externally (kubectl + scripted loop, or one CLI call per CR).
+**Recommendation for v1: approach 2.** `GetCustomResource` is the smallest addition that eliminates the stale-paste hazard. The operator drives "which CRs to adopt" externally (`kubectl get airflows -A` to enumerate, then one `astro deployment adopt` per CR). The resolver-side fetch happens transparently to the operator.
 
 ## Affected files (initial inventory)
 
 ### Proto changes
 
-- [`commander/_proto/custom_resource.proto`](../../../../commander/_proto/custom_resource.proto) — add fields for `field_manager`, `force_apply` on `ApplyCustomResourceRequest`, and **(if approach 2 above)** a new `GetCustomResource` RPC. **`ListCustomResources` is deferred — not part of v1.** _(Use the `grpc-readme-updater` skill when changing these.)_
+- [`commander/_proto/custom_resource.proto`](../../../../commander/_proto/custom_resource.proto) — add fields for `field_manager`, `force_apply` on `ApplyCustomResourceRequest`, and a new `GetCustomResource` RPC (required for v1). **`ListCustomResources` is deferred — not part of v1.** _(Use the `grpc-readme-updater` skill when changing these.)_
 - [`commander/_proto/commander.proto`](../../../../commander/_proto/commander.proto) — register the new RPC.
 
 ### Commander code
 
-- [`commander/api/custom_resource.go`](../../../../commander/api/custom_resource.go) — **(if approach 2)** new handler entry for `GetCustomResource`.
+- [`commander/api/custom_resource.go`](../../../../commander/api/custom_resource.go) — new handler entry for `GetCustomResource`.
 - [`commander/kubernetes/custom_resource.go`](../../../../commander/kubernetes/custom_resource.go) — switch apply path; add list method.
 - _(If Option A:)_ replace `Create()` / `Update()` block (lines 35–48) with `Patch` server-side apply.
 - _(If Option B:)_ branch on a new request field `adopted bool` to skip the apply.
@@ -175,7 +185,7 @@ Three approaches, ordered by engineering cost:
 
 - [ ] **Field ownership matrix.** For each top-level field in `Airflow.spec` (executor, scheduler, workers, webserver, …), is APC authoritative, customer authoritative, or shared? This drives whether Option A's slim spec is viable.
 - [ ] **Image/runtime version on adoption.** The customer's CR carries `spec.image` already. If they later trigger a runtime upgrade through APC, does the upgrade go through APC's image registry mirror, or do we leave their image source alone?
-- [ ] **Delete semantics for adopted CRs.** When Houston's `deployment-deleted` worker fires on an adopted deployment, do we delete the CR, leave it alone, or require explicit "deprovision and destroy" gesture?
+- [x] **Delete semantics for adopted CRs — resolved.** Two distinct mutations with opposite intent: `deleteDeployment` is fully destructive even for adopted CRs (deletes the CR + namespace + Houston row), and `unadoptDeployment` releases the deployment back to operator-only management without touching K8s. The `deployment-deleted` worker is **not** modified to special-case adopted deployments — destructive intent is preserved. See [Task 3 § Phase F](m2-task-3-migrate-deployments-to-cp.md#phase-f--rollback--un-adopt).
 - [ ] **Secrets reconciliation.** Today Commander syncs platform secrets (registry creds, JWT cert, TLS) into the deployment namespace — see [`commander/kubernetes/custom_resource.go`](../../../../commander/kubernetes/custom_resource.go) (lines 1153–1182 per `01-codebase-changes.md`). For adopted namespaces, do we still inject these? Likely yes for registry/JWT, no for things the customer might be managing.
 - [ ] **Race with operator's reconcile loop.** Even with server-side apply, the operator may immediately reconcile after our patch and "fight" if its internal state derives from a different spec snapshot. _Needs an integration test._
 - [ ] **Detection of "this CR is adopted".** Should it be a CR annotation (e.g. `apc.astronomer.io/adopted-at: 2026-…`) or purely a Houston DB state? Annotation makes it self-describing in-cluster; DB-only keeps the CR pristine.

@@ -91,7 +91,9 @@ The existing **`config` JSONB column** is the most natural place to dump fields 
 
 ### Phase A — Catalogue an existing `Airflow` CR
 
-The operator running the adoption (or a wrapper script) sources the `Airflow` CR spec from the DP cluster directly — `kubectl get airflow <name> -n <ns> -o json` — plus the namespace metadata and one or two referenced Secrets, and feeds it into the `adoptDeployment` mutation. **No Commander list/discovery RPC is required for v1**; see [Task 2 § Discovery / association](m2-task-2-connect-operator-to-commander.md#discovery--association) for the trade-off.
+The operator running adoption enumerates `Airflow` CRs locally with `kubectl get airflows -A` to know what's there, then calls `adoptDeployment(crNamespace, crName, ...)` per CR. **The operator never round-trips the spec through the client** — Houston's resolver fetches the live CR from the DP via Commander's new single-CR `GetCustomResource` RPC (see [Task 2 § Discovery / association](m2-task-2-connect-operator-to-commander.md#discovery--association)). This eliminates the stale-paste hazard of a `--cr <json>` flag.
+
+The operator may also need to inspect the CR's namespace metadata and `Secret/<release>-env` to populate the `webserverUrl` argument and pre-fill any incompatibility decisions — both of those are still resolved client-side.
 
 > **Worked example available.** [`reference-cr-mapping-walkthrough.md`](reference-cr-mapping-walkthrough.md) walks a real 0.37 CR through this mapping field by field, starting from only the cluster context + namespace name. It surfaces several corrections to the generic table below.
 
@@ -132,7 +134,7 @@ Anything not in this table goes into `Deployment.config.adoption.rawCRSnapshot` 
 
 Bulk Houston-driven discovery of `Airflow` CRs across the DP cluster (`discoverOperatorDeployments` query + `astro deployment discover` CLI command) is **out of scope for v1**. The operator enumerates CRs externally via `kubectl get airflows -A -o json` and pipes them into per-CR adoptions.
 
-Once we have signal that customers want a UI-driven discovery flow (M2.1 or later), we can add either:
+If customer feedback later shows demand for a UI-driven discovery flow, we can add either:
 - A single-CR `GetCustomResource` RPC in Commander + Houston-side iteration over operator-supplied names, or
 - A full `ListCustomResources` RPC in Commander.
 
@@ -140,64 +142,393 @@ See [Task 2 § Discovery / association](m2-task-2-connect-operator-to-commander.
 
 ### Phase C — Adopt
 
-New GraphQL mutation: `adoptDeployment(input: AdoptDeploymentInput!): Deployment!` — or extend `upsertDeployment` with an `adoptFromCR: Boolean` argument (per the milestone description: *"upsert deployment with some flag called migrate"*).
+New GraphQL mutation: `adoptDeployment(input: AdoptDeploymentInput!): Deployment!`.
 
 ```graphql
 input AdoptDeploymentInput {
-  workspaceUuid: ID!
-  clusterId:     ID!
-  crNamespace:   String!
-  crName:        String!
-  crSpec:        JSON!            # the operator-supplied `Airflow` spec (kubectl -o json)
-  label:         String           # optional override of CR name as display label
-  webserverUrl:  String           # customer's existing webserver URL (Task 1 / Option B/C/D)
-  flowerUrl:     String           # customer's existing flower URL (optional)
-  acceptIncompatibilities: Boolean
+  # Required identity / placement
+  workspaceUuid:           ID!         # APC workspace to attach the deployment to
+  clusterId:               ID!         # DP cluster (from registerCluster output)
+  crNamespace:             String!     # K8s namespace of the existing Airflow CR
+  crName:                  String!     # metadata.name of the CR
+
+  # Optional metadata
+  label:                   String      # UI display label; defaults to crName
+  description:             String      # longer-form description; maps to Deployment.description
+  webserverUrl:            String      # customer's existing webserver URL; stored in config.adoption.urls.webserver.
+                                       # If omitted, Houston falls back to the computed pattern (Task 1 § URL handling).
+  acceptIncompatibilities: Boolean     # defaults false. When false and any CR field has no Houston representation,
+                                       # the resolver returns a GraphQL error whose extensions carry
+                                       # `incompatibleFields: [{ path, reason }, ...]`.
+                                       # When true, adopt anyway and stash unmapped fields in config.adoption.rawCRSnapshot.
 }
 ```
 
-Resolver:
+**Per-field meaning** (full discussion of trade-offs in the Notion design doc):
 
-1. **(Optional defensive check.)** If `GetCustomResource` is implemented in Commander, fetch the live CR and compare against `crSpec`; reject on mismatch. Otherwise trust the operator-supplied spec.
-2. Resolves / creates a workspace per `workspaceUuid` (or default workspace if not provided).
-3. Runs the Phase A catalogue map on `crSpec` to build the upsert payload.
-4. Marks the deployment as adopted in `Deployment.config.adoption` JSONB (see Task 2 Option B). Stores `webserverUrl` / `flowerUrl` under `config.adoption.urls`.
-5. Inserts the `Deployment` row **without** firing the standard create-worker that would `ApplyCustomResource` over the existing CR. Either:
-   - Skip the publish, or
-   - Publish a new event `DEPLOYMENT_ADOPTED_FROM_CR` that the workers know to handle differently.
-6. Returns the new Deployment record.
+| Field | Meaning |
+|---|---|
+| `workspaceUuid` | Required. Houston Workspace ID (CUID). The walkthrough shows it can be recovered from the namespace label `workspace=…`, but we always require the operator to supply it explicitly — works the same for APC-emitted and hand-written CRs. |
+| `clusterId` | Required. Houston Cluster ID returned by `registerCluster` in Task 1. Tells the resolver which DP Commander to talk to. |
+| `crNamespace`, `crName` | Required. K8s `(namespace, name)` of the `Airflow` CR. Maps to `Deployment.namespace` and `Deployment.releaseName` (both `@unique`). |
+| `label` | Optional. UI display label. Defaults to `crName` if omitted. |
+| `description` | Optional. Maps to `Deployment.description`. |
+| `webserverUrl` | Optional. Customer's existing webserver URL, stored in `Deployment.config.adoption.urls.webserver`. Required to keep the customer's existing URL working under [Task 1 § Deployment URL handling](m2-task-1-install-dp.md#deployment-url-handling--adopted-crs) Option B/D. Skip if Option A/C is in play. `flowerUrl` deferred to a follow-up — most customers don't expose Flower externally. |
+| `acceptIncompatibilities` | Optional. Defaults `false`. Some CR fields don't map cleanly into Houston's first-class columns (multiple worker groups, `podTemplateConfigMapName`, `airflowPlugins[]`, etc. — see [`reference-cr-mapping-walkthrough.md`](reference-cr-mapping-walkthrough.md) § *CRD extension surface*). With `false`, the resolver returns a structured GraphQL error; with `true`, it adopts and stashes unmapped fields in `Deployment.config.adoption.rawCRSnapshot`. |
 
-The skipped-publish path is safer initially; the dedicated event lets us evolve later.
+Resolver flow:
+
+1. **Flag check.** Reject if `OPERATOR_INHERITANCE_ENABLED !== true` (env on Houston).
+2. **AuthZ.** Validate caller has permission on `workspaceUuid` and `clusterId`.
+3. **Fetch the live CR.** Call `Commander.GetCustomResource(group="airflow.apache.org", version="v1beta1", plural="airflows", namespace=crNamespace, name=crName)` against `clusterId`. Error if not found.
+4. **Catalogue-map** the fetched CR spec via the new module `houston-api/src/lib/deployments/operator/cr-to-deployment.ts`.
+5. **Compatibility check.** If any field is incompatible and `acceptIncompatibilities !== true`, throw a structured GraphQL error:
+
+   ```
+   error.message: "Cannot adopt deployment — CR has fields with no Houston representation."
+   error.extensions: {
+     code: "ADOPTION_INCOMPATIBLE",
+     incompatibleFields: [
+       { path: "spec.airflowPlugins", reason: "no first-class column" },
+       { path: "spec.podTemplateConfigMapName", reason: "no first-class column" },
+       ...
+     ]
+   }
+   ```
+
+   UI consumes this to show *"Cannot adopt — these fields are not supported: ..."* and offer "Adopt anyway" → re-submit with `acceptIncompatibilities: true`.
+
+6. **Build the upsert payload** from the catalogue map.
+7. **Set adoption metadata** in `Deployment.config.adoption`:
+   - `adopted: true`
+   - `adoptedAt: now()`
+   - `source: "operator-cr"`
+   - `urls.webserver: input.webserverUrl` (if provided)
+   - `rawCRSnapshot: <fetched CR spec>` (if `acceptIncompatibilities=true` *or* any "partial" field exists)
+   - `incompatibleFields: [...]` (if `acceptIncompatibilities=true` — for audit / re-evaluation later)
+8. **Insert the `Deployment` row.** Use Prisma `create`. **Do not publish any worker event.**
+9. **Create the deployment-scoped role binding** (`DEPLOYMENT_ADMIN` → calling user).
+10. **Audit-log entry** (append-only): `action="adopt", userId, deploymentId, releaseName, namespace`.
+11. **Return the Deployment record.**
+
+Step 8's "do not publish" is the critical safety. The standard `DEPLOYMENT_UPSERTED_FOR_CREATE` event would fire workers that call `ApplyCustomResource`, which would stomp the customer's CR. We bypass that path entirely on adoption; future edits go through the standard upsert flow but with the SSA path active (per Task 2).
 
 CLI shape:
 
 ```sh
-# the operator drives the loop
-kubectl get airflows -A -o json | jq -c '.items[] | {namespace: .metadata.namespace, name: .metadata.name, spec: .spec}' | \
-  while read cr; do
-    astro deployment adopt \
-      --cluster <cluster-id> \
-      --workspace <workspace-id> \
-      --cr "$cr" \
-      --webserver-url "https://airflow-prod.acme.com"
-  done
+# Operator enumerates locally
+kubectl get airflows -A
+
+# Then for each CR they want to adopt:
+astro deployment adopt \
+  --cluster      <cluster-id> \
+  --workspace    <workspace-id> \
+  --namespace    astronomer-electromagnetic-aphelion-3060 \
+  --name         electromagnetic-aphelion-3060 \
+  --label        "Production ETL" \
+  --webserver-url "https://deployments.localtest.me/electromagnetic-aphelion-3060/airflow"
 ```
+
+The CLI only passes CR identity. No `--cr <json>` flag — Houston fetches the spec via Commander. If `acceptIncompatibilities` is needed, the CLI surfaces the structured error and prompts for a re-run with `--accept-incompatibilities`.
 
 A higher-level wrapper (e.g. `astro deployment adopt-all --cluster X`) is a follow-up, not a v1 requirement.
 
-### Phase D — User and role migration
+### Phase D — User, role, and Airflow-auth handling
 
-The operator doesn't own user management — Airflow's own RBAC (webserver users) is what exists today. The PRD positions APC's RBAC layer as additive. Two flows:
+This section has three concerns: (1) who gets APC roles after adoption, (2) whether we touch the customer's Airflow auth setup, and (3) how the two combine into an SSO story.
 
-1. **System admin bootstrap.** As part of CP install (M2 Task 1 if unified, or already-existing if split), a system admin login is provisioned. _(Houston has a bootstrap path — verify mechanism: env-var / CLI / first-login-wins.)_ This admin runs the adoption flow.
-2. **Airflow → APC user migration.** Manual or scripted. For each Airflow user, create an APC user (`inviteUser` mutation from `mutation/index.js:31`), attach to a workspace, give a workspace/deployment role from the enum.
+#### D.1 — APC roles after adoption (default in v1)
 
-Sub-questions (from the milestone description's bullets):
+Adoption grants `DEPLOYMENT_ADMIN` (deployment-scoped) to the user who called `adoptDeployment`. That's it. All other users get APC access via the existing `inviteUser` mutation and workspace-level RBAC, identical to native deployments. The customer's Airflow user DB / SSO is **not touched** by default.
 
-- **Mapping Airflow roles → APC roles.** Airflow's defaults (`Admin`, `Op`, `User`, `Viewer`, `Public`) don't 1:1 with `WORKSPACE_ADMIN` / `DEPLOYMENT_*`. A reasonable default mapping is _TBD_ — needs product input.
-- **Bulk import.** `inviteUser` is per-user. For a customer with hundreds of users, a CSV / script wrapper is desirable. Possibly a new mutation `bulkInviteUsers`, or a CLI utility.
+Rationale: keeps adoption a low-side-effect operation. Airflow's auth and APC's auth stay decoupled. Customers who want bulk-import can opt in (see D.2).
 
-### Phase E — Verification
+System-admin bootstrap is the same as any existing CP install — out of scope for adoption.
+
+#### D.2 — Optional bulk user import (new input on `adoptDeployment`)
+
+Operators can opt into mirroring the customer's Airflow user DB into APC at adoption time. Default `off`. Product still needs to confirm this is wanted for v1; the field is in the API but the resolver path is feature-flagged.
+
+```graphql
+input AdoptDeploymentInput {
+  # ...existing fields above...
+  importUsers: AirflowUserImportInput     # optional
+}
+
+input AirflowUserImportInput {
+  enabled:           Boolean!             # explicit opt-in (true to actually import)
+  roleMap:           AirflowRoleMapInput  # optional override of the default mapping
+  skipDisabledUsers: Boolean              # default true
+}
+
+input AirflowRoleMapInput {
+  admin:   String       # APC role to grant for Airflow `Admin`;   default "DEPLOYMENT_ADMIN"
+  op:      String       # APC role to grant for Airflow `Op`;      default "DEPLOYMENT_EDITOR"
+  user:    String       # APC role to grant for Airflow `User`;    default "DEPLOYMENT_EDITOR"
+  viewer:  String       # APC role to grant for Airflow `Viewer`;  default "DEPLOYMENT_VIEWER"
+  public:  String       # APC role to grant for Airflow `Public`;  default null (skip)
+}
+```
+
+When `importUsers.enabled = true`, the resolver:
+
+1. Reads `Secret/<crNamespace>/<crName>-metadata` (via Commander) to get the Airflow DB connection string.
+2. Connects to the Airflow metadata DB. **Open question:** Houston connects directly, or proxies the SQL through Commander? In split-CP/DP, direct Houston → Airflow DB is often blocked by network policy.
+3. Reads the `ab_user`, `ab_role`, `ab_user_role` tables.
+4. Filters out disabled users (FAB sets `ab_user.active=False`) when `skipDisabledUsers=true`.
+5. For each remaining user, calls the existing `inviteUser` mutation logic (`houston-api/src/resolvers/mutation/invite-user/` and friends) with the role from `roleMap`. Custom Airflow roles are skipped (logged for the operator to handle).
+6. Records per-user import status in `Deployment.config.adoption.importedUsers[]` for traceability and idempotent re-runs.
+
+**Default Airflow → APC role mapping:**
+
+| Airflow FAB role | Default APC role | Notes |
+|---|---|---|
+| `Admin` | `DEPLOYMENT_ADMIN` | The customer's Airflow admins get deployment-scoped admin in APC. Workspace-level admin is not granted automatically; operator elevates manually if needed. |
+| `Op` | `DEPLOYMENT_EDITOR` | Modify deployment config, not RBAC. |
+| `User` | `DEPLOYMENT_EDITOR` | Similar to Op for most APC purposes. |
+| `Viewer` | `DEPLOYMENT_VIEWER` | Read-only. |
+| `Public` | _(skipped)_ | FAB `Public` is unauthenticated guest — no APC equivalent. |
+| Custom roles | _(skipped)_ | Operator handles via per-user `inviteUser` post-adoption. |
+
+**Caveats:**
+
+- **SSO-backed Airflow has a near-empty ****`ab_user`**** table.** With LDAP/OAuth auth, FAB only writes a row on first login. Bulk import on a fresh SSO-only deployment returns few or zero users — the operator should use the standard `inviteUser` path instead.
+- **Customer DB reachability.** Houston must be able to reach the Airflow metadata DB. In split-CP/DP, this may require either DB ingress from the CP cluster (security-sensitive), a network policy carve-out, or proxying through Commander. Default is to reject the import with a clear error rather than silently degrade.
+- **Idempotency.** Re-running adoption with `importUsers.enabled=true` should be a no-op for users already imported (matched by username). The `importedUsers[]` array supports this check.
+
+#### D.3 — Airflow auth on adopted deployments — three options
+
+> **No decision yet. Discuss.**
+
+The question: when APC adopts a deployment, does it touch the customer's Airflow webserver auth (env vars, `webserver_config.py`, ingress annotations) — or leave it alone?
+
+Background: APC-emitted operator deployments use a specific auth pattern. The webserver validates Houston-issued JWTs:
+- Env var `AIRFLOW__ASTRONOMER__HOUSTON_JWK_URL` points the webserver at Houston's JWKS endpoint.
+- `webserver_config.py` sets `AUTH_TYPE = AUTH_REMOTE_USER` + `SECURITY_MANAGER_CLASS = astronomer.flask_appbuilder.security.AirflowAstroSecurityManager`.
+- Nginx ingress annotation `auth-url: https://houston.../v1/authorization` enforces Houston-side authz *before* the webserver sees a request.
+
+Adopted CRs from a standalone-operator install use whatever auth the customer configured — typically FAB-DB, LDAP, OAuth against the customer's IdP, or `AUTH_REMOTE_USER` behind their auth proxy.
+
+**Option A — Leave the customer's Airflow auth untouched (recommended default).**
+APC adds the deployment to its model. The CR's auth env vars and `webserver_config.py` ConfigMap are unchanged. "Open Airflow" in Astro UI sends the user to the customer's webserver URL where they log in via whatever auth was already configured.
+- ✅ Zero disruption.
+- ✅ Customer's existing user DB / SSO stays as the source of truth.
+- ❌ Two separate logins (APC and Airflow). No SSO unless the customer happens to configure both Houston and Airflow against the same IdP (see D.4).
+
+**Option B — Optional per-deployment migration to Houston JWT auth.**
+A follow-up mutation `migrateAirflowAuth(deploymentId)` SSA-patches the CR after adoption:
+- Sets `AIRFLOW__ASTRONOMER__HOUSTON_JWK_URL` to the new CP's JWKS endpoint.
+- Replaces `webserver_config.py` content with the Astronomer pattern (`AUTH_REMOTE_USER` + `AirflowAstroSecurityManager`).
+- Sets the ingress `auth-url` annotation to the new Houston.
+
+After this, APC-issued JWTs work against Airflow — single sign-on. Default off; customer opts in per deployment.
+- ✅ Single sign-on between APC and Airflow.
+- ❌ Customer's existing Airflow user DB becomes irrelevant.
+- ❌ Pipelines that hit the Airflow REST API with non-Astronomer auth (customer-issued tokens, basic auth) break.
+- Best paired with D.2 bulk import so users still have access.
+
+**Option C — Always switch to Houston JWT at adoption time.**
+Same as B but mandatory. Listed for completeness; almost certainly too disruptive for v1. Adoption shouldn't have side effects this large.
+
+**Special case — re-adopting an APC-emitted CR (Stage 1 → Stage 2).**
+If the CR being adopted *was originally* produced by an APC Houston (we can detect this from the presence of `AIRFLOW__ASTRONOMER__HOUSTON_JWK_URL` in `spec.env`), the JWK URL points at the *old* CP. Under Option A nobody can log into Airflow after adoption because the new CP's JWT signatures don't validate. The catalogue map should:
+- Detect this case (env var present and pointing at a non-current Houston URL).
+- Flag it as an incompatibility unless `acceptIncompatibilities=true` or Option B is also being applied at adoption time.
+- The follow-up `migrateAirflowAuth` mutation handles the JWK URL swap.
+
+#### D.4 — SSO compatibility matrix
+
+Per the auth backend the customer's Airflow is using today. Assumes Option A (the recommended default) unless otherwise noted.
+
+| Customer's Airflow auth | Bulk import (D.2) viable? | SSO between APC and Airflow? | Notes |
+|---|---|---|---|
+| **FAB-DB (local users)** | ✅ Yes — `ab_user` has all users. | ❌ No SSO. Two logins. | Common in on-prem Airflow. Bulk import gives the customer one-shot user migration into APC. |
+| **LDAP (`AUTH_LDAP`)** | ❌ No — `ab_user` only has first-login users. | ❌ Houston has no LDAP support. Customer puts OAuth/OIDC in front of LDAP to share IdP with Houston. | Customer-side work needed. Document the OAuth-bridge pattern. |
+| **OAuth — Google** | ❌ No (same reason) | ✅ Configure Houston with Google OAuth ([`houston-api/src/lib/oauth/config/google-config.ts`](../../../../houston-api/src/lib/oauth/config/google-config.ts)). Same Google account logs into both. | Two cookie domains, but the IdP redirect flow is fast — feels like SSO. |
+| **OAuth — Microsoft / Azure AD** | ❌ No | ✅ Configure Houston with Microsoft OAuth ([`houston-api/src/lib/oauth/config/microsoft-config.ts`](../../../../houston-api/src/lib/oauth/config/microsoft-config.ts)). |  |
+| **OAuth — GitHub** | ❌ No | ✅ Configure Houston with GitHub OAuth ([`houston-api/src/lib/oauth/config/github-config.ts`](../../../../houston-api/src/lib/oauth/config/github-config.ts)). | Uncommon in production but supported. |
+| **OAuth — Okta / generic OIDC** | ❌ No | ⚠️ Houston has no first-class Okta config. Wire Okta as a custom OIDC provider modelled on the Google+Auth0 pattern ([`google-auth0-config.ts`](../../../../houston-api/src/lib/oauth/config/google-auth0-config.ts)). Customer-side Houston config work. |  |
+| **SAML** | ❌ No | ❌ Houston has no SAML support. Customer needs an OAuth/OIDC bridge or accepts two logins. |  |
+| **`AUTH_REMOTE_USER` with customer auth proxy** | ❌ No | ❌ No SSO unless the customer's auth proxy also serves APC and Houston accepts the same header. Bespoke. |  |
+| **Astronomer JWT (CR was originally APC-emitted)** | ⚠️ FAB populates on first login from JWT claims — bulk import sees only users who have logged in before. | ✅ After applying Option B `migrateAirflowAuth`. Without it, Airflow login is broken because the JWK URL points at the old CP. | See "Special case" under D.3. |
+
+#### D.5 — Open product/UX questions
+
+- [ ] Is bulk user import actually wanted for v1, or pure follow-up? *(Owner: product.)*
+- [ ] If the operator picks Option B, is the JWK migration part of `adoptDeployment` or strictly a separate `migrateAirflowAuth(deploymentId)` mutation? Separate-mutation is safer (adoption stays low-side-effect); inline is fewer calls.
+- [ ] Detection of APC-emitted CR: rely on the env var, or also check the namespace label `platform-release`? The walkthrough showed both are set for APC-emitted CRs.
+- [ ] Document the OAuth-bridging-LDAP pattern, or punt to field engineering? *(Owner: docs / field eng.)*
+
+### Phase E — Per-deployment infrastructure handling
+
+Adopted deployments inherit five categories of customer-side infrastructure from the existing CR. For each, the default v1 behaviour is in this section. **All defaults below match the recommendation in the product/design call.**
+
+> Across all five: the resolver fetches the live CR + supporting Secrets/ConfigMaps via `Commander.GetCustomResource` and `Commander.GetSecret`. Side effects on the CR (SSA patches, new Secrets) are applied at adopt time and tracked in `Deployment.config.adoption.*`.
+
+#### E.1 — Environment variables
+
+**Default: adopt the customer's existing Secret(s) by name. Do not rename.**
+
+Houston names the env-var Secret `<releaseName>-env` for native deployments ([`houston-api/src/lib/deployments/naming/index.js:117`](../../../../houston-api/src/lib/deployments/naming/index.js#L117)). Adopted CRs may reference any Secret name(s) — customer-chosen. The CR's `env[]` carries `secretKeyRef` entries pointing at whichever Secret(s) the customer used.
+
+Resolver behaviour:
+1. At adopt time, walk the fetched CR's `env[]` (any one component — they're duplicated across all per the walkthrough). For each `secretKeyRef`, collect the unique set of Secret names → store in `Deployment.config.adoption.envSecretNames: string[]`.
+2. For each Secret, call `Commander.GetSecret(crNamespace, secretName)` to read the data keys → populate `Deployment.environmentVariables` with `{ name, value, isSecret: true, sourceSecret: <secretName> }`.
+3. On *edits* via `upsertDeployment` post-adoption: writeback targets the original Secret name(s) from `config.adoption.envSecretNames`, not `<releaseName>-env`. Worker logic branches on the adopted flag.
+
+**External secret managers (ExternalSecretsOperator / SealedSecrets / Vault Operator / etc.): read-only in v1.**
+- Detection: check the source K8s Secret for owner references to `ExternalSecret`, `SealedSecret`, `VaultSecret`, or annotations like `external-secrets.io/managed-by` / `sealedsecrets.bitnami.com/managed`.
+- When detected, the catalogue map marks env vars from that Secret as `readOnly: true` in `Deployment.environmentVariables`.
+- The UI shows them with a lock icon and a tooltip pointing at the customer's external secret-manager UI.
+- Editing via `upsertDeployment` is blocked with a structured error (`code: "ENV_VAR_EXTERNALLY_MANAGED"`, `extensions.secretName`).
+- No write-back attempt — would just get reconciled away by the external-secret operator on its next loop.
+
+#### E.2 — Logs
+
+**Default: switch to APC's ES at adopt time. Provision an ES user/password, rewrite the CR's ES env vars.**
+
+Native flow (per [`houston-api/src/workers/deployment-upserted-for-create/index.js:86,228`](../../../../houston-api/src/workers/deployment-upserted-for-create/index.js)):
+1. Resolver generates `elasticsearchPassword` (32-char random).
+2. Worker passes it to Commander in the secrets payload; Commander creates `<releaseName>-elasticsearch` Secret with the connection string.
+3. The CR's `AIRFLOW__ELASTICSEARCH__HOST` / `..._ELASTICSEARCH_HOST` env vars reference that Secret.
+4. The ES host itself resolves to `<releaseName>-elasticsearch-nginx.<releaseNamespace>` ([`lib/clusters/index.js:351`](../../../../houston-api/src/lib/clusters/index.js#L351)) for the default case, or to the external ES proxy if the cluster has `customLogging.enabled`.
+
+Adoption flow:
+1. Generate `elasticsearchPassword` per native path.
+2. Create the `<releaseName>-elasticsearch` Secret in the deployment namespace (via Commander's `SetSecret`).
+3. SSA-patch the CR to point its ES env vars at the new Secret (replaces whatever ES the customer had wired). Field manager `apc-commander`.
+4. Vector (cluster-wide DaemonSet — [`charts/vector/templates/vector-daemonset.yaml`](../../../charts/vector/templates/vector-daemonset.yaml)) is namespace-agnostic and ships logs based on pod labels. Verify that the operator's pods carry the labels Vector's config expects (`astronomer.io/platform-release=astronomer` and friends, confirmed on the live 0.37 CR in [`reference-cr-mapping-walkthrough.md`](reference-cr-mapping-walkthrough.md)). If labels are missing, SSA-patch them into the CR's per-component `customLabels` / `podTemplateSpec.metadata.labels`.
+
+**ES user / role creation.** _Open implementation question:_ where is the per-deployment ES user actually created today for native deployments? The password is generated in Houston but the user creation likely happens at the ES side. Confirm before implementing — possible answers: an ES init job, ES role mapper, an ES sidecar, or Houston calling the ES admin API directly. _Owner: TBD._
+
+**Customer's previous log destination.** Stops receiving fresh logs after the SSA patch. Customer's existing log pipeline (Splunk, Datadog, their own ES) is unaware until they query and notice the gap.
+
+**Historical log migration: out of scope for v1.** Logs produced before adoption stay where they were. APC's ES only contains post-adoption logs. Customers needing unified history run their own reindex job out-of-band (`elasticdump`, `logstash`, etc.). Document this in the runbook.
+
+**Custom log patterns: not supported in v1.** Houston's "View Logs" query assumes the standard ES index pattern + document shape that operator-mode deployments emit. Adopted deployments are conformed by the SSA patch above; non-standard patterns are not preserved.
+
+**Open question.** What if the customer's existing ES uses `customLogging.enabled` at the cluster level (external-es-proxy)? The cluster's logging config is per-cluster, not per-deployment — adoption inherits whatever the DP cluster was registered with. If the DP cluster was registered with `customLogging.enabled=true`, adopted deployments use the external ES; with `=false`, they use APC's in-cluster ES. Operator decides at DP install time (Task 1).
+
+#### E.3 — Metrics
+
+**Default: use APC's Prometheus. Verify scrape labels at adopt time.**
+
+APC's Prometheus has a dedicated `airflow-operator` scrape job at [`astronomer/charts/prometheus/templates/prometheus-config-configmap.yaml:293`](../../../charts/prometheus/templates/prometheus-config-configmap.yaml). The scrape filter uses pod labels (including `astronomer.io/platform-release`) — verify these in the live CR before relying on it.
+
+Adoption flow:
+1. After Commander.GetCustomResource fetches the spec, the catalogue map checks each component's `customLabels` / `podTemplateSpec.metadata.labels` for the expected scrape labels.
+2. If missing on any component, build an SSA patch that adds them. Same field-manager (`apc-commander`).
+3. Per-deployment StatsD continues running as the metrics source (it's part of the CR's `spec.statsd` block already — APC's Prometheus scrapes it).
+4. APC dashboards (Grafana panels in `charts/astronomer/templates/grafana/` etc.) pick up the deployment automatically once labels match.
+
+**Customer's existing Prometheus.** If the customer has their own Prometheus also scraping the deployment, it keeps doing so — APC's labelling doesn't interfere with whatever labels the customer was already using. Two scrapes is fine.
+
+**Federation (APC pulls from customer's Prometheus): not in v1.** Adds operational complexity and a CP→DP network dependency for metrics that the direct-scrape path already covers.
+
+**Custom metric patterns: not in v1.** Same uniformity rule as logs — APC dashboards assume the operator's StatsD metric names.
+
+#### E.4 — Airflow metadata DB
+
+**Default: keep the customer's external DB. Use the existing BYO-DB path.**
+
+`upsertDeployment` already supports BYO DB via `metadataConnection` / `metadataConnectionJson` ([`houston-api/src/lib/deployments/database/index.js`](../../../../houston-api/src/lib/deployments/database/index.js)). Adoption rides on the same path:
+
+1. At adopt time, Houston calls `Commander.GetSecret(crNamespace, "<releaseName>-metadata")` (or whichever Secret the CR's `spec.secrets.metadataSecretName` points at) to extract the connection URI.
+2. Populates `Deployment.airflowDbRef.activeConnectionRef` to point at the existing Secret. Same for result backend (`<releaseName>-result-backend`).
+3. APC never touches the customer's DB. No schema migrations, no user creation, no SSL rewrite.
+4. `Deployment.config.database.ssl.*` (mode, secret) is copied from the CR's `spec.databaseSSLMode` and `spec.databaseSSLSecretName`.
+
+**No metadata DB migration to APC-managed Postgres in v1.** Customer keeps their existing DB. If they later want APC-managed (for e.g. consolidated backups), that's a separate migration operation outside v1 scope — would require dumping their DB → restoring into APC's → SSA-patching the CR to point at the new connection. Heavy; downtime-sensitive; many failure modes.
+
+**Fernet key.** Same model — the CR references `spec.secrets.fernetKeySecretName`. APC reads the Secret name and respects `spec.useExternallyManagedFernetKey: true` (visible in the walkthrough). No rotation at adopt time.
+
+**Pgbouncer connection.** Same. Adopted CRs that already use pgbouncer keep their existing pgbouncer setup; the `spec.pgbouncer.*` config from the CR maps to `Deployment.pgbouncerConfig`.
+
+#### E.5 — Registry / image pull
+
+**Default: keep the customer's existing registry secret. Image stays where it is.**
+
+Native flow generates a registry password ([`houston-api/src/lib/deployments/config/index.js:4938`](../../../../houston-api/src/lib/deployments/config/index.js#L4938) — `generatePassword({ length: 32, numbers: true })`) and a `<releaseName>-registry` dockerconfigjson Secret pointing at APC's internal registry. Customer can BYO via `customRegistryDockerconfigjson` ([`config/index.js:723`](../../../../houston-api/src/lib/deployments/config/index.js#L723)).
+
+Adopted CRs already have:
+- `spec.imagePullSecret: <releaseName>-registry` (or whatever the customer named it),
+- `spec.image: <some registry>/<image>:<tag>` — possibly the customer's own registry, possibly Astronomer's, possibly a mirror.
+
+Adoption flow:
+1. Record the customer's `imagePullSecret` name and `image` in `Deployment.config.adoption.registry`.
+2. Do **not** generate a new registry password.
+3. Do **not** retag/push the image into APC's registry.
+4. Future image upgrades via Houston: by default, push to wherever the CR's `image` points — APC respects the customer's registry choice.
+
+**Switching to APC's registry: not in v1.** Would require: creating a registry user, retagging the image, pushing into APC's registry, SSA-patching the CR's `imagePullSecret` + `image`, possibly bouncing pods. Disruptive. Out of scope.
+
+**Detection.** Watch for `spec.image` containing the APC platform registry hostname (e.g. `registry.<helm.baseDomain>`). If the customer is *already* on APC's registry (e.g. APC-emitted CR being re-adopted), use the standard native flow — generate a registry password tied to the new CP, SSA-patch the Secret. Flag this case in the compatibility report; same family as the JWK URL re-pointing in D.3.
+
+### Phase F — Rollback & un-adopt
+
+Adoption must be reversible without destroying the customer's `Airflow` CR, namespace, or pods. Two paths:
+
+**Hard cutoff — `OPERATOR_INHERITANCE_FREEZE_EDITS` env on Houston (install-wide).**
+When `true`, every worker that calls Commander on a deployment with `config.adoption.adopted === true` short-circuits:
+- `deployment-upserted-for-create/update` — returns without `ApplyCustomResource`.
+- `deployment-image-update` — same.
+- `deployment-variables-updated` — same.
+- `deployment-deleted` — also short-circuits while the flag is on. The customer can't `deleteDeployment` an adopted CR during a freeze, since we don't trust APC's code path. Normal `deleteDeployment` semantics resume when the flag is flipped back.
+
+Operator continues reconciling the CR normally. Flip back to `false` after fixing the bug.
+
+This flag is independent of `OPERATOR_INHERITANCE_ENABLED`:
+- `_ENABLED=false` rejects new adoptions but leaves existing ones receiving APC edits.
+- `_FREEZE_EDITS=true` freezes existing adopted deployments but new adoptions can still be made (rarely the right combination, but technically possible).
+- Both off = full disablement.
+
+**Orderly un-adopt — new `unadoptDeployment` mutation.**
+Separate from `deleteDeployment`. **Does not call Commander. Does not touch K8s.**
+
+```graphql
+mutation UnadoptDeployment($input: UnadoptDeploymentInput!) {
+  unadoptDeployment(input: $input) {
+    id
+    releaseName
+    deletedAt
+  }
+}
+
+input UnadoptDeploymentInput {
+  deploymentUuid: ID!
+}
+```
+
+Resolver (new file: `houston-api/src/resolvers/mutation/unadopt-deployment/index.ts`):
+1. Validate the deployment exists and is adopted. Reject if `config.adoption.adopted !== true` — never run this path on native APC deployments.
+2. **Do not publish any worker event.** No `DEPLOYMENT_DELETED`.
+3. Soft-delete the `Deployment` row (`deletedAt = now()`). Stays in DB; existing soft-delete filters hide it from UI / list queries.
+4. Delete `RoleBinding` rows where `deploymentId = <this id>` only. Workspace, workspace memberships, and `inviteUser`-created user rows are kept — they may still be in use for other deployments.
+5. Emit a Houston audit-log entry: `action="unadopt"`, `userId`, `deploymentId`, `releaseName`, `namespace`. Append-only.
+
+Re-adoption later detects the soft-deleted row (same `releaseName` + `namespace` + `clusterId`), clears `deletedAt`, refreshes `config.adoption.rawCRSnapshot` from the new CR spec, re-creates the `DEPLOYMENT_ADMIN` role binding.
+
+**`deleteDeployment` vs `unadoptDeployment` — clear separation of intent.**
+The two mutations are deliberately distinct:
+
+| Mutation | What it does to the Airflow CR | What it does to the Houston DB | Use when |
+|---|---|---|---|
+| `deleteDeployment` (existing) | **Deletes the CR + namespace + pods** via `Commander.DeleteCustomResource`. Adopted-vs-native makes no difference — destruction is destruction. | Hard- or soft-delete per existing semantics. | Customer actually wants the deployment gone. |
+| `unadoptDeployment` (new) | **No K8s touch.** | Soft-delete the row, remove deployment-scoped `RoleBinding`s. | Customer wants to keep their Airflow running but release it from APC management. |
+
+The `deployment-deleted` worker is **not** modified to special-case adopted deployments. A `deleteDeployment` call against an adopted CR runs the standard destructive flow. This keeps the semantics obvious: if you wanted the workloads kept, you would have called `unadoptDeployment`.
+
+(The one exception is when `OPERATOR_INHERITANCE_FREEZE_EDITS=true` — see Hard cutoff above. That flag freezes *all* APC → Commander calls for adopted deployments, including `deleteDeployment`, on the assumption that APC's code path can't be trusted while the freeze is on. Customers needing to actually delete during a freeze either wait it out or use `kubectl delete airflow ...` directly.)
+
+**What is NOT cleaned up on un-adopt:**
+- The `Airflow` CR in the DP cluster.
+- The deployment namespace.
+- Platform secrets Commander synced into the namespace (`astronomer-houston-jwt-signing-certificate`, `<release>-registry`, etc.). Customer cleans these up if they want.
+- Workspace + non-deployment-scoped role bindings + invited users.
+- Audit-log entries (append-only).
+- Cluster registration in Houston (deregister the whole DP via the existing `deregisterCluster` mutation if needed).
+
+### Phase G — Verification
 
 - Adopted deployment shows in `listDeployments` with adopted indicator.
 - Adopted deployment shows in the UI with a banner explaining limitations (per PRD CUJ 4).
@@ -209,20 +540,22 @@ Sub-questions (from the milestone description's bullets):
 ### Houston (data model, resolvers, workers)
 
 - [`houston-api/prisma/schema.prisma`](../../../../houston-api/prisma/schema.prisma) — likely **no new columns** if we use `Deployment.config` JSONB; otherwise add `adoptedAt: DateTime?` and `adoptionSource: String?`. **Migration TBD.**
-- [`houston-api/src/schema/mutation.js`](../../../../houston-api/src/schema/mutation.js) — add `adoptDeployment` (or extend `upsertDeployment`).
+- [`houston-api/src/schema/mutation.js`](../../../../houston-api/src/schema/mutation.js) — add `adoptDeployment` and `unadoptDeployment`.
 - [`houston-api/src/schema/query.js`](../../../../houston-api/src/schema/query.js) — **deferred for v1.** `discoverOperatorDeployments` is out of scope until we add a Houston-driven discovery UI.
-- New resolver: `houston-api/src/resolvers/mutation/adopt-deployment/index.ts` (or modify `upsert-deployment/index.ts`).
+- New resolver: `houston-api/src/resolvers/mutation/adopt-deployment/index.ts`.
+- New resolver: `houston-api/src/resolvers/mutation/unadopt-deployment/index.ts` — soft-deletes the row, removes deployment-scoped `RoleBinding`s, audit-logs. No worker publish; no Commander call. See § Phase F.
 - New module: `houston-api/src/lib/deployments/operator/cr-to-deployment.ts` — the catalogue mapping from §Phase A.
-- [`houston-api/src/workers/deployment-upserted-for-create/index.js`](../../../../houston-api/src/workers/deployment-upserted-for-create/index.js) — branch on adopted-flag (already covered in Task 2).
+- [`houston-api/src/workers/deployment-upserted-for-create/index.js`](../../../../houston-api/src/workers/deployment-upserted-for-create/index.js) — branch on adopted-flag + on `OPERATOR_INHERITANCE_FREEZE_EDITS` env (already covered in Task 2).
+- [`houston-api/src/workers/deployment-deleted/index.js`](../../../../houston-api/src/workers/deployment-deleted/index.js) — only adds the `OPERATOR_INHERITANCE_FREEZE_EDITS` short-circuit. No adoption-specific branch — destructive intent is preserved. See § Phase F.
 - _(If we add bulk user invite)_ new mutation under `houston-api/src/resolvers/mutation/bulk-invite-users/`.
 
 ### Commander
 
-- **Optional** single-CR `GetCustomResource` RPC for defensive validation. **`ListCustomResources` is deferred — not v1.** See Task 2 § Discovery / association.
+- **Required for v1:** single-CR `GetCustomResource` RPC. Houston's `adoptDeployment` resolver calls it to fetch the live CR spec before catalogue-mapping. **`ListCustomResources` is deferred — not v1.** See Task 2 § Discovery / association.
 
 ### Astro CLI
 
-- [`astro-cli/cmd/software/deployment.go`](../../../../astro-cli/cmd/software/deployment.go) — add `astro deployment adopt` subcommand near `newDeploymentCreateCmd` (line ~141). Takes `--cluster`, `--workspace`, and `--cr` (operator-supplied JSON spec) flags. **`astro deployment discover` is deferred — not v1.**
+- [`astro-cli/cmd/software/deployment.go`](../../../../astro-cli/cmd/software/deployment.go) — add `astro deployment adopt` subcommand near `newDeploymentCreateCmd` (line ~141). Takes `--cluster`, `--workspace`, `--namespace`, `--name`, optional `--label`, `--description`, `--webserver-url`, `--accept-incompatibilities` flags. **No `--cr` flag** — Houston fetches the spec via Commander. **`astro deployment discover` is deferred — not v1.**
 - New file under `astro-cli/houston/` for the new GraphQL operations.
 
 ### APC UI
@@ -239,7 +572,7 @@ Sub-questions (from the milestone description's bullets):
 - [ ] **CR fields without a Houston column.** Many `Airflow.spec` fields (e.g. custom env, custom pod template, multiple worker groups, statsd config) don't have first-class Houston columns. Are we fine living in `config` JSONB, or do we want a structured migration to add columns? Affects DB migrations.
 - [ ] **DAG deployment method.** Operator supports image-baked DAGs, DAG-only deploys (via APC's DAG server), git-sync. Mapping CR DAG-deployment configuration into Houston's `dagDeployment` arg requires fidelity — see also [`../03-gap-analysis.md`](../03-gap-analysis.md) Gap 10 / Gap 11 / Gap 12.
 - [ ] **What happens if the CR is later edited by `kubectl`?** Does Houston re-sync, drift-detect, or warn?
-- [ ] **Reversibility.** Can a customer "un-adopt" a deployment back to operator-only control? Useful for trial-period semantics.
+- [x] **Reversibility — resolved.** Yes, via the new `unadoptDeployment` mutation. Soft-deletes the Houston DB row, removes deployment-scoped role bindings, leaves the CR + namespace + pods untouched. See § Phase F.
 - [ ] **Image / registry preservation.** Customer's CR may reference their own registry. After adoption, do image upgrades flow through the APC registry mirror, or stay on the customer's source?
 - [ ] **License / billing counter.** From the PRD: does an adopted deployment increment the APC license counter? Need answer before GA.
 
@@ -251,11 +584,15 @@ Sub-questions (from the milestone description's bullets):
 
 ## Acceptance criteria (draft)
 
-- [ ] `astro deployment adopt --cr <json>` accepts an operator-supplied CR spec and creates a Houston `Deployment` row. (Bulk discovery deferred.)
+- [ ] `astro deployment adopt --cluster X --workspace Y --namespace N --name M` creates a Houston `Deployment` row. Houston fetches the live CR via `Commander.GetCustomResource`. (Bulk discovery deferred.)
 - [ ] `adoptDeployment` mutation creates a `Deployment` row with `mode=operator` and an adopted flag, *without* publishing the standard create-worker event.
+- [ ] When the CR has incompatible fields and `acceptIncompatibilities=false`, the resolver returns a GraphQL error with `extensions.code="ADOPTION_INCOMPATIBLE"` and `extensions.incompatibleFields=[...]`. CLI surfaces it; re-running with `--accept-incompatibilities` succeeds and stashes the unmapped fields in `Deployment.config.adoption.rawCRSnapshot`.
 - [ ] The adopted deployment is visible in `listDeployments`, in Astro UI, and via `astro deployment list`.
 - [ ] At least one role-binding from the system admin exists for the adopted deployment.
 - [ ] Editing the deployment through Houston UI updates the underlying CR (via Task 2's path).
 - [ ] DAGs continue to run throughout.
 - [ ] Mapping of CR `.spec` fields → Houston fields is documented and tested.
+- [ ] `unadoptDeployment` mutation soft-deletes the Houston row + deployment-scoped role bindings without touching the CR or namespace.
+- [ ] `deleteDeployment` on an adopted CR runs the standard destructive path: deletes the CR + namespace + Houston row, same as a native deployment.
+- [ ] `OPERATOR_INHERITANCE_FREEZE_EDITS=true` halts every worker's Commander call on adopted deployments — including `deployment-deleted` — and `=false` resumes normal operation.
 - [ ] Fields with no first-class column are visible in `Deployment.config.adoption.rawCRSnapshot`.
