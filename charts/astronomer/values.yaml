@@ -551,6 +551,8 @@ dpLink:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Number of DP-Link replicas
   # @default -- 3
@@ -746,6 +748,8 @@ pilot:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Pod annotations
   podAnnotations: {}
@@ -859,6 +863,8 @@ navigator:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
