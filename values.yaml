@@ -316,15 +316,15 @@ global:
         tag: 0.20.0-6
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.5.12
+        tag: 2026.5.22
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.5.12
+        tag: 2026.5.22
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.5.12
+        tag: 2026.5.22
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.2.10
