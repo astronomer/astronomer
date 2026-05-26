@@ -35,6 +35,8 @@ serviceAccount:
   create: true
   # Annotations to add to the service account
   annotations: ~
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
 
 extraVolumes: []
 extraVolumeMounts: []

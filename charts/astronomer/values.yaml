@@ -551,6 +551,8 @@ dpLink:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Number of DP-Link replicas
   # @default -- 3
@@ -616,9 +618,6 @@ dpLink:
 
   # -- Arguments to pass to the container
   args: ~
-
-  # -- Additional environment variables
-  env: []
 
   # -- Volume mounts
   volumeMounts: ~
@@ -746,6 +745,8 @@ pilot:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Pod annotations
   podAnnotations: {}
@@ -859,6 +860,8 @@ navigator:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
@@ -887,14 +890,6 @@ navigator:
 
   # -- Custom readiness probe configuration (overrides default)
   readinessProbe: {}
-
-  # -- Extra environment variables
-  env: []
-
-  # Component Flag
-  # -- Enable Navigator feature flag passed to the application
-  # @default -- false
-  enabled: false
 
   # Failover request reconcile loop knobs
   # -- Interval in seconds between failover request reconciler runs

@@ -130,6 +130,8 @@ serviceAccount:
   annotations: {}
   # -- Extra Labels to add to the service account.
   extraLabels: {}
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
   # -- The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template.
   name: ""
