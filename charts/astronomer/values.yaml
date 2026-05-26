@@ -619,9 +619,6 @@ dpLink:
   # -- Arguments to pass to the container
   args: ~
 
-  # -- Additional environment variables
-  env: []
-
   # -- Volume mounts
   volumeMounts: ~
 
