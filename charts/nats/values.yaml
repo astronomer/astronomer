@@ -83,6 +83,8 @@ nats:
     serviceAccount:
       create: true
       name: ~
+      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+      automountServiceAccountToken: true
 
 
     # Jetstream Domain

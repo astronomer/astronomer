@@ -46,6 +46,7 @@ roleRef:
 ---
 kind: ServiceAccount
 apiVersion: v1
+automountServiceAccountToken: {{ .Values.nats.jetStream.serviceAccount.automountServiceAccountToken }}
 metadata:
   annotations:
     "helm.sh/hook": "pre-install,pre-upgrade"
