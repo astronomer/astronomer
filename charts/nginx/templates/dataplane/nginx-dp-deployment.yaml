@@ -50,9 +50,7 @@ spec:
         - name: etc-nginx-copier
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "nginx.securityContext" . | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           command:
             - /bin/sh
@@ -70,9 +68,7 @@ spec:
               mountPath: /etc/ingress-controller
       containers:
         - name: nginx
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "nginx.securityContext" . | nindent 12 }}
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}

@@ -88,6 +88,19 @@ Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on O
 {{- end -}}
 {{- end }}
 
+{{/*
+Return container securityContext, always enforcing readOnlyRootFilesystem: true.
+Omits runAsUser on OpenShift (UIDs are assigned dynamically).
+*/}}
+{{- define "nginx.securityContext" -}}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- if .Values.global.openshift.enabled }}
+{{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- merge $required .Values.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
+
 {{ define "defaultBackend.serviceAccountName" -}}
 {{- if and .Values.defaultBackend.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "defaultBackend.fullname" . )) .Values.defaultBackend.serviceAccount.name }}
