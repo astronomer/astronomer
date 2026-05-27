@@ -48,9 +48,7 @@ spec:
         {{- toYaml .Values.master.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
-{{- if eq .Values.global.openshift.enabled false }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
+      securityContext: {{- include "elasticsearch.podSecurityContext" . | nindent 8 }}
       nodeSelector:
         {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.master.antiAffinity "hard" }}
@@ -161,7 +159,7 @@ spec:
             # Defaults to false, which means information is retrieved from the master node.
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
-          initialDelaySeconds: 5
+          initialDelaySeconds: 30
         {{- end }}
         {{- if .Values.master.livenessProbe }}
         livenessProbe: {{- tpl (toYaml .Values.master.livenessProbe) . | nindent 10 }}
@@ -169,6 +167,7 @@ spec:
         livenessProbe:
           tcpSocket:
             port: {{ .Values.common.ports.transport }}
+          initialDelaySeconds: 30
         {{- end }}
         volumeMounts:
         - name: tmp

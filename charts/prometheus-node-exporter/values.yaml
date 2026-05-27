@@ -57,6 +57,8 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ~
   imagePullSecrets: []
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
 
 podSecurityContext:
   fsGroup: 65534

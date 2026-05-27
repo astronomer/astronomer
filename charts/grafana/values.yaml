@@ -11,17 +11,22 @@ replicas: 1
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 12.4.2-1
+    tag: 12.4.2-2
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.1
+    tag: 2.0.3
     pullPolicy: IfNotPresent
 
 securityContext:
   runAsNonRoot: true
 
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext: {}
+
 serviceAccount:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
   # Specifies whether a ServiceAccount should be created
   create: true
   # Annotations to add to the service account

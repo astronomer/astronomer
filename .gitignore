@@ -1,3 +1,4 @@
+**/*.html
 **/charts/*.tgz
 **kubeconfig**
 *.key
@@ -5,6 +6,7 @@
 *.swp
 *.tgz
 .DS_Store
+.claude/settings.local.json
 /.idea/
 /.python-version
 /.unittest-requirements

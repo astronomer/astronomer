@@ -18,7 +18,7 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 3.10.0-1
+    tag: 3.10.0-2
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.23
+    tag: 0.1.25
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
@@ -45,6 +45,8 @@ resources: {}
 podAnnotations: {}
 
 serviceAccount:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
   # Specifies whether a service account should be created
   create: true
   # Annotations to add to the service account

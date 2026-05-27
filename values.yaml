@@ -46,7 +46,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.1
+      tag: 2.0.3
       pullPolicy: IfNotPresent
     priorityClassName: ~
   #Global flag to enable Operator based deployment
@@ -111,7 +111,7 @@ global:
     dagOnlyDeployment:
       enabled: false
       repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.9.5
+      tag: 0.9.6
       securityContexts:
         pod:
           fsGroup: 50000
@@ -199,8 +199,6 @@ global:
   namespaceLabels: {}
     # To enforce PSA baseline policy, use the following values:
     # pod-security.kubernetes.io/enforce: baseline
-  # Use kube-lego
-  acme: false
 
   # whether to create pod disruption budgets by default for platform components
   podDisruptionBudgets:
@@ -253,7 +251,7 @@ global:
       enabled: false
       name: sidecar-log-consumer
       repository: quay.io/astronomer/ap-vector
-      tag: 0.54.0
+      tag: 0.55.0-1
       customConfig: false
       indexPattern: ~
       extraEnv: []
@@ -337,30 +335,30 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.29.0-1
+        tag: 0.29.0-4
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.6.2
+        tag: 8.6.3
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-8
+        tag: 1.24.1-9
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.20.0-5
+        tag: 0.12.0
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.4.22
+        tag: 2026.5.12
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.4.22
+        tag: 2026.5.12
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.4.22
+        tag: 2026.5.12
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.7
+        tag: 0.2.9
     metrics:
       enabled: false
 
