@@ -44,6 +44,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.serviceAccountName" . }}-dp
+      securityContext: {{- include "nginx.podSecurityContext" . | nindent 8 }}
       {{- include "nginx.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-nginx-copier
