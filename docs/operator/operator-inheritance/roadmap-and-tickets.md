@@ -17,7 +17,7 @@ Within the existing **M2 — [Stage 1 → 2] Astro Runtime operator to APC adopt
 | **M2.A** | **DP install + cluster registration** | A customer with a standalone-operator cluster can install the APC DP onto it and register with an existing CP. | Yes | 1 |
 | **M2.B** | **Commander: SSA + `GetCustomResource`** | Commander's `ApplyCustomResource` can do server-side apply preserving customer-set fields; new RPC fetches a single CR. | Yes | 1 |
 | **M2.C** | **Houston: catalogue map + adoption mutations** | `adoptDeployment` + `unadoptDeployment` mutations work, with a CR → upsert-payload catalogue map and structured incompatibility errors. | Depends on M2.B for live deploys; resolves to stubs otherwise. | 1 (scaffold) + 2 (full) |
-| **M2.D** | **Houston: worker branching + rollback flags** | All deployment-edit workers respect the adopted flag + `OPERATOR_INHERITANCE_FREEZE_EDITS`. SSA path triggered for adopted CRs. | Depends on M2.C | 2 |
+| **M2.D** | **Houston: worker branching + soft-delete + isFrozen check** | All deployment-edit workers respect the adopted flag + check `Deployment.isFrozen` before any Commander call. Soft-delete-only for adopted (A.3). SSA path triggered for adopted CRs. | Depends on M2.C and the generic per-deployment freeze ticket (A.1, parallel to operator-inheritance scope) | 2 |
 | **M2.E** | **Per-deployment infrastructure handling** | Env vars / metadata DB / registry wired through adoption. Metrics labels checked. Logs **may slip to v1.1** (blocked on ES user creation discovery). | Depends on M2.C + small bits of M2.B | 2 |
 | **M2.F** | **CLI surface** | `astro deployment adopt` + `astro deployment unadopt` work end-to-end. | Depends on M2.C | 2 |
 | **M2.G** | **Docs + runbook** | Customer-facing adoption runbook and operator-facing rollback runbook are written and reviewed. | Continuous through 1 & 2 |
@@ -88,7 +88,7 @@ Three independent tracks; each delivers a demoable artefact.
 
 | Track | Milestones | What lands by end of Sprint 2 |
 |---|---|---|
-| **Houston** | M2.C (full), M2.D, M2.E | `adoptDeployment` resolver does the 11-step flow including real Commander calls. Workers branch on adopted flag. FREEZE_EDITS short-circuits all workers. Phase E: env vars (E.1), metadata DB (E.4), registry (E.5), metrics labels (E.3). E.2 logs ships only if 6.9 unblocked. |
+| **Houston** | M2.C (full), M2.D, M2.E | `adoptDeployment` resolver does the 13-step flow including real Commander calls. Workers branch on adopted flag + `Deployment.isFrozen`. Soft-delete-only for adopted (A.3). Phase E: env vars (E.1), metadata DB (E.4), registry (E.5), metrics labels (E.3). E.2 logs ships only if 6.9 unblocked. |
 | **CLI** | M2.F | `astro deployment adopt` + `astro deployment unadopt` work against the new mutations. |
 | **Chart + Docs** | M2.A polish, M2.G | Customer-facing adoption runbook complete. Rollback runbook complete. CI integration on the new DP-install path. |
 
@@ -97,7 +97,7 @@ Three independent tracks; each delivers a demoable artefact.
 2. `kubectl get airflows -A` → see the CR.
 3. `astro deployment adopt --cluster X --workspace Y --namespace N --name M --webserver-url ...` → new Deployment in Astro UI.
 4. Edit worker replicas in Astro UI → Houston SSA-patches the CR → customer-set toleration preserved → operator reconciles → an extra worker pod appears.
-5. Set `OPERATOR_INHERITANCE_FREEZE_EDITS=true` → edit replicas again → log shows the worker short-circuited; CR not touched.
+5. Call `freezeDeployment(deploymentUuid)` → `Deployment.isFrozen=true` → edit replicas again → log shows the worker short-circuited; CR not touched. `unfreezeDeployment` resumes.
 6. Flip back → resume.
 7. `astro deployment unadopt` → Houston row soft-deleted; CR + namespace + pods untouched (`kubectl get pods -n N` shows everything still running).
 8. Compatibility-error demo: adopt a CR with `airflowPlugins[]` (no Houston column) → CLI shows structured error → re-run with `--accept-incompatibilities` → succeeds, plugin info stashed in `config.adoption.rawCRSnapshot`.
@@ -213,22 +213,17 @@ Priority: **P0** must-ship, **P1** should-ship, **P2** nice-to-have, **P3** stre
 - **Acceptance criteria:** Flag readable via `config.get("operatorInheritance.enabled")`. Chart test confirms it renders.
 - **Est:** XS · **Priority:** P0 · **Depends on:** —
 
-#### 3.2 — `OPERATOR_INHERITANCE_FREEZE_EDITS` env flag
-- **Description:** Same as 3.1 with a separate flag for the rollback freeze.
-- **Est:** XS · **Priority:** P0 · **Depends on:** —
+#### 3.2 — Per-deployment `Deployment.isFrozen` + `freezeDeployment` / `unfreezeDeployment` mutations (A.1)
+- **Description:** Add a Prisma migration adding `isFrozen: Boolean @default(false)` to `Deployment`. Add two new mutations in [`houston-api/src/schema/mutation.js`](../../../../houston-api/src/schema/mutation.js): `freezeDeployment(deploymentUuid: ID!, reason: String): Deployment!` and `unfreezeDeployment(deploymentUuid: ID!): Deployment!`. Resolver toggles the column and writes an audit-log entry. **Generic across modes** (helm + operator + adopted) — files outside operator-inheritance scope as a standalone capability. Workers consume the flag (Epic 4).
+- **Est:** S · **Priority:** P0 · **Depends on:** —
 
 #### 3.3 — `adoptDeployment` mutation schema
-- **Description:** Add to [`houston-api/src/schema/mutation.js`](../../../../houston-api/src/schema/mutation.js). Input type per [`m2-task-3` § Phase C](m2-task-3-migrate-deployments-to-cp.md#phase-c--adopt): `workspaceUuid`, `clusterId`, `crNamespace`, `crName`, `label?`, `description?`, `webserverUrl?`, `acceptIncompatibilities?`. Return type `Deployment!`.
+- **Description:** Add to [`houston-api/src/schema/mutation.js`](../../../../houston-api/src/schema/mutation.js). Input per [`m2-task-3` § Phase C](m2-task-3-migrate-deployments-to-cp.md#phase-c--adopt): `workspaceUuid`, `clusterId`, `crNamespace`, `crName`, `label?`, `description?`, `useApcLogging?`, `useApcMetrics?`, `useApcRegistry?`, `acceptIncompatibilities?` (default true). Return type `Deployment!`.
 - **Est:** S · **Priority:** P0 · **Depends on:** —
 
 #### 3.4 — `adoptDeployment` resolver (full 11-step flow)
-- **Description:** Implement `houston-api/src/resolvers/mutation/adopt-deployment/index.ts`. Steps per § Phase C: flag check, authz, `Commander.GetCustomResource`, catalogue map, incompatibility check (structured error), build upsert payload, write adoption metadata, Prisma create, role binding, audit log, return. **Do not publish worker event.**
-- **Acceptance criteria:**
-  - Creates a `Deployment` row with `mode=operator` and `config.adoption.adopted=true`.
-  - Creates exactly one `RoleBinding` (`DEPLOYMENT_ADMIN` → caller).
-  - On incompatible CR with `acceptIncompatibilities=false`, returns a GraphQL error with `extensions.code="ADOPTION_INCOMPATIBLE"` and `extensions.incompatibleFields[]`.
-  - No worker event published (verifiable via NATS spy in test).
-  - Audit-log entry written.
+- **Full ticket spec:** [`tickets/adopt-deployment-mutation.md`](tickets/adopt-deployment-mutation.md)
+- **Team:** PLX. Permissions + request/response shapes + 13 acceptance criteria fleshed out there.
 - **Est:** L · **Priority:** P0 · **Depends on:** 2.x, 3.1, 3.3, 3.7
 
 #### 3.5 — `unadoptDeployment` mutation schema
@@ -262,7 +257,7 @@ Priority: **P0** must-ship, **P1** should-ship, **P2** nice-to-have, **P3** stre
 
 ---
 
-### Epic 4 — Worker branching + `FREEZE_EDITS` enforcement
+### Epic 4 — Worker branching + `isFrozen` enforcement + adopted soft-delete
 **Milestone:** M2.D
 **Owner team:** Houston team — _owner TBD_
 **Sprint:** 2
@@ -287,16 +282,16 @@ Priority: **P0** must-ship, **P1** should-ship, **P2** nice-to-have, **P3** stre
   - If `envSecretNames` is empty, fall back to the standard `<releaseName>-env` (e.g. for re-adopted APC-emitted CRs).
 - **Est:** M · **Priority:** P0 · **Depends on:** 4.1, 6.1
 
-#### 4.5 — Universal `FREEZE_EDITS` short-circuit on all workers
-- **Description:** Before any Commander call, every worker checks `OPERATOR_INHERITANCE_FREEZE_EDITS === true` AND `deployment.config.adoption.adopted === true`. If both, log and return without calling Commander. Includes `deployment-deleted` worker — destructive actions also blocked during freeze.
+#### 4.5 — Universal `isFrozen` short-circuit on all workers (A.1)
+- **Description:** Before any Commander call, every worker checks `deployment.isFrozen === true`. If true, log and return without calling Commander — regardless of mode (helm / vanilla operator / adopted operator). Includes `deployment-deleted` worker's Commander call (the Houston-side row update still proceeds; only the K8s call is gated).
 - **Est:** S · **Priority:** P0 · **Depends on:** 3.2, 4.1–4.4
 
 #### 4.6 — Integration test: SSA preserves customer-set fields on edit
 - **Description:** End-to-end via a real Houston + Commander + k3d. Pre-create a CR with a custom toleration. Adopt it. Edit worker replicas via Houston. Assert: new pod count matches and the toleration is still on the CR.
 - **Est:** M · **Priority:** P0 · **Depends on:** 4.1, 1.6
 
-#### 4.7 — Integration test: FREEZE_EDITS halts every Commander call on adopted deployments
-- **Description:** Set `OPERATOR_INHERITANCE_FREEZE_EDITS=true`. Trigger updates on the adopted deployment from all five workers (or via the GraphQL surface that fans out to them). Assert: zero Commander calls during the freeze.
+#### 4.7 — Integration test: `isFrozen` halts every Commander call
+- **Description:** Call `freezeDeployment(deploymentUuid)` → assert `Deployment.isFrozen=true`. Trigger updates on the deployment from all five workers (via the GraphQL surfaces that fan out to them). Assert: zero Commander calls during the freeze. Call `unfreezeDeployment` and assert normal operation resumes.
 - **Est:** S · **Priority:** P0 · **Depends on:** 4.5
 
 ---
@@ -475,7 +470,7 @@ Priority: **P0** must-ship, **P1** should-ship, **P2** nice-to-have, **P3** stre
 - **Est:** M · **Priority:** P0 · **Depends on:** 5.7, 7.1
 
 #### 9.2 — Operator-facing rollback runbook
-- **Description:** New markdown doc `astronomer/docs/operator/operator-inheritance/runbook-rollback.md`. Covers FREEZE_EDITS flag flip, unadopt procedure, Commander rollback procedure.
+- **Description:** New markdown doc `astronomer/docs/operator/operator-inheritance/runbook-rollback.md`. Covers `freezeDeployment` / `unfreezeDeployment` flow, unadopt procedure, Commander rollback procedure.
 - **Est:** S · **Priority:** P0 · **Depends on:** 3.6, 4.5
 
 #### 9.3 — Update `astronomer/docs/operator/02-local-setup.md` for the new adoption flow
@@ -497,7 +492,7 @@ Priority: **P0** must-ship, **P1** should-ship, **P2** nice-to-have, **P3** stre
 
 **Sprint 2:**
 - M2.C complete — resolver does the full 11-step flow.
-- M2.D complete — workers branch correctly; FREEZE_EDITS halts edits.
+- M2.D complete — workers branch correctly; `isFrozen` halts edits; `deleteDeployment` on adopted deployments is soft-delete only.
 - M2.E mostly complete — E.1, E.4, E.5, E.3 ship; E.2 ships if 6.9 unblocks.
 - M2.F complete — CLI works end-to-end.
 - M2.G complete — runbooks written.

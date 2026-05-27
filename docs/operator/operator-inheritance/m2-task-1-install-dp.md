@@ -237,58 +237,28 @@ export function deploymentsUrl({ globalDeploymentsConfig, clusterDetails }) {  /
 
 **Net effect.** The customer's Airflow webserver hostname **must be a subdomain of the CP's `helm.baseDomain` at any depth** (e.g. if `helm.baseDomain = astro.acme.com`, then `airflow-prod.astro.acme.com` and `airflow-prod.eu.astro.acme.com` both work; `airflow.acme.com` does not). Without that, browser auth and OAuth callbacks break — Option B isn't really viable for a customer whose existing URL is on a totally different root domain.
 
-This re-frames the options below.
+### Decision (per design-review A.5): APC's URL pattern wins; customer keeps their ingress controller
 
-There are no good auto-detect options — Houston can't infer the customer's chosen URL from the CR. So this is a deliberate decision at adoption time. Four options:
+> The earlier draft offered four options (A/B/C/D) for handling the customer's existing URL. **All four were dropped at design review** in favour of a single design grounded in what Houston's auth flow can actually support.
 
-### Option A — Force migration to APC-managed URL ("clean cut")
+**The decision:** when an adopted deployment is **edited via Houston for the first time**, the SSA patch rewrites the CR's ingress block to APC's standard pattern (`<deployments-subdomain>.<helm.baseDomain>/<releaseName>/airflow`). The customer's previously-published URL stops working at that point.
 
-The customer reconfigures their own LB / DNS so the existing Airflow is reachable at `<releaseName>-airflow.<baseDomain>` via APC's nginx. The customer's old LB rules / DNS entries are removed once cutover completes.
+**What's preserved** is the **ingress controller / load-balancer IP**, not the URL string:
 
-- **Cookie/SSO compatibility.** ✅ Works — URL is under `.${helm.baseDomain}`.
-- **Pros.** No code changes. Houston's existing URL helpers work unchanged. Long-term one canonical URL pattern.
-- **Cons.** Customer DNS / cert / LB work — high-touch, risky for production tenants. Cutover window during which the old URL stops working. Hard sell for "zero downtime" customers.
-- **When this fits.** New-ish customers who haven't published their Airflow URL widely, or customers whose existing URL already matches APC's pattern.
+- **Customer using NGINX ingress controller already.** No new ingress controller is installed. APC's helm chart skips bringing up its own. The existing one keeps serving traffic; the only change is the Ingress object's path (now `/<releaseName>/airflow`). Auth annotations are added to the same Ingress.
+- **Customer on OpenShift / using a different ingress controller (e.g. OpenShift Routes).** APC's **auth sidecar** mechanism handles auth — set the relevant extra annotation, customer's controller stays in place, no NGINX needed. Load-balancer IP unchanged.
 
-### Option B — Per-deployment URL override on the `Deployment` row
+**Why no per-deployment URL override:** the JWT cookie is scoped to `.${helm.baseDomain}` (see code excerpts above). A URL outside that domain cannot work for browser-based auth no matter how Houston renders it. The earlier "Option B / Option D" (per-deployment URL override on the Deployment row) silently broke login for off-domain customers; we explicitly chose not to add that footgun.
 
-Store the customer's existing URLs in `Deployment.config.adoption.urls = { webserver, flower }`. Modify the helpers above to prefer the override when present, falling back to the computed URL otherwise. APC's nginx **does not** add Ingress rules for adopted deployments — the customer's existing LB keeps serving them.
+**Customer prerequisite:** they must whitelist `*.${helm.baseDomain}` (or the equivalent star-cert / DNS entry). Once that's in place, APC's URL pattern resolves correctly through their existing ingress controller and LB IP.
 
-- **Cookie/SSO compatibility.** ⚠️ Only viable if the customer's existing webserver hostname is *already* a subdomain (at any depth) of `helm.baseDomain` (e.g. `airflow-prod.eu.astro.acme.com` when `helm.baseDomain = astro.acme.com`). If the customer's URL is on a different root domain entirely, this option cannot deliver a working login flow.
-- **Pros.** Zero DNS / LB change for the customer. Customer-facing URL preserved exactly. Minimal disruption.
-- **Cons.** Code change in the four helper functions + every consumer (UI, CLI, audit, alerting). Houston's nginx-rules-creation code path must learn to skip adopted CRs. Two URL patterns to support indefinitely.
-- **When this fits.** Customers whose existing webserver hostname *already* ends in the CP's baseDomain — e.g. they used the same DNS zone for their operator install as APC will use for the CP.
+**Operational impact:**
+- Customer needs to update any external links / bookmarks pointing at the old Airflow URL after adoption + first edit.
+- No `webserverUrl` field on `AdoptDeploymentInput` (dropped per A.5).
+- No `Deployment.config.adoption.urls` block (dropped per A.5).
+- No code changes to `deploymentsSubdomain` / `airflowSubdomain` / `deploymentsUrl` (the helpers from Houston's utilities work as-is).
 
-### Option C — Reverse-proxy through APC nginx to the customer's LB
-
-APC's nginx Ingress for adopted CRs serves `<releaseName>-airflow.<baseDomain>` and proxies through to the customer's existing internal/external URL where the Airflow webserver actually lives. Houston URLs are unchanged.
-
-- **Cookie/SSO compatibility.** ✅ Works — the public URL the browser hits is under `.${helm.baseDomain}`, so cookies + OAuth redirects work. The fact that nginx proxies further is invisible to the browser.
-- **Pros.** Single URL pattern at the Houston / browser layer. Customer's pods don't move, customer's internal URL keeps working for their existing tooling.
-- **Cons.** Extra network hop. Per-CR nginx config. TLS chain complications if the customer's LB terminates with a different cert than APC.
-- **When this fits.** Customer's Airflow lives on a non-shared domain *and* they're OK with end-users hitting the new APC URL — but they still want their pods reachable at the old URL internally.
-
-### Option D — Remove rules from APC LB, expose only customer URL
-
-A variant of B. APC's nginx never creates Ingress / Service rules for adopted CRs. Houston is configured to display the customer's URL as the only URL.
-
-- **Cookie/SSO compatibility.** ⚠️ Same constraint as B — only works if the customer's URL is under `.${helm.baseDomain}`.
-- **Pros.** Even less APC-side wiring than B.
-- **Cons.** Same Houston changes as B. Operationally the customer must hand us the URL during adoption.
-
-### Recommendation
-
-Default depends on where the customer's existing webserver URL lives relative to `helm.baseDomain`:
-
-| Customer's existing URL | Recommendation |
-|---|---|
-| Already a subdomain of the CP's `helm.baseDomain` | **Option B** — render the existing URL directly, skip nginx rules. |
-| On a different root domain entirely | **Option C** — proxy through APC's nginx so the public URL is on the shared domain. Avoids forcing customer DNS changes while keeping auth working. |
-| Customer is willing to migrate DNS | **Option A** — cleanest long-term. |
-
-Either way, the operator-driven install runbook captures the customer's existing webserver/flower URLs per CR during the `adoptDeployment` flow (M2 / Task 3) and stores them in `Deployment.config.adoption.urls`. Picking Option C means we *also* spin up nginx rules at registration time.
-
-> Option B and Option D, despite being the lowest-touch from a chart perspective, **cannot** make browser auth work for a customer whose existing URL is off the CP's baseDomain. This is a hard constraint from the JWT cookie scope and the UI's OAuth redirect validator — not something we can sweep over without rewriting auth.
+> ~~Old draft: four options A/B/C/D with conditional recommendations.~~ **Replaced by the single design above (A.5).** Options B and D were never viable for off-domain customers anyway (cookie scope). C was a per-CR nginx-proxy workaround that adds operational complexity for a problem A.5 solves directly. A is essentially what we've kept — minus the language about "force migration".
 
 ## Affected files (initial estimate)
 
@@ -319,7 +289,7 @@ Either way, the operator-driven install runbook captures the customer's existing
 - [ ] **Failure recovery.** If install partially fails (e.g., nginx hostPort already taken), how do we cleanly roll back without touching the operator's resources?
 - [ ] **`baseDomain` enforcement.** Houston validates uniqueness of `baseDomain` per cluster ([`lib/clusters/index.js:552-557`](../../../../houston-api/src/lib/clusters/index.js#L552-L557)) but does **not** today validate equality with the CP's `helm.baseDomain`. Should we add an explicit equality check at registration time, or rely on operator runbook discipline?
 - [ ] **`registerCluster` from a service account.** The mutation accepts both user and service-account callers ([`lib/clusters/index.js:457-463`](../../../../houston-api/src/lib/clusters/index.js#L457-L463)). What credential should the install script use? Bootstrap a per-DP service account, or require a CP admin token?
-- [ ] **Deployment URL handling for adopted CRs.** Which option (A/B/C/D in the "Deployment URL handling" section) ships for v1? Default recommendation is B (override on `Deployment.config.adoption.urls`), but needs product/UX signoff. **Owner: TBD.**
+- [x] **Deployment URL handling for adopted CRs — resolved at design review (A.5).** APC's URL pattern wins on first edit; customer keeps their ingress controller / LB IP via auth-sidecar or BYO Nginx. No per-deployment URL override. See "Decision (per design-review A.5)" above.
 - [ ] **Adopted-deployment URL collection during onboarding.** If we go with Option B/D, where does the customer's per-CR URL come from? The CR itself doesn't carry it explicitly. Inferring from the customer's Ingress / Route resources is possible but fragile. Most likely answer: operator collects it interactively as part of the adopt step (M2 / Task 3).
 
 ## Out of scope for this task

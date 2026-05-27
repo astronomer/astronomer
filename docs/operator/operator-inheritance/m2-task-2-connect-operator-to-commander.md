@@ -125,15 +125,21 @@ Combine **A + B**:
 - B (adoption flag) lets us ship safely without touching every existing customer.
 - A (server-side apply) is the longer-term direction even for non-adopted deployments — it makes Commander's behaviour predictable and avoids the silent stomp.
 
-### Emergency rollback — install-wide freeze
+### Emergency rollback — per-deployment freeze (A.1)
 
-If A or B misbehave in the field, we need a way to stop APC from touching adopted CRs without rolling back the whole deployment. The lever: a new Houston env flag `OPERATOR_INHERITANCE_FREEZE_EDITS` (default `false`). When `true`, every worker that calls Commander checks `deployment.config.adoption.adopted` first and short-circuits — no `ApplyCustomResource`, no `DeleteCustomResource`. The CR keeps running, reconciled by the operator alone, until we fix the bug and flip the flag back.
+If A or B misbehave in the field, we need a way to stop APC from touching specific deployments without rolling back the whole installation. The lever: a new boolean column `Deployment.isFrozen` (default `false`) toggled by two new mutations — `freezeDeployment(deploymentUuid, reason)` and `unfreezeDeployment(deploymentUuid)`.
 
-Implementation lives in the workers, not Commander — Commander stays a dumb pipe, Houston decides whether to call it. Detailed semantics, including the safety net for the delete path, in [Task 3 § Phase F](m2-task-3-migrate-deployments-to-cp.md#phase-f--rollback--un-adopt).
+When `Deployment.isFrozen === true`, every worker that calls Commander short-circuits — no `ApplyCustomResource`, no `DeleteCustomResource`. The CR keeps running, reconciled by the operator alone, until we fix the bug and flip the flag back.
 
-Companion install-wide flag `OPERATOR_INHERITANCE_ENABLED` (default `false`) gates **new adoptions** — existing adopted deployments are not affected by `_ENABLED` alone. Both flags are independent and combine as you'd expect.
+This is **generic across modes** (helm + operator + adopted) — useful for any deployment with a stuck rollout, not just adopted ones. Files as a parallel ticket outside the operator-inheritance project; adoption is just one consumer of the feature.
 
-> Don't add a separate `COMMANDER_ALLOW_SSA` kill-switch. SSA is invoked only when Houston sends `field_manager`, which Houston only does for adopted deployments — both flags above already gate that.
+Implementation lives in the workers, not Commander — Commander stays a dumb pipe, Houston decides whether to call it. Detailed semantics, including the soft-delete-only behaviour for adopted deployments, in [Task 3 § Phase F](m2-task-3-migrate-deployments-to-cp.md#phase-f--rollback--un-adopt).
+
+Companion install-wide flag `OPERATOR_INHERITANCE_ENABLED` (default `false`) gates **new adoptions** — existing adopted deployments are not affected by `_ENABLED`. Use the per-deployment freeze for that.
+
+> ~~Old draft: `OPERATOR_INHERITANCE_FREEZE_EDITS` install-wide env flag.~~ Replaced by per-deployment `Deployment.isFrozen` (A.1) — install-wide was too blunt; one bad deployment shouldn't freeze the other nine.
+
+> Don't add a separate `COMMANDER_ALLOW_SSA` kill-switch. SSA is invoked only when Houston sends `field_manager`, which Houston only does for adopted deployments — the freeze + adoption flag already gate that.
 
 ## Discovery / association
 
