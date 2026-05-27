@@ -693,7 +693,7 @@ def _generate_helm_values(s: Settings, values_dir: Path) -> Path:
             "plane": {"mode": "unified"},
             "baseDomain": s.base_domain,
             "tlsSecret": s.tls_secret_name,
-            "airflowOperator": {"enabled": True, "inClusterPostgres": True},
+            "airflowOperator": {"enabled": True},
             "postgresql": {"enabled": True},
             "rbac": {"enabled": True},
             "clusterRoles": True,
