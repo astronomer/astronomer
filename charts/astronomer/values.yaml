@@ -43,6 +43,9 @@ images:
 securityContext:
   runAsNonRoot: true
 
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext: {}
+
 astroUI:
   replicas: 2
   env: []
