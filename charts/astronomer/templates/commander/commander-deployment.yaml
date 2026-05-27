@@ -56,7 +56,7 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
-      securityContext: {{- include "astronomer.commander.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "astronomer.podSecurityContext" . | nindent 8 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- include "commander.hostAliases" . | nindent 6 }}

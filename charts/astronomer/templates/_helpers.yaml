@@ -860,17 +860,6 @@ omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation
 {{- end }}
 
 {{/*
-Return commander podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
-*/}}
-{{- define "astronomer.commander.podSecurityContext" -}}
-{{- if .Values.global.openshift.enabled }}
-{{- omit .Values.commander.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.commander.podSecurityContext }}
-{{- end -}}
-{{- end }}
-
-{{/*
 Return registry podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
 */}}
 {{- define "astronomer.registry.podSecurityContext" -}}
