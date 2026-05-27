@@ -21,6 +21,9 @@ images:
 securityContext:
   runAsNonRoot: true
 
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext: {}
+
 serviceAccount:
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   automountServiceAccountToken: true
