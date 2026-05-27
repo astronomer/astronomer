@@ -106,6 +106,17 @@ imagePullSecrets:
 {{- end -}}
 {{- end }}
 
+{{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "prometheus.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
 {{- define "prometheus.airflowMetricsActionDrop" }}
 - source_labels: [__name__]
   regex: 'airflow_task_instance_created_.*'

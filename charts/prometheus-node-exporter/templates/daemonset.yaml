@@ -33,9 +33,7 @@ spec:
       priorityClassName:  {{ .Values.priorityClassName  }}
 {{ end }}
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
-{{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
-{{- end }}
+      securityContext: {{- include "prometheus-node-exporter.podSecurityContext" . | nindent 8 }}
 {{- include "prometheus-node-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: node-exporter
