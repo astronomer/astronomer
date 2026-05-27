@@ -846,3 +846,26 @@ entropy of a Fernet key.
 {{- merge $required .Values.houston.logging.loggingSidecar.securityContext | toYaml }}
 {{- end -}}
 {{- end }}
+
+{{/*
+Return shared podSecurityContext (astro-ui, navigator, pilot, dp-link),
+omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "astronomer.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return registry podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "astronomer.registry.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.registry.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.registry.podSecurityContext }}
+{{- end -}}
+{{- end }}

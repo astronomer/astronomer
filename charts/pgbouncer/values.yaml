@@ -9,6 +9,9 @@ image:
 securityContext:
   runAsNonRoot: true
 
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext: {}
+
 internalPort: 6543
 servicePort: 6543
 
