@@ -1,23 +1,71 @@
 ---
 name: helm-chart
-description: Use for Helm chart work - creating charts, modifying existing charts, values design, testing. For the Astronomer APC repository, see SPEC.md for repository-specific guidance.
+description: Use for Helm chart work - creating charts, modifying existing charts, values design, testing. For the Astronomer APC repository, see docs/architecture.md for the platform overview.
 ---
 
 # Helm Chart Work Guide
 
 ## Working on the Astronomer APC Chart
 
-**See SPEC.md in the repository root for all APC-specific guidance:**
+APC is an umbrella chart: templates live at the umbrella level (under `templates/` and `charts/<chart>/templates/`), sub-charts are tightly coupled and not intended to be used standalone, and a single `values.yaml` controls the entire platform. See [docs/architecture.md](../../../docs/architecture.md) for the installation modes (unified / control / data), per-mode component inventory, and cross-plane communication.
 
-- **Architecture**: Umbrella chart design, sub-chart organization, design principles
-- **Template Best Practices**: See "Probe Customization Pattern" section
-  - **Critical**: Every container must support customizable livenessProbe and readinessProbe
-- **Testing Strategy**: See the [chart-tests skill](../chart-tests/SKILL.md) — load it when writing or running tests
-  - **Critical**: Values nesting for sub-charts, probe customization, and `uv run pytest` usage are all covered there
-- **Code Standards**: Naming conventions, template best practices, Python script standards
-- **Values Documentation**: Helm-docs adoption plan, JSON schema structure
-- **Refactoring Guidelines**: Modernization roadmap and improvement areas
-- **Development Workflow**: Setup, building, validating changes
+For testing, use the [chart-tests skill](../chart-tests/SKILL.md) — it covers `render_chart()`, sub-chart values nesting, parametrized tests, and `uv run pytest` usage.
+
+### Template layout
+
+Three filename styles coexist in this repo. When adding a new template, follow whichever style the surrounding chart already uses — we do not retroactively rename existing files.
+
+**Style 1 — component-prefixed bare files.** Used in single-component sub-charts: `alertmanager`, `external-es-proxy`, `external-secrets`, `grafana`, `kube-state`, `pgbouncer`, `prometheus`, `vector`. Filenames are `<chart>[-feature]-<k8s_object>.yaml` directly under `templates/`.
+
+```
+charts/alertmanager/templates/alertmanager-statefulset.yaml
+charts/prometheus/templates/prometheus-alerts-configmap.yaml
+charts/vector/templates/vector-daemonset.yaml
+```
+
+**Style 2 — bare object-name files.** Used in sub-charts derived from upstream third-party charts: `postgresql`, `nats`, `prometheus-postgres-exporter`. Filenames are just `<k8s_object>.yaml`. Keep this style for these charts so future re-syncs with upstream stay easy.
+
+```
+charts/postgresql/templates/statefulset.yaml
+charts/nats/templates/configmap.yaml
+charts/prometheus-postgres-exporter/templates/deployment.yaml
+```
+
+**Style 3 — sub-component subdirectories.** Used in charts that contain multiple distinct sub-components: `astronomer` (Houston, Commander, Astro UI, Registry, Pilot, …), `nginx` (controlplane / dataplane variants), `elasticsearch` (master / data / client / curator / exporter), `airflow-operator` (rbac / manager / webhooks / …). Each sub-component lives in its own subdirectory and the sub-component name is repeated in the filename — the redundancy keeps the file identifiable from its basename alone.
+
+```
+charts/astronomer/templates/commander/commander-deployment.yaml
+charts/astronomer/templates/houston/api/houston-deployment.yaml
+charts/nginx/templates/controlplane/nginx-cp-deployment.yaml
+charts/elasticsearch/templates/master/es-master-statefulset.yaml
+```
+
+In all three styles: lowercase with hyphens, helpers live in `_helpers.yaml` (or `_helpers.tpl`), and the K8s object kind (`deployment`, `configmap`, `networkpolicy`, `service`, `serviceaccount`, `role`, `rolebinding`, `ingress`, …) is part of the filename so resources are easy to locate.
+
+### Probe customization
+
+Every container should expose `livenessProbe` and `readinessProbe` as overridable values so operators can tune health checks for their environments (slow-starting components, alternative probe methods, higher failure thresholds).
+
+```yaml
+# In the deployment template
+{{- if .Values.myComponent.livenessProbe }}
+livenessProbe: {{ tpl (toYaml .Values.myComponent.livenessProbe) $ | nindent 12 }}
+{{- else }}
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+{{- end }}
+
+# In values.yaml
+myComponent:
+  # -- Custom liveness probe configuration (overrides default)
+  livenessProbe: {}
+  # -- Custom readiness probe configuration (overrides default)
+  readinessProbe: {}
+```
 
 ### Values Documentation
 
@@ -73,8 +121,6 @@ Create `values.schema.json`:
 6. All changes must pass pre-commit checks with `prek run --all-files`
 
 ---
-
-**For the Astronomer APC repository, SPEC.md is the authoritative source.**
 
 ### Labels & Annotations
 

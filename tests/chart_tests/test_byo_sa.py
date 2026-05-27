@@ -52,18 +52,26 @@ class TestServiceAccounts:
         assert not docs
 
     def test_serviceaccount_with_overrides(self, kube_version):
-        "Test that if custom SA are added it gets created"
+        "Test that custom SA names are applied and automountServiceAccountToken defaults to true"
         values = {
-            "astronomer": {
-                "commander": {"serviceAccount": {"create": "true", "name": "commander-test"}},
-                "registry": {"serviceAccount": {"create": "true", "name": "registry-test"}},
-                "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test"}},
-                "houston": {"serviceAccount": {"create": "true", "name": "houston-test"}},
-                "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test"}},
+            "global": {
+                "postgresql": {"enabled": True},
+                "nodeExporter": {"enabled": True},
             },
-            "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
-            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
-            "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
+            "astronomer": {
+                "commander": {"serviceAccount": {"create": True, "name": "commander-test"}},
+                "registry": {"serviceAccount": {"create": True, "name": "registry-test"}},
+                "configSyncer": {"serviceAccount": {"create": True, "name": "configsyncer-test"}},
+                "houston": {"serviceAccount": {"create": True, "name": "houston-test"}},
+                "astroUI": {"serviceAccount": {"create": True, "name": "astroui-test"}},
+                "navigator": {"enabled": True, "serviceAccount": {"create": True, "name": "navigator-test"}},
+                "dpLink": {"serviceAccount": {"create": True, "name": "dplink-test"}},
+            },
+            "nats": {"nats": {"serviceAccount": {"create": True, "name": "nats-test"}}},
+            "grafana": {"serviceAccount": {"create": True, "name": "grafana-test"}},
+            "alertmanager": {"serviceAccount": {"create": True, "name": "alertmanager-test"}},
+            "postgresql": {"serviceAccount": {"create": True, "name": "postgresql-test"}},
+            "prometheus-node-exporter": {"serviceAccount": {"create": True, "name": "pne-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -74,24 +82,101 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
+                "charts/astronomer/templates/navigator/navigator-serviceaccount.yaml",
+                "charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
+                "charts/postgresql/templates/serviceaccount.yaml",
+                "charts/prometheus-node-exporter/templates/serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 8
+        assert len(docs) == 12
         expected_names = {
             "commander-test",
             "registry-test",
             "configsyncer-test",
             "houston-test",
             "astroui-test",
+            "navigator-test",
+            "dplink-test",
             "grafana-test",
             "alertmanager-test",
+            "postgresql-test",
+            "pne-test",
         }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
+        assert all(doc["automountServiceAccountToken"] is True for doc in docs)
+
+    def test_automountServiceAccountToken_with_overrides(self, kube_version):
+        "Test that automountServiceAccountToken can be overridden to false per component"
+        values = {
+            "global": {
+                "postgresql": {"enabled": True},
+                "nodeExporter": {"enabled": True},
+            },
+            "astronomer": {
+                "commander": {"serviceAccount": {"create": True, "name": "commander-test", "automountServiceAccountToken": False}},
+                "registry": {"serviceAccount": {"create": True, "name": "registry-test", "automountServiceAccountToken": False}},
+                "configSyncer": {
+                    "serviceAccount": {"create": True, "name": "configsyncer-test", "automountServiceAccountToken": False}
+                },
+                "houston": {"serviceAccount": {"create": True, "name": "houston-test", "automountServiceAccountToken": False}},
+                "astroUI": {"serviceAccount": {"create": True, "name": "astroui-test", "automountServiceAccountToken": False}},
+                "navigator": {
+                    "enabled": True,
+                    "serviceAccount": {"create": True, "name": "navigator-test", "automountServiceAccountToken": False},
+                },
+                "dpLink": {"serviceAccount": {"create": True, "name": "dplink-test", "automountServiceAccountToken": False}},
+            },
+            "nats": {"nats": {"serviceAccount": {"create": True, "name": "nats-test", "automountServiceAccountToken": False}}},
+            "grafana": {"serviceAccount": {"create": True, "name": "grafana-test", "automountServiceAccountToken": False}},
+            "alertmanager": {
+                "serviceAccount": {"create": True, "name": "alertmanager-test", "automountServiceAccountToken": False}
+            },
+            "postgresql": {"serviceAccount": {"create": True, "name": "postgresql-test", "automountServiceAccountToken": False}},
+            "prometheus-node-exporter": {
+                "serviceAccount": {"create": True, "name": "pne-test", "automountServiceAccountToken": False}
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/astronomer/templates/commander/commander-serviceaccount.yaml",
+                "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
+                "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
+                "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
+                "charts/astronomer/templates/navigator/navigator-serviceaccount.yaml",
+                "charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml",
+                "charts/nats/templates/nats-serviceaccount.yaml",
+                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
+                "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
+                "charts/postgresql/templates/serviceaccount.yaml",
+                "charts/prometheus-node-exporter/templates/serviceaccount.yaml",
+            ],
+        )
+
+        assert len(docs) == 12
+        expected_names = {
+            "commander-test",
+            "registry-test",
+            "configsyncer-test",
+            "houston-test",
+            "astroui-test",
+            "navigator-test",
+            "dplink-test",
+            "grafana-test",
+            "alertmanager-test",
+            "postgresql-test",
+            "pne-test",
+        }
+        extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
+        assert expected_names.issubset(extracted_names)
+        assert all(doc["automountServiceAccountToken"] is False for doc in docs)
 
     def test_serviceaccount_with_create_disabled(self, kube_version):
         "Test that if SA create disabled"
