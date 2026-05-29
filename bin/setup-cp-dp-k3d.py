@@ -566,9 +566,7 @@ def _kubectl_apply_yaml(context: str, yaml_text: str) -> None:
 # ---------------------------------------------------------------------------
 
 CERT_MANAGER_VERSION = "v1.5.4"
-CERT_MANAGER_MANIFEST_URL = (
-    f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
-)
+CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
 
 
 def _install_cert_manager(context: str) -> None:
@@ -588,10 +586,7 @@ def _pin_cert_manager_to_control_plane(context: str) -> None:
     proxy can't reach it across the Flannel VXLAN overlay in k3d, causing 502 errors.
     Pinning to the control-plane node (10.42.0.x) keeps webhook calls local.
     """
-    node_selector_patch = (
-        '{"spec":{"template":{"spec":{"nodeSelector":'
-        '{"node-role.kubernetes.io/control-plane":"true"}}}}}'
-    )
+    node_selector_patch = '{"spec":{"template":{"spec":{"nodeSelector":{"node-role.kubernetes.io/control-plane":"true"}}}}}'
     for deployment in ("cert-manager-webhook", "cert-manager-cainjector", "cert-manager"):
         _run(
             [
@@ -1243,7 +1238,6 @@ def _ensure_dp_node_houston_hosts_pin(settings: Settings, dp: DataPlane) -> None
     """
     primary_cp = settings.control_planes[0]
     cp_context = f"k3d-{primary_cp.cluster_name}"
-    dp_node_container = f"k3d-{dp.cluster_name}-server-0"
     cp_nginx_svc = f"{settings.release_name}-cp-nginx"
 
     cp_nginx_lb_ip = _kubectl_get_service_lb_ip(cp_context, settings.namespace, cp_nginx_svc)

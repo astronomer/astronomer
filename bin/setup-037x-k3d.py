@@ -186,9 +186,7 @@ HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
 HELM_REPO_URL = "https://internal-helm.astronomer.io"
 
 CERT_MANAGER_VERSION = "v1.5.4"
-CERT_MANAGER_MANIFEST_URL = (
-    f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
-)
+CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
 
 
 def _install_cert_manager(context: str) -> None:
