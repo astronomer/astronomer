@@ -18,43 +18,45 @@ This document covers how to set up a local APC environment with the Airflow Oper
 
 ## Quick Start (Automated)
 
-A setup script is provided at `bin/setup-operator-k3d.py`. It creates a single unified-plane k3d cluster with the Airflow Operator enabled.
+Operator-mode local setup is now part of the standard CP/DP setup script at `bin/setup-cp-dp-k3d.py`. It creates separate control-plane and data-plane k3d clusters with the Airflow Operator enabled by default.
 
 ```bash
 # From the astronomer repo root:
-python3 bin/setup-operator-k3d.py
+python3 bin/setup-cp-dp-k3d.py
 
 # With custom domain:
-python3 bin/setup-operator-k3d.py --base-domain local.astro.dev
+python3 bin/setup-cp-dp-k3d.py --base-domain local.astro.dev
 
 # With MySQL instead of PostgreSQL for Airflow metadata DB:
-python3 bin/setup-operator-k3d.py --airflow-db mysql
+python3 bin/setup-cp-dp-k3d.py --dp-airflow-db mysql
 
 # Skip steps you've already done:
-python3 bin/setup-operator-k3d.py --skip-certs --skip-clusters
+python3 bin/setup-cp-dp-k3d.py --skip-certs --skip-clusters
 
 # With extra Helm values:
-python3 bin/setup-operator-k3d.py --helm-values /path/to/custom-values.yaml
+python3 bin/setup-cp-dp-k3d.py --helm-values /path/to/custom-values.yaml
 
-# Recreate the cluster from scratch:
-python3 bin/setup-operator-k3d.py --recreate-cluster
+# Recreate the clusters from scratch:
+python3 bin/setup-cp-dp-k3d.py --recreate-clusters
+
+# Fall back to the helm-based (non-operator) airflow path:
+python3 bin/setup-cp-dp-k3d.py --no-enable-operator
 ```
 
 ### What the Script Does
 
 1. Validates prerequisites (docker, k3d, kubectl, helm, mkcert)
 2. Sets up local pull-through registry proxies (quay.io, docker.io, etc.)
-3. Generates TLS certificates with mkcert
-4. Creates a k3d cluster (`operator-dev`)
-5. Creates the `astronomer` namespace + TLS secrets
-6. Generates Helm values with operator enabled:
-   - `global.airflowOperator.enabled: true`
-   - `airflow-operator.crd.create: true`
-   - `airflow-operator.certManager.enabled: true`
-7. Runs `helm upgrade --install` with the astronomer chart
-8. Waits for operator pod readiness
-9. Verifies CRDs are installed and webhooks are running
-10. Prints `/etc/hosts` entries and next steps
+3. Generates TLS certificates with mkcert (SANs covering both CP and DP subdomains)
+4. Creates a CP k3d cluster (`cp01`) and one or more DP k3d clusters (`dp01`, …)
+5. Creates the `astronomer` namespace + TLS secrets in every cluster
+6. Generates Helm values with the operator enabled (when `--enable-operator`, the default):
+   - `global.airflowOperator.enabled: true` (on both CP and DP)
+   - `airflow-operator.crd.create: true` (DP only)
+   - `airflow-operator.certManager.enabled: true` (DP only)
+7. Runs `helm upgrade --install` against each cluster (CP first, then each DP)
+8. Reconciles cross-cluster DNS so DP components can reach CP endpoints
+9. Prints `/etc/hosts` entries and next steps
 
 ---
 

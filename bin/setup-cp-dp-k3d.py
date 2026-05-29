@@ -208,6 +208,7 @@ class Settings:
     helm_timeout: str
     helm_debug: bool
     dp_airflow_db: str
+    enable_operator: bool
     agents: int = 0
 
 
@@ -560,6 +561,76 @@ def _kubectl_apply_yaml(context: str, yaml_text: str) -> None:
     _run(["kubectl", "--context", context, "apply", "-f", "-"], check=True, stdin=yaml_text)
 
 
+# ---------------------------------------------------------------------------
+# cert-manager (required by the airflow-operator webhooks)
+# ---------------------------------------------------------------------------
+
+CERT_MANAGER_VERSION = "v1.5.4"
+CERT_MANAGER_MANIFEST_URL = (
+    f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
+)
+
+
+def _install_cert_manager(context: str) -> None:
+    """Install cert-manager CRDs + controller into the cluster behind `context`. Idempotent."""
+    _print(f"Installing cert-manager {CERT_MANAGER_VERSION} into {context}")
+    _run(
+        ["kubectl", "--context", context, "apply", "-f", CERT_MANAGER_MANIFEST_URL],
+        capture=False,
+    )
+
+
+def _pin_cert_manager_to_control_plane(context: str) -> None:
+    """Pin cert-manager pods to the k3s control-plane node.
+
+    The kube-apiserver calls cert-manager's admission webhook for Certificate/Issuer
+    resources. If the webhook pod lands on an agent node (10.42.1.x), the apiserver
+    proxy can't reach it across the Flannel VXLAN overlay in k3d, causing 502 errors.
+    Pinning to the control-plane node (10.42.0.x) keeps webhook calls local.
+    """
+    node_selector_patch = (
+        '{"spec":{"template":{"spec":{"nodeSelector":'
+        '{"node-role.kubernetes.io/control-plane":"true"}}}}}'
+    )
+    for deployment in ("cert-manager-webhook", "cert-manager-cainjector", "cert-manager"):
+        _run(
+            [
+                "kubectl",
+                "--context",
+                context,
+                "patch",
+                "deployment",
+                deployment,
+                "-n",
+                "cert-manager",
+                "--type=merge",
+                f"--patch={node_selector_patch}",
+            ],
+            check=False,  # tolerate if a deployment doesn't exist yet
+        )
+
+
+def _wait_for_cert_manager(context: str, timeout_s: int = 180) -> None:
+    """Wait for the cert-manager controller + webhook deployments to become available."""
+    _print(f"Waiting for cert-manager to be ready ({context})")
+    for deployment in ("cert-manager", "cert-manager-webhook"):
+        _run(
+            [
+                "kubectl",
+                "--context",
+                context,
+                "-n",
+                "cert-manager",
+                "wait",
+                "--for=condition=available",
+                f"deployment/{deployment}",
+                f"--timeout={timeout_s}s",
+            ],
+            capture=False,
+        )
+    _print(f"cert-manager is ready ({context})")
+
+
 def _kubectl_create_namespace(context: str, namespace: str) -> None:
     proc = _run(["kubectl", "--context", context, "create", "namespace", namespace], check=False)
     if proc.returncode == 0:
@@ -636,6 +707,28 @@ def _write_values_file(path: Path, content: str) -> None:
 
 
 def _cp_values_yaml(settings: Settings) -> str:
+    operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
+    # The airflow-operator subchart is conditionally installed by
+    # global.airflowOperator.enabled. We set that flag on the CP so houston-configmap
+    # learns operator mode is on, but the actual operator controller belongs on the DP.
+    # Neutralize the subchart on the CP: zero replicas, no CRDs (DP owns them), no
+    # webhook configs (no apiserver -> empty-endpoint calls), no cert-manager dance.
+    operator_subchart_block = (
+        """\
+airflow-operator:
+  crd:
+    create: false
+  certManager:
+    enabled: false
+  webhooks:
+    enabled: false
+  manager:
+    replicas: 0
+
+"""
+        if settings.enable_operator
+        else ""
+    )
     return f"""\
 global:
   baseDomain: {settings.base_domain}
@@ -659,6 +752,7 @@ global:
     enabled: true
   dagOnlyDeployment:
     enabled: true
+{operator_block}
 
 tags:
   platform: true
@@ -741,11 +835,49 @@ postgresql:
   service:
     type: NodePort
     nodePort: {CP_POSTGRES_NODEPORT}
-"""
+
+{operator_subchart_block}"""
 
 
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     """Generate DP Helm values.  PostgreSQL is always disabled — DPs use the CP's shared postgres."""
+    global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
+    # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
+    # (see Chart.yaml condition). The values block below is only consumed when
+    # that flag is on; we emit it only in that case for clarity.
+    operator_subchart_block = (
+        """\
+airflow-operator:
+  crd:
+    create: true
+  certManager:
+    enabled: true
+  images:
+    manager:
+      repository: quay.io/astronomer/airflow-operator-controller
+      tag: "1.5.2"
+  manager:
+    replicas: 1
+    # Pin the operator controller (which also serves the admission webhook) to
+    # the control-plane node.  The kube-apiserver runs on that same node and
+    # reaches webhook pods via its own pod-network (10.42.0.x).  If the
+    # controller lands on an agent node (10.42.1.x), the apiserver has to
+    # traverse the Flannel VXLAN overlay between Docker containers, which
+    # fails with "502 Bad Gateway" in k3d.
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+"""
+        if settings.enable_operator
+        else ""
+    )
     return f"""\
 global:
   baseDomain: {settings.base_domain}
@@ -769,12 +901,12 @@ global:
     enabled: true
   dagOnlyDeployment:
     enabled: true
-
+{global_operator_block}
 tags:
   platform: true
   postgresql: false
 
-astronomer:
+{operator_subchart_block}astronomer:
   commander:
     replicas: 1
   registry: {{}}
@@ -1271,6 +1403,18 @@ def parse_args() -> argparse.Namespace:
         help="Database type for Airflow deployments on the data plane (default: postgres).",
     )
 
+    parser.add_argument(
+        "--enable-operator",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Enable Airflow operator mode. Sets global.airflowOperator.enabled=true on "
+            "both CP and DP, and renders the airflow-operator subchart values on the DP. "
+            "Pass --no-enable-operator to fall back to the helm-based airflow path. "
+            "Default: enabled."
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -1318,6 +1462,7 @@ def main() -> int:  # noqa: C901
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
         dp_airflow_db=args.dp_airflow_db,
+        enable_operator=bool(args.enable_operator),
         agents=args.agents,
     )
 
@@ -1523,6 +1668,16 @@ def main() -> int:  # noqa: C901
                     ms.done(h)
                 else:
                     ms.skip(f"Pre-DP: update {dp.cluster_name} CoreDNS NodeHosts for CP ingress", reason="--skip-dns-reconcile set")
+
+                # The airflow-operator webhooks need cert-manager's Issuer/Certificate
+                # flow to produce `webhook-server-cert`. Install cert-manager before the
+                # DP helm release so the Certificate the chart creates can be fulfilled.
+                if settings.enable_operator:
+                    h = ms.start(f"Install cert-manager on {dp.cluster_name} (operator webhooks)")
+                    _install_cert_manager(dp_ctx)
+                    _pin_cert_manager_to_control_plane(dp_ctx)
+                    _wait_for_cert_manager(dp_ctx)
+                    ms.done(h, detail=f"version={CERT_MANAGER_VERSION}")
 
                 h = ms.start(f"Helm install/upgrade Data Plane (context={dp_ctx})")
                 _helm_upgrade_install(

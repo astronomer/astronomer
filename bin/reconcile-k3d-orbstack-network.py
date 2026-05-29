@@ -195,6 +195,7 @@ def _settings_from_env() -> Settings:
         base_domain=os.environ.get("BASE_DOMAIN", "localtest.me"),
         dp_domain_prefix=os.environ.get("DP_DOMAIN_PREFIX", "dp01"),
         dp_node_container=os.environ.get("DP_NODE_CONTAINER", "k3d-dp01-server-0"),
+        dp_agents=int(os.environ.get("DP_AGENTS", "0")),
         cp_ingress_service=os.environ.get("CP_INGRESS_SERVICE", "astronomer-cp-nginx"),
     )
 
