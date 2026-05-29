@@ -15,6 +15,9 @@ images:
 securityContext:
   runAsNonRoot: true
 
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext: {}
+
 env: {}
 resources:
   limits:
