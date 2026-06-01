@@ -565,7 +565,7 @@ def _kubectl_apply_yaml(context: str, yaml_text: str) -> None:
 # cert-manager (required by the airflow-operator webhooks)
 # ---------------------------------------------------------------------------
 
-CERT_MANAGER_VERSION = "v1.5.4"
+CERT_MANAGER_VERSION = "v1.19.4"
 CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
 
 
@@ -1349,10 +1349,11 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--recreate-clusters", action="store_true", help="Delete and recreate k3d clusters if they exist")
     parser.add_argument(
-        "--agents",
+        "--num-compute-nodes",
+        dest="num_compute_nodes",
         type=int,
         default=0,
-        help="Number of k3d agent (worker) nodes per cluster. Applies to both CP and DP clusters. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding agents.",
+        help="Number of additional k3d worker nodes per cluster (mapped to k3d --agents). Applies to both CP and DP clusters. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding nodes.",
     )
     parser.add_argument(
         "--no-local-registry",
@@ -1457,7 +1458,7 @@ def main() -> int:  # noqa: C901
         helm_debug=bool(args.helm_debug),
         dp_airflow_db=args.dp_airflow_db,
         enable_operator=bool(args.enable_operator),
-        agents=args.agents,
+        agents=args.num_compute_nodes,
     )
 
     try:
