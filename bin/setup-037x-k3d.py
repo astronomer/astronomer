@@ -56,6 +56,7 @@ _REGISTRY_SPECS: tuple[_RegistrySpec, ...] = (
     _RegistrySpec(name="astronomer-registry-proxy-docker", upstream="https://registry-1.docker.io", host_port=15002),
     _RegistrySpec(name="astronomer-registry-proxy-elastic", upstream="https://docker.elastic.co", host_port=15003),
     _RegistrySpec(name="astronomer-registry-proxy-k8s", upstream="https://registry.k8s.io", host_port=15004),
+    _RegistrySpec(name="astronomer-registry-proxy-astrocrpublic", upstream="https://astrocrpublic.azurecr.io", host_port=15005),
 )
 
 
@@ -151,6 +152,7 @@ def _get_registry_config_path(docker_network: str) -> Path:
     proxy_docker = "astronomer-registry-proxy-docker"
     proxy_elastic = "astronomer-registry-proxy-elastic"
     proxy_k8s = "astronomer-registry-proxy-k8s"
+    proxy_astrocrpublic = "astronomer-registry-proxy-astrocrpublic"
 
     content = f"""\
 mirrors:
@@ -169,6 +171,9 @@ mirrors:
   "registry.k8s.io":
     endpoint:
       - "http://{proxy_k8s}:5000"
+  "astrocrpublic.azurecr.io":
+    endpoint:
+      - "http://{proxy_astrocrpublic}:5000"
 """
     HELPER_DIR.mkdir(parents=True, exist_ok=True)
     K3D_REGISTRY_CONFIG_PATH.write_text(content)
@@ -179,6 +184,33 @@ DEFAULT_CHART_VERSION = "0.37.7"
 HELM_REPO_NAME = "astronomer-internal"
 HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
 HELM_REPO_URL = "https://internal-helm.astronomer.io"
+
+CERT_MANAGER_VERSION = "v1.19.4"
+CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
+
+
+def _install_cert_manager(context: str) -> None:
+    """Install cert-manager CRDs + controller. Idempotent (kubectl apply)."""
+    _run(["kubectl", "--context", context, "apply", "-f", CERT_MANAGER_MANIFEST_URL], capture=False)
+
+
+def _wait_for_cert_manager(context: str, timeout_s: int = 180) -> None:
+    for deployment in ("cert-manager", "cert-manager-webhook", "cert-manager-cainjector"):
+        _run(
+            [
+                "kubectl",
+                "--context",
+                context,
+                "wait",
+                "-n",
+                "cert-manager",
+                f"deployment/{deployment}",
+                "--for",
+                "condition=available",
+                f"--timeout={timeout_s}s",
+            ],
+            capture=False,
+        )
 
 
 def _print(msg: str) -> None:
@@ -428,6 +460,7 @@ class Settings:
     chart_version: str
     helm_timeout: str
     helm_debug: bool
+    agents: int = 0
 
 
 def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
@@ -482,10 +515,11 @@ def _k3d_create_cluster(
     docker_network: str,
     ports: list[str],
     mkcert_root_ca: Path,
+    agents: int = 1,
     registry_config: Path | None = None,
 ) -> None:
     """Create a k3d cluster with traefik disabled."""
-    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*"
+    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*;agent:*"
     cmd = [
         "k3d",
         "cluster",
@@ -493,6 +527,8 @@ def _k3d_create_cluster(
         name,
         "--network",
         docker_network,
+        "--agents",
+        str(agents),
         "--k3s-arg",
         "--disable=traefik@server:0",
         "--volume",
@@ -593,10 +629,11 @@ def _values_yaml(settings: Settings) -> str:
     """Generate 0.37.x-schema values for a local single-cluster deployment."""
     return f"""\
 global:
+  airflowOperator:
+    enabled: true
   baseDomain: {settings.base_domain}
   tlsSecret: {settings.tls_secret_name}
-  postgresql:
-    enabled: true
+  postgresqlEnabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   rbacEnabled: true
@@ -629,6 +666,7 @@ global:
 
 tags:
   platform: true
+  postgresql: true
   monitoring: true
   logging: true
   stan: true
@@ -638,11 +676,11 @@ astronomer:
     replicas: 1
     resources:
       requests:
-        cpu: "100m"
-        memory: "256Mi"
+        cpu: "50m"
+        memory: "128Mi"
       limits:
-        cpu: "500m"
-        memory: "1024Mi"
+        cpu: "250m"
+        memory: "512Mi"
   houston:
     replicas: 1
     worker:
@@ -658,11 +696,11 @@ astronomer:
         hardDeleteDeployment: true
     resources:
       requests:
-        cpu: "250m"
+        cpu: "100m"
         memory: "512Mi"
       limits:
         cpu: "500m"
-        memory: "1024Mi"
+        memory: "1536Mi"
   commander:
     replicas: 1
     resources:
@@ -686,20 +724,20 @@ nginx:
   replicasDefaultBackend: 1
   resources:
     requests:
-      cpu: "250m"
-      memory: "256Mi"
+      cpu: "50m"
+      memory: "128Mi"
     limits:
-      cpu: "500m"
-      memory: "512Mi"
+      cpu: "200m"
+      memory: "256Mi"
 
 grafana:
   resources:
     requests:
-      cpu: "100m"
-      memory: "256Mi"
+      cpu: "50m"
+      memory: "128Mi"
     limits:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "150m"
+      memory: "256Mi"
 
 prometheus:
   retention: 2d
@@ -708,11 +746,11 @@ prometheus:
     size: "10Gi"
   resources:
     requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
       cpu: "250m"
       memory: "1Gi"
-    limits:
-      cpu: "500m"
-      memory: "2Gi"
 
 nats:
   nats:
@@ -753,29 +791,29 @@ elasticsearch:
       NUMBER_OF_MASTERS: "1"
   master:
     replicas: 1
-    heapMemory: 256m
+    heapMemory: 128m
     resources:
       requests:
-        cpu: "250m"
-        memory: "512Mi"
+        cpu: "100m"
+        memory: "256Mi"
     persistence:
       size: "10Gi"
   data:
     replicas: 1
-    heapMemory: 512m
+    heapMemory: 256m
     resources:
       requests:
-        cpu: "250m"
-        memory: "1Gi"
+        cpu: "100m"
+        memory: "512Mi"
     persistence:
       size: "20Gi"
   client:
     replicas: 1
-    heapMemory: 256m
+    heapMemory: 128m
     resources:
       requests:
-        cpu: "250m"
-        memory: "512Mi"
+        cpu: "100m"
+        memory: "256Mi"
   images:
     es:
       repository: docker.elastic.co/elasticsearch/elasticsearch
@@ -784,31 +822,31 @@ elasticsearch:
 kibana:
   resources:
     requests:
-      cpu: "100m"
-      memory: "1Gi"
+      cpu: "50m"
+      memory: "256Mi"
     limits:
-      cpu: "500m"
-      memory: "2Gi"
+      cpu: "200m"
+      memory: "512Mi"
   env:
-    NODE_OPTIONS: "--max-old-space-size=768"
+    NODE_OPTIONS: "--max-old-space-size=384"
 
 fluentd:
   resources:
     requests:
-      cpu: "100m"
-      memory: "256Mi"
+      cpu: "50m"
+      memory: "128Mi"
     limits:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "150m"
+      memory: "256Mi"
 
 kube-state:
   resources:
     requests:
-      cpu: "100m"
-      memory: "256Mi"
+      cpu: "50m"
+      memory: "128Mi"
     limits:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "150m"
+      memory: "256Mi"
 
 prometheus-blackbox-exporter:
   resources:
@@ -822,6 +860,12 @@ prometheus-blackbox-exporter:
 postgresql:
   postgresqlUsername: postgres
   postgresqlPassword: postgres
+
+airflow-operator:
+  crd:
+    create: true
+  certManager:
+    enabled: true
 """
 
 
@@ -894,6 +938,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--helm-debug", action="store_true")
     parser.add_argument("--recreate-cluster", action="store_true", help="Delete and recreate k3d cluster if it exists")
     parser.add_argument(
+        "--num-compute-nodes",
+        dest="num_compute_nodes",
+        type=int,
+        default=0,
+        help="Number of additional k3d worker nodes to create alongside the server node (mapped to k3d --agents). Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding nodes.",
+    )
+    parser.add_argument(
         "--no-local-registry",
         action="store_true",
         help=(
@@ -943,6 +994,7 @@ def main() -> int:
         chart_version=args.chart_version,
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
+        agents=args.num_compute_nodes,
     )
 
     context = f"k3d-{settings.cluster_name}"
@@ -996,6 +1048,7 @@ def main() -> int:
                         f"{settings.http_port}:80@loadbalancer",
                     ],
                     mkcert_root_ca=mkcert_root_ca,
+                    agents=settings.agents,
                     registry_config=registry_config,
                 )
             else:
@@ -1029,6 +1082,11 @@ def main() -> int:
             ms.skip("Apply namespace + secrets", reason="--skip-secrets set")
 
         if not args.skip_helm:
+            h = ms.start(f"Install cert-manager {CERT_MANAGER_VERSION} (required by airflow-operator webhooks)")
+            _install_cert_manager(context)
+            _wait_for_cert_manager(context)
+            ms.done(h)
+
             h = ms.start(f"Ensure Helm repo `{HELM_REPO_NAME}` is up-to-date")
             _ensure_helm_repo()
             ms.done(h)
