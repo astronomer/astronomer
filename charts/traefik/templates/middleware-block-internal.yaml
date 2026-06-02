@@ -1,0 +1,18 @@
+##############################
+## Block Internal Middleware ##
+##############################
+# Denies all traffic — applied to Houston's /v1/alerts and /v1/metrics routes
+# via IngressRoutes in middleware-block-internal-routes.yaml
+# Replaces the nginx configuration-snippet deny directives in houston/ingress.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-block-internal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: middleware-block-internal
+    release: {{ .Release.Name }}
+spec:
+  ipAllowList:
+    sourceRange: []

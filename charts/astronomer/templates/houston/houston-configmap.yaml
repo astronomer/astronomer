@@ -51,6 +51,9 @@ data:
           enabled: true
           clientId: ~
 
+      ldap:
+        enabled: false
+
       github:
         enabled: true
 

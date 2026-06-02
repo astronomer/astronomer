@@ -1,0 +1,54 @@
+########################################
+## Traefik Default Backend Deployment ##
+########################################
+{{- if .Values.defaultBackend.enabled }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ template "traefik.defaultBackend.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: traefik-default-backend
+    chart: {{ template "traefik.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: traefik
+      component: traefik-default-backend
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: traefik
+        component: traefik-default-backend
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "traefik.defaultBackend.fullname" . }}
+      {{- template "traefik.imagePullSecrets" . }}
+      containers:
+        - name: default-backend
+          image: {{ template "traefik.defaultBackend.image" . }}
+          imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.ports.defaultBackendHTTP }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+{{ toYaml .Values.defaultBackend.resources | indent 12 }}
+{{- end }}

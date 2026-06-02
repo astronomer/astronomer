@@ -1,0 +1,43 @@
+###################################
+## Traefik Control Plane Service ##
+###################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "traefik.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: traefik-service
+    chart: {{ template "traefik.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  {{- if .Values.serviceAnnotations }}
+  annotations:
+{{ toYaml .Values.serviceAnnotations | indent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.serviceType }}
+  {{- if .Values.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.loadBalancerIP }}
+  {{- end }}
+  {{- if .Values.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+{{ toYaml .Values.loadBalancerSourceRanges | indent 4 }}
+  {{- end }}
+  selector:
+    tier: traefik
+    component: traefik-deployment
+    release: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: web
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: websecure
+      protocol: TCP
+{{- end }}

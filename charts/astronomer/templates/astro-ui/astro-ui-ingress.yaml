@@ -21,12 +21,8 @@ metadata:
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    nginx.ingress.kubernetes.io/custom-http-errors: "404"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      if ($host = '{{ .Values.global.baseDomain }}' ) {
-        rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
-      }
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-traefik"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ .Release.Name }}-redirect-to-app@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-custom-errors@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-security-headers@kubernetescrd"
     {{- end }}
 spec:
   {{- if .Values.global.tlsSecret }}
@@ -65,12 +61,8 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    nginx.ingress.kubernetes.io/custom-http-errors: "404"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      if ($host = '{{ .Values.global.baseDomain }}' ) {
-        rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
-      }
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-traefik"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ .Release.Name }}-redirect-to-app@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-custom-errors@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-security-headers@kubernetescrd"
     {{- end }}
 spec:
   {{- if .Values.global.tlsSecret }}

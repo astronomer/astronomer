@@ -1,0 +1,63 @@
+#######################################
+## Block /v1/alerts and /v1/metrics  ##
+#######################################
+# IngressRoute CRDs that block Houston's internal-only endpoints.
+# These routes take priority (higher weight) over the regular Houston Ingress,
+# ensuring requests to these paths are denied at the ingress layer.
+# Replaces: nginx configuration-snippet "location ~ ^/v1/(alerts|metrics) { deny all; return 403; }"
+{{- if .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-houston-block-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: ingressroute-block-alerts
+    release: {{ .Release.Name }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`houston.{{ .Values.global.baseDomain }}`) && PathPrefix(`/v1/alerts`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: {{ .Release.Name }}-block-internal
+      services:
+        - name: {{ .Release.Name }}-houston
+          port: 8871
+  {{- if .Values.global.tlsSecret }}
+  tls:
+    secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-houston-block-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: ingressroute-block-metrics
+    release: {{ .Release.Name }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`houston.{{ .Values.global.baseDomain }}`) && PathPrefix(`/v1/metrics`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: {{ .Release.Name }}-block-internal
+      services:
+        - name: {{ .Release.Name }}-houston
+          port: 8871
+  {{- if .Values.global.tlsSecret }}
+  tls:
+    secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,58 @@
+################################
+## Traefik Ingress Controller  ##
+################################
+
+images:
+  traefik:
+    repository: traefik
+    tag: v3.3
+    pullPolicy: IfNotPresent
+  defaultBackend:
+    repository: quay.io/astronomer/ap-default-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Number of replicas for the Traefik deployment
+replicas: 2
+
+# Service type for the Traefik LoadBalancer service
+serviceType: "LoadBalancer"
+
+# String IP address Traefik should bind to (leave empty for auto-assigned)
+loadBalancerIP: ~
+
+# List used to restrict IPs that can reach the Traefik ingress
+loadBalancerSourceRanges: []
+
+# Dict of arbitrary annotations to add to the Traefik service
+serviceAnnotations: {}
+
+# Log level for Traefik (DEBUG, INFO, WARN, ERROR)
+logLevel: INFO
+
+# IngressClass name. Defaults to <release-name>-traefik if not set.
+ingressClass: ""
+
+ports:
+  traefik: 9000
+  web: 80
+  websecure: 443
+  defaultBackendHTTP: 8080
+
+defaultBackend:
+  enabled: true
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "50Mi"
+    limits:
+      cpu: "120m"
+      memory: "100Mi"
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "1"
+    memory: "1024Mi"

@@ -1,0 +1,20 @@
+########################################
+## Redirect baseDomain → app.baseDomain ##
+########################################
+# Replaces the nginx configuration-snippet redirect in charts/astronomer/templates/ingress.yaml
+{{- if .Values.global.baseDomain }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-redirect-to-app
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: middleware-redirect-to-app
+    release: {{ .Release.Name }}
+spec:
+  redirectRegex:
+    regex: "^https?://{{ .Values.global.baseDomain }}(.*)"
+    replacement: "https://app.{{ .Values.global.baseDomain }}${1}"
+    permanent: true
+{{- end }}

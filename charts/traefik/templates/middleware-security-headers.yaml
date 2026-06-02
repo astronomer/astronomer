@@ -1,0 +1,24 @@
+##############################
+## Security Headers Middleware ##
+##############################
+# Replaces the nginx add-headers ConfigMap used across Astronomer ingresses
+{{- if .Values.global.baseDomain }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-security-headers
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: middleware-security-headers
+    release: {{ .Release.Name }}
+spec:
+  headers:
+    frameDeny: true
+    browserXssFilter: true
+    contentTypeNosniff: true
+    referrerPolicy: "same-origin"
+    contentSecurityPolicy: "default-src 'self' 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }}"
+    customResponseHeaders:
+      X-Forwarded-Proto: "https"
+{{- end }}

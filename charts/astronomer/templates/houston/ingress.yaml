@@ -21,14 +21,11 @@ metadata:
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    nginx.ingress.kubernetes.io/custom-http-errors: "404"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      location ~ ^/v1/(alerts|metrics) {
-        deny all;
-        return 403;
-      }
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-traefik"
+    # proxy-buffer-size is translated by Traefik's NGINX ingress provider
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ .Release.Name }}-custom-errors@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-security-headers@kubernetescrd"
+    # /v1/alerts and /v1/metrics are blocked via IngressRoute CRDs in charts/traefik/templates/middleware-block-internal-routes.yaml
     {{- end }}
 
     {{- if .Values.houston.ingress.annotation  }}

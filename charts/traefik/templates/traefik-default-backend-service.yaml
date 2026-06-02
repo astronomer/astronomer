@@ -1,0 +1,26 @@
+####################################
+## Traefik Default Backend Service ##
+####################################
+{{- if .Values.defaultBackend.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "traefik.defaultBackend.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: traefik-default-backend
+    chart: {{ template "traefik.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    tier: traefik
+    component: traefik-default-backend
+    release: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ .Values.ports.defaultBackendHTTP }}
+      targetPort: http
+      protocol: TCP
+{{- end }}

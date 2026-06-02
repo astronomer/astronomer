@@ -1,0 +1,46 @@
+##################################
+## Houston ForwardAuth Middleware ##
+##################################
+{{- if .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+# Control/Unified plane: call Houston's auth endpoint in-cluster
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-houston-auth
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: middleware-houston-auth
+    release: {{ .Release.Name }}
+spec:
+  forwardAuth:
+    address: "http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization"
+    authResponseHeaders:
+      - authorization
+      - username
+      - email
+    trustForwardHeader: true
+{{- end }}
+{{- if eq .Values.global.plane.mode "data" }}
+---
+# Data plane: call Houston through the external domain
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-houston-auth
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: middleware-houston-auth
+    release: {{ .Release.Name }}
+spec:
+  forwardAuth:
+    address: "https://houston.{{ .Values.global.baseDomain }}/v1/authorization"
+    authResponseHeaders:
+      - authorization
+      - username
+      - email
+    trustForwardHeader: true
+{{- end }}
+{{- end }}

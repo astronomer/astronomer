@@ -16,7 +16,13 @@ dependencies:
     tags:
       - platform
   - name: nginx
-    condition: global.nginx.enabled
+    condition: nginx.enabled
+    tags:
+      - platform
+
+  # Traefik Ingress Controller (replaces nginx for the POC)
+  - name: traefik
+    condition: traefik.enabled
     tags:
       - platform
 

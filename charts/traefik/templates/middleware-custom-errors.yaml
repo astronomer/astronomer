@@ -1,0 +1,23 @@
+##############################
+## Custom Errors Middleware  ##
+##############################
+# Replaces nginx.ingress.kubernetes.io/custom-http-errors: "404"
+{{- if .Values.defaultBackend.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-custom-errors
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: middleware-custom-errors
+    release: {{ .Release.Name }}
+spec:
+  errors:
+    status:
+      - "404"
+    service:
+      name: {{ template "traefik.defaultBackend.fullname" . }}
+      port: {{ .Values.ports.defaultBackendHTTP }}
+    query: "/{status}.html"
+{{- end }}

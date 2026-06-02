@@ -46,7 +46,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.3
+      tag: 2.0.4
       pullPolicy: IfNotPresent
     priorityClassName: ~
   #Global flag to enable Operator based deployment
@@ -338,24 +338,24 @@ global:
         tag: 0.29.0-4
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.0.6
+        tag: 8.6.3
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-9
+        tag: 1.24.1-10
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
         tag: 0.12.0
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.5.12
+        tag: 2026.5.22
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.5.12
+        tag: 2026.5.22
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.5.12
+        tag: 2026.5.22
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.2.9
@@ -515,6 +515,9 @@ astronomer:
 ## Nginx configuration
 #################################
 nginx:
+  # Set to false when using Traefik as the ingress controller
+  enabled: false
+
   resources:
     requests:
       cpu: "500m"
@@ -533,6 +536,44 @@ nginx:
   ingressAnnotations: {}
 
   defaultBackend:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "50Mi"
+      limits:
+        cpu: "120m"
+        memory: "100Mi"
+
+#################################
+## Traefik Ingress Controller   ##
+## (replaces nginx for the POC) ##
+#################################
+traefik:
+  enabled: true
+
+  images:
+    traefik:
+      repository: traefik
+      tag: v3.3
+      pullPolicy: IfNotPresent
+
+  replicas: 2
+  serviceType: "LoadBalancer"
+  loadBalancerIP: ~
+  loadBalancerSourceRanges: []
+  serviceAnnotations: {}
+  logLevel: INFO
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1024Mi"
+
+  defaultBackend:
+    enabled: true
     resources:
       requests:
         cpu: "100m"

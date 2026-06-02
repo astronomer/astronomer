@@ -1,0 +1,24 @@
+########################################
+## Redirect 401 → Houston Login Page  ##
+########################################
+# When ForwardAuth returns 401, redirect the user to the login page.
+# This pairs with the houston-auth middleware on protected routes.
+{{- if .Values.global.baseDomain }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Name }}-redirect-to-login
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: middleware-redirect-to-login
+    release: {{ .Release.Name }}
+spec:
+  errors:
+    status:
+      - "401"
+    service:
+      name: {{ .Release.Name }}-houston
+      port: 8871
+    query: "/login"
+{{- end }}

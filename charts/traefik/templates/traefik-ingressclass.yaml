@@ -1,0 +1,15 @@
+##########################
+## Traefik IngressClass  ##
+##########################
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: {{ template "traefik.ingress.class" . }}
+  labels:
+    tier: traefik
+    component: traefik-ingressclass
+    chart: {{ template "traefik.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  controller: traefik.io/ingress-controller

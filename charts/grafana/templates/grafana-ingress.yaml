@@ -20,10 +20,8 @@ metadata:
     {{- if .Values.global.extraAnnotations }}
     {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    {{- include "houston.internalauthurl" . | indent 4}}
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
-    nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-traefik"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ .Release.Name }}-houston-auth@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-security-headers@kubernetescrd"
     {{- end }}
 spec:
   {{- if .Values.global.tlsSecret }}

@@ -77,6 +77,17 @@ imagePullSecrets:
 {{- end }}
 
 
+{{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "nats.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
 {{ define "nats.serviceAccountName" -}}
 {{- if and .Values.nats.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "nats.name" . )) .Values.nats.serviceAccount.name }}

@@ -1,0 +1,80 @@
+######################################
+## Traefik Control Plane Deployment ##
+######################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ template "traefik.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: traefik
+    component: traefik-deployment
+    chart: {{ template "traefik.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      tier: traefik
+      component: traefik-deployment
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: traefik
+        component: traefik-deployment
+        release: {{ .Release.Name }}
+        plane: {{ .Values.global.plane.mode }}
+    spec:
+      serviceAccountName: {{ template "traefik.serviceAccountName" . }}
+      {{- template "traefik.imagePullSecrets" . }}
+      containers:
+        - name: traefik
+          image: {{ template "traefik.image" . }}
+          imagePullPolicy: {{ .Values.images.traefik.pullPolicy }}
+          args:
+            - --providers.kubernetesingress=true
+            - --providers.kubernetesingress.ingressclass={{ template "traefik.ingress.class" . }}
+            - --providers.kubernetesingress.nginx.enabled=true
+            - --providers.kubernetesingress.namespaces={{ .Release.Namespace }}
+            - --providers.kubernetescrd=true
+            - --providers.kubernetescrd.namespaces={{ .Release.Namespace }}
+            - --entrypoints.web.address=:{{ .Values.ports.web }}
+            - --entrypoints.websecure.address=:{{ .Values.ports.websecure }}
+            - --entrypoints.websecure.http2.enabled=true
+            - --entrypoints.traefik.address=:{{ .Values.ports.traefik }}
+            - --api=true
+            - --api.dashboard=false
+            - --metrics.prometheus=true
+            - --log.level={{ .Values.logLevel }}
+            - --accesslog=true
+          ports:
+            - name: web
+              containerPort: {{ .Values.ports.web }}
+              protocol: TCP
+            - name: websecure
+              containerPort: {{ .Values.ports.websecure }}
+              protocol: TCP
+            - name: traefik
+              containerPort: {{ .Values.ports.traefik }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: traefik
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: traefik
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+{{- end }}

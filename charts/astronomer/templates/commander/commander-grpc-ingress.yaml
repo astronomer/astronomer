@@ -20,11 +20,11 @@ metadata:
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
-    nginx.ingress.kubernetes.io/enable-http2: "true"
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-traefik"
+    # Traefik handles gRPC natively via HTTP/2 — no backend-protocol annotation needed
+    # proxy-buffer-size is translated by Traefik's NGINX ingress provider
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ .Release.Name }}-custom-errors@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-security-headers@kubernetescrd"
     {{- end }}
     {{- if .Values.commander.ingress.annotation  }}
     {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}

@@ -15,11 +15,14 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.3
+    tag: 2.0.4
     pullPolicy: IfNotPresent
 
 securityContext:
   runAsNonRoot: true
+
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext: {}
 
 serviceAccount:
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/

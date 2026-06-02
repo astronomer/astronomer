@@ -60,6 +60,7 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
+      securityContext: {{- include "prometheus.podSecurityContext" . | nindent 8 }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       {{- include "prometheus.hostAliases" . | nindent 6 }}
       initContainers:
@@ -263,9 +264,6 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 1
           {{- end }}
-{{- if eq .Values.global.openshift.enabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
         - name: nginx-write-dir

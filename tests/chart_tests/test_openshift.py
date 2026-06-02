@@ -51,7 +51,7 @@ class TestOpenshift:
 
         assert len(docs) == 6
         for doc in docs:
-            assert "securityContext" not in doc["spec"]["template"]["spec"]
+            assert "securityContext" in doc["spec"]["template"]["spec"]
 
     def test_openshift_flag_defaults_with_enabled_and_validate_container_securitycontext(self, kube_version):
         "Validate containerSecurityContext when openshiftEnabled is Enabled"

@@ -21,8 +21,8 @@ metadata:
     {{- if .Values.global.extraAnnotations }}
       {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-traefik"
+    # These proxy-* annotations are translated by Traefik's NGINX ingress provider
     nginx.ingress.kubernetes.io/proxy-body-size: "100m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"

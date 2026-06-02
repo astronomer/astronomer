@@ -1,0 +1,21 @@
+##################################
+## Traefik Cluster Role Binding ##
+##################################
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "traefik.fullname" . }}
+  labels:
+    tier: traefik
+    component: traefik-clusterrolebinding
+    chart: {{ template "traefik.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "traefik.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "traefik.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
