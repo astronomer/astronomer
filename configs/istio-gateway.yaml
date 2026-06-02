@@ -1,0 +1,261 @@
+####################################################################
+## Astronomer Platform Configuration - Istio Gateway (No NGINX)  ##
+## This configuration uses Istio Gateway instead of NGINX        ##
+## Prerequisites: Istio must be pre-installed in your cluster    ##
+####################################################################
+
+global:
+  # Base domain for the Astronomer platform
+  baseDomain: "astronomer.example.com"
+
+  # Deployment mode
+  plane:
+    mode: unified  # Options: unified, control, data
+
+  # TLS Secret
+  # This secret must exist in the namespace before installation
+  # kubectl create secret tls astronomer-tls --cert=tls.crt --key=tls.key -n <namespace>
+  tlsSecret: "astronomer-tls"
+
+  # NGINX - DISABLED (using Istio instead)
+  nginxEnabled: false
+
+  # Istio - ENABLED
+  # Reference your existing Istio Gateway
+  istioEnabled: true
+
+  istio:
+    # Reference to existing Istio Gateway in format: "namespace/gateway-name"
+    # This Gateway must be pre-configured to handle your domains
+    gateway: "istio-system/default-gateway"
+
+    # VirtualService configuration
+    virtualService:
+      # Request timeout for all routes (default: 600s)
+      timeout: 600s
+
+      # Retry policy for failed requests
+      retries:
+        attempts: 3
+        perTryTimeout: 30s
+        retryOn: "5xx,connect-failure,refused-stream"
+
+  # RBAC
+  rbacEnabled: true
+  clusterRoles: true
+
+  # Network Policy
+  networkPolicy:
+    enabled: true
+
+  # PostgreSQL Database
+  postgresqlEnabled: false
+  # Configure external database connection in houston.backendConnection
+
+  # Prometheus Postgres Exporter
+  prometheusPostgresExporterEnabled: false
+
+  # NATS
+  nats:
+    enabled: true
+    replicas: 3
+
+# Tags - control which components are installed
+tags:
+  platform: true      # Core platform components
+  monitoring: true    # Prometheus, Grafana, Alertmanager
+  logging: true       # Elasticsearch, Vector
+
+# Astronomer platform components
+astronomer:
+  # Houston - API and auth backend
+  houston:
+    replicas: 2
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+    # Database connection (required when postgresqlEnabled: false)
+    backendConnection: {}
+      # user: astronomer
+      # pass: <password>
+      # host: postgres.example.com
+      # port: 5432
+      # db: astronomer
+
+    # Airflow database connection
+    airflowBackendConnection: {}
+      # user: airflow
+      # pass: <password>
+      # host: postgres.example.com
+      # port: 5432
+      # db: airflow
+
+  # Astro UI - Web interface
+  astroUI:
+    replicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+  # Commander - deployment management
+  commander:
+    replicas: 2
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        cpu: 500m
+        memory: 2Gi
+
+  # Registry - Docker image registry
+  registry:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    persistence:
+      enabled: true
+      size: 100Gi
+
+# Monitoring stack
+prometheus:
+  persistence:
+    enabled: true
+    size: 150Gi
+  retention: 15d
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+    limits:
+      cpu: 2000m
+      memory: 8Gi
+
+grafana:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Logging stack
+elasticsearch:
+  client:
+    persistence:
+      enabled: true
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+
+  data:
+    persistence:
+      enabled: true
+      size: 100Gi
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+
+vector:
+  vector:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1024Mi
+
+####################################################################
+## Installation Instructions                                     ##
+####################################################################
+##
+## 1. Ensure Istio is installed in your cluster:
+##    istioctl install --set profile=default -y
+##
+## 2. Create an Istio Gateway for your domain:
+##
+##    apiVersion: networking.istio.io/v1alpha3
+##    kind: Gateway
+##    metadata:
+##      name: default-gateway
+##      namespace: istio-system
+##    spec:
+##      selector:
+##        istio: ingressgateway
+##      servers:
+##      - port:
+##          number: 80
+##          name: http
+##          protocol: HTTP
+##        hosts:
+##        - "*.astronomer.example.com"
+##        tls:
+##          httpsRedirect: true
+##      - port:
+##          number: 443
+##          name: https
+##          protocol: HTTPS
+##        hosts:
+##        - "*.astronomer.example.com"
+##        tls:
+##          mode: SIMPLE
+##          credentialName: astronomer-tls
+##
+## 3. Create TLS secret in istio-system namespace:
+##    kubectl create secret tls astronomer-tls \
+##      --cert=tls.crt \
+##      --key=tls.key \
+##      -n istio-system
+##
+## 4. Install Astronomer with this configuration:
+##    helm install astronomer . \
+##      -f configs/istio-gateway.yaml \
+##      -n astronomer \
+##      --create-namespace
+##
+## 5. Verify the VirtualService is created:
+##    kubectl get virtualservice -n astronomer
+##
+## 6. Get the Istio Ingress Gateway external IP:
+##    kubectl get svc istio-ingressgateway -n istio-system
+##
+## 7. Configure DNS to point your domain to the Istio Ingress Gateway IP:
+##    *.astronomer.example.com -> <EXTERNAL-IP>
+##
+####################################################################
