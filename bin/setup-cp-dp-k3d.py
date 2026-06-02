@@ -565,10 +565,8 @@ def _kubectl_apply_yaml(context: str, yaml_text: str) -> None:
 # cert-manager (required by the airflow-operator webhooks)
 # ---------------------------------------------------------------------------
 
-CERT_MANAGER_VERSION = "v1.5.4"
-CERT_MANAGER_MANIFEST_URL = (
-    f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
-)
+CERT_MANAGER_VERSION = "v1.19.4"
+CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
 
 
 def _install_cert_manager(context: str) -> None:
@@ -588,10 +586,7 @@ def _pin_cert_manager_to_control_plane(context: str) -> None:
     proxy can't reach it across the Flannel VXLAN overlay in k3d, causing 502 errors.
     Pinning to the control-plane node (10.42.0.x) keeps webhook calls local.
     """
-    node_selector_patch = (
-        '{"spec":{"template":{"spec":{"nodeSelector":'
-        '{"node-role.kubernetes.io/control-plane":"true"}}}}}'
-    )
+    node_selector_patch = '{"spec":{"template":{"spec":{"nodeSelector":{"node-role.kubernetes.io/control-plane":"true"}}}}}'
     for deployment in ("cert-manager-webhook", "cert-manager-cainjector", "cert-manager"):
         _run(
             [
@@ -1243,7 +1238,6 @@ def _ensure_dp_node_houston_hosts_pin(settings: Settings, dp: DataPlane) -> None
     """
     primary_cp = settings.control_planes[0]
     cp_context = f"k3d-{primary_cp.cluster_name}"
-    dp_node_container = f"k3d-{dp.cluster_name}-server-0"
     cp_nginx_svc = f"{settings.release_name}-cp-nginx"
 
     cp_nginx_lb_ip = _kubectl_get_service_lb_ip(cp_context, settings.namespace, cp_nginx_svc)
@@ -1355,10 +1349,11 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--recreate-clusters", action="store_true", help="Delete and recreate k3d clusters if they exist")
     parser.add_argument(
-        "--agents",
+        "--num-compute-nodes",
+        dest="num_compute_nodes",
         type=int,
         default=0,
-        help="Number of k3d agent (worker) nodes per cluster. Applies to both CP and DP clusters. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding agents.",
+        help="Number of additional k3d worker nodes per cluster (mapped to k3d --agents). Applies to both CP and DP clusters. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding nodes.",
     )
     parser.add_argument(
         "--no-local-registry",
@@ -1463,7 +1458,7 @@ def main() -> int:  # noqa: C901
         helm_debug=bool(args.helm_debug),
         dp_airflow_db=args.dp_airflow_db,
         enable_operator=bool(args.enable_operator),
-        agents=args.agents,
+        agents=args.num_compute_nodes,
     )
 
     try:

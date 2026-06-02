@@ -185,10 +185,8 @@ HELM_REPO_NAME = "astronomer-internal"
 HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
 HELM_REPO_URL = "https://internal-helm.astronomer.io"
 
-CERT_MANAGER_VERSION = "v1.5.4"
-CERT_MANAGER_MANIFEST_URL = (
-    f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
-)
+CERT_MANAGER_VERSION = "v1.19.4"
+CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
 
 
 def _install_cert_manager(context: str) -> None:
@@ -940,10 +938,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--helm-debug", action="store_true")
     parser.add_argument("--recreate-cluster", action="store_true", help="Delete and recreate k3d cluster if it exists")
     parser.add_argument(
-        "--agents",
+        "--num-compute-nodes",
+        dest="num_compute_nodes",
         type=int,
         default=0,
-        help="Number of k3d agent (worker) nodes to create alongside the server node. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding agents.",
+        help="Number of additional k3d worker nodes to create alongside the server node (mapped to k3d --agents). Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding nodes.",
     )
     parser.add_argument(
         "--no-local-registry",
@@ -995,7 +994,7 @@ def main() -> int:
         chart_version=args.chart_version,
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
-        agents=args.agents,
+        agents=args.num_compute_nodes,
     )
 
     context = f"k3d-{settings.cluster_name}"
