@@ -18,6 +18,7 @@ data:
     registry:
       version: {{ .Values.images.registry.tag | quote}}
     namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
+    extraAnnotations: {{ include "commander.metadata.extraAnnotations" . }}
     customLogging:
       enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
 {{- end }}
