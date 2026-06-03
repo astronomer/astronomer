@@ -72,6 +72,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "certgenerator.repository" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-certgenerator
+{{- else -}}
+{{ .Values.global.certgenerator.images.repository }}
+{{- end }}
+{{- end }}
+
 {{ define "houston.logging.loggingSidecar.image" -}}
 {{- $images := .Values.images | default dict -}}
 {{- $vector := $images.vector | default dict -}}
