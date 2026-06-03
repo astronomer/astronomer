@@ -72,11 +72,11 @@
 {{- end }}
 {{- end }}
 
-{{ define "certgenerator.image" -}}
+{{ define "certgenerator.repository" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-certgenerator:{{ .Values.global.certgenerator.images.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-certgenerator
 {{- else -}}
-{{ .Values.global.certgenerator.images.repository }}:{{ .Values.global.certgenerator.images.tag }}
+{{ .Values.global.certgenerator.images.repository }}
 {{- end }}
 {{- end }}
 
