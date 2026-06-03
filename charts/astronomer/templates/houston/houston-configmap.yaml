@@ -275,8 +275,8 @@ data:
         airflow:
           images:
             certgenerator:
-              repository: "{{ .Values.global.certgenerator.repository }}"
-              tag: "{{ .Values.global.certgenerator.tag }}"
+              repository: "{{ include "certgenerator.repository" . }}"
+              tag: "{{ .Values.global.certgenerator.images.tag }}"
             statsd:
               repository: "{{ .Values.global.airflow.images.statsd.repository }}"
               tag: "{{ .Values.global.airflow.images.statsd.tag }}"
