@@ -363,6 +363,10 @@ global:
         tag: 0.2.7
     metrics:
       enabled: false
+  certgenerator:
+    images:
+      repository: quay.io/astronomer/ap-certgenerator
+      tag: 0.1.8
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
