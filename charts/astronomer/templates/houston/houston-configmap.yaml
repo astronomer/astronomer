@@ -103,6 +103,9 @@ data:
         operator:
           enabled: {{.Values.global.airflowOperator.enabled}}
 
+    operatorAdoption:
+      enabled: {{ .Values.global.operatorAdoption.enabled }}
+
       deployMechanisms:
         dagOnlyDeployment:
           enabled: {{ .Values.global.deployMechanisms.dagOnlyDeployment.enabled }}

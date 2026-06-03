@@ -1083,3 +1083,54 @@ def test_houston_configmap_no_vector_enabled_key():
     assert find_key_paths(prod, "vectorEnabled") == [], (
         "Legacy vectorEnabled key reappeared in rendered ConfigMap. Use loggingSidecar.enabled instead."
     )
+
+
+def test_houston_configmap_operator_adoption_default():
+    """operatorAdoption.enabled should be true in the default chart values (PLX-500)."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert "operatorAdoption" in prod, "operatorAdoption key must be present in production.yaml"
+    assert prod["operatorAdoption"]["enabled"] is True
+
+
+def test_houston_configmap_operator_adoption_disabled():
+    """Setting global.operatorAdoption.enabled: false must propagate to production.yaml."""
+    docs = render_chart(
+        values={"global": {"operatorAdoption": {"enabled": False}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["operatorAdoption"]["enabled"] is False
+
+
+def test_houston_configmap_operator_adoption_enabled():
+    """Setting global.operatorAdoption.enabled: true must propagate to production.yaml."""
+    docs = render_chart(
+        values={"global": {"operatorAdoption": {"enabled": True}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["operatorAdoption"]["enabled"] is True
+
+
+def test_houston_configmap_operator_adoption_independent_of_airflow_operator():
+    """operatorAdoption and airflowOperator are independent flags — enabling
+    one must not affect the other."""
+    docs = render_chart(
+        values={
+            "global": {
+                "operatorAdoption": {"enabled": False},
+                "airflowOperator": {"enabled": True},
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["operatorAdoption"]["enabled"] is False
+    assert prod["deployments"]["mode"]["operator"]["enabled"] is True
