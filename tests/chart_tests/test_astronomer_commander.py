@@ -50,12 +50,14 @@ class TestAstronomerCommander:
         if namespace_labels and rbac_enabled:
             assert metadata_file_contents == {
                 "namespaceLabels": namespace_labels,
+                "extraAnnotations": {},
                 "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
             }
         else:
             assert metadata_file_contents == {
                 "namespaceLabels": {},
+                "extraAnnotations": {},
                 "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
             }
@@ -85,9 +87,34 @@ class TestAstronomerCommander:
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
         assert metadata_file_contents == {
             "namespaceLabels": {},
+            "extraAnnotations": {},
             "customLogging": {"enabled": enabled},
             "registry": {"version": "99.88.77"},
         }
+
+    def test_commander_metadata_extra_annotations(self, kube_version):
+        """Test that global.extraAnnotations are passed through to commander metadata.yaml."""
+        extra_annotations = {
+            "kubernetes.io/ingress.class": "default",
+            "route.openshift.io/termination": "passthrough",
+        }
+        values = {
+            "global": {
+                "extraAnnotations": extra_annotations,
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert metadata_file_contents["extraAnnotations"] == extra_annotations
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
