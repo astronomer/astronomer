@@ -771,16 +771,6 @@ astronomer:
       deployments:
         configureDagDeployment: true
         hardDeleteDeployment: true
-        deployMechanisms:
-          gitSyncDagDeployment:
-            enabled: true
-          nfsMountDagDeployment:
-            enabled: true
-        runtimeManagement:
-          listAllRuntimeVersions:
-            enabled: true
-          airflowV3:
-            enabled: true
   commander:
     replicas: 1
   registry: {{}}
