@@ -108,7 +108,8 @@ class TestAirflowOperator:
             operator_crds = [
                 doc
                 for doc in docs
-                if doc.get("kind") == "CustomResourceDefinition" and doc.get("metadata", {}).get("name", "").endswith("airflow.apache.org")
+                if doc.get("kind") == "CustomResourceDefinition"
+                and doc.get("metadata", {}).get("name", "").endswith("airflow.apache.org")
             ]
             assert operator_crds == []
 
