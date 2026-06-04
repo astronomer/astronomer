@@ -19,6 +19,9 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       location ~ ^/v1/(alerts|metrics) {
@@ -26,9 +29,6 @@ metadata:
         return 403;
       }
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
-    {{- if .Values.global.extraAnnotations }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
-    {{- end }}
     {{- end }}
 
     {{- if .Values.houston.ingress.annotation  }}

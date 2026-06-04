@@ -19,10 +19,10 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    nginx.ingress.kubernetes.io/custom-http-errors: "404"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
     {{- end }}
 spec:
   {{- if .Values.global.tlsSecret }}
