@@ -5,7 +5,7 @@ images:
     pullPolicy: IfNotPresent
 
 crd:
-  create: false
+  create: true
 certManager:
   enabled: false
 

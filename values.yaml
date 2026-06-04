@@ -53,6 +53,11 @@ global:
   airflowOperator:
     enabled: false
 
+  # Enable adoptDeployment mutation — allows adopting existing Airflow CRs from
+  # customer-managed dataplanes into Houston without recreating Kubernetes resources.
+  operatorAdoption:
+    enabled: true
+
   # Feature flags
   rbac:
     enabled: true
