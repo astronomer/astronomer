@@ -1,6 +1,4 @@
-######################################
-## Airflow Operator Metrics Service ##
-######################################
+{{- if (include "operator.enabled" .) }}
 {{ if .Values.manager.metrics.enabled }}
 apiVersion: v1
 kind: Service
@@ -29,4 +27,5 @@ spec:
     protocol: TCP
   selector:
     component: controller-manager
+{{- end }}
 {{- end }}

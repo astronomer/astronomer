@@ -129,6 +129,16 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Whether airflow-operator resources should render: the operator must be enabled
+and the plane mode must be data or unified.
+*/}}
+{{- define "operator.enabled" -}}
+{{- if and (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) .Values.global.airflowOperator.enabled -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "manager.imagePullSecrets" -}}

@@ -1,4 +1,4 @@
-{{ if and .Values.global.airflowOperator.enabled }}
+{{- if (include "operator.enabled" .) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -30,6 +30,14 @@ rules:
 - apiGroups:
   - ''
   resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ''
+  resources:
   - pods/exec
   verbs:
   - create
@@ -45,15 +53,14 @@ rules:
   resources:
   - airflows
   - airflows/status
-  - allocators
   - apiservers
   - dagprocessors
+  - eventschedulers
   - fernetsecrets
   - pgbouncers
   - postgres
   - rbacs
   - redis
-  - runners
   - schedulers
   - statsds
   - triggerers
@@ -71,14 +78,13 @@ rules:
   - airflow.apache.org
   resources:
   - airflows/finalizers
-  - allocators/finalizers
   - apiservers/finalizers
   - dagprocessors/finalizers
+  - eventschedulers/finalizers
   - pgbouncers/finalizers
   - postgres/finalizers
   - rbacs/finalizers
   - redis/finalizers
-  - runners/finalizers
   - schedulers/finalizers
   - statsds/finalizers
   - triggerers/finalizers
@@ -89,14 +95,13 @@ rules:
 - apiGroups:
   - airflow.apache.org
   resources:
-  - allocators/status
   - apiservers/status
   - dagprocessors/status
+  - eventschedulers/status
   - pgbouncers/status
   - postgres/status
   - rbacs/status
   - redis/status
-  - runners/status
   - schedulers/status
   - statsds/status
   - triggerers/status
@@ -121,6 +126,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - batch
   resources:
   - jobs
@@ -136,6 +153,18 @@ rules:
   - keda.sh
   resources:
   - scaledobjects
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
   verbs:
   - create
   - delete
@@ -197,4 +226,4 @@ rules:
   - update
   - watch
  {{ end -}}
- {{ end -}}
+ {{- end }}

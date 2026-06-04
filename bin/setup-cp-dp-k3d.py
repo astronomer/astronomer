@@ -703,23 +703,20 @@ def _write_values_file(path: Path, content: str) -> None:
 
 def _cp_values_yaml(settings: Settings) -> str:
     operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
-    # The airflow-operator subchart is conditionally installed by
-    # global.airflowOperator.enabled. We set that flag on the CP so houston-configmap
-    # learns operator mode is on, but the actual operator controller belongs on the DP.
-    # Neutralize the subchart on the CP: zero replicas, no CRDs (DP owns them), no
-    # webhook configs (no apiserver -> empty-endpoint calls), no cert-manager dance.
     operator_subchart_block = (
         """\
 airflow-operator:
   crd:
-    create: false
+    create: true
   certManager:
-    enabled: false
-  webhooks:
-    enabled: false
-  manager:
-    replicas: 0
-
+    enabled: true
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 """
         if settings.enable_operator
         else ""
@@ -774,6 +771,16 @@ astronomer:
       deployments:
         configureDagDeployment: true
         hardDeleteDeployment: true
+        deployMechanisms:
+          gitSyncDagDeployment:
+            enabled: true
+          nfsMountDagDeployment:
+            enabled: true
+        runtimeManagement:
+          listAllRuntimeVersions:
+            enabled: true
+          airflowV3:
+            enabled: true
   commander:
     replicas: 1
   registry: {{}}
@@ -847,10 +854,6 @@ airflow-operator:
     create: true
   certManager:
     enabled: true
-  images:
-    manager:
-      repository: quay.io/astronomer/airflow-operator-controller
-      tag: "1.5.2"
   manager:
     replicas: 1
     # Pin the operator controller (which also serves the admission webhook) to
@@ -1619,8 +1622,21 @@ def main() -> int:  # noqa: C901
 
             for cp in settings.control_planes:
                 h = ms.start(f"Helm install/upgrade Control Plane (context=k3d-{cp.cluster_name})")
+
+                cp_ctx = f"k3d-{cp.cluster_name}"
+
+                # The airflow-operator webhooks need cert-manager's Issuer/Certificate
+                # flow to produce `webhook-server-cert`. Install cert-manager before the
+                # helm release so the Certificate the chart creates can be fulfilled.
+                if settings.enable_operator:
+                    h = ms.start(f"Install cert-manager on {cp.cluster_name} (operator webhooks)")
+                    _install_cert_manager(cp_ctx)
+                    _pin_cert_manager_to_control_plane(cp_ctx)
+                    _wait_for_cert_manager(cp_ctx)
+                    ms.done(h, detail=f"version={CERT_MANAGER_VERSION}")
+
                 _helm_upgrade_install(
-                    context=f"k3d-{cp.cluster_name}",
+                    context=cp_ctx,
                     chart_dir=GIT_ROOT_DIR,
                     release_name=settings.release_name,
                     namespace=settings.namespace,

@@ -1,6 +1,4 @@
-#######################################################
-## Airflow Operator WebHook Validating Configuration ##
-#######################################################
+{{- if (include "operator.enabled" .) }}
 {{ if .Values.webhooks.enabled }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -26,9 +24,10 @@ webhooks:
     resources:
     - airflows
   sideEffects: None
+  timeoutSeconds: 30
 - admissionReviewVersions:
   - v1
-  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-dag-processor-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-apiserver-scale" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
   name: vapiserverscale.kb.io
   rules:
@@ -43,7 +42,7 @@ webhooks:
   sideEffects: None
 - admissionReviewVersions:
   - v1
-  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-pgbouncer-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-dag-processor-scale" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
   name: vdagprocessorscale.kb.io
   rules:
@@ -58,7 +57,22 @@ webhooks:
   sideEffects: None
 - admissionReviewVersions:
   - v1
-  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-redis-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-eventscheduler-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  failurePolicy: Fail
+  name: veventschedulerscale.kb.io
+  rules:
+  - apiGroups:
+    - airflow.apache.org
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - eventschedulers/scale
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-pgbouncer-scale" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
   name: vpgbouncerscale.kb.io
   rules:
@@ -73,7 +87,7 @@ webhooks:
   sideEffects: None
 - admissionReviewVersions:
   - v1
-  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-scheduler-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-redis-scale" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
   name: vredisscale.kb.io
   rules:
@@ -88,7 +102,7 @@ webhooks:
   sideEffects: None
 - admissionReviewVersions:
   - v1
-  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-statsd-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-scheduler-scale" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
   name: vschedulerscale.kb.io
   rules:
@@ -103,7 +117,7 @@ webhooks:
   sideEffects: None
 - admissionReviewVersions:
   - v1
-  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-triggerer-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-statsd-scale" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
   name: vstatsdscale.kb.io
   rules:
@@ -118,7 +132,7 @@ webhooks:
   sideEffects: None
 - admissionReviewVersions:
   - v1
-  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-webserver-scale" "Values" .Values "Release" .Release) | indent 4 }}
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-triggerer-scale" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
   name: vtriggererscale.kb.io
   rules:
@@ -150,4 +164,5 @@ webhooks:
     resources:
     - webservers/scale
   sideEffects: None
+{{ end }}
 {{- end }}
