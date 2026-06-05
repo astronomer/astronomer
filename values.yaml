@@ -41,7 +41,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 2026.6.4
+      tag: 2026.6.5
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -316,15 +316,15 @@ global:
         tag: 0.12.0-2
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.6.4
+        tag: 2026.6.5
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.6.4
+        tag: 2026.6.5
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.6.4
+        tag: 2026.6.5
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.2.11
