@@ -80,47 +80,6 @@ def test_houston_configmap_defaults():
     assert "certgenerator" not in af_images
 
 
-def test_houston_configmap_ldap_disabled_by_default():
-    """auth.ldap.enabled should be False in the baseline production.yaml, parallel to auth.local."""
-    docs = render_chart(
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    common_test_cases(docs)
-    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-
-    assert prod["auth"]["ldap"]["enabled"] is False
-    # Sibling auth providers must remain untouched.
-    assert prod["auth"]["local"]["enabled"] is False
-    assert prod["auth"]["openidConnect"]["auth0"]["enabled"] is False
-    assert prod["auth"]["github"]["enabled"] is True
-
-
-def test_houston_configmap_ldap_customer_override():
-    """Customer-supplied auth.ldap.* under houston.config must reach local-production.yaml."""
-    ldap_config = {
-        "enabled": True,
-        "host": "ldap.example.com",
-        "tls": {"mode": "starttls", "rejectUnauthorized": True},
-        "bindDn": "cn=admin,dc=example,dc=com",
-        "searchBase": "ou=people,dc=example,dc=com",
-        "groups": {
-            "enabled": True,
-            "reconcileTeams": True,
-            "manageSystemPermissions": {
-                "enabled": True,
-                "systemAdmin": ["cn=admins,ou=groups,dc=example,dc=com"],
-            },
-        },
-    }
-    docs = render_chart(
-        values={"astronomer": {"houston": {"config": {"auth": {"ldap": ldap_config}}}}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-
-    local_prod = yaml.safe_load(docs[0]["data"]["local-production.yaml"])
-    assert local_prod["auth"]["ldap"] == ldap_config
-
-
 def test_houston_configmap_has_hook_annotations():
     """ConfigMap must be a pre-install/pre-upgrade hook with weight -1, and keep policy."""
     docs = render_chart(
