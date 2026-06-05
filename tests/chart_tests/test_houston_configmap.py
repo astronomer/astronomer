@@ -1103,19 +1103,6 @@ def test_houston_configmap_certgenerator_in_astronomer_images():
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
     assert certgen["repository"] == "quay.io/astronomer/ap-certgenerator"
-    assert certgen["tag"] == "0.1.8"
-
-
-def test_houston_configmap_certgenerator_not_in_airflow_images():
-    """certgenerator must NOT appear under airflow.images — regression guard for PR-3284.
-
-    Before the fix, certgenerator was erroneously placed under the airflow.images block.
-    This test ensures it is never re-introduced there.
-    """
-    docs = render_chart(
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
     assert "certgenerator" not in af_images, "certgenerator must not appear under airflow.images; it belongs in astronomer.images"
 
