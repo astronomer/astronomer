@@ -256,6 +256,12 @@ data:
         networkNSLabels: true
       {{- end }}
 
+        astronomer:
+          images:
+            certgenerator:
+              repository: "{{ include "certgenerator.repository" . }}"
+              tag: "{{ .Values.global.certgenerator.images.tag }}"
+
         gitSyncRelay:
           metrics:
             enabled: {{ .Values.global.gitSyncRelay.metrics.enabled }}
@@ -282,9 +288,6 @@ data:
 
         airflow:
           images:
-            certgenerator:
-              repository: "{{ include "certgenerator.repository" . }}"
-              tag: "{{ .Values.global.certgenerator.images.tag }}"
             statsd:
               repository: "{{ .Values.global.airflow.images.statsd.repository }}"
               tag: "{{ .Values.global.airflow.images.statsd.tag }}"
