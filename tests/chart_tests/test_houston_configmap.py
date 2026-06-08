@@ -76,6 +76,12 @@ def test_houston_configmap_defaults():
     assert git_sync_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync-relay"
     assert prod["deployments"]["helm"]["sccEnabled"] is False
 
+    # certgenerator belongs in astronomer.images, not airflow.images (PR-3284)
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["repository"] == "quay.io/astronomer/ap-certgenerator"
+    assert certgen["tag"]
+    assert "certgenerator" not in af_images
+
 
 def test_houston_configmap_ldap_disabled_by_default():
     """auth.ldap.enabled should be False in the baseline production.yaml, parallel to auth.local."""
@@ -97,7 +103,7 @@ def test_houston_configmap_ldap_customer_override():
     ldap_config = {
         "enabled": True,
         "host": "ldap.example.com",
-        "tls": {"mode": "starttls", "rejectUnauthorized": True},
+        "tls": {"mode": "starttls", "verifyServerCert": True},
         "bindDn": "cn=admin,dc=example,dc=com",
         "searchBase": "ou=people,dc=example,dc=com",
         "groups": {
@@ -1083,3 +1089,32 @@ def test_houston_configmap_no_vector_enabled_key():
     assert find_key_paths(prod, "vectorEnabled") == [], (
         "Legacy vectorEnabled key reappeared in rendered ConfigMap. Use loggingSidecar.enabled instead."
     )
+
+
+def test_houston_configmap_certgenerator_in_astronomer_images():
+    """certgenerator image must appear under astronomer.images in the houston configmap (PR-3284).
+
+    certgenerator is an Astronomer platform component, so Houston should resolve
+    its image from the astronomer.images block, not the airflow.images block.
+    """
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["repository"] == "quay.io/astronomer/ap-certgenerator"
+    af_images = prod["deployments"]["helm"]["airflow"]["images"]
+    assert "certgenerator" not in af_images, "certgenerator must not appear under airflow.images; it belongs in astronomer.images"
+
+
+def test_houston_configmap_certgenerator_custom_tag():
+    """Custom global.certgenerator.images.tag is reflected in astronomer.images.certgenerator."""
+    docs = render_chart(
+        values={"global": {"certgenerator": {"images": {"tag": "custom-999"}}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["tag"] == "custom-999"
+    # Must remain absent from airflow images even when a custom tag is set
+    assert "certgenerator" not in prod["deployments"]["helm"]["airflow"]["images"]
