@@ -771,6 +771,8 @@ astronomer:
       deployments:
         configureDagDeployment: true
         hardDeleteDeployment: true
+        airflowV3:
+          enabled: true
   commander:
     replicas: 1
   registry: {{}}
