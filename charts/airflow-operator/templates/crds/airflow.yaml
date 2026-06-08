@@ -1500,7 +1500,7 @@ spec:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   image:
-                    default: docker.io/bitnami/postgresql:11.10.0-debian-10-r60
+                    default: astrocrpublic.azurecr.io/astronomer/ap-postgresql:17.5.0
                     type: string
                   password:
                     default: postgres
