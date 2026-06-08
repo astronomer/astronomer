@@ -1,7 +1,7 @@
 images:
   manager:
     # TODO: Change it to public image once 1.6.0 is released
-    repository: astrocr.azurecr.io/astronomer/airflow-operator-dev
+    repository: quay.io/astronomer/airflow-operator-dev
     tag: 1.6.0-rc2
     pullPolicy: IfNotPresent
 
