@@ -1,3 +1,4 @@
+{{- if (include "operator.enabled" .) }}
 {{ if .Values.crd.create }}
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -62,6 +63,35 @@ spec:
                     default: ''
                     type: string
                 type: object
+              airflowPlugins:
+                items:
+                  properties:
+                    airflowComponents:
+                      items:
+                        type: string
+                      type: array
+                    dbManager:
+                      type: string
+                    destinationPath:
+                      type: string
+                    image:
+                      type: string
+                    maxKnownImage:
+                      type: string
+                    maxKnownVersion:
+                      type: string
+                    name:
+                      type: string
+                    purgeTables:
+                      type: boolean
+                    pythonPath:
+                      type: string
+                    sourcePath:
+                      type: string
+                    version:
+                      type: string
+                  type: object
+                type: array
               airflowSecrets:
                 properties:
                   fernetKeySecretName:
@@ -92,6 +122,11 @@ spec:
                 - zone
                 - none
                 type: string
+              astroAgentSystemImage:
+                type: string
+              astroAgentVersion:
+                pattern: ^(?:|(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$
+                type: string
               customLabels:
                 additionalProperties:
                   type: string
@@ -102,6 +137,8 @@ spec:
               databaseSSLSecretName:
                 default: ''
                 type: string
+              embeddedDAGProcessor:
+                type: boolean
               enableNetworkPolicies:
                 type: boolean
               env:
@@ -134,6 +171,23 @@ spec:
                               type: string
                           required:
                           - fieldPath
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        fileKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            optional:
+                              default: false
+                              type: boolean
+                            path:
+                              type: string
+                            volumeName:
+                              type: string
+                          required:
+                          - key
+                          - path
+                          - volumeName
                           type: object
                           x-kubernetes-map-type: atomic
                         resourceFieldRef:
@@ -170,6 +224,31 @@ spec:
                   - name
                   type: object
                 type: array
+              envFrom:
+                items:
+                  properties:
+                    configMapRef:
+                      properties:
+                        name:
+                          default: ''
+                          type: string
+                        optional:
+                          type: boolean
+                      type: object
+                      x-kubernetes-map-type: atomic
+                    prefix:
+                      type: string
+                    secretRef:
+                      properties:
+                        name:
+                          default: ''
+                          type: string
+                        optional:
+                          type: boolean
+                      type: object
+                      x-kubernetes-map-type: atomic
+                  type: object
+                type: array
               executionModes:
                 items:
                   type: string
@@ -180,8 +259,6 @@ spec:
                 - LocalExecutor
                 - CeleryExecutor
                 - KubernetesExecutor
-                - StellarExecutor
-                - AstroRuntimeExecutor
                 - AstroExecutor
                 type: string
               extraNetworkPolicyRules:
@@ -216,6 +293,16 @@ spec:
               podTemplateConfigMapName:
                 type: string
               podTemplateSpec:
+                properties:
+                  spec:
+                    properties:
+                      nodeSelector:
+                        additionalProperties:
+                          type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               replicas:
@@ -223,6 +310,9 @@ spec:
                 format: int32
                 minimum: 0
                 type: integer
+              restrictedProfileEnabled:
+                default: false
+                type: boolean
               runtimeVersion:
                 pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
                 type: string
@@ -256,7 +346,18 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                    x-kubernetes-map-type: atomic
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -304,6 +405,9 @@ spec:
                           x-kubernetes-int-or-string: true
                         type: object
                     type: object
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   scrapePort:
                     default: 9102
                     format: int32
@@ -364,4 +468,5 @@ spec:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
       status: {}
+{{ end }}
 {{- end }}
