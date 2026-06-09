@@ -142,13 +142,13 @@ See [Task 2 § Discovery / association](m2-task-2-connect-operator-to-commander.
 
 ### Phase C — Adopt
 
-New GraphQL mutation: `adoptDeployment(input: AdoptDeploymentInput!): Deployment!`.
+New GraphQL mutation: `adoptDeployment(...): Deployment!`. Arguments are **flat top-level fields** (no `input` wrapper).
 
 ```graphql
-input AdoptDeploymentInput {
+adoptDeployment(
   # Required identity / placement
-  workspaceUuid:           ID!         # APC workspace to attach the deployment to
-  clusterId:               ID!         # DP cluster (from registerCluster output)
+  workspaceUuid:           Uuid!       # APC workspace to attach the deployment to
+  clusterId:               Uuid!       # DP cluster (from registerCluster output)
   crNamespace:             String!     # K8s namespace of the existing Airflow CR
   crName:                  String!     # metadata.name of the CR
 
@@ -175,7 +175,7 @@ input AdoptDeploymentInput {
                                        #   When set explicitly to FALSE, the resolver returns a structured
                                        #   ADOPTION_INCOMPATIBLE error if any field has no Houston representation —
                                        #   strict mode for callers who want to fail loudly.
-}
+): Deployment!
 ```
 
 > The earlier draft of this input also carried `webserverUrl` and a nested `importUsers` block. Both were removed at the design review:
@@ -565,41 +565,41 @@ When `Deployment.isFrozen === true`, every worker that would call Commander shor
 **Orderly un-adopt — new `unadoptDeployment` mutation.**
 Separate from `deleteDeployment`. **Does not call Commander. Does not touch K8s.**
 
+Arguments are **flat top-level fields** (no `input` wrapper), consistent with `adoptDeployment`.
+
 ```graphql
-mutation UnadoptDeployment($input: UnadoptDeploymentInput!) {
-  unadoptDeployment(input: $input) {
+mutation UnadoptDeployment($deploymentUuid: Uuid!) {
+  unadoptDeployment(deploymentUuid: $deploymentUuid) {
     id
     releaseName
     deletedAt
   }
-}
-
-input UnadoptDeploymentInput {
-  deploymentUuid: ID!
 }
 ```
 
 Resolver (new file: `houston-api/src/resolvers/mutation/unadopt-deployment/index.ts`):
 1. Validate the deployment exists and is adopted. Reject if `config.adoption.adopted !== true` — never run this path on native APC deployments.
 2. **Do not publish any worker event.** No `DEPLOYMENT_DELETED`.
-3. Soft-delete the `Deployment` row (`deletedAt = now()`). Stays in DB; existing soft-delete filters hide it from UI / list queries.
+3. Remove the `Deployment` row, honoring the org hard-delete switch `deployments.deploymentLifecycle.hardDeleteDeployment.enabled` (the same flag `deleteDeployment` uses): **enabled** → hard delete (`prisma.deployment.delete`; `roleBindings` / `deploymentConfig` cascade); **disabled** → soft delete (`deletedAt = now()`, row kept, hidden by soft-delete filters). Either way the dataplane is untouched — no CR delete, no metadata-DB drop, no image cleanup.
 4. Delete `RoleBinding` rows where `deploymentId = <this id>` only. Workspace, workspace memberships, and `inviteUser`-created user rows are kept — they may still be in use for other deployments.
 5. Emit a Houston audit-log entry: `action="unadopt"`, `userId`, `deploymentId`, `releaseName`, `namespace`. Append-only.
 
-Re-adoption later detects the soft-deleted row (same `releaseName` + `namespace` + `clusterId`), clears `deletedAt`, refreshes `config.adoption.rawCRSnapshot` from the new CR spec, re-creates the `DEPLOYMENT_ADMIN` role binding.
+Re-adoption later simply creates a fresh row — adopt's dedup check filters `deletedAt: null`, so a soft-deleted row doesn't block re-adoption, and a hard delete leaves nothing behind. (Adopt always `create`s a new Deployment; it does not revive the old row.)
 
 **`deleteDeployment` vs `unadoptDeployment` — A.3 (soft-delete-only for adopted).**
 
-> **Design-review decision A.3.** Earlier draft had `deleteDeployment` run the standard destructive flow even on adopted CRs. **Overruled.** Hard-delete on an adopted deployment is unsafe — APC doesn't own the underlying Airflow CR, and Vishnu pointed out that re-adoption flows depend on the CR still existing after a "delete." All deletes on adopted deployments are **soft-deletes**.
+> **Design-review decision A.3.** Earlier draft had `deleteDeployment` run the standard destructive flow even on adopted CRs. **Overruled.** Hard-delete on an adopted deployment is unsafe — APC doesn't own the underlying Airflow CR, and Vishnu pointed out that re-adoption flows depend on the CR still existing after a "delete." Deletes on adopted deployments must not touch the CR.
+
+> ⚠️ **Implementation status (2026-06): A.3 is NOT yet wired into the `deployment-deleted` worker.** The worker's `commanderDeleteDeployment` has no adoption check — for `mode=operator` it calls `deleteDeploymentForOperatorMode` → `Commander.DeleteCustomResource` unconditionally. **Today, `deleteDeployment` on an adopted deployment deletes the customer's Airflow CR.** Until the worker is fixed (or `deleteDeployment` is blocked for adopted deployments), `unadoptDeployment` is the ONLY safe way to detach. Tracked as a follow-up.
 
 | Mutation | What it does to the Airflow CR | What it does to the Houston DB | Notes |
 |---|---|---|---|
 | `deleteDeployment` on a **native** deployment | Deletes CR + namespace + pods (unchanged). | Soft-delete (existing semantics). | No behaviour change. |
-| `deleteDeployment` on an **adopted** deployment | **No K8s touch.** Worker detects `config.adoption.adopted === true` and skips `Commander.DeleteCustomResource`. | Soft-delete the row. | Equivalent to calling `unadoptDeployment`. Worker gives the user the same outcome regardless of which mutation they reached for. |
-| `unadoptDeployment` on an **adopted** deployment | **No K8s touch.** | Soft-delete the row, remove deployment-scoped `RoleBinding`s. | The recommended mutation name. Reads better; clearer intent in audit logs. |
+| `deleteDeployment` on an **adopted** deployment | **Intended:** no K8s touch (worker should skip `Commander.DeleteCustomResource` when `config.adoption.adopted`). **Actual today:** deletes the CR — the skip is not implemented (see warning). | Soft-delete the row. | ⚠️ Not yet safe — use `unadoptDeployment` instead. |
+| `unadoptDeployment` on an **adopted** deployment | **No K8s touch.** | Hard delete when `hardDeleteDeployment.enabled`, else soft delete; remove deployment-scoped `RoleBinding`s. | The recommended, currently-safe detach. Clearer intent in audit logs. |
 | `unadoptDeployment` on a **native** deployment | Rejected — `code: "NOT_ADOPTED"`. | — | Defensive — `unadopt` only makes sense for adopted CRs. |
 
-So both mutations are non-destructive on adopted deployments. The naming distinction is purely for log/audit clarity — operators can use either; the system protects the customer's CR either way.
+`unadoptDeployment` is non-destructive on adopted deployments by construction (it never calls Commander). `deleteDeployment` is intended to be equally safe but isn't yet — until the worker fix lands, reach for `unadoptDeployment`.
 
 > ~~Old design: `deleteDeployment` destructive even on adopted CRs.~~ **Replaced by A.3** — soft-delete only.
 

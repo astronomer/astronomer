@@ -49,7 +49,10 @@ global:
       tag: 2.0.4
       pullPolicy: IfNotPresent
     priorityClassName: ~
-  #Global flag to enable Operator based deployment
+  #Global flag to enable Operator based deployment (operator-awareness in Houston/Commander).
+  # Whether the airflow-operator SUBCHART is installed is governed separately by the top-level
+  # `airflow-operator.enabled` toggle (see Chart.yaml): leave it unset to track this flag, or set
+  # it false to keep awareness on while skipping the subchart (cluster already runs the operator).
   airflowOperator:
     enabled: false
 

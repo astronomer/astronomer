@@ -90,60 +90,60 @@ extend type Mutation {
     - ADOPTION_INCOMPATIBLE              Only when caller passed acceptIncompatibilities:false; CR has unmapped fields. Default true mode adopts anyway.
     - PERMISSION_DENIED                  caller lacks required RBAC
   """
-  adoptDeployment(input: AdoptDeploymentInput!): Deployment!
-}
+  adoptDeployment(
+    """APC workspace to attach the deployment to. Required."""
+    workspaceUuid: Uuid!
 
-input AdoptDeploymentInput {
-  """APC workspace to attach the deployment to. Required."""
-  workspaceUuid: ID!
+    """Houston Cluster ID (from registerCluster) where the CR lives. Required."""
+    clusterId: Uuid!
 
-  """Houston Cluster ID (from registerCluster) where the CR lives. Required."""
-  clusterId: ID!
+    """Kubernetes namespace of the Airflow CR. Required."""
+    crNamespace: String!
 
-  """Kubernetes namespace of the Airflow CR. Required."""
-  crNamespace: String!
+    """metadata.name of the Airflow CR. Required."""
+    crName: String!
 
-  """metadata.name of the Airflow CR. Required."""
-  crName: String!
+    """UI display label. Defaults to crName when omitted."""
+    label: String
 
-  """UI display label. Defaults to crName when omitted."""
-  label: String
+    """Longer-form description. Maps to Deployment.description."""
+    description: String
 
-  """Longer-form description. Maps to Deployment.description."""
-  description: String
+    """
+    Default false. When true, APC's Elasticsearch/Vector becomes the deployment's log
+    destination — Houston generates an ES user/password and SSA-patches the CR's ES env vars.
+    When false (default), APC's logging stack is opted out for this deployment.
+    Historical log migration is NOT supported either way.
+    """
+    useApcLogging: Boolean
 
-  """
-  Default false. When true, APC's Elasticsearch/Vector becomes the deployment's log
-  destination — Houston generates an ES user/password and SSA-patches the CR's ES env vars.
-  When false (default), APC's logging stack is opted out for this deployment.
-  Historical log migration is NOT supported either way.
-  """
-  useApcLogging: Boolean
+    """
+    Default false. When true, APC's Prometheus scrape config is wired up at adopt time.
+    When false, customer keeps their existing Prometheus / federation setup.
+    """
+    useApcMetrics: Boolean
 
-  """
-  Default false. When true, APC's Prometheus scrape config is wired up at adopt time.
-  When false, customer keeps their existing Prometheus / federation setup.
-  """
-  useApcMetrics: Boolean
+    """
+    Default false. When false, APC uses the customer's existing registry (the CR's
+    spec.image + imagePullSecret are recorded but not modified). When true, the customer
+    must re-synchronise images to APC's in-cluster registry BEFORE running this mutation —
+    failing that, pods can't pull images.
+    """
+    useApcRegistry: Boolean
 
-  """
-  Default false. When false, APC uses the customer's existing registry (the CR's
-  spec.image + imagePullSecret are recorded but not modified). When true, the customer
-  must re-synchronise images to APC's in-cluster registry BEFORE running this mutation —
-  failing that, pods can't pull images.
-  """
-  useApcRegistry: Boolean
-
-  """
-  Defaults to TRUE (per design-review A.2). When TRUE, the resolver always adopts the CR
-  and stashes any unmapped fields in Deployment.config.adoption.rawCRSnapshot.
-  When set explicitly to FALSE, the resolver returns a structured ADOPTION_INCOMPATIBLE
-  error if any field has no Houston representation — strict mode for callers who want
-  to fail loudly.
-  """
-  acceptIncompatibilities: Boolean
+    """
+    Defaults to TRUE (per design-review A.2). When TRUE, the resolver always adopts the CR
+    and stashes any unmapped fields in Deployment.config.adoption.rawCRSnapshot.
+    When set explicitly to FALSE, the resolver returns a structured ADOPTION_INCOMPATIBLE
+    error if any field has no Houston representation — strict mode for callers who want
+    to fail loudly.
+    """
+    acceptIncompatibilities: Boolean
+  ): Deployment!
 }
 ```
+
+> Arguments are **flat top-level fields** (no `input` wrapper).
 
 > **Removed from the earlier draft per design review:**
 > - `webserverUrl` (A.5) — APC's URL pattern wins on first edit. The customer's existing URL is *not* preserved; what's preserved is their ingress controller / LB IP.
@@ -152,8 +152,30 @@ input AdoptDeploymentInput {
 ### Example request
 
 ```graphql
-mutation AdoptDeployment($input: AdoptDeploymentInput!) {
-  adoptDeployment(input: $input) {
+mutation AdoptDeployment(
+  $workspaceUuid: Uuid!
+  $clusterId: Uuid!
+  $crNamespace: String!
+  $crName: String!
+  $label: String
+  $description: String
+  $useApcLogging: Boolean
+  $useApcMetrics: Boolean
+  $useApcRegistry: Boolean
+  $acceptIncompatibilities: Boolean
+) {
+  adoptDeployment(
+    workspaceUuid: $workspaceUuid
+    clusterId: $clusterId
+    crNamespace: $crNamespace
+    crName: $crName
+    label: $label
+    description: $description
+    useApcLogging: $useApcLogging
+    useApcMetrics: $useApcMetrics
+    useApcRegistry: $useApcRegistry
+    acceptIncompatibilities: $acceptIncompatibilities
+  ) {
     id
     releaseName
     namespace
@@ -171,18 +193,16 @@ Variables:
 
 ```json
 {
-  "input": {
-    "workspaceUuid": "cmpcqawyq020917jt789yw7fd",
-    "clusterId":     "clw1abc234def567ghi890jkl",
-    "crNamespace":   "airflow-prod",
-    "crName":        "prod-airflow",
-    "label":         "Production ETL",
-    "description":   "Customer's production Airflow",
-    "useApcLogging":  false,
-    "useApcMetrics":  true,
-    "useApcRegistry": false,
-    "acceptIncompatibilities": true
-  }
+  "workspaceUuid": "cmpcqawyq020917jt789yw7fd",
+  "clusterId":     "clw1abc234def567ghi890jkl",
+  "crNamespace":   "airflow-prod",
+  "crName":        "prod-airflow",
+  "label":         "Production ETL",
+  "description":   "Customer's production Airflow",
+  "useApcLogging":  false,
+  "useApcMetrics":  true,
+  "useApcRegistry": false,
+  "acceptIncompatibilities": true
 }
 ```
 

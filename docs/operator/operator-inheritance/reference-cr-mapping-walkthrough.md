@@ -276,17 +276,17 @@ What an `adoptDeployment` mutation call would build for this CR:
 
 ```graphql
 mutation {
-  adoptDeployment(input: {
+  adoptDeployment(
     workspaceUuid: "cmpcqawyq020917jt789yw7fd"            # from namespace label
     clusterId:     "<dp-cluster-id>"                       # from current CP context (Task 1 registerCluster)
     crNamespace:   "astronomer-electromagnetic-aphelion-3060"
     crName:        "electromagnetic-aphelion-3060"
     label:         "electromagnetic-aphelion-3060"         # default to crName
-    crSpec:        { ... full .spec verbatim ... }
-    webserverUrl:  "https://deployments.localtest.me/electromagnetic-aphelion-3060/airflow"
-  }) { id releaseName mode config }
+  ) { id releaseName mode config }
 }
 ```
+
+> Arguments are flat top-level fields. The resolver fetches the full `.spec` itself via Commander `GetCustomResource` — the caller supplies only CR identity, not the spec.
 
 Resolver-side, this becomes the upsert payload:
 
