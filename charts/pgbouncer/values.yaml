@@ -12,6 +12,7 @@ securityContext:
     drop:
       - ALL
   runAsNonRoot: true
+  runAsUser: 1000
 
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 podSecurityContext:
