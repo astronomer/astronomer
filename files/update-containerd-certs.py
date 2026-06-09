@@ -276,6 +276,102 @@ _LEGACY_MIRRORS_HEADER_RE = re.compile(
 )
 
 
+def _extract_legacy_mirrors(config: dict) -> dict[str, list[str]]:
+    """Pull inline `registry.mirrors.<host>` blocks out of a parsed config.toml.
+
+    Walks both the 1.x (`io.containerd.grpc.v1.cri`) and 2.x
+    (`io.containerd.cri.v1.images`) plugin namespaces — current cloud-provider
+    images (GKE 1.33 et al) still declare their default mirrors under the 1.x
+    namespace even on a containerd 2.x runtime, but a future image could move
+    them.
+
+    Returns {registry_host: [endpoint_url, ...]}. Endpoint order is preserved —
+    containerd tries them in the order listed, so the first endpoint is the
+    primary (e.g. a pull-through cache) and the rest are fallbacks.
+    """
+    out: dict[str, list[str]] = {}
+    for version in (1, 2):
+        subtree = _registry_subtree(config, version)
+        if not subtree:
+            continue
+        mirrors = subtree.get("mirrors")
+        if not isinstance(mirrors, dict):
+            continue
+        for host, block in mirrors.items():
+            if not isinstance(block, dict):
+                continue
+            endpoints = block.get("endpoint")
+            if not isinstance(endpoints, list) or not endpoints:
+                continue
+            # Last namespace wins if both 1.x and 2.x have an entry for the
+            # same host — 2.x is the runtime namespace, so it's the source of
+            # truth on a 2.x node.
+            out[host] = [str(e) for e in endpoints if isinstance(e, str)]
+    return out
+
+
+def _generate_passthrough_hosts_toml(registry: str, endpoints: list[str]) -> str:
+    """Translate an inline `mirrors.<registry>` endpoint list into a hosts.toml
+    body that preserves the same pull behavior under the hosts.d schema.
+
+    No `ca` key — these are passthrough mirrors using the OS trust store, not
+    private-CA-trusted endpoints (which are handled by generate_hosts_toml()).
+
+    Validates the generated body parses as TOML before returning — catches
+    cases like a stray quote in an endpoint URL breaking the `[host."..."]`
+    header. Fails loudly rather than writing a hosts.toml containerd would
+    silently ignore.
+    """
+    lines = [f'server = "https://{registry}"', ""]
+    for endpoint in endpoints:
+        lines.append(f'[host."{endpoint}"]')
+        lines.append('  capabilities = ["pull", "resolve"]')
+    content = "\n".join(lines) + "\n"
+
+    try:
+        tomllib.loads(content)
+    except tomllib.TOMLDecodeError as exc:
+        log.error("Generated hosts.toml for %s is invalid TOML. Content:\n%s", registry, content)
+        raise RuntimeError(f"generated hosts.toml for {registry} is invalid TOML") from exc
+    return content
+
+
+def _write_preserved_mirrors(mirrors: dict[str, list[str]]) -> None:
+    """For each inline `mirrors.<host>` block discovered in config.toml, write a
+    `certs.d/<host>/hosts.toml` that preserves the cloud-provider mirror
+    behavior (e.g. a pull-through cache the provider ships by default).
+
+    Skips:
+      * <host> == REGISTRY_HOST — the private-registry hosts.toml is written
+        by `_apply_v2_hosts_toml()` with the customer CA. Translating the
+        inline block here would clobber that file with a no-`ca` version.
+      * Hosts where certs.d/<host>/hosts.toml already exists — respect any
+        hand-authored or operator-supplied file.
+
+    The endpoint list is treated as opaque content — no registry-specific
+    knowledge is hard-coded. Whatever the cloud provider's default config
+    declared is what gets carried over.
+    """
+    for host, endpoints in mirrors.items():
+        if host == REGISTRY_HOST:
+            continue
+        host_dir = CONTAINERD_HOST_PATH / "certs.d" / host
+        hosts_toml = host_dir / "hosts.toml"
+        if hosts_toml.exists():
+            log.info("Skipping mirror passthrough for %s: hosts.toml already exists", host)
+            continue
+        host_dir.mkdir(parents=True, exist_ok=True)
+        content = _generate_passthrough_hosts_toml(host, endpoints)
+        hosts_toml.write_text(content)
+        log.info(
+            "Preserved inline mirror for %s -> %s as %s. Content:\n%s",
+            host,
+            list(endpoints),
+            hosts_toml,
+            content,
+        )
+
+
 def _strip_registry_mirrors_blocks(text: str) -> str:
     """Remove every `[plugins."...".registry.mirrors.<host>]` section (+ its body)
     from config.toml source text.
@@ -341,6 +437,8 @@ def inject_config_path(containerd_version: int) -> None:
             plugin["header"],
         )
         return
+
+    _write_preserved_mirrors(_extract_legacy_mirrors(parsed))
 
     source_text = CONFIG_TOML.read_text()
     stripped_text = _strip_registry_mirrors_blocks(source_text)
