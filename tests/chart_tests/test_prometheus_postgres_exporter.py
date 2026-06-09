@@ -57,6 +57,8 @@ class TestPrometheusPostgresExporter:
             "tcpSocket": {"port": 9187},
         }
         assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
         }

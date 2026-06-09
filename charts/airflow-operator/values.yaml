@@ -17,8 +17,11 @@ runtimeVersions:
   versionsJson: ""
 
 securityContext:
-  runAsNonRoot: true
   allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
 
 terminationGracePeriodSeconds: 10
 webhooks:

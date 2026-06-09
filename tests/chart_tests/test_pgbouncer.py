@@ -26,7 +26,12 @@ class TestPGBouncerDeployment:
 
         c_by_name = get_containers_by_name(deployment)
         assert len(c_by_name) == 1
-        assert c_by_name["pgbouncer"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["pgbouncer"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
         assert c_by_name["pgbouncer"]["resources"] == {
             "limits": {"cpu": "250m", "memory": "256Mi"},
             "requests": {"cpu": "250m", "memory": "256Mi"},
@@ -53,6 +58,8 @@ class TestPGBouncerDeployment:
         c_by_name = get_containers_by_name(docs[0])
         assert len(c_by_name) == 1
         assert c_by_name["pgbouncer"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
             "snoopy": "dog",
