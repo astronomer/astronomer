@@ -158,6 +158,39 @@ class TestAllPodSpecContainers:
                 f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
             )
 
+    @pytest.mark.parametrize(
+        "doc",
+        pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
+    )
+    def test_pss_restricted_security_context(self, doc):
+        """Every platform pod must render the full PSS-Restricted container securityContext (PINF-713).
+
+        Required per container: allowPrivilegeEscalation=False, capabilities.drop includes "ALL",
+        runAsNonRoot=True, and an explicit non-zero runAsUser. seccompProfile.type=RuntimeDefault is
+        accepted at either the pod or the container level, which is how PSS-Restricted is evaluated.
+        """
+        doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+        pod_security_context = doc["spec"]["template"]["spec"].get("securityContext") or {}
+        pod_seccomp = pod_security_context.get("seccompProfile", {}).get("type")
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+        for name, container in c_by_name.items():
+            container_id = f"{doc_id}/{name}"
+            sc = container.get("securityContext") or {}
+
+            assert sc.get("allowPrivilegeEscalation") is False, f"{container_id} must set allowPrivilegeEscalation: false"
+            assert "ALL" in (sc.get("capabilities") or {}).get("drop", []), f"{container_id} must drop ALL capabilities"
+            assert sc.get("runAsNonRoot") is True, f"{container_id} must set runAsNonRoot: true"
+
+            run_as_user = sc.get("runAsUser")
+            assert run_as_user not in (None, 0), f"{container_id} must set an explicit non-zero runAsUser (got {run_as_user!r})"
+
+            container_seccomp = (sc.get("seccompProfile") or {}).get("type")
+            assert "RuntimeDefault" in (pod_seccomp, container_seccomp), (
+                f"{container_id} must set seccompProfile.type: RuntimeDefault at the pod or container level"
+            )
+
 
 @pytest.mark.skip("See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this.")
 class TestDuplicateEnvironment:
