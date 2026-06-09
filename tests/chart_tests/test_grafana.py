@@ -87,9 +87,24 @@ def test_deployment_with_securitycontext_defaults(kube_version, plane_mode):
     doc = docs[0]
     c_by_name = get_containers_by_name(doc, include_init_containers=True)
     assert doc["kind"] == "Deployment"
-    assert c_by_name["grafana"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
-    assert c_by_name["wait-for-db"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
-    assert c_by_name["bootstrapper"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+    assert c_by_name["grafana"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
+        "readOnlyRootFilesystem": True,
+        "runAsNonRoot": True,
+    }
+    assert c_by_name["wait-for-db"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
+        "readOnlyRootFilesystem": True,
+        "runAsNonRoot": True,
+    }
+    assert c_by_name["bootstrapper"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
+        "readOnlyRootFilesystem": True,
+        "runAsNonRoot": True,
+    }
 
 
 @pytest.mark.parametrize("plane_mode", ["control", "unified"])
@@ -110,17 +125,23 @@ def test_deployment_with_securitycontext_overrides(kube_version, plane_mode):
     assert doc["kind"] == "Deployment"
     c_by_name = get_containers_by_name(doc, include_init_containers=True)
     assert c_by_name["grafana"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
         "runAsNonRoot": True,
         "runAsUser": 467,
         "readOnlyRootFilesystem": True,
     }
 
     assert c_by_name["wait-for-db"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
         "runAsNonRoot": True,
         "runAsUser": 467,
         "readOnlyRootFilesystem": True,
     }
     assert c_by_name["bootstrapper"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
         "runAsNonRoot": True,
         "runAsUser": 467,
         "readOnlyRootFilesystem": True,

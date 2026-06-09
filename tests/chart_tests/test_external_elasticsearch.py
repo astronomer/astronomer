@@ -48,6 +48,8 @@ class TestExternalElasticSearch:
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
         assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
         assert deployment["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
         }
@@ -99,6 +101,8 @@ class TestExternalElasticSearch:
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
         assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
         assert deployment["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
         }
@@ -163,6 +167,8 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
             }
@@ -238,6 +244,8 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
             }
@@ -292,6 +300,8 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
             }
