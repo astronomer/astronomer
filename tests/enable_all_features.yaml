@@ -90,3 +90,21 @@ external-secrets:
 postgresql:
   replication:
     enabled: true
+prometheus:
+  securityContext:
+      allowPrivilegeEscalation: false
+  filesdReloader: 
+    securityContext:
+      allowPrivilegeEscalation: false
+elasticsearch:
+  securityContext:
+    allowPrivilegeEscalation: false
+  nginx:
+    securityContext:
+      allowPrivilegeEscalation: false
+  exporter:
+    securityContext:
+      allowPrivilegeEscalation: false
+  curator:
+    securityContext:
+      allowPrivilegeEscalation: false
