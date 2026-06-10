@@ -100,6 +100,7 @@ filesdReloader:
     #   cpu: 100m
     #   memory: 25Mi
   extraEnv: []
+  securityContext: {}
 
 # Which directory prometheus data should be stored
 dataDir: "/prometheus"

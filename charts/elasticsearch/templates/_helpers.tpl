@@ -153,11 +153,10 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "elasticsearch.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
 {{- $required := dict "readOnlyRootFilesystem" true }}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
 {{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
 {{- else }}
-{{- $required := dict "readOnlyRootFilesystem" true }}
 {{- merge $required .Values.securityContext | toYaml }}
 {{- end -}}
 {{- end }}
