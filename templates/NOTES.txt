@@ -8,6 +8,12 @@ Astronomer has been installed in {{ $planeMode }} plane mode.
 {{- if .Values.global.baseDomain }}
 The platform components may take a few minutes to spin up.
 
+{{- if .Values.global.istioEnabled }}
+Ingress: Istio Gateway ({{ .Values.global.istio.gateway }})
+{{- else }}
+Ingress: NGINX Ingress Controller
+{{- end }}
+
 {{- $astronomerEnabled := hasKey .Values.global "astronomerEnabled" | ternary .Values.global.astronomerEnabled true }}
 {{- $platformEnabled := hasKey .Values.tags "platform" | ternary .Values.tags.platform true }}
 {{- $grafanaEnabled := hasKey .Values.global "grafanaEnabled" | ternary .Values.global.grafanaEnabled true }}

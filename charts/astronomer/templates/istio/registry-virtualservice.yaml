@@ -1,0 +1,37 @@
+{{- if .Values.global.istioEnabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+---
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-registry-virtualservice
+  namespace: {{ .Release.Namespace }}
+  labels:
+    component: istio-virtualservice
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  hosts:
+  - "{{ include "registry.ingressURL" . }}"
+  gateways:
+  - {{ .Values.global.istio.gateway }}
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: {{ .Release.Name }}-registry.{{ .Release.Namespace }}.svc.cluster.local
+        port:
+          number: {{ .Values.ports.registryHTTP }}
+    {{- if .Values.global.istio.virtualService.timeout }}
+    timeout: {{ .Values.global.istio.virtualService.timeout }}
+    {{- end }}
+    {{- if .Values.global.istio.virtualService.retries }}
+    retries:
+      {{- toYaml .Values.global.istio.virtualService.retries | nindent 6 }}
+    {{- end }}
+{{- end }}
+{{- end }}

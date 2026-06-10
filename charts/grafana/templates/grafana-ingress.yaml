@@ -2,7 +2,7 @@
 ## Grafana Ingress ##
 #####################
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain (not .Values.global.istioEnabled) }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
