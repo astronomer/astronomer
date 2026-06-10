@@ -31,6 +31,7 @@ class TestPGBouncerDeployment:
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
         }
         assert c_by_name["pgbouncer"]["resources"] == {
             "limits": {"cpu": "250m", "memory": "256Mi"},
@@ -62,6 +63,7 @@ class TestPGBouncerDeployment:
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
             "snoopy": "dog",
             "woodstock": "bird",
         }

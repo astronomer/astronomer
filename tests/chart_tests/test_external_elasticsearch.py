@@ -52,6 +52,7 @@ class TestExternalElasticSearch:
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
         expected_env = [{"name": "ES_SECRET", "value": secret}]
         assert expected_env == deployment["spec"]["template"]["spec"]["containers"][0]["env"]
@@ -105,6 +106,7 @@ class TestExternalElasticSearch:
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
         expected_env = [
             {
@@ -171,6 +173,7 @@ class TestExternalElasticSearch:
                 "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]
@@ -248,6 +251,7 @@ class TestExternalElasticSearch:
                 "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]
@@ -304,6 +308,7 @@ class TestExternalElasticSearch:
                 "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]
