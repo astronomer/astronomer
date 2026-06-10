@@ -23,6 +23,12 @@ securityContext:
       - ALL
   runAsNonRoot: true
 
+# TODO(PINF-713): set securityContext.runAsUser once the airflow-operator image's
+# non-root UID is confirmed (private repo; could not be resolved anonymously).
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
 terminationGracePeriodSeconds: 10
 webhooks:
 

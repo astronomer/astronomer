@@ -24,6 +24,7 @@ securityContext:
     drop:
       - ALL
   runAsNonRoot: true
+  runAsUser: 65532
 
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 podSecurityContext:
@@ -95,6 +96,9 @@ extraEnvVars:
   #       key: smtp_password
 
 bootstrapper:
+  # ap-db-bootstrapper runs as UID 1000; override the chart-wide runAsUser default for this init container.
+  securityContext:
+    runAsUser: 1000
   readinessProbe: {}
   livenessProbe: {}
 

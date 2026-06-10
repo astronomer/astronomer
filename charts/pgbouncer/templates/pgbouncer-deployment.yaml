@@ -69,9 +69,7 @@ spec:
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer.image" . }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
             - name: tmp-workspace

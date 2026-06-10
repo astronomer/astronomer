@@ -134,7 +134,10 @@ global:
     tag: 1.31.1-1
     pullPolicy: IfNotPresent
     port: 8084
-    securityContext: {}
+    # ap-auth-sidecar runs as UID 101. This is layered over each chart's securityContext
+    # default so the sidecar matches its image while inheriting the rest of the PSS controls.
+    securityContext:
+      runAsUser: 101
     readinessProbe: {}
     livenessProbe: {}
     ingressAllowedNamespaces: []

@@ -59,6 +59,34 @@ registry.{{ .Values.global.baseDomain }}
 {{- end }}
 {{- end }}
 
+{{/*
+Render a container-level securityContext for PSS-Restricted conformance.
+
+Call with a list of two elements: (list $ $override) where
+  - $        is the current context (so the helper can read .Values.securityContext and .Values.global)
+  - $override is a per-container securityContext map (or nil). Its fields are layered on top of the
+    chart's .Values.securityContext, so a container that only differs by runAsUser can pass
+    (dict "runAsUser" 101) and inherit every other field from the chart default.
+
+Behavior:
+  - readOnlyRootFilesystem is always force-merged to true (customers cannot disable it).
+  - Every other field is a default (override layered over .Values.securityContext), so it remains
+    overridable via helm values.
+  - runAsUser is omitted on OpenShift, or when it is set to the string "auto", so the cluster's
+    SCC can assign a UID from its allowed range. This mirrors the existing prometheus/nats helpers.
+*/}}
+{{- define "platform.containerSecurityContext" -}}
+{{- $ctx := index . 0 -}}
+{{- $override := index . 1 | default dict -}}
+{{- $required := dict "readOnlyRootFilesystem" true -}}
+{{- $base := merge (deepCopy $override) $ctx.Values.securityContext -}}
+{{- if or (eq (toString $base.runAsUser) "auto") $ctx.Values.global.openshift.enabled -}}
+{{- merge $required (omit $base "runAsUser") | toYaml -}}
+{{- else -}}
+{{- merge $required $base | toYaml -}}
+{{- end -}}
+{{- end }}
+
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.logging.loggingSidecar.tag }}
