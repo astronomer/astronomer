@@ -72,15 +72,15 @@ Behavior:
   - readOnlyRootFilesystem is always force-merged to true (customers cannot disable it).
   - Every other field is a default (override layered over .Values.securityContext), so it remains
     overridable via helm values.
-  - runAsUser is omitted on OpenShift, or when it is set to the string "auto", so the cluster's
-    SCC can assign a UID from its allowed range. This mirrors the existing prometheus/nats helpers.
+  - runAsUser is omitted on OpenShift so the cluster's SCC can assign a UID from its allowed range.
+    This matches the prometheus/elasticsearch helpers as of PINF-765.
 */}}
 {{- define "platform.containerSecurityContext" -}}
 {{- $ctx := index . 0 -}}
 {{- $override := index . 1 | default dict -}}
 {{- $required := dict "readOnlyRootFilesystem" true -}}
 {{- $base := merge (deepCopy $override) $ctx.Values.securityContext -}}
-{{- if or (eq (toString $base.runAsUser) "auto") $ctx.Values.global.openshift.enabled -}}
+{{- if $ctx.Values.global.openshift.enabled -}}
 {{- merge $required (omit $base "runAsUser") | toYaml -}}
 {{- else -}}
 {{- merge $required $base | toYaml -}}
