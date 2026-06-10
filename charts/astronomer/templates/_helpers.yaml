@@ -736,12 +736,7 @@ tls:
 {{- end }}
 
 {{- define "configSyncer.securityContext" -}}
-{{- $required := dict "readOnlyRootFilesystem" true }}
-{{- if .Values.configSyncer.securityContext }}
-{{- merge $required .Values.configSyncer.securityContext | toYaml }}
-{{- else }}
-{{- merge $required .Values.securityContext | toYaml }}
-{{- end }}
+{{- include "platform.containerSecurityContext" (list . .Values.configSyncer.securityContext) -}}
 {{- end }}
 
 {{- define "houston.eventsUrl" -}}

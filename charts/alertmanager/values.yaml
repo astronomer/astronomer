@@ -22,6 +22,7 @@ securityContext:
     drop:
       - ALL
   runAsNonRoot: true
+  runAsUser: 65534
 
 serviceAccount:
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/

@@ -60,9 +60,7 @@ spec:
                   fi
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              securityContext:
-                {{- $required := dict "readOnlyRootFilesystem" true }}
-                {{- merge $required .Values.securityContext | toYaml | nindent 16 }}
+              securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 16 }}
               resources: {{- toYaml .Values.houston.resources | nindent 16 }}
               volumeMounts:
                 - name: etc-ssl-certs
@@ -71,9 +69,7 @@ spec:
             - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              securityContext:
-                {{- $required := dict "readOnlyRootFilesystem" true }}
-                {{- merge $required .Values.securityContext | toYaml | nindent 16 }}
+              securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 16 }}
               resources: {{- toYaml .Values.houston.resources | nindent 16 }}
               args: [
                 "yarn", "cleanup-airflow-db-data", "--",

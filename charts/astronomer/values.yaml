@@ -46,6 +46,7 @@ securityContext:
     drop:
       - ALL
   runAsNonRoot: true
+  runAsUser: 1000
 
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 podSecurityContext:
@@ -53,6 +54,9 @@ podSecurityContext:
     type: RuntimeDefault
 
 astroUI:
+  # ap-astro-ui runs as UID 101; override the chart-wide runAsUser default for this pod.
+  securityContext:
+    runAsUser: 101
   replicas: 2
   env: []
   # This only applies when replicas > 3
@@ -988,6 +992,8 @@ registry:
     fsGroup: 1000
     runAsGroup: 1000
     runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
   extraEnv: []
 
   serviceAccount:
