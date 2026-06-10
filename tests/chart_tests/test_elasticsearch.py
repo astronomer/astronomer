@@ -256,6 +256,7 @@ class TestElasticSearch:
                     "securityContext": {
                         "denver": "colorado",
                         "detroit": "michigan",
+                        "allowPrivilegeEscalation": False,
                     }
                 }
             },
@@ -277,6 +278,7 @@ class TestElasticSearch:
                     "detroit": "michigan",
                     "runAsNonRoot": True,
                     "runAsUser": 1000,
+                    "allowPrivilegeEscalation": False,
                 }.items()
             )
 
