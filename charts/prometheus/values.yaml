@@ -106,7 +106,13 @@ filesdReloader:
     #   cpu: 100m
     #   memory: 25Mi
   extraEnv: []
-  securityContext: {}
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    runAsNonRoot: true
+    runAsUser: 65534
 
 # Which directory prometheus data should be stored
 dataDir: "/prometheus"
