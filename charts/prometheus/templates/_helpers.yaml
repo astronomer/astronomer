@@ -101,7 +101,7 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "prometheus.securityContext" -}}
-{{- if or (eq (toString (.Values.securityContext.runAsUser)) "auto") .Values.global.openshift.enabled }}
+{{- if .Values.global.openshift.enabled }}
 {{- omit  .Values.securityContext "runAsUser" | toYaml }}
 {{- else }}
 {{- toYaml .Values.securityContext }}
@@ -109,7 +109,7 @@ imagePullSecrets:
 {{- end }}
 
 {{- define "filesdreloader.securityContext" -}}
-{{- if or (eq (toString .Values.filesdReloader.securityContext.runAsUser) "auto") .Values.global.openshift.enabled }}
+{{- if .Values.global.openshift.enabled }}
 {{- omit .Values.filesdReloader.securityContext "runAsUser" | toYaml }}
 {{- else }}
 {{- toYaml .Values.filesdReloader.securityContext }}
