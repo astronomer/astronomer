@@ -92,18 +92,21 @@ def test_deployment_with_securitycontext_defaults(kube_version, plane_mode):
         "capabilities": {"drop": ["ALL"]},
         "readOnlyRootFilesystem": True,
         "runAsNonRoot": True,
+        "runAsUser": 65532,
     }
     assert c_by_name["wait-for-db"]["securityContext"] == {
         "allowPrivilegeEscalation": False,
         "capabilities": {"drop": ["ALL"]},
         "readOnlyRootFilesystem": True,
         "runAsNonRoot": True,
+        "runAsUser": 65532,
     }
     assert c_by_name["bootstrapper"]["securityContext"] == {
         "allowPrivilegeEscalation": False,
         "capabilities": {"drop": ["ALL"]},
         "readOnlyRootFilesystem": True,
         "runAsNonRoot": True,
+        "runAsUser": 1000,
     }
 
 
@@ -143,7 +146,7 @@ def test_deployment_with_securitycontext_overrides(kube_version, plane_mode):
         "allowPrivilegeEscalation": False,
         "capabilities": {"drop": ["ALL"]},
         "runAsNonRoot": True,
-        "runAsUser": 467,
+        "runAsUser": 1000,
         "readOnlyRootFilesystem": True,
     }
 
