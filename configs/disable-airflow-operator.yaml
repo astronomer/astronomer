@@ -1,0 +1,6 @@
+---
+airflow-operator:
+  crd:
+    create: false
+  certManager:
+    enabled: false
