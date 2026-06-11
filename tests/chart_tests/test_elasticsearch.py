@@ -494,6 +494,7 @@ class TestElasticSearch:
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
 
     def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
@@ -528,6 +529,7 @@ class TestElasticSearch:
             "allowPrivilegeEscalation": False,
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
             "capabilities": {"drop": ["ALL"]},
             "snoopy": "dog",
             "woodstock": "bird",
@@ -743,8 +745,10 @@ class TestElasticSearch:
         c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["nginx"]["securityContext"] == {
             "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 101,
         }
 
     def test_elasticsearch_nginx_deployment_overrides(self, kube_version):
@@ -767,8 +771,10 @@ class TestElasticSearch:
         c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["nginx"]["securityContext"] == {
             "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 101,
             "snoopy": "dog",
             "woodstock": "bird",
         }
