@@ -16,17 +16,11 @@ PSS_RESTRICTED_EXEMPT = {
     # Privileged / host-mutating infrastructure — must run privileged or as root by design.
     "DaemonSet/release-name-containerd-ca-update": "privileged: installs CA into the host containerd config",
     "DaemonSet/release-name-private-ca": "runs as root to install private CA certs onto the host",
-    "DaemonSet/release-name-vector": "runs as root (UID 0) to read host log files for collection",
+    "DaemonSet/release-name-vector": "must run as root: mounts the host log directory to collect node/pod logs",
     # Bundled third-party charts: privileged init containers or vendored securityContext we do not control.
     "Deployment/release-name-elasticsearch-client": "bundled chart: privileged sysctl init container (vm.max_map_count)",
     "StatefulSet/release-name-elasticsearch-data": "bundled chart: privileged sysctl init container (vm.max_map_count)",
     "StatefulSet/release-name-elasticsearch-master": "bundled chart: privileged sysctl init container (vm.max_map_count)",
-    "Deployment/release-name-elasticsearch-exporter": "bundled chart: vendored container does not set runAsUser",
-    "Deployment/release-name-elasticsearch-nginx": "bundled chart: vendored container lacks capabilities.drop/runAsUser",
-    "StatefulSet/release-name-postgresql-master": "bundled chart: metrics sidecar/vendored container lacks capabilities.drop",
-    "StatefulSet/release-name-postgresql-slave": "bundled chart: volume-permissions init runs as root; vendored container lacks capabilities.drop",
-    # Temporary: image UID not yet confirmed (private repo).
-    "Deployment/release-name-aocm": "TODO(PINF-713): set runAsUser once the airflow-operator image UID is confirmed",
 }
 
 

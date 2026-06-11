@@ -262,6 +262,7 @@ exporter:
   securityContext:
     allowPrivilegeEscalation: false
     runAsNonRoot: true
+    runAsUser: 65534
     capabilities:
       drop:
       - ALL
@@ -313,6 +314,10 @@ nginx:
   securityContext:
     allowPrivilegeEscalation: false
     runAsNonRoot: true
+    runAsUser: 101
+    capabilities:
+      drop:
+        - ALL
   maxBodySize: "100M"
 
   authCache:
