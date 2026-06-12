@@ -103,7 +103,7 @@ def test_houston_configmap_ldap_customer_override():
     ldap_config = {
         "enabled": True,
         "host": "ldap.example.com",
-        "tls": {"mode": "starttls", "rejectUnauthorized": True},
+        "tls": {"mode": "starttls", "verifyServerCert": True},
         "bindDn": "cn=admin,dc=example,dc=com",
         "searchBase": "ou=people,dc=example,dc=com",
         "groups": {
