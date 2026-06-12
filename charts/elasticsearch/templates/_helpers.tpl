@@ -184,7 +184,7 @@ Return exporter podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fi
 {{- end }}
 
 {{- define "elasticsearch.ingressurl" -}}
-{{ if eq .Values.global.plane.mode "data" -}}
+{{ if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 elasticsearch.{{ .Values.global.baseDomain }}
