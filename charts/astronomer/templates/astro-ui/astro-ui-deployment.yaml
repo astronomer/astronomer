@@ -52,9 +52,7 @@ spec:
         - name: astro-ui
           image: {{ include "astroUI.image" . }}
           imagePullPolicy: {{ .Values.images.astroUI.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ .Values.astroUI.securityContext) | nindent 12 }}
           resources: {{- toYaml .Values.astroUI.resources | nindent 12 }}
           {{- if .Values.astroUI.command }}
           command: {{- toYaml .Values.astroUI.command | nindent 12 }}

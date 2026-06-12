@@ -16,6 +16,7 @@ RUN apt update && apt install -y \
     nodejs \
     npm \
     procps \
+    ripgrep \
     unzip \
     vim \
     wget \

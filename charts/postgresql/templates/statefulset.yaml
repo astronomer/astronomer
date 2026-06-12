@@ -63,8 +63,10 @@ spec:
       {{- if .Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
-      {{- if .Values.securityContext.enabled }}
       securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      {{- if .Values.securityContext.enabled }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
@@ -74,6 +76,10 @@ spec:
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         resources: {{- toYaml .Values.resources | nindent 10 }}
         securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
           readOnlyRootFilesystem: true
         {{- if .Values.securityContext.enabled }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
@@ -191,6 +197,7 @@ spec:
         image: {{ template "postgresql.metrics.image" . }}
         imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
         securityContext:
+          allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
         {{- if .Values.metrics.securityContext.enabled }}
           runAsUser: {{ .Values.metrics.securityContext.runAsUser }}

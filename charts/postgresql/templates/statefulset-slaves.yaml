@@ -57,6 +57,8 @@ spec:
       {{- end }}
       securityContext:
         readOnlyRootFilesystem: true
+        seccompProfile:
+          type: RuntimeDefault
       {{- if .Values.securityContext.enabled }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
@@ -90,6 +92,10 @@ spec:
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         resources: {{- toYaml .Values.resources | nindent 10 }}
         securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
           readOnlyRootFilesystem: true
         {{- if .Values.securityContext.enabled }}
           runAsUser: {{ .Values.securityContext.runAsUser }}

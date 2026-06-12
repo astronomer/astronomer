@@ -58,9 +58,7 @@ spec:
           volumeMounts:
             - name: var-lib-grafana
               mountPath: /var_lib_grafana_copy
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
         - name: wait-for-db
           command:
@@ -70,9 +68,7 @@ spec:
             - "DB ready"
           image: {{ template "grafana.image" . }}
           imagePullPolicy: IfNotPresent
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           {{- if .Values.waitForDB.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.waitForDB.readinessProbe) . | nindent 12 }}
@@ -89,9 +85,7 @@ spec:
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ .Values.bootstrapper.securityContext) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           {{- if .Values.bootstrapper.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.bootstrapper.readinessProbe) . | nindent 12 }}
@@ -122,9 +116,7 @@ spec:
         - name: grafana
           image: {{ template "grafana.image" . }}
           imagePullPolicy: {{ .Values.images.grafana.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           ports:
             - name: grafana-ui
@@ -188,9 +180,7 @@ spec:
         {{- if .Values.global.authSidecar.enabled }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ .Values.global.authSidecar.securityContext) | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources:
