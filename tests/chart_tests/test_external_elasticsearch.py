@@ -870,6 +870,40 @@ class TestExternalElasticSearch:
         assert doc["metadata"]["name"] == "release-name-external-es-proxy-ingress"
         assert doc["spec"]["rules"][0]["host"] == "elasticsearch.plane.example.com"
 
+    @pytest.mark.parametrize(
+        ("domain_prefix", "expected_host"),
+        [
+            ("dp01", "elasticsearch.dp01.example.com"),
+            ("", "elasticsearch.example.com"),
+            (None, "elasticsearch.example.com"),
+        ],
+    )
+    def test_external_elasticsearch_ingress_host_domain_prefix(self, domain_prefix, expected_host, kube_version):
+        """Data plane installs without a domainPrefix (same cluster as the control plane)
+        use elasticsearch.<baseDomain> instead of elasticsearch.<domainPrefix>.<baseDomain>."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data", "domainPrefix": domain_prefix},
+                    "tlsSecret": "my-tls-secret",
+                    "customLogging": {
+                        "enabled": True,
+                        "secret": secret,
+                        "host": "esdemo.example.com",
+                    },
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-ingress.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["spec"]["rules"][0]["host"] == expected_host
+        assert doc["spec"]["tls"][0]["hosts"] == [expected_host]
+
     def test_external_es_proxy_auth_cache_enabled_by_default(self, kube_version):
         """Test that auth caching is enabled by default in external-es-proxy configmap."""
         docs = render_chart(

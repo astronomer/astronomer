@@ -987,6 +987,33 @@ class TestElasticSearch:
         assert "proxy_cache_valid 200 10m" in nginx_config
         assert "proxy_cache_valid 401 403 2m" in nginx_config
 
+    @pytest.mark.parametrize(
+        ("domain_prefix", "expected_host"),
+        [
+            ("dp01", "elasticsearch.dp01.example.com"),
+            ("", "elasticsearch.example.com"),
+            (None, "elasticsearch.example.com"),
+        ],
+    )
+    def test_elasticsearch_ingress_host_domain_prefix(self, domain_prefix, expected_host, kube_version):
+        """Data plane installs without a domainPrefix (same cluster as the control plane)
+        use elasticsearch.<baseDomain> instead of elasticsearch.<domainPrefix>.<baseDomain>."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data", "domainPrefix": domain_prefix},
+                    "tlsSecret": "my-tls-secret",
+                },
+            },
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["spec"]["rules"][0]["host"] == expected_host
+        assert doc["spec"]["tls"][0]["hosts"] == [expected_host]
+
     def test_elasticsearch_ingress_with_tls_secret(self, kube_version):
         """Test that elasticsearch ingress includes tls with hosts when tlsSecret is set."""
         docs = render_chart(

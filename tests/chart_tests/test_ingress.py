@@ -211,6 +211,48 @@ class TestIngress:
             assert "nginx.ingress.kubernetes.io/configuration-snippet" in annotations
             assert "app.example.com" in annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
 
+    @pytest.mark.parametrize(
+        ("domain_prefix", "expected_host"),
+        [("dp01", "registry.dp01.example.com"), ("", "registry.example.com"), (None, "registry.example.com")],
+    )
+    def test_data_plane_registry_host_domain_prefix(self, domain_prefix, expected_host, kube_version):
+        """Data plane installs without a domainPrefix (same cluster as the control plane)
+        use registry.<baseDomain> instead of registry.<domainPrefix>.<baseDomain>."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data", "domainPrefix": domain_prefix}}},
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        hosts = [rule["host"] for rule in doc["spec"]["rules"]]
+        assert hosts == [expected_host]
+        assert expected_host in doc["spec"]["tls"][0]["hosts"]
+
+    @pytest.mark.parametrize(
+        ("domain_prefix", "expected_host"),
+        [("dp01", "registry.dp01.example.com"), ("", "registry.example.com"), (None, "registry.example.com")],
+    )
+    def test_data_plane_per_host_registry_ingress_domain_prefix(self, domain_prefix, expected_host, kube_version):
+        """Per-host registry ingress follows the same domainPrefix rule in data plane mode."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "tlsSecret": "my-tls-secret",
+                    "perHostIngress": {"enabled": True},
+                    "plane": {"mode": "data", "domainPrefix": domain_prefix},
+                },
+            },
+            show_only=["charts/astronomer/templates/registry/registry-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["spec"]["rules"][0]["host"] == expected_host
+        assert expected_host in doc["spec"]["tls"][0]["hosts"]
+
     def test_astro_ui_ingress_with_tls_secret(self, kube_version):
         """Test that astro-ui per-host ingress includes tls with hosts when tlsSecret is set."""
         docs = render_chart(

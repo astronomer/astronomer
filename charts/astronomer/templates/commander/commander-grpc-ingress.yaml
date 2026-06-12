@@ -1,7 +1,7 @@
 ############################
 ## Commander GRPC Ingress ##
 ############################
-{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix }}
+{{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:

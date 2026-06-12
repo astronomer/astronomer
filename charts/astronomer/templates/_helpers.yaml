@@ -753,7 +753,7 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- end -}}
 
 {{- define "commander.dataplaneURL" -}}
-{{- if (eq .Values.global.plane.mode "data") -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 {{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}

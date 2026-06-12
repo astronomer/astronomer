@@ -13,7 +13,7 @@ class TestAstronomerCommanderIngress:
         """Test that helm renders a correct GRPC ingress template for astronomer/commander in data plane mode."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": "data", "domainPrefix": "dp01"}}},
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
         assert len(docs) == 1
@@ -54,7 +54,7 @@ class TestAstronomerCommanderIngress:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}},
+                "global": {"plane": {"mode": "data", "domainPrefix": "dp01"}},
                 "astronomer": {"commander": {"ingress": {"annotation": custom_annotations}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
@@ -69,7 +69,7 @@ class TestAstronomerCommanderIngress:
         """Test that helm renders a good metadata ingress template for astronomer/commander in data plane mode."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": "data", "domainPrefix": "dp01"}}},
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
         )
         assert len(docs) == 1
@@ -109,7 +109,7 @@ class TestAstronomerCommanderIngress:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}},
+                "global": {"plane": {"mode": "data", "domainPrefix": "dp01"}},
                 "astronomer": {"commander": {"ingress": {"annotation": custom_annotations}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
@@ -120,13 +120,69 @@ class TestAstronomerCommanderIngress:
         assert annotations["nginx.ingress.kubernetes.io/rate-limit"] == "200"
         assert annotations["custom.metadata/test"] == "metadata-value"
 
+    def test_commander_grpc_ingress_host_domain_prefix(self, kube_version):
+        """Data plane installs with a domainPrefix expose commander on
+        commander.<domainPrefix>.<baseDomain>."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data", "domainPrefix": "dp01"},
+                    "tlsSecret": "my-tls-secret",
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["spec"]["rules"][0]["host"] == "commander.dp01.example.com"
+        assert doc["spec"]["tls"][0]["hosts"] == ["commander.dp01.example.com"]
+
+    def test_commander_metadata_ingress_host_domain_prefix(self, kube_version):
+        """Data plane installs with a domainPrefix expose commander metadata on
+        <domainPrefix>.<baseDomain>."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data", "domainPrefix": "dp01"},
+                    "tlsSecret": "my-tls-secret",
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["spec"]["rules"][0]["host"] == "dp01.example.com"
+        assert doc["spec"]["tls"][0]["hosts"] == ["dp01.example.com"]
+
+    @pytest.mark.parametrize("domain_prefix", ["", None])
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "charts/astronomer/templates/commander/commander-grpc-ingress.yaml",
+            "charts/astronomer/templates/commander/commander-metadata-ingress.yaml",
+        ],
+    )
+    def test_commander_ingress_not_rendered_without_domain_prefix(self, template, domain_prefix, kube_version):
+        """Same-cluster data plane installs (no domainPrefix) do not generate commander ingresses."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data", "domainPrefix": domain_prefix}}},
+            show_only=[template],
+        )
+
+        assert len(docs) == 0
+
     def test_commander_grpc_ingress_with_tls_secret(self, kube_version):
         """Test that commander grpc ingress includes tls with hosts when tlsSecret is set."""
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
-                    "plane": {"mode": "data"},
+                    "plane": {"mode": "data", "domainPrefix": "dp01"},
                     "baseDomain": "example.com",
                     "tlsSecret": "my-tls-secret",
                 },
@@ -147,7 +203,7 @@ class TestAstronomerCommanderIngress:
             kube_version=kube_version,
             values={
                 "global": {
-                    "plane": {"mode": "data"},
+                    "plane": {"mode": "data", "domainPrefix": "dp01"},
                     "baseDomain": "example.com",
                     "tlsSecret": "",
                 },
@@ -164,7 +220,7 @@ class TestAstronomerCommanderIngress:
             kube_version=kube_version,
             values={
                 "global": {
-                    "plane": {"mode": "data"},
+                    "plane": {"mode": "data", "domainPrefix": "dp01"},
                     "baseDomain": "example.com",
                     "tlsSecret": "my-tls-secret",
                 },
@@ -185,7 +241,7 @@ class TestAstronomerCommanderIngress:
             kube_version=kube_version,
             values={
                 "global": {
-                    "plane": {"mode": "data"},
+                    "plane": {"mode": "data", "domainPrefix": "dp01"},
                     "baseDomain": "example.com",
                     "tlsSecret": "",
                 },
