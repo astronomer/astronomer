@@ -154,7 +154,7 @@ imagePullSecrets:
 
 {{- define "elasticsearch.securityContext" -}}
 {{- $required := dict "readOnlyRootFilesystem" true }}
-{{- if .Values.global.openshift.enabled }}
+{{- if .Values.global.openshiftEnabled }}
 {{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
 {{- else }}
 {{- merge $required .Values.securityContext | toYaml }}

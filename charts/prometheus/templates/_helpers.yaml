@@ -101,7 +101,7 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "prometheus.securityContext" -}}
-{{- if .Values.global.openshift.enabled }}
+{{- if .Values.global.openshiftEnabled}}
 {{- omit  .Values.securityContext "runAsUser" | toYaml }}
 {{- else }}
 {{- toYaml .Values.securityContext }}
@@ -109,7 +109,7 @@ imagePullSecrets:
 {{- end }}
 
 {{- define "filesdreloader.securityContext" -}}
-{{- if .Values.global.openshift.enabled }}
+{{- if .Values.global.openshiftEnabled}}
 {{- omit .Values.filesdReloader.securityContext "runAsUser" | toYaml }}
 {{- else }}
 {{- toYaml .Values.filesdReloader.securityContext }}
@@ -120,7 +120,7 @@ imagePullSecrets:
 Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
 */}}
 {{- define "prometheus.podSecurityContext" -}}
-{{- if .Values.global.openshift.enabled }}
+{{- if .Values.global.openshiftEnabled }}
 {{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
 {{- else }}
 {{- toYaml .Values.podSecurityContext }}
