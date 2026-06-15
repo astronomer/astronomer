@@ -15,9 +15,6 @@ images:
 securityContext:
   runAsNonRoot: true
 
-# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-podSecurityContext: {}
-
 env: {}
 resources:
   limits:
@@ -47,8 +44,6 @@ extraArgs:
 priorityClassName: ~
 
 serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
   # Specifies whether a ServiceAccount should be created
   create: true
   # Annotations to add to the service account
