@@ -67,6 +67,18 @@ class TestCpIdentitySecret:
         assert secret["metadata"]["name"] == "cp-identity"
         assert secret["data"]["cp_id"]  # non-empty (uuid, base64-encoded)
 
+    def test_explicit_cp_id_is_used(self, kube_version):
+        """An explicit global.controlPlaneHA.cpId is used verbatim (deterministic for GitOps/offline render)."""
+        import base64
+
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[CP_IDENTITY_FILE],
+            values=_ha_values(cpId="11111111-2222-3333-4444-555555555555"),
+        )
+        assert len(docs) == 1
+        assert base64.b64decode(docs[0]["data"]["cp_id"]).decode() == "11111111-2222-3333-4444-555555555555"
+
     def test_requires_global_base_domain(self, kube_version):
         """Enabling HA without globalBaseDomain fails the render with a clear message."""
         with pytest.raises(CalledProcessError) as excinfo:
