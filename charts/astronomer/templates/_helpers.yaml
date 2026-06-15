@@ -388,6 +388,21 @@ s3:
   regionendpoint: {{ .Values.registry.s3.regionendpoint }}
 {{- end }}
 
+{{- /*
+  CP_ID env var, sourced from the cp-identity Secret. Single source of truth for the
+  secret ref, shared by houston, dp-link and navigator. Guard call sites with
+  `if .Values.global.controlPlaneHA.enabled` — in HA mode it is mounted on every
+  control-plane pod that runs a state-mutating/reconciliation loop so it can resolve
+  its region's active state (Region-gating).
+*/}}
+{{- define "houston.cpIdEnv" -}}
+- name: CP_ID
+  valueFrom:
+    secretKeyRef:
+      name: cp-identity
+      key: cp_id
+{{- end -}}
+
 {{- define "dp_link_environment" }}
 - name: NODE_ENV
   value: "production"
@@ -448,6 +463,9 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+{{- if .Values.global.controlPlaneHA.enabled }}
+{{ include "houston.cpIdEnv" . }}
+{{- end }}
 {{- end }}
 
 
@@ -467,6 +485,9 @@ s3:
 {{- end }}
 - name: NODE_ENV
   value: "production"
+{{- if .Values.global.controlPlaneHA.enabled }}
+{{ include "houston.cpIdEnv" . }}
+{{- end }}
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:

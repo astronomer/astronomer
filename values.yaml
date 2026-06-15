@@ -20,6 +20,24 @@ global:
   clusterLocalServiceAuth:
     token: ""
 
+  # Control Plane High Availability: run multiple active CPs serving traffic concurrently within a region.
+  # Default false keeps single-CP installs unchanged (no behavior change).
+  controlPlaneHA:
+    enabled: false
+    # Parent domain of the global customer-facing hostname (e.g. astro.<region>.<...>.link
+    # when the global URL is app.astro.<region>...). REQUIRED when enabled.
+    globalBaseDomain: ~
+    # Optional override for the customer session cookie Domain= attribute.
+    # When unset, Houston defaults it to `.<globalBaseDomain>`. Set explicitly only for the
+    # advanced single-cookie mode: a common parent of globalBaseDomain and the per-CP admin
+    # baseDomain (not derivable from globalBaseDomain alone) so one cookie covers both flows.
+    cookieDomain: ~
+    # Optional override for the customer session cookie name.
+    # When unset, Houston defaults it to `astronomer_<snakeCase(globalBaseDomain)>_auth` (same
+    # on every CP). Set explicitly only to pin an existing cookie name during HA migration so
+    # current sessions aren't invalidated.
+    cookieName: ~
+
   # Labels to add to every pod
   podLabels: {}
 

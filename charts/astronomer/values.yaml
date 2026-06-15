@@ -46,6 +46,13 @@ securityContext:
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 podSecurityContext: {}
 
+# Houston JWT (JWKS) signing keypair generation. Default true generates a
+# self-signed keypair at install. Set false (or enable global.controlPlaneHA)
+# to consume an externally-provisioned / ESO-synced shared keypair instead.
+jwks:
+  generation:
+    enabled: true
+
 astroUI:
   replicas: 2
   env: []
