@@ -89,6 +89,19 @@ class TestCpIdentitySecret:
             )
         assert "global.controlPlaneHA.globalBaseDomain is required" in excinfo.value.stderr.decode("utf-8")
 
+    def test_data_plane_render_not_gated_on_global_base_domain(self, kube_version):
+        """A data-plane render with HA enabled (e.g. shared values) must not require globalBaseDomain.
+
+        globalBaseDomain is control-plane-only, so the fail guard is scoped to control/unified;
+        the data plane renders cleanly and emits no cp-identity Secret.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[CP_IDENTITY_FILE],
+            values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": True}}},
+        )
+        assert docs == []
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestJwtKeypairGating:
