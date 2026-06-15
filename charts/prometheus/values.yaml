@@ -45,8 +45,6 @@ resources: {}
 podAnnotations: {}
 
 serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
   # Specifies whether a service account should be created
   create: true
   # Annotations to add to the service account
@@ -100,7 +98,6 @@ filesdReloader:
     #   cpu: 100m
     #   memory: 25Mi
   extraEnv: []
-  securityContext: {}
 
 # Which directory prometheus data should be stored
 dataDir: "/prometheus"
@@ -204,15 +201,11 @@ extraFlags:
 # Convert lists to dicts for more explicit assignment.
 # Convert dashes to underscores for golang compatibility.
 config:
-  # Enables kubelet and cAdvisor scrape jobs for pod-level metrics
   enableSelfScrape: false
   scrape_configs:
     kubernetes_apiservers:
       tls_config:
         insecure_skip_verify: false
-    federated_dataplanes:
-      scrape_interval: 15s
-      scrape_timeout: 10s
 
 rbac:
   role:
