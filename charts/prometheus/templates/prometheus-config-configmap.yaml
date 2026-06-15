@@ -75,7 +75,7 @@ data:
         scrape_timeout: {{ .Values.config.scrape_configs.federated_dataplanes.scrape_timeout }}
         params:
           'match[]':
-            - '{job=~".*-kube-state$|airflow|kubernetes-nodes-cadvisor|node-exporter"}'
+            - '{job=~".*-kube-state$|airflow|airflow-operator|kubernetes-nodes-cadvisor|node-exporter"}'
         file_sd_configs:
           - files:
             - /prometheusreloader/airflow/clusters.json
