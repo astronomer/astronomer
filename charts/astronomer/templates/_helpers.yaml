@@ -464,7 +464,7 @@ s3:
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
 {{- if .Values.global.controlPlaneHA.enabled }}
-{{ include "houston.cpIdEnv" . }}
+{{- include "houston.cpIdEnv" . | nindent 0 }}
 {{- end }}
 {{- end }}
 
@@ -486,7 +486,7 @@ s3:
 - name: NODE_ENV
   value: "production"
 {{- if .Values.global.controlPlaneHA.enabled }}
-{{ include "houston.cpIdEnv" . }}
+{{- include "houston.cpIdEnv" . | nindent 0 }}
 {{- end }}
 - name: DATABASE__CONNECTION
   valueFrom:
