@@ -23,8 +23,6 @@ nats:
   # then a service account would be required to be able to
   # gather the public ip from a node.
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a ServiceAccount should be created
     create: false
     # Annotations to add to the service account
@@ -83,8 +81,6 @@ nats:
     serviceAccount:
       create: true
       name: ~
-      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-      automountServiceAccountToken: true
 
 
     # Jetstream Domain
