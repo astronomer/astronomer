@@ -41,7 +41,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 2026.6.5
+      tag: 2026.6.15
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -307,31 +307,31 @@ global:
         tag: 0.30.0
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.6.3
+        tag: 8.6.4
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-13
+        tag: 1.24.1-15
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
         tag: 0.12.0-3
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.6.5
+        tag: 2026.6.15
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.6.5
+        tag: 2026.6.15
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.6.5
+        tag: 2026.6.15
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.2.11
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.15
+      tag: 0.1.16
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
