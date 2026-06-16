@@ -1,0 +1,103 @@
+alertmanager:
+  images:
+    alertmanager:
+      tag: 0.31.1-5
+astronomer:
+  images:
+    astroUI:
+      tag: 2.0.7
+    commander:
+      tag: 2.0.15
+    dbBootstrapper:
+      tag: 2.0.1
+    houston:
+      tag: 2.0.20
+    registry:
+      tag: 3.0.0-9
+    vector:
+      tag: 0.54.0
+elasticsearch:
+  images:
+    es:
+      tag: 8.18.6
+external-secrets:
+  image:
+    tag: 2.2.0
+global:
+  airflow:
+    images:
+      gitSync:
+        tag: 2026.4.22
+      pgbouncer:
+        tag: 1.24.1-8
+      pgbouncerExporter:
+        tag: 0.20.0-5
+      redis:
+        tag: 8.6.2
+      statsd:
+        tag: 0.29.0-1
+      xcom:
+        tag: 2026.4.22
+  authSidecar:
+    tag: 1.29.8
+  deployMechanisms:
+    dagOnlyDeployment:
+      tag: 0.9.4
+  gitSyncRelay:
+    images:
+      gitDaemon:
+        tag: 2026.4.22
+      gitSync:
+        tag: 0.2.7
+  logging:
+    loggingSidecar:
+      tag: 0.54.0
+  privateCaCertsAddToHost:
+    certCopier:
+      tag: 2.0.1
+kube-state:
+  images:
+    kubeState:
+      tag: 2.18.0-1
+nats:
+  images:
+    dbBootstrapper:
+      tag: 2.0.1
+    exporter:
+      tag: 0.17.3-5
+    nats:
+      tag: 2.12.7-1
+nginx:
+  images:
+    defaultBackend:
+      tag: 0.30.0
+    nginx:
+      tag: 1.14.5-1
+postgresql:
+  image:
+    tag: 17.9.0-1
+  metrics:
+    image:
+      tag: 0.5.1-debian-9-r73
+  volumePermissions:
+    image:
+      tag: stretch
+prometheus:
+  images:
+    configReloader:
+      tag: 0.15.0-4
+    filesdReloader:
+      tag: 0.1.22
+    prometheus:
+      tag: 3.10.0-1
+    promproxy:
+      tag: 1.29.2-1
+tags:
+  logging: false
+  monitoring: true
+  platform: true
+  postgresql: true
+vector:
+  vector:
+    image:
+      tag: 0.54.0
