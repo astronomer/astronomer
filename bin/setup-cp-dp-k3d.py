@@ -54,7 +54,6 @@ _REGISTRY_SPECS: tuple[_RegistrySpec, ...] = (
     _RegistrySpec(name="astronomer-registry-proxy-docker", upstream="https://registry-1.docker.io", host_port=15002),
     _RegistrySpec(name="astronomer-registry-proxy-elastic", upstream="https://docker.elastic.co", host_port=15003),
     _RegistrySpec(name="astronomer-registry-proxy-k8s", upstream="https://registry.k8s.io", host_port=15004),
-    _RegistrySpec(name="astronomer-registry-proxy-astrocrpublic", upstream="https://astrocrpublic.azurecr.io", host_port=15005),
 )
 
 
@@ -150,7 +149,6 @@ def _get_registry_config_path(docker_network: str) -> Path:
     proxy_docker = "astronomer-registry-proxy-docker"
     proxy_elastic = "astronomer-registry-proxy-elastic"
     proxy_k8s = "astronomer-registry-proxy-k8s"
-    proxy_astrocrpublic = "astronomer-registry-proxy-astrocrpublic"
 
     content = f"""\
 mirrors:
@@ -169,9 +167,6 @@ mirrors:
   "registry.k8s.io":
     endpoint:
       - "http://{proxy_k8s}:5000"
-  "astrocrpublic.azurecr.io":
-    endpoint:
-      - "http://{proxy_astrocrpublic}:5000"
 """
     HELPER_DIR.mkdir(parents=True, exist_ok=True)
     K3D_REGISTRY_CONFIG_PATH.write_text(content)
@@ -208,8 +203,6 @@ class Settings:
     helm_timeout: str
     helm_debug: bool
     dp_airflow_db: str
-    enable_operator: bool
-    agents: int = 0
 
 
 def _print(msg: str) -> None:
@@ -520,7 +513,6 @@ def _k3d_create_cluster(
     docker_network: str,
     ports: list[str],
     mkcert_root_ca: Path,
-    agents: int = 1,
     extra_k3s_args: list[str] | None = None,
     registry_config: Path | None = None,
 ) -> None:
@@ -529,7 +521,7 @@ def _k3d_create_cluster(
     Pass extra_k3s_args to forward additional --k3s-arg values (each applied @server:0).
     Pass registry_config to configure containerd pull-through mirrors on each node.
     """
-    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*;agent:*"
+    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*"
     cmd = [
         "k3d",
         "cluster",
@@ -537,8 +529,6 @@ def _k3d_create_cluster(
         name,
         "--network",
         docker_network,
-        "--agents",
-        str(agents),
         "--k3s-arg",
         "--disable=traefik@server:0",
         "--volume",
@@ -559,71 +549,6 @@ def _k3d_create_cluster(
 
 def _kubectl_apply_yaml(context: str, yaml_text: str) -> None:
     _run(["kubectl", "--context", context, "apply", "-f", "-"], check=True, stdin=yaml_text)
-
-
-# ---------------------------------------------------------------------------
-# cert-manager (required by the airflow-operator webhooks)
-# ---------------------------------------------------------------------------
-
-CERT_MANAGER_VERSION = "v1.19.4"
-CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
-
-
-def _install_cert_manager(context: str) -> None:
-    """Install cert-manager CRDs + controller into the cluster behind `context`. Idempotent."""
-    _print(f"Installing cert-manager {CERT_MANAGER_VERSION} into {context}")
-    _run(
-        ["kubectl", "--context", context, "apply", "-f", CERT_MANAGER_MANIFEST_URL],
-        capture=False,
-    )
-
-
-def _pin_cert_manager_to_control_plane(context: str) -> None:
-    """Pin cert-manager pods to the k3s control-plane node.
-
-    The kube-apiserver calls cert-manager's admission webhook for Certificate/Issuer
-    resources. If the webhook pod lands on an agent node (10.42.1.x), the apiserver
-    proxy can't reach it across the Flannel VXLAN overlay in k3d, causing 502 errors.
-    Pinning to the control-plane node (10.42.0.x) keeps webhook calls local.
-    """
-    node_selector_patch = '{"spec":{"template":{"spec":{"nodeSelector":{"node-role.kubernetes.io/control-plane":"true"}}}}}'
-    for deployment in ("cert-manager-webhook", "cert-manager-cainjector", "cert-manager"):
-        _run(
-            [
-                "kubectl",
-                "--context",
-                context,
-                "patch",
-                "deployment",
-                deployment,
-                "-n",
-                "cert-manager",
-                "--type=merge",
-                f"--patch={node_selector_patch}",
-            ],
-            check=False,  # tolerate if a deployment doesn't exist yet
-        )
-
-
-def _wait_for_cert_manager(context: str, timeout_s: int = 180) -> None:
-    """Wait for the cert-manager controller + webhook deployments to become available."""
-    _print(f"Waiting for cert-manager to be ready ({context})")
-    for deployment in ("cert-manager", "cert-manager-webhook"):
-        _run(
-            [
-                "kubectl",
-                "--context",
-                context,
-                "-n",
-                "cert-manager",
-                "wait",
-                "--for=condition=available",
-                f"deployment/{deployment}",
-                f"--timeout={timeout_s}s",
-            ],
-            capture=False,
-        )
-    _print(f"cert-manager is ready ({context})")
 
 
 def _kubectl_create_namespace(context: str, namespace: str) -> None:
@@ -702,25 +627,6 @@ def _write_values_file(path: Path, content: str) -> None:
 
 
 def _cp_values_yaml(settings: Settings) -> str:
-    operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
-    operator_subchart_block = (
-        """\
-airflow-operator:
-  crd:
-    create: true
-  certManager:
-    enabled: true
-  resources:
-    limits:
-      cpu: 250m
-      memory: 256Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-"""
-        if settings.enable_operator
-        else ""
-    )
     return f"""\
 global:
   baseDomain: {settings.base_domain}
@@ -744,7 +650,6 @@ global:
     enabled: true
   dagOnlyDeployment:
     enabled: true
-{operator_block}
 
 tags:
   platform: true
@@ -771,8 +676,6 @@ astronomer:
       deployments:
         configureDagDeployment: true
         hardDeleteDeployment: true
-        airflowV3:
-          enabled: true
   commander:
     replicas: 1
   registry: {{}}
@@ -797,27 +700,24 @@ elasticsearch:
 
   master:
     replicas: 1
-    heapMemory: 128m
+    heapMemory: 256m
     resources:
       requests:
-        cpu: "100m"
-        memory: 256Mi
+        memory: 512Mi
 
   data:
+    replicas: 1
+    heapMemory: 512m
+    resources:
+      requests:
+        memory: 1Gi
+
+  client:
     replicas: 1
     heapMemory: 256m
     resources:
       requests:
-        cpu: "100m"
         memory: 512Mi
-
-  client:
-    replicas: 1
-    heapMemory: 128m
-    resources:
-      requests:
-        cpu: "100m"
-        memory: 256Mi
   images:
     es:
       repository: docker.elastic.co/elasticsearch/elasticsearch
@@ -829,45 +729,11 @@ postgresql:
   service:
     type: NodePort
     nodePort: {CP_POSTGRES_NODEPORT}
-
-{operator_subchart_block}"""
+"""
 
 
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     """Generate DP Helm values.  PostgreSQL is always disabled — DPs use the CP's shared postgres."""
-    global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
-    # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
-    # (see Chart.yaml condition). The values block below is only consumed when
-    # that flag is on; we emit it only in that case for clarity.
-    operator_subchart_block = (
-        """\
-airflow-operator:
-  crd:
-    create: true
-  certManager:
-    enabled: true
-  manager:
-    replicas: 1
-    # Pin the operator controller (which also serves the admission webhook) to
-    # the control-plane node.  The kube-apiserver runs on that same node and
-    # reaches webhook pods via its own pod-network (10.42.0.x).  If the
-    # controller lands on an agent node (10.42.1.x), the apiserver has to
-    # traverse the Flannel VXLAN overlay between Docker containers, which
-    # fails with "502 Bad Gateway" in k3d.
-    nodeSelector:
-      node-role.kubernetes.io/control-plane: "true"
-    resources:
-      limits:
-        cpu: 250m
-        memory: 256Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-
-"""
-        if settings.enable_operator
-        else ""
-    )
     return f"""\
 global:
   baseDomain: {settings.base_domain}
@@ -891,12 +757,12 @@ global:
     enabled: true
   dagOnlyDeployment:
     enabled: true
-{global_operator_block}
+
 tags:
   platform: true
   postgresql: false
 
-{operator_subchart_block}astronomer:
+astronomer:
   commander:
     replicas: 1
   registry: {{}}
@@ -921,27 +787,24 @@ elasticsearch:
 
   master:
     replicas: 1
-    heapMemory: 128m
+    heapMemory: 256m
     resources:
       requests:
-        cpu: "100m"
-        memory: 256Mi
+        memory: 512Mi
 
   data:
+    replicas: 1
+    heapMemory: 512m
+    resources:
+      requests:
+        memory: 1Gi
+
+  client:
     replicas: 1
     heapMemory: 256m
     resources:
       requests:
-        cpu: "100m"
         memory: 512Mi
-
-  client:
-    replicas: 1
-    heapMemory: 128m
-    resources:
-      requests:
-        cpu: "100m"
-        memory: 256Mi
   images:
     es:
       repository: docker.elastic.co/elasticsearch/elasticsearch
@@ -1160,7 +1023,6 @@ def _run_dns_reconcile(settings: Settings, cp: ControlPlane, dp: DataPlane) -> N
             "BASE_DOMAIN": settings.base_domain,
             "DP_DOMAIN_PREFIX": dp.domain_prefix,
             "DP_NODE_CONTAINER": f"k3d-{dp.cluster_name}-server-0",
-            "DP_AGENTS": str(settings.agents),
             "CP_INGRESS_SERVICE": f"{settings.release_name}-cp-nginx",
         }
     )
@@ -1223,29 +1085,22 @@ def _ensure_container_hosts_mapping(container: str, ip: str, hostname: str) -> N
 
 def _ensure_dp_node_houston_hosts_pin(settings: Settings, dp: DataPlane) -> None:
     """
-    Ensure all DP node containers (server + agents) have node-level DNS pin for
-    `houston.<baseDomain>` -> CP ingress LB IP.
+    Ensure DP node container has node-level DNS pin for `houston.<baseDomain>` -> CP ingress LB IP.
 
     Why:
     - Pods resolve via CoreDNS, but node-level operations (kubelet/containerd image pulls) use node DNS + /etc/hosts.
     - If `houston.<baseDomain>` resolves incorrectly at the node level, registry auth can break.
-    - With agent nodes, pods can be scheduled on any node, so all nodes need the pin.
     """
     primary_cp = settings.control_planes[0]
     cp_context = f"k3d-{primary_cp.cluster_name}"
+    dp_node_container = f"k3d-{dp.cluster_name}-server-0"
     cp_nginx_svc = f"{settings.release_name}-cp-nginx"
 
     cp_nginx_lb_ip = _kubectl_get_service_lb_ip(cp_context, settings.namespace, cp_nginx_svc)
     houston_host = f"houston.{settings.base_domain}"
 
-    # Patch server node
-    node_containers = [f"k3d-{dp.cluster_name}-server-0"]
-    # Patch all agent nodes
-    node_containers += [f"k3d-{dp.cluster_name}-agent-{i}" for i in range(settings.agents)]
-
-    for container in node_containers:
-        _ensure_container_hosts_mapping(container, cp_nginx_lb_ip, houston_host)
-        _debug(f"Ensured /etc/hosts pin on {container}: {cp_nginx_lb_ip} {houston_host}")
+    _ensure_container_hosts_mapping(dp_node_container, cp_nginx_lb_ip, houston_host)
+    _debug(f"Ensured DP node /etc/hosts pin: {cp_nginx_lb_ip} {houston_host}")
 
 
 def _print_host_etc_hosts_instructions(settings: Settings) -> None:
@@ -1344,13 +1199,6 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--recreate-clusters", action="store_true", help="Delete and recreate k3d clusters if they exist")
     parser.add_argument(
-        "--num-compute-nodes",
-        dest="num_compute_nodes",
-        type=int,
-        default=0,
-        help="Number of additional k3d worker nodes per cluster (mapped to k3d --agents). Applies to both CP and DP clusters. Default: %(default)s. Prefer allocating more CPU/memory in Docker Desktop over adding nodes.",
-    )
-    parser.add_argument(
         "--no-local-registry",
         action="store_true",
         help=(
@@ -1391,18 +1239,6 @@ def parse_args() -> argparse.Namespace:
         choices=["postgres", "mysql"],
         default="postgres",
         help="Database type for Airflow deployments on the data plane (default: postgres).",
-    )
-
-    parser.add_argument(
-        "--enable-operator",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help=(
-            "Enable Airflow operator mode. Sets global.airflowOperator.enabled=true on "
-            "both CP and DP, and renders the airflow-operator subchart values on the DP. "
-            "Pass --no-enable-operator to fall back to the helm-based airflow path. "
-            "Default: enabled."
-        ),
     )
 
     return parser.parse_args()
@@ -1452,8 +1288,6 @@ def main() -> int:  # noqa: C901
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
         dp_airflow_db=args.dp_airflow_db,
-        enable_operator=bool(args.enable_operator),
-        agents=args.num_compute_nodes,
     )
 
     try:
@@ -1533,7 +1367,6 @@ def main() -> int:  # noqa: C901
                             f"{dp.http_port}:80@loadbalancer",
                         ],
                         mkcert_root_ca=mkcert_root_ca,
-                        agents=settings.agents,
                         registry_config=registry_config,
                     )
                 else:
@@ -1614,21 +1447,8 @@ def main() -> int:  # noqa: C901
 
             for cp in settings.control_planes:
                 h = ms.start(f"Helm install/upgrade Control Plane (context=k3d-{cp.cluster_name})")
-
-                cp_ctx = f"k3d-{cp.cluster_name}"
-
-                # The airflow-operator webhooks need cert-manager's Issuer/Certificate
-                # flow to produce `webhook-server-cert`. Install cert-manager before the
-                # helm release so the Certificate the chart creates can be fulfilled.
-                if settings.enable_operator:
-                    h = ms.start(f"Install cert-manager on {cp.cluster_name} (operator webhooks)")
-                    _install_cert_manager(cp_ctx)
-                    _pin_cert_manager_to_control_plane(cp_ctx)
-                    _wait_for_cert_manager(cp_ctx)
-                    ms.done(h, detail=f"version={CERT_MANAGER_VERSION}")
-
                 _helm_upgrade_install(
-                    context=cp_ctx,
+                    context=f"k3d-{cp.cluster_name}",
                     chart_dir=GIT_ROOT_DIR,
                     release_name=settings.release_name,
                     namespace=settings.namespace,
@@ -1671,16 +1491,6 @@ def main() -> int:  # noqa: C901
                     ms.done(h)
                 else:
                     ms.skip(f"Pre-DP: update {dp.cluster_name} CoreDNS NodeHosts for CP ingress", reason="--skip-dns-reconcile set")
-
-                # The airflow-operator webhooks need cert-manager's Issuer/Certificate
-                # flow to produce `webhook-server-cert`. Install cert-manager before the
-                # DP helm release so the Certificate the chart creates can be fulfilled.
-                if settings.enable_operator:
-                    h = ms.start(f"Install cert-manager on {dp.cluster_name} (operator webhooks)")
-                    _install_cert_manager(dp_ctx)
-                    _pin_cert_manager_to_control_plane(dp_ctx)
-                    _wait_for_cert_manager(dp_ctx)
-                    ms.done(h, detail=f"version={CERT_MANAGER_VERSION}")
 
                 h = ms.start(f"Helm install/upgrade Data Plane (context={dp_ctx})")
                 _helm_upgrade_install(

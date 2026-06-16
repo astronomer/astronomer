@@ -57,3 +57,7 @@ prometheus:
     requests:
       cpu: 1000m
       memory: 1Gi
+  images:
+    filesdReloader:
+      pullPolicy: Always
+      tag: PINF-785-better-stack-traces
