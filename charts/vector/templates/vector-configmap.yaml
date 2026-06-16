@@ -155,7 +155,7 @@ data:
           file_str = to_string!(.file)
 
           # Try task execution logs: /dag_id=xxx/run_id=yyy/task_id=zzz/attempt=n.log
-          task_parsed, task_err = parse_regex(file_str, r'/dag_id=(?P<dag_id>[a-zA-Z0-9_-]+)/run_id=(?P<run_id>[^/]+)/task_id=(?P<task_id>[a-zA-Z0-9_-]+)/(?:map_index=(?P<map_index>-?[0-9]+)/)?attempt=(?P<attempt>[0-9]+)\.log$')
+          task_parsed, task_err = parse_regex(file_str, r'/dag_id=(?P<dag_id>[a-zA-Z0-9_.-]+)/run_id=(?P<run_id>[^/]+)/task_id=(?P<task_id>[a-zA-Z0-9_.-]+)/(?:map_index=(?P<map_index>-?[0-9]+)/)?attempt=(?P<attempt>[0-9]+)\.log$')
 
           # Try DAG parse logs: /component/YYYY-MM-DD/dag_file_path.log
           dag_parsed, dag_err = parse_regex(file_str, r'/(?:scheduler|dag_processor|dag_processor_manager)/(?P<date>\d{4}-\d{2}-\d{2})/(?P<dag_file>.+)\.log$')
