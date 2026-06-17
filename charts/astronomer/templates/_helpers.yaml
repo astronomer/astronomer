@@ -16,21 +16,21 @@
 {{- end }}
 {{- end }}
 
-{{ define "commander.metadata.namespaceLabels" }}
+{{- define "commander.metadata.namespaceLabels" -}}
 {{- if .Values.global.rbac.enabled -}}
-{{ .Values.global.namespaceLabels | toYaml | nindent 6 -}}
-{{- else -}}
-{}
-{{- end }}
-{{- end }}
-
-{{ define "commander.metadata.extraAnnotations" }}
-{{- if not (empty .Values.global.extraAnnotations) -}}
-{{ .Values.global.extraAnnotations | toYaml | nindent 6 -}}
+{{ .Values.global.namespaceLabels | toYaml }}
 {{- else -}}
 {}
 {{- end -}}
-{{- end }}
+{{- end -}}
+
+{{- define "commander.metadata.extraAnnotations" -}}
+{{- if not (empty .Values.global.extraAnnotations) -}}
+{{ .Values.global.extraAnnotations | toYaml }}
+{{- else -}}
+{}
+{{- end -}}
+{{- end -}}
 
 {{ define "commander.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
