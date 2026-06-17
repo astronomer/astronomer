@@ -35,6 +35,10 @@ REGISTRY_CONFIG_DIR = HELPER_DIR / "registry-configs"
 K3D_REGISTRY_CONFIG_PATH = HELPER_DIR / "k3d-registry.yaml"
 REGISTRY_IMAGE = "registry:2"
 
+HELM_REPO_NAME = "astronomer-internal"
+HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
+HELM_REPO_URL = "https://internal-helm.astronomer.io"
+
 
 # ---------------------------------------------------------------------------
 # Local pull-through registry helpers
@@ -209,6 +213,7 @@ class Settings:
     helm_debug: bool
     dp_airflow_db: str
     enable_operator: bool
+    chart_version: str | None = None
     agents: int = 0
 
 
@@ -412,6 +417,15 @@ def _which(exe: str) -> str | None:
 def _require_executable(exe: str, *, hint: str) -> None:
     if _which(exe) is None:
         raise RuntimeError(f"Missing required executable `{exe}`. {hint}")
+
+
+def _ensure_helm_repo() -> None:
+    """Ensure the Astronomer internal Helm repo is added and up-to-date."""
+    proc = _run(["helm", "repo", "list", "-o", "json"], check=False)
+    if HELM_REPO_NAME not in (proc.stdout or ""):
+        _print(f"Adding Helm repo: {HELM_REPO_NAME} -> {HELM_REPO_URL}")
+        _run(["helm", "repo", "add", HELM_REPO_NAME, HELM_REPO_URL], check=True)
+    _run(["helm", "repo", "update", HELM_REPO_NAME], check=True)
 
 
 def _docker_network_exists(name: str) -> bool:
@@ -731,8 +745,7 @@ global:
     mode: {settings.cp_mode}
     domainPrefix: ""
   tlsSecret: {settings.tls_secret_name}
-  postgresql:
-    enabled: true
+  postgresqlEnabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:
@@ -1126,13 +1139,15 @@ def _helm_upgrade_install(
     extra_values_files: list[Path],
     timeout: str,
     debug: bool,
+    chart_version: str | None = None,
 ) -> None:
+    chart_ref = HELM_CHART if chart_version else str(chart_dir)
     cmd = [
         "helm",
         "upgrade",
         "--install",
         release_name,
-        str(chart_dir),
+        chart_ref,
         "--namespace",
         namespace,
         "--kube-context",
@@ -1143,6 +1158,8 @@ def _helm_upgrade_install(
         timeout,
         "--wait",
     ]
+    if chart_version:
+        cmd.extend(["--version", chart_version])
     for extra in extra_values_files:
         cmd.extend(["--values", str(extra)])
     if debug:
@@ -1339,6 +1356,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mkcert-root-ca-secret-name", default="mkcert-root-ca")
     parser.add_argument("--mkcert-root-ca-secret-key", default="cert.pem")
 
+    parser.add_argument(
+        "--chart-version",
+        default=None,
+        metavar="VERSION",
+        help=(
+            "Astronomer chart version to install from the remote Helm repo "
+            f"({HELM_REPO_URL}), e.g. '1.2.3'. "
+            "When omitted, installs from the local chart directory."
+        ),
+    )
+
     parser.add_argument("--helm-timeout", default=os.environ.get("HELM_TIMEOUT", "60m"))
     parser.add_argument("--helm-debug", action="store_true")
     parser.add_argument(
@@ -1458,6 +1486,7 @@ def main() -> int:  # noqa: C901
         helm_debug=bool(args.helm_debug),
         dp_airflow_db=args.dp_airflow_db,
         enable_operator=bool(args.enable_operator),
+        chart_version=args.chart_version or None,
         agents=args.num_compute_nodes,
     )
 
@@ -1610,7 +1639,11 @@ def main() -> int:  # noqa: C901
 
         # Step: helm installs
         if not args.skip_helm:
-            if args.helm_deps_update:
+            if settings.chart_version:
+                h = ms.start(f"Ensure Helm repo `{HELM_REPO_NAME}` is up-to-date")
+                _ensure_helm_repo()
+                ms.done(h, detail=f"version={settings.chart_version}")
+            elif args.helm_deps_update:
                 h = ms.start("Helm dependency update")
                 _helm_dependency_update(GIT_ROOT_DIR)
                 ms.done(h)
@@ -1628,6 +1661,7 @@ def main() -> int:  # noqa: C901
                     extra_values_files=[Path(f) for f in args.helm_values],
                     timeout=settings.helm_timeout,
                     debug=settings.helm_debug,
+                    chart_version=settings.chart_version,
                 )
                 ms.done(h)
 
@@ -1684,6 +1718,7 @@ def main() -> int:  # noqa: C901
                     extra_values_files=[Path(f) for f in args.helm_values],
                     timeout=settings.helm_timeout,
                     debug=settings.helm_debug,
+                    chart_version=settings.chart_version,
                 )
                 ms.done(h)
         else:
