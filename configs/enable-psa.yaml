@@ -2,6 +2,6 @@ global:
   namespaceLabels:
     # https://kubernetes.io/docs/concepts/security/pod-security-admission/#pod-security-admission-labels-for-namespaces
     # Available values: privileged, baseline, restricted
-    pod-security.kubernetes.io/audit: "restricted"
-    pod-security.kubernetes.io/warn: "restricted"
+    pod-security.kubernetes.io/audit: "restricted"  # check the audit logs. This is nontrivial in k3d.
+    pod-security.kubernetes.io/warn: "restricted"  # check commander logs for `"msg"="Warning`
     # pod-security.kubernetes.io/enforce: "restricted"
