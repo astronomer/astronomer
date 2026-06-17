@@ -16,16 +16,21 @@ from tests import supported_k8s_versions
 from tests.utils import get_all_features, get_pod_template
 from tests.utils.chart import render_chart
 
-# Pods that do not yet set a pod-level seccomp profile. These are outside the scope of the
-# astronomer platform-chart hardening (PINF-713) and are tracked separately; keep this list
-# tight and remove entries as each component becomes PSS-Restricted conformant.
+# Pods that do not yet set a pod-level seccomp profile. Each entry documents *why* it is
+# exempt. Keep this list tight and remove entries as each component becomes conformant.
 # Keyed by metadata name with the "release-name-" prefix stripped.
 SECCOMP_IGNORE_LIST = {
-    "elasticsearch-curator",  # elasticsearch sub-chart
-    "containerd-ca-update",  # private-ca daemonset
-    "private-ca",  # private-ca daemonset
-    "vector",  # logging daemonset (also runs as root; see test_non_root_user.py)
-    "jetstream-job",  # nats jetstream bootstrap job
+    # Privileged, host-level node agents: they copy the private CA into each node's trust
+    # store and rewrite containerd's config. The container runs privileged=true, runAsUser=0
+    # (see test_containerd_privateca.py), which is fundamentally incompatible with Restricted
+    # — these cannot be made conformant.
+    "containerd-ca-update",
+    "private-ca",
+    # Log-collector DaemonSet: mounts hostPath volumes (/var/log, /var/lib/kubelet/pods) to
+    # read every pod's logs off the node, and runs as root to do so. hostPath is a forbidden
+    # volume type under Restricted and root is disallowed, so this pod is exempt by design
+    # (also in test_non_root_user.py's ignore list).
+    "vector",
 }
 
 POD_MANAGER_KINDS = {"Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job", "CronJob"}
