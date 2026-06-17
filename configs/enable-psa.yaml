@@ -1,4 +1,7 @@
 global:
   namespaceLabels:
     # https://kubernetes.io/docs/concepts/security/pod-security-admission/#pod-security-admission-labels-for-namespaces
-    pod-security.kubernetes.io/enforce: "restricted"  # available values: privileged, baseline, restricted
+    # Available values: privileged, baseline, restricted
+    pod-security.kubernetes.io/audit: "restricted"
+    pod-security.kubernetes.io/warn: "restricted"
+    # pod-security.kubernetes.io/enforce: "restricted"
