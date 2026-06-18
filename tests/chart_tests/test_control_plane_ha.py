@@ -36,7 +36,7 @@ def _ha_values(**overrides):
 
 
 def _any_container_has_cp_id(doc):
-    """True if any (init) container in the pod has the CP_ID env wired to cp-identity."""
+    """True if any container or initContainer in the pod has the CP_ID env wired to cp-identity."""
     for container in get_containers_by_name(doc, include_init_containers=True).values():
         env = get_env_vars_dict(container.get("env", []))
         if env.get("CP_ID") == EXPECTED_CP_ID_ENV:
@@ -124,7 +124,10 @@ class TestJwtKeypairGating:
         docs = render_chart(
             kube_version=kube_version,
             show_only=[JWT_SECRET_FILE],
-            values={"global": {"plane": {"mode": "control"}}, "astronomer": {"jwks": {"generation": {"enabled": False}}}},
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"houston": {"jwks": {"generation": {"enabled": False}}}},
+            },
         )
         assert docs == []
 
@@ -168,14 +171,14 @@ class TestCpIdEnvVar:
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestHoustonConfigHelmValues:
     @staticmethod
-    def _helm_block(docs):
+    def production_yaml_prod_helm(docs):
         assert len(docs) == 1
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         return prod["helm"]
 
     def test_no_ha_values_when_disabled(self, kube_version):
         """HA-off configmap keeps baseDomain only — no global domain / cookie keys."""
-        helm = self._helm_block(
+        helm = self.production_yaml_prod_helm(
             render_chart(
                 kube_version=kube_version,
                 show_only=[CONFIGMAP_FILE],
@@ -190,7 +193,7 @@ class TestHoustonConfigHelmValues:
         """HA-on configmap emits globalBaseDomain; cookie keys omitted unless overridden."""
         values = _ha_values()
         values["global"]["baseDomain"] = "example.com"
-        helm = self._helm_block(render_chart(kube_version=kube_version, show_only=[CONFIGMAP_FILE], values=values))
+        helm = self.production_yaml_prod_helm(render_chart(kube_version=kube_version, show_only=[CONFIGMAP_FILE], values=values))
         assert helm["globalBaseDomain"] == "astro.example.com"
         assert "cookieDomain" not in helm
         assert "cookieName" not in helm
@@ -199,6 +202,6 @@ class TestHoustonConfigHelmValues:
         """cookieDomain / cookieName pass through only when explicitly set."""
         values = _ha_values(cookieDomain=".example.com", cookieName="astronomer_custom_auth")
         values["global"]["baseDomain"] = "example.com"
-        helm = self._helm_block(render_chart(kube_version=kube_version, show_only=[CONFIGMAP_FILE], values=values))
+        helm = self.production_yaml_prod_helm(render_chart(kube_version=kube_version, show_only=[CONFIGMAP_FILE], values=values))
         assert helm["cookieDomain"] == ".example.com"
         assert helm["cookieName"] == "astronomer_custom_auth"
