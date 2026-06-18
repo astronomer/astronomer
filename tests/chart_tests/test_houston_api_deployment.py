@@ -356,3 +356,22 @@ class TestHoustonApiDeployment:
         assert env_vars["ANOTHER_VAR"] == "another-value"
         assert env_vars["MY_SECRET_VAR"] == {"secretKeyRef": {"name": "my-secret", "key": "my-key"}}
         assert env_vars["ANOTHER_SECRET"] == {"secretKeyRef": {"name": "other-secret", "key": "value"}}
+
+
+    def test_houston_registry_host_overrides(self, kube_version):
+        """Test that houston api renders registry with custom overrides."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "registry": {
+                        "fullnameOverride": "custom-registry",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
+        assert env_vars["REGISTRY__HOST"] == "custom-registry"

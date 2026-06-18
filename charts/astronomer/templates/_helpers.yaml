@@ -437,7 +437,7 @@ s3:
 - name: COMMANDER__PORT
   value: {{ .Values.ports.commanderGRPC | quote }}
 - name: REGISTRY__HOST
-  value: {{ .Release.Name }}-registry
+  value: {{ template "registry.fullname" . }}
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
 - name: COMMANDER_WAIT_ENABLED
@@ -500,7 +500,7 @@ s3:
 - name: COMMANDER__PORT
   value: {{ .Values.ports.commanderGRPC | quote }}
 - name: REGISTRY__HOST
-  value: {{ .Release.Name }}-registry
+  value: {{ template "registry.fullname" . }}
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
 - name: NATS__SERVERS
