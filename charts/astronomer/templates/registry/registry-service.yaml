@@ -6,7 +6,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-registry
+  name: {{ template "registry.fullname" . }}
   labels:
     component: {{ template "registry.name" . }}
     tier: astronomer

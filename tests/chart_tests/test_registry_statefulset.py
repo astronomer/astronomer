@@ -249,11 +249,7 @@ class TestRegistryStatefulset:
         assert netpol["spec"]["podSelector"]["matchLabels"]["component"] == "registry"
 
     def test_registry_naming_name_override(self, kube_version):
-        """registry.nameOverride drives the labels/selectors (so they keep matching the pods).
-
-        Resource names that are derived from the fullname helper pick up the override
-        (statefulset, ingress); the hardcoded service and networkpolicy names stay stable.
-        """
+        """registry nameOverride overrides across all registry components."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -274,15 +270,15 @@ class TestRegistryStatefulset:
         assert sts["spec"]["template"]["metadata"]["labels"]["app"] == "custom-registry"
 
         svc = by_kind["Service"]
-        # service name is intentionally stable (the ingress backend references it by this name)
-        assert svc["metadata"]["name"] == "release-name-registry"
+        # service name tracks the fullname so the ingress backend keeps resolving
+        assert svc["metadata"]["name"] == "release-name-custom-registry"
         assert svc["metadata"]["labels"]["component"] == "custom-registry"
         assert svc["spec"]["selector"]["component"] == "custom-registry"
 
         ingress = by_kind["Ingress"]
         assert ingress["metadata"]["name"] == "release-name-custom-registry-ingress"
         assert ingress["metadata"]["labels"]["component"] == "custom-registry-ingress"
-        assert self._ingress_backend_service_name(ingress) == "release-name-registry"
+        assert self._ingress_backend_service_name(ingress) == "release-name-custom-registry"
 
         netpol = by_kind["NetworkPolicy"]
         # policy name and its own component label stay stable; the podSelector tracks the override
@@ -291,9 +287,9 @@ class TestRegistryStatefulset:
         assert netpol["spec"]["podSelector"]["matchLabels"]["component"] == "custom-registry"
 
     def test_registry_naming_fullname_override(self, kube_version):
-        """registry.fullnameOverride drives the fullname-derived resource names only.
-
-        Labels, selectors, and the hardcoded service/networkpolicy names are untouched.
+        """registry fullnameOverride drives every fullname-derived resource name.
+        The statefulset, service, and ingress (plus its backend) all pick up the override;
+        labels/selectors and the networkpolicy name are untouched.
         """
         docs = render_chart(
             kube_version=kube_version,
@@ -312,13 +308,13 @@ class TestRegistryStatefulset:
         assert sts["spec"]["selector"]["matchLabels"]["component"] == "registry"
 
         svc = by_kind["Service"]
-        assert svc["metadata"]["name"] == "release-name-registry"
+        assert svc["metadata"]["name"] == "my-registry"
         assert svc["metadata"]["labels"]["component"] == "registry"
 
         ingress = by_kind["Ingress"]
         assert ingress["metadata"]["name"] == "my-registry-ingress"
         assert ingress["metadata"]["labels"]["component"] == "registry-ingress"
-        assert self._ingress_backend_service_name(ingress) == "release-name-registry"
+        assert self._ingress_backend_service_name(ingress) == "my-registry"
 
         netpol = by_kind["NetworkPolicy"]
         assert netpol["metadata"]["name"] == "release-name-registry-policy"
