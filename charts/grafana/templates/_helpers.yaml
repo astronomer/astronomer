@@ -42,6 +42,11 @@ Create chart name and version as used by the chart label.
 grafana.{{ .Values.global.baseDomain }}
 {{- end }}
 
+{{/* Global customer-facing host, templated from controlPlaneHA.globalBaseDomain (CP HA only). */}}
+{{ define "grafana.globalUrl" -}}
+grafana.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- end }}
+
 {{ define "grafana.backend.secret" -}}
 {{ default (printf "%s-grafana-backend" .Release.Name) .Values.backendSecretName }}
 {{- end }}
