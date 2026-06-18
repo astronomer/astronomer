@@ -12,6 +12,21 @@ from tests.utils.chart import render_chart
 )
 class TestRegistryStatefulset:
     show_only = ["charts/astronomer/templates/registry/registry-statefulset.yaml"]
+    # All registry resources that carry a name/label/selector derived from the naming helpers.
+    naming_templates = [
+        "charts/astronomer/templates/registry/registry-statefulset.yaml",
+        "charts/astronomer/templates/registry/registry-service.yaml",
+        "charts/astronomer/templates/registry/registry-ingress.yaml",
+        "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
+    ]
+
+    @staticmethod
+    def _ingress_backend_service_name(doc):
+        return doc["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"]
+
+    @staticmethod
+    def _by_kind(docs):
+        return {doc["kind"]: doc for doc in docs}
 
     def test_registry_sts_basic_cases(self, kube_version):
         """Test some things that should apply to all cases."""
@@ -130,7 +145,7 @@ class TestRegistryStatefulset:
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"privateCaCerts": ["private-root-ca"]}},
-            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
+            show_only=self.show_only,
         )
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
@@ -163,7 +178,7 @@ class TestRegistryStatefulset:
                 "global": {"privateCaCerts": ["private-root-ca"]},
                 "astronomer": {"registry": {"s3": {"enabled": True}}},
             },
-            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
+            show_only=self.show_only,
         )
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
@@ -200,3 +215,111 @@ class TestRegistryStatefulset:
         assert len(docs) == 1
         spec = docs[0]["spec"]["template"]["spec"]
         assert spec["hostAliases"] == hostAliasSpec
+
+    def test_registry_naming_defaults(self, kube_version):
+        """Default naming across the statefulset, service, ingress and networkpolicy."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"perHostIngress": {"enabled": True}, "networkPolicy": {"enabled": True}}},
+            show_only=self.naming_templates,
+        )
+        by_kind = self._by_kind(docs)
+
+        sts = by_kind["StatefulSet"]
+        assert sts["metadata"]["name"] == "release-name-registry"
+        assert sts["spec"]["serviceName"] == "release-name-registry"
+        assert sts["metadata"]["labels"]["component"] == "registry"
+        assert sts["spec"]["selector"]["matchLabels"]["component"] == "registry"
+        assert sts["spec"]["template"]["metadata"]["labels"]["component"] == "registry"
+        assert sts["spec"]["template"]["metadata"]["labels"]["app"] == "registry"
+
+        svc = by_kind["Service"]
+        assert svc["metadata"]["name"] == "release-name-registry"
+        assert svc["metadata"]["labels"]["component"] == "registry"
+        assert svc["spec"]["selector"]["component"] == "registry"
+
+        ingress = by_kind["Ingress"]
+        assert ingress["metadata"]["name"] == "release-name-registry-ingress"
+        assert ingress["metadata"]["labels"]["component"] == "registry-ingress"
+        assert self._ingress_backend_service_name(ingress) == "release-name-registry"
+
+        netpol = by_kind["NetworkPolicy"]
+        assert netpol["metadata"]["name"] == "release-name-registry-policy"
+        assert netpol["metadata"]["labels"]["component"] == "registry-policy"
+        assert netpol["spec"]["podSelector"]["matchLabels"]["component"] == "registry"
+
+    def test_registry_naming_name_override(self, kube_version):
+        """registry.nameOverride drives the labels/selectors (so they keep matching the pods).
+
+        Resource names that are derived from the fullname helper pick up the override
+        (statefulset, ingress); the hardcoded service and networkpolicy names stay stable.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"perHostIngress": {"enabled": True}, "networkPolicy": {"enabled": True}},
+                "astronomer": {"registry": {"nameOverride": "custom-registry"}},
+            },
+            show_only=self.naming_templates,
+        )
+        by_kind = self._by_kind(docs)
+
+        sts = by_kind["StatefulSet"]
+        # fullname falls back to "<release>-<name>" since the release name does not contain the override
+        assert sts["metadata"]["name"] == "release-name-custom-registry"
+        assert sts["spec"]["serviceName"] == "release-name-custom-registry"
+        assert sts["metadata"]["labels"]["component"] == "custom-registry"
+        assert sts["spec"]["selector"]["matchLabels"]["component"] == "custom-registry"
+        assert sts["spec"]["template"]["metadata"]["labels"]["component"] == "custom-registry"
+        assert sts["spec"]["template"]["metadata"]["labels"]["app"] == "custom-registry"
+
+        svc = by_kind["Service"]
+        # service name is intentionally stable (the ingress backend references it by this name)
+        assert svc["metadata"]["name"] == "release-name-registry"
+        assert svc["metadata"]["labels"]["component"] == "custom-registry"
+        assert svc["spec"]["selector"]["component"] == "custom-registry"
+
+        ingress = by_kind["Ingress"]
+        assert ingress["metadata"]["name"] == "release-name-custom-registry-ingress"
+        assert ingress["metadata"]["labels"]["component"] == "custom-registry-ingress"
+        assert self._ingress_backend_service_name(ingress) == "release-name-registry"
+
+        netpol = by_kind["NetworkPolicy"]
+        # policy name and its own component label stay stable; the podSelector tracks the override
+        assert netpol["metadata"]["name"] == "release-name-registry-policy"
+        assert netpol["metadata"]["labels"]["component"] == "registry-policy"
+        assert netpol["spec"]["podSelector"]["matchLabels"]["component"] == "custom-registry"
+
+    def test_registry_naming_fullname_override(self, kube_version):
+        """registry.fullnameOverride drives the fullname-derived resource names only.
+
+        Labels, selectors, and the hardcoded service/networkpolicy names are untouched.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"perHostIngress": {"enabled": True}, "networkPolicy": {"enabled": True}},
+                "astronomer": {"registry": {"fullnameOverride": "my-registry"}},
+            },
+            show_only=self.naming_templates,
+        )
+        by_kind = self._by_kind(docs)
+
+        sts = by_kind["StatefulSet"]
+        assert sts["metadata"]["name"] == "my-registry"
+        assert sts["spec"]["serviceName"] == "my-registry"
+        assert sts["metadata"]["labels"]["component"] == "registry"
+        assert sts["spec"]["selector"]["matchLabels"]["component"] == "registry"
+
+        svc = by_kind["Service"]
+        assert svc["metadata"]["name"] == "release-name-registry"
+        assert svc["metadata"]["labels"]["component"] == "registry"
+
+        ingress = by_kind["Ingress"]
+        assert ingress["metadata"]["name"] == "my-registry-ingress"
+        assert ingress["metadata"]["labels"]["component"] == "registry-ingress"
+        assert self._ingress_backend_service_name(ingress) == "release-name-registry"
+
+        netpol = by_kind["NetworkPolicy"]
+        assert netpol["metadata"]["name"] == "release-name-registry-policy"
+        assert netpol["spec"]["podSelector"]["matchLabels"]["component"] == "registry"
