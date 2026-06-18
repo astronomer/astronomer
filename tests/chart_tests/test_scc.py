@@ -81,4 +81,4 @@ class TestScc:
             validate_objects=False,
         )
         assert len(docs) == 1
-        assert len(docs[0]["users"]) == 5
+        assert len(docs[0]["users"]) == 6
