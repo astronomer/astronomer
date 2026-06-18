@@ -27,6 +27,11 @@ metadata:
       if ($host = '{{ .Values.global.baseDomain }}' ) {
         rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
       }
+      {{- if .Values.global.controlPlaneHA.enabled }}
+      if ($host = '{{ .Values.global.controlPlaneHA.globalBaseDomain }}' ) {
+        rewrite ^ https://app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}$request_uri permanent;
+      }
+      {{- end }}
     {{- end }}
 spec:
   {{- if .Values.global.tlsSecret }}
@@ -36,6 +41,10 @@ spec:
       {{- if $planeControlMode }}
         - {{ .Values.global.baseDomain }}
         - app.{{ .Values.global.baseDomain }}
+        {{- if .Values.global.controlPlaneHA.enabled }}
+        - {{ .Values.global.controlPlaneHA.globalBaseDomain }}
+        - app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+        {{- end }}
       {{- end }}
       {{- if $planeDataMode }}
         - {{ include "registry.ingressURL" . }}
@@ -63,6 +72,28 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
+{{- if .Values.global.controlPlaneHA.enabled }}
+  - host: {{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+  - host: app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+{{- end }}
 {{- end }}
 {{- if $planeDataMode }}
   - host: {{ include "registry.ingressURL" . }}

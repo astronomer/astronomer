@@ -2,6 +2,8 @@
 ## Prometheus Ingress ##
 ########################
 {{- if .Values.global.baseDomain }}
+{{- /* Global customer-facing host is control-plane-only (globalBaseDomain is unset on data planes). */}}
+{{- $emitGlobalHost := and .Values.global.controlPlaneHA.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -30,6 +32,9 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
         - {{ template "prometheus.url" . }}
+        {{- if $emitGlobalHost }}
+        - {{ template "prometheus.globalUrl" . }}
+        {{- end }}
   {{- end }}
   rules:
     - host: {{ template "prometheus.url" . }}
@@ -46,4 +51,20 @@ spec:
                   {{- else }}
                   name: prometheus-data
                   {{- end }}
+    {{- if $emitGlobalHost }}
+    - host: {{ template "prometheus.globalUrl" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "prometheus.fullname" . }}
+                port:
+                  {{- if .Values.global.authSidecar.enabled }}
+                  name: auth-proxy
+                  {{- else }}
+                  name: prometheus-data
+                  {{- end }}
+    {{- end }}
 {{- end }}

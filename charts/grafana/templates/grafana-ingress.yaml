@@ -31,6 +31,9 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
         - {{ template "grafana.url" . }}
+        {{- if .Values.global.controlPlaneHA.enabled }}
+        - {{ template "grafana.globalUrl" . }}
+        {{- end }}
   {{- end }}
   rules:
     - host: {{ template "grafana.url" . }}
@@ -47,5 +50,21 @@ spec:
                   {{- else }}
                   name: grafana-ui
                   {{- end }}
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - host: {{ template "grafana.globalUrl" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "grafana.fullname" . }}
+                port:
+                  {{- if .Values.global.authSidecar.enabled }}
+                  name: auth-proxy
+                  {{- else }}
+                  name: grafana-ui
+                  {{- end }}
+    {{- end }}
 {{- end }}
 {{- end }}
