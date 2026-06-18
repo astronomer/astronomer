@@ -888,7 +888,7 @@ Return registry podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fi
 
 
 {{/*
-Expand the name of the chart.
+Expand the name of the registry component.
 */}}
 {{- define "registry.name" -}}
 {{- default "registry" .Values.registry.nameOverride | trunc 63 | trimSuffix "-" -}}
