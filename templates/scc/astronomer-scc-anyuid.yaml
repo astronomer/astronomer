@@ -28,7 +28,7 @@ users:
 - system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-nginx-cp
 {{- end }}
 {{- if eq .Values.global.plane.mode "data" }}
-- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-nginx-dp 
+- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-nginx-dp
 {{- end }}
 - system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-prometheus
 volumes:
