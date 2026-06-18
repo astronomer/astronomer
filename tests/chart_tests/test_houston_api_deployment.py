@@ -357,7 +357,6 @@ class TestHoustonApiDeployment:
         assert env_vars["MY_SECRET_VAR"] == {"secretKeyRef": {"name": "my-secret", "key": "my-key"}}
         assert env_vars["ANOTHER_SECRET"] == {"secretKeyRef": {"name": "other-secret", "key": "value"}}
 
-
     def test_houston_registry_host_overrides(self, kube_version):
         """Test that houston api renders registry with custom overrides."""
         docs = render_chart(
