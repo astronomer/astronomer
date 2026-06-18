@@ -6,9 +6,9 @@
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
-  name: {{ .Release.Name }}-registry-ingress
+  name: {{ template "registry.fullname" . }}-ingress
   labels:
-    component: registry-ingress
+    component: {{ template "registry.name" . }}-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
