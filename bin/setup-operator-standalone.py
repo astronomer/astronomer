@@ -255,6 +255,7 @@ class Settings:
     install_operator: bool
     install_service_monitor_crd: bool
     operator_chart_version: str
+    operator_chart_path: str   # explicit local chart dir; empty = auto-detect, then remote
     # image registry
     registry_server: str
     registry_username: str
@@ -714,13 +715,30 @@ def _install_service_monitor_crd(context: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _find_local_operator_chart() -> Path | None:
-    """Return the local airflow-operator helm chart path if it exists in this repo."""
+def _find_local_operator_chart(explicit_path: str = "") -> Path | None:
+    """Return the local airflow-operator Helm chart path, or None to fall back to the remote chart.
+
+    Resolution order:
+      1. ``explicit_path`` (from --operator-chart-path), validated to contain a Chart.yaml.
+      2. Auto-detect: walk up from this script and return the first
+         ``<parent>/airflow-operator/helm`` containing a Chart.yaml.
+
+    Detection is intentionally NOT gated on a ``.git`` directory. In a monorepo-style checkout
+    the chart lives in a sibling repo (e.g. ``…/astro_coding_e2e/airflow-operator/helm``) whose
+    parent dir is not itself a git root, so a ``.git``-gated walk silently misses it and the
+    caller falls back to the remote chart — whose RBAC/CRDs can lag the operator image and cause
+    'forbidden' / 'no matches for kind' errors at runtime. Using the in-repo chart keeps RBAC,
+    CRDs and the operator image in lockstep.
+    """
+    if explicit_path:
+        cand = Path(explicit_path).expanduser().resolve()
+        if cand.is_dir() and (cand / "Chart.yaml").exists():
+            return cand
+        raise RuntimeError(f"--operator-chart-path '{explicit_path}' is not a Helm chart directory (no Chart.yaml)")
     for parent in Path(__file__).resolve().parents:
-        if (parent / ".git").is_dir():
-            candidate = parent / LOCAL_OPERATOR_CHART_REL
-            if candidate.is_dir() and (candidate / "Chart.yaml").exists():
-                return candidate
+        candidate = parent / LOCAL_OPERATOR_CHART_REL
+        if candidate.is_dir() and (candidate / "Chart.yaml").exists():
+            return candidate
     return None
 
 
@@ -1130,7 +1148,11 @@ Examples:
     parser.add_argument("--operator-release", default="airflow-operator-system",
                         help="Helm release name for the operator. Default: %(default)s")
     parser.add_argument("--operator-chart-version", default="",
-                        help="Helm chart version for airflow-operator. Defaults to latest.")
+                        help="Helm chart version for the REMOTE airflow-operator chart. Ignored for a local chart.")
+    parser.add_argument("--operator-chart-path", default="", metavar="DIR",
+                        help="Path to the in-repo airflow-operator Helm chart. Overrides auto-detection "
+                             "(which looks for a sibling airflow-operator/helm). Prefer this over the remote "
+                             "chart so RBAC/CRDs match the operator image and avoid runtime 'forbidden' errors.")
     parser.add_argument("--no-install-operator", dest="install_operator", action="store_false",
                         help="Skip installing the airflow-operator Helm chart.")
     parser.set_defaults(install_operator=True)
@@ -1316,6 +1338,7 @@ def main() -> int:  # noqa: C901
         install_operator=args.install_operator,
         install_service_monitor_crd=args.install_service_monitor_crd,
         operator_chart_version=args.operator_chart_version,
+        operator_chart_path=args.operator_chart_path,
         registry_server=args.registry_server,
         registry_username=args.registry_username,
         registry_password=args.registry_password,
@@ -1399,26 +1422,26 @@ def main() -> int:  # noqa: C901
         else:
             ms.skip("Install ServiceMonitor CRD", reason="--no-service-monitor-crd set")
 
-        # 7. Operator Helm chart
+        # 7. Operator Helm chart.
+        # Prefer the in-repo chart: it ships the RBAC + CRDs that match the operator image, so
+        # the ClusterRole grants every resource the controller watches (apiservers,
+        # eventschedulers, servicemonitors, …). The remote chart can lag the image and leave the
+        # ClusterRole missing rules → "forbidden"/"no matches for kind" at runtime.
         if settings.install_operator:
-            local_chart = _find_local_operator_chart()
+            local_chart = _find_local_operator_chart(settings.operator_chart_path)
             if local_chart:
                 operator_chart = str(local_chart)
                 chart_source = f"local ({local_chart})"
-                # Local chart keeps CRDs and RBAC in sync with the image in values.yaml.
-                # No need to add/update the remote repo.
-                extra_set: list[str] = []
             else:
                 operator_chart = f"{OPERATOR_HELM_REPO_NAME}/{OPERATOR_CHART_NAME}"
                 chart_source = f"remote ({OPERATOR_HELM_REPO_URL})"
+                _print(
+                    "  ⚠️  Local operator chart not found — falling back to the REMOTE chart. Its RBAC "
+                    "and CRDs may lag the operator image, which causes 'forbidden'/'no matches for kind' "
+                    "errors at runtime. Pass --operator-chart-path <repo>/airflow-operator/helm to use "
+                    "the in-repo chart."
+                )
                 _helm_repo_add(OPERATOR_HELM_REPO_NAME, OPERATOR_HELM_REPO_URL)
-                # gcr.io/kubebuilder/kube-rbac-proxy was decommissioned in 2024.
-                # Override to the canonical quay.io mirror when using the remote chart,
-                # which still has the hardcoded image. The local chart already has this fixed.
-                extra_set = [
-                    "manager.metrics.kubeRbacProxy.image.repository=quay.io/brancz/kube-rbac-proxy",
-                    "manager.metrics.kubeRbacProxy.image.tag=v0.8.0",
-                ]
 
             h = ms.start(f"Install airflow-operator (ns={settings.operator_namespace})")
             _helm_upgrade_install(
@@ -1427,7 +1450,6 @@ def main() -> int:  # noqa: C901
                 chart=operator_chart,
                 namespace=settings.operator_namespace,
                 version=settings.operator_chart_version if not local_chart else "",
-                extra_set=extra_set,
                 timeout="10m",
             )
             ms.done(h, detail=f"release={settings.operator_release} chart={chart_source}")
