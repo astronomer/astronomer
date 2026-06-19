@@ -22,7 +22,7 @@ spec:
   podSelector:
     matchLabels:
       tier: astronomer
-      component: registry
+      component: {{ template "registry.name" . }}
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
