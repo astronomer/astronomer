@@ -65,7 +65,7 @@ class TestScc:
         assert commander_expected_result in docs[0]["rules"]
         assert houston_values["deployments"]["helm"]["sccEnabled"] is True
 
-    def test_scc_privilges(self, kube_version):
+    def test_scc_privileges(self, kube_version):
         """Test scc privileges when scc is enabled."""
 
         docs = render_chart(
