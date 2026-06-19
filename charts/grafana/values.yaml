@@ -11,11 +11,11 @@ replicas: 1
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 12.4.2-2
+    tag: 12.4.4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.4
+    tag: 2.0.11
     pullPolicy: IfNotPresent
 
 securityContext:

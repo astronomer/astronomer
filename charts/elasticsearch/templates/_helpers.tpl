@@ -11,8 +11,12 @@ Create a default fully qualified app name.
 We truncate at 44 chars (63 - len("-headless-discovery")) because some Kubernetes name fields are limited to 63 (by the DNS naming spec).
 */}}
 {{- define "elasticsearch.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- printf "%s-%s" .Release.Name $name | trunc 44 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
 
 {{ define "elasticsearch.serviceAccountName" -}}
@@ -153,11 +157,10 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "elasticsearch.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
 {{- $required := dict "readOnlyRootFilesystem" true }}
+{{- if .Values.global.openshift.enabled }}
 {{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
 {{- else }}
-{{- $required := dict "readOnlyRootFilesystem" true }}
 {{- merge $required .Values.securityContext | toYaml }}
 {{- end -}}
 {{- end }}

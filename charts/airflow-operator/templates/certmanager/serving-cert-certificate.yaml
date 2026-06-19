@@ -1,7 +1,5 @@
-#####################################
-# Operator Serving-Cert Certificate #
-#####################################
-{{ if and .Values.certManager.enabled (not .Values.webhooks.useCustomTlsCerts) .Values.global.airflowOperator.enabled -}}
+{{- if (include "operator.enabled" .) }}
+{{ if and .Values.certManager.enabled (not .Values.webhooks.useCustomTlsCerts) -}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -19,4 +17,5 @@ spec:
   issuerRef:
     name: {{ .Release.Name }}-airflow-operator-selfsigned-issuer
   secretName: webhook-server-cert
+{{- end }}
 {{- end }}
