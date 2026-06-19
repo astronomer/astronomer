@@ -11,9 +11,9 @@ kind: StatefulSet
 apiVersion: apps/v1
 {{- end }}
 metadata:
-  name: {{ .Release.Name }}-registry
+  name: {{ template "registry.fullname" . }}
   labels:
-    component: registry
+    component: {{ template "registry.name" . }}
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -27,11 +27,11 @@ spec:
   replicas: {{ .Values.registry.replicas }}
   selector:
     matchLabels:
-      component: registry
+      component: {{ template "registry.name" . }}
       tier: astronomer
       release: {{ .Release.Name }}
 {{- if and (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) (not .Values.registry.s3.enabled) }}
-  serviceName: {{ .Release.Name }}-registry
+  serviceName: {{ template "registry.fullname" . }}
 {{- end }}
   template:
     metadata:
@@ -39,10 +39,10 @@ spec:
 {{- with .Values.podLabels }}
 {{ toYaml . | indent 8 }}
 {{- end }}
-        component: registry
+        component: {{ template "registry.name" . }}
         tier: astronomer
         release: {{ .Release.Name }}
-        app: registry
+        app: {{ template "registry.name" . }}
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
         {{- include "global.podLabels" . | nindent 8 }}
