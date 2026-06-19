@@ -890,7 +890,6 @@ Return registry podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fi
 {{- end -}}
 {{- end }}
 
-
 {{/*
 Expand the name of the registry component.
 */}}
@@ -914,4 +913,14 @@ If release name contains chart name it will be used as a full name.
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
+{{- end }}
+
+{{/*
+Whether the registry should be rendered.
+Master switch registry.enabled (default true) AND the registry plane modes (data/unified).
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "registry.enabled" -}}
+{{- $planeOk := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+{{- and .Values.registry.enabled $planeOk -}}
 {{- end }}

@@ -381,8 +381,8 @@ global:
       # another: thing
     extraLabels: []
       # do-funky-injection: maybe
-  daemonsetLogging:
-    enabled: true
+  #daemonsetLogging:
+  #  enabled: false
 
 
 #################################

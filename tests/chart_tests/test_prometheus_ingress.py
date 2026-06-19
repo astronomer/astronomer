@@ -47,11 +47,12 @@ class TestIngress:
 
     @pytest.mark.parametrize(
         ("domain_prefix", "expected_host"),
-        [("dp01", "prometheus.dp01.example.com"), ("", "prometheus.example.com"), (None, "prometheus.example.com")],
+        [("dp01", "prometheus.dp01.example.com"), ("", None), (None, None)],
     )
     def test_prometheus_ingress_host_domain_prefix(self, domain_prefix, expected_host, kube_version):
-        """Data plane installs without a domainPrefix (same cluster as the control plane)
-        use prometheus.<baseDomain> instead of prometheus.<domainPrefix>.<baseDomain>."""
+        """Data plane installs with a domainPrefix expose prometheus on
+        prometheus.<domainPrefix>.<baseDomain>. Same-cluster data plane installs
+        (no domainPrefix) do not create the public prometheus ingress."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -63,10 +64,27 @@ class TestIngress:
             show_only=["charts/prometheus/templates/ingress.yaml"],
         )
 
+        if expected_host is None:
+            assert len(docs) == 0
+            return
+
         assert len(docs) == 1
         doc = docs[0]
         assert doc["spec"]["rules"][0]["host"] == expected_host
         assert doc["spec"]["tls"][0]["hosts"] == [expected_host]
+
+    @pytest.mark.parametrize("mode", ["unified", "control"])
+    def test_prometheus_ingress_rendered_for_non_data_modes(self, mode, kube_version):
+        """Unified and control plane installs always expose the public prometheus ingress,
+        regardless of domainPrefix."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": mode, "domainPrefix": ""}}},
+            show_only=["charts/prometheus/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert docs[0]["spec"]["rules"][0]["host"] == "prometheus.example.com"
 
     @pytest.mark.parametrize(
         ("domain_prefix", "expected_host"),

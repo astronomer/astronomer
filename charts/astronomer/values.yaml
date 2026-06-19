@@ -951,6 +951,9 @@ navigator:
   flightCleanupTtl: 604800
 
 registry:
+  # Master switch for provisioning the Astronomer registry. Defaults to true.
+  # Set false to skip registry setup entirely, even in data/unified mode.
+  enabled: true
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False
   replicas: 1

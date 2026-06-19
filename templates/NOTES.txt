@@ -32,6 +32,9 @@ The control plane is responsible for platform management, orchestration, and use
 You can access the data plane at:
 - Astronomer dashboard:   {{ if and $astronomerEnabled $platformEnabled }}https://{{ $domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 - Grafana dashboard:      {{ if and $grafanaEnabled $monitoringEnabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+{{ else }}
+- Commander API:   {{ if and $astronomerEnabled $platformEnabled }}commander.{{ .Values.global.baseDomain }}:443{{ else }}Disabled{{ end }}
+- Commander Metadata: {{ if and $astronomerEnabled $platformEnabled }}http://{{ .Release.Name}}-commander.{{ .Release.Namespace }}.svc.cluster.local.:8880{{ else }}Disabled{{ end }}
 {{- end }}
 
 The data plane is responsible for executing and monitoring Airflow workloads.
