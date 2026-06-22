@@ -94,6 +94,15 @@ global:
     # The name of a manually created ClusterSecretStore
     # externalSecretManagerName: your-css-name
 
+  # sharedElasticsearch: host the logging stack (Elasticsearch, external-es-proxy,
+  # Vector) on the control plane so data planes can share it.
+  # When enabled: control plane provisions logging, and the data plane provisions
+  # NONE (it uses the shared control-plane stack).
+  # When disabled: the data plane provisions its own logging, control plane none.
+  # Unified always provisions logging regardless of this flag.
+  sharedElasticsearch:
+    enabled: true
+
   # Metrics and reporting features
   metricsReporting:
     taskUsageMetrics:
