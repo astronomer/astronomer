@@ -849,7 +849,7 @@ entropy of a Fernet key.
 {{- end }}
 
 {{- define "houston.logging.loggingSidecar.securityContext" -}}
-{{- if or (eq ( toString ( .Values.houston.logging.loggingSidecar.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- if or (eq ( toString ( .Values.houston.logging.loggingSidecar.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
 {{- $required := dict "readOnlyRootFilesystem" true }}
 {{- merge $required (omit .Values.houston.logging.loggingSidecar.securityContext "runAsUser") | toYaml }}
 {{- else }}

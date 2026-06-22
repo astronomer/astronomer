@@ -3,6 +3,7 @@ import pytest
 import yaml
 
 from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
 show_only = [
@@ -137,3 +138,64 @@ class TestOpenshift:
         assert "securityContext" not in gitSyncRelayConfig
         assert "gitDaemon" not in gitSyncRelayConfig
         assert "gitSync" not in gitSyncRelayConfig
+
+    def test_openshift_enabled_logging_sidecar_securitycontext_omits_runasuser(self, kube_version):
+        """On OpenShift the logging-sidecar securityContext must omit runAsUser (the SCC assigns the
+        UID), while keeping the enforced readOnlyRootFilesystem and the operator's other fields."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"openshift": {"enabled": True}},
+                "astronomer": {
+                    "houston": {
+                        "logging": {
+                            "loggingSidecar": {
+                                "enabled": True,
+                                "cloudwatch": {"enabled": True},
+                                "securityContext": {"runAsUser": 1234},
+                            },
+                        },
+                    },
+                },
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        for doc in docs:
+            sc = get_containers_by_name(doc)["vector"]["securityContext"]
+            assert "runAsUser" not in sc
+            assert sc["readOnlyRootFilesystem"] is True
+
+    def test_openshift_disabled_logging_sidecar_securitycontext_keeps_runasuser(self, kube_version):
+        """Off OpenShift the logging-sidecar securityContext renders runAsUser unchanged."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"openshift": {"enabled": False}},
+                "astronomer": {
+                    "houston": {
+                        "logging": {
+                            "loggingSidecar": {
+                                "enabled": True,
+                                "cloudwatch": {"enabled": True},
+                                "securityContext": {"runAsUser": 1234},
+                            },
+                        },
+                    },
+                },
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        for doc in docs:
+            sc = get_containers_by_name(doc)["vector"]["securityContext"]
+            assert sc["runAsUser"] == 1234
+            assert sc["readOnlyRootFilesystem"] is True
