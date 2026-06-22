@@ -26,6 +26,18 @@ global:
     enabled: false
     # Parent domain of the global customer-facing hostname. REQUIRED when enabled.
     # E.g. set to "astro.example.com" when the global URL is "app.astro.example.com".
+    #
+    # TLS cert SANs (customer prerequisite: when
+    # enabled, each CP's ingresses serve two host families, so the per-CP TLS cert
+    # (global.tlsSecret) on EVERY CP must include SANs for both:
+    #   per-CP admin (under baseDomain):  <baseDomain>, app.<baseDomain>,
+    #     houston.<baseDomain>, grafana.<baseDomain>, alertmanager.<baseDomain>,
+    #     prometheus.<baseDomain>
+    #   global customer-facing (under globalBaseDomain): the same subdomains under
+    #     <globalBaseDomain> (app./houston./grafana./alertmanager./prometheus.) plus the
+    #     bare <globalBaseDomain>
+    # One physical cert per CP serves both families. Issue via DNS-01 ACME — HTTP-01 will
+    # not work because the global host only routes to active-region CPs.
     globalBaseDomain: ~
     # Stable per-CP identity (UUID), exposed to pods as the CP_ID env var.
     # When unset, the chart looks up the existing cp-identity Secret and reuses its value,

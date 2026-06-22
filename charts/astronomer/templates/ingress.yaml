@@ -4,6 +4,8 @@
 {{- if and .Values.global.baseDomain ( not .Values.global.perHostIngress.enabled ) }}
 {{- $planeDataMode := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- /* Global customer-facing host is control-plane-only (globalBaseDomain is unset on data planes). */}}
+{{- $emitGlobalHost := and .Values.global.controlPlaneHA.enabled $planeControlMode }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -27,6 +29,11 @@ metadata:
       if ($host = '{{ .Values.global.baseDomain }}' ) {
         rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
       }
+      {{- if $emitGlobalHost }}
+      if ($host = '{{ .Values.global.controlPlaneHA.globalBaseDomain }}' ) {
+        rewrite ^ https://app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}$request_uri permanent;
+      }
+      {{- end }}
     {{- end }}
 spec:
   {{- if .Values.global.tlsSecret }}
@@ -36,6 +43,10 @@ spec:
       {{- if $planeControlMode }}
         - {{ .Values.global.baseDomain }}
         - app.{{ .Values.global.baseDomain }}
+        {{- if $emitGlobalHost }}
+        - {{ .Values.global.controlPlaneHA.globalBaseDomain }}
+        - app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+        {{- end }}
       {{- end }}
       {{- if $planeDataMode }}
         - {{ include "registry.ingressURL" . }}
@@ -63,6 +74,28 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
+{{- if $emitGlobalHost }}
+  - host: {{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+  - host: app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+{{- end }}
 {{- end }}
 {{- if $planeDataMode }}
   - host: {{ include "registry.ingressURL" . }}
