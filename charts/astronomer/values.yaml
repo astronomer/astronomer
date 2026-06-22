@@ -123,6 +123,13 @@ houston:
   jwtSigningKeySecretName: ~
   jwtSigningCertificateSecretName: ~
 
+  # Houston JWT (JWKS) signing keypair generation. Default true generates a
+  # self-signed keypair at install. Set false (or enable global.controlPlaneHA)
+  # to consume an externally-provisioned / ESO-synced shared keypair instead.
+  jwks:
+    generation:
+      enabled: true
+
   serviceAccount:
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
