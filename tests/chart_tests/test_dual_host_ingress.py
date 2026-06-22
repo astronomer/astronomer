@@ -123,3 +123,25 @@ def test_public_ingress_global_bare_domain_redirect(kube_version):
     snippet = ingress["metadata"]["annotations"]["nginx.ingress.kubernetes.io/configuration-snippet"]
     assert f"if ($host = '{GLOBAL_BASE_DOMAIN}' )" in snippet
     assert f"https://app.{GLOBAL_BASE_DOMAIN}$request_uri" in snippet
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+def test_public_ingress_data_plane_ha_no_global_redirect(kube_version):
+    """Public ingress renders on data planes; the global bare-domain redirect is control-plane-only.
+
+    A data-plane render with HA enabled and no globalBaseDomain must not emit the global
+    redirect (which would otherwise template `<no value>` into the nginx snippet).
+    """
+    values = {
+        "global": {
+            "plane": {"mode": "data"},
+            "baseDomain": BASE_DOMAIN,
+            "controlPlaneHA": {"enabled": True},
+        }
+    }
+    ingress = _find_ingress(render_chart(kube_version=kube_version, show_only=[PUBLIC_INGRESS], values=values))
+    snippet = ingress["metadata"]["annotations"]["nginx.ingress.kubernetes.io/configuration-snippet"]
+    assert "<no value>" not in snippet
+    assert GLOBAL_BASE_DOMAIN not in snippet
+    # Only the per-CP baseDomain redirect should be present.
+    assert f"if ($host = '{BASE_DOMAIN}' )" in snippet
