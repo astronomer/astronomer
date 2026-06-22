@@ -101,7 +101,7 @@ global:
   # When disabled: the data plane provisions its own logging, control plane none.
   # Unified always provisions logging regardless of this flag.
   sharedElasticsearch:
-    enabled: true
+    enabled: false
 
   # Metrics and reporting features
   metricsReporting:
@@ -390,8 +390,8 @@ global:
       # another: thing
     extraLabels: []
       # do-funky-injection: maybe
-  #daemonsetLogging:
-  #  enabled: false
+  daemonsetLogging:
+    enabled: true
 
 
 #################################
