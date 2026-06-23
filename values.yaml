@@ -94,6 +94,11 @@ global:
     # The name of a manually created ClusterSecretStore
     # externalSecretManagerName: your-css-name
 
+  # sharedElasticsearch: Allows sharing logging components with control plane.
+  # Built specially for cp dp split mode
+  sharedElasticsearch:
+    enabled: false
+
   # Metrics and reporting features
   metricsReporting:
     taskUsageMetrics:
