@@ -239,6 +239,32 @@ class TestPrometheusStatefulset:
         c_by_name = get_containers_by_name(docs[0])
         assert {"name": "CUSTOM_DATABASE_NAME", "values": "astrohouston"} in c_by_name["filesd-reloader"]["env"]
 
+    @pytest.mark.parametrize(
+        "plane_mode,expected_present,expected_container_count",
+        [
+            ("unified", True, 3),
+            ("control", True, 3),
+            ("data", False, 2),
+        ],
+    )
+    def test_prometheus_filesd_reloader_by_plane_mode(self, kube_version, plane_mode, expected_present, expected_container_count):
+        """Test filesd-reloader presence varies by plane mode.
+
+        filesd-reloader connects to astronomer_houston which only exists in the
+        control plane. It must be excluded from data plane deployments to avoid
+        a fatal DB connection error on startup.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert ("filesd-reloader" in c_by_name) == expected_present
+        assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == expected_container_count
+
     def test_prometheus_cluster_role_defaults(self, kube_version):
         """Test Prometheus with cluster role defaults."""
         values = {}
