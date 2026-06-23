@@ -79,7 +79,7 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-            - ALL
+              - ALL
           readOnlyRootFilesystem: true
         {{- if .Values.securityContext.enabled }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
