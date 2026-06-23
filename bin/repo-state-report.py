@@ -21,10 +21,10 @@ def get_repo_state() -> dict:
         if os.getenv(var):
             repo_state[var] = os.getenv(var)
 
-    helm_path = subprocess.check_output(["which helm"], shell=True).decode("utf-8").strip()
+    helm_path = subprocess.check_output(["which", "helm"]).decode("utf-8").strip()
     repo_state["helm_path"] = helm_path
 
-    helm_version = subprocess.check_output(["helm version --short"], shell=True).decode("utf-8").strip()
+    helm_version = subprocess.check_output(["helm", "version", "--short"]).decode("utf-8").strip()
     repo_state["helm_version"] = helm_version
 
     return repo_state
