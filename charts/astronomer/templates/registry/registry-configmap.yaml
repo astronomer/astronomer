@@ -2,7 +2,7 @@
 ## Astronomer Registry ConfigMap ##
 ###################################
 {{ if and .Values.global.baseDomain }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "registry.enabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
