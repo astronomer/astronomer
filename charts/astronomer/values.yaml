@@ -961,6 +961,7 @@ navigator:
   flightCleanupTtl: 604800
 
 registry:
+  enabled: true
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False
   replicas: 1
