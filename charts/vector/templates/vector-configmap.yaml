@@ -50,10 +50,10 @@ data:
         condition:
           type: "vrl"
           source: |
-            {{- if and .Values.global.namespaceManagement.namespacePools.enabled (gt (len .Values.global.namespaceManagement.namespacePools.namespaces.names) 0) }}
+            {{- if and .Values.global.namespaceManagement.namespacePools.enabled (gt (len .Values.global.namespaceManagement.namespacePools.namespaces.names) 0) (not .Values.global.sharedElasticsearch.enabled) }}
             namespaces = [{{ range $i, $ns := .Values.global.namespaceManagement.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
             includes(namespaces, .kubernetes.pod_namespace)
-            {{- else if or .Values.global.namespaceManagement.manualNamespaceNames.enabled (not .Values.global.manageClusterScopedResources.enabled) }}
+            {{- else if or .Values.global.sharedElasticsearch.enabled .Values.global.namespaceManagement.manualNamespaceNames.enabled (not .Values.global.manageClusterScopedResources.enabled) }}
             exists(.kubernetes.pod_namespace) && is_string(.kubernetes.pod_namespace) && .kubernetes.pod_namespace != ""
             {{- else }}
             .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
