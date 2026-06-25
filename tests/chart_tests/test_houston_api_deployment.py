@@ -41,7 +41,7 @@ class TestHoustonApiDeployment:
 
         c_by_name = get_containers_by_name(houston_deployment, include_init_containers=True)
         assert len(c_by_name) == 4
-        houston_container, etc_ssl_certs_copier_container, wait_for_db_container, houston_bootstrapper_container = (
+        houston_container, etc_ssl_certs_copier_container, houston_bootstrapper_container, db_migration_container = (
             c_by_name.values()
         )
 
@@ -50,7 +50,7 @@ class TestHoustonApiDeployment:
         assert houston_bootstrapper_container["securityContext"]["readOnlyRootFilesystem"]
         assert houston_bootstrapper_container["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
         assert houston_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
-        assert wait_for_db_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
+        assert db_migration_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
 
         assert houston_container["securityContext"]["readOnlyRootFilesystem"]
         houston_container_env = get_env_vars_dict(houston_container["env"])
@@ -61,10 +61,10 @@ class TestHoustonApiDeployment:
             "secretKeyRef": {"key": "connection", "name": "release-name-houston-backend"}
         }
 
-        assert wait_for_db_container["securityContext"]["readOnlyRootFilesystem"]
-        wait_for_db_container_env = get_env_vars_dict(wait_for_db_container["env"])
-        assert wait_for_db_container_env["COMMANDER_WAIT_ENABLED"] == "true"
-        assert wait_for_db_container_env["REGISTRY_WAIT_ENABLED"] == "true"
+        assert db_migration_container["securityContext"]["readOnlyRootFilesystem"]
+        db_migration_container_env = get_env_vars_dict(db_migration_container["env"])
+        assert db_migration_container_env["COMMANDER_WAIT_ENABLED"] == "true"
+        assert db_migration_container_env["REGISTRY_WAIT_ENABLED"] == "true"
 
     def test_houston_api_deployment_control_mode(self, kube_version):
         docs = render_chart(
@@ -83,7 +83,7 @@ class TestHoustonApiDeployment:
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
-        env_vars = get_env_vars_dict(c_by_name["wait-for-db"]["env"])
+        env_vars = get_env_vars_dict(c_by_name["db-migration"]["env"])
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 

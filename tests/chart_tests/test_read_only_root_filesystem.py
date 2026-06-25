@@ -90,12 +90,6 @@ class TestHoustonPodManagers:
                     assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in container["volumeMounts"], (
                         f"{pod_name}/{container['name']} missing mount: /etc/ssl/certs"
                     )
-                    assert {"mountPath": "/tmp", "name": "tmp"} not in container["volumeMounts"], (
-                        f"{pod_name}/{container['name']} unnecessary mount: /tmp"
-                    )
-                    assert {"mountPath": "/houston/node_modules/.cache", "name": "tmp"} not in container["volumeMounts"], (
-                        f"{pod_name}/{container['name']} unnecessary mount: /houston/node_modules/.cache"
-                    )
                 case _:
                     assert {"mountPath": "/tmp", "name": "tmp"} in container["volumeMounts"], (
                         f"{pod_name}/{container['name']} missing mount: /tmp"

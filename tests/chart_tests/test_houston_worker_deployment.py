@@ -37,7 +37,7 @@ class TestHoustonWorkerDeployment:
 
         c_by_name = get_containers_by_name(worker_deployment, include_init_containers=True)
         assert len(c_by_name) == 4
-        houston_container, _etc_ssl_certs_copier_container, _wait_for_db_container, _houston_bootstrapper_container = (
+        houston_container, _etc_ssl_certs_copier_container, _houston_bootstrapper_container, _houston_migrations_container = (
             c_by_name.values()
         )
 
