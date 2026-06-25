@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import yaml
@@ -6,23 +7,33 @@ from tests import git_root_dir
 from tests.utils.chart import render_chart
 
 # Kinds that manage pods (and therefore carry pod/container securityContexts).
-pod_managers = ["CronJob", "DaemonSet", "Deployment", "Job", "StatefulSet"]
+pod_managers = ["CronJob", "DaemonSet", "Deployment", "Job", "StatefulSet", "ReplicaSet"]
+
+# A template is a pod manager if one of its YAML documents declares a pod-managing resource at
+# the top level, i.e. a column-0 `kind:` line. Anchoring at column 0 (no leading whitespace) is
+# what distinguishes a real resource from a nested reference such as an HPA's
+# `scaleTargetRef.kind: Deployment`, which is indented.
+_pod_manager_kind_re = re.compile(
+    r"^kind:[ \t]*[\"']?(?:" + "|".join(pod_managers) + r")[\"']?[ \t]*$",
+    re.MULTILINE,
+)
 
 
 def find_all_pod_manager_templates() -> list[str]:
-    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir."""
+    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir.
 
-    false_positive_filenames = [
-        "charts/nats/templates/jetstream-job-scc.yaml",  # Not a job, but the scc for the job
-    ]
+    Detection is by content, not filename. Filename matching is unreliable in both directions: it
+    misses Jobs/CronJobs whose filename omits the kind (e.g. add-labels-to-namespace.yaml,
+    houston-check-runtime-updates.yaml) and would false-positive on resources that merely reference
+    a pod manager through an indented field (e.g. an HPA's scaleTargetRef.kind: Deployment). We
+    instead look for a top-level `kind:` naming a pod-managing resource in the template source.
+    """
 
     return sorted(
         {
-            str(x.relative_to(git_root_dir))
-            for x in (git_root_dir / "charts").rglob("*")
-            if any(substr in x.name for substr in ("deployment", "statefulset", "replicaset", "daemonset", "job"))
-            and x.is_file()
-            and str(x.relative_to(git_root_dir)) not in false_positive_filenames
+            str(path.relative_to(git_root_dir))
+            for path in (git_root_dir / "charts").rglob("*.yaml")
+            if path.is_file() and _pod_manager_kind_re.search(path.read_text())
         }
     )
 

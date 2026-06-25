@@ -193,6 +193,7 @@ data_plane_only_template_substrings = (
     "prometheus-federation-auth-deployment",
     "pilot-deployment",
     "external-secrets",
+    "commander-jwks-hooks",
 )
 
 # "Kind/release-name-workload/container": reason it may keep runAsUser on OpenShift.
@@ -215,7 +216,7 @@ def test_all_containers_omit_runasuser_on_openshift(template_name):
     pin runAsUser when global.openshift.enabled is True. Enforce this across every pod manager
     template in the chart (init containers included).
     """
-    overrides = {"global": {"openshift": {"enabled": True}}}
+    overrides = {"global": {"openshift": {"enabled": True}, "networkNSLabels": {"enabled": True}}}
     if any(substring in template_name for substring in data_plane_only_template_substrings):
         overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), overrides)
