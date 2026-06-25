@@ -1,3 +1,4 @@
+{{- if (include "operator.enabled" .) }}
 {{ if .Values.crd.create }}
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -42,12 +43,22 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               image:
-                default: docker.io/bitnami/postgresql:11.10.0-debian-10-r60
+                default: astrocrpublic.azurecr.io/astronomer/ap-postgresql:17.5.0
                 type: string
               password:
                 default: postgres
                 type: string
               podTemplateSpec:
+                properties:
+                  spec:
+                    properties:
+                      nodeSelector:
+                        additionalProperties:
+                          type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               replicas:
@@ -95,6 +106,9 @@ spec:
                       x-kubernetes-int-or-string: true
                     type: object
                 type: object
+              restrictedProfileEnabled:
+                default: false
+                type: boolean
               servingPort:
                 default: 5432
                 format: int32
@@ -119,4 +133,5 @@ spec:
     storage: true
     subresources:
       status: {}
+{{ end }}
 {{- end }}

@@ -56,7 +56,7 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{ define "nginx.serviceAccountName" -}}
-{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "nginx.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}
@@ -77,8 +77,32 @@ imagePullSecrets:
 {{ printf "%s-default-backend" (include "nginx.fullname" .)}}
 {{- end -}}
 
+{{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "nginx.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return container securityContext, always enforcing readOnlyRootFilesystem: true.
+Omits runAsUser on OpenShift (UIDs are assigned dynamically).
+*/}}
+{{- define "nginx.securityContext" -}}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- if .Values.global.openshift.enabled }}
+{{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- merge $required .Values.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
+
 {{ define "defaultBackend.serviceAccountName" -}}
-{{- if and .Values.defaultBackend.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.defaultBackend.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "defaultBackend.fullname" . )) .Values.defaultBackend.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.defaultBackend.serviceAccount.name }}

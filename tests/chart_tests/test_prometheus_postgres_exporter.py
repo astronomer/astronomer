@@ -15,7 +15,7 @@ class TestPrometheusPostgresExporter:
             kube_version=kube_version,
             values={
                 "global": {
-                    "prometheusPostgresExporterEnabled": True,
+                    "prometheusPostgresExporter": {"enabled": True},
                 },
             },
             show_only=[
@@ -29,7 +29,7 @@ class TestPrometheusPostgresExporter:
         doc = docs[0]
         assert doc["kind"] == "Service"
         assert doc["metadata"]["name"] == "release-name-postgresql-exporter"
-        assert doc["spec"]["selector"]["app"] == "prometheus-postgres-exporter"
+        assert doc["spec"]["selector"]["component"] == "prometheus-postgres-exporter"
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"] == [
             {
@@ -70,7 +70,7 @@ class TestPrometheusPostgresExporter:
         and tolerations with global values."""
         values = {
             "global": {
-                "prometheusPostgresExporterEnabled": True,
+                "prometheusPostgresExporter": {"enabled": True},
                 "platformNodePool": global_platform_node_pool_config,
             }
         }
@@ -91,7 +91,7 @@ class TestPrometheusPostgresExporter:
 
         global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-postgres-exporter"}
         values = {
-            "global": {"prometheusPostgresExporterEnabled": True},
+            "global": {"prometheusPostgresExporter": {"enabled": True}},
             "prometheus-postgres-exporter": global_platform_node_pool_config,
         }
         docs = render_chart(

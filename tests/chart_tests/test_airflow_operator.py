@@ -57,12 +57,61 @@ class TestAirflowOperator:
                 [str(x.relative_to(git_root_dir)) for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/crds").glob("*")]
             ),
         )
-        assert len(docs) == 14
+        assert len(docs) == 13
         for doc in docs:
             assert "apiextensions.k8s.io/v1" == doc["apiVersion"]
             assert "CustomResourceDefinition" == doc["kind"]
             assert "cert-manager.io/inject-ca-from" in doc["metadata"]["annotations"]
             assert "airflow.apache.org" in doc["metadata"]["name"]
+
+    @pytest.mark.parametrize(
+        "plane_mode,should_render",
+        [
+            ("data", True),
+            ("unified", True),
+            ("control", False),
+        ],
+    )
+    def test_airflow_operator_renders(self, kube_version, plane_mode, should_render):
+        """Operator resources only render on planes (data, unified), not on the control plane."""
+        crd_templates = sorted(
+            str(x.relative_to(git_root_dir)) for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/crds").glob("*")
+        )
+        values = {
+            "airflow-operator": {
+                "crd": {"create": True},
+            },
+            "global": {
+                "airflowOperator": {"enabled": True},
+                "plane": {"mode": plane_mode},
+            },
+        }
+        if should_render:
+            docs = render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values=values,
+                show_only=crd_templates,
+            )
+            assert len(docs) == 13
+            for doc in docs:
+                assert "CustomResourceDefinition" == doc["kind"]
+        else:
+            # On the control plane the operator templates render empty. helm errors with
+            # "could not find template" when --show-only targets an all-empty template, so
+            # render the full chart and assert no operator CRDs are emitted.
+            docs = render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values=values,
+            )
+            operator_crds = [
+                doc
+                for doc in docs
+                if doc.get("kind") == "CustomResourceDefinition"
+                and doc.get("metadata", {}).get("name", "").endswith("airflow.apache.org")
+            ]
+            assert operator_crds == []
 
     def test_airflow_operator_secret(self, kube_version):
         """Test Airflow Operator Webhook tls"""
@@ -183,6 +232,9 @@ class TestAirflowOperator:
         assert docs[3]["kind"] == "Service"
         assert docs[3]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
 
+        # Render the full chart (not --show-only): with webhooks disabled some manager
+        # templates render empty, and helm errors when --show-only targets an all-empty
+        # template. Assert the webhook service is simply absent from the output.
         docs = render_chart(
             validate_objects=False,
             kube_version=kube_version,
@@ -194,12 +246,6 @@ class TestAirflowOperator:
                     "webhooks": {"enabled": False},
                 },
             },
-            show_only=sorted(
-                [
-                    str(x.relative_to(git_root_dir))
-                    for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/manager").glob("*")
-                ]
-            ),
         )
         webhook_services = [doc for doc in docs if "webhook" in doc.get("metadata", {}).get("name", "")]
         assert len(webhook_services) == 0

@@ -1,13 +1,13 @@
 ################################################
 ## Prometheus Postgres Exporter Role Binding  ##
 ################################################
-{{- if and .Values.rbac.create .Values.global.rbacEnabled }}
+{{- if and .Values.rbac.create .Values.global.rbac.enabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: RoleBinding
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
   labels:
-    app: {{ template "prometheus-postgres-exporter.name" . }}
+    component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}

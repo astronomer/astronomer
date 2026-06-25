@@ -1,7 +1,7 @@
 #############################################
 ## Astronomer Commander Pod Disruption Budget
 #############################################
-{{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if .Values.global.podDisruptionBudgets.enabled }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget

@@ -68,6 +68,33 @@ class Test_Registry_Configmap:
         assert doc["metadata"]["name"] == "release-name-registry"
         assert yaml.safe_load(doc["data"]["config.yml"])["log"]["level"] == "debug"
 
+    def test_registry_configmap_name_override(self, kube_version):
+        """registry.nameOverride drives the component label; resource name comes from fullname."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"registry": {"nameOverride": "custom-registry"}}},
+            show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        # fullname falls back to "<release>-<name>" since the release name does not contain the override
+        assert doc["metadata"]["name"] == "release-name-custom-registry"
+        assert doc["metadata"]["labels"]["component"] == "custom-registry"
+
+    def test_registry_configmap_fullname_override(self, kube_version):
+        """registry.fullnameOverride drives the resource name without touching the component label."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"registry": {"fullnameOverride": "my-registry"}}},
+            show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["metadata"]["name"] == "my-registry"
+        assert doc["metadata"]["labels"]["component"] == "registry"
+
     def test_registry_configmap_with_houston_event_url(self, kube_version):
         """Test that helm renders registry-configmap with correct Houston event URL for notifications."""
         docs = render_chart(

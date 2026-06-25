@@ -15,7 +15,7 @@ global:
 image:
   registry: quay.io
   repository: astronomer/ap-postgresql
-  tag: 17.9.0
+  tag: 17.10.0-1
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -89,6 +89,8 @@ serviceAccount:
   annotations: {}
   ## Name of an already existing service account. Setting this value disables the automatic service account creation.
   # name:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
 
 replication:
   enabled: false

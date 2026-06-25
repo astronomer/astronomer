@@ -11,12 +11,16 @@ Create a default fully qualified app name.
 We truncate at 44 chars (63 - len("-headless-discovery")) because some Kubernetes name fields are limited to 63 (by the DNS naming spec).
 */}}
 {{- define "elasticsearch.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- printf "%s-%s" .Release.Name $name | trunc 44 | trimSuffix "-" -}}
 {{- end -}}
+{{- end -}}
 
 {{ define "elasticsearch.serviceAccountName" -}}
-{{- if and .Values.common.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.common.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "elasticsearch.fullname" . )) .Values.common.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.common.serviceAccount.name }}
@@ -145,25 +149,46 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "curator.indexPattern" -}}
-{{ if and .Values.global.loggingSidecar.enabled .Values.global.loggingSidecar.indexPattern }}
-{{- .Values.global.loggingSidecar.indexPattern | squote }}
+{{ if and .Values.global.logging.loggingSidecar.enabled .Values.global.logging.loggingSidecar.indexPattern }}
+{{- .Values.global.logging.loggingSidecar.indexPattern | squote }}
 {{ else }}
 {{- .Values.curator.age.timestring | squote}}
 {{- end -}}
 {{- end -}}
 
 {{- define "elasticsearch.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
 {{- $required := dict "readOnlyRootFilesystem" true }}
+{{- if .Values.global.openshift.enabled }}
 {{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
 {{- else }}
-{{- $required := dict "readOnlyRootFilesystem" true }}
 {{- merge $required .Values.securityContext | toYaml }}
 {{- end -}}
 {{- end }}
 
+{{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "elasticsearch.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return exporter podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "elasticsearch.exporter.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.exporter.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.exporter.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
 {{- define "elasticsearch.ingressurl" -}}
-{{ if eq .Values.global.plane.mode "data" -}}
+{{ if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 elasticsearch.{{ .Values.global.baseDomain }}

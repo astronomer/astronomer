@@ -44,21 +44,21 @@ class TestOpenshift:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"openshiftEnabled": True},
+                "global": {"openshift": {"enabled": True}},
             },
             show_only=show_only,
         )
 
         assert len(docs) == 6
         for doc in docs:
-            assert "securityContext" not in doc["spec"]["template"]["spec"]
+            assert "securityContext" in doc["spec"]["template"]["spec"]
 
     def test_openshift_flag_defaults_with_enabled_and_validate_container_securitycontext(self, kube_version):
         "Validate containerSecurityContext when openshiftEnabled is Enabled"
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"openshiftEnabled": True},
+                "global": {"openshift": {"enabled": True}},
             },
             show_only=[
                 "charts/prometheus/templates/prometheus-statefulset.yaml",
@@ -77,7 +77,7 @@ class TestOpenshift:
         "Validate houston config when openshiftEnabled is Enabled"
         docs = render_chart(
             values={
-                "global": {"openshiftEnabled": True},
+                "global": {"openshift": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
@@ -95,3 +95,45 @@ class TestOpenshift:
 
         gitSyncConfig = airflowConfig["dags"]["gitSync"]
         assert {"runAsNonRoot": True} == gitSyncConfig["securityContexts"]["container"]
+
+    def test_openshift_flag_defaults_with_enabled_and_validate_houston_configmap_gitsyncrelay(self, kube_version):
+        """Validate gitSyncRelay securityContext in houston configmap when openshift is enabled."""
+        docs = render_chart(
+            values={
+                "global": {"openshift": {"enabled": True}},
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+        gitSyncRelayConfig = prod["deployments"]["helm"]["gitSyncRelay"]
+
+        assert gitSyncRelayConfig["securityContext"] is None
+        assert gitSyncRelayConfig["gitDaemon"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
+        assert gitSyncRelayConfig["gitSync"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
+
+    def test_openshift_disabled_houston_configmap_gitsyncrelay_no_security_overrides(self, kube_version):
+        """Validate gitSyncRelay has no securityContext overrides when openshift is disabled."""
+        docs = render_chart(
+            values={
+                "global": {"openshift": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+        gitSyncRelayConfig = prod["deployments"]["helm"]["gitSyncRelay"]
+
+        assert "securityContext" not in gitSyncRelayConfig
+        assert "gitDaemon" not in gitSyncRelayConfig
+        assert "gitSync" not in gitSyncRelayConfig

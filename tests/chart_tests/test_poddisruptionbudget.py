@@ -55,7 +55,7 @@ class TestPDB:
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
-            values={"global": {"prometheusPostgresExporterEnabled": True}},
+            values={"global": {"prometheusPostgresExporter": {"enabled": True}}},
         )
         assert all(x["apiVersion"] == "policy/v1" for x in docs)
 
@@ -67,7 +67,7 @@ class TestPDB:
             show_only=self.show_only,
             values={
                 "global": {
-                    "prometheusPostgresExporterEnabled": True,
+                    "prometheusPostgresExporter": {"enabled": True},
                     "useLegacyPodDisruptionBudget": True,
                 }
             },
@@ -76,9 +76,9 @@ class TestPDB:
 
     def test_global_pdb_disabled(self, kube_version):
         """Validate that there are no PDBs when
-        global.podDisruptionBudgetsEnabled is False."""
+        global.podDisruptionBudgets.enabled is False."""
         docs = render_chart(
-            values={"global": {"podDisruptionBudgetsEnabled": False}},
+            values={"global": {"podDisruptionBudgets": {"enabled": False}}},
             kube_version=kube_version,
         )
 

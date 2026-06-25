@@ -1,7 +1,7 @@
 # Namespace Pools - create user-defined namespaces to host Airflow deployments
-{{- if and .Values.global.features.namespacePools.enabled .Values.global.features.namespacePools.namespaces.create }}
+{{- if and .Values.global.namespaceManagement.namespacePools.enabled .Values.global.namespaceManagement.namespacePools.namespaces.create }}
 {{- $namespaceLabels := .Values.global.namespaceLabels }}
-{{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+{{- range $i, $namespaceName := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
 ---
 apiVersion: v1
 kind: Namespace

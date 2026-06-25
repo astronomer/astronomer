@@ -74,6 +74,9 @@ def create_validator(api_version, kind, kube_version=default_version):
 
 def validate_k8s_object(instance, kube_version=default_version):
     """Validate the k8s object."""
+    # CRDs are not reliably present in the kubernetes-json-schema repository, so skip validation for them.
+    if instance.get("kind") == "CustomResourceDefinition":
+        return
     validate = create_validator(instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version)
     validate.validate(instance)
 
@@ -200,3 +203,18 @@ def prepare_k8s_lookup_dict(k8s_objects) -> dict[tuple[str, str], dict[str, Any]
     The keys of the dict are the k8s object's kind and name
     """
     return {(k8s_object["kind"], k8s_object["metadata"]["name"]): k8s_object for k8s_object in k8s_objects}
+
+
+def find_key_paths(obj: Any, needle: str, path: str = "") -> list[str]:
+    """Return dotted paths of every occurrence of `needle` as a key in a nested dict/list."""
+    hits: list[str] = []
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            p = f"{path}.{k}" if path else k
+            if k == needle:
+                hits.append(p)
+            hits.extend(find_key_paths(v, needle, p))
+    elif isinstance(obj, list):
+        for i, item in enumerate(obj):
+            hits.extend(find_key_paths(item, needle, f"{path}[{i}]"))
+    return hits

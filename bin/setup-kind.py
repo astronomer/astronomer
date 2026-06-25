@@ -63,6 +63,14 @@ def run_command(command: str | list) -> str:
     return result.stdout.strip()
 
 
+def list_docker_images():
+    command = f"{GIT_ROOT_DIR}/bin/show-docker-images.py --with-houston"
+    docker_images_output = subprocess.check_output(command, shell=True)
+    docker_image_list = [x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")]
+
+    return sorted(set(docker_image_list))
+
+
 def kind_load_docker_images(cluster: str) -> None:
     """
     Load any available docker images into a KIND cluster.
@@ -74,10 +82,7 @@ def kind_load_docker_images(cluster: str) -> None:
     Args:
         cluster: Name of the KIND cluster to load images into.
     """
-    circleci_config = yaml.safe_load((GIT_ROOT_DIR / ".circleci" / "config.yml").read_text())
-    image_list = circleci_config["workflows"]["scan-docker-images"]["jobs"][0]["trivy-scan-docker"]["matrix"]["parameters"][
-        "docker_image"
-    ]
+    image_list = list_docker_images()
 
     image_allow_list = {
         "unified": [

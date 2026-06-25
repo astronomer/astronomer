@@ -86,7 +86,7 @@ class TestDefaultProbes:
             "initialDelaySeconds": 30,
             "timeoutSeconds": 10,
         },
-        "elasticsearch-master_es-master": {"tcpSocket": {"port": 9300}},
+        "elasticsearch-master_es-master": {"tcpSocket": {"port": 9300}, "initialDelaySeconds": 30},
         "grafana_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
@@ -122,6 +122,9 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
             "successThreshold": 1,
             "failureThreshold": 6,
+        },
+        "prometheus-node-exporter_node-exporter": {
+            "httpGet": {"path": "/", "port": 9100},
         },
         "prometheus-postgres-exporter_prometheus-postgres-exporter": {
             "tcpSocket": {"port": 9187},
@@ -186,7 +189,7 @@ class TestDefaultProbes:
         },
         "elasticsearch-master_es-master": {
             "httpGet": {"path": "/_cluster/health?local=true", "port": 9200},
-            "initialDelaySeconds": 5,
+            "initialDelaySeconds": 30,
         },
         "grafana_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
@@ -217,6 +220,9 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
             "successThreshold": 1,
             "failureThreshold": 6,
+        },
+        "prometheus-node-exporter_node-exporter": {
+            "httpGet": {"path": "/", "port": 9100},
         },
         "prometheus-postgres-exporter_prometheus-postgres-exporter": {
             "tcpSocket": {"port": 9187},

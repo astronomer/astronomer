@@ -1,3 +1,5 @@
+import re
+
 import jmespath
 import pytest
 import yaml
@@ -64,7 +66,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "prometheusPostgresExporterEnabled": True,
+                    "prometheusPostgresExporter": {"enabled": True},
                 },
             },
         )[0]
@@ -156,7 +158,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             namespace=namespace,
             values={
-                "global": {"features": {"namespacePools": {"enabled": False}}},
+                "global": {"namespaceManagement": {"namespacePools": {"enabled": False}}},
                 "astronomer": {
                     "houston": {
                         "config": {"deployments": {"namespaceFreeFormEntry": False}},
@@ -185,7 +187,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             values={
-                "global": {"namespaceFreeFormEntry": True},
+                "global": {"namespaceManagement": {"namespaceFreeFormEntry": {"enabled": True}}},
             },
         )[0]
         self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
@@ -217,8 +219,10 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "features": {"namespacePools": {"enabled": True}},
-                    "namespaceFreeFormEntry": False,
+                    "namespaceManagement": {
+                        "namespacePools": {"enabled": True},
+                        "namespaceFreeFormEntry": {"enabled": False},
+                    },
                 }
             },
         )[0]
@@ -232,8 +236,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "features": {"namespacePools": {"enabled": False}},
-                    "manualNamespaceNamesEnabled": True,
+                    "namespaceManagement": {"namespacePools": {"enabled": False}, "manualNamespaceNames": {"enabled": True}},
                 }
             },
         )[0]
@@ -351,3 +354,66 @@ class TestPrometheusConfigConfigmap:
         assert len(airflow_operator_scrape_config) == 0
         airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
         assert len(airflow_scrape_config) == 1
+
+    def test_federated_dataplanes_default_scrape_settings(self, kube_version):
+        """Test that federated-dataplanes uses default scrape_interval and scrape_timeout."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        federated = [s for s in scrape_configs if s["job_name"] == "federated-dataplanes"]
+
+        assert len(federated) == 1
+        assert federated[0]["scrape_interval"] == "15s"
+        assert federated[0]["scrape_timeout"] == "10s"
+
+    def test_federated_dataplanes_custom_scrape_settings(self, kube_version):
+        """Test that federated-dataplanes scrape_interval and scrape_timeout are configurable."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={
+                "prometheus": {
+                    "config": {
+                        "scrape_configs": {
+                            "federated_dataplanes": {
+                                "scrape_interval": "30s",
+                                "scrape_timeout": "5s",
+                            },
+                        },
+                    },
+                },
+            },
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        federated = [s for s in scrape_configs if s["job_name"] == "federated-dataplanes"]
+
+        assert len(federated) == 1
+        assert federated[0]["scrape_interval"] == "30s"
+        assert federated[0]["scrape_timeout"] == "5s"
+
+    def test_federated_dataplanes_match_includes_operator_job(self, kube_version):
+        """Operator-mode deployments scrape under job 'airflow-operator' on the data plane, while
+        legacy Helm deployments use job 'airflow'. The federation selector is an anchored
+        alternation, so 'airflow' matches only the legacy job — the operator job must be listed
+        explicitly or its per-deployment metrics never federate to the control-plane Prometheus the
+        Houston metrics UI queries. Regression guard for PLX-504 (operator-inheritance metrics)."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        federated = [s for s in scrape_configs if s["job_name"] == "federated-dataplanes"]
+        assert len(federated) == 1
+
+        match_selectors = federated[0]["params"]["match[]"]
+        job_regex = re.search(r'job=~"([^"]+)"', match_selectors[0]).group(1)
+        alternatives = job_regex.split("|")
+        # Both the operator-mode job and the legacy Helm job must be federated, since both carry
+        # per-deployment Airflow metrics the UI renders.
+        assert "airflow-operator" in alternatives, alternatives
+        assert "airflow" in alternatives, alternatives

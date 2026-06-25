@@ -1,7 +1,7 @@
 ################################
 ## Commander Metadata Ingress ##
 ################################
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -17,10 +17,10 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     nginx.ingress.kubernetes.io/rewrite-target: /metadata
@@ -40,10 +40,10 @@ spec:
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
-        - {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+        - {{ include "commander.baseDomain" . }}
   {{- end }}
   rules:
-  - host: {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+  - host: {{ include "commander.baseDomain" . }}
     http:
       paths:
         - path: /metadata

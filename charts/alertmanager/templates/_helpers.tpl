@@ -84,8 +84,19 @@ imagePullSecrets:
 {{- end }}
 {{- end }}
 
+{{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser  fields on OpenShift Based Installation.
+*/}}
+{{- define "alertmanager.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
 {{ define "alertmanager.serviceAccountName" -}}
-{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "alertmanager.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}

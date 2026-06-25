@@ -2,7 +2,7 @@
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{- .Values.global.logging.indexNamePrefix -}}
 {{- else -}}
-{{- if .Values.global.loggingSidecar.enabled  -}}
+{{- if .Values.global.logging.loggingSidecar.enabled  -}}
 vector
 {{- else -}}
 fluentd
@@ -20,15 +20,34 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{- end }}
 
 
+{{/*
+DEPRECATED: containerd.configToml is retained as an escape hatch for operators who need
+to supply fully custom TOML/hosts.toml content via containerdConfigToml.
+For containerd 2.x (GKE 1.33+), the daemonset script auto-generates a correct hosts.toml
+when containerdConfigToml is not set (nil). Prefer using containerdVersion: "2" instead.
+*/}}
 {{ define "containerd.configToml" -}}
 {{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
 {{- end }}
 
+{{/*
+Registry hostname differs between unified and data-plane installs
+because data-plane clusters prefix the base domain with
+`global.plane.domainPrefix`.
+*/}}
+{{- define "containerd.registryHost" -}}
+{{- if eq .Values.global.plane.mode "data" -}}
+registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+registry.{{ .Values.global.baseDomain }}
+{{- end -}}
+{{- end }}
+
 {{ define "dagOnlyDeployment.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.dagOnlyDeployment.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.deployMechanisms.dagOnlyDeployment.tag }}
 {{- else -}}
-{{ .Values.global.dagOnlyDeployment.repository }}:{{ .Values.global.dagOnlyDeployment.tag }}
+{{ .Values.global.deployMechanisms.dagOnlyDeployment.repository }}:{{ .Values.global.deployMechanisms.dagOnlyDeployment.tag }}
 {{- end }}
 {{- end }}
 
@@ -42,15 +61,15 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.loggingSidecar.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.logging.loggingSidecar.tag }}
 {{- else -}}
-{{ .Values.global.loggingSidecar.repository }}:{{ .Values.global.loggingSidecar.tag }}
+{{ .Values.global.logging.loggingSidecar.repository }}:{{ .Values.global.logging.loggingSidecar.tag }}
 {{- end }}
 {{- end }}
 
 {{ define "certCopier.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
 {{- else -}}
 {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
 {{- end }}
@@ -82,4 +101,16 @@ proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
 
 {{ define "registry.authHeaderSecret" -}}
 {{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
+{{- end }}
+
+{{/*
+Whether the logging stack (Elasticsearch, external-es-proxy, Vector) should be rendered
+for the current plane. Always on for unified. When global.sharedElasticsearch.enabled,
+the control plane hosts shared logging and the data plane runs none; when disabled, the
+data plane runs its own and the control plane runs none.
+Defined in the parent chart so all logging sub-charts can include it.
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "logging.enabled" -}}
+{{- or (eq .Values.global.plane.mode "unified") (and (eq .Values.global.plane.mode "control") .Values.global.sharedElasticsearch.enabled) (and (eq .Values.global.plane.mode "data") (not .Values.global.sharedElasticsearch.enabled)) -}}
 {{- end }}

@@ -365,7 +365,12 @@ class TestAuthSidecar:
         Only include networkpolicies that have the network.openshift.io/policy-group: ingress label."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
+            values={
+                "global": {
+                    "authSidecar": {"enabled": True, "ingressAllowedNamespaces": []},
+                    "plane": {"mode": "data"},
+                }
+            },
             show_only=["charts/astronomer/templates/commander/commander-networkpolicy.yaml"],
         )
 

@@ -1,9 +1,10 @@
 ########################
 ## Astronomer Ingress ##
 ########################
-{{- if and .Values.global.baseDomain ( not .Values.global.enablePerHostIngress ) }}
-{{- $planeDataMode := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if and .Values.global.baseDomain ( not .Values.global.perHostIngress.enabled ) }}
 {{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $registryEnabled := eq (include "registry.enabled" .) "true" }}
+{{- if or $planeControlMode $registryEnabled }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -18,10 +19,10 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
@@ -44,7 +45,7 @@ spec:
         - {{ .Values.global.baseDomain }}
         - app.{{ .Values.global.baseDomain }}
       {{- end }}
-      {{- if $planeDataMode }}
+      {{- if $registryEnabled }}
         - {{ include "registry.ingressURL" . }}
       {{- end }}
   {{- end }}
@@ -71,7 +72,7 @@ spec:
               port:
                 name: astro-ui-http
 {{- end }}
-{{- if $planeDataMode }}
+{{- if $registryEnabled }}
   - host: {{ include "registry.ingressURL" . }}
     http:
       paths:
@@ -82,5 +83,6 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
+{{- end }}
 {{- end }}
 {{- end }}

@@ -69,7 +69,7 @@ imagePullSecrets:
 {{- end }}
 
 {{- define "nats.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
 {{- omit .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
 {{- else }}
 {{- .Values.securityContext | toYaml | nindent 10 }}
@@ -77,8 +77,19 @@ imagePullSecrets:
 {{- end }}
 
 
+{{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "nats.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
 {{ define "nats.serviceAccountName" -}}
-{{- if and .Values.nats.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.nats.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "nats.name" . )) .Values.nats.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.nats.serviceAccount.name }}
@@ -86,7 +97,7 @@ imagePullSecrets:
 {{- end }}
 
 {{ define "jetStream.serviceAccountName" -}}
-{{- if and .Values.nats.jetStream.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.nats.jetStream.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-jetstream-sa" .Release.Name) .Values.nats.jetStream.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.nats.jetStream.serviceAccount.name }}

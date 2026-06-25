@@ -9,8 +9,8 @@ from tests.utils.chart import render_chart
 def list_docker_images():
     extra_globals = {
         "global.baseDomain": "foo.com",
-        "postgresqlEnabled": True,
-        "prometheusPostgresExporterEnabled": True,
+        "postgresql": {"enabled": True},
+        "prometheusPostgresExporter": {"enabled": True},
     }
 
     public_repo_docs = render_chart(values={"global": extra_globals})

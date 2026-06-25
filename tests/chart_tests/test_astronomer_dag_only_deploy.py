@@ -19,19 +19,19 @@ class TestDagOnlyDeploy:
         )
 
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is False
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is False
 
     def test_dagonlydeploy_with_serviceaccount_overrides(self, kube_version):
         """Test dagonlydeploy Service Account overrides."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"dagOnlyDeployment": {"enabled": True, "serviceAccount": {"create": True}}}},
+            values={"global": {"deployMechanisms": {"dagOnlyDeployment": {"enabled": True, "serviceAccount": {"create": True}}}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
         assert len(docs) == 1
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
         assert prod["deployments"]["dagDeploy"]["enabled"] is True
         assert "serviceAccount" in prod["deployments"]["dagDeploy"]
         assert {"create": True} == prod["deployments"]["dagDeploy"]["serviceAccount"]
@@ -47,13 +47,15 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "repository": images.split(":")[0],
-                        "tag": images.split(":")[1],
-                        "securityContexts": {"pod": {"fsGroup": 55555}, "container": {"runAsUser": 12345}},
-                        "resources": resources,
-                    }
+                    "deployMechanisms": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "repository": images.split(":")[0],
+                            "tag": images.split(":")[1],
+                            "securityContexts": {"pod": {"fsGroup": 55555}, "container": {"runAsUser": 12345}},
+                            "resources": resources,
+                        },
+                    },
                 }
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -61,7 +63,7 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
         assert prod["deployments"]["dagDeploy"] == {
             "enabled": True,
             "images": {
@@ -79,13 +81,13 @@ class TestDagOnlyDeploy:
         """Test dagonlydeploy Service defaults."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"dagOnlyDeployment": {"enabled": True}}},
+            values={"global": {"deployMechanisms": {"dagOnlyDeployment": {"enabled": True}}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
         assert prod["deployments"]["dagDeploy"]["enabled"] is True
         assert "server" not in prod["deployments"]["dagDeploy"]
         assert "client" not in prod["deployments"]["dagDeploy"]
@@ -97,12 +99,14 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
+                    "deployMechanisms": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                        },
+                    },
                     "privateRegistry": {
                         "enabled": True,
                         "repository": private_registry,
-                    },
-                    "dagOnlyDeployment": {
-                        "enabled": True,
                     },
                 }
             },
@@ -111,7 +115,7 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
 
         assert prod["deployments"]["dagDeploy"]["images"]["dagServer"]["repository"].startswith(private_registry)
 
@@ -121,10 +125,12 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "openshiftEnabled": True,
-                    "dagOnlyDeployment": {
-                        "enabled": True,
+                    "deployMechanisms": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                        },
                     },
+                    "openshift": {"enabled": True},
                 }
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -132,7 +138,7 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
 
         assert {} == prod["deployments"]["dagDeploy"]["securityContexts"]
 
@@ -142,9 +148,11 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "securityContexts": {"pod": {"fsGroup": "auto"}},
+                    "deployMechanisms": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "securityContexts": {"pod": {"fsGroup": "auto"}},
+                        },
                     },
                 }
             },
@@ -153,7 +161,7 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
 
         assert {} == prod["deployments"]["dagDeploy"]["securityContexts"]
 
@@ -169,9 +177,11 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "persistence": persistenceRetain,
+                    "deployMechanisms": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "persistence": persistenceRetain,
+                        },
                     },
                 },
             },
@@ -180,7 +190,7 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
 
         assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
 
@@ -196,9 +206,11 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "persistence": persistenceRetain,
+                    "deployMechanisms": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "persistence": persistenceRetain,
+                        },
                     },
                 },
             },
@@ -207,7 +219,7 @@ class TestDagOnlyDeploy:
 
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
         assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
 
     def test_houston_configmap_with_dagonlydeployment_probe(self, kube_version):
@@ -233,13 +245,15 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "repository": images.split(":")[0],
-                        "tag": images.split(":")[1],
-                        "server": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
-                        "client": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
-                    }
+                    "deployMechanisms": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "repository": images.split(":")[0],
+                            "tag": images.split(":")[1],
+                            "server": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
+                            "client": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
+                        },
+                    },
                 }
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -268,16 +282,18 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "repository": images.split(":")[0],
-                        "tag": images.split(":")[1],
-                        "server": {
-                            "nodeSelector": global_platform_node_pool_config["nodeSelector"],
-                            "affinity": global_platform_node_pool_config["affinity"],
-                            "tolerations": global_platform_node_pool_config["tolerations"],
+                    "deployMechanisms": {
+                        "dagOnlyDeployment": {
+                            "enabled": True,
+                            "repository": images.split(":")[0],
+                            "tag": images.split(":")[1],
+                            "server": {
+                                "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                                "affinity": global_platform_node_pool_config["affinity"],
+                                "tolerations": global_platform_node_pool_config["tolerations"],
+                            },
                         },
-                    }
+                    },
                 }
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],

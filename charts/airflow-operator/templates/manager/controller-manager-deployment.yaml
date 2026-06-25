@@ -1,6 +1,4 @@
-#################################
-## Airflow Operator Deployment ##
-#################################
+{{- if (include "operator.enabled" .) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -39,9 +37,10 @@ spec:
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
-      {{ include "manager.imagePullSecrets" . | nindent 8 }}
+            {{ include "manager.imagePullSecrets" . | nindent 8 }}
       containers: {{- include "manager.containers" . | nindent 8 }}
       securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
       serviceAccountName: {{ template "operator.serviceAccountName" . }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes: {{- include "manager.volumes" . | nindent 8 }}
+{{- end }}

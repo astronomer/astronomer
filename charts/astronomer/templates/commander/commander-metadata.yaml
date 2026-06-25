@@ -15,5 +15,16 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   metadata.yaml: |-
-    namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
+    registry:
+      version: {{ .Values.images.registry.tag | quote}}
+    namespaceLabels:
+      {{- include "commander.metadata.namespaceLabels" . | nindent 6 }}
+    extraAnnotations:
+      {{- include "commander.metadata.extraAnnotations" . | nindent 6 }}
+    customLogging:
+      enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
+    {{- if and (eq .Values.global.plane.mode "data") .Values.global.sharedElasticsearch.enabled }}
+    elasticsearch:
+      sharedElasticsearchEnabled: true
+    {{- end }}
 {{- end }}
