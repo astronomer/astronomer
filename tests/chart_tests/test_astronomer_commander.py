@@ -123,7 +123,7 @@ class TestAstronomerCommander:
                 "sharedElasticsearch": {
                     "enabled": True,
                 },
-                "plane" : {
+                "plane": {
                     "mode": "data",
                 },
             },

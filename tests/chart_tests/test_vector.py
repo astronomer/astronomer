@@ -417,7 +417,9 @@ class TestVector:
             ("data", True, 0),
         ],
     )
-    def test_vector_logging_enabled_by_mode_and_shared_elasticsearch_feature(self, kube_version, mode, shared_elasticsearch, expected_count):
+    def test_vector_logging_enabled_by_mode_and_shared_elasticsearch_feature(
+        self, kube_version, mode, shared_elasticsearch, expected_count
+    ):
         """Test that Vector renders according to the logging.enabled helper across plane mode and sharedElasticsearch."""
         values = {
             "global": {

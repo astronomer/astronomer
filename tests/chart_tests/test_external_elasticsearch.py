@@ -15,13 +15,14 @@ secret = base64.b64encode(b"sample-secret").decode()
     supported_k8s_versions,
 )
 class TestExternalElasticSearch:
-     # external-es-proxy templates gated purely by the logging.enabled helper.
+    # external-es-proxy templates gated purely by the logging.enabled helper.
     es_proxy_templates = [
         "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
         "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
         "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
         "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
     ]
+
     def test_externalelasticsearch_with_secret(self, kube_version):
         """Test External ElasticSearch with secret passed from
         config/values.yaml."""

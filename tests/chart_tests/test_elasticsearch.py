@@ -831,6 +831,45 @@ class TestElasticSearch:
         else:
             assert len(docs) == 0, f"Document {doc} should not render in {plane_mode} mode"
 
+    @pytest.mark.parametrize("doc", es_component_templates)
+    @pytest.mark.parametrize(
+        "plane_mode,shared_elasticsearch,should_render",
+        [
+            # unified: logging is always enabled regardless of sharedElasticsearch
+            ("unified", False, True),
+            ("unified", True, True),
+            # control: logging is enabled only when sharedElasticsearch is enabled
+            ("control", False, False),
+            ("control", True, True),
+            # data: logging is enabled only when sharedElasticsearch is disabled
+            ("data", False, True),
+            ("data", True, False),
+        ],
+    )
+    def test_elasticsearch_logging_enabled_by_mode_and_shared_elasticsearch(
+        self, kube_version, doc, plane_mode, shared_elasticsearch, should_render
+    ):
+        """Test that elasticsearch templates render according to the logging.enabled helper across plane mode and sharedElasticsearch."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                    "sharedElasticsearch": {"enabled": shared_elasticsearch},
+                },
+                "elasticsearch": {"data": {"persistence": {"enabled": True}}},
+            },
+            show_only=[doc],
+        )
+        if should_render:
+            assert len(docs) == 1, (
+                f"Document {doc} should render in {plane_mode} mode with sharedElasticsearch={shared_elasticsearch}"
+            )
+        else:
+            assert len(docs) == 0, (
+                f"Document {doc} should not render in {plane_mode} mode with sharedElasticsearch={shared_elasticsearch}"
+            )
+
     def test_elasticsearch_ingress_control_mode_default(self, kube_version):
         """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
         docs = render_chart(
