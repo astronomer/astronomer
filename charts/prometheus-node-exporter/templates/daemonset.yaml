@@ -39,9 +39,7 @@ spec:
         - name: node-exporter
           image: {{ template "image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "prometheus-node-exporter.securityContext" . | nindent 12 }}
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys

@@ -92,6 +92,19 @@ assigns them. OpenShift users can also override per-component via values.
 {{- end }}
 
 {{/*
+Return container securityContext, always enforcing readOnlyRootFilesystem: true.
+Omits runAsUser on OpenShift (UIDs are assigned dynamically).
+*/}}
+{{- define "prometheus-node-exporter.securityContext" -}}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- if .Values.global.openshift.enabled }}
+{{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- merge $required .Values.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
+
+{{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "prometheus-node-exporter.imagePullSecrets" -}}
