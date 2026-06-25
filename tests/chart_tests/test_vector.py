@@ -402,3 +402,40 @@ class TestVector:
         if expected_count > 0:
             assert all(doc.get("apiVersion") for doc in docs)
             assert all(doc.get("kind") for doc in docs)
+
+    @pytest.mark.parametrize(
+        "mode,shared_elasticsearch,expected_count",
+        [
+            # unified: logging is always enabled regardless of sharedElasticsearch
+            ("unified", False, 6),
+            ("unified", True, 6),
+            # control: logging is enabled only when sharedElasticsearch is enabled
+            ("control", False, 0),
+            ("control", True, 6),
+            # data: logging is enabled only when sharedElasticsearch is disabled
+            ("data", False, 6),
+            ("data", True, 0),
+        ],
+    )
+    def test_vector_logging_enabled_by_mode_and_shared_elasticsearch_feature(
+        self, kube_version, mode, shared_elasticsearch, expected_count
+    ):
+        """Test that Vector renders according to the logging.enabled helper across plane mode and sharedElasticsearch."""
+        values = {
+            "global": {
+                "plane": {"mode": mode},
+                "sharedElasticsearch": {"enabled": shared_elasticsearch},
+            }
+        }
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=all_templates,
+        )
+
+        assert len(docs) == expected_count
+
+        if expected_count > 0:
+            assert all(doc.get("apiVersion") for doc in docs)
+            assert all(doc.get("kind") for doc in docs)

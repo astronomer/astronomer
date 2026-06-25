@@ -15,18 +15,21 @@ secret = base64.b64encode(b"sample-secret").decode()
     supported_k8s_versions,
 )
 class TestExternalElasticSearch:
+    # external-es-proxy templates gated purely by the logging.enabled helper.
+    es_proxy_templates = [
+        "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+        "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
+        "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+        "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
+    ]
+
     def test_externalelasticsearch_with_secret(self, kube_version):
         """Test External ElasticSearch with secret passed from
         config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"customLogging": {"enabled": True, "secret": secret}}},
-            show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
-            ],
+            show_only=self.es_proxy_templates,
         )
 
         expected_nginx_mounts = [
@@ -84,12 +87,7 @@ class TestExternalElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"customLogging": {"enabled": True, "secretName": "essecret"}}},
-            show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
-            ],
+            show_only=self.es_proxy_templates,
         )
 
         assert len(docs) == 4
@@ -1009,3 +1007,40 @@ class TestExternalElasticSearch:
 
         assert len(docs) == 1
         assert "tls" not in docs[0]["spec"]
+
+    @pytest.mark.parametrize(
+        "mode,shared_elasticsearch,should_render",
+        [
+            # unified: logging is always enabled regardless of sharedElasticsearch
+            ("unified", False, True),
+            ("unified", True, True),
+            # control: logging is enabled only when sharedElasticsearch is enabled
+            ("control", False, False),
+            ("control", True, True),
+            # data: logging is enabled only when sharedElasticsearch is disabled
+            ("data", False, True),
+            ("data", True, False),
+        ],
+    )
+    def test_external_es_proxy_logging_enabled_by_mode_and_shared_elasticsearch(
+        self, kube_version, mode, shared_elasticsearch, should_render
+    ):
+        """Test that external-es-proxy renders according to the logging.enabled helper across plane mode and sharedElasticsearch."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.es_proxy_templates,
+            values={
+                "global": {
+                    "customLogging": {"enabled": True},
+                    "plane": {"mode": mode},
+                    "sharedElasticsearch": {"enabled": shared_elasticsearch},
+                },
+            },
+        )
+
+        if should_render:
+            assert len(docs) == len(self.es_proxy_templates)
+            assert all(doc.get("apiVersion") for doc in docs)
+            assert all(doc.get("kind") for doc in docs)
+        else:
+            assert len(docs) == 0
