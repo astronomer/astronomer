@@ -54,7 +54,7 @@ data:
             namespaces = [{{ range $i, $ns := .Values.global.features.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
             includes(namespaces, .kubernetes.pod_namespace)
             {{- else if or .Values.global.manualNamespaceNamesEnabled .Values.global.disableManageClusterScopedResources }}
-            match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
+            exists(.kubernetes.pod_namespace) && is_string(.kubernetes.pod_namespace) && .kubernetes.pod_namespace != ""
             {{- else }}
             .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
             {{- end }}

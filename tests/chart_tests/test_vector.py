@@ -157,7 +157,7 @@ class TestVector:
             show_only=["charts/vector/templates/vector-configmap.yaml"],
         )[0]
 
-        expected_rule = "match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')"
+        expected_rule = "exists(.kubernetes.pod_namespace) && is_string(.kubernetes.pod_namespace) && .kubernetes.pod_namespace != "
         assert expected_rule in doc["data"]["vector-config.yaml"]
 
     def test_vector_configmap_manual_namespaces_and_namespacepools_disabled(self, kube_version):
