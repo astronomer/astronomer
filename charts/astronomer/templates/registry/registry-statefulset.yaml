@@ -166,7 +166,7 @@ spec:
           emptyDir: {}
         - name: config
           configMap:
-            name: {{ .Release.Name }}-registry
+            name: {{ template "registry.fullname" . }}
             items:
               - key: config.yml
                 path: config.yml
