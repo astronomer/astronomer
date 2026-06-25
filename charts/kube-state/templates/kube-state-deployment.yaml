@@ -52,7 +52,7 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "kube-state.serviceAccountName" . }}
-      securityContext: {{- include "kube-state.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       {{- include "kube-state.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: kube-state

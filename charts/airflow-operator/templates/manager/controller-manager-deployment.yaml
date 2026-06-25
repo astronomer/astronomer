@@ -39,7 +39,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
             {{ include "manager.imagePullSecrets" . | nindent 8 }}
       containers: {{- include "manager.containers" . | nindent 8 }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list . nil) | nindent 8 }}
       serviceAccountName: {{ template "operator.serviceAccountName" . }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes: {{- include "manager.volumes" . | nindent 8 }}

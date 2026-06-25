@@ -42,7 +42,7 @@ spec:
             version: {{ .Chart.Version }}
             {{- include "global.podLabels" . | nindent 12 }}
         spec:
-          securityContext: {{- include "elasticsearch.podSecurityContext" . | nindent 12 }}
+          securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 12 }}
           serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
           nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
           affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}

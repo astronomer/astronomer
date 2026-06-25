@@ -735,10 +735,6 @@ tls:
 {{- end -}}
 {{- end }}
 
-{{- define "configSyncer.securityContext" -}}
-{{- include "platform.containerSecurityContext" (list . .Values.configSyncer.securityContext) -}}
-{{- end }}
-
 {{- define "houston.eventsUrl" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
 https://houston.{{ .Values.global.baseDomain }}/v1/registry/events
@@ -854,6 +850,13 @@ entropy of a Fernet key.
 {{- required "houston.logging.loggingSidecar.elasticsearch.endpoint must be set when houston.logging.loggingSidecar.elasticsearch.enabled is true" .Values.houston.logging.loggingSidecar.elasticsearch.endpoint }}
 {{- end }}
 
+{{/*
+loggingSidecar uses ONLY its own securityContext as the base (not the chart-wide
+.Values.securityContext), so it deliberately does not use platform.containerSecurityContext,
+whose override-on-chart-base merge would layer extra fields (capabilities, runAsUser) onto the
+sidecar. It does mirror the platform helper's RORFS-forcing and runAsUser omission (OpenShift or
+the "auto" sentinel).
+*/}}
 {{- define "houston.logging.loggingSidecar.securityContext" -}}
 {{- if or (eq ( toString ( .Values.houston.logging.loggingSidecar.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
 {{- $required := dict "readOnlyRootFilesystem" true }}
@@ -865,19 +868,9 @@ entropy of a Fernet key.
 {{- end }}
 
 {{/*
-Return shared podSecurityContext (astro-ui, navigator, pilot, dp-link),
-omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
-*/}}
-{{- define "astronomer.podSecurityContext" -}}
-{{- if .Values.global.openshift.enabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
-{{- end }}
-
-{{/*
 Return registry podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+Uses .Values.registry.podSecurityContext as its own base (not the chart-wide .Values.podSecurityContext),
+so it deliberately does not use platform.podSecurityContext, whose merge would layer the chart base underneath.
 */}}
 {{- define "astronomer.registry.podSecurityContext" -}}
 {{- if .Values.global.openshift.enabled }}

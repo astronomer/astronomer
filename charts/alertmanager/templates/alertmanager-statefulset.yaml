@@ -44,7 +44,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "alertmanager.serviceAccountName" . }}
-      securityContext: {{- include "alertmanager.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

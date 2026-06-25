@@ -52,7 +52,7 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "pgbouncer.serviceAccountName" . }}
-      securityContext: {{- include "pgbouncer.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       volumes:
         - name: tmp-workspace
           emptyDir: {}

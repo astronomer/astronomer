@@ -66,7 +66,7 @@ spec:
         component: labeller
         release: {{ .Release.Name }}
     spec:
-      securityContext: {{- include "astronomer.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-labeller
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}

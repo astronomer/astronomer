@@ -74,16 +74,44 @@ Behavior:
     overridable via helm values.
   - runAsUser is omitted on OpenShift so the cluster's SCC can assign a UID from its allowed range.
     This matches the prometheus/elasticsearch helpers as of PINF-765.
+  - runAsUser is also omitted when it is set to the string "auto", an escape hatch that lets the
+    platform (or a user) defer UID assignment off OpenShift too. Rendering "runAsUser: auto" is never
+    valid, so omitting it is always correct.
 */}}
 {{- define "platform.containerSecurityContext" -}}
 {{- $ctx := index . 0 -}}
 {{- $override := index . 1 | default dict -}}
 {{- $required := dict "readOnlyRootFilesystem" true -}}
 {{- $base := merge (deepCopy $override) $ctx.Values.securityContext -}}
-{{- if $ctx.Values.global.openshift.enabled -}}
+{{- if or $ctx.Values.global.openshift.enabled (eq (toString $base.runAsUser) "auto") -}}
 {{- merge $required (omit $base "runAsUser") | toYaml -}}
 {{- else -}}
 {{- merge $required $base | toYaml -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Render a pod-level securityContext.
+
+Call with a list of two elements: (list $ $override) where
+  - $        is the current context (so the helper can read .Values.podSecurityContext and .Values.global)
+  - $override is a per-pod podSecurityContext map (or nil). Its fields are layered on top of the
+    chart's .Values.podSecurityContext.
+
+Behavior:
+  - fsGroup, runAsGroup and runAsUser are omitted on OpenShift, where the cluster's SCC assigns
+    them from its allowed range. Every other field (e.g. seccompProfile) is preserved.
+  - Off OpenShift the merged podSecurityContext is rendered unchanged.
+This is the pod-level counterpart of platform.containerSecurityContext.
+*/}}
+{{- define "platform.podSecurityContext" -}}
+{{- $ctx := index . 0 -}}
+{{- $override := index . 1 | default dict -}}
+{{- $base := merge (deepCopy $override) $ctx.Values.podSecurityContext -}}
+{{- if $ctx.Values.global.openshift.enabled -}}
+{{- omit $base "fsGroup" "runAsGroup" "runAsUser" | toYaml -}}
+{{- else -}}
+{{- toYaml $base -}}
 {{- end -}}
 {{- end }}
 
