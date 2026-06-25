@@ -23,7 +23,7 @@ data:
       {{- include "commander.metadata.extraAnnotations" . | nindent 6 }}
     customLogging:
       enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
-    {{- if .Values.global.sharedElasticsearch.enabled }}
+    {{- if and (eq .Values.global.plane.mode "data") .Values.global.sharedElasticsearch.enabled }}
     elasticsearch:
       sharedElasticsearchEnabled: true
     {{- end }}

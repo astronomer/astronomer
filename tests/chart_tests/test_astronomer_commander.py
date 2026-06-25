@@ -116,6 +116,28 @@ class TestAstronomerCommander:
         metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
         assert metadata_file_contents["extraAnnotations"] == extra_annotations
 
+    def test_commander_metadata_shared_elasticsearch_overrides(self, kube_version):
+        """Test that global.sharedElasticsearch are passed through to commander metadata.yaml."""
+        values = {
+            "global": {
+                "sharedElasticsearch": {
+                    "enabled": True,
+                },
+                "plane" : {
+                    "mode": "data",
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert metadata_file_contents["elasticsearch"] == {"sharedElasticsearchEnabled": True}
+
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
         values = {
