@@ -66,7 +66,7 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-      {{- if .Values.securityContext.enabled }}
+      {{- if and .Values.securityContext.enabled (not .Values.global.openshift.enabled) }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
@@ -83,7 +83,9 @@ spec:
           readOnlyRootFilesystem: true
         {{- if .Values.securityContext.enabled }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+          {{- if not .Values.global.openshift.enabled }}
           runAsUser: {{ .Values.securityContext.runAsUser }}
+          {{- end }}
         {{- end }}
         env:
         - name: POSTGRESQL_PORT_NUMBER
@@ -199,7 +201,7 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-        {{- if .Values.metrics.securityContext.enabled }}
+        {{- if and .Values.metrics.securityContext.enabled (not .Values.global.openshift.enabled) }}
           runAsUser: {{ .Values.metrics.securityContext.runAsUser }}
         {{- end }}
         env:

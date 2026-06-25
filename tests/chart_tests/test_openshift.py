@@ -206,8 +206,6 @@ containers_allowed_to_pin_runasuser = {
     "StatefulSet/release-name-elasticsearch-master/sysctl": "privileged init container; runs as root (uid 0) to set vm.max_map_count",
     "Deployment/release-name-elasticsearch-exporter/metrics-exporter": "vendored elasticsearch-exporter sub-chart; securityContext not templated",
     "Deployment/release-name-elasticsearch-nginx/nginx": "vendored elasticsearch nginx sub-chart; securityContext not templated",
-    "StatefulSet/release-name-postgresql-master/release-name-postgresql": "vendored bitnami postgresql sub-chart; securityContext not templated",
-    "StatefulSet/release-name-postgresql-slave/release-name-postgresql": "vendored bitnami postgresql sub-chart; securityContext not templated",
 }
 
 

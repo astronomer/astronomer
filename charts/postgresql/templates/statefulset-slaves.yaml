@@ -58,7 +58,7 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-      {{- if .Values.securityContext.enabled }}
+      {{- if and .Values.securityContext.enabled (not .Values.global.openshift.enabled) }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
@@ -97,7 +97,9 @@ spec:
               - ALL
           readOnlyRootFilesystem: true
         {{- if .Values.securityContext.enabled }}
+          {{- if not .Values.global.openshift.enabled }}
           runAsUser: {{ .Values.securityContext.runAsUser }}
+          {{- end }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
         {{- end }}
         env:
