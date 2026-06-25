@@ -46,7 +46,7 @@ class TestHoustonCronjobJob:
             kube_version=kube_version,
             values={
                 "astronomer": {
-                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "securityContext": {"allowPrivilegeEscalation": False},
                     "houston": {
                         "cleanupDeployments": {
                             "enabled": True,
@@ -74,7 +74,6 @@ class TestHoustonCronjobJob:
         ]
 
         assert c_by_name["cleanup"]["securityContext"] == {
-            "allowPriviledgeEscalation": False,
             "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,

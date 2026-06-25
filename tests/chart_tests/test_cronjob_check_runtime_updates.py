@@ -44,7 +44,7 @@ class TestHoustonCronJobAstroRuntimeUpdates:
             kube_version=kube_version,
             values={
                 "astronomer": {
-                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "securityContext": {"allowPrivilegeEscalation": False},
                     "houston": {"updateRuntimeCheck": {"enabled": True}},
                 }
             },
@@ -63,7 +63,6 @@ class TestHoustonCronJobAstroRuntimeUpdates:
             "--url=https://updates.astronomer.io/astronomer-runtime",
         ]
         assert job_container_by_name["update-check"]["securityContext"] == {
-            "allowPriviledgeEscalation": False,
             "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,

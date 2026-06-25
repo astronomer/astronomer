@@ -55,7 +55,7 @@ class TestHoustonCronJobPlatformUpdates:
             kube_version=kube_version,
             values={
                 "astronomer": {
-                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "securityContext": {"allowPrivilegeEscalation": False},
                     "houston": {"updateCheck": {"enabled": True, "schedule": "57 * * * *"}},
                 }
             },
@@ -75,7 +75,6 @@ class TestHoustonCronJobPlatformUpdates:
             " --url=https://updates.astronomer.io/astronomer-platform",
         ]
         assert job_container_by_name["update-check"]["securityContext"] == {
-            "allowPriviledgeEscalation": False,
             "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,

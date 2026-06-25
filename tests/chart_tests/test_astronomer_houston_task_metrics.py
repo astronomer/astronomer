@@ -49,7 +49,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
             values={
                 "global": {"metricsReporting": {"taskUsageMetrics": {"enabled": True}}},
                 "astronomer": {
-                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "securityContext": {"allowPrivilegeEscalation": False},
                     "houston": {"cleanupTaskUsageData": {"schedule": "0 23 * * *"}},
                 },
             },
@@ -64,7 +64,6 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-task-usage-data"
         assert docs[0]["spec"]["schedule"] == "0 23 * * *"
         assert job_container_by_name["cleanup"]["securityContext"] == {
-            "allowPriviledgeEscalation": False,
             "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,

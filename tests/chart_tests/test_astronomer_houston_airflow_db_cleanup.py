@@ -54,7 +54,7 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
             kube_version=kube_version,
             values={
                 "astronomer": {
-                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "securityContext": {"allowPrivilegeEscalation": False},
                     "houston": {"cleanupAirflowDb": {"enabled": True, "schedule": "22 5 * * *"}},
                 }
             },
@@ -69,7 +69,6 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-airflow-db-data"
         assert docs[0]["spec"]["schedule"] == "22 5 * * *"
         assert job_container_by_name["cleanup"]["securityContext"] == {
-            "allowPriviledgeEscalation": False,
             "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
