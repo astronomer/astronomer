@@ -753,15 +753,17 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- end -}}
 
 {{- define "commander.dataplaneURL" -}}
-{{- if (eq .Values.global.plane.mode "data") -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else if eq .Values.global.plane.mode "data" -}}
+http://{{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
 {{- else -}}
 {{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
 {{- end }}
 {{- end -}}
 
 {{- define "commander.baseDomain" -}}
-{{- if (eq .Values.global.plane.mode "data") -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 {{ .Values.global.baseDomain }}
@@ -774,7 +776,11 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 
 {{- define "elasticsearch.url" -}}
 {{- if eq .Values.global.plane.mode "data" -}}
+{{- if .Values.global.plane.domainPrefix -}}
 elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+elasticsearch.{{ .Values.global.baseDomain }}
+{{- end -}}
 {{- else if eq .Values.global.plane.mode "unified" -}}
 {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local.:9200
 {{- end -}}
@@ -802,7 +808,7 @@ http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.cluster.local:{{ 
 {{- end -}}
 
 {{- define "registry.ingressURL" -}}
-{{- if (eq .Values.global.plane.mode "data") -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 registry.{{ .Values.global.baseDomain }}
