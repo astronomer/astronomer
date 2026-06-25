@@ -1008,13 +1008,6 @@ class TestExternalElasticSearch:
         assert len(docs) == 1
         assert "tls" not in docs[0]["spec"]
 
-    # external-es-proxy templates gated purely by the logging.enabled helper.
-    logging_gated_templates = [
-        "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
-        "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
-        "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
-    ]
-
     @pytest.mark.parametrize(
         "mode,shared_elasticsearch,should_render",
         [
@@ -1035,7 +1028,7 @@ class TestExternalElasticSearch:
         """Test that external-es-proxy renders according to the logging.enabled helper across plane mode and sharedElasticsearch."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=self.logging_gated_templates,
+            show_only=self.es_proxy_templates,
             values={
                 "global": {
                     "customLogging": {"enabled": True},
@@ -1046,7 +1039,7 @@ class TestExternalElasticSearch:
         )
 
         if should_render:
-            assert len(docs) == len(self.logging_gated_templates)
+            assert len(docs) == len(self.es_proxy_templates)
             assert all(doc.get("apiVersion") for doc in docs)
             assert all(doc.get("kind") for doc in docs)
         else:
