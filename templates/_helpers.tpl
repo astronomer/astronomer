@@ -102,3 +102,15 @@ proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
 {{ define "registry.authHeaderSecret" -}}
 {{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
+
+{{/*
+Whether the logging stack (Elasticsearch, external-es-proxy, Vector) should be rendered
+for the current plane. Always on for unified. When global.sharedElasticsearch.enabled,
+the control plane hosts shared logging and the data plane runs none; when disabled, the
+data plane runs its own and the control plane runs none.
+Defined in the parent chart so all logging sub-charts can include it.
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "logging.enabled" -}}
+{{- or (eq .Values.global.plane.mode "unified") (and (eq .Values.global.plane.mode "control") .Values.global.sharedElasticsearch.enabled) (and (eq .Values.global.plane.mode "data") (not .Values.global.sharedElasticsearch.enabled)) -}}
+{{- end }}

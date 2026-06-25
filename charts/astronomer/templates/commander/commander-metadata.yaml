@@ -17,8 +17,14 @@ data:
   metadata.yaml: |-
     registry:
       version: {{ .Values.images.registry.tag | quote}}
-    namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
-    extraAnnotations: {{ include "commander.metadata.extraAnnotations" . }}
+    namespaceLabels:
+      {{- include "commander.metadata.namespaceLabels" . | nindent 6 }}
+    extraAnnotations:
+      {{- include "commander.metadata.extraAnnotations" . | nindent 6 }}
     customLogging:
       enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
+    {{- if and (eq .Values.global.plane.mode "data") .Values.global.sharedElasticsearch.enabled }}
+    elasticsearch:
+      sharedElasticsearchEnabled: true
+    {{- end }}
 {{- end }}

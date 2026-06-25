@@ -2,13 +2,13 @@
 ## Astronomer Registry Ingress ##
 #################################
 {{- if and .Values.global.baseDomain .Values.global.perHostIngress.enabled }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "registry.enabled" .) "true" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
-  name: {{ .Release.Name }}-registry-ingress
+  name: {{ template "registry.fullname" . }}-ingress
   labels:
-    component: registry-ingress
+    component: {{ template "registry.name" . }}-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -39,7 +39,7 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: {{ .Release.Name }}-registry
+              name: {{ template "registry.fullname" . }}
               port:
                 name: registry-http
 {{- end }}

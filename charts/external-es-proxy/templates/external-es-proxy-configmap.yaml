@@ -1,7 +1,7 @@
 ###################################
 ## Elasticsearch Proxy ConfigMap ##
 ###################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 {{- $authCacheEnabled := .Values.authCache.enabled }}
 kind: ConfigMap
 apiVersion: v1
