@@ -53,7 +53,7 @@ class TestHoustonInternalAuthorization:
         """Test Alertmanager Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": "data", "domainPrefix": "dp01"}}},
             show_only=[
                 "charts/alertmanager/templates/ingress.yaml",
                 "charts/grafana/templates/grafana-ingress.yaml",
