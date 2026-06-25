@@ -285,12 +285,12 @@ class TestIngress:
             (
                 "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
                 "control",
-                {"enablePerHostIngress": True},
+                {"perHostIngress": {"enabled": True}},
             ),
             (
                 "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
                 "unified",
-                {"enablePerHostIngress": True},
+                {"perHostIngress": {"enabled": True}},
             ),
             (
                 "charts/astronomer/templates/houston/ingress.yaml",
@@ -305,7 +305,7 @@ class TestIngress:
             (
                 "charts/astronomer/templates/registry/registry-ingress.yaml",
                 "unified",
-                {"enablePerHostIngress": True},
+                {"perHostIngress": {"enabled": True}},
             ),
             (
                 "charts/astronomer/templates/commander/commander-grpc-ingress.yaml",
