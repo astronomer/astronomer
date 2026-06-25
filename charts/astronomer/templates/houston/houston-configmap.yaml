@@ -68,6 +68,8 @@ data:
     helm:
       baseDomain: {{ .Values.global.baseDomain }}
       {{- if .Values.global.controlPlaneHA.enabled }}
+      controlPlaneHA:
+        enabled: {{ .Values.global.controlPlaneHA.enabled }}
       globalBaseDomain: {{ .Values.global.controlPlaneHA.globalBaseDomain }}
       {{- with .Values.global.controlPlaneHA.cookieDomain }}
       cookieDomain: {{ . }}

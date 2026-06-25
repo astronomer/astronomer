@@ -185,15 +185,17 @@ class TestHoustonConfigHelmValues:
                 values={"global": {"plane": {"mode": "control"}, "baseDomain": "example.com"}},
             )
         )
+        assert "controlPlaneHA" not in helm
         assert "globalBaseDomain" not in helm
         assert "cookieDomain" not in helm
         assert "cookieName" not in helm
 
     def test_global_base_domain_emitted_in_ha(self, kube_version):
-        """HA-on configmap emits globalBaseDomain; cookie keys omitted unless overridden."""
+        """HA-on configmap emits the HA-enabled signal + globalBaseDomain; cookie keys omitted unless overridden."""
         values = _ha_values()
         values["global"]["baseDomain"] = "example.com"
         helm = self.production_yaml_prod_helm(render_chart(kube_version=kube_version, show_only=[CONFIGMAP_FILE], values=values))
+        assert helm["controlPlaneHA"]["enabled"] is True
         assert helm["globalBaseDomain"] == "astro.example.com"
         assert "cookieDomain" not in helm
         assert "cookieName" not in helm
