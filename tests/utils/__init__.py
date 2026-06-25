@@ -2,7 +2,29 @@ from pathlib import Path
 
 import yaml
 
+from tests import git_root_dir
 from tests.utils.chart import render_chart
+
+# Kinds that manage pods (and therefore carry pod/container securityContexts).
+pod_managers = ["CronJob", "DaemonSet", "Deployment", "Job", "StatefulSet"]
+
+
+def find_all_pod_manager_templates() -> list[str]:
+    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir."""
+
+    false_positive_filenames = [
+        "charts/nats/templates/jetstream-job-scc.yaml",  # Not a job, but the scc for the job
+    ]
+
+    return sorted(
+        {
+            str(x.relative_to(git_root_dir))
+            for x in (git_root_dir / "charts").rglob("*")
+            if any(substr in x.name for substr in ("deployment", "statefulset", "replicaset", "daemonset", "job"))
+            and x.is_file()
+            and str(x.relative_to(git_root_dir)) not in false_positive_filenames
+        }
+    )
 
 
 def get_env_vars_dict(container_env):

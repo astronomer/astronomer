@@ -2,35 +2,13 @@ import pytest
 from deepmerge import always_merger
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_all_features, get_service_account_name_from_doc
+from tests.utils import (
+    find_all_pod_manager_templates,
+    get_all_features,
+    get_service_account_name_from_doc,
+    pod_managers,
+)
 from tests.utils.chart import render_chart
-
-
-def find_all_pod_manager_templates() -> list[str]:
-    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir."""
-
-    false_positive_filenames = [
-        "charts/nats/templates/jetstream-job-scc.yaml",  # Not a job, but the scc for the job
-    ]
-
-    return sorted(
-        {
-            str(x.relative_to(git_root_dir))
-            for x in (git_root_dir / "charts").rglob("*")
-            if any(substr in x.name for substr in ("deployment", "statefulset", "replicaset", "daemonset", "job"))
-            and x.is_file()
-            and str(x.relative_to(git_root_dir)) not in false_positive_filenames
-        }
-    )
-
-
-pod_managers = [
-    "CronJob",
-    "DaemonSet",
-    "Deployment",
-    "Job",
-    "StatefulSet",
-]
 
 
 @pytest.mark.parametrize(
