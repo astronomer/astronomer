@@ -51,8 +51,11 @@ class TestExternalElasticSearch:
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
         assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
         assert deployment["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
         expected_env = [{"name": "ES_SECRET", "value": secret}]
         assert expected_env == deployment["spec"]["template"]["spec"]["containers"][0]["env"]
@@ -97,8 +100,11 @@ class TestExternalElasticSearch:
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
         assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
         assert deployment["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
         expected_env = [
             {
@@ -161,8 +167,11 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]
@@ -236,8 +245,11 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]
@@ -290,8 +302,11 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]

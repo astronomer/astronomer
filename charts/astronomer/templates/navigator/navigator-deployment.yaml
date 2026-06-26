@@ -44,7 +44,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "navigator.serviceAccountName" . }}
-      securityContext: {{- include "astronomer.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -63,9 +63,7 @@ spec:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
           resources: {{- toYaml .Values.navigator.resources | nindent 12 }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
       containers:
         - name: navigator
           image: {{ template "houston.image" . }}
@@ -74,9 +72,7 @@ spec:
             - yarn
             - run
             - navigator
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.navigator.resources | nindent 12 }}
           {{- if .Values.navigator.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.navigator.livenessProbe) . | nindent 12 }}

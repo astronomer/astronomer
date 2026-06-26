@@ -111,9 +111,7 @@ service:
     requests:
       cpu: '{{ .Values.manager.resources.requests.cpu }}'
       memory: '{{ .Values.manager.resources.requests.memory }}'
-  securityContext:
-    {{- $required := dict "readOnlyRootFilesystem" true }}
-    {{- merge $required .Values.manager.securityContext | toYaml | nindent 4 }}
+  securityContext: {{- include "platform.containerSecurityContext" (list . nil) | nindent 4 }}
   volumeMounts: {{ include "manager.volumeMounts" . | nindent 2 }}
 {{- end }}
 

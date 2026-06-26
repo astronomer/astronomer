@@ -97,7 +97,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/prometheus/templates/ingress.yaml", "charts/prometheus/templates/prometheus-federate-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data", "domainPrefix": "dp01"}}},
         )
 
         assert len(docs) == 2

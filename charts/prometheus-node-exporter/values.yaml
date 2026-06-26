@@ -64,8 +64,14 @@ podSecurityContext:
   fsGroup: 65534
   runAsGroup: 65534
   runAsUser: 65534
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
   readOnlyRootFilesystem: true
   runAsUser: 65534

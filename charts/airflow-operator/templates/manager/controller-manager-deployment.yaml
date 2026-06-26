@@ -38,7 +38,7 @@ spec:
       containers: {{- include "manager.containers" . | nindent 8 }}
       {{- include "manager.imagePullSecrets" . | nindent 6 }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.manager.nodeSelector) | nindent 8 }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list . nil) | nindent 8 }}
       serviceAccountName: '{{ template "operator.serviceAccountName" . }}'
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.manager.tolerations) | nindent 8 }}

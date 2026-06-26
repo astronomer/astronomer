@@ -86,9 +86,7 @@ spec:
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
           resources: {{- toYaml .Values.registry.resources | nindent 12 }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           env:
           {{- if .Values.registry.extraEnv }}
             {{- toYaml .Values.registry.extraEnv | nindent 12 }}
@@ -96,9 +94,7 @@ spec:
       containers:
         - name: registry
           image: {{ template "registry.image" . }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
             - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
@@ -166,7 +162,7 @@ spec:
           emptyDir: {}
         - name: config
           configMap:
-            name: {{ .Release.Name }}-registry
+            name: {{ template "registry.fullname" . }}
             items:
               - key: config.yml
                 path: config.yml

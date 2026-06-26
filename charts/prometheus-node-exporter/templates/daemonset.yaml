@@ -33,15 +33,13 @@ spec:
       priorityClassName:  {{ .Values.priorityClassName  }}
 {{ end }}
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
-      securityContext: {{- include "prometheus-node-exporter.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list . nil) | nindent 8 }}
 {{- include "prometheus-node-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: node-exporter
           image: {{ template "image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list . nil) | nindent 12 }}
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys

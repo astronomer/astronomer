@@ -45,7 +45,7 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "pilot.serviceAccountName" . }}
-      securityContext: {{- include "astronomer.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
@@ -65,9 +65,7 @@ spec:
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
           resources: {{- toYaml .Values.pilot.resources | nindent 12 }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
       containers:
         - name: pilot
           image: {{ template "commander.image" . }}
@@ -75,9 +73,7 @@ spec:
           command:
             - commander
             - pilot
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.pilot.resources | nindent 12 }}
           {{- if .Values.pilot.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.pilot.livenessProbe) . | nindent 12 }}

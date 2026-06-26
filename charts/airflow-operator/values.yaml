@@ -28,6 +28,18 @@ runtimeVersions:
 # astro-runtime versions (sets the ALLOW_DEPRECATED_RUNTIME_VERSIONS env var).
 allowDeprecatedRuntimeVersions: true
 
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 65532
+
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
 terminationGracePeriodSeconds: 10
 webhooks:
 
@@ -57,9 +69,6 @@ serviceAccount:
 
 manager:
   replicas: 1
-  securityContext:
-    runAsNonRoot: true
-    allowPrivilegeEscalation: false
   metrics:
     enabled: false
   resources:
