@@ -723,6 +723,7 @@ airflow-operator:
     )
     return f"""\
 global:
+  helmRepo: "https://internal-helm.astronomer.io"
   baseDomain: {settings.base_domain}
   plane:
     mode: {settings.cp_mode}
@@ -870,6 +871,7 @@ airflow-operator:
     )
     return f"""\
 global:
+  helmRepo: "https://internal-helm.astronomer.io"
   baseDomain: {settings.base_domain}
   plane:
     mode: data
