@@ -32,6 +32,7 @@ class TestRegistryStatefulset:
             "fsGroup": 1000,
             "runAsGroup": 1000,
             "runAsUser": 1000,
+            "seccompProfile": {"type": "RuntimeDefault"},
         }
         assert {"emptyDir": {}, "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["volumes"]
         assert {

@@ -107,12 +107,14 @@ Renders a complete tree, even values that contains template.
 {{- end -}}
 
 {{/*
-Return true if the OpenShift is the detected platform
+Return true if OpenShift is the target platform, either because the operator
+explicitly set the repo-wide global.openshift.enabled flag (the convention used
+by every other chart) or because the OpenShift API is detected at install time.
 Usage:
 {{- include "external-secrets.isOpenShift" . -}}
 */}}
 {{- define "external-secrets.isOpenShift" -}}
-{{- if .Capabilities.APIVersions.Has "security.openshift.io/v1" -}}
+{{- if or .Values.global.openshift.enabled (.Capabilities.APIVersions.Has "security.openshift.io/v1") -}}
 {{- true -}}
 {{- end -}}
 {{- end -}}
