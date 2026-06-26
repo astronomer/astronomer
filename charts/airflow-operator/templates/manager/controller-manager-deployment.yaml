@@ -36,7 +36,7 @@ spec:
     spec:
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.manager.affinity) | nindent 8 }}
       containers: {{- include "manager.containers" . | nindent 8 }}
-      {{- include "manager.imagePullSecrets" . | nindent 8 }}
+      {{- include "manager.imagePullSecrets" . | nindent 6 }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.manager.nodeSelector) | nindent 8 }}
       securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
       serviceAccountName: '{{ template "operator.serviceAccountName" . }}'

@@ -222,13 +222,13 @@ class TestAirflowOperator:
         assert len(docs) == 4
         assert docs[0]["apiVersion"] == "apps/v1"
         assert docs[0]["kind"] == "Deployment"
-        assert docs[0]["metadata"]["name"] == "release-name-aocm"
+        assert docs[0]["metadata"]["name"] == "release-name-airflow-operator-controller-manager"
         assert all(doc["metadata"]["labels"]["component"] == "controller-manager" for doc in docs[:3])
         assert all(doc["apiVersion"] == "v1" for doc in docs[1:4])
         assert docs[1]["kind"] == "Service"
-        assert docs[1]["metadata"]["name"] == "release-name-aocm-metrics-service"
+        assert docs[1]["metadata"]["name"] == "release-name-airflow-operator-controller-manager-metrics-service"
         assert docs[2]["kind"] == "ConfigMap"
-        assert docs[2]["metadata"]["name"] == "release-name-aom-config"
+        assert docs[2]["metadata"]["name"] == "release-name-airflow-operator-manager-config"
         assert docs[3]["kind"] == "Service"
         assert docs[3]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
 
@@ -279,7 +279,7 @@ class TestAirflowOperator:
         assert "/manager" in c_by_name["manager"]["command"]
         doc = docs[1]
         assert doc["kind"] == "Service"
-        assert doc["metadata"]["name"] == "release-name-aocm-metrics-service"
+        assert doc["metadata"]["name"] == "release-name-airflow-operator-controller-manager-metrics-service"
         assert doc["spec"]["selector"]["component"] == "controller-manager"
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"] == [
@@ -291,3 +291,48 @@ class TestAirflowOperator:
                 "appProtocol": "http",
             }
         ]
+
+    def test_airflow_operator_manager_environment_default(self, kube_version):
+        """Test the manager container has AIRFLOW_OPERATOR_ENVIRONMENT set to 'apc'."""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                },
+            },
+            show_only=[
+                "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        env = {e["name"]: e["value"] for e in c_by_name["manager"]["env"]}
+        assert env["AIRFLOW_OPERATOR_ENVIRONMENT"] == "apc"
+
+    def test_airflow_operator_manager_private_registry(self, kube_version):
+        """Test the manager uses the private registry image and imagePullSecrets when global privateRegistry is enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "my.private.registry/astronomer",
+                        "secretName": "my-registry-secret",
+                    },
+                },
+            },
+            show_only=[
+                "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["imagePullSecrets"] == [{"name": "my-registry-secret"}]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        image = c_by_name["manager"]["image"]
+        # When privateRegistry is enabled the image is built from the private repo + the dev image name.
+        assert image.startswith("my.private.registry/astronomer/airflow-operator-dev:")
