@@ -9,6 +9,20 @@ from tests.utils.chart import render_chart
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 
+# Pods that cannot meet PSS-Restricted, exempt from test_pss_restricted_security_context (PINF-713).
+# Each entry is justified below. In a real cluster these workloads are handled with PSS namespace
+# exemptions rather than the Restricted policy, because they require privileged or root access by design.
+PSS_RESTRICTED_EXEMPT = {
+    # Privileged / host-mutating infrastructure — must run privileged or as root by design.
+    "DaemonSet/release-name-containerd-ca-update": "privileged: installs CA into the host containerd config",
+    "DaemonSet/release-name-private-ca": "runs as root to install private CA certs onto the host",
+    "DaemonSet/release-name-vector": "must run as root: mounts the host log directory to collect node/pod logs",
+    # Bundled third-party charts: privileged init containers or vendored securityContext we do not control.
+    "Deployment/release-name-elasticsearch-client": "bundled chart: privileged sysctl init container (vm.max_map_count)",
+    "StatefulSet/release-name-elasticsearch-data": "bundled chart: privileged sysctl init container (vm.max_map_count)",
+    "StatefulSet/release-name-elasticsearch-master": "bundled chart: privileged sysctl init container (vm.max_map_count)",
+}
+
 
 class TestK8sVersionConstraints:
     @pytest.mark.parametrize(
@@ -132,6 +146,44 @@ class TestAllPodSpecContainers:
             ), f"The spec for '{pod_container}' does not use the same image for public and private registry configurations."
             assert container["image"].startswith(self.private_repo), (
                 f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
+            )
+
+    @pytest.mark.parametrize(
+        "doc",
+        pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
+    )
+    def test_pss_restricted_security_context(self, doc):
+        """Every platform pod must render the full PSS-Restricted container securityContext (PINF-713).
+
+        Required per container: allowPrivilegeEscalation=False, capabilities.drop includes "ALL",
+        runAsNonRoot=True, and an explicit non-zero runAsUser. seccompProfile.type=RuntimeDefault is
+        accepted at either the pod or the container level, which is how PSS-Restricted is evaluated.
+
+        Pods listed in PSS_RESTRICTED_EXEMPT are skipped with a documented reason; they require
+        privileged/root access by design or are bundled third-party charts we do not control.
+        """
+        doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+        if doc_id in PSS_RESTRICTED_EXEMPT:
+            pytest.skip(f"PSS-exempt: {PSS_RESTRICTED_EXEMPT[doc_id]}")
+        pod_security_context = doc["spec"]["template"]["spec"].get("securityContext") or {}
+        pod_seccomp = pod_security_context.get("seccompProfile", {}).get("type")
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+        for name, container in c_by_name.items():
+            container_id = f"{doc_id}/{name}"
+            sc = container.get("securityContext") or {}
+
+            assert sc.get("allowPrivilegeEscalation") is False, f"{container_id} must set allowPrivilegeEscalation: false"
+            assert "ALL" in (sc.get("capabilities") or {}).get("drop", []), f"{container_id} must drop ALL capabilities"
+            assert sc.get("runAsNonRoot") is True, f"{container_id} must set runAsNonRoot: true"
+
+            run_as_user = sc.get("runAsUser")
+            assert run_as_user not in (None, 0), f"{container_id} must set an explicit non-zero runAsUser (got {run_as_user!r})"
+
+            container_seccomp = (sc.get("seccompProfile") or {}).get("type")
+            assert "RuntimeDefault" in (pod_seccomp, container_seccomp), (
+                f"{container_id} must set seccompProfile.type: RuntimeDefault at the pod or container level"
             )
 
 

@@ -2,7 +2,6 @@
 ## Prometheus Federation Auth Deployment ##
 ###########################################
 {{- if eq .Values.global.plane.mode "data" }}
-{{- $prometheusSecurityContext := (include "prometheus.securityContext" . | fromYaml) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -51,9 +50,7 @@ spec:
       - name: federation-auth
         image: {{ template "promproxy.image" . }}
         imagePullPolicy: {{ .Values.images.promproxy.pullPolicy }}
-        securityContext:
-          {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- merge $required $prometheusSecurityContext | toYaml | nindent 10 }}
+        securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
         ports:
         - containerPort: {{ .Values.global.authSidecar.port }}
           name: http

@@ -77,30 +77,6 @@ imagePullSecrets:
 {{ printf "%s-default-backend" (include "nginx.fullname" .)}}
 {{- end -}}
 
-{{/*
-Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
-*/}}
-{{- define "nginx.podSecurityContext" -}}
-{{- if .Values.global.openshiftEnabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
-{{- end }}
-
-{{/*
-Return container securityContext, always enforcing readOnlyRootFilesystem: true.
-Omits runAsUser on OpenShift (UIDs are assigned dynamically).
-*/}}
-{{- define "nginx.securityContext" -}}
-{{- $required := dict "readOnlyRootFilesystem" true }}
-{{- if .Values.global.openshiftEnabled }}
-{{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
-{{- else }}
-{{- merge $required .Values.securityContext | toYaml }}
-{{- end -}}
-{{- end }}
-
 {{ define "defaultBackend.serviceAccountName" -}}
 {{- if and .Values.defaultBackend.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "defaultBackend.fullname" . )) .Values.defaultBackend.serviceAccount.name }}

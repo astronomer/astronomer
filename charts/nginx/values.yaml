@@ -27,7 +27,9 @@ securityContext:
   allowPrivilegeEscalation: false
 
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-podSecurityContext: {}
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 serviceAccount:
   # Specifies whether a service account should be created

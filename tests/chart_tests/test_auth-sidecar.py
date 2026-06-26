@@ -104,6 +104,7 @@ class TestAuthSidecar:
             "pullPolicy": "IfNotPresent",
             "annotations": {},
             "resources": custom_resources,
+            "securityContext": {"runAsUser": 101},
         }
 
         assert expected_output == prod["deployments"]["authSideCar"]
@@ -191,6 +192,7 @@ class TestAuthSidecar:
             "pullPolicy": "IfNotPresent",
             "resources": default_resource,
             "annotations": {},
+            "securityContext": {"runAsUser": 101},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
 
@@ -231,6 +233,7 @@ class TestAuthSidecar:
                 "kubernetes.io/ingress.class": "astronomer-nginx",
                 "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
             },
+            "securityContext": {"runAsUser": 101},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
 

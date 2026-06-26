@@ -83,9 +83,7 @@ service:
   image: {{ include "operator.image" . }}
   imagePullPolicy: {{ .Values.images.manager.pullPolicy }}
   resources: {{- toYaml .Values.manager.resources | nindent 4 }}
-  securityContext:
-    {{- $required := dict "readOnlyRootFilesystem" true }}
-    {{- merge $required .Values.securityContext | toYaml | nindent 4 }}
+  securityContext: {{- include "platform.containerSecurityContext" (list . nil) | nindent 4 }}
   volumeMounts: {{- include "manager.volumeMounts" . | nindent 2 }}
   {{- if .Values.livenessProbe }}
   livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 4 }}
