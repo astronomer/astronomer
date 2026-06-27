@@ -101,6 +101,16 @@ service:
       path: /readyz
       port: {{ .Values.ports.managerPort }}
   {{- end }}
+  {{- if .Values.startupProbe }}
+  startupProbe: {{- tpl (toYaml .Values.startupProbe) . | nindent 4 }}
+  {{- else }}
+  startupProbe:
+    httpGet:
+      path: /healthz
+      port: {{ .Values.ports.managerPort }}
+    failureThreshold: 30
+    periodSeconds: 10
+  {{- end }}
 {{- end }}
 
 {{- define "operator.serviceAccountName" -}}

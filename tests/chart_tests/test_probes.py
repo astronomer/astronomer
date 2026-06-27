@@ -18,13 +18,42 @@ class TestCustomProbes:
 
     @pytest.mark.parametrize("doc", filtered_docs)
     def test_template_probes_with_custom_values(self, doc):
-        """Ensure all containers have the ability to customize liveness probes."""
+        """Ensure all containers have the ability to customize liveness, readiness, and startup probes."""
 
         for container in doc.values():
             assert "livenessProbe" in container
             assert "readinessProbe" in container
+            assert "startupProbe" in container
             assert container["livenessProbe"] != {}
             assert container["readinessProbe"] != {}
+            assert container["startupProbe"] != {}
+
+
+class TestStartupProbes:
+    """Cross-cutting guard for the Gatekeeper ``allow-with-probes`` constraint (PINF-691).
+
+    Clusters enforcing that constraint reject any container that does not define a
+    startupProbe, so this must be 100% coverage: every long-running container the
+    admission controller sees, across every pod-manager kind, must define a non-empty
+    startupProbe. We render with the default feature set (what a real install produces)
+    rather than custom probe overrides, because the constraint evaluates the rendered
+    manifest as installed. Init containers are excluded -- Kubernetes forbids
+    startupProbe on non-sidecar init containers.
+    """
+
+    docs = render_chart(values=get_all_features())
+    containers = {
+        f"{doc['kind']}_{doc['metadata']['name']}_{name}": container
+        for doc in docs
+        if doc["kind"] in include_kind_list
+        for name, container in get_containers_by_name(doc).items()
+    }
+
+    @pytest.mark.parametrize("container", containers.values(), ids=list(containers.keys()))
+    def test_every_container_has_startup_probe(self, container):
+        """Every container must define a non-empty startupProbe (Gatekeeper allow-with-probes)."""
+        assert "startupProbe" in container, "container is missing a startupProbe"
+        assert container["startupProbe"] != {}, "startupProbe must not be empty"
 
 
 class TestDefaultProbes:

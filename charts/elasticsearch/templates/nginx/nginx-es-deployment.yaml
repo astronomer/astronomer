@@ -73,6 +73,15 @@ spec:
           {{- if .Values.nginx.livenessProbe }}
           livenessProbe: {{- tpl (toYaml .Values.nginx.livenessProbe) . | nindent 12 }}
           {{- end }}
+          {{- if .Values.nginx.startupProbe }}
+          startupProbe: {{- tpl (toYaml .Values.nginx.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.common.ports.http }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}

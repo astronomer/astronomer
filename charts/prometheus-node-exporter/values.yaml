@@ -40,6 +40,11 @@ readinessProbe: {}
   #   path: /
   #   port: {{ .Values.service.port }}
 
+startupProbe: {}
+  # httpGet:
+  #   path: /
+  #   port: {{ .Values.service.port }}
+
 resources:
   limits:
     cpu: 100m

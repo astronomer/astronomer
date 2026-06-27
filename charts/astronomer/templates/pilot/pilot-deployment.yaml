@@ -81,6 +81,15 @@ spec:
           {{- if .Values.pilot.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.pilot.readinessProbe) . | nindent 12 }}
           {{- end }}
+          {{- if .Values.pilot.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.pilot.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.ports.commanderHTTP }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs

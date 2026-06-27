@@ -80,6 +80,15 @@ spec:
           {{- if .Values.navigator.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.navigator.readinessProbe) . | nindent 12 }}
           {{- end }}
+          {{- if .Values.navigator.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.navigator.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.ports.houstonHTTP }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs

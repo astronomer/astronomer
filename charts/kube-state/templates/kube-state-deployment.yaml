@@ -85,5 +85,15 @@ spec:
             initialDelaySeconds: 5
             timeoutSeconds: 5
           {{- end }}
+          {{ if .Values.startupProbe }}
+          startupProbe: {{- tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{ else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.scrape }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           resources: {{- toYaml .Values.resources | nindent 12 }}
 {{- end }}

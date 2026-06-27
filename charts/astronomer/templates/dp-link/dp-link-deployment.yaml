@@ -132,6 +132,15 @@ spec:
           {{- if .Values.dpLink.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.dpLink.readinessProbe) $ | nindent 12 }}
           {{- end }}
+          {{- if .Values.dpLink.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.dpLink.startupProbe) $ | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.ports.houstonHTTP }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}

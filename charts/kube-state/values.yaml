@@ -41,6 +41,7 @@ livenessProbe: {}
 #  initialDelaySeconds: 5
 #  timeoutSeconds: 5
 readinessProbe: {}
+startupProbe: {}
 
 ports:
   scrape: 8080
