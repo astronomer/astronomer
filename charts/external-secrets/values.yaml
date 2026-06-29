@@ -367,5 +367,5 @@ hostAliases: []
 # -- Any extra pod spec on the deployment
 podSpecExtra: {}
 
-crds:
+crd:
   create: true
