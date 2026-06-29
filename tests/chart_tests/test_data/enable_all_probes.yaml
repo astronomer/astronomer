@@ -516,18 +516,11 @@ grafana:
       exec:
         command:
         - /bin/true
-  startupProbe:
-    exec:
-      command:
-      - /bin/true
-  livenessProbe:
-    exec:
-      command:
-      - /bin/true
-  readinessProbe:
-    exec:
-      command:
-      - /bin/true
+  authProxy:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
 kube-state:
   startupProbe:
     exec:
