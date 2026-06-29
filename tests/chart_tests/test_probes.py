@@ -35,7 +35,7 @@ class TestStartupProbes:
     Clusters enforcing that constraint reject any container that does not define a
     startupProbe, so this must be 100% coverage: every long-running container the
     admission controller sees, across every pod-manager kind, must define a non-empty
-    startupProbe. We render with the default feature set (what a real install produces)
+    startupProbe. We render with ``get_all_features()`` (maximal chart surface area)
     rather than custom probe overrides, because the constraint evaluates the rendered
     manifest as installed. Init containers are excluded -- Kubernetes forbids
     startupProbe on non-sidecar init containers.
