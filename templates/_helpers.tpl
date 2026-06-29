@@ -14,10 +14,27 @@ fluentd
 {{ define "houston.internalauthurl" -}}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
+{{- else if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain }}
+nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}/v1/authorization
 {{- else }}
 nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
 {{- end }}
 {{- end }}
+
+{{/*
+auth-signin annotation shared by the prometheus/alertmanager/grafana ingresses.
+Under control-plane HA the customer enters via the global hostname and the session
+cookie is scoped to globalBaseDomain, so the sign-in redirect must resolve to the
+global host. Falls back to baseDomain when HA is off (single-CP rendering unchanged)
+or when globalBaseDomain is unset (e.g. data planes, where it is never templated).
+*/}}
+{{- define "houston.authsignin" -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}/login
+{{- else -}}
+nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+{{- end -}}
+{{- end -}}
 
 
 {{/*
@@ -94,6 +111,8 @@ imagePullSecrets:
 {{- define "houston-proxy" -}}
 {{- if eq .Values.global.plane.mode "unified" -}}
 proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+{{- else if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+proxy_pass https://houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}/v1/elasticsearch;
 {{- else -}}
 proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
 {{- end -}}
