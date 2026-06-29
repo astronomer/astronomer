@@ -62,7 +62,7 @@ scopedNamespace: ""
 scopedRBAC: false
 
 # -- If true the OpenShift finalizer permissions will be added to RBAC
-openshiftFinalizers: true
+openshiftFinalizers: false
 
 # -- If true the system:auth-delegator ClusterRole will be added to RBAC
 systemAuthDelegator: false

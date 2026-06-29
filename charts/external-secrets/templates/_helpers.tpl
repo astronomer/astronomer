@@ -164,3 +164,14 @@ and the plane mode must be data or unified.
 true
 {{- end -}}
 {{- end -}}
+
+{{/*
+Whether to grant the OpenShift-only finalizer permissions: either the repo-wide
+global.openshift.enabled flag is set, or the chart-local openshiftFinalizers
+override is explicitly enabled.
+*/}}
+{{- define "external-secrets.openshiftFinalizers" -}}
+{{- if or .Values.global.openshift.enabled .Values.openshiftFinalizers -}}
+true
+{{- end -}}
+{{- end -}}

@@ -43,39 +43,39 @@ rules:
     resources:
     - "externalsecrets"
     - "externalsecrets/status"
-    {{- if .Values.openshiftFinalizers }}
+    {{- if (include "external-secrets.openshiftFinalizers" .) }}
     - "externalsecrets/finalizers"
     {{- end }}
     - "secretstores"
     - "secretstores/status"
-    {{- if .Values.openshiftFinalizers }}
+    {{- if (include "external-secrets.openshiftFinalizers" .) }}
     - "secretstores/finalizers"
     {{- end }}
     {{- if .Values.processClusterStore }}
     - "clustersecretstores"
     - "clustersecretstores/status"
-    {{- if .Values.openshiftFinalizers }}
+    {{- if (include "external-secrets.openshiftFinalizers" .) }}
     - "clustersecretstores/finalizers"
     {{- end }}
     {{- end }}
     {{- if .Values.processClusterExternalSecret }}
     - "clusterexternalsecrets"
     - "clusterexternalsecrets/status"
-    {{- if .Values.openshiftFinalizers }}
+    {{- if (include "external-secrets.openshiftFinalizers" .) }}
     - "clusterexternalsecrets/finalizers"
     {{- end }}
     {{- end }}
     {{- if .Values.processPushSecret }}
     - "pushsecrets"
     - "pushsecrets/status"
-    {{- if .Values.openshiftFinalizers }}
+    {{- if (include "external-secrets.openshiftFinalizers" .) }}
     - "pushsecrets/finalizers"
     {{- end }}
     {{- end }}
     {{- if .Values.processClusterPushSecret }}
     - "clusterpushsecrets"
     - "clusterpushsecrets/status"
-    {{- if .Values.openshiftFinalizers }}
+    {{- if (include "external-secrets.openshiftFinalizers" .) }}
     - "clusterpushsecrets/finalizers"
     {{- end }}
     {{- end }}
@@ -372,56 +372,6 @@ subjects:
   - name: {{ include "external-secrets.serviceAccountName" . }}
     namespace: {{ template "external-secrets.namespace" . }}
     kind: ServiceAccount
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: {{ include "external-secrets.fullname" . }}-leaderelection
-  namespace: {{ template "external-secrets.namespace" . }}
-  labels:
-    {{- include "external-secrets.labels" . | nindent 4 }}
-rules:
-  - apiGroups:
-    - ""
-    resources:
-    - "configmaps"
-    resourceNames:
-    - "external-secrets-controller"
-    verbs:
-    - "get"
-    - "update"
-    - "patch"
-  - apiGroups:
-    - ""
-    resources:
-    - "configmaps"
-    verbs:
-    - "create"
-  - apiGroups:
-    - "coordination.k8s.io"
-    resources:
-    - "leases"
-    verbs:
-    - "get"
-    - "create"
-    - "update"
-    - "patch"
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: {{ include "external-secrets.fullname" . }}-leaderelection
-  namespace: {{ template "external-secrets.namespace" . }}
-  labels:
-    {{- include "external-secrets.labels" . | nindent 4 }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: {{ include "external-secrets.fullname" . }}-leaderelection
-subjects:
-  - kind: ServiceAccount
-    name: {{ include "external-secrets.serviceAccountName" . }}
-    namespace: {{ template "external-secrets.namespace" . }}
 {{- if .Values.rbac.servicebindings.create }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
