@@ -23,7 +23,7 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     {{- include "houston.internalauthurl" . | nindent 4 }}
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "global.authBaseDomain" . }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
 spec:
