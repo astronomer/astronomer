@@ -22,9 +22,9 @@ auth-flow URL regardless of annotation key.
 */}}
 {{- define "houston.authBaseDomain" -}}
 {{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
-{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- .Values.global.controlPlaneHA.globalBaseDomain -}}
 {{- else -}}
-{{ .Values.global.baseDomain }}
+{{- .Values.global.baseDomain -}}
 {{- end -}}
 {{- end -}}
 
