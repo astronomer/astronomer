@@ -55,16 +55,16 @@ class TestDefaultProbes:
 
     # Expected container liveness probes. This block should contain all of the expected default liveness probes.
     expected_clp = {
-        "alertmanager_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
-        },
-        "aocm_manager": {
+        "airflow-operator-controller-manager_manager": {
             "httpGet": {
                 "path": "/healthz",
                 "port": 8081,
             }
+        },
+        "alertmanager_auth-proxy": {
+            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
+            "initialDelaySeconds": 10,
+            "periodSeconds": 10,
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {
@@ -160,6 +160,12 @@ class TestDefaultProbes:
 
     # Expected container readiness probes. This block should contain all of the expected default readiness probes.
     expected_crp = {
+        "airflow-operator-controller-manager_manager": {
+            "httpGet": {
+                "path": "/readyz",
+                "port": 8081,
+            }
+        },
         "alertmanager_alertmanager": {
             "httpGet": {"path": "/#/status", "port": 9093},
             "initialDelaySeconds": 30,
@@ -169,12 +175,6 @@ class TestDefaultProbes:
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
-        },
-        "aocm_manager": {
-            "httpGet": {
-                "path": "/readyz",
-                "port": 8081,
-            }
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {"httpGet": {"path": "/healthz", "port": 8880}, "initialDelaySeconds": 10, "periodSeconds": 10},
