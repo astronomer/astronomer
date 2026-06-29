@@ -291,3 +291,97 @@ class TestAirflowOperator:
                 "appProtocol": "http",
             }
         ]
+
+    def test_airflow_operator_manager_environment_default(self, kube_version):
+        """Test the manager container has AIRFLOW_OPERATOR_ENVIRONMENT set to 'apc'."""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                },
+            },
+            show_only=[
+                "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        env = {e["name"]: e["value"] for e in c_by_name["manager"]["env"]}
+        assert env["AIRFLOW_OPERATOR_ENVIRONMENT"] == "apc"
+
+    def test_airflow_operator_manager_private_registry(self, kube_version):
+        """Test the manager uses the private registry image and imagePullSecrets when global privateRegistry is enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "my.private.registry/astronomer",
+                        "secretName": "my-registry-secret",
+                    },
+                },
+            },
+            show_only=[
+                "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["imagePullSecrets"] == [{"name": "my-registry-secret"}]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        image = c_by_name["manager"]["image"]
+        # When privateRegistry is enabled the image is built from the private repo + the dev image name.
+        assert image.startswith("my.private.registry/astronomer/airflow-operator-dev:")
+
+    def test_operator_resource_names_within_dns_limits(self, kube_version):
+        """Operator resource names must stay within k8s name limits with a long release name.
+
+        The manager Deployment/Service/ConfigMap/ServiceAccount names were deliberately
+        shortened (e.g. -aocm, -aom-config) so they don't consume a customer's release-name
+        headroom against the 63-char DNS-label limit that k8s/helm enforce. This guards
+        against an upstream chart sync silently re-lengthening them (see review on commit
+        44e45982). The webhook Service keeps the longest release-prefixed suffix
+        (-airflow-operator-webhook-service, 33 chars), so a 30-char release name must still
+        leave its name <= 63 (33 + 30 = 63).
+        """
+        long_release_name = "a" * 30
+        show_only = [
+            "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
+            "charts/airflow-operator/templates/manager/controller-manager-metrics-service.yaml",
+            "charts/airflow-operator/templates/manager/manager-config-configmap.yaml",
+            "charts/airflow-operator/templates/manager/webhook-service.yaml",
+            "charts/airflow-operator/templates/rbac/controller-manager-serviceaccount.yaml",
+            "charts/airflow-operator/templates/rbac/leader-election-role.yaml",
+            "charts/airflow-operator/templates/rbac/leader-election-rolebinding.yaml",
+            "charts/airflow-operator/templates/certmanager/selfsigned-issuer.yaml",
+            "charts/airflow-operator/templates/certmanager/serving-cert-certificate.yaml",
+            "charts/airflow-operator/templates/webhooks/mutating-webhook-configuration.yaml",
+            "charts/airflow-operator/templates/webhooks/validating-webhook-configuration.yaml",
+        ]
+        docs = render_chart(
+            name=long_release_name,
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                },
+                "airflow-operator": {
+                    "manager": {"metrics": {"enabled": True}},
+                    "webhooks": {"enabled": True},
+                    "certManager": {"enabled": True},
+                },
+            },
+            show_only=show_only,
+        )
+        assert docs, "expected operator resources to render"
+        for doc in docs:
+            name = doc["metadata"]["name"]
+            # Service names become DNS labels (63-char cap); other resource names are
+            # DNS subdomains (253-char cap).
+            limit = 63 if doc["kind"] == "Service" else 253
+            assert len(name) <= limit, f"{doc['kind']}/{name} is {len(name)} chars, exceeds {limit}"
