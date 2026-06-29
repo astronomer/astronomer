@@ -2,7 +2,7 @@
 ###############################
 ## external-secrets operator ##
 ###############################
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if (include "external-secrets.enabled" .) }}
 {{- include "external-secrets.reconciler-sanity-test" . }}
 apiVersion: apps/v1
 kind: Deployment

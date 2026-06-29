@@ -154,3 +154,13 @@ Fail the install if a cluster scoped reconciler is enabled while its namespace s
   {{- fail "You have disabled processing of PushSecrets but not ClusterPushSecrets. This is an invalid configuration. ClusterPushSecret processing depends on processing of PushSecrets. Please either enable processing of PushSecrets, or disable processing of ClusterPushSecrets." }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Whether external-secrets resources should render: the secrets manager must be enabled
+and the plane mode must be data or unified.
+*/}}
+{{- define "external-secrets.enabled" -}}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+true
+{{- end -}}
+{{- end -}}
