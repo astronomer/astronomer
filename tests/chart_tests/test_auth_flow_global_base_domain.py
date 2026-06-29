@@ -81,6 +81,23 @@ class TestAuthSigninGlobalBaseDomain:
         )
         assert docs[0]["metadata"]["annotations"][AUTH_SIGNIN] == f"https://app.{BASE_DOMAIN}/login"
 
+    def test_ha_on_without_global_base_domain_falls_back_to_base_domain(self, kube_version):
+        """HA on but globalBaseDomain unset must not emit a broken empty-host redirect.
+
+        Only the prometheus ingress can render auth-signin in this state: grafana/alertmanager
+        render on control/unified only, and a control-plane render with HA on + no
+        globalBaseDomain fails the cp-identity-secret guard. The prometheus data-plane render
+        exercises the shared houston.authBaseDomain fallback for the auth-signin annotation.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[PROMETHEUS_INGRESS],
+            values=_values("data", ha=True),
+        )
+        auth_signin = docs[0]["metadata"]["annotations"][AUTH_SIGNIN]
+        assert auth_signin == f"https://app.{BASE_DOMAIN}/login"
+        assert "app./login" not in auth_signin
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestAuthUrlGlobalBaseDomain:
