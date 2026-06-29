@@ -29,6 +29,7 @@ AUTH_SIGNIN_INGRESSES = [PROMETHEUS_INGRESS, ALERTMANAGER_INGRESS, GRAFANA_INGRE
 
 BASE_DOMAIN = "example.com"
 GLOBAL_BASE_DOMAIN = "astro.example.com"
+DOMAIN_PREFIX = "dp"
 
 AUTH_SIGNIN = "nginx.ingress.kubernetes.io/auth-signin"
 AUTH_URL = "nginx.ingress.kubernetes.io/auth-url"
@@ -40,7 +41,12 @@ def _values(plane_mode, *, ha=False, global_base_domain=None):
         cpha["enabled"] = True
     if global_base_domain is not None:
         cpha["globalBaseDomain"] = global_base_domain
-    global_values = {"plane": {"mode": plane_mode}, "baseDomain": BASE_DOMAIN}
+    plane = {"mode": plane_mode}
+    # Data-plane hosts are prefixed with domainPrefix (e.g. prometheus.dp.<baseDomain>);
+    # set it so data-mode renders match real installs (parity with test_dual_host_ingress.py).
+    if plane_mode == "data":
+        plane["domainPrefix"] = DOMAIN_PREFIX
+    global_values = {"plane": plane, "baseDomain": BASE_DOMAIN}
     if cpha:
         global_values["controlPlaneHA"] = cpha
     return {"global": global_values}
