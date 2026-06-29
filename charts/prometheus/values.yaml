@@ -87,6 +87,12 @@ readinessProbe: {}
   # periodSeconds: 5
   # failureThreshold: 3
   # timeoutSeconds: 1
+startupProbe: {}
+  # httpGet:
+  #   path: /-/healthy
+  #   port: {{ .Values.ports.http }}
+  # failureThreshold: 30
+  # periodSeconds: 10
 
 podSecurityContext:
   fsGroup: 65534
@@ -103,6 +109,7 @@ securityContext:
 configMapReloader:
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
   resources: {}
     # limits:
     #   cpu: 100m
@@ -114,6 +121,7 @@ configMapReloader:
 filesdReloader:
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
   resources: {}
     # limits:
     #   cpu: 100m
@@ -222,6 +230,7 @@ federation:
     annotations: {}
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
 
 extraFlags:
 - "--enable-feature=auto-config-reload"

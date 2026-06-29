@@ -82,6 +82,15 @@ spec:
               {{- if .Values.houston.updateCheck.livenessProbe }}
               livenessProbe: {{ tpl (toYaml .Values.houston.updateCheck.livenessProbe) . | nindent 16 }}
               {{- end }}
+              {{- if .Values.houston.updateCheck.startupProbe }}
+              startupProbe: {{ tpl (toYaml .Values.houston.updateCheck.startupProbe) . | nindent 16 }}
+              {{- else }}
+              startupProbe:
+                exec:
+                  command: ["true"]
+                failureThreshold: 30
+                periodSeconds: 10
+              {{- end }}
               volumeMounts:
                 - name: etc-ssl-certs
                   mountPath: /etc/ssl/certs

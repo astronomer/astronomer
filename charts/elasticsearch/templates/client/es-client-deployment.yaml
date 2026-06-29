@@ -174,6 +174,9 @@ spec:
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 90
         {{- end }}
+        {{- if .Values.client.startupProbe }}
+        startupProbe: {{- tpl (toYaml .Values.client.startupProbe) . | nindent 10 }}
+        {{- else }}
         startupProbe:
           httpGet:
             # without local=true, we are waiting for this pod's
@@ -182,6 +185,7 @@ spec:
             port: {{ .Values.common.ports.http }}
           failureThreshold: 30
           periodSeconds: 10
+        {{- end }}
         volumeMounts:
         - mountPath: /tmp
           name: tmp

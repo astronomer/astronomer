@@ -70,5 +70,14 @@ spec:
               {{- if .Values.configSyncer.livenessProbe }}
               livenessProbe: {{ tpl (toYaml .Values.configSyncer.livenessProbe) . | nindent 16 }}
               {{- end }}
+              {{- if .Values.configSyncer.startupProbe }}
+              startupProbe: {{ tpl (toYaml .Values.configSyncer.startupProbe) . | nindent 16 }}
+              {{- else }}
+              startupProbe:
+                exec:
+                  command: ["true"]
+                failureThreshold: 30
+                periodSeconds: 10
+              {{- end }}
 {{- end }}
 {{- end }}
