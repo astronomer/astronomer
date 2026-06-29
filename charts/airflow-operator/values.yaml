@@ -60,7 +60,7 @@ webhooks:
 serviceAccount:
   create: true
   # Override the name of the controller-manager ServiceAccount.
-  # Leave empty to use the default "airflow-operator-controller-manager".
+  # Leave empty to use the default "aocm".
   name: ""
   # Whether the ServiceAccount's API token is automatically mounted into the pod.
   automountServiceAccountToken: true
