@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-aom-config
+  name: {{ .Release.Name }}-airflow-operator-manager-config
   namespace: {{ .Release.Namespace }}
   labels:
     tier: operator
