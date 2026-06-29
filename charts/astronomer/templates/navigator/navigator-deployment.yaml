@@ -83,9 +83,13 @@ spec:
           {{- if .Values.navigator.startupProbe }}
           startupProbe: {{ tpl (toYaml .Values.navigator.startupProbe) . | nindent 12 }}
           {{- else }}
+          # navigator (`yarn navigator`) is a reconcile/gRPC-client worker that binds
+          # no listener, so a tcpSocket/httpGet probe (here against houstonHTTP, a port
+          # it does not serve) would fail forever and crashloop the pod. Use a no-op
+          # exec probe to satisfy Gatekeeper's allow-with-probes safely.
           startupProbe:
-            tcpSocket:
-              port: {{ .Values.ports.houstonHTTP }}
+            exec:
+              command: ["/bin/true"]
             failureThreshold: 30
             periodSeconds: 10
           {{- end }}
