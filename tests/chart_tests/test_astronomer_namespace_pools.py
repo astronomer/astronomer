@@ -228,7 +228,9 @@ class TestAstronomerNamespacePools:
 
         deployments_config = yaml.safe_load(doc["data"]["production.yaml"])
 
-        assert deployments_config["deployments"]["namespaceManagement"]["hardDeleteDeployment"]["enabled"]
+        # hardDeleteDeployment was removed from the chart (PLX-575): hard delete
+        # is now the default and only behaviour in Houston.
+        assert "hardDeleteDeployment" not in deployments_config["deployments"]["namespaceManagement"]
         assert deployments_config["deployments"]["namespaceManagement"]["manualNamespaceNames"]["enabled"]
         assert deployments_config["deployments"]["namespaceManagement"]["preCreatedNamespaces"] == [
             {"name": namespace} for namespace in namespaces
