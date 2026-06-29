@@ -15,6 +15,6 @@ roleRef:
   name: {{ .Release.Name }}-airflow-operator-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: {{ template "operator.serviceAccountName" . }}
+  name: '{{ template "operator.serviceAccountName" . }}'
   namespace: '{{ .Release.Namespace }}'
 {{- end }}
