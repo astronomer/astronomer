@@ -31,20 +31,25 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
   # fsGroup: 2000
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsUser: 1000
+  runAsUser: 65534
 
 awsproxy:
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
+
+startupProbe: {}
 
 service:
   type: ClusterIP

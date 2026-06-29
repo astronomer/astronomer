@@ -11,11 +11,13 @@ RUN apt update && apt install -y \
     file \
     gh \
     git \
+    gron \
     jq \
     less \
     nodejs \
     npm \
     procps \
+    ripgrep \
     unzip \
     vim \
     wget \

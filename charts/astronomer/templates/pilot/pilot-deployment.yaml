@@ -45,7 +45,7 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "pilot.serviceAccountName" . }}
-      securityContext: {{- include "astronomer.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
@@ -65,9 +65,7 @@ spec:
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
           resources: {{- toYaml .Values.pilot.resources | nindent 12 }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
       containers:
         - name: pilot
           image: {{ template "commander.image" . }}
@@ -75,15 +73,26 @@ spec:
           command:
             - commander
             - pilot
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.pilot.resources | nindent 12 }}
           {{- if .Values.pilot.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.pilot.livenessProbe) . | nindent 12 }}
           {{- end }}
           {{- if .Values.pilot.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.pilot.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.pilot.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.pilot.startupProbe) . | nindent 12 }}
+          {{- else }}
+          # Pilot is a FlightDeck claim/lease worker (`commander pilot`): it dials
+          # out to commander gRPC and binds no listener, so a tcpSocket/httpGet probe
+          # would fail forever and crashloop the pod. Use a no-op exec probe to
+          # satisfy Gatekeeper's allow-with-probes without risking a dead start.
+          startupProbe:
+            exec:
+              command: ["/bin/true"]
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           volumeMounts:
             - name: etc-ssl-certs

@@ -14,8 +14,15 @@ images:
 
 podSecurityContext:
   fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
+  runAsUser: 65534
 
 serviceAccount:
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -57,6 +64,11 @@ readinessProbe: {}
   #   port: {{ .Values.ports.http }}
   # initialDelaySeconds: 30
   # timeoutSeconds: 30
+
+startupProbe: {}
+
+authProxy:
+  startupProbe: {}
 
 ports:
   http: 9093

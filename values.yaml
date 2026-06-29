@@ -48,6 +48,9 @@ global:
       repository: quay.io/astronomer/ap-db-bootstrapper
       tag: 2.0.12
       pullPolicy: IfNotPresent
+      startupProbe: {}
+    containerdCertCopier:
+      startupProbe: {}
     priorityClassName: ~
 
   # If you do NOT want to use the default configured nginx ingress controller, add the ingressClassName you want to replace it with
@@ -144,7 +147,8 @@ global:
     tag: 1.31.2
     pullPolicy: IfNotPresent
     port: 8084
-    securityContext: {}
+    securityContext:
+      runAsUser: 101
     readinessProbe: {}
     livenessProbe: {}
     ingressAllowedNamespaces: []

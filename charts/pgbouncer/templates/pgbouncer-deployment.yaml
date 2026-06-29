@@ -52,7 +52,7 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "pgbouncer.serviceAccountName" . }}
-      securityContext: {{- include "pgbouncer.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       volumes:
         - name: tmp-workspace
           emptyDir: {}
@@ -69,9 +69,7 @@ spec:
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer.image" . }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
             - name: tmp-workspace
@@ -107,6 +105,15 @@ spec:
           readinessProbe:
             tcpSocket:
               port: {{ .Values.internalPort }}
+          {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.internalPort }}
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           lifecycle:
             preStop:

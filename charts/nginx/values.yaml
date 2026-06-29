@@ -27,7 +27,9 @@ securityContext:
   allowPrivilegeEscalation: false
 
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-podSecurityContext: {}
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -67,6 +69,7 @@ livenessProbe: {}
   # initialDelaySeconds: 30
   # timeoutSeconds: 5
 readinessProbe: {}
+startupProbe: {}
 
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"
@@ -133,6 +136,7 @@ defaultBackend:
   resources: {}
   readinessProbe: {}
   livenessProbe: {}
+  startupProbe: {}
   podAnnotations: {}
   serviceAccount:
     # Specifies whether a service account should be created
