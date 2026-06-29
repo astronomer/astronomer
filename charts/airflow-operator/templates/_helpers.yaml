@@ -117,11 +117,11 @@ service:
 
 {{/*
 Name of the controller-manager ServiceAccount. Defaults to
-"airflow-operator-controller-manager" name; override via serviceAccount.name.
+"aocm" name; override via serviceAccount.name.
 */}}
 {{- define "operator.serviceAccountName" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
-    {{- default (printf "%s-airflow-operator-controller-manager" .Release.Name) .Values.serviceAccount.name }}
+    {{- default (printf "%s-aocm" .Release.Name) .Values.serviceAccount.name }}
 {{- else -}}
     {{- default "default" .Values.serviceAccount.name }}
 {{- end -}}
