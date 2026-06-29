@@ -20,7 +20,7 @@ rendering unchanged) or when globalBaseDomain is unset (e.g. data planes, where 
 never templated). Consumers template the surrounding URL/key, so this is reusable for any
 auth-flow URL regardless of annotation key.
 */}}
-{{- define "houston.authBaseDomain" -}}
+{{- define "global.authBaseDomain" -}}
 {{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
 {{- .Values.global.controlPlaneHA.globalBaseDomain -}}
 {{- else -}}
@@ -32,7 +32,7 @@ auth-flow URL regardless of annotation key.
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
 {{- else }}
-nginx.ingress.kubernetes.io/auth-url: https://houston.{{ include "houston.authBaseDomain" . }}/v1/authorization
+nginx.ingress.kubernetes.io/auth-url: https://houston.{{ include "global.authBaseDomain" . }}/v1/authorization
 {{- end }}
 {{- end }}
 
@@ -112,7 +112,7 @@ imagePullSecrets:
 {{- if eq .Values.global.plane.mode "unified" -}}
 proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
 {{- else -}}
-proxy_pass https://houston.{{ include "houston.authBaseDomain" . }}/v1/elasticsearch;
+proxy_pass https://houston.{{ include "global.authBaseDomain" . }}/v1/elasticsearch;
 {{- end -}}
 {{- end }}
 

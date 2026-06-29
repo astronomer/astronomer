@@ -87,7 +87,7 @@ class TestAuthSigninGlobalBaseDomain:
         Only the prometheus ingress can render auth-signin in this state: grafana/alertmanager
         render on control/unified only, and a control-plane render with HA on + no
         globalBaseDomain fails the cp-identity-secret guard. The prometheus data-plane render
-        exercises the shared houston.authBaseDomain fallback for the auth-signin annotation.
+        exercises the shared global.authBaseDomain fallback for the auth-signin annotation.
         """
         docs = render_chart(
             kube_version=kube_version,

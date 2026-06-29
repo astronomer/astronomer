@@ -22,7 +22,7 @@ metadata:
     {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     {{- include "houston.internalauthurl" . | indent 4}}
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "houston.authBaseDomain" . }}/login
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "global.authBaseDomain" . }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
 spec:
