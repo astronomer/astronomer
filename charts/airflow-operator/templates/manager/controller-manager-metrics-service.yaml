@@ -14,7 +14,7 @@ metadata:
     prometheus.io/scrape: "true"
     prometheus.io/port: "{{ .Values.ports.managerContainerPort }}"
 
-  name: {{ .Release.Name }}-aocm-metrics-service
+  name: {{ .Release.Name }}-airflow-operator-controller-manager-metrics-service
   namespace: '{{ .Release.Namespace }}'
 
 spec:
