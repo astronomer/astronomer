@@ -106,6 +106,15 @@ spec:
             tcpSocket:
               port: {{ .Values.internalPort }}
           {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.internalPort }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           lifecycle:
             preStop:
               exec:

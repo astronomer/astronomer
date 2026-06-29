@@ -104,6 +104,16 @@ service:
       path: /readyz
       port: {{ .Values.ports.managerPort }}
   {{- end }}
+  {{- if .Values.manager.startupProbe }}
+  startupProbe: {{- tpl (toYaml .Values.manager.startupProbe) . | nindent 4 }}
+  {{- else }}
+  startupProbe:
+    httpGet:
+      path: /healthz
+      port: {{ .Values.ports.managerPort }}
+    failureThreshold: 30
+    periodSeconds: 10
+  {{- end }}
   resources:
     limits:
       cpu: '{{ .Values.manager.resources.limits.cpu }}'

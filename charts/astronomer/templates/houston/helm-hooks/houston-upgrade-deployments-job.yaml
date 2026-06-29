@@ -150,6 +150,15 @@ spec:
           {{- if .Values.houston.upgradeDeployments.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.livenessProbe) . | nindent 12 }}
           {{- end }}
+          {{- if .Values.houston.upgradeDeployments.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            exec:
+              command: ["true"]
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs

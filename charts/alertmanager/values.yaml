@@ -65,6 +65,11 @@ readinessProbe: {}
   # initialDelaySeconds: 30
   # timeoutSeconds: 30
 
+startupProbe: {}
+
+authProxy:
+  startupProbe: {}
+
 ports:
   http: 9093
 
