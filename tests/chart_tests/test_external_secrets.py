@@ -35,10 +35,14 @@ class TestExternalSecretsDeployment:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["kind"] == "Deployment"
         assert doc["metadata"]["name"] == "release-name-external-secrets"
+        assert doc["metadata"]["labels"]["tier"] == "dp-failover"
+        assert doc["metadata"]["labels"]["component"] == "external-secrets"
+        assert doc["metadata"]["labels"]["release"] == "external-secrets"
         assert doc["spec"]["replicas"] == 1
-        assert doc["spec"]["template"]["metadata"]["labels"]["tier"] == "dp-failover"
-        assert doc["spec"]["template"]["metadata"]["labels"]["component"] == "external-secrets"
-        assert doc["spec"]["template"]["metadata"]["labels"]["release"] == "release-name"
+        labels = doc["spec"]["template"]["metadata"]["labels"]
+        assert labels["tier"] == "dp-failover"
+        assert labels["component"] == "external-secrets"
+        assert labels["release"] == "release-name"
 
     def test_deployment_image(self, kube_version):
         """Test that the operator deployment uses the correct image."""
