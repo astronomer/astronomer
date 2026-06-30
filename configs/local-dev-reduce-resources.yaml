@@ -1,39 +1,30 @@
-# Reduce resources for local dev
----
 prometheus:
-  replicas: 1
-  resources:
-    requests:
-      cpu: "0.5m"
-      memory: "0.5Gi"
-    limits:
-      cpu: "0.5m"
-      memory: "4Gi" # required for a large spike in memory usage
   configMapReloader:
     resources:
-      requests:
-        cpu: 500m
-        memory: 512Mi
       limits:
-        cpu: 500m
-        memory: 2Gi
-
+        cpu: 100m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 25Mi
+  federation:
+    auth:
+      resources: {}
   filesdReloader:
     resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
       requests:
         cpu: 500m
         memory: 512Mi
-      limits:
-        cpu: 500m
-        memory: 2Gi
-
 
 prometheus-postgresql-exporter:
   replicaCount: 1
   resources:
     requests:
-      cpu: "0.1m"
-      memory: "0.5Gi"
-    limits:
-      cpu: "0.1m"
-      memory: "1Gi"
+      cpu: 0m
+      memory: 0Gi
+  limits:
+    cpu: 1m
+    memory: 1Gi

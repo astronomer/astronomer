@@ -1,0 +1,24 @@
+# Enables the ability to create git-sync deployments.
+---
+astronomer:
+  airflowChartVersion:
+  houston:
+    config:
+      deployments:
+        gitSyncDagDeployment: true
+
+global:
+  gitSyncRelay:
+    images:
+      gitSync:
+        repository: quay.io/astronomer/ap-git-sync-relay
+        tag: danielhoherd_PINF-426-fr11-git-sync-relay
+      # gitDaemon:
+      #   repository: quay.io/astronomer/ap-git-daemon
+      #   tag: 2026.6.23
+  # airflow:
+  #   images:
+  #     gitSync:
+  #       # OSS airflow component's git-sync sidecar
+  #       repository: quay.io/astronomer/ap-git-sync
+  #       tag: 2026.6.23
