@@ -465,6 +465,8 @@ s3:
   value: {{ .Release.Name }}-stan
 {{- if .Values.global.controlPlaneHA.enabled }}
 {{- include "houston.cpIdEnv" . | nindent 0 }}
+- name: DPLINK_WORKER_ID
+  value: "$(CP_ID):$(HOSTNAME)"
 {{- end }}
 {{- end }}
 
