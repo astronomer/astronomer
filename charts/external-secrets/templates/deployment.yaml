@@ -4,6 +4,10 @@
 ###############################
 {{- if (include "external-secrets.enabled" .) }}
 {{- include "external-secrets.reconciler-sanity-test" . }}
+{{- $useRoles := or .Values.global.namespaceManagement.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
+{{- $namespaces = append $namespaces .Release.Namespace }}
+{{- $namespaceList := join "," $namespaces }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -80,7 +84,11 @@ spec:
           {{- if .Values.scopedNamespace }}
           - --namespace={{ .Values.scopedNamespace }}
           {{- end }}
-          {{- if and .Values.scopedNamespace .Values.scopedRBAC }}
+          {{- if or $useRoles .Values.watchNamespaces }}
+          - --watch-namespaces={{ $namespaceList }}
+          - --enable-secrets-caching=true
+          {{- end }}
+           {{- if or (and .Values.scopedNamespace .Values.scopedRBAC) .Values.watchNamespaces }}
           - --enable-cluster-store-reconciler=false
           - --enable-cluster-external-secret-reconciler=false
           - --enable-cluster-push-secret-reconciler=false

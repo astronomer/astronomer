@@ -30,8 +30,8 @@ revisionHistoryLimit: 10
 
 image:
   repository: quay.io/astronomer/ap-external-secrets
-  tag: 2.7.0
-  pullPolicy: IfNotPresent
+  tag: feat-test-eso-rbac
+  pullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
@@ -63,6 +63,8 @@ scopedRBAC: false
 
 # -- If true the OpenShift finalizer permissions will be added to RBAC
 openshiftFinalizers: false
+
+watchNamespaces: []
 
 # -- If true the system:auth-delegator ClusterRole will be added to RBAC
 systemAuthDelegator: false
