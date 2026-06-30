@@ -37,7 +37,7 @@ class TestExternalSecretsDeployment:
         assert doc["metadata"]["name"] == "release-name-external-secrets"
         assert doc["metadata"]["labels"]["tier"] == "dp-failover"
         assert doc["metadata"]["labels"]["component"] == "external-secrets"
-        assert doc["metadata"]["labels"]["release"] == "external-secrets"
+        assert doc["metadata"]["labels"]["release"] == "release-name"
         assert doc["spec"]["replicas"] == 1
         labels = doc["spec"]["template"]["metadata"]["labels"]
         assert labels["tier"] == "dp-failover"
