@@ -93,8 +93,6 @@ data:
         {{- range $i, $namespaceName := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
           - name: {{ $namespaceName }}
         {{- end }}
-        hardDeleteDeployment:
-          enabled: true
         manualNamespaceNames:
           enabled: true
         {{- end }}
