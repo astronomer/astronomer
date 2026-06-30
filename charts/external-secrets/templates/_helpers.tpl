@@ -62,7 +62,9 @@ Selector labels
 {{- define "external-secrets.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "external-secrets.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+tier: dp-failover
 component: {{ template "external-secrets.name" . }}
+release: {{ .Release.Name }}
 chart: {{ template "external-secrets.chart" . }}
 heritage: {{ .Release.Service }}
 release: {{ .Release.Name }}
