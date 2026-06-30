@@ -62,6 +62,11 @@ Selector labels
 {{- define "external-secrets.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "external-secrets.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+component: {{ template "external-secrets.name" . }}
+chart: {{ template "external-secrets.chart" . }}
+heritage: {{ .Release.Service }}
+release: {{ .Release.Name }}
+plane: {{ .Values.global.plane.mode }}
 {{- end }}
 
 {{/*
