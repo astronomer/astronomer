@@ -116,6 +116,8 @@ spec:
               value: {{ .Release.Name }}-stan
             {{- if .Values.global.controlPlaneHA.enabled }}
             {{- include "houston.cpIdEnv" . | nindent 12 }}
+            - name: NAVIGATOR_WORKER_ID
+              value: "$(CP_ID):$(HOSTNAME)"
             {{- end }}
 
             # Failover request reconcile loop
