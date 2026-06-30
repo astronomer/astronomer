@@ -141,6 +141,16 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
           {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.ports.http }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           volumeMounts:
             - name: grafana-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
@@ -210,6 +220,17 @@ spec:
               port: {{ .Values.global.authSidecar.port }}
               scheme: HTTP
             initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          {{- if .Values.authProxy.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.authProxy.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            failureThreshold: 30
             periodSeconds: 10
           {{- end }}
           volumeMounts:

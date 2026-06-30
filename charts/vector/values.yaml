@@ -21,6 +21,7 @@ vector:
   resources: ~
   livenessProbe: ~
   readinessProbe: ~
+  startupProbe: ~
 
 logLevel: ~
 

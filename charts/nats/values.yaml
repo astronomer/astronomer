@@ -64,6 +64,13 @@ nats:
     # initialDelaySeconds: 10
     # timeoutSeconds: 5
 
+  startupProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: 8222
+    # failureThreshold: 30
+    # periodSeconds: 10
+
   # Server settings.
   limits:
     maxConnections:
@@ -80,6 +87,11 @@ nats:
 
   jetStream:
     enabled: true
+    startupProbe: {}
+      # exec:
+      #   command: ["true"]
+      # failureThreshold: 30
+      # periodSeconds: 10
     serviceAccount:
       create: true
       name: ~
@@ -278,6 +290,11 @@ reloader:
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
+  startupProbe: {}
+    # tcpSocket:
+    #   port: 7777
+    # failureThreshold: 30
+    # periodSeconds: 10
   # resource configuration for the metrics sidecar
   resources:
     limits:

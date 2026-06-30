@@ -51,6 +51,12 @@ helm.sh/chart: {{ include "external-secrets.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+tier: dp-failover
+component: {{ template "external-secrets.name" . }}
+release: {{ .Release.Name }}
+chart: {{ template "external-secrets.chart" . }}
+heritage: {{ .Release.Service }}
+plane: {{ .Values.global.plane.mode }}
 {{- with .Values.commonLabels }}
 {{ toYaml . }}
 {{- end }}
