@@ -51,6 +51,12 @@ helm.sh/chart: {{ include "external-secrets.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+tier: dp-failover
+component: {{ template "external-secrets.name" . }}
+release: {{ .Release.Name }}
+chart: {{ template "external-secrets.chart" . }}
+heritage: {{ .Release.Service }}
+plane: {{ .Values.global.plane.mode }}
 {{- with .Values.commonLabels }}
 {{ toYaml . }}
 {{- end }}
@@ -62,13 +68,6 @@ Selector labels
 {{- define "external-secrets.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "external-secrets.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-tier: dp-failover
-component: {{ template "external-secrets.name" . }}
-release: {{ .Release.Name }}
-chart: {{ template "external-secrets.chart" . }}
-heritage: {{ .Release.Service }}
-release: {{ .Release.Name }}
-plane: {{ .Values.global.plane.mode }}
 {{- end }}
 
 {{/*
