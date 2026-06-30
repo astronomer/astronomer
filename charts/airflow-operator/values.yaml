@@ -60,7 +60,7 @@ webhooks:
 serviceAccount:
   create: true
   # Override the name of the controller-manager ServiceAccount.
-  # Leave empty to use the default "airflow-operator-controller-manager".
+  # Leave empty to use the default "aocm".
   name: ""
   # Whether the ServiceAccount's API token is automatically mounted into the pod.
   automountServiceAccountToken: true
@@ -90,6 +90,12 @@ manager:
     #     path: /readyz
     #     port: .Values.port.managerPort
     # initialDelaySeconds: 5
+    # periodSeconds: 10
+  startupProbe: {}
+    # httpGet:
+    #     path: /healthz
+    #     port: .Values.port.managerPort
+    # failureThreshold: 30
     # periodSeconds: 10
   nodeSelector: {}
   # affinity: node/pod (anti-)affinity rules, e.g. spread replicas across nodes.

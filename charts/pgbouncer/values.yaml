@@ -74,6 +74,10 @@ livenessProbe: {}
   # tcpSocket:
   #   port: {{ .Values.internalPort }}
 
+startupProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.internalPort }}
+
 # Mount additional volumes into pgbouncer.
 extraVolumes: []
 extraVolumeMounts: []
