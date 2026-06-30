@@ -5,6 +5,7 @@
 {{- if (include "external-secrets.enabled" .) }}
 {{- include "external-secrets.reconciler-sanity-test" . }}
 {{- $useRoles := or .Values.global.namespaceManagement.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not $useRoles )}}
 {{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- $namespaceList := join "," $namespaces }}
@@ -85,7 +86,7 @@ spec:
           - --watch-namespaces={{ $namespaceList }}
           - --enable-secrets-caching=true
           {{- end }}
-           {{- if or (and .Values.scopedNamespace .Values.scopedRBAC) .Values.watchNamespaces }}
+           {{- if or (and .Values.scopedNamespace .Values.scopedRBAC) .Values.watchNamespaces (not $useClusterRoles) }}
           - --enable-cluster-store-reconciler=false
           - --enable-cluster-external-secret-reconciler=false
           - --enable-cluster-push-secret-reconciler=false
