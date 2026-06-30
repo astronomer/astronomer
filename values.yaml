@@ -48,6 +48,9 @@ global:
       repository: quay.io/astronomer/ap-db-bootstrapper
       tag: 2.0.12
       pullPolicy: IfNotPresent
+      startupProbe: {}
+    containerdCertCopier:
+      startupProbe: {}
     priorityClassName: ~
   #Global flag to enable Operator based deployment
   airflowOperator:

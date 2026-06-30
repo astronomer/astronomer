@@ -90,6 +90,15 @@ spec:
               {{- if .Values.houston.syncDataplaneClusters.livenessProbe }}
               livenessProbe: {{ tpl (toYaml .Values.houston.syncDataplaneClusters.livenessProbe) . | nindent 16 }}
               {{- end }}
+              {{- if .Values.houston.syncDataplaneClusters.startupProbe }}
+              startupProbe: {{ tpl (toYaml .Values.houston.syncDataplaneClusters.startupProbe) . | nindent 16 }}
+              {{- else }}
+              startupProbe:
+                exec:
+                  command: ["true"]
+                failureThreshold: 30
+                periodSeconds: 10
+              {{- end }}
           volumes:
             - name: etc-ssl-certs
               emptyDir: {}

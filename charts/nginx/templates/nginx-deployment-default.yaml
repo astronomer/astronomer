@@ -64,6 +64,17 @@ spec:
             initialDelaySeconds: 30
             timeoutSeconds: 5
           {{- end }}
+          {{ if .Values.defaultBackend.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.defaultBackend.startupProbe) . | nindent 12 }}
+          {{ else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.defaultBackendHTTP }}
+              scheme: HTTP
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           resources: {{ toYaml .Values.defaultBackend.resources | nindent 12 }}
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}

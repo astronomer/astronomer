@@ -77,6 +77,16 @@ spec:
               path: /
               port: {{ .Values.service.port }}
           {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.service.port }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: proc

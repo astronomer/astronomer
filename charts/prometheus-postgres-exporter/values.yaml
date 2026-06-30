@@ -56,6 +56,12 @@ readinessProbe: {}
   # initialDelaySeconds: 5
   # periodSeconds: 10
 
+startupProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.service.targetPort }}
+  # failureThreshold: 30
+  # periodSeconds: 10
+
 
 podSecurityContext:
   seccompProfile:

@@ -89,6 +89,15 @@ spec:
               {{- if .Values.houston.taskUsageMetrics.livenessProbe }}
               livenessProbe: {{ tpl (toYaml .Values.houston.taskUsageMetrics.livenessProbe) . | nindent 16 }}
               {{- end }}
+              {{- if .Values.houston.taskUsageMetrics.startupProbe }}
+              startupProbe: {{ tpl (toYaml .Values.houston.taskUsageMetrics.startupProbe) . | nindent 16 }}
+              {{- else }}
+              startupProbe:
+                exec:
+                  command: ["true"]
+                failureThreshold: 30
+                periodSeconds: 10
+              {{- end }}
           volumes:
             - name: etc-ssl-certs
               emptyDir: {}

@@ -140,6 +140,24 @@ spec:
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
+        {{- if .Values.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c
+           {{- if (include "postgresql.database" .) }}
+            - exec pg_isready -U {{ include "postgresql.username" . | quote }} -d {{ (include "postgresql.database" .) | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+           {{- else }}
+            - exec pg_isready -U {{ include "postgresql.username" . | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+           {{- end }}
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+        {{- end }}
         {{- if .Values.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 10 }}
         {{- else }}
@@ -227,6 +245,16 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 6
           successThreshold: 1
+        {{- end }}
+        {{- if .Values.metrics.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.metrics.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          httpGet:
+            path: /
+            port: metrics
+          failureThreshold: 30
+          periodSeconds: 10
         {{- end }}
         {{- if .Values.metrics.readinessProbe }}
         readinessProbe:

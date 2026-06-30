@@ -47,6 +47,9 @@ securityContext:
 awsproxy:
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
+
+startupProbe: {}
 
 service:
   type: ClusterIP

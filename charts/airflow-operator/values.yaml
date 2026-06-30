@@ -91,6 +91,12 @@ manager:
     #     port: .Values.port.managerPort
     # initialDelaySeconds: 5
     # periodSeconds: 10
+  startupProbe: {}
+    # httpGet:
+    #     path: /healthz
+    #     port: .Values.port.managerPort
+    # failureThreshold: 30
+    # periodSeconds: 10
   nodeSelector: {}
   # affinity: node/pod (anti-)affinity rules, e.g. spread replicas across nodes.
   affinity: {}

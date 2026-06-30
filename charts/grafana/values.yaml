@@ -95,6 +95,11 @@ extraEnvVars:
   #       name: grafana-smtp-secret
   #       key: smtp_password
 
+startupProbe: {}
+
+authProxy:
+  startupProbe: {}
+
 bootstrapper:
   # ap-db-bootstrapper runs as UID 1000; override the chart-wide runAsUser default for this init container.
   securityContext:

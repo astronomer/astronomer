@@ -62,6 +62,15 @@ spec:
           {{- if .Values.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
           {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.service.securehttp }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           env:
 {{- if .Values.global.customLogging.extraEnv }}
 {{ toYaml .Values.global.customLogging.extraEnv | indent 10 }}
@@ -130,6 +139,15 @@ spec:
           {{- end }}
           {{- if .Values.awsproxy.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.awsproxy.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.awsproxy.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.awsproxy.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.service.awsproxy }}
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

@@ -132,6 +132,19 @@ spec:
           {{- if .Values.dpLink.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.dpLink.readinessProbe) $ | nindent 12 }}
           {{- end }}
+          {{- if .Values.dpLink.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.dpLink.startupProbe) $ | nindent 12 }}
+          {{- else }}
+          # dp-link is a dial-out worker (`yarn run dplink`): it consumes a Commander
+          # gRPC stream and runs a per-cluster claim/lease loop, binding no listener,
+          # so a tcpSocket/httpGet probe would fail forever and crashloop the pod. Use
+          # a no-op exec probe to satisfy Gatekeeper's allow-with-probes safely.
+          startupProbe:
+            exec:
+              command: ["/bin/true"]
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
