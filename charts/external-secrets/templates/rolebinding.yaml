@@ -1,4 +1,41 @@
 ---
+######################################
+## external-secrets controller RoleBinding ##
+######################################
+{{- if and (include "external-secrets.enabled" .) .Values.rbac.create }}
+{{- $namespacepoolsRBACresources:= and .Values.global.namespaceManagement.namespacePools.createRbac .Values.global.namespaceManagement.namespacePools.enabled }}
+{{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}
+{{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not $useRoles )}}
+{{- $shouldCreateResources := and .Values.global.rbac.enabled (or (and .Values.global.clusterRoles (not .Values.global.namespaceManagement.namespacePools.enabled )) $namespacepoolsRBACresources) }}
+{{- if $shouldCreateResources }}
+{{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
+{{- if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{- else  }}
+  {{- $namespaces = append $namespaces .Release.Namespace }}
+{{- end }}
+{{- range $i, $namespaceName := $namespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ if $useClusterRoles }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
+metadata:
+  name: {{ include "external-secrets.fullname" $ }}
+  {{- if not $useClusterRoles }}
+  namespace: {{ $namespaceName }}
+  {{- end }}
+  labels:
+    {{- include "external-secrets.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
+  name: {{ include "external-secrets.fullname" $ }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "external-secrets.serviceAccountName" $ }}
+    namespace: {{ template "external-secrets.namespace" $ }}
+{{- end }}
+{{- end }}
+{{- end }}
 ###########################
 ## external-secrets RBAC ##
 ###########################

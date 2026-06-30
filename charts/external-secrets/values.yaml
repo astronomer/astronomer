@@ -142,7 +142,7 @@ rbac:
 
   servicebindings:
     # -- Specifies whether a clusterrole to give servicebindings read access should be created.
-    create: true
+    create: false
 
   # -- Specifies whether permissions are aggregated to the view ClusterRole
   aggregateToView: true
