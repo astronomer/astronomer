@@ -1,17 +1,18 @@
 # Enables the ability to create git-sync deployments.
 ---
 astronomer:
-  airflowChartVersion:
+  airflowChartVersion: 1.18.0-build43027
   houston:
     config:
       deployments:
         gitSyncDagDeployment: true
 
 global:
+  helmRepo: https://internal-helm.astronomer.io
   gitSyncRelay:
     images:
       gitSync:
-        repository: quay.io/astronomer/ap-git-sync-relay
+        # repository: quay.io/astronomer/ap-git-sync-relay
         tag: danielhoherd_PINF-426-fr11-git-sync-relay
       # gitDaemon:
       #   repository: quay.io/astronomer/ap-git-daemon
