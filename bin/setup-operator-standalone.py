@@ -52,8 +52,8 @@ import os
 import secrets
 import shlex
 import subprocess
-import tempfile
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -175,13 +175,21 @@ def _ensure_registry(spec: _RegistrySpec, docker_network: str) -> None:
     _print(f"  Creating registry proxy: {spec.name} -> {spec.upstream} (host port {spec.host_port})")
     _run(
         [
-            "docker", "run", "-d",
-            "--name", spec.name,
-            "--network", docker_network,
-            "--restart", "always",
-            "-p", f"{spec.host_port}:5000",
-            "-v", f"{volume_name}:/var/lib/registry",
-            "-v", f"{config_path}:/etc/docker/registry/config.yml:ro",
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            spec.name,
+            "--network",
+            docker_network,
+            "--restart",
+            "always",
+            "-p",
+            f"{spec.host_port}:5000",
+            "-v",
+            f"{volume_name}:/var/lib/registry",
+            "-v",
+            f"{config_path}:/etc/docker/registry/config.yml:ro",
             REGISTRY_IMAGE,
         ]
     )
@@ -236,7 +244,7 @@ class Settings:
     operator_release: str
     keda_namespace: str
     # k3d cluster creation
-    cluster_name: str          # empty string = skip cluster creation
+    cluster_name: str  # empty string = skip cluster creation
     docker_network: str
     https_port: int
     http_port: int
@@ -255,7 +263,10 @@ class Settings:
     install_operator: bool
     install_service_monitor_crd: bool
     operator_chart_version: str
-    operator_chart_path: str   # explicit local chart dir; empty = auto-detect, then remote
+    operator_chart_path: str  # explicit local chart dir; empty = auto-detect, then remote
+    operator_image: str  # custom operator image ("repo:tag" or "repo"); empty = chart default
+    load_operator_image: bool  # docker pull + k3d image import the operator image (k3d mode only)
+    operator_set: tuple[str, ...]  # extra `helm --set KEY=VALUE` overrides for the operator chart
     # image registry
     registry_server: str
     registry_username: str
@@ -267,7 +278,7 @@ class Settings:
     executor: str
     # CR
     apply_cr: bool
-    cr_path: str               # empty = generate CR from settings
+    cr_path: str  # empty = generate CR from settings
     pod_template_path: Path | None
     # admin user (Airflow 2 / FAB auth)
     create_admin_user: bool
@@ -373,7 +384,7 @@ class Milestones:
             return " ".join(s.split())
 
         def _truncate(s: str, n: int) -> str:
-            return s if len(s) <= n else (f"{s[:n-3]}..." if n > 3 else s[:n])
+            return s if len(s) <= n else (f"{s[: n - 3]}..." if n > 3 else s[:n])
 
         rows: list[list[str]] = []
         for row in self._rows:
@@ -391,13 +402,15 @@ class Milestones:
             error = _one_line(str(row.get("error") or ""))
             details_cell = (f"{detail} " if detail else "") + error if error else detail
 
-            rows.append([
-                str(int(row["idx"])),
-                _truncate(_one_line(str(row["title"])), 70),
-                status_cell,
-                duration_cell,
-                _truncate(details_cell, 90),
-            ])
+            rows.append(
+                [
+                    str(int(row["idx"])),
+                    _truncate(_one_line(str(row["title"])), 70),
+                    status_cell,
+                    duration_cell,
+                    _truncate(details_cell, 90),
+                ]
+            )
 
         headers = ["#", "Milestone", "Status", "Duration", "Details"]
         widths = [len(h) for h in headers]
@@ -500,17 +513,48 @@ def _k3d_create_cluster(
     registry_config: Path | None,
 ) -> None:
     cmd = [
-        "k3d", "cluster", "create", name,
-        "--network", docker_network,
-        "--agents", str(agents),
-        "--k3s-arg", "--disable=traefik@server:0",
-        "--port", f"{https_port}:443@loadbalancer",
-        "--port", f"{http_port}:80@loadbalancer",
+        "k3d",
+        "cluster",
+        "create",
+        name,
+        "--network",
+        docker_network,
+        "--agents",
+        str(agents),
+        "--k3s-arg",
+        "--disable=traefik@server:0",
+        "--port",
+        f"{https_port}:443@loadbalancer",
+        "--port",
+        f"{http_port}:80@loadbalancer",
     ]
     if registry_config is not None:
         cmd.extend(["--registry-config", str(registry_config)])
     _print(f"  Creating k3d cluster: {name}")
     _run(cmd, capture=False)
+
+
+def _docker_pull(image: str) -> None:
+    _print(f"  docker pull {image}")
+    _run(["docker", "pull", image], capture=False)
+
+
+def _k3d_image_import(cluster: str, image: str) -> None:
+    _print(f"  k3d image import {image} -> cluster {cluster}")
+    _run(["k3d", "image", "import", image, "-c", cluster], capture=False)
+
+
+def _load_image_into_k3d(cluster: str, image: str) -> None:
+    """Pull an image with the local (authenticated) Docker daemon and side-load it into k3d.
+
+    Lets us run private/RC operator images (e.g. airflow-operator-dev, behind an authenticated
+    registry) in a k3d cluster without wiring imagePullSecrets into the cluster: the local
+    `docker pull` uses the developer's existing registry login, and `k3d image import` copies the
+    image straight into every node's containerd. With a non-":latest" tag the kubelet defaults to
+    imagePullPolicy=IfNotPresent, so it uses the loaded image and never contacts the registry.
+    """
+    _docker_pull(image)
+    _k3d_image_import(cluster, image)
 
 
 def _docker_inspect_ip(container: str) -> str:
@@ -543,7 +587,7 @@ def _save_state(namespace: str, state: dict[str, str]) -> None:
     _state_path(namespace).write_text(json.dumps(state, indent=2))
 
 
-def _get_or_generate(state: dict[str, str], key: str, generator: "Callable[[], str]") -> str:  # type: ignore[name-defined]
+def _get_or_generate(state: dict[str, str], key: str, generator: Callable[[], str]) -> str:
     if key not in state:
         state[key] = generator()
     return state[key]
@@ -604,9 +648,18 @@ def _create_namespace(context: str, namespace: str) -> None:
 
 def _apply_literal_secret(*, context: str, namespace: str, name: str, literals: dict[str, str]) -> None:
     cmd = [
-        "kubectl", "--context", context, "-n", namespace,
-        "create", "secret", "generic", name,
-        "--dry-run=client", "-o", "yaml",
+        "kubectl",
+        "--context",
+        context,
+        "-n",
+        namespace,
+        "create",
+        "secret",
+        "generic",
+        name,
+        "--dry-run=client",
+        "-o",
+        "yaml",
     ]
     for k, v in literals.items():
         cmd.append(f"--from-literal={k}={v}")
@@ -616,42 +669,79 @@ def _apply_literal_secret(*, context: str, namespace: str, name: str, literals: 
 def _apply_file_secret(*, context: str, namespace: str, name: str, key: str, file_path: Path) -> None:
     yaml_out = _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "create", "secret", "generic", name,
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "generic",
+            name,
             f"--from-file={key}={file_path}",
-            "--dry-run=client", "-o", "yaml",
+            "--dry-run=client",
+            "-o",
+            "yaml",
         ]
     ).stdout
     _kubectl_apply_yaml(context, yaml_out)
 
 
 def _apply_docker_registry_secret(
-    *, context: str, namespace: str, name: str,
-    server: str, username: str, password: str, email: str,
+    *,
+    context: str,
+    namespace: str,
+    name: str,
+    server: str,
+    username: str,
+    password: str,
+    email: str,
 ) -> None:
     yaml_out = _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "create", "secret", "docker-registry", name,
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "docker-registry",
+            name,
             f"--docker-server={server}",
             f"--docker-username={username}",
             f"--docker-password={password}",
             f"--docker-email={email}",
-            "--dry-run=client", "-o", "yaml",
+            "--dry-run=client",
+            "-o",
+            "yaml",
         ]
     ).stdout
     _kubectl_apply_yaml(context, yaml_out)
 
 
 def _apply_configmap_from_file(
-    *, context: str, namespace: str, name: str, key: str, file_path: Path,
+    *,
+    context: str,
+    namespace: str,
+    name: str,
+    key: str,
+    file_path: Path,
 ) -> None:
     yaml_out = _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "create", "configmap", name,
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "configmap",
+            name,
             f"--from-file={key}={file_path}",
-            "--dry-run=client", "-o", "yaml",
+            "--dry-run=client",
+            "-o",
+            "yaml",
         ]
     ).stdout
     _kubectl_apply_yaml(context, yaml_out)
@@ -672,10 +762,16 @@ def _pin_cert_manager_to_control_plane(context: str) -> None:
     for deployment in ("cert-manager-webhook", "cert-manager-cainjector", "cert-manager"):
         _run(
             [
-                "kubectl", "--context", context,
-                "patch", "deployment", deployment,
-                "-n", "cert-manager",
-                "--type=merge", f"--patch={patch}",
+                "kubectl",
+                "--context",
+                context,
+                "patch",
+                "deployment",
+                deployment,
+                "-n",
+                "cert-manager",
+                "--type=merge",
+                f"--patch={patch}",
             ],
             check=False,
         )
@@ -686,9 +782,13 @@ def _wait_for_cert_manager(context: str, timeout_s: int = 180) -> None:
     for deployment in ("cert-manager", "cert-manager-webhook"):
         _run(
             [
-                "kubectl", "--context", context,
-                "-n", "cert-manager",
-                "wait", "--for=condition=available",
+                "kubectl",
+                "--context",
+                context,
+                "-n",
+                "cert-manager",
+                "wait",
+                "--for=condition=available",
                 f"deployment/{deployment}",
                 f"--timeout={timeout_s}s",
             ],
@@ -742,6 +842,47 @@ def _find_local_operator_chart(explicit_path: str = "") -> Path | None:
     return None
 
 
+def _split_image_ref(image: str) -> tuple[str, str]:
+    """Split ``repo[:tag]`` into ``(repository, tag)``; tag is "" when absent.
+
+    Only treats a trailing ``:tag`` as a tag when the colon comes after the last ``/`` — this
+    avoids mistaking a registry-host port (e.g. ``localhost:5000/airflow-operator``) for a tag.
+    """
+    last_slash = image.rfind("/")
+    last_colon = image.rfind(":")
+    if last_colon > last_slash:
+        return image[:last_colon], image[last_colon + 1 :]
+    return image, ""
+
+
+def _operator_extra_set(settings: Settings) -> list[str]:
+    """Build the `helm --set` overrides for the operator chart.
+
+    certManager.enabled defaults to false in the operator chart, which skips the selfsigned
+    Issuer + serving-cert Certificate. The webhook configs are still rendered
+    (webhooks.enabled=true) with a cert-manager.io/inject-ca-from annotation, so without this
+    the webhook-server-cert secret is never issued, no caBundle is injected, and the API server
+    rejects the webhook's self-signed cert when the Airflow CR is applied. We install
+    cert-manager earlier precisely so this can be enabled.
+    """
+    sets = ["certManager.enabled=true"]
+    if settings.operator_image:
+        repo, tag = _split_image_ref(settings.operator_image)
+        # The two operator charts template the manager image from different value paths:
+        #   - sibling airflow-operator/helm (auto-detected, preferred): manager.image.{repository,tag}
+        #   - this repo's charts/airflow-operator (remote fallback):     images.manager.{repository,tag}
+        # A `helm --set` to a path the resolved chart doesn't reference is silently ignored, so
+        # setting both makes --operator-image work regardless of which chart is used.
+        sets.append(f"manager.image.repository={repo}")
+        sets.append(f"images.manager.repository={repo}")
+        if tag:
+            sets.append(f"manager.image.tag={tag}")
+            sets.append(f"images.manager.tag={tag}")
+    # User-supplied overrides last so they win over the defaults above.
+    sets.extend(settings.operator_set)
+    return sets
+
+
 def _helm_repo_add(name: str, url: str) -> None:
     _run(["helm", "repo", "add", "--force-update", name, url])
     _run(["helm", "repo", "update", name])
@@ -759,10 +900,18 @@ def _helm_upgrade_install(
     timeout: str = "5m",
 ) -> None:
     cmd = [
-        "helm", "upgrade", "--install", release, chart,
-        "--kube-context", context,
-        "--namespace", namespace,
-        "--wait", "--timeout", timeout,
+        "helm",
+        "upgrade",
+        "--install",
+        release,
+        chart,
+        "--kube-context",
+        context,
+        "--namespace",
+        namespace,
+        "--wait",
+        "--timeout",
+        timeout,
     ]
     if create_namespace:
         cmd.append("--create-namespace")
@@ -788,38 +937,37 @@ def _setup_secrets(settings: Settings, state: dict[str, str]) -> None:
     webserver_secret = _get_or_generate(state, "webserver_secret_key", _generate_secret_key)
     redis_password = _get_or_generate(state, "redis_password", _generate_password)
 
-    _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-fernet-key",
-                          literals={"fernet-key": fernet_key})
-    _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-webserver-secret-key",
-                          literals={"webserver-secret-key": webserver_secret})
+    _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-fernet-key", literals={"fernet-key": fernet_key})
+    _apply_literal_secret(
+        context=ctx, namespace=ns, name=f"{p}-webserver-secret-key", literals={"webserver-secret-key": webserver_secret}
+    )
 
     if not settings.in_cluster_postgres:
-        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-metadata",
-                              literals={"connection": settings.metadata_db_url})
-        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-result-backend",
-                              literals={"connection": settings.result_backend_url})
+        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-metadata", literals={"connection": settings.metadata_db_url})
+        _apply_literal_secret(
+            context=ctx, namespace=ns, name=f"{p}-result-backend", literals={"connection": settings.result_backend_url}
+        )
         pgbouncer_conn = settings.metadata_db_url.replace("postgresql+psycopg2://", "postgresql://")
-        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-pgbouncer-connection",
-                              literals={"connection": pgbouncer_conn})
+        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-pgbouncer-connection", literals={"connection": pgbouncer_conn})
 
     if settings.executor == "CeleryExecutor":
         redis_conn = f"redis://:{redis_password}@{p}-redis:6379/0"
-        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-redis-password",
-                              literals={"password": redis_password})
-        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-redis-connection",
-                              literals={"connection": redis_conn})
+        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-redis-password", literals={"password": redis_password})
+        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-redis-connection", literals={"connection": redis_conn})
 
     if settings.db_ca_cert is not None:
-        _apply_file_secret(context=ctx, namespace=ns, name=f"{p}-db-ca",
-                           key="ca.crt", file_path=settings.db_ca_cert)
+        _apply_file_secret(context=ctx, namespace=ns, name=f"{p}-db-ca", key="ca.crt", file_path=settings.db_ca_cert)
 
     if settings.elasticsearch_url:
-        _apply_literal_secret(context=ctx, namespace=ns, name=f"{p}-elasticsearch",
-                              literals={"connection": settings.elasticsearch_url})
+        _apply_literal_secret(
+            context=ctx, namespace=ns, name=f"{p}-elasticsearch", literals={"connection": settings.elasticsearch_url}
+        )
 
     if settings.registry_username and settings.registry_password:
         _apply_docker_registry_secret(
-            context=ctx, namespace=ns, name=f"{p}-registry",
+            context=ctx,
+            namespace=ns,
+            name=f"{p}-registry",
             server=settings.registry_server,
             username=settings.registry_username,
             password=settings.registry_password,
@@ -910,9 +1058,15 @@ def _wait_for_deployment_available(context: str, namespace: str, name: str, time
         raise CommandError(f"Deployment {name} was not created within the expected time")
     _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "wait", "--for=condition=available",
-            f"deployment/{name}", f"--timeout={timeout_s}s",
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "wait",
+            "--for=condition=available",
+            f"deployment/{name}",
+            f"--timeout={timeout_s}s",
         ],
         capture=False,
     )
@@ -934,15 +1088,29 @@ def _create_admin_user(settings: Settings) -> str:
     _print(f"  Creating admin user '{settings.admin_username}'")
     proc = _run(
         [
-            "kubectl", "--context", ctx, "-n", ns,
-            "exec", f"deployment/{deploy}", "--",
-            "airflow", "users", "create",
-            "--username", settings.admin_username,
-            "--password", settings.admin_password,
-            "--firstname", "Admin",
-            "--lastname", "User",
-            "--role", "Admin",
-            "--email", settings.admin_email,
+            "kubectl",
+            "--context",
+            ctx,
+            "-n",
+            ns,
+            "exec",
+            f"deployment/{deploy}",
+            "--",
+            "airflow",
+            "users",
+            "create",
+            "--username",
+            settings.admin_username,
+            "--password",
+            settings.admin_password,
+            "--firstname",
+            "Admin",
+            "--lastname",
+            "User",
+            "--role",
+            "Admin",
+            "--email",
+            settings.admin_email,
         ],
         check=False,
     )
@@ -988,9 +1156,7 @@ def _generate_cr_yaml(settings: Settings) -> str:
     redisPasswordSecretName: {p}-redis-password
 """
 
-    image_pull_secret_block = (
-        f"  imagePullSecret: {p}-registry\n" if settings.registry_username else ""
-    )
+    image_pull_secret_block = f"  imagePullSecret: {p}-registry\n" if settings.registry_username else ""
 
     db_ssl_block = ""
     if settings.db_ca_cert is not None:
@@ -1113,57 +1279,106 @@ Examples:
         default="",
         help="Create a k3d cluster with this name and use it. Mutually exclusive with --context.",
     )
-    cluster_group.add_argument("--docker-network", default="airflow-standalone-net",
-                               help="Docker network for k3d. Default: %(default)s")
-    cluster_group.add_argument("--https-port", type=int, default=8443,
-                               help="Host HTTPS port mapped to the cluster LoadBalancer. Default: %(default)s")
-    cluster_group.add_argument("--http-port", type=int, default=8080,
-                               help="Host HTTP port mapped to the cluster LoadBalancer. Default: %(default)s")
     cluster_group.add_argument(
-        "--num-agents", type=int, default=0,
+        "--docker-network", default="airflow-standalone-net", help="Docker network for k3d. Default: %(default)s"
+    )
+    cluster_group.add_argument(
+        "--https-port", type=int, default=8443, help="Host HTTPS port mapped to the cluster LoadBalancer. Default: %(default)s"
+    )
+    cluster_group.add_argument(
+        "--http-port", type=int, default=8080, help="Host HTTP port mapped to the cluster LoadBalancer. Default: %(default)s"
+    )
+    cluster_group.add_argument(
+        "--num-agents",
+        type=int,
+        default=0,
         help="Number of k3d agent (worker) nodes. Default: %(default)s",
     )
-    cluster_group.add_argument("--recreate-cluster", action="store_true",
-                               help="Delete and recreate the k3d cluster if it already exists.")
     cluster_group.add_argument(
-        "--no-local-registry", action="store_true",
+        "--recreate-cluster", action="store_true", help="Delete and recreate the k3d cluster if it already exists."
+    )
+    cluster_group.add_argument(
+        "--no-local-registry",
+        action="store_true",
         help="Skip pull-through registry proxy setup (images pulled directly from remote).",
     )
 
     # --- existing cluster ---
     parser.add_argument(
-        "--context", default="",
+        "--context",
+        default="",
         help="kubectl context for an existing cluster. Ignored when --cluster-name is set.",
     )
 
     # --- namespace / naming ---
-    parser.add_argument("--namespace", default="airflow-prod",
-                        help="Deployment namespace for the Airflow CR. Default: %(default)s")
-    parser.add_argument("--release-prefix", default="prod-airflow",
-                        help="Prefix for K8s resource names (secrets, CR name). Default: %(default)s")
+    parser.add_argument("--namespace", default="airflow-prod", help="Deployment namespace for the Airflow CR. Default: %(default)s")
+    parser.add_argument(
+        "--release-prefix", default="prod-airflow", help="Prefix for K8s resource names (secrets, CR name). Default: %(default)s"
+    )
 
     # --- operator ---
-    parser.add_argument("--operator-namespace", default="airflow-operator-system",
-                        help="Namespace for the operator controller. Default: %(default)s")
-    parser.add_argument("--operator-release", default="airflow-operator-system",
-                        help="Helm release name for the operator. Default: %(default)s")
-    parser.add_argument("--operator-chart-version", default="",
-                        help="Helm chart version for the REMOTE airflow-operator chart. Ignored for a local chart.")
-    parser.add_argument("--operator-chart-path", default="", metavar="DIR",
-                        help="Path to the in-repo airflow-operator Helm chart. Overrides auto-detection "
-                             "(which looks for a sibling airflow-operator/helm). Prefer this over the remote "
-                             "chart so RBAC/CRDs match the operator image and avoid runtime 'forbidden' errors.")
-    parser.add_argument("--no-install-operator", dest="install_operator", action="store_false",
-                        help="Skip installing the airflow-operator Helm chart.")
+    parser.add_argument(
+        "--operator-namespace",
+        default="airflow-operator-system",
+        help="Namespace for the operator controller. Default: %(default)s",
+    )
+    parser.add_argument(
+        "--operator-release", default="airflow-operator-system", help="Helm release name for the operator. Default: %(default)s"
+    )
+    parser.add_argument(
+        "--operator-chart-version",
+        default="",
+        help="Helm chart version for the REMOTE airflow-operator chart. Ignored for a local chart.",
+    )
+    parser.add_argument(
+        "--operator-chart-path",
+        default="",
+        metavar="DIR",
+        help="Path to the in-repo airflow-operator Helm chart. Overrides auto-detection "
+        "(which looks for a sibling airflow-operator/helm). Prefer this over the remote "
+        "chart so RBAC/CRDs match the operator image and avoid runtime 'forbidden' errors.",
+    )
+    parser.add_argument(
+        "--operator-image",
+        default="",
+        metavar="REPO[:TAG]",
+        help="Custom operator controller image. Sets images.manager.repository (and "
+        ".tag when a tag is given) on the operator chart, overriding the chart default.",
+    )
+    parser.add_argument(
+        "--operator-set",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="Extra `helm --set KEY=VALUE` override for the operator chart. Repeatable. "
+        "Applied after --operator-image, so it wins on conflicts.",
+    )
+    parser.add_argument(
+        "--no-load-operator-image",
+        dest="load_operator_image",
+        action="store_false",
+        help="Do NOT pull + side-load the --operator-image into the k3d cluster. By "
+        "default, when --operator-image is set in k3d mode, the image is pulled with "
+        "the local (authenticated) Docker daemon and imported into the cluster so "
+        "private/RC images work without in-cluster pull secrets.",
+    )
+    parser.set_defaults(load_operator_image=True)
+    parser.add_argument(
+        "--no-install-operator",
+        dest="install_operator",
+        action="store_false",
+        help="Skip installing the airflow-operator Helm chart.",
+    )
     parser.set_defaults(install_operator=True)
 
     # --- cert-manager ---
-    parser.add_argument("--skip-cert-manager", action="store_true",
-                        help="Skip cert-manager install (if already present).")
+    parser.add_argument("--skip-cert-manager", action="store_true", help="Skip cert-manager install (if already present).")
 
     # --- ServiceMonitor CRD ---
     parser.add_argument(
-        "--no-service-monitor-crd", dest="install_service_monitor_crd", action="store_false",
+        "--no-service-monitor-crd",
+        dest="install_service_monitor_crd",
+        action="store_false",
         help=(
             "Skip installing the Prometheus Operator ServiceMonitor CRD. The operator's apiserver "
             "controller watches ServiceMonitor; without the CRD its cache fails to sync. Pass this "
@@ -1173,15 +1388,15 @@ Examples:
     parser.set_defaults(install_service_monitor_crd=True)
 
     # --- KEDA ---
-    parser.add_argument("--install-keda", action="store_true",
-                        help="Install KEDA (required for CeleryWorker autoscaling).")
-    parser.add_argument("--keda-namespace", default="keda",
-                        help="Namespace for KEDA. Default: %(default)s")
+    parser.add_argument("--install-keda", action="store_true", help="Install KEDA (required for CeleryWorker autoscaling).")
+    parser.add_argument("--keda-namespace", default="keda", help="Namespace for KEDA. Default: %(default)s")
 
     # --- database ---
     db_group = parser.add_argument_group("database")
     db_group.add_argument(
-        "--metadata-db-url", default="", metavar="URL",
+        "--metadata-db-url",
+        default="",
+        metavar="URL",
         help=(
             "PostgreSQL metadata DB URL. "
             "Format: postgresql+psycopg2://user:pwd@host:5432/dbname. "
@@ -1189,17 +1404,22 @@ Examples:
         ),
     )
     db_group.add_argument(
-        "--result-backend-url", default="", metavar="URL",
+        "--result-backend-url",
+        default="",
+        metavar="URL",
         help="Celery result backend URL (db+postgresql://...). Derived from --metadata-db-url if omitted.",
     )
-    db_group.add_argument("--db-ca-cert", default="", metavar="FILE",
-                          help="Path to DB TLS CA cert PEM (for databaseSSLMode=verify-full).")
     db_group.add_argument(
-        "--in-cluster-postgres", action="store_true",
+        "--db-ca-cert", default="", metavar="FILE", help="Path to DB TLS CA cert PEM (for databaseSSLMode=verify-full)."
+    )
+    db_group.add_argument(
+        "--in-cluster-postgres",
+        action="store_true",
         help="Use the operator's embedded postgres (dev only, NOT for production).",
     )
     db_group.add_argument(
-        "--reset-postgres", action="store_true",
+        "--reset-postgres",
+        action="store_true",
         help=(
             "Delete the in-cluster postgres PVC + owned secrets before applying the CR, forcing a "
             "fresh database. Use after deleting/re-applying the CR to clear a stale password volume. "
@@ -1208,25 +1428,24 @@ Examples:
     )
 
     # --- optional integrations ---
-    parser.add_argument("--elasticsearch-url", default="", metavar="URL",
-                        help="Elasticsearch remote logging URL. Optional.")
+    parser.add_argument("--elasticsearch-url", default="", metavar="URL", help="Elasticsearch remote logging URL. Optional.")
 
     # --- registry ---
     reg_group = parser.add_argument_group("image registry")
-    reg_group.add_argument("--registry-server", default="quay.io",
-                           help="Docker registry server. Default: %(default)s")
+    reg_group.add_argument("--registry-server", default="quay.io", help="Docker registry server. Default: %(default)s")
     reg_group.add_argument("--registry-username", default="", help="Registry username.")
     reg_group.add_argument("--registry-password", default="", help="Registry password/token.")
     reg_group.add_argument("--registry-email", default="", help="Registry email.")
 
     # --- Airflow ---
     af_group = parser.add_argument_group("Airflow")
-    af_group.add_argument("--airflow-image", default=DEFAULT_AIRFLOW_IMAGE,
-                          help=f"Airflow image repository. Default: %(default)s")
-    af_group.add_argument("--airflow-version", default=DEFAULT_AIRFLOW_VERSION,
-                          help=f"Airflow / runtime image tag. Default: %(default)s")
+    af_group.add_argument("--airflow-image", default=DEFAULT_AIRFLOW_IMAGE, help="Airflow image repository. Default: %(default)s")
     af_group.add_argument(
-        "--executor", default="LocalExecutor",
+        "--airflow-version", default=DEFAULT_AIRFLOW_VERSION, help="Airflow / runtime image tag. Default: %(default)s"
+    )
+    af_group.add_argument(
+        "--executor",
+        default="LocalExecutor",
         choices=["LocalExecutor", "CeleryExecutor", "KubernetesExecutor"],
         help="Airflow executor. Default: %(default)s",
     )
@@ -1235,17 +1454,22 @@ Examples:
     parser.add_argument("--skip-secrets", action="store_true", help="Skip creating Secrets.")
 
     # --- pod template ---
-    parser.add_argument("--pod-template-file", default="", metavar="FILE",
-                        help="KubernetesExecutor pod_template_file.yaml to mount as a ConfigMap.")
+    parser.add_argument(
+        "--pod-template-file", default="", metavar="FILE", help="KubernetesExecutor pod_template_file.yaml to mount as a ConfigMap."
+    )
 
     # --- CR ---
     cr_group = parser.add_argument_group("Airflow CR")
     cr_group.add_argument(
-        "--no-apply-cr", dest="apply_cr", action="store_false",
+        "--no-apply-cr",
+        dest="apply_cr",
+        action="store_false",
         help="Skip applying the Airflow CR (prerequisites only).",
     )
     cr_group.add_argument(
-        "--cr-path", default="", metavar="FILE",
+        "--cr-path",
+        default="",
+        metavar="FILE",
         help=(
             "Path to a custom Airflow CR YAML to apply instead of the generated one. "
             "When omitted a CR is generated from the current settings."
@@ -1256,7 +1480,8 @@ Examples:
     # --- admin user (Airflow 2 / FAB auth) ---
     user_group = parser.add_argument_group("admin user (Airflow 2 / FAB auth)")
     user_group.add_argument(
-        "--create-admin-user", action="store_true",
+        "--create-admin-user",
+        action="store_true",
         help=(
             "After the CR is applied, wait for the webserver and create a FAB admin user so you "
             "can log into the Airflow UI. Idempotent. Airflow 2 only (FAB auth)."
@@ -1264,8 +1489,7 @@ Examples:
     )
     user_group.add_argument("--admin-username", default="admin", help="Admin username. Default: %(default)s")
     user_group.add_argument("--admin-password", default="admin", help="Admin password. Default: %(default)s")
-    user_group.add_argument("--admin-email", default="admin@example.com",
-                            help="Admin email. Default: %(default)s")
+    user_group.add_argument("--admin-email", default="admin@example.com", help="Admin email. Default: %(default)s")
 
     return parser.parse_args()
 
@@ -1339,6 +1563,9 @@ def main() -> int:  # noqa: C901
         install_service_monitor_crd=args.install_service_monitor_crd,
         operator_chart_version=args.operator_chart_version,
         operator_chart_path=args.operator_chart_path,
+        operator_image=args.operator_image,
+        load_operator_image=args.load_operator_image,
+        operator_set=tuple(args.operator_set),
         registry_server=args.registry_server,
         registry_username=args.registry_username,
         registry_password=args.registry_password,
@@ -1422,6 +1649,20 @@ def main() -> int:  # noqa: C901
         else:
             ms.skip("Install ServiceMonitor CRD", reason="--no-service-monitor-crd set")
 
+        # 6c. Side-load the operator image into k3d (private/RC images without pull secrets).
+        # Must run before the operator Helm install: `helm --wait` blocks on the manager pod
+        # becoming ready, which never happens if the image can't be pulled in-cluster.
+        if settings.operator_image and settings.load_operator_image and settings.install_operator:
+            if settings.cluster_name:
+                h = ms.start(f"Load operator image into k3d (`{settings.operator_image}`)")
+                _load_image_into_k3d(settings.cluster_name, settings.operator_image)
+                ms.done(h, detail=f"imported into cluster {settings.cluster_name}")
+            else:
+                ms.skip(
+                    "Load operator image into k3d",
+                    reason="not a k3d cluster (--context given) — add imagePullSecrets instead",
+                )
+
         # 7. Operator Helm chart.
         # Prefer the in-repo chart: it ships the RBAC + CRDs that match the operator image, so
         # the ClusterRole grants every resource the controller watches (apiservers,
@@ -1450,6 +1691,7 @@ def main() -> int:  # noqa: C901
                 chart=operator_chart,
                 namespace=settings.operator_namespace,
                 version=settings.operator_chart_version if not local_chart else "",
+                extra_set=_operator_extra_set(settings),
                 timeout="10m",
             )
             ms.done(h, detail=f"release={settings.operator_release} chart={chart_source}")
@@ -1553,7 +1795,7 @@ def main() -> int:  # noqa: C901
         --firstname Admin --lastname User --role Admin --email admin@example.com
 """)
         else:
-            _print(f"""
+            _print("""
   Apply the Airflow CR manually (generate + inspect first):
     python3 -c "
 import sys; sys.argv=['x','--in-cluster-postgres','--cluster-name','x']

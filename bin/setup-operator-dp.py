@@ -150,13 +150,21 @@ def _ensure_registry(spec: _RegistrySpec, docker_network: str) -> None:
     _print(f"  Creating registry proxy: {spec.name} -> {spec.upstream} (host port {spec.host_port})")
     _run(
         [
-            "docker", "run", "-d",
-            "--name", spec.name,
-            "--network", docker_network,
-            "--restart", "always",
-            "-p", f"{spec.host_port}:5000",
-            "-v", f"{volume_name}:/var/lib/registry",
-            "-v", f"{config_path}:/etc/docker/registry/config.yml:ro",
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            spec.name,
+            "--network",
+            docker_network,
+            "--restart",
+            "always",
+            "-p",
+            f"{spec.host_port}:5000",
+            "-v",
+            f"{volume_name}:/var/lib/registry",
+            "-v",
+            f"{config_path}:/etc/docker/registry/config.yml:ro",
             REGISTRY_IMAGE,
         ]
     )
@@ -213,14 +221,16 @@ class ControlPlane:
 @dataclass(frozen=True)
 class OperatorDataPlane:
     """The pre-existing operator cluster we layer the DP onto. We do NOT create this cluster."""
-    cluster_name: str   # k3d cluster name, e.g. "airflow-dev" (context f"k3d-{cluster_name}")
-    context: str        # kube context, e.g. "k3d-airflow-dev"
+
+    cluster_name: str  # k3d cluster name, e.g. "airflow-dev" (context f"k3d-{cluster_name}")
+    context: str  # kube context, e.g. "k3d-airflow-dev"
     domain_prefix: str  # APC DP subdomain prefix, e.g. "dp01"
 
 
 @dataclass
 class Survey:
     """Read-only inventory of the operator cluster, used to drive DP value toggles."""
+
     operator_namespace: str | None = None
     operator_image: str | None = None
     airflow_crd_count: int = 0
@@ -288,9 +298,14 @@ class Milestones:
         self._active = h
         self._rows.append(
             {
-                "idx": h.idx, "title": title, "status": "running",
-                "started_at": time.monotonic(), "ended_at": None,
-                "duration_s": None, "detail": "", "error": "",
+                "idx": h.idx,
+                "title": title,
+                "status": "running",
+                "started_at": time.monotonic(),
+                "ended_at": None,
+                "duration_s": None,
+                "detail": "",
+                "error": "",
             }
         )
         _print(f"⏳ [{h.idx:02d}] {title}")
@@ -323,9 +338,14 @@ class Milestones:
         self._idx += 1
         self._rows.append(
             {
-                "idx": self._idx, "title": title, "status": "skipped",
-                "started_at": None, "ended_at": None,
-                "duration_s": 0.0, "detail": reason, "error": "",
+                "idx": self._idx,
+                "title": title,
+                "status": "skipped",
+                "started_at": None,
+                "ended_at": None,
+                "duration_s": 0.0,
+                "detail": reason,
+                "error": "",
             }
         )
 
@@ -342,8 +362,10 @@ class Milestones:
         for row in self._rows:
             status = str(row["status"])
             status_cell = {
-                "success": "✅ Success", "failure": "❌ Failed",
-                "skipped": "⏭️ Skipped", "running": "⏳ Running",
+                "success": "✅ Success",
+                "failure": "❌ Failed",
+                "skipped": "⏭️ Skipped",
+                "running": "⏳ Running",
             }.get(status, status)
             duration_s = row.get("duration_s")
             duration_cell = f"{duration_s:.1f}s" if isinstance(duration_s, (int, float)) else "-"
@@ -469,7 +491,7 @@ def _host_port_free(port: int) -> bool:
     """Return True if `port` can be bound on the host (i.e. nothing else is using it)."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         try:
-            sock.bind(("0.0.0.0", port))
+            sock.bind(("0.0.0.0", port))  # noqa: S104  # host free-port probe; k3d maps on all interfaces
             return True
         except OSError:
             return False
@@ -495,11 +517,18 @@ def _k3d_create_cluster(
     """Create a k3d cluster with traefik disabled and the mkcert root CA mounted on every node."""
     volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*;agent:*"
     cmd = [
-        "k3d", "cluster", "create", name,
-        "--network", docker_network,
-        "--agents", "0",
-        "--k3s-arg", "--disable=traefik@server:0",
-        "--volume", volume,
+        "k3d",
+        "cluster",
+        "create",
+        name,
+        "--network",
+        docker_network,
+        "--agents",
+        "0",
+        "--k3s-arg",
+        "--disable=traefik@server:0",
+        "--volume",
+        volume,
     ]
     if registry_config is not None:
         cmd.extend(["--registry-config", str(registry_config)])
@@ -594,30 +623,45 @@ def _kubectl_create_namespace(context: str, namespace: str) -> None:
     raise CommandError(f"Failed to create namespace {namespace} (context={context}): {(proc.stderr or '').strip()}")
 
 
-def _kubectl_apply_tls_secret(
-    *, context: str, namespace: str, secret_name: str, cert_path: Path, key_path: Path
-) -> None:
+def _kubectl_apply_tls_secret(*, context: str, namespace: str, secret_name: str, cert_path: Path, key_path: Path) -> None:
     secret_yaml = _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "create", "secret", "tls", secret_name,
-            f"--cert={cert_path}", f"--key={key_path}",
-            "--dry-run=client", "-o", "yaml",
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "tls",
+            secret_name,
+            f"--cert={cert_path}",
+            f"--key={key_path}",
+            "--dry-run=client",
+            "-o",
+            "yaml",
         ],
         check=True,
     ).stdout
     _kubectl_apply_yaml(context, secret_yaml)
 
 
-def _kubectl_apply_generic_secret_from_file(
-    *, context: str, namespace: str, secret_name: str, key: str, file_path: Path
-) -> None:
+def _kubectl_apply_generic_secret_from_file(*, context: str, namespace: str, secret_name: str, key: str, file_path: Path) -> None:
     secret_yaml = _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "create", "secret", "generic", secret_name,
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "generic",
+            secret_name,
             f"--from-file={key}={file_path}",
-            "--dry-run=client", "-o", "yaml",
+            "--dry-run=client",
+            "-o",
+            "yaml",
         ],
         check=True,
     ).stdout
@@ -629,10 +673,19 @@ def _create_astronomer_bootstrap_secret_postgres(*, context: str, namespace: str
     conn = f"postgres://{CP_POSTGRES_USERNAME}:{CP_POSTGRES_PASSWORD}@{pg_host}:{CP_POSTGRES_NODEPORT}"
     secret_yaml = _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "create", "secret", "generic", "astronomer-bootstrap",
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "generic",
+            "astronomer-bootstrap",
             f"--from-literal=connection={conn}",
-            "--dry-run=client", "-o", "yaml",
+            "--dry-run=client",
+            "-o",
+            "yaml",
         ],
         check=True,
     ).stdout
@@ -643,9 +696,16 @@ def _create_astronomer_bootstrap_secret_postgres(*, context: str, namespace: str
 def _kubectl_get_service_lb_ip(context: str, namespace: str, service: str) -> str:
     proc = _run(
         [
-            "kubectl", "--context", context, "-n", namespace,
-            "get", "svc", service,
-            "-o", "jsonpath={.status.loadBalancer.ingress[0].ip}",
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "get",
+            "svc",
+            service,
+            "-o",
+            "jsonpath={.status.loadBalancer.ingress[0].ip}",
         ],
         check=True,
     )
@@ -721,11 +781,19 @@ def _helm_upgrade_install(
     specific Deployments we need via `_wait_for_deployments_available()`.
     """
     cmd = [
-        "helm", "upgrade", "--install", release_name, str(chart_dir),
-        "--namespace", namespace,
-        "--kube-context", context,
-        "--values", str(values_file),
-        "--timeout", timeout,
+        "helm",
+        "upgrade",
+        "--install",
+        release_name,
+        str(chart_dir),
+        "--namespace",
+        namespace,
+        "--kube-context",
+        context,
+        "--values",
+        str(values_file),
+        "--timeout",
+        timeout,
     ]
     if wait:
         cmd.append("--wait")
@@ -748,9 +816,20 @@ def _wait_for_deployments_available(context: str, namespace: str, *, timeout: st
     """
     _print(f"Waiting for Deployments to be Available ({context}, ns={namespace})")
     _run(
-        ["kubectl", "--context", context, "-n", namespace, "wait",
-         "--for=condition=Available", "deploy", "--all", f"--timeout={timeout}"],
-        check=True, capture=False,
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "wait",
+            "--for=condition=Available",
+            "deploy",
+            "--all",
+            f"--timeout={timeout}",
+        ],
+        check=True,
+        capture=False,
     )
 
 
@@ -789,6 +868,34 @@ def _k(context: str, *args: str, check: bool = False) -> str:
     """Run a read-only kubectl against `context` and return stdout (empty on error)."""
     proc = _run(["kubectl", "--context", context, "--request-timeout=20s", *args], check=check)
     return (proc.stdout or "").strip()
+
+
+def _list_kube_contexts() -> list[str]:
+    proc = _run(["kubectl", "config", "get-contexts", "-o", "name"], check=False)
+    return [c for c in (proc.stdout or "").splitlines() if c.strip()]
+
+
+def _resolve_operator_context(requested: str) -> str:
+    """Validate the operator kube context, auto-correcting a bare k3d cluster name.
+
+    k3d exposes a cluster named "<name>" under the kube context "k3d-<name>", so a common
+    mistake is passing --operator-context <name> instead of k3d-<name>. If the requested context
+    is not in the kubeconfig but "k3d-<requested>" is, use the prefixed form. Otherwise fail
+    loudly: every survey probe runs with check=False, so an unknown context silently reports
+    all-zeros, which is indistinguishable from an empty-but-valid cluster.
+    """
+    contexts = _list_kube_contexts()
+    if requested in contexts:
+        return requested
+    prefixed = f"k3d-{requested}"
+    if not requested.startswith("k3d-") and prefixed in contexts:
+        _print(f"  Note: no kube context '{requested}'; using k3d context '{prefixed}'.")
+        return prefixed
+    available = ", ".join(contexts) or "<none>"
+    raise RuntimeError(
+        f"kube context '{requested}' not found. Available contexts: {available}. "
+        "Pass --operator-context with one of these (k3d clusters use a 'k3d-' prefix)."
+    )
 
 
 def _survey_operator_cluster(context: str) -> Survey:
@@ -877,10 +984,7 @@ def _print_survey(s: Survey, context: str) -> None:
 
 def _snapshot_airflow_crs(context: str) -> str:
     """Stable identity snapshot of all Airflow CRs (ns/name/uid/resourceVersion) for before/after diff."""
-    jsonpath = (
-        "jsonpath={range .items[*]}{.metadata.namespace}/{.metadata.name}="
-        "{.metadata.uid}@{.metadata.generation}{\"\\n\"}{end}"
-    )
+    jsonpath = 'jsonpath={range .items[*]}{.metadata.namespace}/{.metadata.name}={.metadata.uid}@{.metadata.generation}{"\\n"}{end}'
     out = _k(context, "get", "airflows.airflow.apache.org", "-A", "-o", jsonpath)
     return "\n".join(sorted(line for line in out.splitlines() if line))
 
@@ -1157,9 +1261,12 @@ def _discover_dp_ingress_hosts(settings: Settings) -> list[str]:
     """Best-effort: list the hostnames the DP nginx Ingress serves (to locate the metadata host)."""
     out = _k(
         settings.data_plane.context,
-        "-n", settings.namespace,
-        "get", "ingress", "-o",
-        "jsonpath={range .items[*]}{range .spec.rules[*]}{.host}{\"\\n\"}{end}{end}",
+        "-n",
+        settings.namespace,
+        "get",
+        "ingress",
+        "-o",
+        'jsonpath={range .items[*]}{range .spec.rules[*]}{.host}{"\\n"}{end}{end}',
     )
     return sorted({h for h in out.splitlines() if h})
 
@@ -1245,28 +1352,44 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Convert an existing standalone Airflow-operator cluster into an APC data plane "
-            "and stand up a fresh control plane."
+            "Convert an existing standalone Airflow-operator cluster into an APC data plane and stand up a fresh control plane."
         ),
     )
-    parser.add_argument("--operator-context", default="k3d-airflow-dev",
-                        help="kube context of the EXISTING operator cluster (becomes the DP). Default: %(default)s")
-    parser.add_argument("--operator-cluster-name", default=None,
-                        help="k3d cluster name of the operator cluster. Default: --operator-context without any leading 'k3d-'.")
-    parser.add_argument("--base-domain", default="localtest.me",
-                        help="Shared baseDomain for CP and DP (must match). Default: %(default)s")
+    parser.add_argument(
+        "--operator-context",
+        default="k3d-airflow-dev",
+        help="kube context of the EXISTING operator cluster (becomes the DP). Default: %(default)s",
+    )
+    parser.add_argument(
+        "--operator-cluster-name",
+        default=None,
+        help="k3d cluster name of the operator cluster. Default: --operator-context without any leading 'k3d-'.",
+    )
+    parser.add_argument(
+        "--base-domain", default="localtest.me", help="Shared baseDomain for CP and DP (must match). Default: %(default)s"
+    )
     parser.add_argument("--namespace", default="astronomer", help="APC platform namespace. Default: %(default)s")
     parser.add_argument("--release-name", default="astronomer", help="Helm release name. Default: %(default)s")
-    parser.add_argument("--docker-network", default=None,
-                        help="Docker network the CP joins. Default: auto-detected from the operator cluster.")
-    parser.add_argument("--cp-cluster-name", default="cp01",
-                        help="k3d cluster name for the new control plane. Default: %(default)s")
-    parser.add_argument("--cp-https-port", type=int, default=8443,
-                        help="Preferred host HTTPS port for the CP loadbalancer; auto-bumped to the next free "
-                             "port if taken (the operator cluster already publishes 8443). Default: %(default)s")
-    parser.add_argument("--cp-http-port", type=int, default=8080,
-                        help="Preferred host HTTP port for the CP loadbalancer; auto-bumped to the next free "
-                             "port if taken (the operator cluster already publishes 8080). Default: %(default)s")
+    parser.add_argument(
+        "--docker-network", default=None, help="Docker network the CP joins. Default: auto-detected from the operator cluster."
+    )
+    parser.add_argument(
+        "--cp-cluster-name", default="cp01", help="k3d cluster name for the new control plane. Default: %(default)s"
+    )
+    parser.add_argument(
+        "--cp-https-port",
+        type=int,
+        default=8443,
+        help="Preferred host HTTPS port for the CP loadbalancer; auto-bumped to the next free "
+        "port if taken (the operator cluster already publishes 8443). Default: %(default)s",
+    )
+    parser.add_argument(
+        "--cp-http-port",
+        type=int,
+        default=8080,
+        help="Preferred host HTTP port for the CP loadbalancer; auto-bumped to the next free "
+        "port if taken (the operator cluster already publishes 8080). Default: %(default)s",
+    )
     parser.add_argument("--dp-domain-prefix", default="dp01", help="APC DP subdomain prefix. Default: %(default)s")
 
     parser.add_argument("--tls-secret-name", default="astronomer-tls")
@@ -1275,12 +1398,22 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--helm-timeout", default=os.environ.get("HELM_TIMEOUT", "60m"))
     parser.add_argument("--helm-debug", action="store_true")
-    parser.add_argument("--helm-deps-update", action="store_true",
-                        help="Run `helm dependency update` before installing (off by default; local charts are vendored).")
-    parser.add_argument("--helm-values", action="append", default=[], dest="helm_values", metavar="FILE",
-                        help="Extra Helm values file passed to both CP and DP installs (repeatable).")
-    parser.add_argument("--values-dir", default="",
-                        help="Directory to write cp-values.yaml / dp-values.yaml. Defaults to a temp directory.")
+    parser.add_argument(
+        "--helm-deps-update",
+        action="store_true",
+        help="Run `helm dependency update` before installing (off by default; local charts are vendored).",
+    )
+    parser.add_argument(
+        "--helm-values",
+        action="append",
+        default=[],
+        dest="helm_values",
+        metavar="FILE",
+        help="Extra Helm values file passed to both CP and DP installs (repeatable).",
+    )
+    parser.add_argument(
+        "--values-dir", default="", help="Directory to write cp-values.yaml / dp-values.yaml. Defaults to a temp directory."
+    )
 
     parser.add_argument("--recreate-cp-cluster", action="store_true", help="Delete and recreate the CP k3d cluster if it exists.")
     parser.add_argument("--no-local-registry", action="store_true", help="Skip the pull-through registry proxy setup.")
@@ -1297,12 +1430,16 @@ def main() -> int:  # noqa: C901
     args = parse_args()
     ms = Milestones()
 
-    operator_cluster_name = args.operator_cluster_name or (
-        args.operator_context[len("k3d-"):] if args.operator_context.startswith("k3d-") else args.operator_context
-    )
+    try:
+        operator_context = _resolve_operator_context(args.operator_context)
+    except RuntimeError as e:
+        _print(f"❌ {e}")
+        return 1
+
+    operator_cluster_name = args.operator_cluster_name or (operator_context.removeprefix("k3d-"))
     dp = OperatorDataPlane(
         cluster_name=operator_cluster_name,
-        context=args.operator_context,
+        context=operator_context,
         domain_prefix=args.dp_domain_prefix,
     )
     cp = ControlPlane(cluster_name=args.cp_cluster_name, https_port=args.cp_https_port, http_port=args.cp_http_port)
@@ -1411,13 +1548,18 @@ def main() -> int:  # noqa: C901
         for ctx in target_contexts:
             _kubectl_create_namespace(ctx, settings.namespace)
             _kubectl_apply_tls_secret(
-                context=ctx, namespace=settings.namespace,
-                secret_name=settings.tls_secret_name, cert_path=cert_path, key_path=key_path,
+                context=ctx,
+                namespace=settings.namespace,
+                secret_name=settings.tls_secret_name,
+                cert_path=cert_path,
+                key_path=key_path,
             )
             _kubectl_apply_generic_secret_from_file(
-                context=ctx, namespace=settings.namespace,
+                context=ctx,
+                namespace=settings.namespace,
                 secret_name=settings.mkcert_root_ca_secret_name,
-                key=settings.mkcert_root_ca_secret_key, file_path=mkcert_root_ca,
+                key=settings.mkcert_root_ca_secret_key,
+                file_path=mkcert_root_ca,
             )
         ms.done(h, detail=f"tlsSecret={settings.tls_secret_name} caSecret={settings.mkcert_root_ca_secret_name}")
 
@@ -1444,9 +1586,14 @@ def main() -> int:  # noqa: C901
         if not args.skip_cp:
             h = ms.start(f"Helm install/upgrade Control Plane (context={cp_context})")
             _helm_upgrade_install(
-                context=cp_context, chart_dir=REPO_ROOT, release_name=settings.release_name,
-                namespace=settings.namespace, values_file=cp_values_path,
-                extra_values_files=extra_values, timeout=settings.helm_timeout, debug=settings.helm_debug,
+                context=cp_context,
+                chart_dir=REPO_ROOT,
+                release_name=settings.release_name,
+                namespace=settings.namespace,
+                values_file=cp_values_path,
+                extra_values_files=extra_values,
+                timeout=settings.helm_timeout,
+                debug=settings.helm_debug,
             )
             # No --wait above (would deadlock on Prometheus pre-migration); wait on Deployments here,
             # by which point Helm has already run the post-install DB migration that creates the schema.
@@ -1462,7 +1609,9 @@ def main() -> int:  # noqa: C901
                 h = ms.start("Create DP astronomer-bootstrap secret (-> CP postgres)")
                 cp_node_ip = _docker_inspect_ip(f"k3d-{cp.cluster_name}-server-0")
                 _create_astronomer_bootstrap_secret_postgres(
-                    context=dp.context, namespace=settings.namespace, pg_host=cp_node_ip,
+                    context=dp.context,
+                    namespace=settings.namespace,
+                    pg_host=cp_node_ip,
                 )
                 ms.done(h, detail=f"pg_host={cp_node_ip}")
 
@@ -1474,9 +1623,14 @@ def main() -> int:  # noqa: C901
 
             h = ms.start(f"Helm install/upgrade Data Plane onto operator cluster (context={dp.context})")
             _helm_upgrade_install(
-                context=dp.context, chart_dir=REPO_ROOT, release_name=settings.release_name,
-                namespace=settings.namespace, values_file=dp_values_path,
-                extra_values_files=extra_values, timeout=settings.helm_timeout, debug=settings.helm_debug,
+                context=dp.context,
+                chart_dir=REPO_ROOT,
+                release_name=settings.release_name,
+                namespace=settings.namespace,
+                values_file=dp_values_path,
+                extra_values_files=extra_values,
+                timeout=settings.helm_timeout,
+                debug=settings.helm_debug,
             )
             _wait_for_deployments_available(dp.context, settings.namespace)
             ms.done(h)
