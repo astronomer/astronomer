@@ -36,7 +36,18 @@ Modelled on `bin/setup-cp-dp-k3d.py` (shared helpers copied for a standalone scr
 `bin/setup-operator-standalone.py`. Safe to re-run: cluster/secret/helm steps are idempotent.
 
 Notes / constraints:
-- We do NOT modify `/etc/hosts` on the local machine. The script prints the entries to add.
+- Local networking uses two Docker containers (mirroring the Astro Hosted product — no host
+  installs, since Docker is already required), so there is NO manual `/etc/hosts` editing:
+    * a dnsmasq container resolves `*.<base-domain>` to 127.0.0.1, wired in via a one-time
+      `/etc/resolver/<base-domain>` file;
+    * an nginx container on :443 forwards each connection by TLS SNI to the right cluster's
+      published host port (`*.<dpPrefix>.<base>` -> DP, everything else -> CP), passing TLS
+      through untouched (no certs at the proxy). This is required because the two k3d clusters'
+      443 is published on different host ports and their container IPs aren't host-routable under
+      OrbStack.
+  The default base domain is `apc-dev.local` (APC's own; the Astro Hosted product owns
+  `astronomer-dev.local` and its resolver, which this script never touches). If setup is skipped
+  or fails, the script prints `/etc/hosts` entries (all -> 127.0.0.1) to add as a fallback.
 - We do NOT install k3d/helm/kubectl/mkcert for you; we validate and fail with actionable hints.
 - CP and DP MUST share the same `baseDomain` (Houston's cluster registration + URL helpers
   assume it). This script uses a single `--base-domain` for both, enforcing that by construction.
@@ -67,6 +78,38 @@ REGISTRY_IMAGE = "registry:2"
 CP_POSTGRES_NODEPORT = 5432
 CP_POSTGRES_USERNAME = "postgres"
 CP_POSTGRES_PASSWORD = "postgres"  # noqa: S105
+
+# Local networking for CP+DP ingress (replaces manual host /etc/hosts editing). Two containers:
+#
+#   1. dnsmasq — resolves *.<base-domain> to 127.0.0.1 for the Mac host. macOS routes the domain
+#      to it via /etc/resolver/<base-domain>. apc-dev.local is APC's own dev domain; the Astro
+#      Hosted product owns astronomer-dev.local (+ its /etc/resolver file), never touched here.
+#   2. nginx (SNI reverse proxy) — listens on host :443 and, using stream + ssl_preread, forwards
+#      each connection by TLS SNI to the right cluster's *published host port* (k3d maps each
+#      cluster's 443 to a distinct host port, e.g. CP 8444 / DP 8443). TLS is passed through
+#      untouched (no certs at the proxy; the k3d ingress still terminates).
+#
+# Why a proxy at all: the two k3d clusters live on different host ports and their container IPs
+# are NOT host-routable under OrbStack (curl -> "No route to host"), so DNS alone can't reach the
+# right cluster on standard :443. This mirrors why the Astro Hosted product runs an nginx layer.
+#
+# We still do NOT need Astro Hosted's second "bridge" dnsmasq: their control plane is a bare Docker
+# container that must resolve *.<base> (Docker's embedded DNS ignores /etc/resolver), whereas our
+# CP/DP both run inside k3d, where cross-cluster/in-pod resolution is handled by CoreDNS NodeHosts
+# + the DP node /etc/hosts pin (see reconcile-k3d-orbstack-network.py).
+#
+# 15353, not 5353: 5353/udp is macOS mDNS/Bonjour (mDNSResponder owns it), so publishing there
+# collides and UDP DNS silently times out. 15353 also matches the 15000-range used by the local
+# registry proxies in these scripts.
+LOCAL_DNS_PORT = 15353
+DNSMASQ_CONF_PATH = HELPER_DIR / "apc-dev-dnsmasq.conf"
+DNSMASQ_CONTAINER_NAME = "apc-dev-dnsmasq"
+# Official Alpine base + `apk add dnsmasq` at start — avoids depending on a third-party dnsmasq image.
+DNSMASQ_IMAGE = "alpine:3.20"
+
+PROXY_CONTAINER_NAME = "apc-dev-proxy"
+PROXY_CONF_PATH = HELPER_DIR / "apc-dev-proxy-nginx.conf"
+PROXY_IMAGE = "nginx:stable-alpine"  # official nginx; includes the stream + ssl_preread modules
 
 # Namespaces this script must NEVER mutate (operator + system). Guard against footguns.
 PROTECTED_NAMESPACE_PREFIXES = ("kube-", "airflow-operator", "cert-manager")
@@ -748,6 +791,231 @@ def _ensure_dp_node_houston_hosts_pin(settings: Settings) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Local networking (dnsmasq + SNI reverse proxy) — replaces manual host /etc/hosts editing
+#
+# CP and DP are separate k3d clusters whose 443 is published on distinct host ports, and whose
+# container IPs are NOT host-routable under OrbStack. So:
+#   - dnsmasq resolves the whole <base> domain -> 127.0.0.1 (macOS routes it via /etc/resolver).
+#   - an nginx SNI proxy on host :443 forwards each TLS connection, by server name, to the right
+#     cluster's published host port (TLS passed through untouched via ssl_preread).
+# ---------------------------------------------------------------------------
+
+
+def _resolver_file_path(base_domain: str) -> Path:
+    return Path("/etc/resolver") / base_domain
+
+
+def _serverlb_host_port(cluster_name: str) -> int | None:
+    """Host port that k3d published for the cluster serverlb's 443, or None if not found/running."""
+    proc = _run(["docker", "port", f"k3d-{cluster_name}-serverlb", "443/tcp"], check=False)
+    # Output lines look like "0.0.0.0:8444" / "[::]:8444"; take the port off the first line.
+    for line in (proc.stdout or "").splitlines():
+        line = line.strip()
+        if ":" in line:
+            try:
+                return int(line.rsplit(":", 1)[1])
+            except ValueError:
+                continue
+    _debug(f"could not determine serverlb host port for {cluster_name}: {(proc.stderr or '').strip()}")
+    return None
+
+
+def _write_dnsmasq_conf(base_domain: str) -> None:
+    """Write the dnsmasq config: resolve the whole base domain to 127.0.0.1 (the SNI proxy).
+
+    Mounted into the dnsmasq container, which listens inside the container (all interfaces) on
+    port 53 — Docker DNATs the published 127.0.0.1:LOCAL_DNS_PORT to it. Routing to the correct
+    cluster happens at the nginx proxy by SNI, so DNS only needs a single 127.0.0.1 answer.
+    """
+    lines = [
+        "# Managed by bin/setup-operator-dp.py — regenerated each run. Do not edit by hand.",
+        "port=53",  # in-container port; published to the host as 127.0.0.1:LOCAL_DNS_PORT
+        "no-resolv",  # only answer for our domain; never act as a general resolver
+        "no-hosts",
+        "local-ttl=0",
+        # Authoritative for our domain. The address= record is IPv4-only, but macOS fires an AAAA
+        # query alongside the A query; without this, dnsmasq gives no clean AAAA answer and the
+        # resolver stalls ~5s before falling back to the A record. `local=` makes dnsmasq answer
+        # AAAA authoritatively (immediate NODATA), removing the delay.
+        f"local=/{base_domain}/",
+        f"address=/{base_domain}/127.0.0.1",
+    ]
+    HELPER_DIR.mkdir(parents=True, exist_ok=True)
+    DNSMASQ_CONF_PATH.write_text("\n".join(lines) + "\n")
+
+
+def _ensure_dnsmasq_container() -> None:
+    """(Re)create the dnsmasq container from the freshly-written config.
+
+    Recreated (not just restarted) each run so the current config + serverlb IPs take effect.
+    Uses the official Alpine image and installs dnsmasq at start, avoiding a third-party image.
+    `--restart unless-stopped` keeps it answering across OrbStack/Docker restarts.
+    """
+    _run(["docker", "rm", "-f", DNSMASQ_CONTAINER_NAME], check=False, capture=True)
+    _run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            DNSMASQ_CONTAINER_NAME,
+            "--restart",
+            "unless-stopped",
+            "-p",
+            f"127.0.0.1:{LOCAL_DNS_PORT}:53/udp",
+            "-p",
+            f"127.0.0.1:{LOCAL_DNS_PORT}:53/tcp",
+            "-v",
+            f"{DNSMASQ_CONF_PATH}:/etc/dnsmasq.conf:ro",
+            "--entrypoint",
+            "sh",
+            DNSMASQ_IMAGE,
+            "-c",
+            "apk add --no-cache dnsmasq >/dev/null && exec dnsmasq -k --conf-file=/etc/dnsmasq.conf",
+        ],
+        check=True,
+    )
+    # Wait for dnsmasq to be up inside the container (apk add + start take a moment).
+    for _ in range(30):  # ~15s
+        if _run(["docker", "exec", DNSMASQ_CONTAINER_NAME, "pidof", "dnsmasq"], check=False).returncode == 0:
+            return
+        time.sleep(0.5)
+    raise RuntimeError(f"dnsmasq container {DNSMASQ_CONTAINER_NAME} did not start; check `docker logs {DNSMASQ_CONTAINER_NAME}`")
+
+
+def _write_proxy_conf(*, base_domain: str, dp_prefix: str, cp_port: int, dp_port: int) -> None:
+    """Write the nginx stream config: route each TLS connection by SNI to a cluster's host port.
+
+    ssl_preread reads the TLS SNI without terminating TLS, so no certs live at the proxy — the
+    k3d ingress still does TLS. The DP subdomain (`*.<dpPrefix>.<base>`) goes to the DP host port;
+    everything else under <base> (houston, app, the bare domain, ...) goes to the CP host port.
+    """
+    dp_suffix = f"{dp_prefix}.{base_domain}".replace(".", "\\.")
+    conf = f"""\
+# Managed by bin/setup-operator-dp.py — regenerated each run. Do not edit by hand.
+worker_processes 1;
+events {{}}
+stream {{
+    map $ssl_preread_server_name $apc_upstream {{
+        ~*(^|\\.){dp_suffix}$   127.0.0.1:{dp_port};   # *.{dp_prefix}.{base_domain} and the bare host -> DP
+        default                 127.0.0.1:{cp_port};   # everything else under {base_domain} -> CP
+    }}
+    server {{
+        listen 443;
+        ssl_preread on;
+        proxy_pass $apc_upstream;
+    }}
+}}
+"""
+    HELPER_DIR.mkdir(parents=True, exist_ok=True)
+    PROXY_CONF_PATH.write_text(conf)
+
+
+def _ensure_proxy_container() -> None:
+    """(Re)create the SNI reverse-proxy container from the freshly-written config.
+
+    Host networking (like the Astro Hosted nginx): binds the host's :443 and reaches the k3d
+    serverlb published ports at 127.0.0.1:<port>. Recreated each run so new cluster ports apply.
+    """
+    _run(["docker", "rm", "-f", PROXY_CONTAINER_NAME], check=False, capture=True)
+    _run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            PROXY_CONTAINER_NAME,
+            "--restart",
+            "unless-stopped",
+            "--network",
+            "host",
+            "-v",
+            f"{PROXY_CONF_PATH}:/etc/nginx/nginx.conf:ro",
+            PROXY_IMAGE,
+        ],
+        check=True,
+    )
+    for _ in range(20):  # ~10s
+        if _run(["docker", "exec", PROXY_CONTAINER_NAME, "pidof", "nginx"], check=False).returncode == 0:
+            return
+        time.sleep(0.5)
+    raise RuntimeError(f"proxy container {PROXY_CONTAINER_NAME} did not start; check `docker logs {PROXY_CONTAINER_NAME}`")
+
+
+def _ensure_resolver_file(base_domain: str) -> bool:
+    """Ensure /etc/resolver/<base_domain> routes the domain to our dnsmasq. Returns True if changed.
+
+    Needs sudo, but only when the file is missing or wrong (first run) — re-runs are prompt-free.
+    """
+    want = f"nameserver 127.0.0.1\nport {LOCAL_DNS_PORT}\n"
+    path = _resolver_file_path(base_domain)
+    try:
+        if path.read_text() == want:
+            return False
+    except OSError:
+        pass
+    _print(f"  Writing {path} (needs sudo, one-time)")
+    _run(["sudo", "mkdir", "-p", "/etc/resolver"], check=True)
+    _run(["sudo", "tee", str(path)], stdin=want, check=True)
+    return True
+
+
+def _verify_local_networking(base_domain: str, dp_prefix: str, cp_up: bool, dp_up: bool) -> None:
+    """Best-effort end-to-end check: name -> 127.0.0.1 (dnsmasq) -> :443 proxy -> right cluster."""
+    checks = []
+    if cp_up:
+        checks.append((f"houston.{base_domain}", "CP"))
+    if dp_up:
+        checks.append((f"commander.{dp_prefix}.{base_domain}", "DP"))
+    for host, which in checks:
+        dns = _run(["dscacheutil", "-q", "host", "-a", "name", host], check=False)
+        ips = [ln.split(":", 1)[1].strip() for ln in (dns.stdout or "").splitlines() if ln.startswith("ip_address")]
+        dns_ok = "127.0.0.1" in ips
+        # Reachability through the proxy: any TLS/HTTP response (even 404) proves the path works.
+        curl = _run(
+            ["curl", "-sk", "--max-time", "4", "-o", "/dev/null", "-w", "%{http_code}", f"https://{host}/"],
+            check=False,
+        )
+        code = (curl.stdout or "").strip()
+        reachable = code.isdigit() and code != "000"
+        marker = "[ok]" if (dns_ok and reachable) else "[FAILED]"
+        _print(f"    {host} ({which}) -> DNS {', '.join(ips) or 'none'}, proxy HTTP {code or 'none'} {marker}")
+
+
+def _setup_local_networking(settings: Settings) -> str:
+    """Configure local DNS + SNI reverse proxy for CP/DP ingress (replaces manual /etc/hosts edits).
+
+    dnsmasq resolves *.<base> -> 127.0.0.1; an nginx SNI proxy on :443 forwards each hostname to
+    the right cluster's published host port. Raises on failure; the caller falls back to printing
+    the manual /etc/hosts entries so the user is never blocked.
+    """
+    base = settings.base_domain
+    dp_prefix = settings.data_plane.domain_prefix
+
+    cp_port = _serverlb_host_port(settings.control_plane.cluster_name)
+    dp_port = _serverlb_host_port(settings.data_plane.cluster_name)
+    if not cp_port or not dp_port:
+        raise RuntimeError(
+            f"could not find published 443 host ports for both clusters "
+            f"(CP={cp_port}, DP={dp_port}); are both serverlb containers running?"
+        )
+
+    # DNS: whole domain -> 127.0.0.1
+    _write_dnsmasq_conf(base)
+    _ensure_dnsmasq_container()
+    changed = _ensure_resolver_file(base)
+
+    # Proxy: :443 -> per-cluster host port by SNI
+    _write_proxy_conf(base_domain=base, dp_prefix=dp_prefix, cp_port=cp_port, dp_port=dp_port)
+    _ensure_proxy_container()
+
+    _print(f"  dnsmasq `{DNSMASQ_CONTAINER_NAME}`: *.{base} -> 127.0.0.1 (127.0.0.1:{LOCAL_DNS_PORT})")
+    _print(f"  proxy `{PROXY_CONTAINER_NAME}` on :443 by SNI: *.{dp_prefix}.{base} -> :{dp_port} (DP), else -> :{cp_port} (CP)")
+    _verify_local_networking(base, dp_prefix, cp_up=True, dp_up=True)
+    return f"resolver {'created' if changed else 'present'}; proxy CP:{cp_port} DP:{dp_port}"
+
+
+# ---------------------------------------------------------------------------
 # Helm
 # ---------------------------------------------------------------------------
 
@@ -1278,11 +1546,6 @@ def _print_registration_runbook(settings: Settings) -> None:
     """
     base = settings.base_domain
     dp = settings.data_plane
-    dp_serverlb = f"k3d-{dp.cluster_name}-serverlb"
-    try:
-        dp_ip = _docker_inspect_ip(dp_serverlb)
-    except Exception:  # noqa: BLE001
-        dp_ip = "<dp-serverlb-ip>"
 
     hosts = _discover_dp_ingress_hosts(settings)
     # Commander's /metadata is served on the DP ingress. Prefer a discovered commander host;
@@ -1294,8 +1557,9 @@ def _print_registration_runbook(settings: Settings) -> None:
     _print("\n" + "=" * 78)
     _print("DP → CP REGISTRATION (run this yourself — this script does NOT call registerCluster)")
     _print("=" * 78)
-    _print("\n1) Make sure your host /etc/hosts maps the DP ingress (see entries printed above), so")
-    _print(f"   `{metadata_host}` resolves to the DP nginx at {dp_ip}.")
+    _print(f"\n1) Local networking resolves `{metadata_host}` to 127.0.0.1, and the :443 SNI proxy")
+    _print("   forwards it to the DP ingress. If you ran with --skip-* and setup was skipped, add")
+    _print("   the printed /etc/hosts entries manually instead.")
     _print("\n2) Sanity-check Commander's metadata endpoint is reachable and well-formed:")
     _print(f"     curl -sk {metadata_url}/metadata | jq .")
     if hosts:
@@ -1320,28 +1584,19 @@ def _print_registration_runbook(settings: Settings) -> None:
 
 
 def _print_host_etc_hosts_instructions(settings: Settings) -> None:
-    """Print recommended host /etc/hosts entries (CP + DP ingress via the k3d serverlb IPs)."""
+    """Print /etc/hosts fallback entries. All names point at 127.0.0.1; the :443 SNI proxy
+    (or, without it, a per-cluster port-forward) routes to the right cluster."""
     base = settings.base_domain
-    cp = settings.control_plane
-    dp = settings.data_plane
-    _print("\nAdd the following entries to your host `/etc/hosts`:\n")
-    try:
-        dp_ip = _docker_inspect_ip(f"k3d-{dp.cluster_name}-serverlb")
-        prefix = dp.domain_prefix
-        _print(
-            f"{dp_ip} {prefix}.{base} deployments.{prefix}.{base} registry.{prefix}.{base} "
-            f"commander.{prefix}.{base} prometheus.{prefix}.{base} elasticsearch.{prefix}.{base}"
-        )
-    except Exception as e:  # noqa: BLE001
-        _print(f"# (could not determine DP serverlb IP: {e})")
-    try:
-        cp_ip = _docker_inspect_ip(f"k3d-{cp.cluster_name}-serverlb")
-        _print(
-            f"{cp_ip} {base} app.{base} houston.{base} grafana.{base} prometheus.{base} "
-            f"elasticsearch.{base} alertmanager.{base} registry.{base}"
-        )
-    except Exception as e:  # noqa: BLE001
-        _print(f"# (could not determine CP serverlb IP: {e})")
+    prefix = settings.data_plane.domain_prefix
+    _print("\nAdd the following entries to your host `/etc/hosts` (the :443 SNI proxy routes by hostname):\n")
+    _print(
+        f"127.0.0.1 {base} app.{base} houston.{base} grafana.{base} prometheus.{base} "
+        f"elasticsearch.{base} alertmanager.{base} registry.{base}"
+    )
+    _print(
+        f"127.0.0.1 {prefix}.{base} deployments.{prefix}.{base} registry.{prefix}.{base} "
+        f"commander.{prefix}.{base} prometheus.{prefix}.{base} elasticsearch.{prefix}.{base}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1366,7 +1621,10 @@ def parse_args() -> argparse.Namespace:
         help="k3d cluster name of the operator cluster. Default: --operator-context without any leading 'k3d-'.",
     )
     parser.add_argument(
-        "--base-domain", default="localtest.me", help="Shared baseDomain for CP and DP (must match). Default: %(default)s"
+        "--base-domain",
+        default="apc-dev.local",
+        help="Shared baseDomain for CP and DP (must match). A dedicated dnsmasq resolves "
+        "*.<base-domain> to the CP/DP ingress, so no /etc/hosts editing is needed. Default: %(default)s",
     )
     parser.add_argument("--namespace", default="astronomer", help="APC platform namespace. Default: %(default)s")
     parser.add_argument("--release-name", default="astronomer", help="Helm release name. Default: %(default)s")
@@ -1656,8 +1914,20 @@ def main() -> int:  # noqa: C901
             _print("\n  BEFORE:\n" + (crs_before or "  <none>"))
             _print("\n  AFTER:\n" + (crs_after or "  <none>"))
 
+        # Step: local networking for CP+DP ingress (dnsmasq + SNI proxy; replaces /etc/hosts edits).
+        if not args.skip_cp and not args.skip_dp:
+            h = ms.start(f"Configure local networking for *.{settings.base_domain} (dnsmasq + :443 proxy)")
+            try:
+                detail = _setup_local_networking(settings)
+                ms.done(h, detail=detail)
+            except Exception as e:  # noqa: BLE001
+                ms.fail(h, error=str(e))
+                _print(f"\n  Local networking setup failed ({e}); fall back to manual /etc/hosts entries below.")
+                _print_host_etc_hosts_instructions(settings)
+        else:
+            ms.skip("Configure local networking (dnsmasq + :443 proxy)", reason="--skip-cp/--skip-dp set")
+
         ms.print_summary_table()
-        _print_host_etc_hosts_instructions(settings)
         _print_registration_runbook(settings)
         _print("\n✅ Completed. The control plane is up and the operator cluster now runs the APC data plane.")
         _print("   Next: run the registration step above, then proceed to M2 / Task 2 (connect Commander to the CRs).")
