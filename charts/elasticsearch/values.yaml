@@ -110,6 +110,12 @@ client:
     #   path: /_cluster/health?local=true
     #   port: {{ .Values.common.ports.http }}
     # initialDelaySeconds: 5
+  startupProbe: {}
+    # httpGet:
+    #   path: /_cluster/health
+    #   port: {{ .Values.common.ports.http }}
+    # failureThreshold: 30
+    # periodSeconds: 10
 
   env:
     NODE_DATA: "false"
@@ -152,6 +158,11 @@ data:
     # initialDelaySeconds: 20
     # periodSeconds: 10
   readinessProbe: {}
+  startupProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.transport }}
+    # failureThreshold: 30
+    # periodSeconds: 10
 
   env:
     NODE_DATA: "true"
@@ -209,6 +220,11 @@ master:
   livenessProbe: {}
     # tcpSocket:
     #   port: {{ .Values.common.ports.transport }}
+  startupProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.transport }}
+    # failureThreshold: 30
+    # periodSeconds: 10
 
   env:
     NODE_DATA: "false"
@@ -247,6 +263,7 @@ curator:
 
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
 
 exporter:
   podAnnotations: {}
@@ -287,6 +304,12 @@ exporter:
     #   port: http
     # initialDelaySeconds: 10
     # timeoutSeconds: 10
+  startupProbe: {}
+    # httpGet:
+    #   path: /healthz
+    #   port: http
+    # failureThreshold: 30
+    # periodSeconds: 10
 
   service:
     type: ClusterIP
@@ -311,6 +334,11 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
+  startupProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.http }}
+    # failureThreshold: 30
+    # periodSeconds: 10
   securityContext:
     allowPrivilegeEscalation: false
     runAsNonRoot: true

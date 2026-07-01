@@ -35,9 +35,6 @@ spec:
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
       {{- end }}
       labels:
-        tier: dp-failover
-        component: {{ template "external-secrets.name" . }}
-        release: {{ .Release.Name }}
         {{- include "external-secrets.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}

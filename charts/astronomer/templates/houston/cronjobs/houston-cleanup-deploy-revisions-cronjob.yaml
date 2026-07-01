@@ -90,6 +90,15 @@ spec:
               {{- if .Values.houston.cleanupDeployRevisions.livenessProbe }}
               livenessProbe: {{ tpl (toYaml .Values.houston.cleanupDeployRevisions.livenessProbe) . | nindent 16 }}
               {{- end }}
+              {{- if .Values.houston.cleanupDeployRevisions.startupProbe }}
+              startupProbe: {{ tpl (toYaml .Values.houston.cleanupDeployRevisions.startupProbe) . | nindent 16 }}
+              {{- else }}
+              startupProbe:
+                exec:
+                  command: ["true"]
+                failureThreshold: 30
+                periodSeconds: 10
+              {{- end }}
           volumes:
             - name: etc-ssl-certs
               emptyDir: {}

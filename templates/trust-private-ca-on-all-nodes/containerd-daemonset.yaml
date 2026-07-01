@@ -79,6 +79,15 @@ spec:
           limits:
             cpu: 50m
             memory: "50Mi"
+        {{- if .Values.global.privateCaCertsAddToHost.containerdCertCopier.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.global.privateCaCertsAddToHost.containerdCertCopier.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          exec:
+            command: ["true"]
+          failureThreshold: 30
+          periodSeconds: 10
+        {{- end }}
         volumeMounts:
         - name: hostcerts
           mountPath: /host-trust-store

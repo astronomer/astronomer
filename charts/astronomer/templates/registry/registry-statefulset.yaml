@@ -157,6 +157,16 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
           {{- end }}
+          {{- if .Values.registry.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.registry.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.ports.registryHTTP }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
