@@ -1,16 +1,15 @@
 """Tests for the auth-sidecar / commander-gRPC chart gaps in control-plane HA (PINF-894, PINF-895).
 
-Sibling to test_auth_flow_global_base_domain.py (PINF-893). Two auth-sidecar / BYO-ingress
+Sibling to test_auth_flow_global_base_domain.py. Two auth-sidecar / BYO-ingress
 surfaces still assumed the per-CP host under control-plane HA:
 
-PINF-894 — the three monitoring auth-sidecar nginx configmaps (prometheus / alertmanager /
+The three monitoring auth-sidecar nginx configmaps (prometheus / alertmanager /
 grafana) templated the auth subrequest `Host`, the auth `proxy_pass`, and the login `302`
 redirect from `global.baseDomain`. Under HA the customer enters via the global host and the
 session cookie is scoped to `controlPlaneHA.globalBaseDomain`, so these must resolve to the
-global host. They now reuse the shared `global.authBaseDomain` helper: HA-on +
-globalBaseDomain -> global host, else baseDomain (single-CP / HA-off rendering unchanged).
+global host.
 
-PINF-895 — the commander gRPC ingress emitted `backend-protocol: GRPC` and
+The commander gRPC ingress emitted `backend-protocol: GRPC` and
 `enable-http2: true` only in the auth-sidecar-off branch, so auth-sidecar installs lost the
 CP->DP gRPC/HTTP-2 backend protocol unless manually patched. Both annotations are now
 emitted unconditionally.
