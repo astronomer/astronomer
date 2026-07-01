@@ -219,18 +219,20 @@ class TestAirflowOperator:
                 ]
             ),
         )
-        assert len(docs) == 4
+        assert len(docs) == 5
         assert docs[0]["apiVersion"] == "apps/v1"
         assert docs[0]["kind"] == "Deployment"
         assert docs[0]["metadata"]["name"] == "release-name-aocm"
-        assert all(doc["metadata"]["labels"]["component"] == "controller-manager" for doc in docs[:3])
-        assert all(doc["apiVersion"] == "v1" for doc in docs[1:4])
         assert docs[1]["kind"] == "Service"
         assert docs[1]["metadata"]["name"] == "release-name-aocm-metrics-service"
-        assert docs[2]["kind"] == "ConfigMap"
-        assert docs[2]["metadata"]["name"] == "release-name-aom-config"
-        assert docs[3]["kind"] == "Service"
-        assert docs[3]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
+        assert docs[2]["kind"] == "NetworkPolicy"
+        assert docs[2]["metadata"]["name"] == "release-name-airflow-operator-policy"
+        assert docs[3]["kind"] == "ConfigMap"
+        assert docs[3]["metadata"]["name"] == "release-name-aom-config"
+        assert docs[4]["kind"] == "Service"
+        assert docs[4]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
+        assert docs[0]["metadata"]["labels"]["component"] == "controller-manager"
+        assert docs[1]["metadata"]["labels"]["component"] == "controller-manager"
 
         # Render the full chart (not --show-only): with webhooks disabled some manager
         # templates render empty, and helm errors when --show-only targets an all-empty
