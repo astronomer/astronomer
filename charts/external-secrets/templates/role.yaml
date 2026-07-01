@@ -1,0 +1,247 @@
+{{- if and (include "external-secrets.enabled" .) .Values.rbac.create }}
+{{- $namespacepoolsRBACresources:= and .Values.global.namespaceManagement.namespacePools.createRbac .Values.global.namespaceManagement.namespacePools.enabled }}
+{{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}
+{{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not $useRoles )}}
+{{- $shouldCreateResources := and .Values.global.rbac.enabled (or (and .Values.global.clusterRoles (not .Values.global.namespaceManagement.namespacePools.enabled )) $namespacepoolsRBACresources) }}
+{{- if $shouldCreateResources }}
+{{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
+{{- if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{- else  }}
+  {{- $namespaces = append $namespaces .Release.Namespace }}
+{{- end }}
+{{- range $i, $namespaceName := $namespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
+metadata:
+  name: {{ include "external-secrets.fullname" $ }}
+  {{- if not $useClusterRoles }}
+  namespace: {{ $namespaceName }}
+  {{- end }}
+  labels:
+    {{- include "external-secrets.labels" $ | nindent 4 }}
+rules:
+  - apiGroups:
+    - "external-secrets.io"
+    resources:
+    - "secretstores"
+    - "externalsecrets"
+    {{- if $.Values.processPushSecret }}
+    - "pushsecrets"
+    {{- end }}
+    {{- if and $.Values.processClusterStore $useClusterRoles }}
+    - "clustersecretstores"
+    {{- end }}
+    {{- if and $.Values.processClusterExternalSecret $useClusterRoles }}
+    - "clusterexternalsecrets"
+    {{- end }}
+    {{- if and $.Values.processClusterPushSecret $useClusterRoles }}
+    - "clusterpushsecrets"
+    {{- end }}
+    verbs:
+    - "get"
+    - "list"
+    - "watch"
+  - apiGroups:
+    - "external-secrets.io"
+    resources:
+    - "externalsecrets"
+    - "externalsecrets/status"
+    {{- if (include "external-secrets.openshiftFinalizers" $) }}
+    - "externalsecrets/finalizers"
+    {{- end }}
+    - "secretstores"
+    - "secretstores/status"
+    {{- if (include "external-secrets.openshiftFinalizers" $) }}
+    - "secretstores/finalizers"
+    {{- end }}
+    {{- if and $.Values.processClusterStore $useClusterRoles }}
+    - "clustersecretstores"
+    - "clustersecretstores/status"
+    {{- if (include "external-secrets.openshiftFinalizers" $) }}
+    - "clustersecretstores/finalizers"
+    {{- end }}
+    {{- end }}
+    {{- if and $.Values.processClusterExternalSecret $useClusterRoles }}
+    - "clusterexternalsecrets"
+    - "clusterexternalsecrets/status"
+    {{- if (include "external-secrets.openshiftFinalizers" $) }}
+    - "clusterexternalsecrets/finalizers"
+    {{- end }}
+    {{- end }}
+    {{- if $.Values.processPushSecret }}
+    - "pushsecrets"
+    - "pushsecrets/status"
+    {{- if (include "external-secrets.openshiftFinalizers" $) }}
+    - "pushsecrets/finalizers"
+    {{- end }}
+    {{- end }}
+    {{- if and $.Values.processClusterPushSecret $useClusterRoles }}
+    - "clusterpushsecrets"
+    - "clusterpushsecrets/status"
+    {{- if (include "external-secrets.openshiftFinalizers" $) }}
+    - "clusterpushsecrets/finalizers"
+    {{- end }}
+    {{- end }}
+    verbs:
+    - "get"
+    - "update"
+    - "patch"
+  - apiGroups:
+    - "generators.external-secrets.io"
+    resources:
+    - "generatorstates"
+    verbs:
+    - "get"
+    - "list"
+    - "watch"
+    - "create"
+    - "update"
+    - "patch"
+    - "delete"
+    - "deletecollection"
+  - apiGroups:
+    - "generators.external-secrets.io"
+    resources:
+    - "acraccesstokens"
+    - "cloudsmithaccesstokens"
+    {{- if and $.Values.processClusterGenerator $useClusterRoles }}
+    - "clustergenerators"
+    {{- end }}
+    - "ecrauthorizationtokens"
+    - "fakes"
+    - "gcraccesstokens"
+    - "githubaccesstokens"
+    - "quayaccesstokens"
+    - "passwords"
+    - "sshkeys"
+    - "stssessiontokens"
+    - "uuids"
+    - "vaultdynamicsecrets"
+    - "webhooks"
+    - "grafanas"
+    - "mfas"
+    verbs:
+    - "get"
+    - "list"
+    - "watch"
+  - apiGroups:
+    - ""
+    resources:
+    - "serviceaccounts"
+    - "namespaces"
+    verbs:
+    - "get"
+    - "list"
+    - "watch"
+  {{- if and $.Values.processClusterExternalSecret $useClusterRoles }}
+  - apiGroups:
+    - ""
+    resources:
+    - "namespaces"
+    verbs:
+    - "update"
+    - "patch"
+  {{- end }}
+  - apiGroups:
+    - ""
+    resources:
+    - "configmaps"
+    verbs:
+    - "get"
+    - "list"
+    - "watch"
+  - apiGroups:
+    - ""
+    resources:
+    - "secrets"
+    verbs:
+    - "get"
+    - "list"
+    - "watch"
+    - "create"
+    - "update"
+    - "delete"
+    - "patch"
+  {{- if $.Values.genericTargets.enabled }}
+  # Generic target permissions (ConfigMaps)
+  - apiGroups:
+    - ""
+    resources:
+    - "configmaps"
+    verbs:
+    - "create"
+    - "update"
+    - "delete"
+    - "patch"
+  {{- range $.Values.genericTargets.resources }}
+  # Custom resource permissions for non-Secret targets
+  - apiGroups:
+    - {{ .apiGroup | quote }}
+    resources:
+    {{- range .resources }}
+    - {{ . | quote }}
+    {{- end }}
+    verbs:
+    {{- range .verbs }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+  - apiGroups:
+    - ""
+    resources:
+    - "serviceaccounts/token"
+    verbs:
+    - "create"
+  - apiGroups:
+    - ""
+    resources:
+    - "events"
+    verbs:
+    - "create"
+    - "patch"
+  - apiGroups:
+    - "external-secrets.io"
+    resources:
+    - "externalsecrets"
+    verbs:
+    - "create"
+    - "update"
+    - "delete"
+  {{- if $.Values.processPushSecret }}
+  - apiGroups:
+    - "external-secrets.io"
+    resources:
+    - "pushsecrets"
+    verbs:
+    - "create"
+    - "update"
+    - "delete"
+  {{- end }}
+{{- end }}
+{{- if and $.Values.rbac.servicebindings.create ( not $.Values.scopedRBAC ) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "external-secrets.fullname" $ }}-servicebindings
+  labels:
+    servicebinding.io/controller: "true"
+    {{- include "external-secrets.labels" $ | nindent 4 }}
+rules:
+  - apiGroups:
+    - "external-secrets.io"
+    resources:
+    - "externalsecrets"
+    {{- if $.Values.processPushSecret }}
+    - "pushsecrets"
+    {{- end }}
+    verbs:
+    - "get"
+    - "list"
+    - "watch"
+{{- end }}
+{{- end }}
+{{- end }}

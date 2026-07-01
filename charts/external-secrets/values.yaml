@@ -30,8 +30,8 @@ revisionHistoryLimit: 10
 
 image:
   repository: quay.io/astronomer/ap-external-secrets
-  tag: 2.2.0-2
-  pullPolicy: IfNotPresent
+  tag: feat-test-eso-rbac
+  pullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
@@ -62,7 +62,9 @@ scopedNamespace: ""
 scopedRBAC: false
 
 # -- If true the OpenShift finalizer permissions will be added to RBAC
-openshiftFinalizers: true
+openshiftFinalizers: false
+
+watchNamespaces: []
 
 # -- If true the system:auth-delegator ClusterRole will be added to RBAC
 systemAuthDelegator: false
@@ -124,8 +126,6 @@ service:
 serviceAccount:
   # -- Specifies whether a service account should be created.
   create: true
-  # -- Automounts the service account token in all containers of the pod
-  automount: true
   # -- Annotations to add to the service account.
   annotations: {}
   # -- Extra Labels to add to the service account.
@@ -142,7 +142,7 @@ rbac:
 
   servicebindings:
     # -- Specifies whether a clusterrole to give servicebindings read access should be created.
-    create: true
+    create: false
 
   # -- Specifies whether permissions are aggregated to the view ClusterRole
   aggregateToView: true
@@ -368,3 +368,6 @@ hostAliases: []
 
 # -- Any extra pod spec on the deployment
 podSpecExtra: {}
+
+crd:
+  create: true
