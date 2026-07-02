@@ -2,6 +2,12 @@
 # compatible with 2.x
 ---
 astronomer:
+  helmRepo: https://internal-helm.astronomer.io
+  images:
+    houston:
+      tag: danielhoherd_PINF-427-fr11-houston-api
+      pullPolicy: Always
+      # repository: quay.io/astronomer/ap-houston-api
   airflowChartVersion: 1.18.0-build43027
   houston:
     config:
@@ -15,17 +21,17 @@ astronomer:
           gitSyncDagDeployment:
             enabled: true
 
-  helmRepo: https://internal-helm.astronomer.io
+global:
   gitSyncRelay:
     images:
       gitSync:
-        # repository: quay.io/astronomer/ap-git-sync-relay
         tag: danielhoherd_PINF-426-fr11-git-sync-relay
         pullPolicy: Always
+        # repository: quay.io/astronomer/ap-git-sync-relay
       # gitDaemon:
-      #   repository: quay.io/astronomer/ap-git-daemon
       #   tag: 2026.6.23
       #   pullPolicy: Always
+      #   repository: quay.io/astronomer/ap-git-daemon
   # airflow:
   #   images:
   #     gitSync:
