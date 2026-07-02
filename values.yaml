@@ -46,7 +46,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.12
+      tag: 2.0.13
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
@@ -260,7 +260,7 @@ global:
       enabled: false
       name: sidecar-log-consumer
       repository: quay.io/astronomer/ap-vector
-      tag: 0.56.0-1
+      tag: 0.56.0-2
       customConfig: false
       indexPattern: ~
       extraEnv: []
@@ -344,27 +344,27 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.30.0-1
+        tag: 0.30.0-2
       redis:
         repository: quay.io/astronomer/ap-redis
         tag: 8.6.4-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-16
+        tag: 1.24.1-17
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
         tag: 0.12.0-5
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.6.23
+        tag: 2026.7.1
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.6.23
+        tag: 2026.7.1
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.6.23
+        tag: 2026.7.1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.2.13
