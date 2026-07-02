@@ -18,7 +18,7 @@ images:
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.21-22
+    tag: 8.0.21-23
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
@@ -35,8 +35,6 @@ common:
   protocol: http
 
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a ServiceAccount should be created
     create: true
     # Annotations to add to the service account
@@ -110,12 +108,6 @@ client:
     #   path: /_cluster/health?local=true
     #   port: {{ .Values.common.ports.http }}
     # initialDelaySeconds: 5
-  startupProbe: {}
-    # httpGet:
-    #   path: /_cluster/health
-    #   port: {{ .Values.common.ports.http }}
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   env:
     NODE_DATA: "false"
@@ -158,11 +150,6 @@ data:
     # initialDelaySeconds: 20
     # periodSeconds: 10
   readinessProbe: {}
-  startupProbe: {}
-    # tcpSocket:
-    #   port: {{ .Values.common.ports.transport }}
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   env:
     NODE_DATA: "true"
@@ -220,11 +207,6 @@ master:
   livenessProbe: {}
     # tcpSocket:
     #   port: {{ .Values.common.ports.transport }}
-  startupProbe: {}
-    # tcpSocket:
-    #   port: {{ .Values.common.ports.transport }}
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   env:
     NODE_DATA: "false"
@@ -263,7 +245,6 @@ curator:
 
   livenessProbe: {}
   readinessProbe: {}
-  startupProbe: {}
 
 exporter:
   podAnnotations: {}
@@ -273,13 +254,8 @@ exporter:
   # Restart policy for all containers
   restartPolicy: Always
 
-  podSecurityContext:
-    seccompProfile:
-      type: RuntimeDefault
+  podSecurityContext: {}
   securityContext:
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    runAsUser: 65534
     capabilities:
       drop:
       - ALL
@@ -304,12 +280,6 @@ exporter:
     #   port: http
     # initialDelaySeconds: 10
     # timeoutSeconds: 10
-  startupProbe: {}
-    # httpGet:
-    #   path: /healthz
-    #   port: http
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   service:
     type: ClusterIP
@@ -334,18 +304,8 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
-  startupProbe: {}
-    # tcpSocket:
-    #   port: {{ .Values.common.ports.http }}
-    # failureThreshold: 30
-    # periodSeconds: 10
   securityContext:
-    allowPrivilegeEscalation: false
     runAsNonRoot: true
-    runAsUser: 101
-    capabilities:
-      drop:
-        - ALL
   maxBodySize: "100M"
 
   authCache:
@@ -369,11 +329,8 @@ sysctlInitContainer:
 
 podSecurityContext:
   fsGroup: 1000
-  seccompProfile:
-    type: RuntimeDefault
 
 securityContext:
-  allowPrivilegeEscalation: false
   capabilities:
     drop:
       - ALL
