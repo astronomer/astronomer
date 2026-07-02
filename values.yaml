@@ -313,7 +313,7 @@ global:
         tag: 1.24.1-17
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.0-5
+        tag: 0.12.1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
         tag: 2026.7.1
@@ -324,10 +324,10 @@ global:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.6.23
+        tag: 2026.7.1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.13
+        tag: 0.2.15
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
