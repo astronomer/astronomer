@@ -5,9 +5,15 @@ astronomer:
   houston:
     config:
       deployments:
-        gitSyncDagDeployment: true
+        configureDagDeployment: true
+        deployMechanisms:
+          gitSyncDagDeployment:
+            enabled: true
 
 global:
+  deployMechanisms:
+    dagOnlyDeployment:
+      enabled: true
   helmRepo: https://internal-helm.astronomer.io
   gitSyncRelay:
     images:
