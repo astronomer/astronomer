@@ -25,6 +25,7 @@ dependencies = [
     "requests>=2.32.5",
     "ruamel.yaml>=0.19.1",
     "semver>=3.0.4",
+    "tabulate>=0.10.0",
     "yamllint>=1.37.1",
 ]
 

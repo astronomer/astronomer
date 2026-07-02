@@ -13,6 +13,10 @@ orbs:
   cosign: cpanato/cosign-orb@2.0.0
 
 parameters:
+  scan-docker-images:
+    type: boolean
+    default: false
+    description: "This will run docker image scan."
   qa-release:
     type: boolean
     default: false
@@ -56,6 +60,38 @@ jobs:
           command: |
             # Execute the signing script with version from environment
             python bin/sign-images.py --version "${IMAGE_TAG}"
+
+  endorctl-scan-docker:
+    executor: docker-executor
+    environment:
+      ENDOR_NAMESPACE: "astronomer"
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: docker23
+      - run:
+          name: Create venv
+          command: make venv
+      - run:
+          name: Install endorctl
+          command: |
+            curl -fsSL https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o ./endorctl
+            echo "$(curl -fsSL https://api.endorlabs.com/sha/latest/endorctl_linux_amd64)  endorctl" | sha256sum -c
+            chmod +x ./endorctl
+            sudo mv ./endorctl /usr/local/bin/endorctl
+            endorctl --version
+      - run:
+          name: Endor Labs container scan
+          command: |
+            mkdir -p scan-results
+            uv run bin/show-docker-images.py \
+              | uv run bin/scan-endorctl.py --images-from-stdin \
+                  --ignorefile .circleci/endorignore \
+                  --csv scan-results/endorctl-findings.csv
+      - store_artifacts:
+          path: scan-results
+          destination: endorctl-scan-results
 
   release_bom:
     docker:
@@ -357,9 +393,21 @@ jobs:
 workflows:
   version: 2.1
 
+  scan-docker-images:
+    when:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.qa-release >>
+    jobs:
+      - endorctl-scan-docker:
+          context:
+            - apc-endorlabs
+
   build-and-release-helm-chart:
     when:
-      not: << pipeline.parameters.qa-release >>
+      and:
+        - not: << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - run_pre_commit
       - test-unit
@@ -501,7 +549,10 @@ workflows:
             - gcp-astronomer-prod
 
   qa-build-and-release-helm-chart:
-    when: << pipeline.parameters.qa-release >>
+    when:
+      and:
+        - << pipeline.parameters.qa-release >>
+        - not: << pipeline.parameters.scan-docker-images >>
     jobs:
       - build-artifact:
           qa_release: true

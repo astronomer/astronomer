@@ -1,0 +1,3 @@
+# CVE IDs listed here (one per line, # comments allowed) are excluded from the
+# endorctl gate. Add a CVE only after triaging it in the Endor UI, and keep a
+# note explaining why it is ignored.
