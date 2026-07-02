@@ -21,12 +21,15 @@ astronomer:
       gitSync:
         # repository: quay.io/astronomer/ap-git-sync-relay
         tag: danielhoherd_PINF-426-fr11-git-sync-relay
+        pullPolicy: Always
       # gitDaemon:
       #   repository: quay.io/astronomer/ap-git-daemon
       #   tag: 2026.6.23
+      #   pullPolicy: Always
   # airflow:
   #   images:
   #     gitSync:
   #       # OSS airflow component's git-sync sidecar
   #       repository: quay.io/astronomer/ap-git-sync
   #       tag: 2026.6.23
+  #       pullPolicy: Always
