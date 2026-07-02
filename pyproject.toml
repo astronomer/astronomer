@@ -6,7 +6,7 @@ description = "Astro Private Cloud chart development environment"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
-    "cryptography>=46.0.2",
+    "cryptography>=48.0.1",
     "deepmerge>=2.0",
     "docker>=7.1.0",
     "filelock>=3.20.0",
