@@ -23,8 +23,6 @@ nats:
   # then a service account would be required to be able to
   # gather the public ip from a node.
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a ServiceAccount should be created
     create: false
     # Annotations to add to the service account
@@ -64,13 +62,6 @@ nats:
     # initialDelaySeconds: 10
     # timeoutSeconds: 5
 
-  startupProbe: {}
-    # httpGet:
-    #   path: /
-    #   port: 8222
-    # failureThreshold: 30
-    # periodSeconds: 10
-
   # Server settings.
   limits:
     maxConnections:
@@ -87,16 +78,9 @@ nats:
 
   jetStream:
     enabled: true
-    startupProbe: {}
-      # exec:
-      #   command: ["true"]
-      # failureThreshold: 30
-      # periodSeconds: 10
     serviceAccount:
       create: true
       name: ~
-      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-      automountServiceAccountToken: true
 
 
     # Jetstream Domain
@@ -178,14 +162,8 @@ imagePullSecrets: []
 # Toggle whether to use setup a Pod Security Context
 podSecurityContext:
    fsGroup: 1000
-   seccompProfile:
-     type: RuntimeDefault
 # ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext:
-   allowPrivilegeEscalation: false
-   capabilities:
-     drop:
-       - ALL
    runAsUser: 1000
    runAsNonRoot: true
 
@@ -290,11 +268,6 @@ reloader:
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
-  startupProbe: {}
-    # tcpSocket:
-    #   port: 7777
-    # failureThreshold: 30
-    # periodSeconds: 10
   # resource configuration for the metrics sidecar
   resources:
     limits:
