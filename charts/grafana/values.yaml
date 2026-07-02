@@ -19,21 +19,9 @@ images:
     pullPolicy: IfNotPresent
 
 securityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
   runAsNonRoot: true
-  runAsUser: 65532
-
-# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-podSecurityContext:
-  seccompProfile:
-    type: RuntimeDefault
 
 serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
   # Specifies whether a ServiceAccount should be created
   create: true
   # Annotations to add to the service account
@@ -95,15 +83,7 @@ extraEnvVars:
   #       name: grafana-smtp-secret
   #       key: smtp_password
 
-startupProbe: {}
-
-authProxy:
-  startupProbe: {}
-
 bootstrapper:
-  # ap-db-bootstrapper runs as UID 1000; override the chart-wide runAsUser default for this init container.
-  securityContext:
-    runAsUser: 1000
   readinessProbe: {}
   livenessProbe: {}
 
