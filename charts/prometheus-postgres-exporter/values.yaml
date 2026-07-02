@@ -34,8 +34,6 @@ rbac:
   create: true
 
 serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
   # Specifies whether a ServiceAccount should be created
   create: true
   # Annotations to add to the service account
@@ -56,24 +54,12 @@ readinessProbe: {}
   # initialDelaySeconds: 5
   # periodSeconds: 10
 
-startupProbe: {}
-  # tcpSocket:
-  #   port: {{ .Values.service.targetPort }}
-  # failureThreshold: 30
-  # periodSeconds: 10
 
-
-podSecurityContext:
-  seccompProfile:
-    type: RuntimeDefault
+podSecurityContext: {}
 securityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
   runAsNonRoot: true
   # The securityContext this Pod should use. See https://kubernetes.io/docs/concepts/policy/security-context/ for more.
-  runAsUser: 65534
+  # runAsUser: 65534
 
 config:
   datasource:
