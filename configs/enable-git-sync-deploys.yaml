@@ -1,20 +1,19 @@
-# Enables the ability to create git-sync deployments.
+# Enables the ability to create git-sync deployments. This config is
+# compatible with 2.x
 ---
 astronomer:
   airflowChartVersion: 1.18.0-build43027
   houston:
     config:
       deployments:
-        configureDagDeployment:
-          enabled: true
         deployMechanisms:
+          # Enable dag deployment features
+          configureDagDeployment:
+             enabled: true
+
+          # Enable the git-sync dag deployment feature
           gitSyncDagDeployment:
             enabled: true
-
-global:
-  deployMechanisms:
-    dagOnlyDeployment:
-      enabled: true
 
   helmRepo: https://internal-helm.astronomer.io
   gitSyncRelay:
