@@ -3,39 +3,39 @@
 ---
 astronomer:
   helmRepo: https://internal-helm.astronomer.io
-  images:
-    houston:
-      tag: danielhoherd_PINF-427-fr11-houston-api
-      pullPolicy: Always
-      # repository: quay.io/astronomer/ap-houston-api
-  airflowChartVersion: 1.18.0-build43027
+  # images:
+  #   houston:
+  #     tag: danielhoherd_PINF-427-fr11-houston-api
+  #     pullPolicy: Always
+  #     repository: quay.io/astronomer/ap-houston-api
+  # airflowChartVersion: 1.18.0-build43027
   houston:
     config:
       deployments:
         deployMechanisms:
           # Enable dag deployment features
           configureDagDeployment:
-             enabled: true
+            enabled: true
 
           # Enable the git-sync dag deployment feature
           gitSyncDagDeployment:
             enabled: true
 
-global:
-  gitSyncRelay:
-    images:
-      gitSync:
-        tag: danielhoherd_PINF-426-fr11-git-sync-relay
-        pullPolicy: Always
-        # repository: quay.io/astronomer/ap-git-sync-relay
-      # gitDaemon:
-      #   tag: 2026.6.23
-      #   pullPolicy: Always
-      #   repository: quay.io/astronomer/ap-git-daemon
-  # airflow:
-  #   images:
-  #     gitSync:
-  #       # OSS airflow component's git-sync sidecar
-  #       repository: quay.io/astronomer/ap-git-sync
-  #       tag: 2026.6.23
-  #       pullPolicy: Always
+# global:
+#   gitSyncRelay:
+#     images:
+#       gitSync:
+#         tag: danielhoherd_PINF-426-fr11-git-sync-relay
+#         pullPolicy: Always
+#         repository: quay.io/astronomer/ap-git-sync-relay
+#       gitDaemon:
+#         tag: 2026.6.23
+#         pullPolicy: Always
+#         repository: quay.io/astronomer/ap-git-daemon
+#   airflow:
+#     images:
+#       gitSync:
+#         # OSS airflow component's git-sync sidecar
+#         repository: quay.io/astronomer/ap-git-sync
+#         tag: 2026.6.23
+#         pullPolicy: Always
