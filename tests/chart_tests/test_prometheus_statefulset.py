@@ -239,6 +239,27 @@ class TestPrometheusStatefulset:
         c_by_name = get_containers_by_name(docs[0])
         assert {"name": "CUSTOM_DATABASE_NAME", "values": "astrohouston"} in c_by_name["filesd-reloader"]["env"]
 
+    def test_prometheus_filesd_reloader_resources_overrides(self, kube_version):
+        """Test Prometheus filesd reloader with custom cpu/memory requests and limits."""
+        resources = {
+            "limits": {"cpu": "500m", "memory": "256Mi"},
+            "requests": {"cpu": "250m", "memory": "128Mi"},
+        }
+        values = {
+            "global": {"rbac": {"enabled": False}},
+            "prometheus": {"filesdReloader": {"resources": resources}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        self.prometheus_common_tests(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["filesd-reloader"]["resources"] == resources
+
     @pytest.mark.parametrize(
         "plane_mode,expected_present,expected_container_count",
         [
