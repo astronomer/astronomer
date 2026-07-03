@@ -8,17 +8,17 @@
   refresh path via `yarn refresh-cp-chart-version` (update-only, idempotent, no-op
   when the CP is unregistered).
 
-  Only meaningful under Control Plane HA — the cp-identity Secret (source of CP_ID,
-  injected via houston_environment) exists only when controlPlaneHA is enabled, and
-  cross-CP version coordination only applies to multi-CP installs. Without HA the
-  script would no-op, so we skip rendering the Job entirely on single-CP installs.
+  Rendered on every control/unified plane, mirroring the houston-db-migrations and
+  houston-upgrade-deployments hooks. Cross-CP version coordination only matters
+  under Control Plane HA: the CP_ID env (from the cp-identity Secret) is injected
+  by houston_environment only when controlPlaneHA is enabled, so on single-CP /
+  non-HA installs the script finds no CP_ID and cleanly no-ops.
 
   Ordering: this is a `post-upgrade` hook while houston-db-migrations is a
   `pre-upgrade` hook, so migrations always complete before this runs — a CP only
   advertises its new chartVersion once its new schema is live. hook-weight "0"
   runs it ahead of the post-upgrade houston-upgrade-deployments hook (weight "1").
 */}}
-{{- if .Values.global.controlPlaneHA.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
@@ -168,6 +168,12 @@ spec:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
             {{- include "houston_environment" . | indent 12 }}
+          {{- if .Values.houston.refreshCpChartVersion.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.refreshCpChartVersion.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.refreshCpChartVersion.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.refreshCpChartVersion.livenessProbe) . | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
@@ -184,5 +190,4 @@ spec:
           emptyDir: {}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
-{{- end }}
 {{- end }}

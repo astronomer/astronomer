@@ -134,6 +134,15 @@ astronomer:
         exec:
           command:
           - /bin/true
+    refreshCpChartVersion:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
     livenessProbe:
       exec:
         command:

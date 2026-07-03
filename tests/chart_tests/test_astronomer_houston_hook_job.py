@@ -201,29 +201,11 @@ class TestHoustonHookJob:
 class TestRefreshCpChartVersionHookJob:
     """The CP chartVersion refresh post-upgrade hook (PINF-930)."""
 
-    def test_absent_when_ha_disabled(self, kube_version):
-        """No refresh Job on a default (non-HA) install — the script would no-op anyway."""
+    def test_defaults_on_control_plane(self, kube_version):
+        """Rendered on a control plane (mirrors db-migration/upgrade-deployments): name, args, mount."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "control"}}},
-            show_only=[REFRESH_CP_CHART_VERSION_FILE],
-        )
-        assert docs == []
-
-    def test_absent_on_data_plane_in_ha(self, kube_version):
-        """A data-plane render (even with HA shared values) emits no refresh Job."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": True}}},
-            show_only=[REFRESH_CP_CHART_VERSION_FILE],
-        )
-        assert docs == []
-
-    def test_defaults_in_ha(self, kube_version):
-        """Rendered in HA mode: correct name, args, and config mount."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values=_ha_values(),
             show_only=[REFRESH_CP_CHART_VERSION_FILE],
         )
 
@@ -241,11 +223,20 @@ class TestRefreshCpChartVersionHookJob:
             "subPath": "production.yaml",
         } in job["volumeMounts"]
 
+    def test_absent_on_data_plane(self, kube_version):
+        """A data-plane render emits no refresh Job (no CP registry on the data plane)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+        assert docs == []
+
     def test_hook_weight_and_order(self, kube_version):
         """post-upgrade hook, ordered after the pre-upgrade db-migration job."""
         docs = render_chart(
             kube_version=kube_version,
-            values=_ha_values(),
+            values={"global": {"plane": {"mode": "control"}}},
             show_only=[REFRESH_CP_CHART_VERSION_FILE],
         )
 
@@ -256,7 +247,7 @@ class TestRefreshCpChartVersionHookJob:
         assert annotations.get("helm.sh/hook-delete-policy") == "before-hook-creation"
 
     def test_cp_id_env_mounted_in_ha(self, kube_version):
-        """CP_ID (from the cp-identity Secret) is wired so the script can resolve its CP."""
+        """Under HA, CP_ID (from the cp-identity Secret) is wired so the script can resolve its CP."""
         docs = render_chart(
             kube_version=kube_version,
             values=_ha_values(),
@@ -267,3 +258,16 @@ class TestRefreshCpChartVersionHookJob:
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
         env = get_env_vars_dict(c_by_name["refresh-cp-chart-version-job"].get("env", []))
         assert env.get("CP_ID") == {"secretKeyRef": {"name": "cp-identity", "key": "cp_id"}}
+
+    def test_cp_id_env_absent_without_ha(self, kube_version):
+        """Without HA there is no cp-identity Secret, so the script no-ops (no CP_ID wired)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}}},
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env = get_env_vars_dict(c_by_name["refresh-cp-chart-version-job"].get("env", []))
+        assert "CP_ID" not in env

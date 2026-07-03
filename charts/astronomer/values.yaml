@@ -519,6 +519,10 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+  refreshCpChartVersion:
+    readinessProbe: {}
+    livenessProbe: {}
+
   bootstrapper:
     readinessProbe: {}
     livenessProbe: {}

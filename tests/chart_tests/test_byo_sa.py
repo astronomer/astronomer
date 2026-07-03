@@ -426,6 +426,9 @@ custom_service_account_names = {
     "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
+    "charts/astronomer/templates/houston/helm-hooks/houston-refresh-cp-chart-version-job.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
     "charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
