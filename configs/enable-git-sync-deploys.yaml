@@ -2,7 +2,6 @@
 # compatible with 2.x
 ---
 astronomer:
-  helmRepo: https://internal-helm.astronomer.io
   # images:
   #   houston:
   #     tag: danielhoherd_PINF-427-fr11-houston-api
@@ -25,7 +24,8 @@ astronomer:
             metrics:
               enabled: true
 
-# global:
+global:
+  helmRepo: https://internal-helm.astronomer.io
 #   gitSyncRelay:
 #     images:
 #       gitSync:
