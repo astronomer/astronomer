@@ -162,8 +162,7 @@ Fail the install if a cluster scoped reconciler is enabled while its namespace s
 {{- end -}}
 
 {{/*
-Whether external-secrets resources should render: the secrets manager must be enabled
-and the plane mode must be data or unified.
+Whether external-secrets resources should render: the plane mode must be data or unified.
 */}}
 {{- define "external-secrets.enabled" -}}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
