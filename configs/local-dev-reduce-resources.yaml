@@ -25,6 +25,6 @@ prometheus-postgresql-exporter:
     requests:
       cpu: 0m
       memory: 0Gi
-  limits:
-    cpu: 1m
-    memory: 1Gi
+    limits:
+      cpu: 1m
+      memory: 1Gi
