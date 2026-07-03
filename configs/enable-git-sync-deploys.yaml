@@ -20,6 +20,10 @@ astronomer:
           # Enable the git-sync dag deployment feature
           gitSyncDagDeployment:
             enabled: true
+        helm:
+          gitSyncRelay:
+            metrics:
+              enabled: true
 
 # global:
 #   gitSyncRelay:
