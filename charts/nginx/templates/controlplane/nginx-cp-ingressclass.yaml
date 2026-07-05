@@ -2,7 +2,8 @@
 ## NGINX IngressClass ##
 ##########################
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-{{- if not .Values.global.ingressClassName }}
+# use dict to create a new dict and avoid erroring on extraAnnotations key missing in the original dict
+{{- if not (or .Values.global.ingressClassName (index (.Values.global.extraAnnotations | default dict) "kubernetes.io/ingress.class")) }}
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
 metadata:

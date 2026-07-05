@@ -251,6 +251,16 @@ class TestIngress:
                 "direct spec.ingressClassName",
             ),
             (
+                {
+                    "global": {
+                        "ingressClassName": "custom-ingress",
+                        "extraAnnotations": {"kubernetes.io/ingress.class": "annotation-ingress"},
+                    }
+                },
+                "custom-ingress",
+                "ingressClassName takes precedence over annotation",
+            ),
+            (
                 {"global": {"extraAnnotations": {"kubernetes.io/ingress.class": "annotation-ingress"}}},
                 "annotation-ingress",
                 "kubernetes.io/ingress.class annotation",
@@ -383,6 +393,16 @@ class TestIngress:
             (
                 "global.ingressClassName",
                 {"global": {"ingressClassName": "custom-class"}},
+                "custom-class",
+            ),
+            (
+                "global.ingressClassName over annotation",
+                {
+                    "global": {
+                        "ingressClassName": "custom-class",
+                        "extraAnnotations": {"kubernetes.io/ingress.class": "annotation-class"},
+                    }
+                },
                 "custom-class",
             ),
             (

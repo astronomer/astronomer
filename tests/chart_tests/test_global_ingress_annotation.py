@@ -13,7 +13,12 @@ class TestGlobalIngressAnnotation:
 
         all_ingress_files = [str(x.relative_to(git_root_dir)) for x in Path(git_root_dir).rglob("*ingress*.yaml")]
 
-        always_rendered_ingress = [f for f in all_ingress_files if "external-es-proxy-ingress.yaml" not in f]
+        always_rendered_ingress = [
+            # do not render files that contain kind: IngressClass, just kind: Ingress
+            f
+            for f in all_ingress_files
+            if "external-es-proxy-ingress.yaml" not in f and "ingressclass" not in f.lower()
+        ]
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
@@ -49,7 +54,9 @@ class TestGlobalIngressAnnotation:
         """Test global ingress annotation overrides for platform ingress."""
 
         all_ingress_files = [str(x.relative_to(git_root_dir)) for x in Path(git_root_dir).rglob("*ingress*.yaml")]
-        always_rendered_ingress = [f for f in all_ingress_files if "external-es-proxy-ingress.yaml" not in f]
+        always_rendered_ingress = [
+            f for f in all_ingress_files if "external-es-proxy-ingress.yaml" not in f and "ingressclass" not in f.lower()
+        ]
 
         custom_class = "custom-ingress-class"
         docs = render_chart(
@@ -86,7 +93,9 @@ class TestGlobalIngressAnnotation:
         """Without an override, kubernetes.io/ingress.class falls back to the platform default."""
 
         all_ingress_files = [str(x.relative_to(git_root_dir)) for x in Path(git_root_dir).rglob("*ingress*.yaml")]
-        always_rendered_ingress = [f for f in all_ingress_files if "external-es-proxy-ingress.yaml" not in f]
+        always_rendered_ingress = [
+            f for f in all_ingress_files if "external-es-proxy-ingress.yaml" not in f and "ingressclass" not in f.lower()
+        ]
 
         docs = render_chart(
             kube_version=kube_version,
