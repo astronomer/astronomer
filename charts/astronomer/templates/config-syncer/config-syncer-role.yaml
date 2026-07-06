@@ -1,6 +1,6 @@
-############################################
-## Astronomer Commander Role/ClusterRole  ##
-############################################
+###########################################
+## Astronomer Commander Role/ClusterRole ##
+###########################################
 # Here, we either:
 # 1. Do not create any resource if rbac.enabled is disabled
 # 2. Create a Cluster Role if namespacePools is disabled
