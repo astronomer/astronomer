@@ -436,8 +436,6 @@ tags:
 
 
 CP_POSTGRES_NODEPORT = 5432
-CP_POSTGRES_USERNAME = "postgres"
-CP_POSTGRES_PASSWORD = "postgres"  # noqa: S105
 
 MYSQL_ROOT_PASSWORD = os.environ.get("MYSQL_ROOT_PASSWORD", "rootpassword")
 MYSQL_IMAGE = "mysql:8.0"
@@ -511,40 +509,6 @@ def _create_astronomer_bootstrap_secret_mysql(*, context: str, namespace: str, r
     ).stdout
     _kubectl_apply_yaml(context, secret_yaml)
     _debug(f"astronomer-bootstrap secret set with MySQL connection: {svc_name}")
-
-
-def _dp_postgres_service_host(*, release_name: str, namespace: str) -> str:
-    """
-    DP's own local postgres Service DNS name — the `postgresql` subchart's bitnami `fullname`
-    template (`<release>-postgresql`), reached in-cluster since each DP now runs its own postgres
-    instead of sharing the CP's.
-    """
-    return f"{release_name}-postgresql.{namespace}.svc.cluster.local"
-
-
-def _create_astronomer_bootstrap_secret_postgres(*, context: str, namespace: str, host: str, port: int) -> None:
-    """Create (or update) the astronomer-bootstrap secret with a Postgres connection string."""
-    conn = f"postgres://{CP_POSTGRES_USERNAME}:{CP_POSTGRES_PASSWORD}@{host}:{port}"
-    secret_yaml = _run(
-        [
-            "kubectl",
-            "--context",
-            context,
-            "-n",
-            namespace,
-            "create",
-            "secret",
-            "generic",
-            "astronomer-bootstrap",
-            f"--from-literal=connection={conn}",
-            "--dry-run=client",
-            "-o",
-            "yaml",
-        ],
-        check=True,
-    ).stdout
-    _kubectl_apply_yaml(context, secret_yaml)
-    _debug(f"astronomer-bootstrap secret set with postgres connection to {host}:{port}")
 
 
 def _helm_dependency_update(chart_dir: Path) -> None:
@@ -780,7 +744,7 @@ def _ensure_dnsmasq_container() -> None:
         ],
         check=True,
     )
-    for _ in range(30):  # ~15s
+    for _ in range(600):  # ~5min — `apk add` is a fresh network fetch every run, slower under load
         if _run(["docker", "exec", DNSMASQ_CONTAINER_NAME, "pidof", "dnsmasq"], check=False).returncode == 0:
             return
         time.sleep(0.5)
@@ -1063,14 +1027,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--dp-airflow-db",
         choices=["postgres", "mysql"],
-        default="postgres",
-        help="Database type for Airflow deployments on the data plane (default: postgres).",
+        default=None,
+        help=(
+            "Database type for Airflow deployments on the data plane. "
+            "Omit to be prompted interactively; falls back to 'postgres' outside a TTY."
+        ),
     )
 
     parser.add_argument(
         "--enable-operator",
         action=argparse.BooleanOptionalAction,
-        default=False,
+        default=None,
         help=(
             "Enable Airflow operator mode. Sets global.airflowOperator.enabled=true on "
             "both CP and DP, and renders the airflow-operator subchart values on the DP. "
@@ -1207,6 +1174,14 @@ def main() -> int:  # noqa: C901
         )
         cp_mode = TOPOLOGY_TO_CP_MODE[topology]
 
+    dp_airflow_db = args.dp_airflow_db
+    if dp_airflow_db is None:
+        dp_airflow_db = _prompt_choice(
+            "Which database should data planes use?",
+            ["postgres", "mysql"],
+            default="postgres",
+        )
+
     ms = Milestones()
 
     dp_base_https = args.dp_base_https_port if args.dp_base_https_port is not None else (args.cp_base_https_port + args.cp_count)
@@ -1244,7 +1219,7 @@ def main() -> int:  # noqa: C901
         mkcert_root_ca_secret_key=args.mkcert_root_ca_secret_key,
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
-        dp_airflow_db=args.dp_airflow_db,
+        dp_airflow_db=dp_airflow_db,
         enable_operator=enable_operator,
         chart_version=resolved_chart_version,
         chart_is_prerelease=chart_is_prerelease,
@@ -1453,25 +1428,23 @@ def main() -> int:  # noqa: C901
                 )
                 ms.done(h)
 
-            # Step: create astronomer-bootstrap secrets in all DP clusters.
-            # Each DP now runs its own database (postgres or mysql) rather than sharing the CP's.
-            h = ms.start("Create DP astronomer-bootstrap secrets")
+            # Step: create astronomer-bootstrap secrets in DP clusters using MySQL.
+            # Postgres mode needs no manual step: the `postgresql` subchart's own
+            # astronomer-bootstrap-secret.yaml template creates it automatically whenever
+            # `global.postgresql.enabled: true` (see charts/postgresql/templates/) — creating it
+            # ourselves via kubectl first would make Helm refuse to install (a resource with that
+            # name already exists but isn't Helm-owned).
             if settings.dp_airflow_db == "mysql":
+                h = ms.start("Create DP astronomer-bootstrap secrets (MySQL)")
                 for dp in settings.data_planes:
                     _create_astronomer_bootstrap_secret_mysql(
                         context=f"k3d-{dp.cluster_name}",
                         namespace=settings.namespace,
                         release_name=settings.release_name,
                     )
+                ms.done(h, detail=f"db={settings.dp_airflow_db}")
             else:
-                for dp in settings.data_planes:
-                    _create_astronomer_bootstrap_secret_postgres(
-                        context=f"k3d-{dp.cluster_name}",
-                        namespace=settings.namespace,
-                        host=_dp_postgres_service_host(release_name=settings.release_name, namespace=settings.namespace),
-                        port=5432,
-                    )
-            ms.done(h, detail=f"db={settings.dp_airflow_db}")
+                ms.skip("Create DP astronomer-bootstrap secrets", reason="postgresql subchart creates it automatically")
 
             # IMPORTANT: DP components may need to resolve CP endpoints during startup.
             # Patch each DP's CoreDNS NodeHosts (and restart CoreDNS) after CP install, before that DP's install.
