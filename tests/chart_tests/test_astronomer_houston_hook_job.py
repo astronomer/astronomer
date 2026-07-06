@@ -33,9 +33,21 @@ class TestHoustonHookJob:
         assert docs[0]["kind"] == "Job"
         assert docs[0]["metadata"]["name"] == "release-name-houston-upgrade-deployments"
 
-        assert c_by_name["wait-for-db"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["wait-for-db"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
-        assert c_by_name["houston-bootstrapper"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["houston-bootstrapper"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
         assert c_by_name["post-upgrade-job"]["args"] == [
             "yarn",
@@ -44,7 +56,13 @@ class TestHoustonHookJob:
             "--canary=false",
         ]
 
-        assert c_by_name["post-upgrade-job"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["post-upgrade-job"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
         assert {
             "name": "houston-config-volume",
             "mountPath": "/houston/config/production.yaml",
@@ -81,13 +99,31 @@ class TestHoustonHookJob:
         assert docs[0]["kind"] == "Job"
         assert docs[0]["metadata"]["name"] == "release-name-houston-db-migrations"
 
-        assert c_by_name["wait-for-db"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["wait-for-db"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
-        assert c_by_name["houston-bootstrapper"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["houston-bootstrapper"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
         assert c_by_name["houston-db-migrations-job"]["args"] == ["yarn", "migrate"]
 
-        assert c_by_name["houston-db-migrations-job"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["houston-db-migrations-job"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
         assert {
             "name": "houston-config-volume",
             "mountPath": "/houston/config/production.yaml",

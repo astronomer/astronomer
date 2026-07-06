@@ -1,10 +1,14 @@
 ########################################################################################################
-# This file should enable and customize every available livenessProbe and readinessProbe. This serves as
+# This file should enable and customize every available livenessProbe, readinessProbe, and startupProbe. This serves as
 # a way to test that every probe is customizable, and as a document about how to configure every probe.
 # In order to test every available probe, this should also enable every available feature.
 ########################################################################################################
 
 airflow-operator:
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -14,6 +18,10 @@ airflow-operator:
       command:
       - /bin/true
 alertmanager:
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -24,6 +32,10 @@ alertmanager:
       - /bin/true
 astronomer:
   astroUI:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -33,6 +45,10 @@ astronomer:
         command:
         - /bin/true
   commander:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -42,6 +58,10 @@ astronomer:
         command:
         - /bin/true
   configSyncer:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -51,6 +71,10 @@ astronomer:
         command:
         - /bin/true
   dpLink:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -61,6 +85,10 @@ astronomer:
         - /bin/true
   pilot:
     enabled: true
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -71,6 +99,10 @@ astronomer:
         - /bin/true
   navigator:
     enabled: true
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -81,6 +113,10 @@ astronomer:
         - /bin/true
   houston:
     bootstrapper:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -90,6 +126,10 @@ astronomer:
           command:
           - /bin/true
     cleanupAirflowDb:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -99,6 +139,10 @@ astronomer:
           command:
           - /bin/true
     cleanupDeployRevisions:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -108,6 +152,10 @@ astronomer:
           command:
           - /bin/true
     cleanupClusterAudits:
+      startupProbe:
+        exec:
+          command:
+            - /bin/true
       livenessProbe:
         exec:
           command:
@@ -117,6 +165,10 @@ astronomer:
           command:
             - /bin/true
     cleanupDeployments:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -126,6 +178,10 @@ astronomer:
           command:
           - /bin/true
     dbMigration:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -143,6 +199,10 @@ astronomer:
         exec:
           command:
           - /bin/true
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -152,6 +212,10 @@ astronomer:
         command:
         - /bin/true
     taskUsageMetrics:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -161,6 +225,10 @@ astronomer:
           command:
           - /bin/true
     updateCheck:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -170,6 +238,10 @@ astronomer:
           command:
           - /bin/true
     updateResourceStrategy:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -179,6 +251,10 @@ astronomer:
           command:
           - /bin/true
     updateRuntimeCheck:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -188,6 +264,10 @@ astronomer:
           command:
           - /bin/true
     syncDataplaneClusters:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -197,6 +277,10 @@ astronomer:
           command:
           - /bin/true
     upgradeDeployments:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -206,6 +290,10 @@ astronomer:
           command:
           - /bin/true
     waitForDB:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -215,6 +303,10 @@ astronomer:
           command:
           - /bin/true
     worker:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -224,6 +316,10 @@ astronomer:
           command:
           - /bin/true
   registry:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -234,6 +330,10 @@ astronomer:
         - /bin/true
 elasticsearch:
   client:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -243,6 +343,10 @@ elasticsearch:
         command:
         - /bin/true
   curator:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -252,6 +356,10 @@ elasticsearch:
         command:
         - /bin/true
   data:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -261,6 +369,10 @@ elasticsearch:
         command:
         - /bin/true
   exporter:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -270,6 +382,10 @@ elasticsearch:
         command:
         - /bin/true
   master:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -279,6 +395,10 @@ elasticsearch:
         command:
         - /bin/true
   nginx:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -288,6 +408,10 @@ elasticsearch:
         command:
         - /bin/true
   sysctlInitContainer:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -298,6 +422,10 @@ elasticsearch:
         - /bin/true
 external-es-proxy:
   awsproxy:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -306,6 +434,10 @@ external-es-proxy:
       exec:
         command:
         - /bin/true
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -316,6 +448,10 @@ external-es-proxy:
       - /bin/true
 vector:
   vector:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -329,6 +465,10 @@ global:
     enabled: true
   authSidecar:
     enabled: true
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -348,6 +488,10 @@ global:
     enabled: true
 grafana:
   bootstrapper:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -356,6 +500,10 @@ grafana:
       exec:
         command:
         - /bin/true
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -365,6 +513,10 @@ grafana:
       command:
       - /bin/true
   waitForDB:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -373,15 +525,16 @@ grafana:
       exec:
         command:
         - /bin/true
-  livenessProbe:
-    exec:
-      command:
-      - /bin/true
-  readinessProbe:
-    exec:
-      command:
-      - /bin/true
+  authProxy:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
 kube-state:
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -393,6 +546,10 @@ kube-state:
 nats:
   exporter:
     enabled: true
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -402,6 +559,10 @@ nats:
         command:
         - /bin/true
   nats:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -411,6 +572,10 @@ nats:
         command:
         - /bin/true
   reloader:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -421,6 +586,10 @@ nats:
         - /bin/true
 nginx:
   defaultBackend:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -429,6 +598,10 @@ nginx:
       exec:
         command:
         - /bin/true
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -438,6 +611,10 @@ nginx:
       command:
       - /bin/true
 pgbouncer:
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -447,12 +624,20 @@ pgbouncer:
       command:
       - /bin/true
 postgresql:
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
       - /bin/true
   metrics:
     enabled: true
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -470,6 +655,10 @@ postgresql:
     enabled: true
 prometheus:
   configMapReloader:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -479,6 +668,10 @@ prometheus:
         command:
         - /bin/true
   filesdReloader:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -488,6 +681,10 @@ prometheus:
         command:
         - /bin/true
   federation:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -496,6 +693,10 @@ prometheus:
       exec:
         command:
         - /bin/true
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -505,6 +706,10 @@ prometheus:
       command:
       - /bin/true
 prometheus-postgres-exporter:
+  startupProbe:
+    exec:
+      command:
+      - /bin/true
   livenessProbe:
     exec:
       command:
@@ -515,6 +720,10 @@ prometheus-postgres-exporter:
       - /bin/true
 stan:
   exporter:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:
@@ -525,6 +734,10 @@ stan:
         - /bin/true
   stan:
     nats:
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
       livenessProbe:
         exec:
           command:
@@ -534,6 +747,10 @@ stan:
           command:
           - /bin/true
   waitForNatsServer:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
     livenessProbe:
       exec:
         command:

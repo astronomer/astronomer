@@ -1,7 +1,7 @@
 ########################
 ## Prometheus Ingress ##
 ########################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain (or (ne .Values.global.plane.mode "data") .Values.global.plane.domainPrefix) }}
 {{- /* Global customer-facing host is control-plane-only (globalBaseDomain is unset on data planes). */}}
 {{- $emitGlobalHost := and .Values.global.controlPlaneHA.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
 kind: Ingress

@@ -1,7 +1,7 @@
 ###########################################################################
 # Vector ConfigMap
 ###########################################################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -50,11 +50,11 @@ data:
         condition:
           type: "vrl"
           source: |
-            {{- if and .Values.global.namespaceManagement.namespacePools.enabled (gt (len .Values.global.namespaceManagement.namespacePools.namespaces.names) 0) }}
+            {{- if and .Values.global.namespaceManagement.namespacePools.enabled (gt (len .Values.global.namespaceManagement.namespacePools.namespaces.names) 0) (not .Values.global.sharedElasticsearch.enabled) }}
             namespaces = [{{ range $i, $ns := .Values.global.namespaceManagement.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
             includes(namespaces, .kubernetes.pod_namespace)
-            {{- else if or .Values.global.namespaceManagement.manualNamespaceNames.enabled (not .Values.global.manageClusterScopedResources.enabled) }}
-            match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
+            {{- else if or .Values.global.sharedElasticsearch.enabled .Values.global.namespaceManagement.manualNamespaceNames.enabled (not .Values.global.manageClusterScopedResources.enabled) }}
+            exists(.kubernetes.pod_namespace) && is_string(.kubernetes.pod_namespace) && .kubernetes.pod_namespace != ""
             {{- else }}
             .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
             {{- end }}
@@ -155,7 +155,7 @@ data:
           file_str = to_string!(.file)
 
           # Try task execution logs: /dag_id=xxx/run_id=yyy/task_id=zzz/attempt=n.log
-          task_parsed, task_err = parse_regex(file_str, r'/dag_id=(?P<dag_id>[a-zA-Z0-9_-]+)/run_id=(?P<run_id>[^/]+)/task_id=(?P<task_id>[a-zA-Z0-9_-]+)/(?:map_index=(?P<map_index>-?[0-9]+)/)?attempt=(?P<attempt>[0-9]+)\.log$')
+          task_parsed, task_err = parse_regex(file_str, r'/dag_id=(?P<dag_id>[a-zA-Z0-9_.-]+)/run_id=(?P<run_id>[^/]+)/task_id=(?P<task_id>[a-zA-Z0-9_.-]+)/(?:map_index=(?P<map_index>-?[0-9]+)/)?attempt=(?P<attempt>[0-9]+)\.log$')
 
           # Try DAG parse logs: /component/YYYY-MM-DD/dag_file_path.log
           dag_parsed, dag_err = parse_regex(file_str, r'/(?:scheduler|dag_processor|dag_processor_manager)/(?P<date>\d{4}-\d{2}-\d{2})/(?P<dag_file>.+)\.log$')

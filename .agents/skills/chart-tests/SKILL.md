@@ -129,6 +129,26 @@ Every container must support customizable `livenessProbe` and `readinessProbe`. 
 1. Add its probes to `tests/chart_tests/test_data/enable_all_probes.yaml`
 2. Run tests with that file to verify probes are rendered correctly
 
+### Cross-cutting invariants — ALWAYS guard with a cross-cutting test
+
+Some requirements must hold for **every** container/pod/object the cluster renders, not just one
+component — typically because an admission controller (e.g. a Gatekeeper/OPA constraint) rejects the
+whole install if a single object violates them. Examples: every container must define a `startupProbe`
+(`allow-with-probes`, PINF-691), `allowPrivilegeEscalation: false` (PINF-585/713), no forbidden Service
+fields (PINF-692).
+
+For requirements like these, a per-component test is **not enough** — a new component added later silently
+reintroduces the violation. Always add a single cross-cutting test that:
+
+1. Renders with `get_all_features()` (what a real install presents to the admission controller), and
+2. Iterates **every** container across every pod-manager kind and asserts the invariant, so any new
+   component that violates it fails the suite automatically.
+
+Use `get_chart_containers()` or `get_containers_by_name()` over the filtered doc list. `test_probes.py`
+(`TestStartupProbes`, `TestCustomProbes`) and `test_security_context_override.py` are the reference
+patterns. Write this test **first** (TDD): it should fail (red) listing every offending container before
+you implement the fix, then pass (green) once coverage is complete.
+
 ---
 
 ## ConfigMap Scripts

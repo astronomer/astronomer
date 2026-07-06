@@ -39,7 +39,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "defaultBackend.serviceAccountName" . }}
-      securityContext: {{- include "nginx.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
@@ -49,7 +49,7 @@ spec:
         - name: default-backend
           image: {{ template "nginx.defaultBackend.image" . }}
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
-          securityContext: {{- include "nginx.securityContext" . | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           {{- if .Values.defaultBackend.readinessProbe }}
           readinessProbe: {{ toYaml .Values.defaultBackend.readinessProbe | nindent 12 }}
           {{- end }}
@@ -63,6 +63,17 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
             timeoutSeconds: 5
+          {{- end }}
+          {{ if .Values.defaultBackend.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.defaultBackend.startupProbe) . | nindent 12 }}
+          {{ else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.defaultBackendHTTP }}
+              scheme: HTTP
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           resources: {{ toYaml .Values.defaultBackend.resources | nindent 12 }}
           ports:

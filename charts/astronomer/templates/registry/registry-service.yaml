@@ -2,13 +2,13 @@
 ## Astronomer Registry Service ##
 #################################
 {{- if .Values.global.baseDomain }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "registry.enabled" .) "true" }}
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-registry
+  name: {{ template "registry.fullname" . }}
   labels:
-    component: registry
+    component: {{ template "registry.name" . }}
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -25,7 +25,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    component: registry
+    component: {{ template "registry.name" . }}
     tier: astronomer
     release: {{ .Release.Name }}
   ports:
