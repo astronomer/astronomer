@@ -4,7 +4,7 @@
 ###############################
 {{- if (include "external-secrets.enabled" .) }}
 {{- include "external-secrets.reconciler-sanity-test" . }}
-{{- $useRoles := or .Values.global.namespaceManagement.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}
 {{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not $useRoles )}}
 {{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
