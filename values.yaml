@@ -52,17 +52,9 @@ global:
     containerdCertCopier:
       startupProbe: {}
     priorityClassName: ~
-  #Global flag to enable Operator based deployment (operator-awareness in Houston/Commander).
-  # Whether the airflow-operator SUBCHART is installed is governed separately by the top-level
-  # `airflow-operator.enabled` toggle (see Chart.yaml): leave it unset to track this flag, or set
-  # it false to keep awareness on while skipping the subchart (cluster already runs the operator).
+  #Global flag to enable Operator based deployment
   airflowOperator:
     enabled: false
-
-  # Enable adoptDeployment mutation — allows adopting existing Airflow CRs from
-  # customer-managed dataplanes into Houston without recreating Kubernetes resources.
-  operatorAdoption:
-    enabled: true
 
   # Feature flags
   rbac:

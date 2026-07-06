@@ -8,6 +8,7 @@ images:
 # out-of-band (e.g. installed separately by a cluster admin or via GitOps).
 crd:
   create: true
+
 certManager:
   enabled: false
 

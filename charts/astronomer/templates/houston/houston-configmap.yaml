@@ -665,9 +665,6 @@ data:
         log: error
     {{- end }}
 
-    operatorAdoption:
-      enabled: {{ .Values.global.operatorAdoption.enabled }}
-
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
