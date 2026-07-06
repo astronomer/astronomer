@@ -336,11 +336,11 @@ gcp_cloud_logging:
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
-  value: "true"
+  value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
-  value: "true"
+  value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
-  value: "astronomer-cluster-secret-store"
+  value: {{ .Values.global.dataPlaneFailover.externalSecretManagerName | quote }}
 {{- end }}
 
 {{- define "registry.gcsVolume" }}
