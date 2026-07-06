@@ -138,7 +138,7 @@ houston:
   # Houston JWT (JWKS) signing keypair generation. Default true generates a
   # self-signed keypair at install for single-CP mode. In HA mode
   # (global.controlPlaneHA.enabled: true), this flag is overridden and generation
-  # is SKIPPED — Secrets must be pre-provisioned in the astronomer namespace.
+  # is SKIPPED — Secrets must be pre-provisioned in the release namespace.
   # Exception: set global.controlPlaneHA.bootstrapJwks: true on the FIRST CP
   # install of a fresh HA cluster to generate the shared material once; copy the
   # resulting Secrets to subsequent CPs before installing them.
