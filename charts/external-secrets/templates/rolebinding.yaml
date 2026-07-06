@@ -39,7 +39,10 @@ subjects:
 ###########################
 ## external-secrets RBAC ##
 ###########################
-{{- if and .Values.systemAuthDelegator ( not .Values.scopedRBAC ) }}
+{{- if and (include "external-secrets.enabled" .) .Values.rbac.create .Values.systemAuthDelegator ( not .Values.scopedRBAC ) }}
+{{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}
+{{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not $useRoles) }}
+{{- if $useClusterRoles }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -55,4 +58,5 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "external-secrets.serviceAccountName" . }}
     namespace: {{ template "external-secrets.namespace" . }}
+{{- end }}
 {{- end }}

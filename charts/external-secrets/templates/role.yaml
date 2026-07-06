@@ -224,7 +224,7 @@ rules:
     - "delete"
   {{- end }}
 {{- end }}
-{{- if and $.Values.rbac.servicebindings.create ( not $.Values.scopedRBAC ) }}
+{{- if and $useClusterRoles $.Values.rbac.servicebindings.create ( not $.Values.scopedRBAC ) }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
