@@ -9,7 +9,7 @@ tolerations: []
 images:
   alertmanager:
     repository: quay.io/astronomer/ap-alertmanager
-    tag: 0.32.1-1
+    tag: 0.33.0
     pullPolicy: IfNotPresent
 
 podSecurityContext:
