@@ -673,8 +673,9 @@ data:
     strictSchemaCheck:
       enabled: {{ .Values.houston.strictSchemaCheck.enabled }}
 
-    operatorAdoption:
-      enabled: {{ .Values.global.operatorAdoption.enabled }}
+    operator:
+      adoption:
+        enabled: {{ .Values.global.operator.adoption.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |

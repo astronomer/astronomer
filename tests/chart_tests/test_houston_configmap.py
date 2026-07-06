@@ -1,5 +1,6 @@
 import ast
 
+import pytest
 import yaml
 
 from tests.utils.chart import find_key_paths, render_chart
@@ -1120,46 +1121,33 @@ def test_houston_configmap_certgenerator_custom_tag():
     assert "certgenerator" not in prod["deployments"]["helm"]["airflow"]["images"]
 
 
-def test_houston_configmap_operator_adoption_default():
-    """operatorAdoption.enabled should be true in the default chart values (PLX-500)."""
+@pytest.mark.parametrize(
+    "values,expected",
+    [
+        ({}, True),
+        ({"global": {"operator": {"adoption": {"enabled": True}}}}, True),
+        ({"global": {"operator": {"adoption": {"enabled": False}}}}, False),
+    ],
+    ids=["default", "explicit-enabled", "explicit-disabled"],
+)
+def test_houston_configmap_operator_adoption(values, expected):
+    """global.operator.adoption.enabled must propagate to production.yaml, and defaults to true (PLX-500)."""
     docs = render_chart(
+        values=values,
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
 
-    assert "operatorAdoption" in prod, "operatorAdoption key must be present in production.yaml"
-    assert prod["operatorAdoption"]["enabled"] is True
-
-
-def test_houston_configmap_operator_adoption_disabled():
-    """Setting global.operatorAdoption.enabled: false must propagate to production.yaml."""
-    docs = render_chart(
-        values={"global": {"operatorAdoption": {"enabled": False}}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-
-    assert prod["operatorAdoption"]["enabled"] is False
-
-
-def test_houston_configmap_operator_adoption_enabled():
-    """Setting global.operatorAdoption.enabled: true must propagate to production.yaml."""
-    docs = render_chart(
-        values={"global": {"operatorAdoption": {"enabled": True}}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-
-    assert prod["operatorAdoption"]["enabled"] is True
+    assert prod["operator"]["adoption"]["enabled"] is expected
 
 
 def test_houston_configmap_operator_adoption_independent_of_airflow_operator():
-    """operatorAdoption and airflowOperator are independent flags — enabling
+    """operator.adoption and airflowOperator are independent flags — enabling
     one must not affect the other."""
     docs = render_chart(
         values={
             "global": {
-                "operatorAdoption": {"enabled": False},
+                "operator": {"adoption": {"enabled": False}},
                 "airflowOperator": {"enabled": True},
             }
         },
@@ -1167,5 +1155,5 @@ def test_houston_configmap_operator_adoption_independent_of_airflow_operator():
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
 
-    assert prod["operatorAdoption"]["enabled"] is False
+    assert prod["operator"]["adoption"]["enabled"] is False
     assert prod["deployments"]["mode"]["operator"]["enabled"] is True
