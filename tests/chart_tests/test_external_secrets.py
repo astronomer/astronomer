@@ -280,11 +280,12 @@ class TestExternalSecretsCRDs:
 
 @pytest.mark.parametrize("plane_mode", ["unified", "control", "data"])
 def test_external_secrets_only_renders_when_enabled(plane_mode):
-    """Test that external-secrets deployment only renders in data plane mode when enabled.
+    """Test that external-secrets deployment only renders in data/unified plane modes when enabled.
 
     When the subchart is entirely absent (not enabled at umbrella level), helm
     cannot find any of its templates and raises an error.  When the subchart IS
-    enabled, the deployment only renders if plane.mode == 'data'.
+    enabled, the deployment renders in the data and unified planes but not the
+    control plane.
     """
     # When the subchart is entirely disabled helm errors regardless of plane mode.
     with pytest.raises(subprocess.CalledProcessError):
@@ -293,7 +294,7 @@ def test_external_secrets_only_renders_when_enabled(plane_mode):
             show_only=[DEPLOYMENT_TEMPLATE],
         )
 
-    # When the subchart is enabled, deployment renders only in data plane mode.
+    # When the subchart is enabled, deployment renders in the data and unified planes only.
     docs = render_chart(
         values={
             "external-secrets": {"enabled": True},
@@ -301,8 +302,8 @@ def test_external_secrets_only_renders_when_enabled(plane_mode):
         },
         show_only=[DEPLOYMENT_TEMPLATE],
     )
-    if plane_mode == "data":
-        assert len(docs) == 1, f"Expected 1 external-secrets deployment in plane.mode=data, got {len(docs)}"
+    if plane_mode in ("data", "unified"):
+        assert len(docs) == 1, f"Expected 1 external-secrets deployment in plane.mode={plane_mode}, got {len(docs)}"
     else:
         assert len(docs) == 0, f"Expected 0 external-secrets deployments in plane.mode={plane_mode}, got {len(docs)}"
 
