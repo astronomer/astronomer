@@ -24,6 +24,14 @@ global:
   # Default false keeps single-CP installs unchanged (no behavior change).
   controlPlaneHA:
     enabled: false
+    # Only for the FIRST CP install of a fresh HA cluster. When true (with
+    # enabled: true), overrides the HA-mode hard-block on JWKS + registry
+    # keypair generation, allowing the chart to generate the shared secret
+    # material into local k8s Secrets. Customer then copies those Secrets to
+    # subsequent CP clusters before installing them (see runbook).
+    # Default false: subsequent CPs and single-CP-to-HA migrations skip
+    # generation and expect Secrets to be pre-provisioned.
+    bootstrapJwks: false
     # Parent domain of the global customer-facing hostname. REQUIRED when enabled.
     # E.g. set to "astro.example.com" when the global URL is "app.astro.example.com".
     #
