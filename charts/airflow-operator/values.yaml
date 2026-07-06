@@ -2,23 +2,42 @@ images:
   manager:
     # TODO: Change it to public image once 1.6.0 is released
     repository: quay.io/astronomer/airflow-operator-dev
-    tag: 1.6.0-rc2
+    tag: 1.6.0-rc3
     pullPolicy: IfNotPresent
-
+# Whether the chart should create the Airflow Operator CRDs. Set to false if the CRDs are managed
+# out-of-band (e.g. installed separately by a cluster admin or via GitOps).
 crd:
   create: true
 certManager:
   enabled: false
 
+
+# Restrict the Airflow Operator to only send network requests to Kubernetes API, and read available astro-runtime versions from a local file instead of retrieving it dynamically online.
 airgapped: false
+
+# The distribution the Operator is running in, surfaced to the manager as the AIRFLOW_OPERATOR_ENVIRONMENT
+# env var. Valid values: "standalone", "apc", "astro", "local".
+environment: apc
 
 runtimeVersions:
   configMapName: ""
   versionsJson: ""
 
+# When true, the operator will accept Airflow CRs that reference deprecated
+# astro-runtime versions (sets the ALLOW_DEPRECATED_RUNTIME_VERSIONS env var).
+allowDeprecatedRuntimeVersions: true
+
 securityContext:
-  runAsNonRoot: true
   allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 65532
+
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 terminationGracePeriodSeconds: 10
 webhooks:
@@ -36,6 +55,17 @@ webhooks:
   caBundle: ""
   tlsCert: ""
   tlsKey: ""
+
+serviceAccount:
+  create: true
+  # Override the name of the controller-manager ServiceAccount.
+  # Leave empty to use the default "aocm".
+  name: ""
+  # Whether the ServiceAccount's API token is automatically mounted into the pod.
+  automountServiceAccountToken: true
+  # Extra annotations to add to the ServiceAccount (e.g. for cloud IAM role binding).
+  annotations: {}
+
 manager:
   replicas: 1
   metrics:
@@ -48,25 +78,28 @@ manager:
       cpu: 500m
       memory: 250Mi
   env: []
-
-serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
-  create: true
-  annotations: {}
-  name: ""
-livenessProbe: {}
-  # httpGet:
-  #     path: /healthz
-  #     port: .Values.port.managerPort
-  # initialDelaySeconds: 15
-  # periodSeconds: 20
-readinessProbe: {}
-  # httpGet:
-  #     path: /readyz
-  #     port: .Values.port.managerPort
-  # initialDelaySeconds: 5
-  # periodSeconds: 10
+  livenessProbe: {}
+    # httpGet:
+    #     path: /healthz
+    #     port: .Values.port.managerPort
+    # initialDelaySeconds: 15
+    # periodSeconds: 20
+  readinessProbe: {}
+    # httpGet:
+    #     path: /readyz
+    #     port: .Values.port.managerPort
+    # initialDelaySeconds: 5
+    # periodSeconds: 10
+  startupProbe: {}
+    # httpGet:
+    #     path: /healthz
+    #     port: .Values.port.managerPort
+    # failureThreshold: 30
+    # periodSeconds: 10
+  nodeSelector: {}
+  # affinity: node/pod (anti-)affinity rules, e.g. spread replicas across nodes.
+  affinity: {}
+  tolerations: []
 
 ports:
   managerPort: 8081
@@ -76,7 +109,3 @@ ports:
   webhookServicePort: 443
 
 podAnnotations: {}
-
-nodeSelector: {}
-affinity: {}
-tolerations: []

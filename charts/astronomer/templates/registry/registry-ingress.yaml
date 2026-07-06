@@ -2,7 +2,7 @@
 ## Astronomer Registry Ingress ##
 #################################
 {{- if and .Values.global.baseDomain .Values.global.perHostIngress.enabled }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "registry.enabled" .) "true" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -29,10 +29,10 @@ spec:
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
-        - {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+        - {{ include "registry.ingressURL" . }}
   {{- end }}
   rules:
-  - host: {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+  - host: {{ include "registry.ingressURL" . }}
     http:
       paths:
         - path: /

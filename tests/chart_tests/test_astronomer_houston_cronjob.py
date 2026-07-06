@@ -32,7 +32,13 @@ class TestHoustonCronjobJob:
             "--canary=false",
         ]
 
-        assert c_by_name["cleanup"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["cleanup"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_houston_cleanup_deployment_cronjob_overrides(self, kube_version):
         """Test cleanup deployments cronjob overrides."""
@@ -40,7 +46,7 @@ class TestHoustonCronjobJob:
             kube_version=kube_version,
             values={
                 "astronomer": {
-                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "securityContext": {"allowPrivilegeEscalation": False},
                     "houston": {
                         "cleanupDeployments": {
                             "enabled": True,
@@ -68,9 +74,11 @@ class TestHoustonCronjobJob:
         ]
 
         assert c_by_name["cleanup"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
-            "allowPriviledgeEscalation": False,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
         }
 
     def test_houston_cleanup_deployment_cronjob_disabled(self, kube_version):

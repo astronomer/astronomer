@@ -4,7 +4,6 @@
 {{- if .Values.global.clusterRoles -}}
 {{- if or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-{{- $natsSecurityContext := (include "nats.securityContext" . | fromYaml) }}
 {{- if .Values.global.rbac.enabled }}
 ---
 kind: Role
@@ -96,6 +95,7 @@ spec:
       {{- end }}
       {{- end }}
     spec:
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       restartPolicy: Never
       serviceAccountName: {{ template "jetStream.serviceAccountName" . }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
@@ -105,14 +105,21 @@ spec:
       containers:
       - name: jetstream-template-fixer
         image: {{ template "dbBootstrapper.image" . }}
-        securityContext:
-          {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
+        securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
         {{- if .Values.nats.readinessProbe }}
         readinessProbe: {{- tpl (toYaml .Values.nats.readinessProbe) . | nindent 10 }}
         {{- end }}
         {{ if .Values.nats.livenessProbe }}
         livenessProbe: {{- tpl (toYaml .Values.nats.livenessProbe) . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.nats.jetStream.startupProbe }}
+        startupProbe: {{- tpl (toYaml .Values.nats.jetStream.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          exec:
+            command: ["true"]
+          failureThreshold: 30
+          periodSeconds: 10
         {{- end }}
         resources: {{ toYaml .Values.nats.resources | nindent 10 }}
         command:

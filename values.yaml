@@ -46,8 +46,11 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.11
+      tag: 2.0.13
       pullPolicy: IfNotPresent
+      startupProbe: {}
+    containerdCertCopier:
+      startupProbe: {}
     priorityClassName: ~
   #Global flag to enable Operator based deployment (operator-awareness in Houston/Commander).
   # Whether the airflow-operator SUBCHART is installed is governed separately by the top-level
@@ -102,6 +105,11 @@ global:
     # The name of a manually created ClusterSecretStore
     # externalSecretManagerName: your-css-name
 
+  # sharedElasticsearch: Allows sharing logging components with control plane.
+  # Built specially for cp dp split mode
+  sharedElasticsearch:
+    enabled: false
+
   # Metrics and reporting features
   metricsReporting:
     taskUsageMetrics:
@@ -139,10 +147,11 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.31.1-1
+    tag: 1.31.2
     pullPolicy: IfNotPresent
     port: 8084
-    securityContext: {}
+    securityContext:
+      runAsUser: 101
     readinessProbe: {}
     livenessProbe: {}
     ingressAllowedNamespaces: []
@@ -259,7 +268,7 @@ global:
       enabled: false
       name: sidecar-log-consumer
       repository: quay.io/astronomer/ap-vector
-      tag: 0.56.0-1
+      tag: 0.56.0-2
       customConfig: false
       indexPattern: ~
       extraEnv: []
@@ -343,30 +352,30 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.30.0-1
+        tag: 0.30.0-2
       redis:
         repository: quay.io/astronomer/ap-redis
         tag: 8.6.4-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-15
+        tag: 1.24.1-17
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
         tag: 0.12.0-5
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.6.15
+        tag: 2026.7.1
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.6.15
+        tag: 2026.7.1
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.6.15
+        tag: 2026.7.1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.13
+        tag: 0.3.0
     metrics:
       enabled: false
   certgenerator:

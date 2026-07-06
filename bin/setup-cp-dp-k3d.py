@@ -529,6 +529,7 @@ airflow-operator:
     )
     return f"""\
 global:
+  helmRepo: "https://internal-helm.astronomer.io"
   baseDomain: {settings.base_domain}
   plane:
     mode: {settings.cp_mode}
@@ -665,6 +666,7 @@ airflow-operator:
     )
     return f"""\
 global:
+  helmRepo: "https://internal-helm.astronomer.io"
   baseDomain: {settings.base_domain}
   plane:
     mode: data
@@ -1408,7 +1410,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--enable-operator",
         action=argparse.BooleanOptionalAction,
-        default=None,
+        default=False,
         help=(
             "Enable Airflow operator mode. Sets global.airflowOperator.enabled=true on "
             "both CP and DP, and renders the airflow-operator subchart values on the DP. "

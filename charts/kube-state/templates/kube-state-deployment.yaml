@@ -52,7 +52,7 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "kube-state.serviceAccountName" . }}
-      securityContext: {{- include "kube-state.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       {{- include "kube-state.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: kube-state
@@ -65,9 +65,7 @@ spec:
             {{- .Values.extraArgs | toYaml | nindent 10 }}
         {{- end }}
           image: {{ include "kube-state.image" . }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
           ports:
             - name: scrape
@@ -86,6 +84,16 @@ spec:
               port: {{ .Values.ports.scrape }}
             initialDelaySeconds: 5
             timeoutSeconds: 5
+          {{- end }}
+          {{ if .Values.startupProbe }}
+          startupProbe: {{- tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{ else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.scrape }}
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           resources: {{- toYaml .Values.resources | nindent 12 }}
 {{- end }}
