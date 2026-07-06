@@ -1,3 +1,6 @@
+########################################
+## External Secrets Role/ClusterRole  ##
+########################################
 {{- if and (include "external-secrets.enabled" .) .Values.rbac.create }}
 {{- $namespacepoolsRBACresources:= and .Values.global.namespaceManagement.namespacePools.createRbac .Values.global.namespaceManagement.namespacePools.enabled }}
 {{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}

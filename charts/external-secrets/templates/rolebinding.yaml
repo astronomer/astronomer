@@ -1,7 +1,7 @@
 ---
-######################################
-## external-secrets controller RoleBinding ##
-######################################
+#############################################
+## External Secrets controller RoleBinding ##
+#############################################
 {{- if and (include "external-secrets.enabled" .) .Values.rbac.create }}
 {{- $namespacepoolsRBACresources:= and .Values.global.namespaceManagement.namespacePools.createRbac .Values.global.namespaceManagement.namespacePools.enabled }}
 {{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}
