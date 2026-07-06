@@ -545,6 +545,7 @@ houston:
   refreshCpChartVersion:
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   bootstrapper:
     readinessProbe: {}

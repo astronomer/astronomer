@@ -252,7 +252,13 @@ class TestRefreshCpChartVersionHookJob:
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
         job = c_by_name["refresh-cp-chart-version-job"]
         assert job["args"] == ["yarn", "refresh-cp-chart-version"]
-        assert job["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert job["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
         assert {
             "name": "houston-config-volume",
             "mountPath": "/houston/config/production.yaml",

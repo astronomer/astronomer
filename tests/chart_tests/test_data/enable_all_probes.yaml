@@ -199,6 +199,10 @@ astronomer:
         exec:
           command:
           - /bin/true
+      startupProbe:
+        exec:
+          command:
+          - /bin/true
     startupProbe:
       exec:
         command:
