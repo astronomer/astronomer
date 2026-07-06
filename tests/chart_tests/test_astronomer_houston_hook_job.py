@@ -4,7 +4,7 @@ from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
-REFRESH_CP_CHART_VERSION_FILE = "charts/astronomer/templates/houston/helm-hooks/houston-refresh-cp-chart-version-job.yaml"
+REFRESH_CP_CHART_VERSION_FILE = "charts/astronomer/templates/houston/helm-hooks/houston-cp-refresh-job.yaml"
 
 
 def _ha_values(**overrides):
@@ -211,7 +211,7 @@ class TestRefreshCpChartVersionHookJob:
 
         assert len(docs) == 1
         assert docs[0]["kind"] == "Job"
-        assert docs[0]["metadata"]["name"] == "release-name-houston-refresh-cp-chart-version"
+        assert docs[0]["metadata"]["name"] == "release-name-houston-cp-refresh"
 
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
         job = c_by_name["refresh-cp-chart-version-job"]

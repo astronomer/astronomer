@@ -23,10 +23,10 @@
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-houston-refresh-cp-chart-version
+  name: {{ .Release.Name }}-houston-cp-refresh
   labels:
     tier: astronomer
-    component: houston-cp-chart-version-refresh
+    component: houston-cp-refresh
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -45,9 +45,9 @@ spec:
     metadata:
       labels:
         tier: astronomer
-        component: houston-cp-chart-version-refresh
+        component: houston-cp-refresh
         release: {{ .Release.Name }}
-        app: houston-cp-chart-version-refresh
+        app: houston-cp-refresh
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
         {{- include "global.podLabels" . | nindent 8 }}
