@@ -2,7 +2,7 @@ Thank you for installing Astronomer!
 Your release is named {{ .Release.Name }}.
 
 {{- $planeMode := .Values.global.plane.mode }}
-{{- $domainPrefix := .Values.global.plane.domainsuffix }}
+{{- $domainPrefix := .Values.global.plane.domainPrefix }}
 Astronomer has been installed in {{ $planeMode }} plane mode.
 
 {{- $astronomerEnabled := true }}
