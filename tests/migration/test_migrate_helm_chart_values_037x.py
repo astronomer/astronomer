@@ -173,7 +173,8 @@ class TestPartialOverrideMigration:
         assert deployments["runtimeManagement"]["listAllRuntimeVersions"]["enabled"] is True
         assert deployments["deploymentImagesRegistry"]["updateDeploymentImageEndpoint"]["enabled"] is True
         assert deployments["metricsReporting"]["grafana"]["enabled"] is True
-        assert deployments["deploymentLifecycle"]["hardDeleteDeployment"]["enabled"] is True
+        # Deprecated (PLX-575): hardDeleteDeployment is removed, not migrated.
+        assert "hardDeleteDeployment" not in deployments.get("deploymentLifecycle", {})
         assert deployments["logHelmValues"]["enabled"] is True
         assert deployments["namespaceManagement"]["manualReleaseNames"]["enabled"] is False
         # Move migrations

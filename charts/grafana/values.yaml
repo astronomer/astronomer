@@ -11,18 +11,25 @@ replicas: 1
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 12.4.4
+    tag: 12.4.5
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.8
+    tag: 2.0.13
     pullPolicy: IfNotPresent
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
+  runAsUser: 65532
 
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-podSecurityContext: {}
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 serviceAccount:
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -88,7 +95,15 @@ extraEnvVars:
   #       name: grafana-smtp-secret
   #       key: smtp_password
 
+startupProbe: {}
+
+authProxy:
+  startupProbe: {}
+
 bootstrapper:
+  # ap-db-bootstrapper runs as UID 1000; override the chart-wide runAsUser default for this init container.
+  securityContext:
+    runAsUser: 1000
   readinessProbe: {}
   livenessProbe: {}
 

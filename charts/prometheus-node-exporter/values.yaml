@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 image:
   repository: quay.io/astronomer/ap-node-exporter
-  tag: 1.11.0
+  tag: 1.11.1-1
   pullPolicy: IfNotPresent
 
 service:
@@ -40,6 +40,11 @@ readinessProbe: {}
   #   path: /
   #   port: {{ .Values.service.port }}
 
+startupProbe: {}
+  # httpGet:
+  #   path: /
+  #   port: {{ .Values.service.port }}
+
 resources:
   limits:
     cpu: 100m
@@ -64,8 +69,14 @@ podSecurityContext:
   fsGroup: 65534
   runAsGroup: 65534
   runAsUser: 65534
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
   readOnlyRootFilesystem: true
   runAsUser: 65534

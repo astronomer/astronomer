@@ -32,17 +32,6 @@
 {{ .Release.Name }}-pgbouncer-stats
 {{- end }}
 
-{{/*
-Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
-*/}}
-{{- define "pgbouncer.podSecurityContext" -}}
-{{- if .Values.global.openshift.enabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
-{{- end }}
-
 {{ define "pgbouncer.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
 {{ default (printf "%s-pgbouncer" .Release.Name ) .Values.serviceAccount.name }}
