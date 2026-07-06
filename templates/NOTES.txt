@@ -62,9 +62,9 @@ We have guides available at https://www.astronomer.io/docs/learn/ and are always
 To see dashboard URLs here, provide baseDomain in your config.
 {{- end }}
 
-{{- if and (or (eq $planeMode "control") (eq $planeMode "unified")) $astronomerEnabled $platformEnabled .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.bootstrapJwks (dig "houston" "jwks" "generation" "enabled" true .Values.astronomer) }}
+{{- if and .Release.IsInstall (or (eq $planeMode "control") (eq $planeMode "unified")) $astronomerEnabled $platformEnabled .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.bootstrapJwks (dig "houston" "jwks" "generation" "enabled" true .Values.astronomer) }}
 
-First-CP HA bootstrap complete. The chart has generated the following Secrets in this cluster's {{ .Release.Namespace }} namespace:
+First-CP HA bootstrap (bootstrapJwks enabled): this install generates the following Secrets in this cluster's {{ .Release.Namespace }} namespace:
 
 - {{ include "houston.jwtKeySecret" (dict "Release" .Release "Values" .Values.astronomer) | trim }} — Houston JWT signing keypair (private key)
 - {{ include "houston.jwtCertificateSecret" (dict "Release" .Release "Values" .Values.astronomer) | trim }} — JWT signing certificate (also signs Docker registry tokens)
