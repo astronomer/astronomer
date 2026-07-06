@@ -9,6 +9,7 @@
 ############################
 
 global:
+  helmRepo: "https://internal-helm.astronomer.io"
   deploymentLifecycle:
     deployRollback:
       enabled: true

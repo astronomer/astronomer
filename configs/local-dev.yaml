@@ -14,6 +14,7 @@ tags:
   nats: true
 
 global:
+  helmRepo: "https://internal-helm.astronomer.io"
   # Base domain for all subdomains exposed through ingress
   baseDomain: localtest.me
   # Mode of the plane, can be 'data', 'unified' or 'local'

@@ -7,6 +7,7 @@
 ############################
 
 global:
+  helmRepo: "https://internal-helm.astronomer.io"
   deployRollbackEnabled: true
   taskUsageMetricsEnabled: true
   vectorEnabled: true

@@ -330,18 +330,6 @@ def _version_specific_values_file(chart_version: str | None) -> Path:
     return GIT_ROOT_DIR / "configs" / filename
 
 
-def _postgresql_enabled_yaml(*, enabled: bool) -> str:
-    """
-    Emit both `global.postgresqlEnabled` (1.x/0.37.x) and `global.postgresql.enabled` (2.x/main)
-    unconditionally — whichever chart is actually installed reads the one it recognizes and
-    ignores the other (no values schema validation to reject it). This is the one postgres flag
-    that differs between CP (on) and DP (always off; DPs share the CP's postgres), so it isn't in
-    configs/local-1x.yaml / configs/local-2x.yaml with everything else.
-    """
-    value = "true" if enabled else "false"
-    return f"  postgresqlEnabled: {value}\n  postgresql:\n    enabled: {value}\n"
-
-
 def _cp_values_yaml(settings: Settings) -> str:
     operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
     operator_subchart_block = (
@@ -362,10 +350,8 @@ airflow-operator:
         if settings.enable_operator
         else ""
     )
-    postgresql_flag = _postgresql_enabled_yaml(enabled=True)
     return f"""\
 global:
-  helmRepo: "https://internal-helm.astronomer.io"
   baseDomain: {settings.base_domain}
   plane:
     mode: {settings.cp_mode}
@@ -373,7 +359,7 @@ global:
   tlsSecret: {settings.tls_secret_name}
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
-{postgresql_flag}{operator_block}
+{operator_block}
 
 tags:
   platform: true
@@ -397,8 +383,8 @@ postgresql:
 
 
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
-    """Generate DP Helm values.  PostgreSQL is always disabled — DPs use the CP's shared postgres."""
-    postgresql_flag = _postgresql_enabled_yaml(enabled=False)
+    """Generate DP Helm values. Postgres on/off is decided by main() via configs/postgres-*.yaml
+    depending on --dp-airflow-db — each DP runs its own database rather than sharing the CP's."""
     global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
     # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
@@ -434,7 +420,6 @@ airflow-operator:
     )
     return f"""\
 global:
-  helmRepo: "https://internal-helm.astronomer.io"
   baseDomain: {settings.base_domain}
   plane:
     mode: data
@@ -442,7 +427,7 @@ global:
   tlsSecret: {settings.tls_secret_name}
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
-{postgresql_flag}{global_operator_block}
+{global_operator_block}
 tags:
   platform: true
   postgresql: false
@@ -463,73 +448,19 @@ def _mysql_service_name(release_name: str) -> str:
     return f"{release_name}-mysql"
 
 
+MYSQL_MANIFEST_TEMPLATE = GIT_ROOT_DIR / "configs" / "mysql-manifest.yaml"
+
+
 def _mysql_manifest_yaml(namespace: str, release_name: str) -> str:
-    """Generate a Kubernetes Deployment + Service manifest for a local MySQL 8.0 instance."""
+    """Fill in configs/mysql-manifest.yaml for a local MySQL 8.0 Deployment + Service."""
     svc_name = _mysql_service_name(release_name)
-    labels = f"app: {svc_name}"
-    return f"""\
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {svc_name}
-  namespace: {namespace}
-  labels:
-    {labels}
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      {labels}
-  template:
-    metadata:
-      labels:
-        {labels}
-    spec:
-      containers:
-        - name: mysql
-          image: {MYSQL_IMAGE}
-          args:
-            - --default-authentication-plugin=mysql_native_password
-            - --explicit_defaults_for_timestamp=1
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: "{MYSQL_ROOT_PASSWORD}"
-          ports:
-            - containerPort: 3306
-              name: mysql
-          readinessProbe:
-            exec:
-              command:
-                - mysqladmin
-                - ping
-                - -h
-                - "127.0.0.1"
-                - -u
-                - root
-                - -p{MYSQL_ROOT_PASSWORD}
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "256Mi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {svc_name}
-  namespace: {namespace}
-  labels:
-    {labels}
-spec:
-  selector:
-    {labels}
-  ports:
-    - port: 3306
-      targetPort: 3306
-      protocol: TCP
-      name: mysql
-"""
+    return MYSQL_MANIFEST_TEMPLATE.read_text().format(
+        svc_name=svc_name,
+        namespace=namespace,
+        labels=f"app: {svc_name}",
+        mysql_image=MYSQL_IMAGE,
+        mysql_root_password=MYSQL_ROOT_PASSWORD,
+    )
 
 
 def _deploy_mysql(*, context: str, namespace: str, release_name: str) -> None:
@@ -582,9 +513,18 @@ def _create_astronomer_bootstrap_secret_mysql(*, context: str, namespace: str, r
     _debug(f"astronomer-bootstrap secret set with MySQL connection: {svc_name}")
 
 
-def _create_astronomer_bootstrap_secret_postgres(*, context: str, namespace: str, pg_host: str) -> None:
-    """Create (or update) the astronomer-bootstrap secret with a Postgres connection string pointing to the CP."""
-    conn = f"postgres://{CP_POSTGRES_USERNAME}:{CP_POSTGRES_PASSWORD}@{pg_host}:{CP_POSTGRES_NODEPORT}"
+def _dp_postgres_service_host(*, release_name: str, namespace: str) -> str:
+    """
+    DP's own local postgres Service DNS name — the `postgresql` subchart's bitnami `fullname`
+    template (`<release>-postgresql`), reached in-cluster since each DP now runs its own postgres
+    instead of sharing the CP's.
+    """
+    return f"{release_name}-postgresql.{namespace}.svc.cluster.local"
+
+
+def _create_astronomer_bootstrap_secret_postgres(*, context: str, namespace: str, host: str, port: int) -> None:
+    """Create (or update) the astronomer-bootstrap secret with a Postgres connection string."""
+    conn = f"postgres://{CP_POSTGRES_USERNAME}:{CP_POSTGRES_PASSWORD}@{host}:{port}"
     secret_yaml = _run(
         [
             "kubectl",
@@ -604,7 +544,7 @@ def _create_astronomer_bootstrap_secret_postgres(*, context: str, namespace: str
         check=True,
     ).stdout
     _kubectl_apply_yaml(context, secret_yaml)
-    _debug(f"astronomer-bootstrap secret set with postgres connection to {pg_host}")
+    _debug(f"astronomer-bootstrap secret set with postgres connection to {host}:{port}")
 
 
 def _helm_dependency_update(chart_dir: Path) -> None:
@@ -1500,7 +1440,10 @@ def main() -> int:  # noqa: C901
                     release_name=settings.release_name,
                     namespace=settings.namespace,
                     values_file=cp_values_files[cp.cluster_name],
-                    base_values_files=(_version_specific_values_file(settings.chart_version),),
+                    base_values_files=(
+                        _version_specific_values_file(settings.chart_version),
+                        GIT_ROOT_DIR / "configs" / "postgres-enabled.yaml",
+                    ),
                     extra_values_files=[Path(f) for f in args.helm_values],
                     timeout=settings.helm_timeout,
                     debug=settings.helm_debug,
@@ -1511,8 +1454,7 @@ def main() -> int:  # noqa: C901
                 ms.done(h)
 
             # Step: create astronomer-bootstrap secrets in all DP clusters.
-            # Postgres mode: point to the primary CP's (cp01) shared postgres NodePort on the CP node Docker IP.
-            # MySQL mode: point to each DP's own MySQL service.
+            # Each DP now runs its own database (postgres or mysql) rather than sharing the CP's.
             h = ms.start("Create DP astronomer-bootstrap secrets")
             if settings.dp_airflow_db == "mysql":
                 for dp in settings.data_planes:
@@ -1522,13 +1464,12 @@ def main() -> int:  # noqa: C901
                         release_name=settings.release_name,
                     )
             else:
-                primary_cp = settings.control_planes[0]
-                cp_node_ip = _docker_inspect_ip(f"k3d-{primary_cp.cluster_name}-server-0")
                 for dp in settings.data_planes:
                     _create_astronomer_bootstrap_secret_postgres(
                         context=f"k3d-{dp.cluster_name}",
                         namespace=settings.namespace,
-                        pg_host=cp_node_ip,
+                        host=_dp_postgres_service_host(release_name=settings.release_name, namespace=settings.namespace),
+                        port=5432,
                     )
             ms.done(h, detail=f"db={settings.dp_airflow_db}")
 
@@ -1560,6 +1501,12 @@ def main() -> int:  # noqa: C901
                     else:
                         ms.skip(f"Install ServiceMonitor CRD on {dp.cluster_name}", reason="--skip-service-monitor-crd set")
 
+                # Each DP runs its own database — postgres subchart on, unless --dp-airflow-db=mysql
+                # (mysql is deployed as a plain k8s manifest above instead; see _deploy_mysql).
+                dp_postgres_values_file = (
+                    "postgres-enabled.yaml" if settings.dp_airflow_db == "postgres" else "postgres-disabled.yaml"
+                )
+
                 h = ms.start(f"Helm install/upgrade Data Plane (context={dp_ctx})")
                 _helm_upgrade_install(
                     context=dp_ctx,
@@ -1567,7 +1514,10 @@ def main() -> int:  # noqa: C901
                     release_name=settings.release_name,
                     namespace=settings.namespace,
                     values_file=dp_values_files[dp.cluster_name],
-                    base_values_files=(_version_specific_values_file(settings.chart_version),),
+                    base_values_files=(
+                        _version_specific_values_file(settings.chart_version),
+                        GIT_ROOT_DIR / "configs" / dp_postgres_values_file,
+                    ),
                     extra_values_files=[Path(f) for f in args.helm_values],
                     timeout=settings.helm_timeout,
                     debug=settings.helm_debug,
