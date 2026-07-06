@@ -103,9 +103,6 @@ data:
         operator:
           enabled: {{.Values.global.airflowOperator.enabled}}
 
-    operatorAdoption:
-      enabled: {{ .Values.global.operatorAdoption.enabled }}
-
       deployMechanisms:
         dagOnlyDeployment:
           enabled: {{ .Values.global.deployMechanisms.dagOnlyDeployment.enabled }}
@@ -667,6 +664,9 @@ data:
         node: {{ printf "http://%s-elasticsearch:9200" .Release.Name }}
         log: error
     {{- end }}
+
+    operatorAdoption:
+      enabled: {{ .Values.global.operatorAdoption.enabled }}
 
     prometheus:
       enabled: true

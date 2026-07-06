@@ -39,9 +39,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap
-
 from helm_chart_values_migration_shared import HOUSTON_DEPLOYMENT_PATH_MIGRATIONS
 from k3d_setup_shared import (
     CERT_MANAGER_VERSION,
@@ -75,6 +72,8 @@ from k3d_setup_shared import (
     _validate_prereqs,
     _wait_for_cert_manager,
 )
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
 
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]))
 
@@ -181,12 +180,6 @@ class Settings:
     agents: int = 0
 
 
-
-
-
-
-
-
 def _ts() -> str:
     """Return a compact local timestamp for progress logs."""
     return time.strftime("%H:%M:%S")
@@ -232,20 +225,6 @@ def _prompt_yes_no(question: str, *, default: bool) -> bool:
         _print(f"  Please answer y or n (got {raw!r})")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def _helm_search_versions(chart_ref: str) -> list[str]:
     """Return published versions of `chart_ref`, newest first (same order `helm search` uses).
 
@@ -281,7 +260,7 @@ def _resolve_chart_version(alias: str, chart_ref: str) -> str:
     if prereleases:
         return prereleases[0]  # `helm search` already sorts newest-first
 
-    prefix = alias[:-2] if alias.endswith(".x") else alias
+    prefix = alias.removesuffix(".x")
     matches = [v for v in versions if v == prefix or v.startswith(f"{prefix}.")]
     if matches:
         return matches[0]
@@ -290,18 +269,6 @@ def _resolve_chart_version(alias: str, chart_ref: str) -> str:
         f"No published chart version matches --version '{alias}' on {chart_ref}. "
         f"Newest available versions: {', '.join(versions[:10])}"
     )
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
@@ -336,7 +303,6 @@ def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
     _generate_tls_cert(mkcert_exe=mkcert_exe, cert_path=cert_path, key_path=key_path, root_ca=root_ca, sans=sans)
 
     return cert_path, key_path, root_ca
-
 
 
 def _write_values_file(path: Path, content: str) -> None:
@@ -989,8 +955,6 @@ def _kubectl_get_service_lb_ip(context: str, namespace: str, service: str) -> st
     return ip
 
 
-
-
 def _ensure_container_hosts_mapping(container: str, ip: str, hostname: str) -> None:
     """
     Ensure a single ip->hostname mapping exists in the container's /etc/hosts.
@@ -1251,8 +1215,6 @@ def _setup_local_networking(settings: Settings) -> str:
     return f"resolver {'created' if changed else 'present'}; proxy CP:{primary_cp.https_port} DP:{[p for _, p in dp_entries]}"
 
 
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Automate Astronomer CP/DP local setup using k3d.")
     parser.add_argument("--base-domain", default="localtest.me")
@@ -1380,8 +1342,7 @@ def parse_args() -> argparse.Namespace:
         "--skip-local-networking",
         action="store_true",
         help=(
-            "Skip the local dnsmasq + SNI-proxy setup (host :443, /etc/resolver) and print "
-            "manual /etc/hosts instructions instead."
+            "Skip the local dnsmasq + SNI-proxy setup (host :443, /etc/resolver) and print manual /etc/hosts instructions instead."
         ),
     )
 
