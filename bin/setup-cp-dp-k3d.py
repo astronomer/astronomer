@@ -28,7 +28,6 @@ helpers) lives in bin/k3d_setup_shared.py, alongside bin/setup-037x-k3d.py.
 from __future__ import annotations
 
 import argparse
-import io
 import json
 import os
 import shlex
@@ -39,7 +38,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from helm_chart_values_migration_shared import HOUSTON_DEPLOYMENT_PATH_MIGRATIONS
 from k3d_setup_shared import (
     CERT_MANAGER_VERSION,
     HELM_CHART,
@@ -72,8 +70,6 @@ from k3d_setup_shared import (
     _validate_prereqs,
     _wait_for_cert_manager,
 )
-from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap
 
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]))
 
@@ -309,171 +305,44 @@ def _write_values_file(path: Path, content: str) -> None:
     path.write_text(content)
 
 
-def _uses_legacy_flat_schema(chart_version: str | None) -> bool:
+def _version_specific_values_file(chart_version: str | None) -> Path:
     """
-    Return True if `chart_version` predates the 2.x values.yaml restructure and needs the old
-    flat/differently-nested `global.*` + `houston.config.deployments.*` keys.
+    Pick the plain, hand-written values file with the `global.*` + `houston.config.deployments.*`
+    overrides for this chart version's schema (see configs/local-1x.yaml, configs/local-2x.yaml,
+    configs/local-dev.yaml — 1.x and 2.x renamed a bunch of these keys, see
+    bin/helm_chart_values_migration_shared.py for the full rename list).
 
-    Verified directly against `values.yaml` on release-1.1/release-1.2 (flat, "1.x schema") vs
-    release-2.0/release-2.1/master (nested, "2.x schema") — the schema is stable within each line
-    and only breaks at the 1.x/2.x boundary. `bin/helm_chart_values_migration_shared.py` (the
-    actual 1.x->2.x migration script) is the authoritative source for every rename below.
-    `chart_version=None` means installing from the local checkout (the `main` alias), which today
-    is 2.x-shaped.
+    `chart_version=None` means installing from the local checkout (the `main` alias) — that's
+    exactly what configs/local-dev.yaml is for. 0.37.x (major version 0) shares 1.x's shape for
+    everything these files set, so it reuses configs/local-1x.yaml too; it isn't actually
+    installed through this code path in normal use (`--version 0.37` delegates the whole run to
+    bin/setup-037x-k3d.py — see DELEGATE_037_ALIAS), this only matters if `--chart-version` is
+    used to force a 0.37.x chart version directly.
     """
     if chart_version is None:
-        return False
+        return GIT_ROOT_DIR / "configs" / "local-dev.yaml"
     major = chart_version.split(".", 1)[0]
     try:
-        return int(major) < 2
+        major_num = int(major)
     except ValueError:
-        return False
+        major_num = 2
+    filename = "local-1x.yaml" if major_num <= 1 else "local-2x.yaml"
+    return GIT_ROOT_DIR / "configs" / filename
 
 
-BASE_VALUES_DIR = Path(__file__).resolve().parent / "cp-dp-base-values"
-
-
-def _load_base_values(legacy: bool) -> CommentedMap:
+def _postgresql_enabled_yaml(*, enabled: bool) -> str:
     """
-    Load the real, vendored `values.yaml` for this schema family — a verbatim copy of the
-    umbrella chart's own values.yaml (see bin/cp-dp-base-values/*.yaml for provenance/how to
-    refresh). Used to validate the override paths below against an actual chart file instead of
-    a hand-typed guess: if a path stops existing here, `_assert_path` fails loudly instead of
-    Helm silently ignoring an override that no longer matches the schema.
+    Emit both `global.postgresqlEnabled` (1.x/0.37.x) and `global.postgresql.enabled` (2.x/main)
+    unconditionally — whichever chart is actually installed reads the one it recognizes and
+    ignores the other (no values schema validation to reject it). This is the one postgres flag
+    that differs between CP (on) and DP (always off; DPs share the CP's postgres), so it isn't in
+    configs/local-1x.yaml / configs/local-2x.yaml with everything else.
     """
-    filename = "1x-values.yaml" if legacy else "2x-values.yaml"
-    return YAML(typ="rt").load((BASE_VALUES_DIR / filename).read_text())
-
-
-def _assert_path(mapping: CommentedMap, dotted: str, *, source: str) -> None:
-    """Raise if `dotted` (e.g. "postgresql.enabled") isn't declared in `mapping`."""
-    current: object = mapping
-    walked: list[str] = []
-    for part in dotted.split("."):
-        walked.append(part)
-        if not isinstance(current, (dict, CommentedMap)) or part not in current:
-            raise RuntimeError(
-                f"{source} no longer declares `{'.'.join(walked)}`. The umbrella chart's values.yaml "
-                "schema may have changed — recheck bin/helm_chart_values_migration_shared.py and "
-                "re-copy bin/cp-dp-base-values/*.yaml from the source branch."
-            )
-        current = current[part]
-
-
-def _set_dotted(mapping: CommentedMap, dotted: str, value: object) -> None:
-    """Set `dotted` (e.g. "postgresql.enabled") on `mapping`, creating intermediate maps as needed."""
-    current = mapping
-    parts = dotted.split(".")
-    for part in parts[:-1]:
-        if part not in current or not isinstance(current[part], (dict, CommentedMap)):
-            current[part] = CommentedMap()
-        current = current[part]
-    current[parts[-1]] = value
-
-
-def _dump_indented(mapping: CommentedMap, *, indent: int) -> str:
-    """Dump `mapping` as YAML, prefixing every line with `indent` spaces so it can be spliced
-    into a larger hand-written values template at the right nesting level."""
-    yaml = YAML(typ="rt")
-    yaml.default_flow_style = False
-    stream = io.StringIO()
-    yaml.dump(mapping, stream)
-    prefix = " " * indent
-    return "".join(prefix + line if line.strip() else line for line in stream.getvalue().splitlines(keepends=True))
-
-
-def _global_feature_flags_yaml(*, legacy: bool, postgresql_enabled: bool) -> str:
-    """
-    Version-aware `global.*` feature-flag block (2-space indented, appended directly under
-    `global:`), built by validating against and mirroring the shape of the real vendored
-    values.yaml for this schema family (bin/cp-dp-base-values/). Only the keys this script
-    actually sets are branched here; everything else (`networkPolicy`, `defaultDenyNetworkPolicy`,
-    `airflowOperator`, `nats`, `plane`, ...) is a stable key path across both schemas and stays
-    inline in the caller.
-
-    1.x -> 2.x renames covered, per bin/helm_chart_values_migration_shared.py:
-      postgresqlEnabled       -> postgresql.enabled
-      deployRollbackEnabled   -> deploymentLifecycle.deployRollback.enabled
-      taskUsageMetricsEnabled -> metricsReporting.taskUsageMetrics.enabled
-      vectorEnabled           -> daemonsetLogging.enabled
-      dagOnlyDeployment       -> deployMechanisms.dagOnlyDeployment
-    """
-    filename = "1x-values.yaml" if legacy else "2x-values.yaml"
-    source = f"bin/cp-dp-base-values/{filename}"
-    base_global = _load_base_values(legacy)["global"]
-
-    paths: dict[str, object] = (
-        {
-            "postgresqlEnabled": postgresql_enabled,
-            "deployRollbackEnabled": True,
-            "taskUsageMetricsEnabled": True,
-            "dagOnlyDeployment.enabled": True,
-        }
-        if legacy
-        else {
-            "postgresql.enabled": postgresql_enabled,
-            "deploymentLifecycle.deployRollback.enabled": True,
-            "metricsReporting.taskUsageMetrics.enabled": True,
-            "daemonsetLogging.enabled": True,
-            "deployMechanisms.dagOnlyDeployment.enabled": True,
-        }
-    )
-    overrides = CommentedMap()
-    for dotted, value in paths.items():
-        _assert_path(base_global, dotted, source=source)
-        _set_dotted(overrides, dotted, value)
-
-    # `global.vectorEnabled` (1.x only) gates the `vector` subchart via a Chart.yaml `condition`,
-    # not a values.yaml default — it's never declared with a default value, so there's nothing to
-    # assert against here. Ground truth: `git grep vectorEnabled release-1.1 -- Chart.yaml`.
-    if legacy:
-        overrides["vectorEnabled"] = True
-
-    return _dump_indented(overrides, indent=2)
-
-
-def _houston_deployments_config_yaml(*, legacy: bool) -> str:
-    """
-    Version-aware `astronomer.houston.config.deployments.*` block (CP only; 6-space indented to
-    sit under `astronomer.houston.config:`). This is Houston's own app-config schema (deep-merged
-    wholesale into a ConfigMap — see charts/astronomer/templates/houston/houston-configmap.yaml),
-    restructured in lockstep with the 2.x Helm values rename. These keys aren't declared anywhere
-    in values.yaml (they're a passthrough blob), so there's no base file to validate paths
-    against — instead this derives the 2.x path directly from `HOUSTON_DEPLOYMENT_PATH_MIGRATIONS`
-    in bin/helm_chart_values_migration_shared.py, the same table houston-api's own migration code
-    is kept in sync with, rather than a second hand-typed copy of the mapping.
-    """
-    deployments = CommentedMap()
-    if legacy:
-        deployments["configureDagDeployment"] = True
-        deployments["hardDeleteDeployment"] = True
-        deployments["airflowV3"] = True
-    else:
-        _set_dotted(deployments, _houston_migrated_path("configureDagDeployment"), True)
-        _set_dotted(deployments, _houston_migrated_path("hardDeleteDeployment"), True)
-        airflow_v3 = CommentedMap()
-        airflow_v3["enabled"] = True
-        airflow_v3["minimumAstroRuntimeVersion"] = "3.1-2"
-        _set_dotted(deployments, _houston_migrated_path("airflowV3"), airflow_v3)
-
-    wrapper = CommentedMap()
-    wrapper["deployments"] = deployments
-    return _dump_indented(wrapper, indent=6)
-
-
-def _houston_migrated_path(old_key: str) -> str:
-    """Look up the 2.x path for a 1.x `houston.config.deployments.*` key in the authoritative
-    migration table (see `_houston_deployments_config_yaml`)."""
-    for old, new, _kind in HOUSTON_DEPLOYMENT_PATH_MIGRATIONS:
-        if old == old_key and new is not None:
-            return new
-    raise RuntimeError(f"'{old_key}' not found in HOUSTON_DEPLOYMENT_PATH_MIGRATIONS (bin/helm_chart_values_migration_shared.py)")
+    value = "true" if enabled else "false"
+    return f"  postgresqlEnabled: {value}\n  postgresql:\n    enabled: {value}\n"
 
 
 def _cp_values_yaml(settings: Settings) -> str:
-    legacy = _uses_legacy_flat_schema(settings.chart_version)
-    global_flags = _global_feature_flags_yaml(legacy=legacy, postgresql_enabled=True)
-    houston_deployments = _houston_deployments_config_yaml(legacy=legacy)
     operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
     operator_subchart_block = (
         """\
@@ -493,6 +362,7 @@ airflow-operator:
         if settings.enable_operator
         else ""
     )
+    postgresql_flag = _postgresql_enabled_yaml(enabled=True)
     return f"""\
 global:
   helmRepo: "https://internal-helm.astronomer.io"
@@ -503,85 +373,18 @@ global:
   tlsSecret: {settings.tls_secret_name}
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
-  nats:
-    enabled: true
-    replicas: 1
-  networkPolicy:
-    enabled: false
-  defaultDenyNetworkPolicy: false
-{global_flags}{operator_block}
+{postgresql_flag}{operator_block}
 
 tags:
   platform: true
   postgresql: true
 
 astronomer:
-  astroUI:
-    replicas: 1
   houston:
-    replicas: 1
-    worker:
-      replicas: 1
     config:
-      emailConfirmation:
-        enabled: false
-      publicSignups:
-        enabled: false
       cors:
         allowedOrigins:
           - "https://app.{settings.base_domain}"
-      auth:
-        local:
-          enabled: true
-{houston_deployments}  commander:
-    replicas: 1
-  registry: {{}}
-
-nginx:
-  replicas: 1
-  replicasDefaultBackend: 1
-
-nats:
-  cluster:
-    enabled: false
-    replicas: 1
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "64Mi"
-
-elasticsearch:
-  common:
-    env:
-      NUMBER_OF_MASTERS: "1"
-
-  master:
-    replicas: 1
-    heapMemory: 128m
-    resources:
-      requests:
-        cpu: "100m"
-        memory: 256Mi
-
-  data:
-    replicas: 1
-    heapMemory: 256m
-    resources:
-      requests:
-        cpu: "100m"
-        memory: 512Mi
-
-  client:
-    replicas: 1
-    heapMemory: 128m
-    resources:
-      requests:
-        cpu: "100m"
-        memory: 256Mi
-  images:
-    es:
-      repository: docker.elastic.co/elasticsearch/elasticsearch
-      tag: "8.18.6"
 
 postgresql:
   postgresqlUsername: postgres
@@ -595,8 +398,7 @@ postgresql:
 
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     """Generate DP Helm values.  PostgreSQL is always disabled — DPs use the CP's shared postgres."""
-    legacy = _uses_legacy_flat_schema(settings.chart_version)
-    global_flags = _global_feature_flags_yaml(legacy=legacy, postgresql_enabled=False)
+    postgresql_flag = _postgresql_enabled_yaml(enabled=False)
     global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
     # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
@@ -640,68 +442,12 @@ global:
   tlsSecret: {settings.tls_secret_name}
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
-  nats:
-    enabled: true
-    replicas: 1
-  networkPolicy:
-    enabled: false
-  defaultDenyNetworkPolicy: false
-{global_flags}{global_operator_block}
+{postgresql_flag}{global_operator_block}
 tags:
   platform: true
   postgresql: false
 
-{operator_subchart_block}astronomer:
-  commander:
-    replicas: 1
-  registry: {{}}
-
-nginx:
-  replicas: 1
-  replicasDefaultBackend: 1
-
-nats:
-  cluster:
-    enabled: false
-    replicas: 1
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "64Mi"
-
-elasticsearch:
-  common:
-    env:
-      NUMBER_OF_MASTERS: "1"
-
-  master:
-    replicas: 1
-    heapMemory: 128m
-    resources:
-      requests:
-        cpu: "100m"
-        memory: 256Mi
-
-  data:
-    replicas: 1
-    heapMemory: 256m
-    resources:
-      requests:
-        cpu: "100m"
-        memory: 512Mi
-
-  client:
-    replicas: 1
-    heapMemory: 128m
-    resources:
-      requests:
-        cpu: "100m"
-        memory: 256Mi
-  images:
-    es:
-      repository: docker.elastic.co/elasticsearch/elasticsearch
-      tag: "8.18.6"
-"""
+{operator_subchart_block}"""
 
 
 CP_POSTGRES_NODEPORT = 5432
@@ -879,7 +625,14 @@ def _helm_upgrade_install(
     chart_version: str | None = None,
     chart_is_prerelease: bool = False,
     extra_set: tuple[str, ...] = (),
+    base_values_files: tuple[Path, ...] = (),
 ) -> None:
+    """
+    `base_values_files` are applied BEFORE `values_file` (lowest precedence — e.g. the plain
+    version-specific overrides in configs/local-*.yaml), so `values_file` (this script's
+    per-invocation settings, like CP-vs-DP postgres enable/disable) always wins over them.
+    `extra_values_files` (e.g. --helm-values) are applied last and win over everything.
+    """
     chart_ref = HELM_CHART if chart_version else str(chart_dir)
     cmd = [
         "helm",
@@ -891,12 +644,18 @@ def _helm_upgrade_install(
         namespace,
         "--kube-context",
         context,
-        "--values",
-        str(values_file),
-        "--timeout",
-        timeout,
-        "--wait",
     ]
+    for base in base_values_files:
+        cmd.extend(["--values", str(base)])
+    cmd.extend(
+        [
+            "--values",
+            str(values_file),
+            "--timeout",
+            timeout,
+            "--wait",
+        ]
+    )
     if chart_version:
         cmd.extend(["--version", chart_version])
         if chart_is_prerelease:
@@ -1741,6 +1500,7 @@ def main() -> int:  # noqa: C901
                     release_name=settings.release_name,
                     namespace=settings.namespace,
                     values_file=cp_values_files[cp.cluster_name],
+                    base_values_files=(_version_specific_values_file(settings.chart_version),),
                     extra_values_files=[Path(f) for f in args.helm_values],
                     timeout=settings.helm_timeout,
                     debug=settings.helm_debug,
@@ -1807,6 +1567,7 @@ def main() -> int:  # noqa: C901
                     release_name=settings.release_name,
                     namespace=settings.namespace,
                     values_file=dp_values_files[dp.cluster_name],
+                    base_values_files=(_version_specific_values_file(settings.chart_version),),
                     extra_values_files=[Path(f) for f in args.helm_values],
                     timeout=settings.helm_timeout,
                     debug=settings.helm_debug,

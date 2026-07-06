@@ -1,0 +1,86 @@
+############################
+## Astronomer configuration
+## Version-specific overrides for the 1.x chart schema (release-1.1 / release-1.2)
+## used by bin/setup-cp-dp-k3d.py for --version 1.1.x / 1.2.x (and 0.37.x, which shares this
+## same flat key shape). global.postgresqlEnabled and tags.postgresql are set per CP/DP by the
+## script itself, not here, since CP needs postgres on and DP needs it off.
+############################
+
+global:
+  deployRollbackEnabled: true
+  taskUsageMetricsEnabled: true
+  vectorEnabled: true
+  dagOnlyDeployment:
+    enabled: true
+  nats:
+    enabled: true
+    replicas: 1
+  networkPolicy:
+    enabled: false
+  defaultDenyNetworkPolicy: false
+
+astronomer:
+  astroUI:
+    replicas: 1
+  houston:
+    replicas: 1
+    worker:
+      replicas: 1
+    config:
+      emailConfirmation:
+        enabled: false
+      publicSignups:
+        enabled: false
+      auth:
+        local:
+          enabled: true
+      deployments:
+        configureDagDeployment: true
+        hardDeleteDeployment: true
+        airflowV3: true
+  commander:
+    replicas: 1
+  registry: {}
+
+nginx:
+  replicas: 1
+  replicasDefaultBackend: 1
+
+nats:
+  cluster:
+    enabled: false
+    replicas: 1
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+
+elasticsearch:
+  common:
+    env:
+      NUMBER_OF_MASTERS: "1"
+  master:
+    replicas: 1
+    heapMemory: 128m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 256Mi
+  data:
+    replicas: 1
+    heapMemory: 256m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 512Mi
+  client:
+    replicas: 1
+    heapMemory: 128m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 256Mi
+  images:
+    es:
+      repository: docker.elastic.co/elasticsearch/elasticsearch
+      tag: "8.18.6"
