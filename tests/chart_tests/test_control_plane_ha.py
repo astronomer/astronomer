@@ -19,6 +19,7 @@ from tests.utils.chart import render_chart
 
 JWT_SECRET_FILE = "charts/astronomer/templates/houston/api/houston-jwt-certificate-secret.yaml"
 CP_IDENTITY_FILE = "charts/astronomer/templates/houston/api/cp-identity-secret.yaml"
+DB_MIGRATION_JOB_FILE = "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml"
 CONFIGMAP_FILE = "charts/astronomer/templates/houston/houston-configmap.yaml"
 HOUSTON_API_FILE = "charts/astronomer/templates/houston/api/houston-deployment.yaml"
 HOUSTON_WORKER_FILE = "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"
@@ -88,6 +89,37 @@ class TestCpIdentitySecret:
                 values={"global": {"plane": {"mode": "control"}, "controlPlaneHA": {"enabled": True}}},
             )
         assert "global.controlPlaneHA.globalBaseDomain is required" in excinfo.value.stderr.decode("utf-8")
+
+    def test_hook_annotations(self, kube_version):
+        """cp-identity is a pre-install/pre-upgrade hook so it exists before the hook jobs that mount CP_ID (PINF-934).
+
+        resource-policy keep protects the hook-created Secret from the main-phase prune on the
+        release that converts it from a regular resource, and preserves cp_id across HA toggles.
+        """
+        docs = render_chart(kube_version=kube_version, show_only=[CP_IDENTITY_FILE], values=_ha_values())
+        annotations = docs[0]["metadata"]["annotations"]
+        assert annotations["helm.sh/hook"] == "pre-install,pre-upgrade"
+        assert annotations["helm.sh/hook-weight"] == "-1"
+        assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation"
+        assert annotations["helm.sh/resource-policy"] == "keep"
+
+    def test_hook_runs_before_db_migration_hook_job(self, kube_version):
+        """Regression for the HA-enable upgrade deadlock (PINF-934).
+
+        The db-migration job runs as a pre-upgrade hook and mounts CP_ID from cp-identity,
+        so the Secret hook must run in the same phase with a strictly lower weight.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[CP_IDENTITY_FILE, DB_MIGRATION_JOB_FILE],
+            values=_ha_values(),
+        )
+        by_kind = {doc["kind"]: doc for doc in docs}
+        secret_annotations = by_kind["Secret"]["metadata"]["annotations"]
+        job_annotations = by_kind["Job"]["metadata"]["annotations"]
+        assert "pre-upgrade" in job_annotations["helm.sh/hook"]
+        assert "pre-upgrade" in secret_annotations["helm.sh/hook"]
+        assert int(secret_annotations["helm.sh/hook-weight"]) < int(job_annotations["helm.sh/hook-weight"])
 
     def test_data_plane_render_not_gated_on_global_base_domain(self, kube_version):
         """A data-plane render with HA enabled (e.g. shared values) must not require globalBaseDomain.
