@@ -53,6 +53,8 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 tier: dp-failover
 component: {{ template "external-secrets.name" . }}
+app: {{ template "external-secrets.name" . }}
+version: {{ .Chart.Version }}
 release: {{ .Release.Name }}
 chart: {{ template "external-secrets.chart" . }}
 heritage: {{ .Release.Service }}
