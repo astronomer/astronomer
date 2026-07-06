@@ -542,6 +542,11 @@ houston:
     livenessProbe: {}
     startupProbe: {}
 
+  refreshCpChartVersion:
+    readinessProbe: {}
+    livenessProbe: {}
+    startupProbe: {}
+
   bootstrapper:
     readinessProbe: {}
     livenessProbe: {}
