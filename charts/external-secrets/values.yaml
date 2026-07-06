@@ -30,8 +30,8 @@ revisionHistoryLimit: 10
 
 image:
   repository: quay.io/astronomer/ap-external-secrets
-  tag: feat-test-eso-rbac
-  pullPolicy: Always
+  tag: 2.7.0-astro1
+  pullPolicy: IfNotPresent
 
 imagePullSecrets: []
 nameOverride: ""
