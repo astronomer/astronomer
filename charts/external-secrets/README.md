@@ -28,6 +28,7 @@ The blow list is not 100% accurate after the hard fork. Effort has been put into
 | commonLabels                         | object | `{}`                         | Additional labels added to all helm chart resources.                         |
 | concurrent                         | int    | `1`                         | Specifies the number of concurrent ExternalSecret Reconciles external-secret executes at a time.                         |
 | controllerClass                         | string | `""`                         | If set external secrets will filter matching Secret Stores with the appropriate controller values.                         |
+| crd.create                         | bool   | `true`                         | Specifies whether the external-secrets CRDs are installed with the chart.                         |
 | crds.annotations                         | object | `{}`                         |                         |
 | crds.conversion.enabled                         | bool   | `false`                         | Conversion is disabled by default as we stopped supporting v1alpha1.                         |
 | deploymentAnnotations                         | object | `{}`                         | Annotations to add to Deployment                         |

@@ -15,7 +15,8 @@ ESO_DATA_PLANE_VALUES = ESO_VALUES  # alias kept for readability
 
 DEPLOYMENT_TEMPLATE = "charts/external-secrets/templates/deployment.yaml"
 SERVICEACCOUNT_TEMPLATE = "charts/external-secrets/templates/serviceaccount.yaml"
-RBAC_TEMPLATE = "charts/external-secrets/templates/rbac.yaml"
+ROLE_TEMPLATE = "charts/external-secrets/templates/role.yaml"
+ROLEBINDING_TEMPLATE = "charts/external-secrets/templates/rolebinding.yaml"
 CLUSTER_SECRET_STORE_TEMPLATE = "charts/external-secrets/templates/cluster-secret-store.yaml"
 SECRETS_BACKEND_CREDENTIALS_TEMPLATE = "charts/external-secrets/templates/secrets-backend-credentials.yaml"
 
@@ -216,7 +217,7 @@ class TestExternalSecretsRBAC:
         docs = render_chart(
             kube_version=kube_version,
             values=ESO_VALUES,
-            show_only=[RBAC_TEMPLATE],
+            show_only=[ROLE_TEMPLATE, ROLEBINDING_TEMPLATE],
         )
         kinds = {d["kind"] for d in docs}
         assert "ClusterRole" in kinds
@@ -225,7 +226,7 @@ class TestExternalSecretsRBAC:
     def test_rbac_disabled(self, kube_version):
         """Test that no RBAC resources are rendered when rbac.create is false.
 
-        The template has a static comment header outside the if-block so helm
+        Both templates have a static comment header outside the if-block so helm
         does not error — it returns an empty document list instead.
         """
         docs = render_chart(
@@ -234,7 +235,7 @@ class TestExternalSecretsRBAC:
                 **ESO_VALUES,
                 "external-secrets": {"enabled": True, "rbac": {"create": False}},
             },
-            show_only=[RBAC_TEMPLATE],
+            show_only=[ROLE_TEMPLATE, ROLEBINDING_TEMPLATE],
         )
         assert len(docs) == 0
 
@@ -244,9 +245,9 @@ class TestExternalSecretsCRDs:
     def test_crds_installed_by_default(self, kube_version):
         """Test that CRDs are rendered by default when installCRDs is true."""
         crd_templates = [
-            "charts/external-secrets/templates/crd-clustersecretstores.external-secrets.io.yaml",
-            "charts/external-secrets/templates/crd-externalsecrets.external-secrets.io.yaml",
-            "charts/external-secrets/templates/crd-pushsecrets.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-clustersecretstores.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-externalsecrets.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-pushsecrets.external-secrets.io.yaml",
         ]
         docs = render_chart(
             kube_version=kube_version,
@@ -262,9 +263,9 @@ class TestExternalSecretsCRDs:
     def test_crds_not_rendered_when_subchart_disabled(self, kube_version):
         """Test that CRDs are not rendered when the subchart is disabled (the default)."""
         crd_templates = [
-            "charts/external-secrets/templates/crd-clustersecretstores.external-secrets.io.yaml",
-            "charts/external-secrets/templates/crd-externalsecrets.external-secrets.io.yaml",
-            "charts/external-secrets/templates/crd-pushsecrets.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-clustersecretstores.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-externalsecrets.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-pushsecrets.external-secrets.io.yaml",
         ]
         # When the subchart is disabled, helm errors on --show-only because no
         # output is produced for any of the CRD templates.
