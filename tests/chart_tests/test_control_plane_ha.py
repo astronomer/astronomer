@@ -163,6 +163,22 @@ class TestJwtKeypairGating:
         )
         assert docs == []
 
+    def test_generated_when_ha_with_bootstrap(self, kube_version):
+        """bootstrapJwks=true overrides the HA-mode block (fresh HA first-CP bootstrap)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[JWT_SECRET_FILE],
+            values=_ha_values(bootstrapJwks=True),
+        )
+        assert len(docs) == 2
+
+    def test_bootstrap_skipped_when_generation_disabled(self, kube_version):
+        """jwks.generation.enabled=false wins over bootstrapJwks (explicit disable)."""
+        values = _ha_values(bootstrapJwks=True)
+        values["astronomer"] = {"houston": {"jwks": {"generation": {"enabled": False}}}}
+        docs = render_chart(kube_version=kube_version, show_only=[JWT_SECRET_FILE], values=values)
+        assert docs == []
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 @pytest.mark.parametrize(
