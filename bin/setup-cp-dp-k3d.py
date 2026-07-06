@@ -8,16 +8,27 @@ This script automates the workflow documented in `docs/cp-dp-k3d-setup-guide.md`
 - Create namespaces + secrets (TLS + mkcert root CA) in both clusters
 - Install Astronomer chart into both clusters (CP: unified, DP: data)
 - Reconcile cross-cluster DNS + node-level hosts (OrbStack-friendly) using existing helper
+- Configure local DNS + a host-level SNI reverse proxy so CP/DP are reachable at
+  `https://<sub>.<base-domain>` with no host `/etc/hosts` editing
+- Optionally install the Airflow operator (CRDs, cert-manager, ServiceMonitor CRD) on both planes
 
 Notes / constraints:
-- We intentionally do NOT modify `/etc/hosts` on the local machine (sudo). The guide covers that manually.
+- We do NOT modify the local machine's `/etc/hosts`. CP/DP each publish a distinct host port for
+  their k3d LoadBalancer's :443; a local dnsmasq container resolves `*.<base-domain>` to
+  127.0.0.1 (via a one-time `/etc/resolver/<base-domain>` file) and an nginx SNI-passthrough proxy
+  on host :443 forwards each hostname to the right cluster's published port. This works
+  regardless of Docker Desktop vs OrbStack and isn't affected by container-IP drift.
 - We do NOT install k3d/helm/kubectl/mkcert for you by default; we validate and fail with actionable messages.
 - Safe to re-run: cluster/secrets/helm installs are done in an idempotent way.
+
+Shared boilerplate (Milestones, docker/k3d, registry proxy, mkcert, cert-manager, kubectl secret
+helpers) lives in bin/k3d_setup_shared.py, alongside bin/setup-037x-k3d.py.
 """
 
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import shlex
@@ -28,158 +39,109 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
+
+from helm_chart_values_migration_shared import HOUSTON_DEPLOYMENT_PATH_MIGRATIONS
+from k3d_setup_shared import (
+    CERT_MANAGER_VERSION,
+    HELM_CHART,
+    HELM_REPO_NAME,
+    HELM_REPO_URL,
+    HELPER_DIR,
+    CommandError,
+    Milestones,
+    _debug,
+    _delete_k3d_cluster,
+    _docker_inspect_ip,
+    _ensure_docker_network,
+    _ensure_helm_repo,
+    _ensure_local_registries,
+    _generate_tls_cert,
+    _get_registry_config_path,
+    _install_cert_manager,
+    _k3d_cluster_exists,
+    _k3d_create_cluster,
+    _kubectl_apply_generic_secret_from_file,
+    _kubectl_apply_tls_secret,
+    _kubectl_apply_yaml,
+    _kubectl_create_namespace,
+    _mkcert_caroot,
+    _mkcert_path,
+    _pin_cert_manager_to_control_plane,
+    _print,
+    _require_executable,
+    _run,
+    _validate_prereqs,
+    _wait_for_cert_manager,
+)
+
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]))
-HELPER_DIR = Path.home() / ".local" / "share" / "astronomer-software"
-HELPER_BIN_DIR = HELPER_DIR / "bin"
-REGISTRY_CONFIG_DIR = HELPER_DIR / "registry-configs"
-K3D_REGISTRY_CONFIG_PATH = HELPER_DIR / "k3d-registry.yaml"
-REGISTRY_IMAGE = "registry:2"
-
-HELM_REPO_NAME = "astronomer-internal"
-HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
-HELM_REPO_URL = "https://internal-helm.astronomer.io"
-
 
 # ---------------------------------------------------------------------------
-# Local pull-through registry helpers
-# (See bin/setup-local-registry.py for the standalone management script.)
+# Local networking (dnsmasq + SNI reverse proxy) — replaces manual host /etc/hosts editing.
+#   - dnsmasq resolves the whole <base-domain> -> 127.0.0.1 (macOS routes it via /etc/resolver).
+#   - an nginx SNI-passthrough proxy on host :443 forwards each connection, by TLS server name,
+#     to the right cluster's *published host port* (each CP/DP already publishes its own :443
+#     to a distinct host port at cluster-creation time — see `_k3d_create_cluster`).
 # ---------------------------------------------------------------------------
+LOCAL_DNS_PORT = 15354
+DNSMASQ_CONF_PATH = HELPER_DIR / "cp-dp-dnsmasq.conf"
+DNSMASQ_CONTAINER_NAME = "astro-cp-dp-dnsmasq"
+DNSMASQ_IMAGE = "alpine:3.20"
 
+PROXY_CONTAINER_NAME = "astro-cp-dp-proxy"
+PROXY_CONF_PATH = HELPER_DIR / "cp-dp-proxy-nginx.conf"
+PROXY_IMAGE = "nginx:stable-alpine"  # official nginx; includes the stream + ssl_preread modules
 
-@dataclass(frozen=True)
-class _RegistrySpec:
-    name: str
-    upstream: str
-    host_port: int
-
-
-_REGISTRY_SPECS: tuple[_RegistrySpec, ...] = (
-    _RegistrySpec(name="astronomer-registry-proxy-quay", upstream="https://quay.io", host_port=15001),
-    _RegistrySpec(name="astronomer-registry-proxy-docker", upstream="https://registry-1.docker.io", host_port=15002),
-    _RegistrySpec(name="astronomer-registry-proxy-elastic", upstream="https://docker.elastic.co", host_port=15003),
-    _RegistrySpec(name="astronomer-registry-proxy-k8s", upstream="https://registry.k8s.io", host_port=15004),
-    _RegistrySpec(name="astronomer-registry-proxy-astrocrpublic", upstream="https://astrocrpublic.azurecr.io", host_port=15005),
+# ServiceMonitor CRD: the airflow-operator's apiserver controller watches monitoring.coreos.com/v1
+# ServiceMonitor (an optional Prometheus Operator type). Without the CRD the controller's cache
+# fails to sync. We install just the CRD (not the full Prometheus Operator) so the watch succeeds.
+PROMETHEUS_OPERATOR_VERSION = "v0.76.0"
+SERVICE_MONITOR_CRD_URL = (
+    f"https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/{PROMETHEUS_OPERATOR_VERSION}"
+    "/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml"
 )
 
 
-def _registry_docker_config(spec: _RegistrySpec) -> str:
-    return f"""\
-version: 0.1
-log:
-  level: warn
-storage:
-  filesystem:
-    rootdirectory: /var/lib/registry
-  delete:
-    enabled: true
-http:
-  addr: :5000
-proxy:
-  remoteurl: {spec.upstream}
-"""
-
-
-def _container_state(name: str) -> str | None:
-    proc = _run(["docker", "inspect", name, "--format", "{{.State.Status}}"], check=False)
-    if proc.returncode != 0:
-        return None
-    return (proc.stdout or "").strip() or None
-
-
-def _container_networks(name: str) -> list[str]:
-    proc = _run(["docker", "inspect", name, "--format", "{{json .NetworkSettings.Networks}}"], check=False)
-    if proc.returncode != 0:
-        return []
-    raw = (proc.stdout or "").strip()
-    if not raw:
-        return []
-    try:
-        return list(json.loads(raw).keys())
-    except json.JSONDecodeError:
-        return []
-
-
-def _ensure_registry(spec: _RegistrySpec, docker_network: str) -> None:
-    config_path = REGISTRY_CONFIG_DIR / f"{spec.name}.yml"
-    volume_name = f"{spec.name}-data"
-    state = _container_state(spec.name)
-
-    if state == "running":
-        if docker_network not in _container_networks(spec.name):
-            _run(["docker", "network", "connect", docker_network, spec.name])
-        return
-
-    if state is not None:
-        _print(f"  Starting stopped registry container: {spec.name}")
-        _run(["docker", "start", spec.name])
-        if docker_network not in _container_networks(spec.name):
-            _run(["docker", "network", "connect", docker_network, spec.name])
-        return
-
-    _print(f"  Creating registry proxy: {spec.name} -> {spec.upstream} (host port {spec.host_port})")
+def _install_service_monitor_crd(context: str) -> None:
+    """Server-side apply just the ServiceMonitor CRD so the operator's apiserver watch can sync."""
+    _print(f"Applying ServiceMonitor CRD ({PROMETHEUS_OPERATOR_VERSION}) into {context}")
     _run(
-        [
-            "docker",
-            "run",
-            "-d",
-            "--name",
-            spec.name,
-            "--network",
-            docker_network,
-            "--restart",
-            "always",
-            "-p",
-            f"{spec.host_port}:5000",
-            "-v",
-            f"{volume_name}:/var/lib/registry",
-            "-v",
-            f"{config_path}:/etc/docker/registry/config.yml:ro",
-            REGISTRY_IMAGE,
-        ]
+        ["kubectl", "--context", context, "apply", "--server-side", "-f", SERVICE_MONITOR_CRD_URL],
+        capture=False,
     )
 
 
-def _ensure_local_registries(docker_network: str) -> None:
-    """Ensure all four pull-through registry proxy containers are running."""
-    REGISTRY_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    for spec in _REGISTRY_SPECS:
-        config_path = REGISTRY_CONFIG_DIR / f"{spec.name}.yml"
-        config_path.write_text(_registry_docker_config(spec))
-        _ensure_registry(spec, docker_network)
+# Friendly `--version` aliases (shown in the interactive picker and accepted on the CLI).
+#
+# Numbered aliases resolve to a published chart version on HELM_REPO_URL, including
+# prereleases (most release-branch versions are only ever published as `-betaN` / timestamped
+# CI builds — see `_resolve_chart_version`). "main" is special: it installs from whatever chart
+# is currently checked out locally (no version pull) with dev image tags floated in. "0.37" is
+# also special: 0.37.x has no CP/DP split (see bin/setup-037x-k3d.py), so main() delegates the
+# whole run to that script before any CP/DP settings are built.
+VERSION_ALIASES: tuple[str, ...] = ("0.37", "1.1.x", "1.2.x", "2.0.0", "2.0.1", "2.1", "main")
+DELEGATE_037_ALIAS = "0.37"
+MAIN_DEV_ALIAS = "main"
 
+# `main` floats these first-party image tags to their unreleased branch tag instead of whatever
+# the locally checked-out chart pins by default. Houston's API and worker deployments share a
+# single `images.houston.tag` knob, so one override covers both. `ap-registry` / `ap-vector` are
+# vendored/upstream-tracking images with no "main" build, so they are left at chart defaults.
+MAIN_DEV_IMAGE_SET: tuple[str, ...] = (
+    "images.houston.tag=main",
+    "images.astroUI.tag=main",
+    "images.dbBootstrapper.tag=main",
+    "images.commander.tag=master",
+)
 
-def _get_registry_config_path(docker_network: str) -> Path:
-    """Write the k3d registry mirror config and return its path."""
-    proxy_quay = "astronomer-registry-proxy-quay"
-    proxy_docker = "astronomer-registry-proxy-docker"
-    proxy_elastic = "astronomer-registry-proxy-elastic"
-    proxy_k8s = "astronomer-registry-proxy-k8s"
-    proxy_astrocrpublic = "astronomer-registry-proxy-astrocrpublic"
-
-    content = f"""\
-mirrors:
-  "quay.io":
-    endpoint:
-      - "http://{proxy_quay}:5000"
-  "docker.io":
-    endpoint:
-      - "http://{proxy_docker}:5000"
-  "index.docker.io":
-    endpoint:
-      - "http://{proxy_docker}:5000"
-  "docker.elastic.co":
-    endpoint:
-      - "http://{proxy_elastic}:5000"
-  "registry.k8s.io":
-    endpoint:
-      - "http://{proxy_k8s}:5000"
-  "astrocrpublic.azurecr.io":
-    endpoint:
-      - "http://{proxy_astrocrpublic}:5000"
-"""
-    HELPER_DIR.mkdir(parents=True, exist_ok=True)
-    K3D_REGISTRY_CONFIG_PATH.write_text(content)
-    return K3D_REGISTRY_CONFIG_PATH
+# Friendly topology labels for the interactive picker, mapped to the actual `global.plane.mode`
+# value the CP is installed with (see docs/architecture.md). "cp/dp" -> "control" because the DP
+# cluster(s) (from --dp-count) always install in `data` mode regardless of this choice.
+TOPOLOGY_CHOICES: tuple[str, ...] = ("unified", "cp/dp")
+TOPOLOGY_TO_CP_MODE: dict[str, str] = {"unified": "unified", "cp/dp": "control"}
+DEFAULT_TOPOLOGY = "unified"
 
 
 @dataclass(frozen=True)
@@ -214,20 +176,15 @@ class Settings:
     dp_airflow_db: str
     enable_operator: bool
     chart_version: str | None = None
+    chart_is_prerelease: bool = False
+    extra_helm_set: tuple[str, ...] = ()
     agents: int = 0
 
 
-def _print(msg: str) -> None:
-    print(msg, flush=True)
 
 
-def _debug_enabled() -> bool:
-    return os.environ.get("DEBUG", "").lower() in {"1", "true", "yes"}
 
 
-def _debug(msg: str) -> None:
-    if _debug_enabled():
-        _print(f"DEBUG: {msg}")
 
 
 def _ts() -> str:
@@ -235,242 +192,116 @@ def _ts() -> str:
     return time.strftime("%H:%M:%S")
 
 
-@dataclass(frozen=True)
-class MilestoneHandle:
-    idx: int
+def _interactive_available() -> bool:
+    return sys.stdin.isatty() and sys.stdout.isatty()
 
 
-class Milestones:
+def _prompt_choice(question: str, options: list[str], *, default: str) -> str:
+    """Numbered picker (stdlib only). Returns `default` unmodified outside a TTY (CI/automation)."""
+    if not _interactive_available():
+        return default
+    _print(f"\n{question}")
+    for i, opt in enumerate(options, start=1):
+        marker = "  (default)" if opt == default else ""
+        _print(f"  {i}) {opt}{marker}")
+    default_idx = options.index(default) + 1 if default in options else 1
+    while True:
+        raw = input(f"Select [1-{len(options)}] (default {default_idx}): ").strip()
+        if not raw:
+            return default
+        if raw.isdigit() and 1 <= int(raw) <= len(options):
+            return options[int(raw) - 1]
+        if raw in options:
+            return raw
+        _print(f"  Invalid choice: {raw!r}")
+
+
+def _prompt_yes_no(question: str, *, default: bool) -> bool:
+    """y/n picker (stdlib only). Returns `default` unmodified outside a TTY (CI/automation)."""
+    if not _interactive_available():
+        return default
+    suffix = "[Y/n]" if default else "[y/N]"
+    while True:
+        raw = input(f"{question} {suffix}: ").strip().lower()
+        if not raw:
+            return default
+        if raw in {"y", "yes"}:
+            return True
+        if raw in {"n", "no"}:
+            return False
+        _print(f"  Please answer y or n (got {raw!r})")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def _helm_search_versions(chart_ref: str) -> list[str]:
+    """Return published versions of `chart_ref`, newest first (same order `helm search` uses).
+
+    Includes prereleases (`--devel`): most release-branch versions on the internal repo are only
+    ever published as `-betaN` / timestamped CI builds, so a search without `--devel` would miss
+    almost every non-final version.
     """
-    Milestone logger:
-    - Minimal live output
-    - Final summary table with ✅/❌
+    proc = _run(["helm", "search", "repo", chart_ref, "--versions", "--devel", "-o", "json"], check=True)
+    try:
+        entries = json.loads(proc.stdout or "[]")
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Could not parse `helm search repo {chart_ref}` output: {e}") from e
+    return [str(e["version"]) for e in entries if "version" in e]
+
+
+def _resolve_chart_version(alias: str, chart_ref: str) -> str:
     """
+    Resolve a friendly `--version` alias to a concrete published chart version.
 
-    def __init__(self) -> None:
-        self._idx = 0
-        self._active: MilestoneHandle | None = None
-        self._rows: list[dict[str, object]] = []
-
-    def start(self, title: str) -> MilestoneHandle:
-        self._idx += 1
-        h = MilestoneHandle(idx=self._idx)
-        self._active = h
-        self._rows.append(
-            {
-                "idx": h.idx,
-                "title": title,
-                "status": "running",
-                "started_at": time.monotonic(),
-                "ended_at": None,
-                "duration_s": None,
-                "detail": "",
-                "error": "",
-            }
-        )
-        _print(f"⏳ [{h.idx:02d}] {title}")
-        return h
-
-    def done(self, h: MilestoneHandle, *, detail: str | None = None) -> None:
-        row = self._row(h)
-        row["status"] = "success"
-        row["ended_at"] = time.monotonic()
-        row["duration_s"] = float(row["ended_at"]) - float(row["started_at"])
-        if detail:
-            row["detail"] = detail
-        if self._active == h:
-            self._active = None
-
-    def fail(self, h: MilestoneHandle, *, error: str) -> None:
-        row = self._row(h)
-        row["status"] = "failure"
-        row["ended_at"] = time.monotonic()
-        row["duration_s"] = float(row["ended_at"]) - float(row["started_at"])
-        row["error"] = error
-        if self._active == h:
-            self._active = None
-
-    def fail_active_if_any(self, *, error: str) -> None:
-        if self._active is None:
-            return
-        self.fail(self._active, error=error)
-
-    def skip(self, title: str, *, reason: str) -> None:
-        self._idx += 1
-        self._rows.append(
-            {
-                "idx": self._idx,
-                "title": title,
-                "status": "skipped",
-                "started_at": None,
-                "ended_at": None,
-                "duration_s": 0.0,
-                "detail": reason,
-                "error": "",
-            }
-        )
-
-    def print_summary_table(self) -> None:
-        def _one_line(s: str) -> str:
-            return " ".join(s.split())
-
-        def _truncate(s: str, max_len: int) -> str:
-            if len(s) <= max_len:
-                return s
-            return s[:max_len] if max_len <= 3 else f"{s[: max_len - 3]}..."
-
-        rows: list[list[str]] = []
-        for row in self._rows:
-            idx = str(int(row["idx"]))
-            title = _one_line(str(row["title"]))
-            status = str(row["status"])
-            duration_s = row.get("duration_s")
-            detail = _one_line(str(row.get("detail") or ""))
-            error = _one_line(str(row.get("error") or ""))
-
-            status_cell = {
-                "success": "✅ Success",
-                "failure": "❌ Failed",
-                "skipped": "⏭️ Skipped",
-                "running": "⏳ Running",
-            }.get(status, status)
-
-            duration_cell = "-"
-            if isinstance(duration_s, (int, float)):
-                duration_cell = f"{duration_s:.1f}s"
-
-            details_cell = detail
-            if error:
-                details_cell = (f"{details_cell} " if details_cell else "") + error
-
-            # Keep the table readable in a terminal.
-            title = _truncate(title, 70)
-            details_cell = _truncate(details_cell, 90)
-
-            rows.append([idx, title, status_cell, duration_cell, details_cell])
-
-        headers = ["#", "Milestone", "Status", "Duration", "Details"]
-        widths = [len(h) for h in headers]
-        for r in rows:
-            for i, cell in enumerate(r):
-                widths[i] = max(widths[i], len(cell))
-
-        def _sep(char: str = "-") -> str:
-            return "+".join([char * (w + 2) for w in widths]).join(["+", "+"])
-
-        def _fmt_row(cells: list[str]) -> str:
-            padded = [f" {cells[i].ljust(widths[i])} " for i in range(len(cells))]
-            return "|" + "|".join(padded) + "|"
-
-        _print("\nMilestones summary:\n")
-        _print(_sep("-"))
-        _print(_fmt_row(headers))
-        _print(_sep("-"))
-        for r in rows:
-            _print(_fmt_row(r))
-        _print(_sep("-"))
-
-    def _row(self, h: MilestoneHandle) -> dict[str, object]:
-        for row in reversed(self._rows):
-            if int(row["idx"]) == h.idx:
-                return row
-        raise RuntimeError(f"Milestone handle not found: {h.idx}")
-
-
-class CommandError(RuntimeError):
-    """Raised when an external command fails."""
-
-
-def _run(
-    cmd: list[str],
-    *,
-    check: bool = True,
-    capture: bool = True,
-    env: dict[str, str] | None = None,
-    stdin: str | None = None,
-) -> subprocess.CompletedProcess[str]:
+    - An exact final version (e.g. "2.0.0") matches itself first; failing that, the newest
+      prerelease of that exact version (e.g. "2.0.1" -> "2.0.1-beta8"), since some versions never
+      get a final release before the next one is cut.
+    - A minor-only alias (e.g. "1.1.x", "2.1") matches the newest version under that
+      major[.minor] prefix, released or not.
     """
-    Run a command and optionally capture stdout/stderr.
-    """
-    _debug(f"run: {shlex.join(cmd)}")
-    proc = subprocess.run(
-        cmd,
-        text=True,
-        check=False,
-        input=stdin,
-        stdout=subprocess.PIPE if capture else None,
-        stderr=subprocess.PIPE if capture else None,
-        env=env,
+    versions = _helm_search_versions(chart_ref)
+    if not versions:
+        raise RuntimeError(f"`helm search repo {chart_ref} --versions --devel` returned no versions.")
+
+    if alias in versions:
+        return alias
+    prereleases = [v for v in versions if v.startswith(f"{alias}-")]
+    if prereleases:
+        return prereleases[0]  # `helm search` already sorts newest-first
+
+    prefix = alias[:-2] if alias.endswith(".x") else alias
+    matches = [v for v in versions if v == prefix or v.startswith(f"{prefix}.")]
+    if matches:
+        return matches[0]
+
+    raise RuntimeError(
+        f"No published chart version matches --version '{alias}' on {chart_ref}. "
+        f"Newest available versions: {', '.join(versions[:10])}"
     )
-    if check and proc.returncode != 0:
-        stderr = (proc.stderr or "").strip()
-        raise CommandError(f"Command failed ({proc.returncode}): {shlex.join(cmd)}\n{stderr}")
-    return proc
 
 
-def _which(exe: str) -> str | None:
-    proc = _run(["/usr/bin/env", "bash", "-lc", f"command -v {shlex.quote(exe)}"], check=False)
-    path = (proc.stdout or "").strip()
-    return path or None
 
 
-def _require_executable(exe: str, *, hint: str) -> None:
-    if _which(exe) is None:
-        raise RuntimeError(f"Missing required executable `{exe}`. {hint}")
 
 
-def _ensure_helm_repo() -> None:
-    """Ensure the Astronomer internal Helm repo is added and up-to-date."""
-    proc = _run(["helm", "repo", "list", "-o", "json"], check=False)
-    if HELM_REPO_NAME not in (proc.stdout or ""):
-        _print(f"Adding Helm repo: {HELM_REPO_NAME} -> {HELM_REPO_URL}")
-        _run(["helm", "repo", "add", HELM_REPO_NAME, HELM_REPO_URL], check=True)
-    _run(["helm", "repo", "update", HELM_REPO_NAME], check=True)
 
 
-def _docker_network_exists(name: str) -> bool:
-    proc = _run(["docker", "network", "inspect", name], check=False)
-    return proc.returncode == 0
 
 
-def _ensure_docker_network(name: str) -> None:
-    if _docker_network_exists(name):
-        return
-    _print(f"Creating Docker network: {name}")
-    _run(["docker", "network", "create", name], check=True)
 
 
-def _k3d_cluster_exists(name: str) -> bool:
-    proc = _run(["k3d", "cluster", "get", name], check=False)
-    return proc.returncode == 0
-
-
-def _delete_k3d_cluster(name: str) -> None:
-    if not _k3d_cluster_exists(name):
-        return
-    _print(f"Deleting k3d cluster: {name}")
-    _run(["k3d", "cluster", "delete", name], check=True)
-
-
-def _mkcert_path() -> str:
-    """
-    Prefer our helper-installed mkcert if present, otherwise fall back to PATH.
-    """
-    helper = HELPER_BIN_DIR / "mkcert"
-    if helper.exists():
-        return str(helper)
-    return "mkcert"
-
-
-def _mkcert_caroot(mkcert_exe: str) -> Path:
-    proc = _run([mkcert_exe, "-CAROOT"], check=True)
-    caroot = Path(proc.stdout.strip())
-    if not caroot.exists():
-        raise RuntimeError(f"mkcert CAROOT does not exist: {caroot}")
-    root_ca = caroot / "rootCA.pem"
-    if not root_ca.exists():
-        raise RuntimeError(f"mkcert rootCA.pem not found at: {root_ca}")
-    return root_ca
 
 
 def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
@@ -496,226 +327,187 @@ def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
     root_ca = _mkcert_caroot(mkcert_exe)
 
     # Always regenerate to ensure SANs are correct for all configured data plane domain prefixes.
-    _print("Generating TLS certificates via mkcert (overwrites existing astronomer-tls.{pem,key})")
-    _run([mkcert_exe, "-install"], check=True)
-
     base = settings.base_domain
     sans = [base, f"*.{base}"]
     for dp in settings.data_planes:
         dp_domain = f"{dp.domain_prefix}.{base}"
         sans += [dp_domain, f"*.{dp_domain}"]
 
-    _run(
-        [
-            mkcert_exe,
-            f"-cert-file={cert_path}",
-            f"-key-file={key_path}",
-            *sans,
-        ],
-        check=True,
-    )
-
-    # Append mkcert root CA to cert for a full chain (matches `bin/certs.py` behavior).
-    # NOTE: mkcert might already include it; we avoid double-appending by a simple guard.
-    root_ca_bytes = root_ca.read_bytes()
-    cert_bytes = cert_path.read_bytes()
-    if root_ca_bytes not in cert_bytes:
-        cert_path.write_bytes(cert_bytes + b"\n" + root_ca_bytes)
-
-    if not cert_path.exists() or not key_path.exists():
-        raise RuntimeError(f"Failed to generate TLS certs at {cert_path} / {key_path}")
+    _generate_tls_cert(mkcert_exe=mkcert_exe, cert_path=cert_path, key_path=key_path, root_ca=root_ca, sans=sans)
 
     return cert_path, key_path, root_ca
 
-
-def _k3d_create_cluster(
-    *,
-    name: str,
-    docker_network: str,
-    ports: list[str],
-    mkcert_root_ca: Path,
-    agents: int = 1,
-    extra_k3s_args: list[str] | None = None,
-    registry_config: Path | None = None,
-) -> None:
-    """
-    Create a k3d cluster and disable traefik.
-    Pass extra_k3s_args to forward additional --k3s-arg values (each applied @server:0).
-    Pass registry_config to configure containerd pull-through mirrors on each node.
-    """
-    volume = f"{mkcert_root_ca}:/etc/ssl/certs/mkcert-rootCA.pem@server:*;agent:*"
-    cmd = [
-        "k3d",
-        "cluster",
-        "create",
-        name,
-        "--network",
-        docker_network,
-        "--agents",
-        str(agents),
-        "--k3s-arg",
-        "--disable=traefik@server:0",
-        "--volume",
-        volume,
-    ]
-    if registry_config is not None:
-        cmd.extend(["--registry-config", str(registry_config)])
-    for arg in extra_k3s_args or []:
-        cmd.extend(["--k3s-arg", arg])
-    for p in ports:
-        cmd.extend(["--port", p])
-
-    _print(f"Creating k3d cluster: {name}")
-    _debug(f"run: {shlex.join(cmd)}")
-
-    _run(cmd, check=True, capture=True)
-
-
-def _kubectl_apply_yaml(context: str, yaml_text: str) -> None:
-    _run(["kubectl", "--context", context, "apply", "-f", "-"], check=True, stdin=yaml_text)
-
-
-# ---------------------------------------------------------------------------
-# cert-manager (required by the airflow-operator webhooks)
-# ---------------------------------------------------------------------------
-
-CERT_MANAGER_VERSION = "v1.19.4"
-CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
-
-
-def _install_cert_manager(context: str) -> None:
-    """Install cert-manager CRDs + controller into the cluster behind `context`. Idempotent."""
-    _print(f"Installing cert-manager {CERT_MANAGER_VERSION} into {context}")
-    _run(
-        ["kubectl", "--context", context, "apply", "-f", CERT_MANAGER_MANIFEST_URL],
-        capture=False,
-    )
-
-
-def _pin_cert_manager_to_control_plane(context: str) -> None:
-    """Pin cert-manager pods to the k3s control-plane node.
-
-    The kube-apiserver calls cert-manager's admission webhook for Certificate/Issuer
-    resources. If the webhook pod lands on an agent node (10.42.1.x), the apiserver
-    proxy can't reach it across the Flannel VXLAN overlay in k3d, causing 502 errors.
-    Pinning to the control-plane node (10.42.0.x) keeps webhook calls local.
-    """
-    node_selector_patch = '{"spec":{"template":{"spec":{"nodeSelector":{"node-role.kubernetes.io/control-plane":"true"}}}}}'
-    for deployment in ("cert-manager-webhook", "cert-manager-cainjector", "cert-manager"):
-        _run(
-            [
-                "kubectl",
-                "--context",
-                context,
-                "patch",
-                "deployment",
-                deployment,
-                "-n",
-                "cert-manager",
-                "--type=merge",
-                f"--patch={node_selector_patch}",
-            ],
-            check=False,  # tolerate if a deployment doesn't exist yet
-        )
-
-
-def _wait_for_cert_manager(context: str, timeout_s: int = 180) -> None:
-    """Wait for the cert-manager controller + webhook deployments to become available."""
-    _print(f"Waiting for cert-manager to be ready ({context})")
-    for deployment in ("cert-manager", "cert-manager-webhook"):
-        _run(
-            [
-                "kubectl",
-                "--context",
-                context,
-                "-n",
-                "cert-manager",
-                "wait",
-                "--for=condition=available",
-                f"deployment/{deployment}",
-                f"--timeout={timeout_s}s",
-            ],
-            capture=False,
-        )
-    _print(f"cert-manager is ready ({context})")
-
-
-def _kubectl_create_namespace(context: str, namespace: str) -> None:
-    proc = _run(["kubectl", "--context", context, "create", "namespace", namespace], check=False)
-    if proc.returncode == 0:
-        return
-    if "AlreadyExists" in (proc.stderr or ""):
-        return
-    raise CommandError(f"Failed to create namespace {namespace} (context={context}): {(proc.stderr or '').strip()}")
-
-
-def _kubectl_apply_tls_secret(
-    *,
-    context: str,
-    namespace: str,
-    secret_name: str,
-    cert_path: Path,
-    key_path: Path,
-) -> None:
-    """
-    Idempotently apply a TLS secret.
-    """
-    secret_yaml = _run(
-        [
-            "kubectl",
-            "--context",
-            context,
-            "-n",
-            namespace,
-            "create",
-            "secret",
-            "tls",
-            secret_name,
-            f"--cert={cert_path}",
-            f"--key={key_path}",
-            "--dry-run=client",
-            "-o",
-            "yaml",
-        ],
-        check=True,
-    ).stdout
-    _kubectl_apply_yaml(context, secret_yaml)
-
-
-def _kubectl_apply_generic_secret_from_file(
-    *,
-    context: str,
-    namespace: str,
-    secret_name: str,
-    key: str,
-    file_path: Path,
-) -> None:
-    secret_yaml = _run(
-        [
-            "kubectl",
-            "--context",
-            context,
-            "-n",
-            namespace,
-            "create",
-            "secret",
-            "generic",
-            secret_name,
-            f"--from-file={key}={file_path}",
-            "--dry-run=client",
-            "-o",
-            "yaml",
-        ],
-        check=True,
-    ).stdout
-    _kubectl_apply_yaml(context, secret_yaml)
 
 
 def _write_values_file(path: Path, content: str) -> None:
     path.write_text(content)
 
 
+def _uses_legacy_flat_schema(chart_version: str | None) -> bool:
+    """
+    Return True if `chart_version` predates the 2.x values.yaml restructure and needs the old
+    flat/differently-nested `global.*` + `houston.config.deployments.*` keys.
+
+    Verified directly against `values.yaml` on release-1.1/release-1.2 (flat, "1.x schema") vs
+    release-2.0/release-2.1/master (nested, "2.x schema") — the schema is stable within each line
+    and only breaks at the 1.x/2.x boundary. `bin/helm_chart_values_migration_shared.py` (the
+    actual 1.x->2.x migration script) is the authoritative source for every rename below.
+    `chart_version=None` means installing from the local checkout (the `main` alias), which today
+    is 2.x-shaped.
+    """
+    if chart_version is None:
+        return False
+    major = chart_version.split(".", 1)[0]
+    try:
+        return int(major) < 2
+    except ValueError:
+        return False
+
+
+BASE_VALUES_DIR = Path(__file__).resolve().parent / "cp-dp-base-values"
+
+
+def _load_base_values(legacy: bool) -> CommentedMap:
+    """
+    Load the real, vendored `values.yaml` for this schema family — a verbatim copy of the
+    umbrella chart's own values.yaml (see bin/cp-dp-base-values/*.yaml for provenance/how to
+    refresh). Used to validate the override paths below against an actual chart file instead of
+    a hand-typed guess: if a path stops existing here, `_assert_path` fails loudly instead of
+    Helm silently ignoring an override that no longer matches the schema.
+    """
+    filename = "1x-values.yaml" if legacy else "2x-values.yaml"
+    return YAML(typ="rt").load((BASE_VALUES_DIR / filename).read_text())
+
+
+def _assert_path(mapping: CommentedMap, dotted: str, *, source: str) -> None:
+    """Raise if `dotted` (e.g. "postgresql.enabled") isn't declared in `mapping`."""
+    current: object = mapping
+    walked: list[str] = []
+    for part in dotted.split("."):
+        walked.append(part)
+        if not isinstance(current, (dict, CommentedMap)) or part not in current:
+            raise RuntimeError(
+                f"{source} no longer declares `{'.'.join(walked)}`. The umbrella chart's values.yaml "
+                "schema may have changed — recheck bin/helm_chart_values_migration_shared.py and "
+                "re-copy bin/cp-dp-base-values/*.yaml from the source branch."
+            )
+        current = current[part]
+
+
+def _set_dotted(mapping: CommentedMap, dotted: str, value: object) -> None:
+    """Set `dotted` (e.g. "postgresql.enabled") on `mapping`, creating intermediate maps as needed."""
+    current = mapping
+    parts = dotted.split(".")
+    for part in parts[:-1]:
+        if part not in current or not isinstance(current[part], (dict, CommentedMap)):
+            current[part] = CommentedMap()
+        current = current[part]
+    current[parts[-1]] = value
+
+
+def _dump_indented(mapping: CommentedMap, *, indent: int) -> str:
+    """Dump `mapping` as YAML, prefixing every line with `indent` spaces so it can be spliced
+    into a larger hand-written values template at the right nesting level."""
+    yaml = YAML(typ="rt")
+    yaml.default_flow_style = False
+    stream = io.StringIO()
+    yaml.dump(mapping, stream)
+    prefix = " " * indent
+    return "".join(prefix + line if line.strip() else line for line in stream.getvalue().splitlines(keepends=True))
+
+
+def _global_feature_flags_yaml(*, legacy: bool, postgresql_enabled: bool) -> str:
+    """
+    Version-aware `global.*` feature-flag block (2-space indented, appended directly under
+    `global:`), built by validating against and mirroring the shape of the real vendored
+    values.yaml for this schema family (bin/cp-dp-base-values/). Only the keys this script
+    actually sets are branched here; everything else (`networkPolicy`, `defaultDenyNetworkPolicy`,
+    `airflowOperator`, `nats`, `plane`, ...) is a stable key path across both schemas and stays
+    inline in the caller.
+
+    1.x -> 2.x renames covered, per bin/helm_chart_values_migration_shared.py:
+      postgresqlEnabled       -> postgresql.enabled
+      deployRollbackEnabled   -> deploymentLifecycle.deployRollback.enabled
+      taskUsageMetricsEnabled -> metricsReporting.taskUsageMetrics.enabled
+      vectorEnabled           -> daemonsetLogging.enabled
+      dagOnlyDeployment       -> deployMechanisms.dagOnlyDeployment
+    """
+    filename = "1x-values.yaml" if legacy else "2x-values.yaml"
+    source = f"bin/cp-dp-base-values/{filename}"
+    base_global = _load_base_values(legacy)["global"]
+
+    paths: dict[str, object] = (
+        {
+            "postgresqlEnabled": postgresql_enabled,
+            "deployRollbackEnabled": True,
+            "taskUsageMetricsEnabled": True,
+            "dagOnlyDeployment.enabled": True,
+        }
+        if legacy
+        else {
+            "postgresql.enabled": postgresql_enabled,
+            "deploymentLifecycle.deployRollback.enabled": True,
+            "metricsReporting.taskUsageMetrics.enabled": True,
+            "daemonsetLogging.enabled": True,
+            "deployMechanisms.dagOnlyDeployment.enabled": True,
+        }
+    )
+    overrides = CommentedMap()
+    for dotted, value in paths.items():
+        _assert_path(base_global, dotted, source=source)
+        _set_dotted(overrides, dotted, value)
+
+    # `global.vectorEnabled` (1.x only) gates the `vector` subchart via a Chart.yaml `condition`,
+    # not a values.yaml default — it's never declared with a default value, so there's nothing to
+    # assert against here. Ground truth: `git grep vectorEnabled release-1.1 -- Chart.yaml`.
+    if legacy:
+        overrides["vectorEnabled"] = True
+
+    return _dump_indented(overrides, indent=2)
+
+
+def _houston_deployments_config_yaml(*, legacy: bool) -> str:
+    """
+    Version-aware `astronomer.houston.config.deployments.*` block (CP only; 6-space indented to
+    sit under `astronomer.houston.config:`). This is Houston's own app-config schema (deep-merged
+    wholesale into a ConfigMap — see charts/astronomer/templates/houston/houston-configmap.yaml),
+    restructured in lockstep with the 2.x Helm values rename. These keys aren't declared anywhere
+    in values.yaml (they're a passthrough blob), so there's no base file to validate paths
+    against — instead this derives the 2.x path directly from `HOUSTON_DEPLOYMENT_PATH_MIGRATIONS`
+    in bin/helm_chart_values_migration_shared.py, the same table houston-api's own migration code
+    is kept in sync with, rather than a second hand-typed copy of the mapping.
+    """
+    deployments = CommentedMap()
+    if legacy:
+        deployments["configureDagDeployment"] = True
+        deployments["hardDeleteDeployment"] = True
+        deployments["airflowV3"] = True
+    else:
+        _set_dotted(deployments, _houston_migrated_path("configureDagDeployment"), True)
+        _set_dotted(deployments, _houston_migrated_path("hardDeleteDeployment"), True)
+        airflow_v3 = CommentedMap()
+        airflow_v3["enabled"] = True
+        airflow_v3["minimumAstroRuntimeVersion"] = "3.1-2"
+        _set_dotted(deployments, _houston_migrated_path("airflowV3"), airflow_v3)
+
+    wrapper = CommentedMap()
+    wrapper["deployments"] = deployments
+    return _dump_indented(wrapper, indent=6)
+
+
+def _houston_migrated_path(old_key: str) -> str:
+    """Look up the 2.x path for a 1.x `houston.config.deployments.*` key in the authoritative
+    migration table (see `_houston_deployments_config_yaml`)."""
+    for old, new, _kind in HOUSTON_DEPLOYMENT_PATH_MIGRATIONS:
+        if old == old_key and new is not None:
+            return new
+    raise RuntimeError(f"'{old_key}' not found in HOUSTON_DEPLOYMENT_PATH_MIGRATIONS (bin/helm_chart_values_migration_shared.py)")
+
+
 def _cp_values_yaml(settings: Settings) -> str:
+    legacy = _uses_legacy_flat_schema(settings.chart_version)
+    global_flags = _global_feature_flags_yaml(legacy=legacy, postgresql_enabled=True)
+    houston_deployments = _houston_deployments_config_yaml(legacy=legacy)
     operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
     operator_subchart_block = (
         """\
@@ -742,7 +534,6 @@ global:
     mode: {settings.cp_mode}
     domainPrefix: ""
   tlsSecret: {settings.tls_secret_name}
-  postgresqlEnabled: true
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:
@@ -751,13 +542,7 @@ global:
   networkPolicy:
     enabled: false
   defaultDenyNetworkPolicy: false
-  deployRollbackEnabled: true
-  taskUsageMetricsEnabled: true
-  daemonsetLogging:
-    enabled: true
-  dagOnlyDeployment:
-    enabled: true
-{operator_block}
+{global_flags}{operator_block}
 
 tags:
   platform: true
@@ -781,12 +566,7 @@ astronomer:
       auth:
         local:
           enabled: true
-      deployments:
-        configureDagDeployment: true
-        hardDeleteDeployment: true
-        airflowV3:
-          enabled: true
-  commander:
+{houston_deployments}  commander:
     replicas: 1
   registry: {{}}
 
@@ -848,6 +628,8 @@ postgresql:
 
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     """Generate DP Helm values.  PostgreSQL is always disabled — DPs use the CP's shared postgres."""
+    legacy = _uses_legacy_flat_schema(settings.chart_version)
+    global_flags = _global_feature_flags_yaml(legacy=legacy, postgresql_enabled=False)
     global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
     # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
@@ -888,8 +670,6 @@ global:
     mode: data
     domainPrefix: {dp.domain_prefix}
   tlsSecret: {settings.tls_secret_name}
-  postgresql:
-    enabled: false
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
   nats:
@@ -898,13 +678,7 @@ global:
   networkPolicy:
     enabled: false
   defaultDenyNetworkPolicy: false
-  deployRollbackEnabled: true
-  taskUsageMetricsEnabled: true
-  daemonsetLogging:
-    enabled: true
-  dagOnlyDeployment:
-    enabled: true
-{global_operator_block}
+{global_flags}{global_operator_block}
 tags:
   platform: true
   postgresql: false
@@ -1135,6 +909,8 @@ def _helm_upgrade_install(
     timeout: str,
     debug: bool,
     chart_version: str | None = None,
+    chart_is_prerelease: bool = False,
+    extra_set: tuple[str, ...] = (),
 ) -> None:
     chart_ref = HELM_CHART if chart_version else str(chart_dir)
     cmd = [
@@ -1155,8 +931,12 @@ def _helm_upgrade_install(
     ]
     if chart_version:
         cmd.extend(["--version", chart_version])
+        if chart_is_prerelease:
+            cmd.append("--devel")
     for extra in extra_values_files:
         cmd.extend(["--values", str(extra)])
+    for s in extra_set:
+        cmd.extend(["--set", s])
     if debug:
         cmd.append("--debug")
     _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
@@ -1207,21 +987,6 @@ def _kubectl_get_service_lb_ip(context: str, namespace: str, service: str) -> st
     return ip
 
 
-def _docker_inspect_ip(container: str) -> str:
-    """
-    Return the container IP from `docker inspect`.
-
-    This is useful for k3d's `*-serverlb` containers, which often represent the
-    reachable ingress IP on the shared Docker network.
-    """
-    proc = _run(
-        ["docker", "inspect", container, "-f", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}"],
-        check=True,
-    )
-    ip = proc.stdout.strip()
-    if not ip:
-        raise RuntimeError(f"Could not determine IP for container {container}")
-    return ip
 
 
 def _ensure_container_hosts_mapping(container: str, ip: str, hostname: str) -> None:
@@ -1265,17 +1030,17 @@ def _ensure_dp_node_houston_hosts_pin(settings: Settings, dp: DataPlane) -> None
         _debug(f"Ensured /etc/hosts pin on {container}: {cp_nginx_lb_ip} {houston_host}")
 
 
-def _print_host_etc_hosts_instructions(settings: Settings) -> None:
+def _print_manual_etc_hosts_fallback(settings: Settings) -> None:
     """
-    Print the recommended /etc/hosts entries for accessing CP/DP from the host machine.
+    Fallback ONLY: print /etc/hosts entries pointing at the k3d `*-serverlb` container IPs.
 
-    This uses the Docker IPs of the k3d `*-serverlb` containers:
-    - k3d-cp0X-serverlb (CP ingress, one per control plane)
-    - k3d-dp0X-serverlb (DP ingress, one per data plane)
+    Used when `_setup_local_networking` itself fails (e.g. can't bind :443, no sudo for
+    /etc/resolver). These IPs are only host-routable under OrbStack and can drift on
+    container restart, which is exactly why `_setup_local_networking` exists — prefer that path.
     """
     base = settings.base_domain
 
-    _print("\nAdd the following entries to your host `/etc/hosts`:\n")
+    _print("\nCould not configure local DNS + proxy automatically. As a fallback, add these entries to your host `/etc/hosts`:\n")
     for dp in settings.data_planes:
         dp_serverlb = f"k3d-{dp.cluster_name}-serverlb"
         dp_nginx_lb_ip = _docker_inspect_ip(dp_serverlb)
@@ -1291,11 +1056,199 @@ def _print_host_etc_hosts_instructions(settings: Settings) -> None:
         )
 
 
-def _validate_prereqs() -> None:
-    _require_executable("docker", hint="Install Docker Desktop/OrbStack and ensure `docker` works.")
-    _require_executable("k3d", hint="Install k3d (e.g. `brew install k3d` on macOS).")
-    _require_executable("kubectl", hint="Install kubectl and ensure it is in PATH.")
-    _require_executable("helm", hint="Install helm and ensure it is in PATH.")
+def _resolver_file_path(base_domain: str) -> Path:
+    return Path("/etc/resolver") / base_domain
+
+
+def _write_dnsmasq_conf(base_domain: str) -> None:
+    """Write the dnsmasq config: resolve the whole base domain to 127.0.0.1 (the SNI proxy).
+
+    Mounted into the dnsmasq container, which listens inside the container (all interfaces) on
+    port 53 — Docker DNATs the published 127.0.0.1:LOCAL_DNS_PORT to it. Routing to the correct
+    cluster happens at the nginx proxy by SNI, so DNS only needs a single 127.0.0.1 answer.
+    """
+    lines = [
+        "# Managed by bin/setup-cp-dp-k3d.py — regenerated each run. Do not edit by hand.",
+        "port=53",  # in-container port; published to the host as 127.0.0.1:LOCAL_DNS_PORT
+        "no-resolv",  # only answer for our domain; never act as a general resolver
+        "no-hosts",
+        "local-ttl=0",
+        # Authoritative for our domain. The address= record is IPv4-only, but macOS fires an AAAA
+        # query alongside the A query; without this, dnsmasq gives no clean AAAA answer and the
+        # resolver stalls ~5s before falling back to the A record. `local=` makes dnsmasq answer
+        # AAAA authoritatively (immediate NODATA), removing the delay.
+        f"local=/{base_domain}/",
+        f"address=/{base_domain}/127.0.0.1",
+    ]
+    HELPER_DIR.mkdir(parents=True, exist_ok=True)
+    DNSMASQ_CONF_PATH.write_text("\n".join(lines) + "\n")
+
+
+def _ensure_dnsmasq_container() -> None:
+    """(Re)create the dnsmasq container from the freshly-written config.
+
+    Recreated (not just restarted) each run so the current config takes effect. Uses the official
+    Alpine image and installs dnsmasq at start, avoiding a third-party image.
+    `--restart unless-stopped` keeps it answering across OrbStack/Docker restarts.
+    """
+    _run(["docker", "rm", "-f", DNSMASQ_CONTAINER_NAME], check=False, capture=True)
+    _run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            DNSMASQ_CONTAINER_NAME,
+            "--restart",
+            "unless-stopped",
+            "-p",
+            f"127.0.0.1:{LOCAL_DNS_PORT}:53/udp",
+            "-p",
+            f"127.0.0.1:{LOCAL_DNS_PORT}:53/tcp",
+            "-v",
+            f"{DNSMASQ_CONF_PATH}:/etc/dnsmasq.conf:ro",
+            "--entrypoint",
+            "sh",
+            DNSMASQ_IMAGE,
+            "-c",
+            "apk add --no-cache dnsmasq >/dev/null && exec dnsmasq -k --conf-file=/etc/dnsmasq.conf",
+        ],
+        check=True,
+    )
+    for _ in range(30):  # ~15s
+        if _run(["docker", "exec", DNSMASQ_CONTAINER_NAME, "pidof", "dnsmasq"], check=False).returncode == 0:
+            return
+        time.sleep(0.5)
+    raise RuntimeError(f"dnsmasq container {DNSMASQ_CONTAINER_NAME} did not start; check `docker logs {DNSMASQ_CONTAINER_NAME}`")
+
+
+def _write_proxy_conf(*, base_domain: str, dp_entries: list[tuple[str, int]], cp_port: int) -> None:
+    """Write the nginx stream config: route each TLS connection by SNI to a cluster's host port.
+
+    `dp_entries` is one (domain_prefix, https_port) pair per data plane. Everything under
+    <base_domain> that doesn't match a DP prefix (houston, app, the bare domain, ...) goes to the
+    CP port. ssl_preread reads the TLS SNI without terminating TLS, so no certs live at the proxy
+    — the k3d ingress still does TLS.
+    """
+    map_lines = []
+    for prefix, port in dp_entries:
+        suffix = f"{prefix}.{base_domain}".replace(".", "\\.")
+        map_lines.append(f"        ~*(^|\\.){suffix}$   127.0.0.1:{port};   # *.{prefix}.{base_domain} -> DP {prefix}")
+    maps_block = "\n".join(map_lines)
+    conf = f"""\
+# Managed by bin/setup-cp-dp-k3d.py — regenerated each run. Do not edit by hand.
+worker_processes 1;
+events {{}}
+stream {{
+    map $ssl_preread_server_name $apc_upstream {{
+{maps_block}
+        default                 127.0.0.1:{cp_port};   # everything else under {base_domain} -> CP
+    }}
+    server {{
+        listen 443;
+        ssl_preread on;
+        proxy_pass $apc_upstream;
+    }}
+}}
+"""
+    HELPER_DIR.mkdir(parents=True, exist_ok=True)
+    PROXY_CONF_PATH.write_text(conf)
+
+
+def _ensure_proxy_container() -> None:
+    """(Re)create the SNI reverse-proxy container from the freshly-written config.
+
+    Host networking: binds the host's :443 and reaches the k3d serverlb published ports at
+    127.0.0.1:<port>. Recreated each run so new cluster ports apply.
+    """
+    _run(["docker", "rm", "-f", PROXY_CONTAINER_NAME], check=False, capture=True)
+    _run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            PROXY_CONTAINER_NAME,
+            "--restart",
+            "unless-stopped",
+            "--network",
+            "host",
+            "-v",
+            f"{PROXY_CONF_PATH}:/etc/nginx/nginx.conf:ro",
+            PROXY_IMAGE,
+        ],
+        check=True,
+    )
+    for _ in range(20):  # ~10s
+        if _run(["docker", "exec", PROXY_CONTAINER_NAME, "pidof", "nginx"], check=False).returncode == 0:
+            return
+        time.sleep(0.5)
+    raise RuntimeError(f"proxy container {PROXY_CONTAINER_NAME} did not start; check `docker logs {PROXY_CONTAINER_NAME}`")
+
+
+def _ensure_resolver_file(base_domain: str) -> bool:
+    """Ensure /etc/resolver/<base_domain> routes the domain to our dnsmasq. Returns True if changed.
+
+    Needs sudo, but only when the file is missing or wrong (first run) — re-runs are prompt-free.
+    """
+    want = f"nameserver 127.0.0.1\nport {LOCAL_DNS_PORT}\n"
+    path = _resolver_file_path(base_domain)
+    try:
+        if path.read_text() == want:
+            return False
+    except OSError:
+        pass
+    _print(f"  Writing {path} (needs sudo, one-time)")
+    _run(["sudo", "mkdir", "-p", "/etc/resolver"], check=True)
+    _run(["sudo", "tee", str(path)], stdin=want, check=True)
+    return True
+
+
+def _verify_local_networking(base_domain: str, hosts: list[str]) -> None:
+    """Best-effort end-to-end check: name -> 127.0.0.1 (dnsmasq) -> :443 proxy -> right cluster."""
+    for host in hosts:
+        dns = _run(["dscacheutil", "-q", "host", "-a", "name", host], check=False)
+        ips = [ln.split(":", 1)[1].strip() for ln in (dns.stdout or "").splitlines() if ln.startswith("ip_address")]
+        dns_ok = "127.0.0.1" in ips
+        curl = _run(
+            ["curl", "-sk", "--max-time", "4", "-o", "/dev/null", "-w", "%{http_code}", f"https://{host}/"],
+            check=False,
+        )
+        code = (curl.stdout or "").strip()
+        reachable = code.isdigit() and code != "000"
+        marker = "[ok]" if (dns_ok and reachable) else "[FAILED]"
+        _print(f"    {host} -> DNS {', '.join(ips) or 'none'}, proxy HTTP {code or 'none'} {marker}")
+
+
+def _setup_local_networking(settings: Settings) -> str:
+    """Configure local DNS + SNI reverse proxy for CP/DP ingress (replaces manual /etc/hosts edits).
+
+    dnsmasq resolves *.<base> -> 127.0.0.1; an nginx SNI proxy on :443 forwards each hostname to
+    the right cluster's already-known published host port (`ControlPlane.https_port` /
+    `DataPlane.https_port`, fixed at cluster-creation time — no container-IP lookup needed).
+    Raises on failure; the caller falls back to `_print_manual_etc_hosts_fallback` so a dev is
+    never fully blocked.
+    """
+    base = settings.base_domain
+    primary_cp = settings.control_planes[0]
+    dp_entries = [(dp.domain_prefix, dp.https_port) for dp in settings.data_planes]
+
+    _write_dnsmasq_conf(base)
+    _ensure_dnsmasq_container()
+    changed = _ensure_resolver_file(base)
+
+    _write_proxy_conf(base_domain=base, dp_entries=dp_entries, cp_port=primary_cp.https_port)
+    _ensure_proxy_container()
+
+    _print(f"  dnsmasq `{DNSMASQ_CONTAINER_NAME}`: *.{base} -> 127.0.0.1 (127.0.0.1:{LOCAL_DNS_PORT})")
+    dp_summary = ", ".join(f"{prefix}->:{port}" for prefix, port in dp_entries) or "<none>"
+    _print(f"  proxy `{PROXY_CONTAINER_NAME}` on :443 by SNI: {dp_summary} (DP), else -> :{primary_cp.https_port} (CP)")
+
+    check_hosts = [f"houston.{base}"] + [f"commander.{prefix}.{base}" for prefix, _ in dp_entries]
+    _verify_local_networking(base, check_hosts)
+    return f"resolver {'created' if changed else 'present'}; proxy CP:{primary_cp.https_port} DP:{[p for _, p in dp_entries]}"
+
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -1320,7 +1273,14 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--cp-mode", type=str, default="unified", help="Control plane mode to install (unified, control) Default: '%(default)s'"
+        "--cp-mode",
+        type=str,
+        default=None,
+        help=(
+            "Control plane mode to install: 'unified' (single cluster, CP+DP co-located) or "
+            "'control' (true CP/DP split, paired with the DP cluster(s) from --dp-count). "
+            "Omit to be prompted interactively; falls back to 'unified' outside a TTY."
+        ),
     )
     parser.add_argument(
         "--cp-base-https-port",
@@ -1351,14 +1311,30 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mkcert-root-ca-secret-name", default="mkcert-root-ca")
     parser.add_argument("--mkcert-root-ca-secret-key", default="cert.pem")
 
-    parser.add_argument(
+    version_group = parser.add_mutually_exclusive_group()
+    version_group.add_argument(
+        "--version",
+        dest="version_alias",
+        default=None,
+        metavar="ALIAS",
+        help=(
+            "Friendly Astronomer version to install: one of "
+            f"{', '.join(VERSION_ALIASES)}, or any exact/partial chart version known to "
+            f"{HELM_REPO_URL} (e.g. '1.1.4'). "
+            "'0.37' has no CP/DP split and delegates this entire run to bin/setup-037x-k3d.py. "
+            "'main' installs from the locally checked-out chart and floats "
+            "houston/astroUI/dbBootstrapper to the 'main' image tag and commander to 'master'. "
+            f"Omit to be prompted interactively; falls back to '{MAIN_DEV_ALIAS}' outside a TTY."
+        ),
+    )
+    version_group.add_argument(
         "--chart-version",
         default=None,
         metavar="VERSION",
         help=(
-            "Astronomer chart version to install from the remote Helm repo "
-            f"({HELM_REPO_URL}), e.g. '1.2.3'. "
-            "When omitted, installs from the local chart directory."
+            "Exact Astronomer chart version to install from the remote Helm repo "
+            f"({HELM_REPO_URL}), e.g. '1.2.3-beta1'. Bypasses --version alias resolution "
+            "(including the 0.37 delegation and the 'main' dev-image overrides)."
         ),
     )
 
@@ -1398,6 +1374,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Skip DP node /etc/hosts pin + registry authorization endpoint check.",
     )
+    parser.add_argument(
+        "--skip-local-networking",
+        action="store_true",
+        help=(
+            "Skip the local dnsmasq + SNI-proxy setup (host :443, /etc/resolver) and print "
+            "manual /etc/hosts instructions instead."
+        ),
+    )
 
     parser.add_argument(
         "--values-dir",
@@ -1424,16 +1408,113 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--enable-operator",
         action=argparse.BooleanOptionalAction,
-        default=True,
+        default=None,
         help=(
             "Enable Airflow operator mode. Sets global.airflowOperator.enabled=true on "
             "both CP and DP, and renders the airflow-operator subchart values on the DP. "
             "Pass --no-enable-operator to fall back to the helm-based airflow path. "
-            "Default: enabled."
+            "Omit to be prompted interactively; falls back to enabled outside a TTY."
+        ),
+    )
+    parser.add_argument(
+        "--skip-service-monitor-crd",
+        action="store_true",
+        help=(
+            "When --enable-operator is set, skip installing the ServiceMonitor CRD "
+            "(monitoring.coreos.com/v1). The operator's apiserver controller watches ServiceMonitor "
+            "and its cache fails to sync without the CRD; pass this only if a full Prometheus "
+            "Operator (or the CRD) is already installed in the cluster."
         ),
     )
 
     return parser.parse_args()
+
+
+class Delegate037(Exception):
+    """Raised by `_resolve_version` when --version resolves to "0.37" (no CP/DP split)."""
+
+
+def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool, tuple[str, ...]]:
+    """
+    Resolve --version/--chart-version into (chart_version, chart_is_prerelease, extra_helm_set).
+
+    Raises Delegate037 if the resolved alias is "0.37": the caller must run
+    bin/setup-037x-k3d.py instead of continuing with the normal CP/DP flow, since 0.37.x has no
+    control/data plane separation.
+    """
+    if args.chart_version:
+        return args.chart_version, "-" in args.chart_version, ()
+
+    alias = args.version_alias
+    if alias is None:
+        alias = _prompt_choice(
+            "Which Astronomer version do you want to install?",
+            list(VERSION_ALIASES),
+            default=MAIN_DEV_ALIAS,
+        )
+    if alias == DELEGATE_037_ALIAS:
+        raise Delegate037
+    if alias == MAIN_DEV_ALIAS:
+        return None, False, MAIN_DEV_IMAGE_SET
+
+    _ensure_helm_repo()
+    resolved = _resolve_chart_version(alias, HELM_CHART)
+    return resolved, "-" in resolved, ()
+
+
+def _run_setup_037(args: argparse.Namespace) -> int:
+    """Delegate the whole run to bin/setup-037x-k3d.py: 0.37.x has no CP/DP split to set up."""
+    script = Path(__file__).resolve().parent / "setup-037x-k3d.py"
+    cmd = [
+        sys.executable,
+        str(script),
+        "--base-domain",
+        args.base_domain,
+        "--namespace",
+        args.namespace,
+        "--release-name",
+        args.release_name,
+        "--docker-network",
+        args.docker_network,
+        "--https-port",
+        str(args.cp_base_https_port),
+        "--http-port",
+        str(args.cp_base_http_port),
+        "--tls-secret-name",
+        args.tls_secret_name,
+        "--mkcert-root-ca-secret-name",
+        args.mkcert_root_ca_secret_name,
+        "--mkcert-root-ca-secret-key",
+        args.mkcert_root_ca_secret_key,
+        "--helm-timeout",
+        args.helm_timeout,
+        "--num-compute-nodes",
+        str(args.num_compute_nodes),
+    ]
+    if args.chart_version:
+        cmd += ["--chart-version", args.chart_version]
+    if args.helm_debug:
+        cmd.append("--helm-debug")
+    if args.recreate_clusters:
+        cmd.append("--recreate-cluster")
+    if args.no_local_registry:
+        cmd.append("--no-local-registry")
+    if args.skip_certs:
+        cmd.append("--skip-certs")
+    if args.skip_clusters:
+        cmd.append("--skip-cluster")
+    if args.skip_secrets:
+        cmd.append("--skip-secrets")
+    if args.skip_helm:
+        cmd.append("--skip-helm")
+    if args.values_dir:
+        cmd += ["--values-dir", args.values_dir]
+    for f in args.helm_values:
+        cmd += ["--helm-values", f]
+
+    _print("--version 0.37 has no CP/DP split; delegating this run entirely to bin/setup-037x-k3d.py\n")
+    _debug(f"run: {shlex.join(cmd)}")
+    return subprocess.run(cmd).returncode
 
 
 def main() -> int:  # noqa: C901
@@ -1441,6 +1522,28 @@ def main() -> int:  # noqa: C901
 
     if GIT_ROOT_DIR is None:
         raise RuntimeError("Could not locate repo root (missing .git).")
+
+    _require_executable("helm", hint="Install helm and ensure it is in PATH.")
+    try:
+        resolved_chart_version, chart_is_prerelease, extra_helm_set = _resolve_version(args)
+    except Delegate037:
+        return _run_setup_037(args)
+    except (CommandError, RuntimeError) as e:
+        _print(f"\n❌ Failed to resolve --version: {e}")
+        return 1
+
+    enable_operator = args.enable_operator
+    if enable_operator is None:
+        enable_operator = _prompt_yes_no("Enable Airflow operator mode?", default=True)
+
+    cp_mode = args.cp_mode
+    if cp_mode is None:
+        topology = _prompt_choice(
+            "Which topology do you want to install?",
+            list(TOPOLOGY_CHOICES),
+            default=DEFAULT_TOPOLOGY,
+        )
+        cp_mode = TOPOLOGY_TO_CP_MODE[topology]
 
     ms = Milestones()
 
@@ -1471,7 +1574,7 @@ def main() -> int:  # noqa: C901
         namespace=args.namespace,
         release_name=args.release_name,
         docker_network=args.docker_network,
-        cp_mode=args.cp_mode,
+        cp_mode=cp_mode,
         control_planes=control_planes,
         data_planes=data_planes,
         tls_secret_name=args.tls_secret_name,
@@ -1480,8 +1583,10 @@ def main() -> int:  # noqa: C901
         helm_timeout=args.helm_timeout,
         helm_debug=bool(args.helm_debug),
         dp_airflow_db=args.dp_airflow_db,
-        enable_operator=bool(args.enable_operator),
-        chart_version=args.chart_version or None,
+        enable_operator=enable_operator,
+        chart_version=resolved_chart_version,
+        chart_is_prerelease=chart_is_prerelease,
+        extra_helm_set=extra_helm_set,
         agents=args.num_compute_nodes,
     )
 
@@ -1660,6 +1765,13 @@ def main() -> int:  # noqa: C901
                     _wait_for_cert_manager(cp_ctx)
                     ms.done(h, detail=f"version={CERT_MANAGER_VERSION}")
 
+                    if not args.skip_service_monitor_crd:
+                        h = ms.start(f"Install ServiceMonitor CRD on {cp.cluster_name} (operator apiserver watch)")
+                        _install_service_monitor_crd(cp_ctx)
+                        ms.done(h, detail=f"prometheus-operator {PROMETHEUS_OPERATOR_VERSION}")
+                    else:
+                        ms.skip(f"Install ServiceMonitor CRD on {cp.cluster_name}", reason="--skip-service-monitor-crd set")
+
                 _helm_upgrade_install(
                     context=cp_ctx,
                     chart_dir=GIT_ROOT_DIR,
@@ -1670,6 +1782,8 @@ def main() -> int:  # noqa: C901
                     timeout=settings.helm_timeout,
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
+                    chart_is_prerelease=settings.chart_is_prerelease,
+                    extra_set=settings.extra_helm_set,
                 )
                 ms.done(h)
 
@@ -1716,6 +1830,13 @@ def main() -> int:  # noqa: C901
                     _wait_for_cert_manager(dp_ctx)
                     ms.done(h, detail=f"version={CERT_MANAGER_VERSION}")
 
+                    if not args.skip_service_monitor_crd:
+                        h = ms.start(f"Install ServiceMonitor CRD on {dp.cluster_name} (operator apiserver watch)")
+                        _install_service_monitor_crd(dp_ctx)
+                        ms.done(h, detail=f"prometheus-operator {PROMETHEUS_OPERATOR_VERSION}")
+                    else:
+                        ms.skip(f"Install ServiceMonitor CRD on {dp.cluster_name}", reason="--skip-service-monitor-crd set")
+
                 h = ms.start(f"Helm install/upgrade Data Plane (context={dp_ctx})")
                 _helm_upgrade_install(
                     context=dp_ctx,
@@ -1727,6 +1848,8 @@ def main() -> int:  # noqa: C901
                     timeout=settings.helm_timeout,
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
+                    chart_is_prerelease=settings.chart_is_prerelease,
+                    extra_set=settings.extra_helm_set,
                 )
                 ms.done(h)
         else:
@@ -1755,8 +1878,21 @@ def main() -> int:  # noqa: C901
                     reason="--skip-node-registry-check set",
                 )
 
+        # Step: local DNS + SNI proxy (replaces manual host /etc/hosts editing)
+        if not args.skip_local_networking:
+            h = ms.start(f"Configure local DNS + SNI proxy for `{settings.base_domain}` (no /etc/hosts editing)")
+            try:
+                detail = _setup_local_networking(settings)
+                ms.done(h, detail=detail)
+            except Exception as e:  # noqa: BLE001
+                ms.fail(h, error=str(e))
+                _print(f"\n⚠️  Local networking setup failed ({e}); falling back to manual /etc/hosts instructions.")
+                _print_manual_etc_hosts_fallback(settings)
+        else:
+            ms.skip("Configure local DNS + SNI proxy", reason="--skip-local-networking set")
+            _print_manual_etc_hosts_fallback(settings)
+
         ms.print_summary_table()
-        _print_host_etc_hosts_instructions(settings)
         _print("\n✅ Completed.")
         return 0
     except Exception as e:  # noqa: BLE001
