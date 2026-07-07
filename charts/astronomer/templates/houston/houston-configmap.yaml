@@ -684,6 +684,10 @@ data:
     strictSchemaCheck:
       enabled: {{ .Values.houston.strictSchemaCheck.enabled }}
 
+    operator:
+      adoption:
+        enabled: {{ .Values.global.operator.adoption.enabled }}
+
   # These are any user-specified config overrides.
   local-production.yaml: |
 {{ toYaml .Values.houston.config | indent 4 }}
