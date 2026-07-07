@@ -267,14 +267,43 @@ def _resolve_chart_version(alias: str, chart_ref: str) -> str:
     )
 
 
-def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
+def _tls_cert_paths_by_context(settings: Settings) -> dict[str, tuple[Path, Path]]:
+    """Map each k3d context to its own cert/key file paths (no mkcert call — just path computation)."""
+    cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
+    paths: dict[str, tuple[Path, Path]] = {}
+    for cp in settings.control_planes:
+        paths[f"k3d-{cp.cluster_name}"] = (cert_dir / "astronomer-tls-cp.pem", cert_dir / "astronomer-tls-cp.key")
+    for dp in settings.data_planes:
+        paths[f"k3d-{dp.cluster_name}"] = (
+            cert_dir / f"astronomer-tls-{dp.domain_prefix}.pem",
+            cert_dir / f"astronomer-tls-{dp.domain_prefix}.key",
+        )
+    return paths
+
+
+def _ensure_tls_certs(settings: Settings) -> tuple[dict[str, tuple[Path, Path]], Path]:
     """
-    Generate `astronomer-tls.pem` + `astronomer-tls.key` with SANs for:
-    - <baseDomain>, *.<baseDomain>
-    - <dpPrefix>.<baseDomain>, *.<dpPrefix>.<baseDomain>  (one pair per data plane)
+    Generate one TLS cert per plane, each scoped to only that plane's hostnames:
+    - CP: <baseDomain>, *.<baseDomain>
+    - DP (per data plane): <dpPrefix>.<baseDomain>, *.<dpPrefix>.<baseDomain>
+
+    Why per-plane certs instead of one cert covering everything: dnsmasq must resolve every
+    hostname to 127.0.0.1 (OrbStack's host-network port forwarding only bridges 127.0.0.1 to the
+    Mac host, not other loopback aliases — distinct-IP-per-plane was tried and doesn't work here).
+    With every hostname on the same IP, a browser will reuse (HTTP/2-coalesce) an existing TLS
+    connection for a different hostname if that connection's certificate is already valid for it.
+    A single cert whose SANs cover both `*.<baseDomain>` and `*.<dpPrefix>.<baseDomain>` — applied
+    identically to both the CP and DP clusters — satisfies that check, so a connection opened for
+    `app.<baseDomain>` (CP) gets silently reused for `commander.<dpPrefix>.<baseDomain>` (DP) and
+    vice versa. But the SNI proxy's routing decision is made once per connection (at the TLS
+    handshake), so a coalesced connection stays pinned to whichever backend it first routed to —
+    responses appear to randomly swap between CP and DP, or hang when the pinned backend can't
+    serve the new request's path at all. Scoping each cert's SANs to only its own plane makes a
+    CP connection's certificate invalid for any DP hostname (and vice versa), so the browser is
+    forced to open a fresh connection — which the SNI proxy then correctly routes.
 
     Returns:
-        (cert_path, key_path, mkcert_root_ca_path)
+        ({k3d context -> (cert_path, key_path)}, mkcert_root_ca_path)
     """
     mkcert_exe = _mkcert_path()
     _require_executable(
@@ -284,21 +313,28 @@ def _ensure_tls_certs(settings: Settings) -> tuple[Path, Path, Path]:
 
     cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
     cert_dir.mkdir(parents=True, exist_ok=True)
-    cert_path = cert_dir / "astronomer-tls.pem"
-    key_path = cert_dir / "astronomer-tls.key"
-
     root_ca = _mkcert_caroot(mkcert_exe)
-
-    # Always regenerate to ensure SANs are correct for all configured data plane domain prefixes.
     base = settings.base_domain
-    sans = [base, f"*.{base}"]
+
+    certs_by_context = _tls_cert_paths_by_context(settings)
+
+    cp_cert_path, cp_key_path = certs_by_context[f"k3d-{settings.control_planes[0].cluster_name}"]
+    _generate_tls_cert(
+        mkcert_exe=mkcert_exe, cert_path=cp_cert_path, key_path=cp_key_path, root_ca=root_ca, sans=[base, f"*.{base}"]
+    )
+
     for dp in settings.data_planes:
         dp_domain = f"{dp.domain_prefix}.{base}"
-        sans += [dp_domain, f"*.{dp_domain}"]
+        dp_cert_path, dp_key_path = certs_by_context[f"k3d-{dp.cluster_name}"]
+        _generate_tls_cert(
+            mkcert_exe=mkcert_exe,
+            cert_path=dp_cert_path,
+            key_path=dp_key_path,
+            root_ca=root_ca,
+            sans=[dp_domain, f"*.{dp_domain}"],
+        )
 
-    _generate_tls_cert(mkcert_exe=mkcert_exe, cert_path=cert_path, key_path=key_path, root_ca=root_ca, sans=sans)
-
-    return cert_path, key_path, root_ca
+    return certs_by_context, root_ca
 
 
 def _write_values_file(path: Path, content: str) -> None:
@@ -695,6 +731,13 @@ def _write_dnsmasq_conf(base_domain: str) -> None:
     Mounted into the dnsmasq container, which listens inside the container (all interfaces) on
     port 53 — Docker DNATs the published 127.0.0.1:LOCAL_DNS_PORT to it. Routing to the correct
     cluster happens at the nginx proxy by SNI, so DNS only needs a single 127.0.0.1 answer.
+
+    NOTE: giving each plane its own 127.0.0.x loopback IP was tried (to stop browsers from
+    HTTP/2-coalescing CP and DP connections) and reverted — OrbStack's host-network port
+    forwarding only bridges 127.0.0.1 to the Mac host, not other loopback aliases, even with an
+    explicit `-p 127.0.0.2:PORT:PORT` publish. The coalescing fix instead lives in
+    `_ensure_tls_certs`: each plane gets its own cert whose SANs don't cover the other plane's
+    hostnames, which is what actually gates HTTP/2 connection reuse.
     """
     lines = [
         "# Managed by bin/setup-cp-dp-k3d.py — regenerated each run. Do not edit by hand.",
@@ -1248,20 +1291,17 @@ def main() -> int:  # noqa: C901
             ms.skip("Local registry proxy setup", reason="--no-local-registry set")
 
         # Step: TLS + mkcert root CA file
-        cert_path: Path | None = None
-        key_path: Path | None = None
+        certs_by_context: dict[str, tuple[Path, Path]] | None = None
         mkcert_root_ca: Path | None = None
         if not args.skip_certs:
-            h = ms.start("Generate TLS certs (mkcert) with CP+DP SANs")
-            cert_path, key_path, mkcert_root_ca = _ensure_tls_certs(settings)
-            ms.done(h, detail=f"cert={cert_path} key={key_path}")
+            h = ms.start("Generate TLS certs (mkcert) — one per plane, scoped to its own hostnames")
+            certs_by_context, mkcert_root_ca = _ensure_tls_certs(settings)
+            ms.done(h, detail=f"{len(certs_by_context)} cert(s): {', '.join(sorted(certs_by_context))}")
         else:
-            ms.skip("Generate TLS certs (mkcert) with CP+DP SANs", reason="--skip-certs set")
+            ms.skip("Generate TLS certs (mkcert) — one per plane, scoped to its own hostnames", reason="--skip-certs set")
             # Still need root CA for cluster volume mount + secret if we create clusters/secrets.
             mkcert_root_ca = _mkcert_caroot(_mkcert_path())
-            cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
-            cert_path = cert_dir / "astronomer-tls.pem"
-            key_path = cert_dir / "astronomer-tls.key"
+            certs_by_context = _tls_cert_paths_by_context(settings)
 
         if mkcert_root_ca is None:
             raise RuntimeError("mkcert root CA path not available")
@@ -1319,13 +1359,14 @@ def main() -> int:  # noqa: C901
         # Step: namespace + secrets
         if not args.skip_secrets:
             h = ms.start(f"Apply namespace + secrets in all clusters (ns={settings.namespace})")
-            if cert_path is None or key_path is None:
+            if certs_by_context is None:
                 raise RuntimeError("TLS cert/key paths not available; cannot create secrets")
 
             for ctx in [f"k3d-{cp.cluster_name}" for cp in settings.control_planes] + [
                 f"k3d-{dp.cluster_name}" for dp in settings.data_planes
             ]:
                 _kubectl_create_namespace(ctx, settings.namespace)
+                cert_path, key_path = certs_by_context[ctx]
                 _kubectl_apply_tls_secret(
                     context=ctx,
                     namespace=settings.namespace,
