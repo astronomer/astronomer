@@ -500,11 +500,19 @@ workflows:
             - scenario-unified-1-35-1
       - approve-endorctl-scan:
           type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - endorctl-scan-docker:
           context:
             - apc-endorlabs
           requires:
             - approve-endorctl-scan
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
