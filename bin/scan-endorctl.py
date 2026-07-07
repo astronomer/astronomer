@@ -17,8 +17,10 @@ reviewing it in the Endor UI.
 If --ignorefile is provided and points to a file, each non-blank, non-comment
 line is treated as a CVE ID to ignore.
 
-Images are scanned one by one. The build fails if any image has actionable
-findings; every image is scanned before exiting so the full report is visible.
+Images are scanned concurrently (--jobs, default 2x CPU count) since each scan
+is network-bound. Per-image logs are captured and printed contiguously. The
+build fails if any image has actionable findings; every image is scanned before
+exiting so the full report is visible.
 
 Images can be passed with repeated --image flags, or piped/generated from
 `bin/show-docker-images.py` and passed via --images-from-stdin. Use --skip to
@@ -42,10 +44,14 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import json
+import os
 import re
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from tabulate import tabulate
@@ -244,6 +250,33 @@ def scan_image(image: str, ignored_cves: set[str], severity: str) -> dict[str, l
     return {"action_required": actionable, "no_fix": no_fix, "ignored": ignored}
 
 
+def _default_jobs() -> int:
+    """Default concurrency: 2x CPU count (scans are network-bound), min 2."""
+    return max(2, (os.cpu_count() or 1) * 2)
+
+
+def scan_image_captured(image: str, ignored_cves: set[str], severity: str) -> tuple[str, dict[str, list[dict]] | None, str]:
+    """Run scan_image with stdout/stderr captured into one buffer.
+
+    Returns (image, categorized, captured_output). Capturing keeps each image's
+    log contiguous when scans run concurrently, instead of interleaving.
+
+    categorized is None if the scan errored (e.g. endorctl called sys.exit or
+    raised). The error is captured in the buffer rather than aborting the whole
+    run, so other images still get scanned; main() exits non-zero afterwards.
+    """
+    buf = io.StringIO()
+    categorized: dict[str, list[dict]] | None = None
+    with redirect_stdout(buf), redirect_stderr(buf):
+        try:
+            categorized = scan_image(image, ignored_cves, severity)
+        except SystemExit as e:
+            print(f"Error: scan of {image} exited early ({e.code}); see log above.")
+        except Exception as e:  # noqa: BLE001 - surface any scan failure without killing siblings
+            print(f"Error: scan of {image} raised {type(e).__name__}: {e}")
+    return image, categorized, buf.getvalue()
+
+
 _CSV_HEADERS = [
     "Image URI",
     "Tag",
@@ -357,6 +390,12 @@ def main() -> None:
         default="high",
         help="Minimum severity that fails the build (default: high)",
     )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=_default_jobs(),
+        help="Number of images to scan concurrently (default: 2x CPU count, since scans are network-bound)",
+    )
     args = parser.parse_args()
 
     images = collect_images(args)
@@ -365,11 +404,23 @@ def main() -> None:
 
     ignored_cves = load_ignored_cves(args.ignorefile)
 
-    print(f"Scanning {len(images)} image(s), one at a time:")
+    workers = max(1, min(args.jobs, len(images)))
+    print(f"Scanning {len(images)} image(s), {workers} at a time:")
     for image in images:
         print(f"  - {image}")
 
-    results = [(image, scan_image(image, ignored_cves, args.severity)) for image in images]
+    # Scans run concurrently (network-bound), but each image's log is captured
+    # and flushed contiguously, and results are re-sorted to keep output stable.
+    results_by_image: dict[str, dict[str, list[dict]] | None] = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(scan_image_captured, image, ignored_cves, args.severity) for image in images]
+        for future in futures:
+            image, categorized, output = future.result()
+            results_by_image[image] = categorized
+            print(output, end="")
+
+    errored_images = [image for image in images if results_by_image[image] is None]
+    results = [(image, results_by_image[image]) for image in images if results_by_image[image] is not None]
 
     if args.csv is not None:
         write_csv(args.csv, results)
@@ -377,10 +428,17 @@ def main() -> None:
     failed_images = [image for image, categorized in results if categorized["action_required"]]
 
     print(f"\n{'=' * 100}")
+    if errored_images:
+        print(f"ERRORED: {len(errored_images)} of {len(images)} image(s) could not be scanned:")
+        for image in errored_images:
+            print(f"  - {image}")
     if failed_images:
         print(f"FAILED: {len(failed_images)} of {len(images)} image(s) have actionable vulnerabilities:")
         for image in failed_images:
             print(f"  - {image}")
+    if errored_images:
+        sys.exit(2)
+    if failed_images:
         sys.exit(1)
     print(f"PASSED: all {len(images)} image(s) clear of actionable vulnerabilities.")
     sys.exit(0)
