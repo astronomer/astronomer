@@ -79,6 +79,27 @@ nats:
       cpu: "50m"
       memory: "64Mi"
 
+prometheus:
+  # Chart default (values.yaml prometheus.resources) is 4Gi/8Gi requests/limits — way more than a
+  # single-node local dev setup needs.
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  # Chart default (values.yaml prometheus.configMapReloader.resources) is 25Mi, which OOMKills
+  # under real config-reload load.
+  configMapReloader:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "250Mi"
+      limits:
+        cpu: "100m"
+        memory: "250Mi"
+
 elasticsearch:
   common:
     env:
