@@ -98,10 +98,14 @@ jobs:
             sudo mv ./endorctl /usr/local/bin/endorctl
             endorctl --version
       - run:
+          name: Install helm and other CI tools
+          command: uv run bin/install-ci-tools.py
+      - run:
           name: Endor Labs container scan
           command: |
+            export PATH="$HOME/.local/share/astronomer-software/bin:$PATH"
             mkdir -p scan-results
-            uv run bin/show-docker-images.py \
+            uv run bin/show-docker-images.py --with-houston \
               | uv run bin/scan-endorctl.py --images-from-stdin \
                   --ignorefile .circleci/endorignore \
                   --csv scan-results/endorctl-findings.csv
