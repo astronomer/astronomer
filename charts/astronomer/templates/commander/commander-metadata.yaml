@@ -27,4 +27,6 @@ data:
     elasticsearch:
       sharedElasticsearchEnabled: true
     {{- end }}
+    externalSecretManager:
+      isClusterSecretStore: {{ ternary "false" "true" .Values.global.namespaceManagement.namespacePools.enabled }}
 {{- end }}
