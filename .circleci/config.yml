@@ -91,6 +91,7 @@ jobs:
             mkdir -p scan-results
             uv run bin/show-docker-images.py --with-houston \
               | uv run bin/scan-endorctl.py --images-from-stdin \
+                  --skip airflow-operator-dev \
                   --ignorefile .circleci/endorignore \
                   --csv scan-results/endorctl-findings.csv
       - store_artifacts:

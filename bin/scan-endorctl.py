@@ -21,7 +21,8 @@ Images are scanned one by one. The build fails if any image has actionable
 findings; every image is scanned before exiting so the full report is visible.
 
 Images can be passed with repeated --image flags, or piped/generated from
-`bin/show-docker-images.py` and passed via --images-from-stdin.
+`bin/show-docker-images.py` and passed via --images-from-stdin. Use --skip to
+exclude images whose ref contains a given substring (repeatable).
 
 If --csv is provided, every finding at or above the severity threshold (across
 all images) is written to that path so CI can store it as a downloadable
@@ -304,7 +305,19 @@ def collect_images(args: argparse.Namespace) -> list[str]:
             if not line:
                 continue
             images.append(line.split()[-1])
-    return sorted(set(images))
+    images = sorted(set(images))
+
+    skips = args.skip or []
+    if skips:
+        kept = []
+        for image in images:
+            matched = next((s for s in skips if s in image), None)
+            if matched is not None:
+                print(f"Skipping image (matched --skip {matched!r}): {image}")
+            else:
+                kept.append(image)
+        images = kept
+    return images
 
 
 def main() -> None:
@@ -319,6 +332,12 @@ def main() -> None:
         "--images-from-stdin",
         action="store_true",
         help="Read images from stdin in `bin/show-docker-images.py` format (last column is the image:tag)",
+    )
+    parser.add_argument(
+        "--skip",
+        action="append",
+        default=[],
+        help="Substring of an image ref to exclude from scanning (repeatable), e.g. airflow-operator-dev",
     )
     parser.add_argument(
         "--ignorefile",
