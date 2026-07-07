@@ -11,11 +11,28 @@ fluentd
 {{- end -}}
 
 
+{{/*
+Base domain for the control-plane auth flow (auth-url / auth-signin subrequests and
+redirects, elasticsearch proxy_pass). Under control-plane HA the customer enters via the
+global hostname and the session cookie is scoped to globalBaseDomain, so these auth URLs
+must resolve to the global host. Falls back to baseDomain when HA is off (single-CP
+rendering unchanged) or when globalBaseDomain is unset (e.g. data planes, where it is
+never templated). Consumers template the surrounding URL/key, so this is reusable for any
+auth-flow URL regardless of annotation key.
+*/}}
+{{- define "global.authBaseDomain" -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- else -}}
+{{- .Values.global.baseDomain -}}
+{{- end -}}
+{{- end -}}
+
 {{ define "houston.internalauthurl" -}}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
 {{- else }}
-nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
+nginx.ingress.kubernetes.io/auth-url: https://houston.{{ include "global.authBaseDomain" . }}/v1/authorization
 {{- end }}
 {{- end }}
 
@@ -151,7 +168,7 @@ imagePullSecrets:
 {{- if eq .Values.global.plane.mode "unified" -}}
 proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
 {{- else -}}
-proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
+proxy_pass https://houston.{{ include "global.authBaseDomain" . }}/v1/elasticsearch;
 {{- end -}}
 {{- end }}
 
