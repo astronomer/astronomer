@@ -182,19 +182,19 @@ podLabels: {}
 
 podSecurityContext:
   enabled: true
+  seccompProfile:
+      type: RuntimeDefault
   # fsGroup: 2000
 
 securityContext:
+  enabled: true
   allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
   capabilities:
     drop:
       - ALL
-  enabled: true
   readOnlyRootFilesystem: true
-  runAsNonRoot: true
-  runAsUser: 1000
-  seccompProfile:
-    type: RuntimeDefault
 
 resources:
   limits:
