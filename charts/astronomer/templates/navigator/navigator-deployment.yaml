@@ -123,6 +123,9 @@ spec:
               value: {{ template "houston.nats.servers" . }}
             - name: NATS__CLUSTER_ID
               value: {{ .Release.Name }}-stan
+            {{- if .Values.global.controlPlaneHA.enabled }}
+            {{- include "houston.cpIdEnv" . | nindent 12 }}
+            {{- end }}
 
             # Failover request reconcile loop
             - name: FAILOVER_REQUEST_RECONCILER_INTERVAL_SECONDS

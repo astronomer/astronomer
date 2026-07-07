@@ -2,17 +2,18 @@ Thank you for installing Astronomer!
 Your release is named {{ .Release.Name }}.
 
 {{- $planeMode := .Values.global.plane.mode }}
-{{- $domainPrefix := .Values.global.plane.domainsuffix }}
+{{- $domainPrefix := .Values.global.plane.domainPrefix }}
 Astronomer has been installed in {{ $planeMode }} plane mode.
-
-{{- if .Values.global.baseDomain }}
-The platform components may take a few minutes to spin up.
 
 {{- $astronomerEnabled := true }}
 {{- if and (hasKey .Values.global "astronomer") (kindIs "map" .Values.global.astronomer) (hasKey .Values.global.astronomer "enabled") }}
 {{- $astronomerEnabled = .Values.global.astronomer.enabled }}
 {{- end }}
 {{- $platformEnabled := hasKey .Values.tags "platform" | ternary .Values.tags.platform true }}
+
+{{- if .Values.global.baseDomain }}
+The platform components may take a few minutes to spin up.
+
 {{- $grafanaEnabled := true }}
 {{- if and (hasKey .Values.global "grafana") (kindIs "map" .Values.global.grafana) (hasKey .Values.global.grafana "enabled") }}
 {{- $grafanaEnabled = .Values.global.grafana.enabled }}
@@ -59,4 +60,16 @@ Now that you've installed the platform, you are ready to get started and create 
 We have guides available at https://www.astronomer.io/docs/learn/ and are always available to help.
 {{- else }}
 To see dashboard URLs here, provide baseDomain in your config.
+{{- end }}
+
+{{- if and .Release.IsInstall (or (eq $planeMode "control") (eq $planeMode "unified")) $astronomerEnabled $platformEnabled .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.bootstrapJwks (dig "houston" "jwks" "generation" "enabled" true .Values.astronomer) }}
+
+First-CP HA bootstrap (bootstrapJwks enabled): this install generates the following Secrets in this cluster's {{ .Release.Namespace }} namespace:
+
+- {{ include "houston.jwtKeySecret" (dict "Release" .Release "Values" .Values.astronomer) | trim }} — Houston JWT signing keypair (private key)
+- {{ include "houston.jwtCertificateSecret" (dict "Release" .Release "Values" .Values.astronomer) | trim }} — JWT signing certificate (also signs Docker registry tokens)
+
+Copy these Secrets to each subsequent CP cluster's namespace BEFORE installing additional CPs.
+Any tool works: `kubectl get secret -o yaml` + `kubectl apply -f`, sealed-secrets, Terraform,
+GitOps, External Secrets Operator, HashiCorp Vault, etc. See the runbook for detailed steps.
 {{- end }}

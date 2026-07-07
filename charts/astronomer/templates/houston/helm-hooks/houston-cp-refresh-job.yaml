@@ -1,0 +1,195 @@
+##################################################################
+## Control Plane chartVersion refresh (post-upgrade) Hook Job    ##
+##################################################################
+{{- /*
+  Re-records this control plane's chartVersion in the CP registry after a Helm
+  upgrade, so the max-version eligibility gate (houston src/lib/controlplane)
+  reflects the version this CP now runs. Reuses registerControlPlane's existing-row
+  refresh path via `yarn refresh-cp-chart-version` (update-only, idempotent, no-op
+  when the CP is unregistered).
+
+  Rendered on every control/unified plane, mirroring the houston-db-migrations and
+  houston-upgrade-deployments hooks. Cross-CP version coordination only matters
+  under Control Plane HA: the CP_ID env (from the cp-identity Secret) is injected
+  by houston_environment only when controlPlaneHA is enabled, so on single-CP /
+  non-HA installs the script finds no CP_ID and cleanly no-ops.
+
+  Ordering: this is a `post-upgrade` hook while houston-db-migrations is a
+  `pre-upgrade` hook, so migrations always complete before this runs — a CP only
+  advertises its new chartVersion once its new schema is live. hook-weight "0"
+  runs it ahead of the post-upgrade houston-upgrade-deployments hook (weight "1").
+*/}}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+apiVersion: {{ include "apiVersion.batch" . }}
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-houston-cp-refresh
+  labels:
+    tier: astronomer
+    component: houston-cp-refresh
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: houston-cp-refresh
+        release: {{ .Release.Name }}
+        app: houston-cp-refresh
+        version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
+      annotations:
+        {{- if .Values.global.istio.enabled }}
+          sidecar.istio.io/inject: "false"
+        {{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    spec:
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
+        - name: wait-for-db
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
+          command:
+            - "/houston/bin/entrypoint"
+          args:
+            - "echo"
+            - "DB ready"
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            {{- include "houston_environment" . | indent 12 }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+        - name: houston-bootstrapper
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            # we need to hardcode it to be able to upgrade from prisma1 to prisma2
+            - name: SCHEMA_NAME
+              value: "houston$default"
+            {{ if .Values.global.sslmodeEnabled }}
+            - name: SSLMODE
+              value: "require"
+            {{- end }}
+            # Connection Limit for Prisma Connection Pool: https://www.prisma.io/docs/concepts/components/prisma-client/deployment#database-connection-limit
+            {{ if .Values.houston.prismaConnectionLimit }}
+            - name: PRISMA_CONNECTION_LIMIT
+              value: {{ .Values.houston.prismaConnectionLimit | quote }}
+            {{ end }}
+            - name: DB_NAME
+              value: {{ .Release.Name }}-houston
+            - name: SECRET_NAME
+              value: {{ template "houston.airflowBackendSecret" . }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+            - name: tmp
+              mountPath: /houston/node_modules/.cache
+      {{- end }}
+      containers:
+        - name: refresh-cp-chart-version-job
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+          args: ["yarn", "refresh-cp-chart-version"]
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
+            {{- include "houston_environment" . | indent 12 }}
+          {{- if .Values.houston.refreshCpChartVersion.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.refreshCpChartVersion.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.refreshCpChartVersion.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.refreshCpChartVersion.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.refreshCpChartVersion.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.houston.refreshCpChartVersion.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            exec:
+              command: ["true"]
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: tmp
+              mountPath: /tmp
+            - name: tmp
+              mountPath: /houston/node_modules/.cache
+          {{- include "houston_volume_mounts" . | indent 12 }}
+          {{- include "custom_ca_volume_mounts" . | indent 12 }}
+      volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        {{- include "houston_volumes" . | indent 8 }}
+        {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}

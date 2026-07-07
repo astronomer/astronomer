@@ -53,6 +53,8 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 tier: dp-failover
 component: {{ template "external-secrets.name" . }}
+app: {{ template "external-secrets.name" . }}
+version: {{ .Chart.Version }}
 release: {{ .Release.Name }}
 chart: {{ template "external-secrets.chart" . }}
 heritage: {{ .Release.Service }}
@@ -158,5 +160,25 @@ Fail the install if a cluster scoped reconciler is enabled while its namespace s
 {{- define "external-secrets.reconciler-sanity-test" -}}
 {{- if and (not .Values.processPushSecret) .Values.processClusterPushSecret -}}
   {{- fail "You have disabled processing of PushSecrets but not ClusterPushSecrets. This is an invalid configuration. ClusterPushSecret processing depends on processing of PushSecrets. Please either enable processing of PushSecrets, or disable processing of ClusterPushSecrets." }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether external-secrets resources should render: the plane mode must be data or unified.
+*/}}
+{{- define "external-secrets.enabled" -}}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether to grant the OpenShift-only finalizer permissions: either the repo-wide
+global.openshift.enabled flag is set, or the chart-local openshiftFinalizers
+override is explicitly enabled.
+*/}}
+{{- define "external-secrets.openshiftFinalizers" -}}
+{{- if or .Values.global.openshift.enabled .Values.openshiftFinalizers -}}
+true
 {{- end -}}
 {{- end -}}

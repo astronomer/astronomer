@@ -20,6 +20,51 @@ global:
   clusterLocalServiceAuth:
     token: ""
 
+  # Control Plane High Availability: run multiple active CPs serving traffic concurrently within a region.
+  # Default false keeps single-CP installs unchanged (no behavior change).
+  controlPlaneHA:
+    enabled: false
+    # Only for the FIRST CP install of a fresh HA cluster. When true (with
+    # enabled: true), overrides the HA-mode hard-block on JWKS + registry
+    # keypair generation, allowing the chart to generate the shared secret
+    # material into local k8s Secrets. Customer then copies those Secrets to
+    # subsequent CP clusters before installing them (see runbook).
+    # Default false: subsequent CPs and single-CP-to-HA migrations skip
+    # generation and expect Secrets to be pre-provisioned.
+    bootstrapJwks: false
+    # Parent domain of the global customer-facing hostname. REQUIRED when enabled.
+    # E.g. set to "astro.example.com" when the global URL is "app.astro.example.com".
+    #
+    # TLS cert SANs (customer prerequisite: when
+    # enabled, each CP's ingresses serve two host families, so the per-CP TLS cert
+    # (global.tlsSecret) on EVERY CP must include SANs for both:
+    #   per-CP admin (under baseDomain):  <baseDomain>, app.<baseDomain>,
+    #     houston.<baseDomain>, grafana.<baseDomain>, alertmanager.<baseDomain>,
+    #     prometheus.<baseDomain>
+    #   global customer-facing (under globalBaseDomain): the same subdomains under
+    #     <globalBaseDomain> (app./houston./grafana./alertmanager./prometheus.) plus the
+    #     bare <globalBaseDomain>
+    # One physical cert per CP serves both families. Issue via DNS-01 ACME — HTTP-01 will
+    # not work because the global host only routes to active-region CPs.
+    globalBaseDomain: ~
+    # Stable per-CP identity (UUID), exposed to pods as the CP_ID env var.
+    # When unset, the chart looks up the existing cp-identity Secret and reuses its value,
+    # or generates a new UUID on first install (preserved across `helm upgrade`).
+    # Set explicitly to keep cp_id deterministic for GitOps / offline `helm template`
+    # workflows where the cluster lookup is unavailable (otherwise a new UUID is rendered
+    # each time). May also point Houston at an externally-managed value.
+    cpId: ~
+    # Optional override for the customer session cookie Domain= attribute.
+    # When unset, Houston defaults it to `.<globalBaseDomain>`. Set explicitly only for the
+    # advanced single-cookie mode: a common parent of globalBaseDomain and the per-CP admin
+    # baseDomain (not derivable from globalBaseDomain alone) so one cookie covers both flows.
+    cookieDomain: ~
+    # Optional override for the customer session cookie name.
+    # When unset, Houston defaults it to `astronomer_<snakeCase(globalBaseDomain)>_auth` (same
+    # on every CP). Set explicitly only to pin an existing cookie name during HA migration so
+    # current sessions aren't invalidated.
+    cookieName: ~
+
   # Labels to add to every pod
   podLabels: {}
 
@@ -52,9 +97,19 @@ global:
     containerdCertCopier:
       startupProbe: {}
     priorityClassName: ~
-  #Global flag to enable Operator based deployment
+  # Global flag that makes Houston/Commander operator-aware. This chart also ships an
+  # airflow-operator subchart, installed by default. To run a true adoption setup — where the
+  # operator already exists on the data plane instead of being installed by this chart — set
+  # `airflow-operator.enabled: false` (see Chart.yaml) while leaving this flag `true`.
+  # This will give commander necessary permissions to read Airflow CRs from the data plane.
   airflowOperator:
     enabled: false
+
+  operator:
+    # Enable adoptDeployment mutation — allows adopting existing Airflow CRs from
+    # customer-managed dataplanes into Houston without recreating Kubernetes resources.
+    adoption:
+      enabled: true
 
   # Feature flags
   rbac:
@@ -367,7 +422,7 @@ global:
         tag: 2026.7.1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.13
+        tag: 0.3.0
     metrics:
       enabled: false
   certgenerator:

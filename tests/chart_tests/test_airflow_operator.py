@@ -219,18 +219,20 @@ class TestAirflowOperator:
                 ]
             ),
         )
-        assert len(docs) == 4
+        assert len(docs) == 5
         assert docs[0]["apiVersion"] == "apps/v1"
         assert docs[0]["kind"] == "Deployment"
         assert docs[0]["metadata"]["name"] == "release-name-aocm"
-        assert all(doc["metadata"]["labels"]["component"] == "controller-manager" for doc in docs[:3])
-        assert all(doc["apiVersion"] == "v1" for doc in docs[1:4])
         assert docs[1]["kind"] == "Service"
         assert docs[1]["metadata"]["name"] == "release-name-aocm-metrics-service"
-        assert docs[2]["kind"] == "ConfigMap"
-        assert docs[2]["metadata"]["name"] == "release-name-aom-config"
-        assert docs[3]["kind"] == "Service"
-        assert docs[3]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
+        assert docs[2]["kind"] == "NetworkPolicy"
+        assert docs[2]["metadata"]["name"] == "release-name-airflow-operator-policy"
+        assert docs[3]["kind"] == "ConfigMap"
+        assert docs[3]["metadata"]["name"] == "release-name-aom-config"
+        assert docs[4]["kind"] == "Service"
+        assert docs[4]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
+        assert docs[0]["metadata"]["labels"]["component"] == "controller-manager"
+        assert docs[1]["metadata"]["labels"]["component"] == "controller-manager"
 
         # Render the full chart (not --show-only): with webhooks disabled some manager
         # templates render empty, and helm errors when --show-only targets an all-empty
@@ -336,6 +338,97 @@ class TestAirflowOperator:
         image = c_by_name["manager"]["image"]
         # When privateRegistry is enabled the image is built from the private repo + the dev image name.
         assert image.startswith("my.private.registry/astronomer/airflow-operator-dev:")
+
+    @pytest.mark.parametrize(
+        "operator_enabled,np_enabled,should_render",
+        [
+            (True, True, True),
+            (True, False, False),
+            (False, True, False),
+            (False, False, False),
+        ],
+    )
+    def test_airflow_operator_networkpolicy_renders(self, kube_version, operator_enabled, np_enabled, should_render):
+        """The operator NetworkPolicy renders only when both the operator and global networkPolicy are enabled."""
+        np_file = "charts/airflow-operator/templates/manager/controller-manager-networkpolicy.yaml"
+        values = {
+            "global": {
+                "airflowOperator": {"enabled": operator_enabled},
+                "networkPolicy": {"enabled": np_enabled},
+            },
+        }
+        if should_render:
+            docs = render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values=values,
+                show_only=[np_file],
+            )
+            assert len(docs) == 1
+            assert docs[0]["kind"] == "NetworkPolicy"
+            assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+            assert docs[0]["metadata"]["name"] == "release-name-airflow-operator-policy"
+        else:
+            # When the policy is gated off the template renders empty; helm errors when
+            # --show-only targets an all-empty template, so render the full chart and
+            # assert no operator NetworkPolicy is emitted.
+            docs = render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values=values,
+            )
+            operator_policies = [
+                doc
+                for doc in docs
+                if doc.get("kind") == "NetworkPolicy"
+                and doc.get("metadata", {}).get("name", "") == "release-name-airflow-operator-policy"
+            ]
+            assert operator_policies == []
+
+    def test_airflow_operator_networkpolicy_ingress_rules(self, kube_version):
+        """The operator NetworkPolicy exposes the webhook port and allows prometheus to scrape the manager."""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "networkPolicy": {"enabled": True},
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-networkpolicy.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["spec"]["policyTypes"] == ["Ingress"]
+        assert doc["spec"]["podSelector"]["matchLabels"] == {
+            "tier": "operator",
+            "component": "controller-manager",
+            "release": "release-name",
+        }
+
+        ingress = doc["spec"]["ingress"]
+        assert len(ingress) == 2
+
+        # First rule: webhook port open to any source (no "from" restriction).
+        webhook_rule = ingress[0]
+        assert "from" not in webhook_rule
+        assert webhook_rule["ports"] == [{"protocol": "TCP", "port": 9443}]
+
+        # Second rule: prometheus may scrape the manager upstream metrics port.
+        prometheus_rule = ingress[1]
+        assert prometheus_rule["ports"] == [{"protocol": "TCP", "port": 8080}]
+        assert prometheus_rule["from"] == [
+            {
+                "podSelector": {
+                    "matchLabels": {
+                        "tier": "monitoring",
+                        "component": "prometheus",
+                        "release": "release-name",
+                    }
+                }
+            }
+        ]
 
     def test_operator_resource_names_within_dns_limits(self, kube_version):
         """Operator resource names must stay within k8s name limits with a long release name.
