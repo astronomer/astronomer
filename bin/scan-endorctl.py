@@ -117,7 +117,38 @@ def load_ignored_cves(path: Path | None) -> set[str]:
     return cves
 
 
+def _vuln_spec(finding: dict) -> dict:
+    return finding.get("spec", {}).get("finding_metadata", {}).get("vulnerability", {}).get("spec", {})
+
+
+def get_aliases(finding: dict) -> list[str]:
+    """All IDs this finding is known by (GHSA, CVE, GO-…), from the vuln aliases."""
+    return _vuln_spec(finding).get("aliases", [])
+
+
+def is_vulnerability(finding: dict) -> bool:
+    """True iff this is a CVE/GHSA vulnerability finding.
+
+    A container scan also emits operational/license/policy findings (bad license,
+    archived repo, low activity score) that carry no CVE and have a package URL or
+    raw UUID as their ``extra_key``. Those are out of scope for this vulnerability
+    gate, so filter to findings tagged FINDING_CATEGORY_VULNERABILITY.
+    """
+    return "FINDING_CATEGORY_VULNERABILITY" in finding.get("spec", {}).get("finding_categories", [])
+
+
 def get_vuln_id(finding: dict) -> str:
+    """Human-facing ID for the finding, preferring the CVE when one exists.
+
+    Endor keys container findings by their OSV primary ID, which is usually the
+    GHSA (e.g. GHSA-jppx-rxg9-jmrx) and lands in ``spec.extra_key``. The CVE, if
+    assigned, is one of the aliases in the vulnerability metadata. Prefer the CVE
+    so the report is keyed by the ID people search for, and fall back to the raw
+    key (GHSA) when no CVE has been assigned.
+    """
+    cve = next((a for a in get_aliases(finding) if a.startswith("CVE-")), None)
+    if cve:
+        return cve
     return finding.get("spec", {}).get("extra_key", "") or finding.get("meta", {}).get("name", "unknown")
 
 
@@ -246,14 +277,16 @@ def scan_image(image: str, ignored_cves: set[str], severity: str) -> dict[str, l
     if web_url:
         print(f"Full results: {web_url}")
 
-    findings = data.get("all_findings", [])
+    findings = [f for f in data.get("all_findings", []) if is_vulnerability(f)]
     at_severity = [f for f in findings if severity_at_or_above(f, severity)]
 
     actionable: list[dict] = []
     ignored: list[dict] = []
     no_fix: list[dict] = []
     for f in at_severity:
-        if get_vuln_id(f) in ignored_cves:
+        # Match against every alias (GHSA, CVE, GO-…) so a dev can ignore by
+        # whichever ID they have on hand, not only the one shown in the report.
+        if ignored_cves.intersection(get_aliases(f)) or get_vuln_id(f) in ignored_cves:
             ignored.append(f)
         elif not has_fix_version(f):
             no_fix.append(f)
