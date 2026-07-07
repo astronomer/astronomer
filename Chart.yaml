@@ -81,7 +81,12 @@ dependencies:
 
   # Airflow Operator
   - name: airflow-operator
-    condition: global.airflowOperator.enabled
+    # First-found path wins: `airflow-operator.enabled`, if set, decides whether this subchart
+    # installs; if unset, `global.airflowOperator.enabled` decides instead. Set
+    # `airflow-operator.enabled: false` to skip installing the operator subchart on a data plane
+    # whose cluster already runs a standalone Astro Runtime Operator, while keeping
+    # `global.airflowOperator.enabled: true` so Houston/Commander stay operator-aware.
+    condition: airflow-operator.enabled,global.airflowOperator.enabled
     tags:
       - airflow-operator
 

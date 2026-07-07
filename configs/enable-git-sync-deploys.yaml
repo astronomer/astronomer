@@ -1,0 +1,45 @@
+# Enables the ability to create git-sync deployments. This config is
+# compatible with 2.x
+---
+astronomer:
+  # images:
+  #   houston:
+  #     tag: danielhoherd_PINF-427-fr11-houston-api
+  #     pullPolicy: Always
+  #     repository: quay.io/astronomer/ap-houston-api
+  # airflowChartVersion: 1.18.0-build43027
+  houston:
+    config:
+      deployments:
+        deployMechanisms:
+          # Enable dag deployment features
+          configureDagDeployment:
+            enabled: true
+
+          # Enable the git-sync dag deployment feature
+          gitSyncDagDeployment:
+            enabled: true
+        helm:
+          gitSyncRelay:
+            metrics:
+              enabled: true
+
+global:
+  helmRepo: https://internal-helm.astronomer.io
+#   gitSyncRelay:
+#     images:
+#       gitSync:
+#         tag: danielhoherd_PINF-426-fr11-git-sync-relay
+#         pullPolicy: Always
+#         repository: quay.io/astronomer/ap-git-sync-relay
+#       gitDaemon:
+#         tag: 2026.6.23
+#         pullPolicy: Always
+#         repository: quay.io/astronomer/ap-git-daemon
+#   airflow:
+#     images:
+#       gitSync:
+#         # OSS airflow component's git-sync sidecar
+#         repository: quay.io/astronomer/ap-git-sync
+#         tag: 2026.6.23
+#         pullPolicy: Always
