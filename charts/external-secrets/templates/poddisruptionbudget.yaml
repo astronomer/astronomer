@@ -2,7 +2,7 @@
 ##########################
 ## external-secrets PDB ##
 ##########################
-{{- if and (eq .Values.global.plane.mode "data") .Values.podDisruptionBudget.enabled }}
+{{- if and (include "external-secrets.enabled" .) .Values.podDisruptionBudget.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
