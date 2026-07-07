@@ -28,6 +28,7 @@ The blow list is not 100% accurate after the hard fork. Effort has been put into
 | commonLabels                         | object | `{}`                         | Additional labels added to all helm chart resources.                         |
 | concurrent                         | int    | `1`                         | Specifies the number of concurrent ExternalSecret Reconciles external-secret executes at a time.                         |
 | controllerClass                         | string | `""`                         | If set external secrets will filter matching Secret Stores with the appropriate controller values.                         |
+| crd.create                         | bool   | `true`                         | Specifies whether the external-secrets CRDs are installed with the chart.                         |
 | crds.annotations                         | object | `{}`                         |                         |
 | crds.conversion.enabled                         | bool   | `false`                         | Conversion is disabled by default as we stopped supporting v1alpha1.                         |
 | deploymentAnnotations                         | object | `{}`                         | Annotations to add to Deployment                         |
@@ -89,7 +90,7 @@ The blow list is not 100% accurate after the hard fork. Effort has been put into
 | nameOverride                         | string | `""`                         |                         |
 | namespaceOverride                         | string | `""`                         |                         |
 | nodeSelector                         | object | `{}`                         |                         |
-| openshiftFinalizers                         | bool   | `true`                         | If true the OpenShift finalizer permissions will be added to RBAC                         |
+| openshiftFinalizers                         | bool   | `false`                         | If true the OpenShift finalizer permissions will be added to RBAC                         |
 | podAnnotations                         | object | `{}`                         | Annotations to add to Pod                         |
 | podDisruptionBudget                         | object | `{"enabled":false,"minAvailable":1,"nameOverride":""}`                         | Pod disruption budget - for more details see https://kubernetes.io/docs/concepts/workloads/pods/disruptions/                         |
 | podLabels                         | object | `{}`                         |                         |
@@ -105,7 +106,7 @@ The blow list is not 100% accurate after the hard fork. Effort has been put into
 | rbac.aggregateToEdit                         | bool   | `true`                         | Specifies whether permissions are aggregated to the edit ClusterRole                         |
 | rbac.aggregateToView                         | bool   | `true`                         | Specifies whether permissions are aggregated to the view ClusterRole                         |
 | rbac.create                         | bool   | `true`                         | Specifies whether role and rolebinding resources should be created.                         |
-| rbac.servicebindings.create                         | bool   | `true`                         | Specifies whether a clusterrole to give servicebindings read access should be created.                         |
+| rbac.servicebindings.create                         | bool   | `false`                         | Specifies whether a clusterrole to give servicebindings read access should be created.                         |
 | readinessProbe.enabled                         | bool   | `false`                         | Determines whether the readiness probe is enabled. Disabled by default. Enabling this will auto-start the health server (--live-addr) even if livenessProbe is disabled. Health server address/port are configured via livenessProbe.spec.address and livenessProbe.spec.port.                         |
 | readinessProbe.spec                         | object | `{"failureThreshold":3,"httpGet":{"path":"/readyz","port":"live"},"initialDelaySeconds":10,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5}`                         | The body of the readiness probe settings (standard Kubernetes probe spec).                         |
 | readinessProbe.spec.failureThreshold                | int    | `3`                         | Number of consecutive probe failures that should occur before considering the probe as failed.                         |
@@ -131,7 +132,7 @@ The blow list is not 100% accurate after the hard fork. Effort has been put into
 | service.ipFamilies                         | list   | `[]`                         | Sets the families that should be supported and the order in which they should be applied to ClusterIP as well. Can be IPv4 and/or IPv6.                         |
 | service.ipFamilyPolicy                         | string | `""`                         | Set the ip family policy to configure dual-stack see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)                         |
 | serviceAccount.annotations                         | object | `{}`                         | Annotations to add to the service account.                         |
-| serviceAccount.automount                         | bool   | `true`                         | Automounts the service account token in all containers of the pod                         |
+| serviceAccount.automountServiceAccountToken                         | bool   | `true`                         | Automounts the service account token in all containers of the pod                         |
 | serviceAccount.create                         | bool   | `true`                         | Specifies whether a service account should be created.                         |
 | serviceAccount.extraLabels                         | object | `{}`                         | Extra Labels to add to the service account.                         |
 | serviceAccount.name                         | string | `""`                         | The name of the service account to use. If not set and create is true, a name is generated using the fullname template.                         |

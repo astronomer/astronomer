@@ -14,11 +14,17 @@ metadata:
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
   annotations:
-    {{- if .Values.global.authSidecar.enabled  }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
-    {{- else }}
+    # gRPC/HTTP-2 backend protocol for the CP->DP commander channel. NGINX-Ingress-specific;
+    # emitted unconditionally (including auth-sidecar / BYO mode).
+    # Non-NGINX BYO controllers (ALB, Istio, ...)
+    # ignore these harmlessly and must enable gRPC backend + HTTP/2 via their own mechanism.
     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
     nginx.ingress.kubernetes.io/enable-http2: "true"
+    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
@@ -34,10 +40,10 @@ spec:
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
-        - commander.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+        - commander.{{ include "commander.baseDomain" . }}
   {{- end }}
   rules:
-  - host: commander.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+  - host: commander.{{ include "commander.baseDomain" . }}
     http:
       paths:
         - path: /

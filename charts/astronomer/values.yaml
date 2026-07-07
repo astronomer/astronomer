@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.17.35
+airflowChartVersion: 1.18.1
 
 nodeSelector: {}
 affinity: {}
@@ -15,38 +15,48 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 2.0.19
+    tag: 2.1.3
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.1-7
+    tag: 3.1.1-8
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 2.0.26
+    tag: 2.1.1
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 2.0.11
+    tag: 2.0.12
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.12
+    tag: 2.0.13
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.56.0-1"
+    tag: "0.56.0-2"
     pullPolicy: IfNotPresent
 
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
+  runAsUser: 1000
 
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-podSecurityContext: {}
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 astroUI:
+  # ap-astro-ui runs as UID 101; override the chart-wide runAsUser default for this pod.
+  securityContext:
+    runAsUser: 101
   replicas: 2
   env: []
   # This only applies when replicas > 3
@@ -60,6 +70,7 @@ astroUI:
   #   memory: 128Mi
   readinessProbe: {}
   livenessProbe: {}
+  startupProbe: {}
   serviceAccount:
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
@@ -91,6 +102,7 @@ houston:
     # initialDelaySeconds: 30
     # periodSeconds: 10
     # failureThreshold: 10
+  startupProbe: {}
 
   # Houston can regenerate its certificate authority on each 'helm upgrade'
   # or leave it alone. If this is set to 'true', then all users are logged
@@ -122,6 +134,17 @@ houston:
   # If not specified, we use an auto-generated, self-signed certificate.
   jwtSigningKeySecretName: ~
   jwtSigningCertificateSecretName: ~
+
+  # Houston JWT (JWKS) signing keypair generation. Default true generates a
+  # self-signed keypair at install for single-CP mode. In HA mode
+  # (global.controlPlaneHA.enabled: true), this flag is overridden and generation
+  # is SKIPPED — Secrets must be pre-provisioned in the release namespace.
+  # Exception: set global.controlPlaneHA.bootstrapJwks: true on the FIRST CP
+  # install of a fresh HA cluster to generate the shared material once; copy the
+  # resulting Secrets to subsequent CPs before installing them.
+  jwks:
+    generation:
+      enabled: true
 
   serviceAccount:
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -171,6 +194,7 @@ houston:
     replicas: 2
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
     hostAliases: []
 
     # Dispatcher configuration for houston-worker
@@ -314,6 +338,8 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+    startupProbe: {}
+
   # Cleanup deployments that have been soft-deleted in Houston
   # This runs as a CronJob
   cleanupDeployments:
@@ -334,6 +360,7 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # Cleanup airflow db data
   # This runs as a CronJob
@@ -370,6 +397,7 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
@@ -403,6 +431,7 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # Cleanup cluster audits in Houston
   # This runs as a CronJob
@@ -417,6 +446,7 @@ houston:
     olderThan: 90
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
@@ -432,6 +462,7 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # Check for Astronomer Runtime Updates
   # This runs as a CronJob
@@ -447,6 +478,7 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # When true, Houston rejects deployment config overrides that fail JSON-schema validation.
   strictSchemaCheck:
@@ -483,6 +515,7 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   runtimeReleasesConfigMapName: ~
   runtimeReleasesConfig:
@@ -511,6 +544,12 @@ houston:
   dbMigration:
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
+
+  refreshCpChartVersion:
+    readinessProbe: {}
+    livenessProbe: {}
+    startupProbe: {}
 
   bootstrapper:
     readinessProbe: {}
@@ -523,6 +562,7 @@ houston:
   taskUsageMetrics:
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
 # -- DP-Link configuration for data plane linking
 dpLink:
@@ -619,6 +659,9 @@ dpLink:
   # -- Readiness probe configuration
   readinessProbe: {}
 
+  # -- Startup probe configuration
+  startupProbe: {}
+
   # -- Arguments to pass to the container
   args: ~
 
@@ -646,6 +689,7 @@ configSyncer:
     name: ""
   readinessProbe: {}
   livenessProbe: {}
+  startupProbe: {}
 
 flightDeck:
   # -- Enable the flightDeck feature
@@ -691,6 +735,10 @@ commander:
     #   port: {{ .Values.ports.commanderHTTP }}
     # initialDelaySeconds: 10
     # periodSeconds: 10
+  startupProbe: {}
+  # Auth sidecar (nginx) probe overrides
+  authProxy:
+    startupProbe: {}
   podAnnotations: {}
 
   # Add custom annotation for commander ingress
@@ -768,6 +816,9 @@ pilot:
 
   # -- Readiness probe configuration
   readinessProbe: {}
+
+  # -- Startup probe configuration
+  startupProbe: {}
 
   # -- Extra environment variables
   env: []
@@ -894,6 +945,9 @@ navigator:
   # -- Custom readiness probe configuration (overrides default)
   readinessProbe: {}
 
+  # -- Custom startup probe configuration (overrides default)
+  startupProbe: {}
+
   # Failover request reconcile loop knobs
   # -- Interval in seconds between failover request reconciler runs
   # @default -- 10
@@ -978,11 +1032,14 @@ registry:
     # initialDelaySeconds: 10
     # periodSeconds: 10
     # timeoutSeconds: 5
+  startupProbe: {}
 
   podSecurityContext:
     fsGroup: 1000
     runAsGroup: 1000
     runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
   extraEnv: []
 
   serviceAccount:

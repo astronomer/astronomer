@@ -1,4 +1,7 @@
+---
 exclude: '(venv|\.vscode|tests/k8s_schema|tests/chart_tests/test_data)' # regex
+auto_update:
+  cooldown_days: 7
 repos:
   - repo: local
     hooks:
@@ -50,7 +53,7 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.7"
+    rev: "v0.15.19"
     hooks:
       - id: ruff-check
         args:
@@ -72,7 +75,7 @@ repos:
         exclude: 'charts|templates\/.*\.yaml'
       - id: debug-statements
       - id: detect-private-key
-        exclude: 'charts/external-secrets/templates/crd-(cluster)?secretstores.external-secrets.io.yaml'
+        exclude: 'charts/external-secrets/templates/crds/crd-(cluster)?secretstores.external-secrets.io.yaml'
       - id: end-of-file-fixer
       - id: file-contents-sorter
         args:

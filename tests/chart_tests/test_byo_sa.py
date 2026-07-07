@@ -2,35 +2,13 @@ import pytest
 from deepmerge import always_merger
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_all_features, get_service_account_name_from_doc
+from tests.utils import (
+    find_all_pod_manager_templates,
+    get_all_features,
+    get_service_account_name_from_doc,
+    pod_managers,
+)
 from tests.utils.chart import render_chart
-
-
-def find_all_pod_manager_templates() -> list[str]:
-    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir."""
-
-    false_positive_filenames = [
-        "charts/nats/templates/jetstream-job-scc.yaml",  # Not a job, but the scc for the job
-    ]
-
-    return sorted(
-        {
-            str(x.relative_to(git_root_dir))
-            for x in (git_root_dir / "charts").rglob("*")
-            if any(substr in x.name for substr in ("deployment", "statefulset", "replicaset", "daemonset", "job"))
-            and x.is_file()
-            and str(x.relative_to(git_root_dir)) not in false_positive_filenames
-        }
-    )
-
-
-pod_managers = [
-    "CronJob",
-    "DaemonSet",
-    "Deployment",
-    "Job",
-    "StatefulSet",
-]
 
 
 @pytest.mark.parametrize(
@@ -351,13 +329,10 @@ def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
     default_serviceaccount_names_overrides = {
-        "global": {"rbac": {"enabled": False}},
+        "global": {"rbac": {"enabled": False}, "networkNSLabels": {"enabled": True}},
         "postgresql": {"serviceAccount": {"enabled": True}},
     }
-    if any(
-        substring in template_name
-        for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")
-    ):
+    if any(substring in template_name for substring in data_plane_only_template_substrings):
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
@@ -384,6 +359,9 @@ custom_service_account_names = {
     "charts/astronomer/templates/commander/commander-deployment.yaml": {
         "astronomer": {"commander": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
+    "charts/astronomer/templates/commander/jwks-hooks/commander-jwks-hooks.yaml": {
+        "astronomer": {"commander": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
     "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml": {
         "astronomer": {"configSyncer": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
@@ -397,6 +375,15 @@ custom_service_account_names = {
         "astronomer": {"pilot": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-check-runtime-updates.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-populate-daily-task-metrics.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-ta-metrics.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml": {
@@ -424,6 +411,9 @@ custom_service_account_names = {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/helm-hooks/houston-cp-refresh-job.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml": {
@@ -496,6 +486,22 @@ custom_service_account_names = {
     },
 }
 
+# Pod manager templates whose service account name is fixed (not a configurable
+# serviceAccount.name), so the custom-name test does not apply to them.
+templates_without_custom_service_account = {
+    # The namespace labeller job always uses "<release>-labeller"; it is not a BYO-SA component.
+    "charts/astronomer/templates/add-labels-to-namespace.yaml",
+}
+
+# Templates that only render in the data plane; render them with plane.mode=data.
+data_plane_only_template_substrings = (
+    "nginx-dp-deployment",
+    "prometheus-federation-auth-deployment",
+    "pilot-deployment",
+    "external-secrets",
+    "commander-jwks-hooks",
+)
+
 
 @pytest.mark.parametrize(
     "template_name",
@@ -504,12 +510,25 @@ custom_service_account_names = {
 def test_custom_serviceaccount_names(template_name):
     """Test that custom service account names are rendered correctly."""
 
+    if template_name in templates_without_custom_service_account:
+        pytest.skip(f"{template_name} uses a fixed service account name and is not BYO-SA configurable")
+
+    # This test is parametrized over find_all_pod_manager_templates(), which discovers every pod
+    # manager template by content. Each such template must be classified exactly once: either it
+    # supports a configurable serviceAccount.name (an entry in custom_service_account_names giving
+    # the values that set it to "prothean"), or its SA name is fixed (listed in
+    # templates_without_custom_service_account and skipped above). When a new pod manager template
+    # is added to a chart it shows up here automatically, so this guard fails loudly to force that
+    # classification instead of dying with a bare KeyError on the dict lookup below.
+    assert template_name in custom_service_account_names, (
+        f"{template_name} is a pod manager but is not classified for the BYO-SA test. Add it to "
+        f"custom_service_account_names with the values that set its serviceAccount.name to 'prothean', "
+        f"or, if its service account name is fixed, add it to templates_without_custom_service_account."
+    )
+
     values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
-    if any(
-        substring in template_name
-        for substring in ("nginx-dp-deployment", "prometheus-federation-auth-deployment", "pilot-deployment", "external-secrets")
-    ):
+    if any(substring in template_name for substring in data_plane_only_template_substrings):
         plane_config = {"global": {"plane": {"mode": "data"}}}
         values = always_merger.merge(values, plane_config)
     values = always_merger.merge(values, enable_pgsql_sa)

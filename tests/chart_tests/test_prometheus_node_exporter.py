@@ -85,6 +85,8 @@ class TestPrometheusNodeExporterDaemonset:
             "requests": {"cpu": "666m", "memory": "888Mi"},
         }
         assert c_by_name["node-exporter"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
             "runAsUser": 65534,
@@ -110,6 +112,7 @@ class TestPrometheusNodeExporterDaemonset:
         assert c_by_name["node-exporter"]
         assert c_by_name["node-exporter"]["securityContext"] == {
             "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
             "runAsUser": 65534,
