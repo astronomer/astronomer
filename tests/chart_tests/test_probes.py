@@ -7,6 +7,10 @@ from tests.utils.chart import render_chart
 
 include_kind_list = ["Deployment", "DaemonSet", "StatefulSet", "ReplicaSet", "CronJob", "Job"]
 
+# external-secrets is a hard fork of the upstream chart and does not define a
+# startupProbe on its operator container; exclude it from the cross-cutting guard.
+startup_probe_excluded_components = {"external-secrets"}
+
 customize_all_probes = yaml.safe_load(
     ((git_root_dir) / "tests" / "chart_tests" / "test_data" / "enable_all_probes.yaml").read_text()
 )
@@ -46,6 +50,7 @@ class TestStartupProbes:
         f"{doc['kind']}_{doc['metadata']['name']}_{name}": container
         for doc in docs
         if doc["kind"] in include_kind_list
+        and doc.get("metadata", {}).get("labels", {}).get("component") not in startup_probe_excluded_components
         for name, container in get_containers_by_name(doc).items()
     }
 
