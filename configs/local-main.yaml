@@ -1,9 +1,16 @@
 ############################
 ## Astronomer configuration
-## Used by bin/setup-cp-dp-k3d.py for --version main (installs from the local checkout).
+## Used by bin/setup-cp-dp-k3d.py for --version main (installs from the local checkout, which
+## currently tracks the same schema as the 2.x chart family — see configs/local-2x.yaml, kept
+## identical to this file below the header on purpose).
 ## Deliberately separate from configs/local-dev.yaml, which is also used by the unrelated
 ## KinD-based bin/reset-local-dev workflow (see docs/local-development.md) — changes here
 ## can't accidentally affect that path.
+## global.postgresql.enabled and tags.postgresql are set per CP/DP by the script itself, not
+## here, since CP needs postgres on and DP needs it off. global.baseDomain, global.tlsSecret,
+## global.plane.{mode,domainPrefix}, and global.privateCaCerts are also supplied per-invocation
+## by the script (bin/setup-cp-dp-k3d.py's _cp_values_yaml/_dp_values_yaml) at higher precedence
+## than this file, so they're intentionally not set here either.
 ############################
 
 tags:
@@ -11,52 +18,24 @@ tags:
 
 global:
   helmRepo: "https://internal-helm.astronomer.io"
-  # Base domain for all subdomains exposed through ingress
-  baseDomain: localtest.me
-  # Mode of the plane, can be 'data', 'unified' or 'local'
-  plane:
-    domainPrefix: "local"
-
-  # Name of secret containing TLS certificate
-  tlsSecret: astronomer-tls
-  postgresql:
+  deploymentLifecycle:
+    deployRollback:
+      enabled: true
+  metricsReporting:
+    taskUsageMetrics:
+      enabled: true
+  daemonsetLogging:
     enabled: true
-  nats:
-    replicas: 1
-    enabled: true
-  stan:
-    replicas: 1
-    enabled: true
-  ssl:
-    enabled: false
-  # Custom CA TLS certificates
-  # Each secret must have one data entry 'cert.pem'
-  privateCaCerts:
-  - private-ca
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true
-
-nats:
-  cluster:
+  nats:
+    enabled: true
+    replicas: 1
+  networkPolicy:
     enabled: false
-    replicas: 1
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "64Mi"
+  defaultDenyNetworkPolicy: false
 
-stan:
-  stan:
-    replicas: 1
-  store:
-    cluster:
-      enabled: false
-  resources: {}
-
-############################
-## Astronomer configuration
-############################
 astronomer:
   astroUI:
     replicas: 1
@@ -64,9 +43,10 @@ astronomer:
     replicas: 1
     worker:
       replicas: 1
-
     config:
       emailConfirmation:
+        enabled: false
+      publicSignups:
         enabled: false
       auth:
         local:
@@ -91,24 +71,19 @@ astronomer:
     replicas: 1
   registry: {}
 
-#################################
-## Nginx configuration
-#################################
 nginx:
   replicas: 1
   replicasDefaultBackend: 1
-  # Configure resources
+
+nats:
+  cluster:
+    enabled: false
+    replicas: 1
   resources:
     requests:
-      cpu: "500m"
-      memory: "1024Mi"
-    limits:
-      cpu: "1"
-      memory: "2048Mi"
+      cpu: "50m"
+      memory: "64Mi"
 
-#################################
-## Prometheus configuration
-#################################
 prometheus:
   # Chart default (values.yaml prometheus.resources) is 4Gi/8Gi requests/limits — way more than a
   # single-node local dev setup needs.
@@ -130,9 +105,6 @@ prometheus:
         cpu: "100m"
         memory: "250Mi"
 
-#################################
-## Elasticsearch configuration
-#################################
 elasticsearch:
   common:
     env:

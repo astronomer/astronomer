@@ -401,6 +401,9 @@ global:
   tlsSecret: {settings.tls_secret_name}
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
+  networkPolicy:
+    enabled: false
+  defaultDenyNetworkPolicy: false
 {operator_block}
 
 tags:
