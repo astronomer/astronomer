@@ -44,13 +44,21 @@ astronomer:
         local:
           enabled: true
       deployments:
+        logHelmValues:
+          enabled: true
         deployMechanisms:
+          dagOnlyDeployment:
+            enabled: true
+          gitSyncDagDeployment:
+            enabled: true
           configureDagDeployment:
             enabled: true
         runtimeManagement:
           airflowV3:
             enabled: true
             minimumAstroRuntimeVersion: "3.1-2"
+          listAllRuntimeVersions:
+            enabled: true
   commander:
     replicas: 1
   registry: {}

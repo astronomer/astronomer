@@ -411,6 +411,7 @@ astronomer:
       cors:
         allowedOrigins:
           - "https://app.{settings.base_domain}"
+          - "https://dev.{settings.base_domain}:5000"
 
 postgresql:
   postgresqlUsername: postgres

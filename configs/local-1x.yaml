@@ -38,7 +38,13 @@ astronomer:
       deployments:
         configureDagDeployment: true
         hardDeleteDeployment: true
-        airflowV3: true
+        airflowV3:
+          enabled: true
+          minimumAstroRuntimeVersion: "3.1-2"
+        logHelmValues: true
+        dagOnlyDeployment: true
+        gitSyncDagDeployment: true
+        enableListAllRuntimeVersions: true
   commander:
     replicas: 1
   registry: {}
