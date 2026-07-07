@@ -290,38 +290,38 @@ _CSV_HEADERS = [
 ]
 
 
-def write_csv(csv_path: Path, rows_by_image: list[tuple[str, dict[str, list[dict]]]]) -> None:
-    """Write every at-severity finding across all images to a CSV artifact."""
+def build_finding_rows(rows_by_image: list[tuple[str, dict[str, list[dict]]]]) -> list[list[str]]:
+    """Flatten all at-severity findings into CSV rows, sorted by image then severity."""
+    ranked = []
+    for image, categorized in rows_by_image:
+        uri, tag = split_image(image)
+        for findings in categorized.values():
+            for f in findings:
+                severity = get_severity(f)
+                pkg, current, fix = get_package_info(f)
+                fixable = "Yes" if has_fix_version(f) else "No"
+                row = [uri, tag, get_vuln_id(f), severity, get_cvss(f), pkg, current, fix, fixable]
+                ranked.append((uri, _SEVERITY_ORDER.get(severity, 99), row))
+    ranked.sort(key=lambda r: (r[0], r[1]))
+    return [row for _, _, row in ranked]
+
+
+def write_csv(csv_path: Path, rows: list[list[str]]) -> None:
+    """Write the finding rows to a CSV artifact."""
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with csv_path.open("w", newline="") as fh:
         writer = csv.writer(fh)
         writer.writerow(_CSV_HEADERS)
-        rows = []
-        for image, categorized in rows_by_image:
-            uri, tag = split_image(image)
-            for findings in categorized.values():
-                for f in findings:
-                    severity = get_severity(f)
-                    pkg, current, fix = get_package_info(f)
-                    fixable = "Yes" if has_fix_version(f) else "No"
-                    rows.append(
-                        (
-                            uri,
-                            _SEVERITY_ORDER.get(severity, 99),
-                            tag,
-                            get_vuln_id(f),
-                            severity,
-                            get_cvss(f),
-                            pkg,
-                            current,
-                            fix,
-                            fixable,
-                        )
-                    )
-        rows.sort(key=lambda r: (r[0], r[1]))
-        for r in rows:
-            writer.writerow((r[0], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9]))
+        writer.writerows(rows)
     print(f"\nWrote findings CSV to {csv_path}")
+
+
+def print_findings_report(rows: list[list[str]]) -> None:
+    """Print the same sorted findings that go into the CSV to the console."""
+    print(f"\n{'=' * 100}")
+    print(f"All findings at or above threshold ({len(rows)} rows):")
+    if rows:
+        print(tabulate(rows, headers=_CSV_HEADERS, tablefmt="simple"))
 
 
 def collect_images(args: argparse.Namespace) -> list[str]:
@@ -422,8 +422,10 @@ def main() -> None:
     errored_images = [image for image in images if results_by_image[image] is None]
     results = [(image, results_by_image[image]) for image in images if results_by_image[image] is not None]
 
+    rows = build_finding_rows(results)
+    print_findings_report(rows)
     if args.csv is not None:
-        write_csv(args.csv, results)
+        write_csv(args.csv, rows)
 
     failed_images = [image for image, categorized in results if categorized["action_required"]]
 
