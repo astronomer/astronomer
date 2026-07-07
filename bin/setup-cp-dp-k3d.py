@@ -122,13 +122,17 @@ MAIN_DEV_ALIAS = "main"
 
 # `main` floats these first-party image tags to their unreleased branch tag instead of whatever
 # the locally checked-out chart pins by default. Houston's API and worker deployments share a
-# single `images.houston.tag` knob, so one override covers both. `ap-registry` / `ap-vector` are
-# vendored/upstream-tracking images with no "main" build, so they are left at chart defaults.
+# single `images.houston.tag` knob, so one override covers both (and so does the db-migrations
+# job, which runs off the same houston image). `ap-registry` / `ap-vector` are vendored/upstream-
+# tracking images with no "main" build, so they are left at chart defaults.
+#
+# NOTE: `charts/astronomer` is installed as a named subchart ("astronomer") of the root umbrella
+# chart, so overrides must be scoped under `astronomer.` — bare `images.houston.tag=...` sets an
+# unused top-level key on the umbrella chart and silently no-ops (verified via `helm template`).
 MAIN_DEV_IMAGE_SET: tuple[str, ...] = (
-    "images.houston.tag=main",
-    "images.astroUI.tag=main",
-    "images.dbBootstrapper.tag=main",
-    "images.commander.tag=master",
+    "astronomer.images.houston.tag=main",
+    "astronomer.images.astroUI.tag=main",
+    "astronomer.images.commander.tag=master",
 )
 
 # Friendly topology labels for the interactive picker, mapped to the actual `global.plane.mode`
