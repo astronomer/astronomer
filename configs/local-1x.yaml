@@ -6,6 +6,9 @@
 ## script itself, not here, since CP needs postgres on and DP needs it off.
 ############################
 
+tags:
+  platform: true
+
 global:
   helmRepo: "https://internal-helm.astronomer.io"
   deployRollbackEnabled: true

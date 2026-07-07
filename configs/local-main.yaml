@@ -1,11 +1,9 @@
 ############################
 ## Astronomer configuration
-## Version-specific overrides for the 2.x chart schema (release-2.0 / release-2.1)
-## used by bin/setup-cp-dp-k3d.py for --version 2.0.0 / 2.0.1 / 2.1. global.postgresql.enabled
-## and tags.postgresql are set per CP/DP by the script itself, not here, since CP needs postgres
-## on and DP needs it off.
-## NOTE: hardDeleteDeployment is intentionally absent here — PLX-575 made hard delete the
-## default and only behavior on 2.x, so there's no flag for it anymore.
+## Used by bin/setup-cp-dp-k3d.py for --version main (installs from the local checkout).
+## Deliberately separate from configs/local-dev.yaml, which is also used by the unrelated
+## KinD-based bin/reset-local-dev workflow (see docs/local-development.md) — changes here
+## can't accidentally affect that path.
 ############################
 
 tags:
@@ -13,24 +11,52 @@ tags:
 
 global:
   helmRepo: "https://internal-helm.astronomer.io"
-  deploymentLifecycle:
-    deployRollback:
-      enabled: true
-  metricsReporting:
-    taskUsageMetrics:
-      enabled: true
-  daemonsetLogging:
+  # Base domain for all subdomains exposed through ingress
+  baseDomain: localtest.me
+  # Mode of the plane, can be 'data', 'unified' or 'local'
+  plane:
+    domainPrefix: "local"
+
+  # Name of secret containing TLS certificate
+  tlsSecret: astronomer-tls
+  postgresql:
     enabled: true
+  nats:
+    replicas: 1
+    enabled: true
+  stan:
+    replicas: 1
+    enabled: true
+  ssl:
+    enabled: false
+  # Custom CA TLS certificates
+  # Each secret must have one data entry 'cert.pem'
+  privateCaCerts:
+  - private-ca
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true
-  nats:
-    enabled: true
-    replicas: 1
-  networkPolicy:
-    enabled: false
-  defaultDenyNetworkPolicy: false
 
+nats:
+  cluster:
+    enabled: false
+    replicas: 1
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+
+stan:
+  stan:
+    replicas: 1
+  store:
+    cluster:
+      enabled: false
+  resources: {}
+
+############################
+## Astronomer configuration
+############################
 astronomer:
   astroUI:
     replicas: 1
@@ -38,10 +64,9 @@ astronomer:
     replicas: 1
     worker:
       replicas: 1
+
     config:
       emailConfirmation:
-        enabled: false
-      publicSignups:
         enabled: false
       auth:
         local:
@@ -66,19 +91,24 @@ astronomer:
     replicas: 1
   registry: {}
 
+#################################
+## Nginx configuration
+#################################
 nginx:
   replicas: 1
   replicasDefaultBackend: 1
-
-nats:
-  cluster:
-    enabled: false
-    replicas: 1
+  # Configure resources
   resources:
     requests:
-      cpu: "50m"
-      memory: "64Mi"
+      cpu: "500m"
+      memory: "1024Mi"
+    limits:
+      cpu: "1"
+      memory: "2048Mi"
 
+#################################
+## Elasticsearch configuration
+#################################
 elasticsearch:
   common:
     env:

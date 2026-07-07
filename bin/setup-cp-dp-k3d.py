@@ -349,18 +349,20 @@ def _version_specific_values_file(chart_version: str | None) -> Path:
     """
     Pick the plain, hand-written values file with the `global.*` + `houston.config.deployments.*`
     overrides for this chart version's schema (see configs/local-1x.yaml, configs/local-2x.yaml,
-    configs/local-dev.yaml — 1.x and 2.x renamed a bunch of these keys, see
+    configs/local-main.yaml — 1.x and 2.x renamed a bunch of these keys, see
     bin/helm_chart_values_migration_shared.py for the full rename list).
 
     `chart_version=None` means installing from the local checkout (the `main` alias) — that's
-    exactly what configs/local-dev.yaml is for. 0.37.x (major version 0) shares 1.x's shape for
-    everything these files set, so it reuses configs/local-1x.yaml too; it isn't actually
-    installed through this code path in normal use (`--version 0.37` delegates the whole run to
-    bin/setup-037x-k3d.py — see DELEGATE_037_ALIAS), this only matters if `--chart-version` is
-    used to force a 0.37.x chart version directly.
+    exactly what configs/local-main.yaml is for. Deliberately not configs/local-dev.yaml: that
+    file is also used by the unrelated KinD-based bin/reset-local-dev workflow, so sharing it here
+    would mean a change made for one workflow could silently affect the other. 0.37.x (major
+    version 0) shares 1.x's shape for everything these files set, so it reuses configs/local-1x.yaml
+    too; it isn't actually installed through this code path in normal use (`--version 0.37`
+    delegates the whole run to bin/setup-037x-k3d.py — see DELEGATE_037_ALIAS), this only matters
+    if `--chart-version` is used to force a 0.37.x chart version directly.
     """
     if chart_version is None:
-        return GIT_ROOT_DIR / "configs" / "local-dev.yaml"
+        return GIT_ROOT_DIR / "configs" / "local-main.yaml"
     major = chart_version.split(".", 1)[0]
     try:
         major_num = int(major)
@@ -468,10 +470,21 @@ global:
   tlsSecret: {settings.tls_secret_name}
   privateCaCerts:
     - {settings.mkcert_root_ca_secret_name}
+  nats:
+    enabled: true
+    replicas: 1
+  networkPolicy:
+    enabled: false
+  defaultDenyNetworkPolicy: false
+  daemonsetLogging:
+    enabled: true
+  nginx:
+    enabled: true
+  prometheus:
+    enabled: true
 {global_operator_block}
 tags:
   platform: true
-  postgresql: false
 
 {operator_subchart_block}"""
 
