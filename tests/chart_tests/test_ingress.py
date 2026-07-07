@@ -219,7 +219,7 @@ class TestIngress:
                 "global": {
                     "baseDomain": "example.com",
                     "tlsSecret": "my-tls-secret",
-                    "perHostIngress": {"enabled": True},
+                    "enablePerHostIngress": True,
                 },
             },
             show_only=["charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml"],
@@ -249,7 +249,7 @@ class TestIngress:
                 "global": {
                     "baseDomain": "example.com",
                     "tlsSecret": "",
-                    "perHostIngress": {"enabled": True},
+                    "enablePerHostIngress": True,
                 },
             },
             show_only=["charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml"],
@@ -267,7 +267,7 @@ class TestIngress:
                 "global": {
                     "baseDomain": "example.com",
                     "tlsSecret": "my-tls-secret",
-                    "perHostIngress": {"enabled": True},
+                    "enablePerHostIngress": True,
                 },
             },
             show_only=["charts/astronomer/templates/registry/registry-ingress.yaml"],
@@ -288,7 +288,7 @@ class TestIngress:
                 "global": {
                     "baseDomain": "example.com",
                     "tlsSecret": "",
-                    "perHostIngress": {"enabled": True},
+                    "enablePerHostIngress": True,
                 },
             },
             show_only=["charts/astronomer/templates/registry/registry-ingress.yaml"],
