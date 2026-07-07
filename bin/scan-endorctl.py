@@ -180,6 +180,29 @@ def split_image(image: str) -> tuple[str, str]:
 _SEVERITY_ORDER = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
 _SEVERITY_CHOICES = ["critical", "high", "medium", "low"]
 
+# ANSI colors for console output (CircleCI renders these natively). The CSV is
+# written separately, so it stays free of escape codes.
+_RESET = "\033[0m"
+_RED = "\033[31m"
+_YELLOW = "\033[33m"
+_GREEN = "\033[32m"
+_SEVERITY_COLOR = {"Critical": _RED, "High": _YELLOW}
+
+
+def _color(text: str, code: str) -> str:
+    return f"{code}{text}{_RESET}"
+
+
+def _colorize_severity_column(rendered: str) -> str:
+    """Recolor severity words in an already-rendered tabulate string.
+
+    Coloring after layout keeps escape codes out of tabulate's width math, so
+    columns stay aligned.
+    """
+    for sev, code in _SEVERITY_COLOR.items():
+        rendered = re.sub(rf"\b{sev}\b", _color(sev, code), rendered)
+    return rendered
+
 
 def severity_at_or_above(finding: dict, threshold: str) -> bool:
     """True iff finding's severity is at or above the threshold."""
@@ -321,7 +344,7 @@ def print_findings_report(rows: list[list[str]]) -> None:
     print(f"\n{'=' * 100}")
     print(f"All findings at or above threshold ({len(rows)} rows):")
     if rows:
-        print(tabulate(rows, headers=_CSV_HEADERS, tablefmt="simple"))
+        print(_colorize_severity_column(tabulate(rows, headers=_CSV_HEADERS, tablefmt="simple")))
 
 
 def collect_images(args: argparse.Namespace) -> list[str]:
@@ -431,18 +454,18 @@ def main() -> None:
 
     print(f"\n{'=' * 100}")
     if errored_images:
-        print(f"ERRORED: {len(errored_images)} of {len(images)} image(s) could not be scanned:")
+        print(_color(f"ERRORED: {len(errored_images)} of {len(images)} image(s) could not be scanned:", _RED))
         for image in errored_images:
             print(f"  - {image}")
     if failed_images:
-        print(f"FAILED: {len(failed_images)} of {len(images)} image(s) have actionable vulnerabilities:")
+        print(_color(f"FAILED: {len(failed_images)} of {len(images)} image(s) have actionable vulnerabilities:", _RED))
         for image in failed_images:
             print(f"  - {image}")
     if errored_images:
         sys.exit(2)
     if failed_images:
         sys.exit(1)
-    print(f"PASSED: all {len(images)} image(s) clear of actionable vulnerabilities.")
+    print(_color(f"PASSED: all {len(images)} image(s) clear of actionable vulnerabilities.", _GREEN))
     sys.exit(0)
 
 

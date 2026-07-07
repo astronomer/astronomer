@@ -498,10 +498,18 @@ workflows:
             - approve-internal-release
             - scenario-unified-1-31-14
             - scenario-unified-1-35-1
+      - approve-endorctl-scan:
+          type: approval
+      - endorctl-scan-docker:
+          context:
+            - apc-endorlabs
+          requires:
+            - approve-endorctl-scan
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
+            - endorctl-scan-docker
             - scenario-unified-1-32-11
             - scenario-unified-1-33-7
             - scenario-unified-1-34-3
