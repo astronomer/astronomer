@@ -1,0 +1,50 @@
+{{- if .Values.global.istioEnabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+---
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-astro-ui-virtualservice
+  namespace: {{ .Release.Namespace }}
+  labels:
+    component: istio-virtualservice
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  hosts:
+  - "{{ .Values.global.baseDomain }}"
+  - "app.{{ .Values.global.baseDomain }}"
+  gateways:
+  - {{ .Values.global.istio.gateway }}
+  http:
+  # Redirect base domain to app subdomain
+  - match:
+    - uri:
+        prefix: "/"
+      authority:
+        exact: "{{ .Values.global.baseDomain }}"
+    redirect:
+      authority: "app.{{ .Values.global.baseDomain }}"
+      redirectCode: 301
+  # Astro UI routes
+  - match:
+    - uri:
+        prefix: "/"
+      authority:
+        exact: "app.{{ .Values.global.baseDomain }}"
+    route:
+    - destination:
+        host: {{ .Release.Name }}-astro-ui.{{ .Release.Namespace }}.svc.cluster.local
+        port:
+          number: {{ .Values.ports.astroUIHTTP }}
+    {{- if .Values.global.istio.virtualService.timeout }}
+    timeout: {{ .Values.global.istio.virtualService.timeout }}
+    {{- end }}
+    {{- if .Values.global.istio.virtualService.retries }}
+    retries:
+      {{- toYaml .Values.global.istio.virtualService.retries | nindent 6 }}
+    {{- end }}
+{{- end }}
+{{- end }}

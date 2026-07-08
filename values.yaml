@@ -86,10 +86,28 @@ global:
   # Use cluster roles
   clusterRoles: true
 
-  # Enables necessary components for compatibility with Istio Service Mesh
+  # Enable/disable nginx ingress controller
+  nginxEnabled: true
+
+  # Enable Istio VirtualService for ingress (requires Istio Gateway to be pre-configured)
+  # When enabled, creates VirtualService resources to route traffic through existing Istio Gateway
+  istioEnabled: false
+
+  # Istio configuration
   istio:
-    enabled: false
-    rootNamespace: "istio-config"
+    # Reference to existing Istio Gateway in format: "namespace/gateway-name"
+    # Example: "istio-system/default-gateway"
+    gateway: "istio-system/default-gateway"
+
+    # VirtualService configuration
+    virtualService:
+      # Request timeout for all routes
+      timeout: 600s
+      # Retry policy
+      retries:
+        attempts: 3
+        perTryTimeout: 30s
+        retryOn: "5xx,connect-failure,refused-stream"
 
   # Enable default postgresql database.
   # This is not recommended for production.
