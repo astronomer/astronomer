@@ -2,7 +2,6 @@
 ## NGINX Control Plane RoleBinding/ClusterRoleBinding ##
 ########################################################
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-{{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbac.enabled }}
 kind: ClusterRoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
