@@ -57,6 +57,11 @@ spec:
     - podSelector:
         matchLabels:
           tier: astronomer
+          component: houston-cp-refresh
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
           component: houston
           release: {{ .Release.Name }}
     - podSelector:
