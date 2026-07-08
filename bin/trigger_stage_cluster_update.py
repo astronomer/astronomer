@@ -50,7 +50,7 @@ def get_job_state(circleci_token: str, pipeline_id: str):
     return resp
 
 
-def wait_for_pipeline_completion(circleci_token: str, pipeline_id: str, wait_time_min: int = 120, check_interval_sec: int = 30):
+def wait_for_pipeline_completion(circleci_token: str, pipeline_id: str, wait_time_min: int = 120, check_interval_sec: int = 60):
     elapsed_time = 0
     while elapsed_time < wait_time_min * 60:
         job_state_resp = get_job_state(circleci_token=circleci_token, pipeline_id=pipeline_id)
@@ -62,6 +62,11 @@ def wait_for_pipeline_completion(circleci_token: str, pipeline_id: str, wait_tim
 
         if pipeline_state not in ["pending", "running"]:
             raise RuntimeError(f"ERROR: Pipeline failed with status: {pipeline_state}")
+
+        print(
+            f"INFO: Pipeline status is '{pipeline_state}'. Waited {elapsed_time // 60}m{elapsed_time % 60}s so far, checking again in {check_interval_sec}s.",
+            flush=True,
+        )
 
         time.sleep(check_interval_sec)
         elapsed_time += check_interval_sec
