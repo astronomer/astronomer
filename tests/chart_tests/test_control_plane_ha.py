@@ -255,3 +255,94 @@ class TestHoustonConfigHelmValues:
         helm = self.production_yaml_prod_helm(render_chart(kube_version=kube_version, show_only=[CONFIGMAP_FILE], values=values))
         assert helm["cookieDomain"] == ".example.com"
         assert helm["cookieName"] == "astronomer_custom_auth"
+
+
+DP_HEADERS_FILE = "charts/nginx/templates/dataplane/nginx-dp-headers-configmap.yaml"
+CP_HEADERS_FILE = "charts/nginx/templates/controlplane/nginx-cp-headers-configmap.yaml"
+
+
+def _csp_directives(doc):
+    """Parse a rendered CSP header into {directive: [sources...]}."""
+    out = {}
+    for part in doc["data"]["Content-Security-Policy"].split(";"):
+        toks = part.split()
+        if toks:
+            out[toks[0]] = toks[1:]
+    return out
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestNginxCspGlobalDomain:
+    """PINF-974: when controlPlaneHA is enabled, customer/deployment UIs are also served on
+    the global host family (*.<globalBaseDomain>) — a sibling of *.<baseDomain> that the
+    per-CP wildcard does NOT cover. The nginx CSP (script-src/style-src/etc.) must allow the
+    global host too, or same-origin CSS/JS/XHR on the global host is blocked. Guards both the
+    data-plane and control-plane headers ConfigMaps."""
+
+    GLOBAL_WILDCARD = "*.astro.example.com"
+    GLOBAL_WSS = "wss://*.astro.example.com"
+    HA_DIRECTIVES = ("default-src", "connect-src", "font-src", "script-src", "style-src", "worker-src")
+
+    def _headers(self, kube_version, show_only, mode, base_domain, cpha=None):
+        # baseDomain is applied by render_chart via --set (overrides the values dict), so
+        # pass it through the dedicated kwarg rather than nesting it under values.
+        values = {"global": {"plane": {"mode": mode}}}
+        if cpha is not None:
+            values["global"]["controlPlaneHA"] = cpha
+        docs = render_chart(kube_version=kube_version, baseDomain=base_domain, show_only=[show_only], values=values)
+        assert len(docs) == 1
+        return _csp_directives(docs[0])
+
+    def test_dp_global_host_present_when_ha_enabled(self, kube_version):
+        csp = self._headers(
+            kube_version,
+            DP_HEADERS_FILE,
+            "data",
+            "dp.example.com",
+            {"enabled": True, "globalBaseDomain": "astro.example.com"},
+        )
+        for directive in self.HA_DIRECTIVES:
+            assert self.GLOBAL_WILDCARD in csp[directive], f"{directive} missing global host"
+        assert self.GLOBAL_WSS in csp["connect-src"]
+        assert "*.dp.example.com" in csp["script-src"]  # per-CP family still allowed
+
+    def test_cp_global_host_present_when_ha_enabled(self, kube_version):
+        csp = self._headers(
+            kube_version,
+            CP_HEADERS_FILE,
+            "control",
+            "cp.example.com",
+            {"enabled": True, "globalBaseDomain": "astro.example.com"},
+        )
+        for directive in self.HA_DIRECTIVES:
+            assert self.GLOBAL_WILDCARD in csp[directive], f"{directive} missing global host"
+        assert self.GLOBAL_WSS in csp["connect-src"]
+        assert "*.cp.example.com" in csp["script-src"]
+
+    def test_dp_no_global_host_when_ha_disabled(self, kube_version):
+        csp = self._headers(kube_version, DP_HEADERS_FILE, "data", "dp.example.com")
+        for sources in csp.values():
+            assert self.GLOBAL_WILDCARD not in sources
+            assert self.GLOBAL_WSS not in sources
+
+    def test_cp_no_global_host_when_ha_disabled(self, kube_version):
+        csp = self._headers(kube_version, CP_HEADERS_FILE, "control", "cp.example.com")
+        for sources in csp.values():
+            assert self.GLOBAL_WILDCARD not in sources
+            assert self.GLOBAL_WSS not in sources
+
+    def test_no_global_host_when_enabled_but_global_base_domain_unset(self, kube_version):
+        """Guard requires BOTH enabled and globalBaseDomain.
+
+        Data plane: renders with `enabled` alone and injects nothing — neither the wildcard
+        nor the `wss://` source. Control plane: enabling HA without globalBaseDomain is a hard
+        render failure (the cp-identity guard), so the CP headers can never reach an
+        enabled-but-unset state; assert that failure rather than a header that never renders.
+        """
+        csp = self._headers(kube_version, DP_HEADERS_FILE, "data", "dp.example.com", {"enabled": True})
+        for sources in csp.values():
+            assert self.GLOBAL_WILDCARD not in sources
+            assert self.GLOBAL_WSS not in sources
+
+        with pytest.raises(CalledProcessError):
+            self._headers(kube_version, CP_HEADERS_FILE, "control", "cp.example.com", {"enabled": True})
