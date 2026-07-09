@@ -8,18 +8,20 @@
   refresh path via `yarn refresh-cp-chart-version` (update-only, idempotent, no-op
   when the CP is unregistered).
 
-  Rendered on every control/unified plane, mirroring the houston-db-migrations and
-  houston-upgrade-deployments hooks. Cross-CP version coordination only matters
-  under Control Plane HA: the CP_ID env (from the cp-identity Secret) is injected
-  by houston_environment only when controlPlaneHA is enabled, so on single-CP /
-  non-HA installs the script finds no CP_ID and cleanly no-ops.
+  Gated on both plane mode (control/unified) and controlPlaneHA.enabled: unlike the
+  cp-identity Secret (deliberately generated pre-HA so the id is stable ahead of an
+  HA-enable), this job has no pre-HA value. Cross-CP chartVersion coordination is
+  only meaningful with multiple active CPs; on a single-CP/non-HA install the CP_ID
+  env (from the cp-identity Secret, via houston_environment) isn't wired either, so
+  the job would just spin up a pod and no-op. Gating it here avoids that wasted run
+  on every single-CP/unified helm upgrade.
 
   Ordering: this is a `post-upgrade` hook while houston-db-migrations is a
   `pre-upgrade` hook, so migrations always complete before this runs — a CP only
   advertises its new chartVersion once its new schema is live. hook-weight "0"
   runs it ahead of the post-upgrade houston-upgrade-deployments hook (weight "1").
 */}}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if and (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) .Values.global.controlPlaneHA.enabled }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
