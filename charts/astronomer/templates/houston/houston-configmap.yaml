@@ -526,14 +526,22 @@ data:
                       ' | python3 - """
                   )
                   log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "
-                  if container.args[0:3] == ["airflow", "tasks", "run"] or (int(version.split('.')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]):
+                  is_af2 = container.args[0:3] == ["airflow", "tasks", "run"]
+                  is_af3 = int(version.split('.')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]
+                  if is_af2 or is_af3:
                       container.command = ["tini", "--"]
                       new_args = ["bash", "-c"]
+                      # Airflow 3 writes structured task logs to /usr/local/airflow/logs/**/*.log,
+                      # which the sidecar already ships to Elasticsearch. Teeing stdout to out.log
+                      # would ingest every task log line a second time. Airflow 2 still needs the tee
+                      # because out.log is its only path to Elasticsearch after the broad log path was
+                      # version-gated out of the Airflow 2 sidecar config.
+                      redirect = log_cmd if is_af2 else " ; "
                       command_str = (
                           cmd_init
                           + " /entrypoint "
                           + shlex.join([str(arg) for arg in container.args])
-                          + log_cmd
+                          + redirect
                       )
                       new_args.append(command_str)
                       container.args = new_args
