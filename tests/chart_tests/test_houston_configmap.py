@@ -337,6 +337,46 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
 
+def test_houston_configmap_loggingsidecar_scopes_stdout_tee_to_airflow2():
+    """The pod_mutation_hook must only tee worker stdout to out.log for Airflow 2.
+
+    Airflow 3 writes structured task logs to /usr/local/airflow/logs/**/*.log which
+    the sidecar already ships, so applying the out.log tee to Airflow 3 workers
+    double-ingests every task log line into Elasticsearch. The wrapper (including the
+    finished-file termination shim) must still be applied to both versions."""
+    docs = render_chart(
+        values={
+            "global": {
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "repository": "quay.io/astronomer/ap-vector",
+                        "tag": "0.22.3",
+                    },
+                },
+            },
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    als = yaml.safe_load(docs[0]["data"]["production.yaml"])["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+
+    # Version split is present.
+    assert 'is_af2 = container.args[0:3] == ["airflow", "tasks", "run"]' in als
+    assert 'is_af3 = int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]' in als
+    assert "if is_af2 or is_af3:" in als
+
+    # The tee is only wired in for Airflow 2; Airflow 3 gets a plain terminator.
+    assert 'redirect = log_cmd if is_af2 else " ; "' in als
+    assert "+ redirect" in als
+    # The old unconditional guard that appended log_cmd for both versions is gone.
+    assert "+ log_cmd" not in als
+
+    # Termination shim still applies to every KubernetesExecutor worker pod.
+    assert 'Path("/var/log/sidecar-log-consumer/finished").touch()' in als
+
+
 def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrides():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
