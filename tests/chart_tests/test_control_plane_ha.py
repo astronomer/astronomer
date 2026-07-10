@@ -178,6 +178,7 @@ class TestCpIdentitySecret:
             show_only=[CP_IDENTITY_FILE],
             values={"global": {"plane": {"mode": "control"}, "controlPlaneHA": {"enabled": False}}},
         )
+        assert len(initial) == 1
         cp_id = base64.b64decode(initial[0]["data"]["cp_id"]).decode()
 
         # HA-enable: on a real cluster `lookup` would find the Secret above and reuse cp_id.
