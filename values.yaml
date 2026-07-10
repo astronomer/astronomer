@@ -47,7 +47,9 @@ global:
     # One physical cert per CP serves both families. Issue via DNS-01 ACME — HTTP-01 will
     # not work because the global host only routes to active-region CPs.
     globalBaseDomain: ~
-    # Stable per-CP identity (UUID), exposed to pods as the CP_ID env var.
+    # Stable per-CP identity (UUID), exposed to pods as the CP_ID env var. Generated on
+    # every control/unified plane install regardless of controlPlaneHA.enabled — the value
+    # is preserved for future HA enablement even if not currently in use.
     # When unset, the chart looks up the existing cp-identity Secret and reuses its value,
     # or generates a new UUID on first install (preserved across `helm upgrade`).
     # Set explicitly to keep cp_id deterministic for GitOps / offline `helm template`
