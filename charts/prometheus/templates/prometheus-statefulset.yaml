@@ -60,6 +60,7 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
+      securityContext: {{- include "prometheus.podSecurityContext" . | nindent 8 }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       {{- include "prometheus.hostAliases" . | nindent 6 }}
       initContainers:
@@ -154,7 +155,8 @@ spec:
           image: {{ include "filesdReloader.image" . }}
           imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
           securityContext:
-            readOnlyRootFilesystem: true
+            {{- $required := dict "readOnlyRootFilesystem" true }}
+            {{- merge $required (include "filesdreloader.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           resources: {{ toYaml .Values.filesdReloader.resources | nindent 12 }}
           {{- if .Values.filesdReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.filesdReloader.livenessProbe) . | nindent 12 }}
@@ -265,9 +267,6 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 1
           {{- end }}
-{{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
         - name: nginx-write-dir

@@ -2,7 +2,6 @@
 ## NGINX Data Plane Role/ClusterRole ##
 #######################################
 {{- if eq .Values.global.plane.mode "data" }}
-{{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}

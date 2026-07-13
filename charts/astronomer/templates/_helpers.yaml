@@ -16,13 +16,13 @@
 {{- end }}
 {{- end }}
 
-{{ define "commander.metadata.namespaceLabels" }}
+{{- define "commander.metadata.namespaceLabels" -}}
 {{- if .Values.global.rbacEnabled -}}
-{{ .Values.global.namespaceLabels | toYaml | nindent 6 -}}
+{{ .Values.global.namespaceLabels | toYaml }}
 {{- else -}}
 {}
-{{- end }}
-{{- end }}
+{{- end -}}
+{{- end -}}
 
 {{ define "commander.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
@@ -605,3 +605,26 @@ hostAliases:
 {{ toYaml .Values.commander.hostAliases }}
 {{- end }}
 {{- end -}}
+
+{{/*
+Return shared podSecurityContext (astro-ui, navigator, pilot, dp-link),
+omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "astronomer.podSecurityContext" -}}
+{{- if .Values.global.openshiftEnabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return registry podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "astronomer.registry.podSecurityContext" -}}
+{{- if .Values.global.openshiftEnabled }}
+{{- omit .Values.registry.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.registry.podSecurityContext }}
+{{- end -}}
+{{- end }}

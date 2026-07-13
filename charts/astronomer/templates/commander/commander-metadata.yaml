@@ -17,7 +17,8 @@ data:
   metadata.yaml: |-
     registry:
       version: {{ .Values.images.registry.tag | quote }}
-    namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
+    namespaceLabels:
+      {{- include "commander.metadata.namespaceLabels" . | nindent 6 }}
     customLogging:
       enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
     openshift:

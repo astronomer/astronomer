@@ -153,12 +153,33 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "elasticsearch.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
 {{- $required := dict "readOnlyRootFilesystem" true }}
+{{- if .Values.global.openshiftEnabled }}
 {{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
 {{- else }}
-{{- $required := dict "readOnlyRootFilesystem" true }}
 {{- merge $required .Values.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "elasticsearch.podSecurityContext" -}}
+{{- if .Values.global.openshiftEnabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return exporter podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "elasticsearch.exporter.podSecurityContext" -}}
+{{- if .Values.global.openshiftEnabled }}
+{{- omit .Values.exporter.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.exporter.podSecurityContext }}
 {{- end -}}
 {{- end }}
 

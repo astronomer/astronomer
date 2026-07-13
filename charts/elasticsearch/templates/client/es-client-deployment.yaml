@@ -45,9 +45,7 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
-{{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
+      securityContext: {{- include "elasticsearch.podSecurityContext" . | nindent 8 }}
       nodeSelector:
         {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.client.antiAffinity "hard" }}
@@ -88,7 +86,12 @@ spec:
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         resources: {{- toYaml .Values.client.initResources | nindent 10 }}
         securityContext:
-          readOnlyRootFilesystem: true
+        {{- if .Values.client.securityContext }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required .Values.client.securityContext | toYaml | nindent 10}}
+        {{- else }}
+          {{- include "elasticsearch.securityContext" . | nindent 10 }}
+        {{- end }}
         volumeMounts:
           - name: es-config-dir
             mountPath: /usr/share/elasticsearch/config_copy
