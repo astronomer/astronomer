@@ -59,6 +59,17 @@ Set DATA_SOURCE_URI environment variable
 {{- end }}
 
 {{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "prometheus-postgres-exporter.podSecurityContext" -}}
+{{- if .Values.global.openshiftEnabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
+{{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "prometheus-postgres-exporter.imagePullSecrets" -}}

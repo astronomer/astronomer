@@ -161,6 +161,28 @@ imagePullSecrets:
 {{- end -}}
 {{- end }}
 
+{{/*
+Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "elasticsearch.podSecurityContext" -}}
+{{- if .Values.global.openshiftEnabled }}
+{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return exporter podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+*/}}
+{{- define "elasticsearch.exporter.podSecurityContext" -}}
+{{- if .Values.global.openshiftEnabled }}
+{{- omit .Values.exporter.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.exporter.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
 {{- define "elasticsearch.ingressurl" -}}
 {{ if eq .Values.global.plane.mode "data" -}}
 elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}

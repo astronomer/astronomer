@@ -45,6 +45,7 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "prometheus-postgres-exporter.serviceAccountName" . }}
+      securityContext: {{- include "prometheus-postgres-exporter.podSecurityContext" . | nindent 8 }}
 {{- include "prometheus-postgres-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
@@ -125,20 +126,6 @@ spec:
 {{- with .Values.extraContainers }}
 {{ tpl . $ | indent 8 }}
 {{- end }}
-      securityContext:
-{{ toYaml .Values.podSecurityContext | indent 8 }}
-     {{- with .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
       volumes:
       - configMap:
           defaultMode: 420
