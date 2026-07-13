@@ -185,13 +185,9 @@ def _ts() -> str:
     return time.strftime("%H:%M:%S")
 
 
-def _interactive_available() -> bool:
-    return sys.stdin.isatty() and sys.stdout.isatty()
-
-
-def _prompt_choice(question: str, options: list[str], *, default: str) -> str:
-    """Numbered picker (stdlib only). Returns `default` unmodified outside a TTY (CI/automation)."""
-    if not _interactive_available():
+def _prompt_choice(question: str, options: list[str], *, default: str, interactive: bool) -> str:
+    """Numbered picker (stdlib only). Returns `default` unmodified unless `interactive` is True."""
+    if not interactive:
         return default
     _print(f"\n{question}")
     for i, opt in enumerate(options, start=1):
@@ -209,9 +205,9 @@ def _prompt_choice(question: str, options: list[str], *, default: str) -> str:
         _print(f"  Invalid choice: {raw!r}")
 
 
-def _prompt_yes_no(question: str, *, default: bool) -> bool:
-    """y/n picker (stdlib only). Returns `default` unmodified outside a TTY (CI/automation)."""
-    if not _interactive_available():
+def _prompt_yes_no(question: str, *, default: bool, interactive: bool) -> bool:
+    """y/n picker (stdlib only). Returns `default` unmodified unless `interactive` is True."""
+    if not interactive:
         return default
     suffix = "[Y/n]" if default else "[y/N]"
     while True:
@@ -964,13 +960,22 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help=(
+            "Prompt for --version/--cp-mode/--dp-airflow-db/--enable-operator when any of them "
+            "are omitted, instead of silently using their documented defaults. Off by default so "
+            "automation never blocks waiting on stdin."
+        ),
+    )
+    parser.add_argument(
         "--cp-mode",
         type=str,
         default=None,
         help=(
             "Control plane mode to install: 'unified' (single cluster, CP+DP co-located) or "
             "'control' (true CP/DP split, paired with the DP cluster(s) from --dp-count). "
-            "Omit to be prompted interactively; falls back to 'unified' outside a TTY."
+            "Omit to fall back to 'unified' (pass --interactive to be prompted instead)."
         ),
     )
     parser.add_argument(
@@ -1015,7 +1020,7 @@ def parse_args() -> argparse.Namespace:
             "'0.37' has no CP/DP split and delegates this entire run to bin/setup-037x-k3d.py. "
             "'main' installs from the locally checked-out chart and floats "
             "houston/astroUI/dbBootstrapper to the 'main' image tag and commander to 'master'. "
-            f"Omit to be prompted interactively; falls back to '{MAIN_DEV_ALIAS}' outside a TTY."
+            f"Omit to fall back to '{MAIN_DEV_ALIAS}' (pass --interactive to be prompted instead)."
         ),
     )
     version_group.add_argument(
@@ -1094,7 +1099,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Database type for Airflow deployments on the data plane. "
-            "Omit to be prompted interactively; falls back to 'postgres' outside a TTY."
+            "Omit to fall back to 'postgres' (pass --interactive to be prompted instead)."
         ),
     )
 
@@ -1106,7 +1111,7 @@ def parse_args() -> argparse.Namespace:
             "Enable Airflow operator mode. Sets global.airflowOperator.enabled=true on "
             "both CP and DP, and renders the airflow-operator subchart values on the DP. "
             "Pass --no-enable-operator to fall back to the helm-based airflow path. "
-            "Omit to be prompted interactively; falls back to enabled outside a TTY."
+            "Omit to fall back to enabled (pass --interactive to be prompted instead)."
         ),
     )
     parser.add_argument(
@@ -1136,6 +1141,13 @@ def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool, tuple[
     control/data plane separation.
     """
     if args.chart_version:
+        if args.chart_version in VERSION_ALIASES:
+            raise RuntimeError(
+                f"--chart-version {args.chart_version!r} is a --version alias, not a real chart "
+                f"version. --chart-version is passed straight through to `helm install --version "
+                f"...` and must be an exact version published on {HELM_REPO_URL} (e.g. "
+                f"'1.2.3-beta1'). Use `--version {args.chart_version}` instead."
+            )
         return args.chart_version, "-" in args.chart_version, ()
 
     alias = args.version_alias
@@ -1144,6 +1156,7 @@ def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool, tuple[
             "Which Astronomer version do you want to install?",
             list(VERSION_ALIASES),
             default=MAIN_DEV_ALIAS,
+            interactive=args.interactive,
         )
     if alias == DELEGATE_037_ALIAS:
         raise Delegate037
@@ -1222,12 +1235,12 @@ def main() -> int:  # noqa: C901
     except Delegate037:
         return _run_setup_037(args)
     except (CommandError, RuntimeError) as e:
-        _print(f"\n❌ Failed to resolve --version: {e}")
+        _print(f"\n❌ Failed to resolve chart version: {e}")
         return 1
 
     enable_operator = args.enable_operator
     if enable_operator is None:
-        enable_operator = _prompt_yes_no("Enable Airflow operator mode?", default=True)
+        enable_operator = _prompt_yes_no("Enable Airflow operator mode?", default=True, interactive=args.interactive)
 
     cp_mode = args.cp_mode
     if cp_mode is None:
@@ -1235,6 +1248,7 @@ def main() -> int:  # noqa: C901
             "Which topology do you want to install?",
             list(TOPOLOGY_CHOICES),
             default=DEFAULT_TOPOLOGY,
+            interactive=args.interactive,
         )
         cp_mode = TOPOLOGY_TO_CP_MODE[topology]
 
@@ -1244,6 +1258,7 @@ def main() -> int:  # noqa: C901
             "Which database should data planes use?",
             ["postgres", "mysql"],
             default="postgres",
+            interactive=args.interactive,
         )
 
     ms = Milestones()

@@ -53,7 +53,7 @@ This automates the workflow that is documented step-by-step in [cp-dp-k3d-setup-
 
 The script is safe to re-run; cluster, secret, and helm install steps are idempotent.
 
-If `--version`, `--cp-mode`, and `--enable-operator` are omitted, the script prompts for them interactively (numbered picker); pass the flags explicitly to skip the prompts (e.g. in CI/automation, where they fall back to `main` / `unified` / operator-enabled).
+If `--version`, `--cp-mode`, `--dp-airflow-db`, or `--enable-operator` are omitted, the script silently falls back to their documented defaults (`main` / `unified` / `postgres` / operator-enabled) — safe for CI/automation by default. Pass `--interactive` to get a numbered picker for whichever of those are omitted instead.
 
 See `bin/setup-cp-dp-k3d.py --help` for the full list of flags. Some commonly useful ones:
 
@@ -62,7 +62,8 @@ See `bin/setup-cp-dp-k3d.py --help` for the full list of flags. Some commonly us
 | `--version ALIAS`                                                     | Astronomer version to install: `0.37`, `1.1.x`, `1.2.x`, `2.0.0`, `2.0.1`, `2.1`, `main`, or any exact chart version. `0.37` delegates to `bin/setup-037x-k3d.py` (no CP/DP split); `main` installs from the local checkout with houston/astroUI/dbBootstrapper floated to the `main` image tag and commander to `master` |
 | `--chart-version VERSION`                                             | Escape hatch: install an exact chart version, bypassing `--version` alias resolution |
 | `--dp-count {1,2,3,4}`                                                | Spin up multiple data planes (`dp01`, `dp02`, …)       |
-| `--cp-mode {unified,control}`                                         | `unified` (single cluster, CP+DP co-located) or `control` (true CP/DP split); prompted interactively as "unified" vs "cp/dp" when omitted |
+| `--cp-mode {unified,control}`                                         | `unified` (single cluster, CP+DP co-located) or `control` (true CP/DP split); defaults to `unified` when omitted, or prompts as "unified" vs "cp/dp" with `--interactive` |
+| `--interactive`                                                       | Prompt for `--version`/`--cp-mode`/`--dp-airflow-db`/`--enable-operator` when omitted, instead of using their defaults |
 | `--enable-operator` / `--no-enable-operator`                          | Toggle Airflow operator mode                           |
 | `--recreate-clusters`                                                 | Delete and recreate existing k3d clusters              |
 | `--helm-values FILE`                                                  | Extra helm values file (repeatable) for both CP and DP |
