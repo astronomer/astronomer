@@ -246,7 +246,7 @@ class TestPrometheusStatefulset:
             "requests": {"cpu": "250m", "memory": "128Mi"},
         }
         values = {
-            "global": {"rbac": {"enabled": False}},
+            "global": {"rbacEnabled": False},
             "prometheus": {"filesdReloader": {"resources": resources}},
         }
         docs = render_chart(
