@@ -1,0 +1,12 @@
+# Used by bin/setup-cp-dp-k3d.py for:
+#   - the Control Plane install, always — the CP runs its own in-cluster postgres for Houston's
+#     metadata DB.
+#   - Data Plane installs, when --dp-airflow-db=postgres (the default) — each DP runs its own
+#     local postgres instead of sharing the CP's. See configs/postgres-disabled.yaml, used
+#     instead for DP when --dp-airflow-db=mysql.
+# Both key shapes are set unconditionally (whichever chart is actually installed reads the one it
+# recognizes and ignores the other — no values schema validation to reject it).
+global:
+  postgresqlEnabled: true
+  postgresql:
+    enabled: true
