@@ -58,7 +58,7 @@ spec:
           - "--disable-default-metrics"
           {{- end }}
           {{- if .Values.config.disableSettingsMetrics }}
-          - "--disable-settings-metrics"
+          - "--no-collector.settings"
           {{- end }}
           {{- if .Values.config.autoDiscoverDatabases }}
           - "--auto-discover-databases"
