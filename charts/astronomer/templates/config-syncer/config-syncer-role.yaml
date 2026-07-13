@@ -44,6 +44,11 @@ rules:
 - apiGroups: [""]
   resources: ["namespaces"]
   verbs: ["get", "list"]
+{{- if $.Values.global.dataPlaneFailover.enabled  }}
+- apiGroups: ["external-secrets.io"]
+  resources: ["secretstores"]
+  verbs: ["create", "get", "list", "patch", "update"]
+{{- end }}
 {{ end }}
 {{- end }}
 {{- end }}

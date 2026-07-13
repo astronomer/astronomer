@@ -165,6 +165,42 @@ class TestAstronomerConfigSyncer:
             assert role_binding["roleRef"] == expected_role
             assert role_binding["subjects"][0] == expected_subject
 
+    @pytest.mark.parametrize("failover_enabled", [True, False], ids=["failover_enabled", "failover_disabled"])
+    def test_astronomer_config_syncer_secretstore_rbac(self, kube_version, failover_enabled):
+        """Test that config-syncer is granted external-secrets secretstore permissions
+        only when global.dataPlaneFailover is enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
+                    "dataPlaneFailover": {"enabled": failover_enabled},
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        cluster_role = docs[0]
+        assert cluster_role["kind"] == "ClusterRole"
+
+        secretstore_rules = [
+            rule
+            for rule in cluster_role["rules"]
+            if "external-secrets.io" in rule.get("apiGroups", []) and "secretstores" in rule.get("resources", [])
+        ]
+
+        if failover_enabled:
+            # failover on: config-syncer must be able to sync SecretStores across namespaces
+            assert len(secretstore_rules) == 1
+            assert sorted(secretstore_rules[0]["verbs"]) == ["create", "get", "list", "patch", "update"]
+        else:
+            # failover off: no secretstore permissions should be granted
+            assert secretstore_rules == []
+
     def test_astronomer_config_syncer_rbac_all_disabled(self, kube_version):
         """Test that if rbac.enabled and namespacePools are disabled, we do not
         create any RBAC resources."""
