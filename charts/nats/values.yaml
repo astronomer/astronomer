@@ -162,8 +162,14 @@ imagePullSecrets: []
 # Toggle whether to use setup a Pod Security Context
 podSecurityContext:
    fsGroup: 1000
+   seccompProfile:
+     type: RuntimeDefault
 # ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext:
+   allowPrivilegeEscalation: false
+   capabilities:
+     drop:
+       - ALL
    runAsUser: 1000
    runAsNonRoot: true
 

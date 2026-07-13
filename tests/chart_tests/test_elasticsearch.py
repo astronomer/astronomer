@@ -141,7 +141,10 @@ class TestElasticSearch:
         )
         assert len(docs) == 3
         for doc in docs:
-            assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
+            assert doc["spec"]["template"]["spec"]["securityContext"] == {
+                "fsGroup": 1000,
+                "seccompProfile": {"type": "RuntimeDefault"},
+            }
 
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
         """Test ElasticSearch master, data with securityContext default
@@ -485,11 +488,14 @@ class TestElasticSearch:
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
 
-        assert pod_data["securityContext"] == {}
+        assert pod_data["securityContext"] == {"seccompProfile": {"type": "RuntimeDefault"}}
 
         assert pod_data["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
 
     def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
@@ -515,9 +521,16 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"] == {"denver": "colorado", "detroit": "michigan"}
+        assert pod_data["securityContext"] == {
+            "denver": "colorado",
+            "detroit": "michigan",
+            "seccompProfile": {"type": "RuntimeDefault"},
+        }
         assert pod_data["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
             "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 65534,
             "capabilities": {"drop": ["ALL"]},
             "snoopy": "dog",
             "woodstock": "bird",
@@ -731,7 +744,13 @@ class TestElasticSearch:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["nginx"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["nginx"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 101,
+        }
 
     def test_elasticsearch_nginx_deployment_overrides(self, kube_version):
         """Test ElasticSearch Nginx deployment default overrides."""
@@ -752,8 +771,11 @@ class TestElasticSearch:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["nginx"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 101,
             "snoopy": "dog",
             "woodstock": "bird",
         }

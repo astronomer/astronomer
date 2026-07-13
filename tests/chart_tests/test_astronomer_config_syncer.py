@@ -58,7 +58,13 @@ class TestAstronomerConfigSyncer:
         job_container = c_by_name["config-syncer"]
         assert job_container["image"].startswith("quay.io/astronomer/ap-commander:")
         assert job_container["imagePullPolicy"] == "IfNotPresent"
-        assert job_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert job_container["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_astronomer_config_syncer_rbac_namespace_pools_disabled(self, kube_version):
         """Test that if rbacEnabled but namespacePools disabled, helm renders
@@ -205,7 +211,13 @@ class TestAstronomerConfigSyncer:
         job_container_by_name = get_containers_by_name(doc)
         assert "--target-namespaces" in job_container_by_name["config-syncer"]["args"]
         assert ",".join(namespaces) in job_container_by_name["config-syncer"]["args"]
-        assert job_container_by_name["config-syncer"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert job_container_by_name["config-syncer"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_astronomer_config_syncer_cronjob_security_context_overrides(self, kube_version):
         """Test that config-syncer's container is allowed to configure security context."""
@@ -230,8 +242,11 @@ class TestAstronomerConfigSyncer:
         job_container_by_name = get_containers_by_name(doc)
 
         assert job_container_by_name["config-syncer"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
             "snoopy": "dog",
             "woodstock": "bird",
         }

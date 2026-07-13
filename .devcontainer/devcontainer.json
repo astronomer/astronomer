@@ -1,5 +1,5 @@
 {
-  "name": "Astronomer \"Software\" dev container",
+  "name": "APC dev container",
   "build": {
     "dockerfile": "Dockerfile"
   },
