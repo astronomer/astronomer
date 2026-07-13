@@ -15,6 +15,22 @@ podLabels: {}
 # such that only one is replaced at a time.
 replicas: 1
 
+# Session affinity for the aggregate Prometheus Service. Left unset by default
+# so the rendered Service carries no spec.sessionAffinity / sessionAffinityConfig
+# fields, which some clusters forbid (e.g. Gatekeeper's deny-ingress-sticky-sessions).
+# Set to "ClientIP" to pin clients to a single Prometheus pod, which is only
+# meaningful when replicas > 1 (active/passive query consistency).
+#
+# UPGRADE NOTE: Versions prior to 2.1.0 hardcoded sessionAffinity: ClientIP on
+# this Service. As of 2.1.0 it is unset by default to satisfy clusters that
+# forbid sticky sessions. This is a no-op at the default replicas: 1, but HA
+# deployments running replicas > 1 should set sessionAffinity: "ClientIP" here.
+# Otherwise the aggregate Service round-robins across pods, and since Prometheus
+# replicas are active/passive (each scrapes independently and may hold different
+# data/gaps), the default consumers that query this Service -- Grafana datasource
+# and Houston -- can see inconsistent results across requests.
+sessionAffinity: ""
+
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
@@ -22,11 +38,11 @@ images:
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.15.0-6
+    tag: 0.15.0-7
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.2.2
+    tag: 0.2.5
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty

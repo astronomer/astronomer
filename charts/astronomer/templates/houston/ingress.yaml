@@ -47,6 +47,9 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
         - houston.{{ .Values.global.baseDomain }}
+        {{- if .Values.global.controlPlaneHA.enabled }}
+        - houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+        {{- end }}
   {{- end }}
   rules:
   - host: houston.{{ .Values.global.baseDomain }}
@@ -59,5 +62,17 @@ spec:
               name: {{ .Release.Name }}-houston
               port:
                 name: houston-http
+  {{- if .Values.global.controlPlaneHA.enabled }}
+  - host: houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-houston
+              port:
+                name: houston-http
+  {{- end }}
 {{- end }}
 {{- end }}

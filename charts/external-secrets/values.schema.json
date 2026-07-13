@@ -503,6 +503,9 @@
     },
     "topologySpreadConstraints": {
       "type": "array"
+    },
+    "watchNamespaces": {
+            "type": "array"
     }
   },
   "type": "object"

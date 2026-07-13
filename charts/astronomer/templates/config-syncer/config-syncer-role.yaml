@@ -1,6 +1,6 @@
-########################################
-## Astronomer Commander Role/ClusterRole
-########################################
+###########################################
+## Astronomer Commander Role/ClusterRole ##
+###########################################
 # Here, we either:
 # 1. Do not create any resource if rbac.enabled is disabled
 # 2. Create a Cluster Role if namespacePools is disabled
@@ -44,6 +44,11 @@ rules:
 - apiGroups: [""]
   resources: ["namespaces"]
   verbs: ["get", "list"]
+{{- if $.Values.global.dataPlaneFailover.enabled  }}
+- apiGroups: ["external-secrets.io"]
+  resources: ["secretstores"]
+  verbs: ["create", "get", "list", "patch", "update"]
+{{- end }}
 {{ end }}
 {{- end }}
 {{- end }}
