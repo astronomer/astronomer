@@ -19,7 +19,7 @@ metadata:
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
 data:
-  {{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
+  {{- if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
   astro_runtime_releases.json: |
     {{ .Values.houston.runtimeReleasesConfig | toJson }}
   # These are system-specified config overrides.
@@ -64,7 +64,9 @@ data:
 
     helm:
       baseDomain: {{ .Values.global.baseDomain }}
+      {{- if .Values.registry.auth.secretName }}
       registryAuthSecret: {{ .Values.registry.auth.secretName }}
+      {{- end }}
       releaseName: {{ .Release.Name }}
       releaseNamespace: {{ .Release.Namespace }}
       releaseVersion: {{ .Chart.Version }}
@@ -102,7 +104,7 @@ data:
       cleanupAirflowDb:
         enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
 
-      {{ if .Values.global.features.namespacePools.enabled }}
+      {{- if .Values.global.features.namespacePools.enabled }}
       hardDeleteDeployment: true
       manualNamespaceNames: true
       preCreatedNamespaces:
@@ -178,7 +180,7 @@ data:
             repository: {{ (splitList ":" $dagOnlyDeployment ) | first }}
             tag: {{ (splitList ":" $dagOnlyDeployment ) | last }}
         {{- if .Values.global.dagOnlyDeployment.securityContexts }}
-        securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
+        securityContexts: {{- template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
         {{- if or
           .Values.global.dagOnlyDeployment.resources
@@ -227,7 +229,7 @@ data:
         {{- if .Values.global.dagOnlyDeployment.persistence }}
         persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
         {{- end }}
-        {{ if .Values.global.dagOnlyDeployment.serviceAccount }}
+        {{- if .Values.global.dagOnlyDeployment.serviceAccount }}
         serviceAccount: {{- .Values.global.dagOnlyDeployment.serviceAccount | toYaml | nindent 10 }}
         {{- end }}
       {{- end }}
@@ -301,28 +303,28 @@ data:
           networkPolicies:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
-          {{ end }}
+          {{- end }}
           {{- if .Values.global.openshiftEnabled }}
           dags:
               gitSync:
                 securityContexts:
                   container:
                     runAsNonRoot: true
-          {{ end }}
+          {{- end }}
           # Enable FlowerUI flag by default
           flower:
             enabled: true
-            {{ if .Values.global.openshiftEnabled }}
+            {{- if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
           apiServer:
-            {{ if .Values.global.openshiftEnabled }}
+            {{- if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
             resources:
               limits:
                 # XXX: There is an alert configured to trigger when ephemeral storage reaches
@@ -332,11 +334,11 @@ data:
               requests:
                 ephemeral-storage: "1Gi"
           webserver:
-            {{ if .Values.global.openshiftEnabled }}
+            {{- if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
             resources:
               limits:
                 # XXX: There is an alert configured to trigger when ephemeral storage reaches
@@ -357,11 +359,11 @@ data:
 
           # Worker configuration (applies to Celery and Kubernetes task pods).
           workers:
-            {{ if .Values.global.openshiftEnabled }}
+            {{- if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
             resources:
               limits:
                 ephemeral-storage: "2Gi"
@@ -473,7 +475,7 @@ data:
                       container.args = container.command + container.args
                   container.command = ["tini", "--", "/entrypoint"]
                   pod.spec.containers[0] = container
-      {{ if .Values.global.loggingSidecar.enabled }}
+      {{- if .Values.global.loggingSidecar.enabled }}
                   # For sidecar logging we override the default entrypoint to redirect logs to
                   # files that are consumed by the sidecar container. The command ends by creating
                   # the file /var/log/sidecar-log-consumer/finished, which signals the sidecar log
@@ -515,7 +517,7 @@ data:
                       )
                       new_args.append(command_str)
                       container.args = new_args
-      {{ end }}
+      {{- end }}
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
@@ -535,13 +537,13 @@ data:
           redis:
             # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
-            {{ if .Values.global.openshiftEnabled }}
+            {{- if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
 
-          {{ if .Values.global.openshiftEnabled }}
+          {{- if .Values.global.openshiftEnabled }}
           # Statsd settings
           statsd:
             securityContexts:
@@ -566,16 +568,16 @@ data:
               pod:
                 runAsNonRoot: true
 
-          {{ end }}
+          {{- end }}
 
           # Pgbouncer settings
           pgbouncer:
-            {{ if .Values.global.openshiftEnabled }}
+            {{- if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
             command: ["pgbouncer", "/etc/pgbouncer/pgbouncer.ini"]
-            {{ end }}
+            {{- end }}
             podDisruptionBudget:
               enabled: false
 
@@ -601,7 +603,7 @@ data:
           # to cleanup evicted/failed/succeeded pods.
           cleanup:
             enabled: true
-            {{/*
+            {{- /*
             Generate a deterministic random-ish decimal digit from the .Release.Name, which is used to generate
             the minute field of the cron schedule. This is effectively a splay seeded by the release name.
             This is used to spread the load of this job away from high-use minutes 0,15,30,45.

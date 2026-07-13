@@ -40,7 +40,7 @@ non_airflow_components_list = [
 )
 class TestOpenshift:
     def test_openshift_flag_defaults_with_enabled_and_validate_podsecuritycontext(self, kube_version):
-        "Validate podSecurityContext is not set when openshiftEnabled is True"
+        "Validate podSecurityContext is rendered via the shared helper when openshiftEnabled is True"
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -51,7 +51,7 @@ class TestOpenshift:
 
         assert len(docs) == 6
         for doc in docs:
-            assert "securityContext" not in doc["spec"]["template"]["spec"]
+            assert "securityContext" in doc["spec"]["template"]["spec"]
 
     def test_openshift_flag_defaults_with_enabled_and_validate_container_securitycontext(self, kube_version):
         "Validate containerSecurityContext when openshiftEnabled is Enabled"

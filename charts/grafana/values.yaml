@@ -21,6 +21,9 @@ images:
 securityContext:
   runAsNonRoot: true
 
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext: {}
+
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true

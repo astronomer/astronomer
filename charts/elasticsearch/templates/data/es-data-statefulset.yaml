@@ -49,9 +49,7 @@ spec:
         {{- end }}
     spec:
       terminationGracePeriodSeconds: 3600
-{{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
+      securityContext: {{- include "elasticsearch.podSecurityContext" . | nindent 8 }}
       nodeSelector:
         {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.data.antiAffinity "hard" }}
@@ -92,7 +90,12 @@ spec:
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         resources: {{- toYaml .Values.data.initResources | nindent 10 }}
         securityContext:
-          readOnlyRootFilesystem: true
+          {{- if .Values.data.securityContext }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required .Values.data.securityContext | toYaml | nindent 10 }}
+          {{- else }}
+          {{- include "elasticsearch.securityContext" . | nindent 10 }}
+          {{- end }}
         volumeMounts:
           - name: es-config-dir
             mountPath: /usr/share/elasticsearch/config_copy
