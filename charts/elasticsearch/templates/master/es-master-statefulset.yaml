@@ -48,7 +48,7 @@ spec:
         {{- toYaml .Values.master.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
-      securityContext: {{- include "elasticsearch.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       nodeSelector:
         {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.master.antiAffinity "hard" }}
@@ -93,7 +93,7 @@ spec:
           {{- $required := dict "readOnlyRootFilesystem" true }}
           {{- merge $required .Values.master.securityContext | toYaml | nindent 10 }}
           {{- else }}
-          {{- include "elasticsearch.securityContext" . | nindent 10 }}
+          {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
           {{- end }}
         volumeMounts:
           - name: es-config-dir
@@ -123,7 +123,7 @@ spec:
           {{- $required := dict "readOnlyRootFilesystem" true }}
           {{- merge $required .Values.master.securityContext | toYaml | nindent 10 }}
           {{- else }}
-          {{- include "elasticsearch.securityContext" . | nindent 10 }}
+          {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
           {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}

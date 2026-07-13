@@ -511,15 +511,6 @@ tlsEnabled: false
 {{- end -}}
 {{- end }}
 
-{{- define "configSyncer.securityContext" -}}
-{{- $required := dict "readOnlyRootFilesystem" true }}
-{{- if .Values.configSyncer.securityContext }}
-{{- merge $required .Values.configSyncer.securityContext | toYaml }}
-{{- else }}
-{{- merge $required .Values.securityContext | toYaml }}
-{{- end }}
-{{- end }}
-
 {{- define "houston.eventsUrl" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
 https://houston.{{ .Values.global.baseDomain }}/v1/registry/events
@@ -607,19 +598,9 @@ hostAliases:
 {{- end -}}
 
 {{/*
-Return shared podSecurityContext (astro-ui, navigator, pilot, dp-link),
-omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
-*/}}
-{{- define "astronomer.podSecurityContext" -}}
-{{- if .Values.global.openshiftEnabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
-{{- end }}
-
-{{/*
 Return registry podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+Uses .Values.registry.podSecurityContext as its own base (not the chart-wide .Values.podSecurityContext),
+so it deliberately does not use platform.podSecurityContext, whose merge would layer the chart base underneath.
 */}}
 {{- define "astronomer.registry.podSecurityContext" -}}
 {{- if .Values.global.openshiftEnabled }}

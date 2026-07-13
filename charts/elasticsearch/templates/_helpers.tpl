@@ -152,28 +152,10 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{- define "elasticsearch.securityContext" -}}
-{{- $required := dict "readOnlyRootFilesystem" true }}
-{{- if .Values.global.openshiftEnabled }}
-{{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
-{{- else }}
-{{- merge $required .Values.securityContext | toYaml }}
-{{- end -}}
-{{- end }}
-
-{{/*
-Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
-*/}}
-{{- define "elasticsearch.podSecurityContext" -}}
-{{- if .Values.global.openshiftEnabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
-{{- end }}
-
 {{/*
 Return exporter podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+Uses .Values.exporter.podSecurityContext as its own base (not the chart-wide .Values.podSecurityContext),
+so it deliberately does not use platform.podSecurityContext, whose merge would layer the chart base underneath.
 */}}
 {{- define "elasticsearch.exporter.podSecurityContext" -}}
 {{- if .Values.global.openshiftEnabled }}

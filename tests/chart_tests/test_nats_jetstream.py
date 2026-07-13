@@ -32,6 +32,8 @@ class TestNatsJetstream:
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetStream" in nats_cm
         assert docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
             "runAsUser": 1000,

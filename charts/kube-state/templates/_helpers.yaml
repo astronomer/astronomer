@@ -49,17 +49,6 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{/*
-Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
-*/}}
-{{- define "kube-state.podSecurityContext" -}}
-{{- if .Values.global.openshiftEnabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
-{{- end }}
-
 {{ define "kube-state.serviceAccountName" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "kube-state.fullname" . )) .Values.serviceAccount.name }}

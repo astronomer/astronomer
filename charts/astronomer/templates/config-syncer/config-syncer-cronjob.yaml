@@ -41,6 +41,7 @@ spec:
           {{- end }}
           {{- end }}
         spec:
+          securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 12 }}
           serviceAccountName: {{ template "configSyncer.serviceAccountName" . }}
           nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
           affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
@@ -52,7 +53,7 @@ spec:
               image: {{ template "commander.image" . }}
               imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
               securityContext:
-                {{ include "configSyncer.securityContext" . | nindent 16 }}
+                {{ include "platform.containerSecurityContext" (list . .Values.configSyncer.securityContext) | nindent 16 }}
               resources: {{ toYaml .Values.configSyncer.resources | nindent 16 }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args:
