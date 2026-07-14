@@ -10,17 +10,28 @@
 *~
 .*_cache
 .DS_Store
+.agents
 .bzr/
 .bzrignore
+.circleci
+.claude
+.cursor
+.devcontainer
+.git
 .git/
+.github
 .gitignore
+.helmignore
 .hg/
 .hgignore
 .idea/
+.pre-commit-config.yaml
 .project
 .pytest_cache
+.ruff_cache
 .svn/
 .venv*
+.vscode
 /.circleci
 /.github
 /.pre-commit-config.yaml
