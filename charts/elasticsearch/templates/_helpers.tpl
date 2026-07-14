@@ -176,4 +176,3 @@ elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDoma
 elasticsearch.{{ .Values.global.baseDomain }}
 {{- end -}}
 {{- end -}}
-
