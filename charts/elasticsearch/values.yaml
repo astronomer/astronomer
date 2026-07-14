@@ -250,7 +250,11 @@ curator:
   enabled: true
   schedule: "0 1 * * *"
   securityContext:
+    allowPrivilegeEscalation: false
     runAsNonRoot: true
+    capabilities:
+      drop:
+      - ALL
   resources: {}
 
   # Allows modification of the default age-based filter. If you require more
