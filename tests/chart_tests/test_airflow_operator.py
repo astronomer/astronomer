@@ -39,7 +39,7 @@ class TestAirflowOperator:
                     "certManager": {"enabled": True},
                 },
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
             },
             show_only=sorted(
@@ -67,7 +67,7 @@ class TestAirflowOperator:
                     "crd": {"create": True},
                 },
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
             },
             show_only=sorted(
@@ -88,7 +88,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "crd": {"create": crd_create},
@@ -121,7 +121,7 @@ class TestAirflowOperator:
                 "crd": {"create": True},
             },
             "global": {
-                "airflowOperator": {"enabled": True},
+                "operator": {"enabled": True},
                 "plane": {"mode": plane_mode},
             },
         }
@@ -162,7 +162,7 @@ class TestAirflowOperator:
                     },
                 },
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
             },
             show_only=["charts/airflow-operator/templates/secrets/webhooks-tls.yaml"],
@@ -183,7 +183,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
                 "airflow-operator": {"webhooks": {"enabled": True}},
             },
@@ -214,7 +214,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
                 "airflow-operator": {"airgapped": True, "runtimeVersions": {"versionsJson": runtime_releases_json}},
             },
@@ -235,7 +235,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {
@@ -276,7 +276,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "webhooks": {"enabled": False},
@@ -293,7 +293,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {
@@ -335,7 +335,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
             },
             show_only=[
@@ -353,7 +353,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                     "privateRegistry": {
                         "enabled": True,
                         "repository": "my.private.registry/astronomer",
@@ -387,7 +387,7 @@ class TestAirflowOperator:
         np_file = "charts/airflow-operator/templates/manager/controller-manager-networkpolicy.yaml"
         values = {
             "global": {
-                "airflowOperator": {"enabled": operator_enabled},
+                "operator": {"enabled": operator_enabled},
                 "networkPolicy": {"enabled": np_enabled},
             },
         }
@@ -426,7 +426,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                     "networkPolicy": {"enabled": True},
                 },
             },
@@ -495,7 +495,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {"metrics": {"enabled": True}},
@@ -526,7 +526,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {"metrics": {"enabled": True}},
@@ -555,7 +555,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                     "openshift": {"enabled": openshift_enabled},
                 },
             },
@@ -579,7 +579,7 @@ class TestAirflowOperator:
     ):
         values = {
             "global": {
-                "airflowOperator": {"enabled": True},
+                "operator": {"enabled": True},
                 "rbac": {"enabled": rbac_enabled},
             },
             "airflow-operator": {
@@ -608,7 +608,7 @@ class TestAirflowOperator:
     @pytest.mark.parametrize(
         "operator_values",
         [
-            pytest.param({"global": {"airflowOperator": {"enabled": False}}}, id="explicitly-disabled"),
+            pytest.param({"global": {"operator": {"enabled": False}}}, id="explicitly-disabled"),
             pytest.param({}, id="default-unset"),
         ],
     )
@@ -637,7 +637,7 @@ class TestAirflowOperator:
     def test_airflow_operator_subchart_flag_precedence(self, kube_version, airflow_operator_values, global_enabled, should_render):
         values = {
             "global": {
-                "airflowOperator": {"enabled": global_enabled},
+                "operator": {"enabled": global_enabled},
                 "plane": {"mode": "unified"},
             },
         }
