@@ -35,6 +35,8 @@ class TestServiceAccounts:
             "global": {
                 "postgresql": {"enabled": True},
                 "nodeExporter": {"enabled": True},
+                # dp-link only ever renders in control mode
+                "plane": {"mode": "control"},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": True, "name": "commander-test"}},
@@ -94,6 +96,8 @@ class TestServiceAccounts:
             "global": {
                 "postgresql": {"enabled": True},
                 "nodeExporter": {"enabled": True},
+                # dp-link only ever renders in control mode
+                "plane": {"mode": "control"},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": True, "name": "commander-test", "automountServiceAccountToken": False}},
