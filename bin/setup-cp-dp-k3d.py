@@ -343,6 +343,30 @@ def _write_values_file(path: Path, content: str) -> None:
     path.write_text(content)
 
 
+def _set_pairs_to_nested_dict(pairs: tuple[str, ...]) -> dict:
+    """Turn Helm `--set` style dotted assignments (`a.b.c=value`) into a nested dict.
+    Values are kept as strings, which is all this is used for (image-tag pins)."""
+    root: dict = {}
+    for pair in pairs:
+        key, _, value = pair.partition("=")
+        node = root
+        parts = key.split(".")
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        node[parts[-1]] = value
+    return root
+
+
+def _write_set_overrides_as_values_file(pairs: tuple[str, ...]) -> Path:
+    """Write `--set`-style pins to a temp values file so later `--values` files
+    (e.g. --helm-values) can override them. Applying them as `--set` instead would
+    outrank every `--values` file regardless of order, silently defeating overrides."""
+    fd, path = tempfile.mkstemp(prefix="astro-k3d-image-pins-", suffix=".yaml")
+    with os.fdopen(fd, "w") as handle:
+        json.dump(_set_pairs_to_nested_dict(pairs), handle)  # JSON is valid YAML
+    return Path(path)
+
+
 def _version_specific_values_file(chart_version: str | None) -> Path:
     """
     Pick the plain, hand-written values file with the `global.*` + `houston.config.deployments.*`
@@ -590,7 +614,10 @@ def _helm_upgrade_install(
     `base_values_files` are applied BEFORE `values_file` (lowest precedence — e.g. the plain
     version-specific overrides in configs/local-*.yaml), so `values_file` (this script's
     per-invocation settings, like CP-vs-DP postgres enable/disable) always wins over them.
-    `extra_values_files` (e.g. --helm-values) are applied last and win over everything.
+    `extra_set` (version-alias image pins, e.g. MAIN_DEV_IMAGE_SET) is applied as a `--values`
+    layer just before `extra_values_files` — NOT as `--set`, which would outrank every
+    `--values` file regardless of order. `extra_values_files` (e.g. --helm-values) are applied
+    last and win over everything, so a --helm-values file can override an individual image pin.
     """
     chart_ref = HELM_CHART if chart_version else str(chart_dir)
     cmd = [
@@ -619,10 +646,14 @@ def _helm_upgrade_install(
         cmd.extend(["--version", chart_version])
         if chart_is_prerelease:
             cmd.append("--devel")
+    # Version-alias image pins (extra_set) go in as a --values layer BEFORE the
+    # user's --helm-values, so --helm-values override individual pins. Applying
+    # them as --set (as before) outranked every --values file regardless of order,
+    # silently defeating image-tag overrides from --helm-values.
+    if extra_set:
+        cmd.extend(["--values", str(_write_set_overrides_as_values_file(extra_set))])
     for extra in extra_values_files:
         cmd.extend(["--values", str(extra)])
-    for s in extra_set:
-        cmd.extend(["--set", s])
     if debug:
         cmd.append("--debug")
     _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
