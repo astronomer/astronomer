@@ -67,7 +67,7 @@ data:
           type: "vrl"
           source: |
             component = .kubernetes.pod_labels.component
-            includes(["scheduler", "webserver", "api-server", "worker", "triggerer", "git-sync-relay", "dag-server", "airflow-downgrade", "meta-cleanup", "dag-processor"], component)
+            includes(["scheduler", "webserver", "api-server", "worker", "triggerer", "git-sync-relay", "dag-server", "airflow-downgrade", "meta-cleanup", "dag-processor", "kpo"], component)
 
       transform_airflow_logs:
         type: remap
