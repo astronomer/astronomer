@@ -176,3 +176,35 @@ elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDoma
 elasticsearch.{{ .Values.global.baseDomain }}
 {{- end -}}
 {{- end -}}
+
+{{- define "curator.securityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required (omit .Values.curator.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required .Values.curator.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
+
+
+{{- define "exporter.securityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required (omit .Values.exporter.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required .Values.exporter.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
+
+
+{{- define "nginx.securityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required (omit .Values.nginx.securityContext "runAsUser") | toYaml }}
+{{- else }}
+{{- $required := dict "readOnlyRootFilesystem" true }}
+{{- merge $required .Values.nginx.securityContext | toYaml }}
+{{- end -}}
+{{- end }}
