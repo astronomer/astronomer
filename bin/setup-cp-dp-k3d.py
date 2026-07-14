@@ -114,16 +114,16 @@ def _install_service_monitor_crd(context: str) -> None:
 #
 # Numbered aliases resolve to a published chart version on HELM_REPO_URL, including
 # prereleases (most release-branch versions are only ever published as `-betaN` / timestamped
-# CI builds — see `_resolve_chart_version`). "main" is special: it installs from whatever chart
-# is currently checked out locally (no version pull). Pass `--helm-values
-# configs/pull-main-master-tags.yaml` separately to also float first-party image tags to their
-# unreleased branch builds (main/master) — decoupled from --version so it can be layered on any
-# chart source, not just a local checkout. "0.37" is also special: 0.37.x has no CP/DP split (see
-# bin/setup-037x-k3d.py), so main() delegates the whole run to that script before any CP/DP
-# settings are built.
-VERSION_ALIASES: tuple[str, ...] = ("0.37", "1.1.x", "1.2.x", "2.0.0", "2.0.1", "2.1", "main")
+# CI builds — see `_resolve_chart_version`). "local" is special: it installs from whatever chart
+# is currently checked out on disk (no version pull) — named for "local checkout", not any git
+# branch. Pass `--helm-values configs/pull-main-master-tags.yaml` separately to also float
+# first-party image tags to their unreleased branch builds (main/master) — decoupled from
+# --version so it can be layered on any chart source, not just a local checkout. "0.37" is also
+# special: 0.37.x has no CP/DP split (see bin/setup-037x-k3d.py), so main() delegates the whole
+# run to that script before any CP/DP settings are built.
+VERSION_ALIASES: tuple[str, ...] = ("0.37", "1.1.x", "1.2.x", "2.0.0", "2.0.1", "2.1", "local")
 DELEGATE_037_ALIAS = "0.37"
-MAIN_DEV_ALIAS = "main"
+LOCAL_CHECKOUT_ALIAS = "local"
 
 # Friendly topology labels for the interactive picker, mapped to the actual `global.plane.mode`
 # value the CP is installed with (see docs/architecture.md). "cp/dp" -> "control" because the DP
@@ -334,20 +334,20 @@ def _version_specific_values_file(chart_version: str | None) -> Path:
     """
     Pick the plain, hand-written values file with the `global.*` + `houston.config.deployments.*`
     overrides for this chart version's schema (see configs/local-1x.yaml, configs/local-2x.yaml,
-    configs/local-main.yaml — 1.x and 2.x renamed a bunch of these keys, see
+    configs/k3d-local-scenario.yaml — 1.x and 2.x renamed a bunch of these keys, see
     bin/helm_chart_values_migration_shared.py for the full rename list).
 
-    `chart_version=None` means installing from the local checkout (the `main` alias) — that's
-    exactly what configs/local-main.yaml is for. Deliberately not configs/local-dev.yaml: that
-    file is also used by the unrelated KinD-based bin/reset-local-dev workflow, so sharing it here
-    would mean a change made for one workflow could silently affect the other. 0.37.x (major
+    `chart_version=None` means installing from the local checkout (the `local` alias) — that's
+    exactly what configs/k3d-local-scenario.yaml is for. Deliberately not configs/local-dev.yaml:
+    that file is also used by the unrelated KinD-based bin/reset-local-dev workflow, so sharing it
+    here would mean a change made for one workflow could silently affect the other. 0.37.x (major
     version 0) shares 1.x's shape for everything these files set, so it reuses configs/local-1x.yaml
     too; it isn't actually installed through this code path in normal use (`--version 0.37`
     delegates the whole run to bin/setup-037x-k3d.py — see DELEGATE_037_ALIAS), this only matters
     if `--chart-version` is used to force a 0.37.x chart version directly.
     """
     if chart_version is None:
-        return GIT_ROOT_DIR / "configs" / "local-main.yaml"
+        return GIT_ROOT_DIR / "configs" / "k3d-local-scenario.yaml"
     major = chart_version.split(".", 1)[0]
     try:
         major_num = int(major)
@@ -1134,11 +1134,12 @@ def parse_args() -> argparse.Namespace:
             f"{', '.join(VERSION_ALIASES)}, or any exact/partial chart version known to "
             f"{HELM_REPO_URL} (e.g. '1.1.4'). "
             "'0.37' has no CP/DP split and delegates this entire run to bin/setup-037x-k3d.py. "
-            "'main' installs from whatever chart is currently checked out locally (no version "
-            "pull). Pass '--helm-values configs/pull-main-master-tags.yaml' separately to also "
-            "float houston/astroUI/commander to their unreleased main/master image tags — works "
-            "with any --version, not just 'main'. "
-            f"Omit to fall back to '{MAIN_DEV_ALIAS}' (pass --interactive to be prompted instead)."
+            "'local' installs from whatever chart is currently checked out on disk (no version "
+            "pull; named for 'local checkout', not any git branch). Pass '--helm-values "
+            "configs/pull-main-master-tags.yaml' separately to also float houston/astroUI/"
+            "commander to their unreleased main/master image tags — works with any --version, "
+            "not just 'local'. "
+            f"Omit to fall back to '{LOCAL_CHECKOUT_ALIAS}' (pass --interactive to be prompted instead)."
         ),
     )
     version_group.add_argument(
@@ -1273,12 +1274,12 @@ def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool]:
         alias = _prompt_choice(
             "Which Astronomer version do you want to install?",
             list(VERSION_ALIASES),
-            default=MAIN_DEV_ALIAS,
+            default=LOCAL_CHECKOUT_ALIAS,
             interactive=args.interactive,
         )
     if alias == DELEGATE_037_ALIAS:
         raise Delegate037
-    if alias == MAIN_DEV_ALIAS:
+    if alias == LOCAL_CHECKOUT_ALIAS:
         return None, False
 
     _ensure_helm_repo()
