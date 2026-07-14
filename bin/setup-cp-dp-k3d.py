@@ -46,9 +46,11 @@ from k3d_setup_shared import (
     HELPER_DIR,
     CommandError,
     Milestones,
+    _apply_node_hosts_daemonset,
     _debug,
     _delete_k3d_cluster,
     _docker_inspect_ip,
+    _docker_network_gateway,
     _ensure_docker_network,
     _ensure_helm_repo,
     _ensure_local_registries,
@@ -713,21 +715,6 @@ def _ensure_dp_node_houston_hosts_pin(settings: Settings, dp: DataPlane) -> None
         _debug(f"Ensured /etc/hosts pin on {container}: {gateway} {houston_host}")
 
 
-NODE_HOSTS_DAEMONSET_TEMPLATE = GIT_ROOT_DIR / "configs" / "local-node-hosts-daemonset.yaml"
-
-
-def _node_hosts_daemonset_manifest(ds_name: str, line: str) -> str:
-    """Fill in configs/local-node-hosts-daemonset.yaml: a DaemonSet that re-appends `line` to each
-    node's /etc/hosts every 30s (self-healing across Docker/OrbStack restarts)."""
-    return NODE_HOSTS_DAEMONSET_TEMPLATE.read_text().format(ds_name=ds_name, hosts_line=line)
-
-
-def _apply_node_hosts_daemonset(context: str, ds_name: str, line: str) -> None:
-    manifest = _node_hosts_daemonset_manifest(ds_name, line)
-    _run(["kubectl", "--context", context, "-n", "kube-system", "apply", "-f", "-"], stdin=manifest, check=True)
-    _print(f"  {context}: {ds_name} re-pins '{line}' on every start (survives restarts)")
-
-
 def _ensure_node_hosts_daemonset(settings: Settings) -> None:
     """Persistently keep cross-cluster hostnames pinned to the gateway in each node's /etc/hosts.
 
@@ -995,22 +982,6 @@ def _setup_local_networking(settings: Settings) -> str:
     check_hosts = [f"houston.{base}"] + [f"commander.{prefix}.{base}" for prefix, _ in dp_entries]
     _verify_local_networking(base, check_hosts)
     return f"resolver {'created' if changed else 'present'}; proxy CP:{primary_cp.https_port} DP:{[p for _, p in dp_entries]}"
-
-
-def _docker_network_gateway(network: str) -> str:
-    """Return a docker network's gateway IP — the host address every container/pod on it can reach.
-
-    For the named `astronomer-net` this is fixed for the network's lifetime, so (unlike the k3d
-    node/LB container IPs the reconcile pins) it does NOT drift across OrbStack restarts.
-    """
-    proc = _run(
-        ["docker", "network", "inspect", network, "--format", "{{range .IPAM.Config}}{{.Gateway}}{{end}}"],
-        check=True,
-    )
-    gateway = (proc.stdout or "").strip()
-    if not gateway:
-        raise RuntimeError(f"could not determine the gateway IP of docker network {network!r}")
-    return gateway
 
 
 def _coredns_custom_override(match_regexes: list[str], gateway_ip: str) -> str:
