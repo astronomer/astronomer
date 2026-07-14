@@ -69,7 +69,8 @@ spec:
                     "--web.listen-address=:{{ .Values.exporter.service.httpPort }}",
                     "--web.telemetry-path={{ .Values.exporter.web.path }}"]
 
-          securityContext: {{- include "exporter.securityContext" . | nindent 12 }}
+          securityContext:
+            {{- include "platform.containerSecurityContext" (list . .Values.exporter.securityContext) | nindent 12 }}
           resources: {{- toYaml .Values.exporter.resources | nindent 12 }}
           ports:
             - containerPort: {{ .Values.exporter.service.httpPort }}

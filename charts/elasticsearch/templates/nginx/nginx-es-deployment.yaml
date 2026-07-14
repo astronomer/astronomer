@@ -51,7 +51,8 @@ spec:
         - name: nginx
           image: {{ template "nginx-es.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          securityContext: {{- include "nginx.securityContext" . | nindent 12 }}
+          securityContext:
+            {{- include "platform.containerSecurityContext" (list . .Values.nginx.securityContext) | nindent 12 }}
           resources: {{- toYaml .Values.nginx.resources | nindent 12 }}
           volumeMounts:
             - name: tmp
