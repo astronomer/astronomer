@@ -435,6 +435,21 @@ data:
             from airflow.configuration import conf
             from airflow.version import version
             xcom_sidecar_image = "{{ template "defaultXcomSidecarImage" . }}"
+            def _read_podinfo_label(name, default="unknown"):
+              # KPO pods are created client-side by whatever process (scheduler or
+              # worker) is executing the task, so we can't get the *new* pod's
+              # release/workspace from Helm context here -- this code is rendered
+              # once, at platform install time, not per Airflow deployment. Instead
+              # we read the *current* pod's own release/workspace labels back via a
+              # Kubernetes downward API volume (see airflow-chart's
+              # scheduler/workers/triggerer extraVolumes), and stamp the same values
+              # onto the KPO pod we're mutating.
+              try:
+                with open(f"/etc/podinfo/{name}") as f:
+                  value = f.read().strip()
+                  return value or default
+              except OSError:
+                return default
             try:
               from airflow.providers.cncf.kubernetes.utils.xcom_sidecar import PodDefaults
               PodDefaults.SIDECAR_CONTAINER.image = xcom_sidecar_image
@@ -473,6 +488,12 @@ data:
                   # an Airflow container).
                   extra_labels["kubernetes-pod-operator"] = "True"
                   extra_labels["kubernetes-executor"] = "False"
+                  # These labels are required for KPO task logs to be picked up and
+                  # routed to Elasticsearch by the log shipper (PINF-XXX).
+                  extra_labels["component"] = "kpo"
+                  extra_labels["tier"] = "airflow"
+                  extra_labels["release"] = _read_podinfo_label("release")
+                  extra_labels["workspace"] = _read_podinfo_label("workspace")
               pod.labels.update(extra_labels)
             def pod_mutation_hook_new(pod):
               extra_labels = {
@@ -545,6 +566,12 @@ data:
                   # an Airflow container).
                   extra_labels["kubernetes-pod-operator"] = "True"
                   extra_labels["kubernetes-executor"] = "False"
+                  # These labels are required for KPO task logs to be picked up and
+                  # routed to Elasticsearch by the log shipper (PINF-XXX).
+                  extra_labels["component"] = "kpo"
+                  extra_labels["tier"] = "airflow"
+                  extra_labels["release"] = _read_podinfo_label("release")
+                  extra_labels["workspace"] = _read_podinfo_label("workspace")
               pod.metadata.labels.update(extra_labels)
             def pod_mutation_hook(pod):
               try:
