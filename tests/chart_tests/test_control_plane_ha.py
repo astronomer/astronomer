@@ -1,9 +1,12 @@
 """Tests for the Control Plane HA (global.controlPlaneHA) chart wiring (PINF-768).
 
-Covers, behind the default-off `global.controlPlaneHA.enabled` flag:
-  * cp-identity Secret (generated only in HA mode; required-globalBaseDomain guard)
+Covers:
+  * cp-identity Secret: generated on every control/unified plane install regardless of
+    HA state (PINF-760), so a stable cp_id exists from initial single-CP install and is
+    already available if/when HA is later enabled; data-plane installs never generate it;
+    required-globalBaseDomain guard still applies only when HA is enabled.
   * JWT signing keypair generation gating (jwks.generation.enabled / HA)
-  * CP_ID env var on every CP reconciliation-loop pod
+  * CP_ID env var on every CP reconciliation-loop pod, still gated on HA
     (Houston API + worker, dp-link, navigator)
   * helm.globalBaseDomain / cookieDomain / cookieName in the houston configmap
 """
@@ -54,13 +57,36 @@ def _no_container_has_cp_id(doc):
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestCpIdentitySecret:
-    def test_absent_when_ha_disabled(self, kube_version):
-        """No cp-identity Secret on a default (non-HA) install."""
-        docs = render_chart(kube_version=kube_version, show_only=[CP_IDENTITY_FILE])
+    @pytest.mark.parametrize("mode", ["control", "unified"])
+    def test_generated_when_ha_disabled(self, kube_version, mode):
+        """cp-identity Secret is generated on control/unified installs even with HA off (PINF-760).
+
+        This is the core behavior change: a stable cp_id must exist from the initial
+        single-CP install so it's already available if/when the customer later enables HA,
+        rather than being minted for the first time at the HA-enable flip.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[CP_IDENTITY_FILE],
+            values={"global": {"plane": {"mode": mode}, "controlPlaneHA": {"enabled": False}}},
+        )
+        assert len(docs) == 1
+        secret = docs[0]
+        assert secret["kind"] == "Secret"
+        assert secret["metadata"]["name"] == "cp-identity"
+        assert secret["data"]["cp_id"]  # non-empty (uuid, base64-encoded)
+
+    def test_absent_on_data_plane_when_ha_disabled(self, kube_version):
+        """Data-plane installs never generate cp-identity; the plane-mode gate still applies."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[CP_IDENTITY_FILE],
+            values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": False}}},
+        )
         assert docs == []
 
     def test_generated_when_ha_enabled(self, kube_version):
-        """cp-identity Secret rendered with a base64 cp_id in HA mode."""
+        """cp-identity Secret rendered with a base64 cp_id in HA mode (existing behavior preserved)."""
         docs = render_chart(kube_version=kube_version, show_only=[CP_IDENTITY_FILE], values=_ha_values())
         assert len(docs) == 1
         secret = docs[0]
@@ -133,6 +159,48 @@ class TestCpIdentitySecret:
             values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": True}}},
         )
         assert docs == []
+
+    def test_cp_id_survives_ha_disable_then_reenable(self, kube_version):
+        """cp_id minted at single-CP install time is preserved across an HA disable/re-enable toggle.
+
+        `helm template` has no cluster to run `lookup` against (it always sees an empty
+        cluster), so the `lookup`-finds-the-existing-Secret branch can't be exercised directly
+        in this render-only test harness. This instead pins the cp_id captured from the initial
+        HA-off render via the explicit `global.controlPlaneHA.cpId` override for the later
+        renders — the same value the chart would read back from the real cp-identity Secret
+        (protected by `helm.sh/resource-policy: keep`) during an actual `helm upgrade` toggle.
+        """
+        import base64
+
+        # Single-CP install: cp-identity is generated for the first time (HA off).
+        initial = render_chart(
+            kube_version=kube_version,
+            show_only=[CP_IDENTITY_FILE],
+            values={"global": {"plane": {"mode": "control"}, "controlPlaneHA": {"enabled": False}}},
+        )
+        assert len(initial) == 1
+        cp_id = base64.b64decode(initial[0]["data"]["cp_id"]).decode()
+
+        # HA-enable: on a real cluster `lookup` would find the Secret above and reuse cp_id.
+        enabled = render_chart(
+            kube_version=kube_version,
+            show_only=[CP_IDENTITY_FILE],
+            values=_ha_values(cpId=cp_id),
+        )
+        assert base64.b64decode(enabled[0]["data"]["cp_id"]).decode() == cp_id
+
+        # HA-disable again: the same cp_id remains in place for a future re-enable.
+        disabled_again = render_chart(
+            kube_version=kube_version,
+            show_only=[CP_IDENTITY_FILE],
+            values={
+                "global": {
+                    "plane": {"mode": "control"},
+                    "controlPlaneHA": {"enabled": False, "cpId": cp_id},
+                }
+            },
+        )
+        assert base64.b64decode(disabled_again[0]["data"]["cp_id"]).decode() == cp_id
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -255,3 +323,94 @@ class TestHoustonConfigHelmValues:
         helm = self.production_yaml_prod_helm(render_chart(kube_version=kube_version, show_only=[CONFIGMAP_FILE], values=values))
         assert helm["cookieDomain"] == ".example.com"
         assert helm["cookieName"] == "astronomer_custom_auth"
+
+
+DP_HEADERS_FILE = "charts/nginx/templates/dataplane/nginx-dp-headers-configmap.yaml"
+CP_HEADERS_FILE = "charts/nginx/templates/controlplane/nginx-cp-headers-configmap.yaml"
+
+
+def _csp_directives(doc):
+    """Parse a rendered CSP header into {directive: [sources...]}."""
+    out = {}
+    for part in doc["data"]["Content-Security-Policy"].split(";"):
+        toks = part.split()
+        if toks:
+            out[toks[0]] = toks[1:]
+    return out
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestNginxCspGlobalDomain:
+    """PINF-974: when controlPlaneHA is enabled, customer/deployment UIs are also served on
+    the global host family (*.<globalBaseDomain>) — a sibling of *.<baseDomain> that the
+    per-CP wildcard does NOT cover. The nginx CSP (script-src/style-src/etc.) must allow the
+    global host too, or same-origin CSS/JS/XHR on the global host is blocked. Guards both the
+    data-plane and control-plane headers ConfigMaps."""
+
+    GLOBAL_WILDCARD = "*.astro.example.com"
+    GLOBAL_WSS = "wss://*.astro.example.com"
+    HA_DIRECTIVES = ("default-src", "connect-src", "font-src", "script-src", "style-src", "worker-src")
+
+    def _headers(self, kube_version, show_only, mode, base_domain, cpha=None):
+        # baseDomain is applied by render_chart via --set (overrides the values dict), so
+        # pass it through the dedicated kwarg rather than nesting it under values.
+        values = {"global": {"plane": {"mode": mode}}}
+        if cpha is not None:
+            values["global"]["controlPlaneHA"] = cpha
+        docs = render_chart(kube_version=kube_version, baseDomain=base_domain, show_only=[show_only], values=values)
+        assert len(docs) == 1
+        return _csp_directives(docs[0])
+
+    def test_dp_global_host_present_when_ha_enabled(self, kube_version):
+        csp = self._headers(
+            kube_version,
+            DP_HEADERS_FILE,
+            "data",
+            "dp.example.com",
+            {"enabled": True, "globalBaseDomain": "astro.example.com"},
+        )
+        for directive in self.HA_DIRECTIVES:
+            assert self.GLOBAL_WILDCARD in csp[directive], f"{directive} missing global host"
+        assert self.GLOBAL_WSS in csp["connect-src"]
+        assert "*.dp.example.com" in csp["script-src"]  # per-CP family still allowed
+
+    def test_cp_global_host_present_when_ha_enabled(self, kube_version):
+        csp = self._headers(
+            kube_version,
+            CP_HEADERS_FILE,
+            "control",
+            "cp.example.com",
+            {"enabled": True, "globalBaseDomain": "astro.example.com"},
+        )
+        for directive in self.HA_DIRECTIVES:
+            assert self.GLOBAL_WILDCARD in csp[directive], f"{directive} missing global host"
+        assert self.GLOBAL_WSS in csp["connect-src"]
+        assert "*.cp.example.com" in csp["script-src"]
+
+    def test_dp_no_global_host_when_ha_disabled(self, kube_version):
+        csp = self._headers(kube_version, DP_HEADERS_FILE, "data", "dp.example.com")
+        for sources in csp.values():
+            assert self.GLOBAL_WILDCARD not in sources
+            assert self.GLOBAL_WSS not in sources
+
+    def test_cp_no_global_host_when_ha_disabled(self, kube_version):
+        csp = self._headers(kube_version, CP_HEADERS_FILE, "control", "cp.example.com")
+        for sources in csp.values():
+            assert self.GLOBAL_WILDCARD not in sources
+            assert self.GLOBAL_WSS not in sources
+
+    def test_no_global_host_when_enabled_but_global_base_domain_unset(self, kube_version):
+        """Guard requires BOTH enabled and globalBaseDomain.
+
+        Data plane: renders with `enabled` alone and injects nothing — neither the wildcard
+        nor the `wss://` source. Control plane: enabling HA without globalBaseDomain is a hard
+        render failure (the cp-identity guard), so the CP headers can never reach an
+        enabled-but-unset state; assert that failure rather than a header that never renders.
+        """
+        csp = self._headers(kube_version, DP_HEADERS_FILE, "data", "dp.example.com", {"enabled": True})
+        for sources in csp.values():
+            assert self.GLOBAL_WILDCARD not in sources
+            assert self.GLOBAL_WSS not in sources
+
+        with pytest.raises(CalledProcessError):
+            self._headers(kube_version, CP_HEADERS_FILE, "control", "cp.example.com", {"enabled": True})

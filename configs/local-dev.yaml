@@ -14,6 +14,7 @@ tags:
   nats: true
 
 global:
+  helmRepo: "https://internal-helm.astronomer.io"
   # Base domain for all subdomains exposed through ingress
   baseDomain: localtest.me
   # Mode of the plane, can be 'data', 'unified' or 'local'
@@ -36,6 +37,9 @@ global:
   # Each secret must have one data entry 'cert.pem'
   privateCaCerts:
   - private-ca
+  deployMechanisms:
+    dagOnlyDeployment:
+      enabled: true
 
 nats:
   cluster:
@@ -77,6 +81,22 @@ astronomer:
       auth:
         local:
           enabled: true
+      deployments:
+        logHelmValues:
+          enabled: true
+        deployMechanisms:
+          dagOnlyDeployment:
+            enabled: true
+          gitSyncDagDeployment:
+            enabled: true
+          configureDagDeployment:
+            enabled: true
+        runtimeManagement:
+          airflowV3:
+            enabled: true
+            minimumAstroRuntimeVersion: "3.1-2"
+          listAllRuntimeVersions:
+            enabled: true
   commander:
     replicas: 1
     resources:

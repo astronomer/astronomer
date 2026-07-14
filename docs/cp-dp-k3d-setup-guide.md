@@ -717,6 +717,13 @@ kubectl --context k3d-cp01 -n kube-system wait --for=condition=ready pod -l k8s-
 
 ## Step 11: Configure Local Machine DNS
 
+> **If you're using `bin/setup-cp-dp-k3d.py`, this step is automatic.** The script runs a local
+> dnsmasq container (resolves `*.<base-domain>` to `127.0.0.1`, wired in via a one-time
+> `/etc/resolver/<base-domain>` file) plus an nginx SNI-passthrough proxy on host `:443` that
+> routes each hostname to the right cluster's published port — so `https://houston.localtest.me`
+> and `https://deployments.dp01.localtest.me` (no port) both just work, no `/etc/hosts` editing.
+> Pass `--skip-local-networking` to opt out and fall back to the manual steps below.
+
 ```bash
 # IMPORTANT: host access on OrbStack (macOS)
 # - In OrbStack, the k3d "LoadBalancer EXTERNAL-IP" (often 192.168.147.x) may be reachable from OTHER containers,

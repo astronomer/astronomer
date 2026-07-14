@@ -235,13 +235,19 @@ class TestHoustonHookJob:
     supported_k8s_versions,
 )
 class TestRefreshCpChartVersionHookJob:
-    """The CP chartVersion refresh post-upgrade hook (PINF-930)."""
+    """The CP chartVersion refresh post-upgrade hook (PINF-930).
 
-    def test_defaults_on_control_plane(self, kube_version):
-        """Rendered on a control plane (mirrors db-migration/upgrade-deployments): name, args, mount."""
+    Unlike the cp-identity Secret, this job is gated on controlPlaneHA.enabled in addition
+    to plane mode: cross-CP chartVersion coordination is meaningless with a single CP, and
+    (without HA) CP_ID is never wired to the job either, so running it would just spin up a
+    pod that no-ops.
+    """
+
+    def test_defaults_on_control_plane_with_ha(self, kube_version):
+        """Rendered on a control plane with HA enabled (mirrors db-migration/upgrade-deployments): name, args, mount."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "control"}}},
+            values=_ha_values(),
             show_only=[REFRESH_CP_CHART_VERSION_FILE],
         )
 
@@ -265,11 +271,21 @@ class TestRefreshCpChartVersionHookJob:
             "subPath": "production.yaml",
         } in job["volumeMounts"]
 
-    def test_absent_on_data_plane(self, kube_version):
-        """A data-plane render emits no refresh Job (no CP registry on the data plane)."""
+    @pytest.mark.parametrize("mode", ["control", "unified"])
+    def test_absent_when_ha_disabled(self, kube_version, mode):
+        """No refresh Job on control/unified installs while HA is off (new behavior)."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": mode}, "controlPlaneHA": {"enabled": False}}},
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+        assert docs == []
+
+    def test_absent_on_data_plane(self, kube_version):
+        """A data-plane render emits no refresh Job (no CP registry on the data plane), even with HA enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": True}}},
             show_only=[REFRESH_CP_CHART_VERSION_FILE],
         )
         assert docs == []
@@ -278,7 +294,7 @@ class TestRefreshCpChartVersionHookJob:
         """post-upgrade hook, ordered after the pre-upgrade db-migration job."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "control"}}},
+            values=_ha_values(),
             show_only=[REFRESH_CP_CHART_VERSION_FILE],
         )
 
@@ -300,16 +316,3 @@ class TestRefreshCpChartVersionHookJob:
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
         env = get_env_vars_dict(c_by_name["refresh-cp-chart-version-job"].get("env", []))
         assert env.get("CP_ID") == {"secretKeyRef": {"name": "cp-identity", "key": "cp_id"}}
-
-    def test_cp_id_env_absent_without_ha(self, kube_version):
-        """Without HA there is no cp-identity Secret, so the script no-ops (no CP_ID wired)."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"plane": {"mode": "control"}}},
-            show_only=[REFRESH_CP_CHART_VERSION_FILE],
-        )
-
-        assert len(docs) == 1
-        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
-        env = get_env_vars_dict(c_by_name["refresh-cp-chart-version-job"].get("env", []))
-        assert "CP_ID" not in env

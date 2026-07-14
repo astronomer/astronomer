@@ -334,6 +334,11 @@ def test_default_serviceaccount_names(template_name):
     }
     if any(substring in template_name for substring in data_plane_only_template_substrings):
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
+    if any(substring in template_name for substring in ha_only_template_substrings):
+        default_serviceaccount_names_overrides["global"]["controlPlaneHA"] = {
+            "enabled": True,
+            "globalBaseDomain": "example.com",
+        }
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
     docs = render_chart(show_only=template_name, values=values)
@@ -502,6 +507,9 @@ data_plane_only_template_substrings = (
     "commander-jwks-hooks",
 )
 
+# Templates gated on Control Plane HA; render them with controlPlaneHA.enabled=True.
+ha_only_template_substrings = ("houston-cp-refresh-job",)
+
 
 @pytest.mark.parametrize(
     "template_name",
@@ -531,6 +539,9 @@ def test_custom_serviceaccount_names(template_name):
     if any(substring in template_name for substring in data_plane_only_template_substrings):
         plane_config = {"global": {"plane": {"mode": "data"}}}
         values = always_merger.merge(values, plane_config)
+    if any(substring in template_name for substring in ha_only_template_substrings):
+        ha_config = {"global": {"controlPlaneHA": {"enabled": True, "globalBaseDomain": "example.com"}}}
+        values = always_merger.merge(values, ha_config)
     values = always_merger.merge(values, enable_pgsql_sa)
 
     docs = render_chart(show_only=template_name, values=values)
