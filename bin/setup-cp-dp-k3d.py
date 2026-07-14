@@ -115,27 +115,15 @@ def _install_service_monitor_crd(context: str) -> None:
 # Numbered aliases resolve to a published chart version on HELM_REPO_URL, including
 # prereleases (most release-branch versions are only ever published as `-betaN` / timestamped
 # CI builds — see `_resolve_chart_version`). "main" is special: it installs from whatever chart
-# is currently checked out locally (no version pull) with dev image tags floated in. "0.37" is
-# also special: 0.37.x has no CP/DP split (see bin/setup-037x-k3d.py), so main() delegates the
-# whole run to that script before any CP/DP settings are built.
+# is currently checked out locally (no version pull). Pass `--helm-values
+# configs/pull-main-master-tags.yaml` separately to also float first-party image tags to their
+# unreleased branch builds (main/master) — decoupled from --version so it can be layered on any
+# chart source, not just a local checkout. "0.37" is also special: 0.37.x has no CP/DP split (see
+# bin/setup-037x-k3d.py), so main() delegates the whole run to that script before any CP/DP
+# settings are built.
 VERSION_ALIASES: tuple[str, ...] = ("0.37", "1.1.x", "1.2.x", "2.0.0", "2.0.1", "2.1", "main")
 DELEGATE_037_ALIAS = "0.37"
 MAIN_DEV_ALIAS = "main"
-
-# `main` floats these first-party image tags to their unreleased branch tag instead of whatever
-# the locally checked-out chart pins by default. Houston's API and worker deployments share a
-# single `images.houston.tag` knob, so one override covers both (and so does the db-migrations
-# job, which runs off the same houston image). `ap-registry` / `ap-vector` are vendored/upstream-
-# tracking images with no "main" build, so they are left at chart defaults.
-#
-# NOTE: `charts/astronomer` is installed as a named subchart ("astronomer") of the root umbrella
-# chart, so overrides must be scoped under `astronomer.` — bare `images.houston.tag=...` sets an
-# unused top-level key on the umbrella chart and silently no-ops (verified via `helm template`).
-MAIN_DEV_IMAGE_SET: tuple[str, ...] = (
-    "astronomer.images.houston.tag=main",
-    "astronomer.images.astroUI.tag=main",
-    "astronomer.images.commander.tag=master",
-)
 
 # Friendly topology labels for the interactive picker, mapped to the actual `global.plane.mode`
 # value the CP is installed with (see docs/architecture.md). "cp/dp" -> "control" because the DP
@@ -178,7 +166,6 @@ class Settings:
     enable_operator: bool
     chart_version: str | None = None
     chart_is_prerelease: bool = False
-    extra_helm_set: tuple[str, ...] = ()
     agents: int = 0
 
 
@@ -341,30 +328,6 @@ def _ensure_tls_certs(settings: Settings) -> tuple[dict[str, tuple[Path, Path]],
 
 def _write_values_file(path: Path, content: str) -> None:
     path.write_text(content)
-
-
-def _set_pairs_to_nested_dict(pairs: tuple[str, ...]) -> dict:
-    """Turn Helm `--set` style dotted assignments (`a.b.c=value`) into a nested dict.
-    Values are kept as strings, which is all this is used for (image-tag pins)."""
-    root: dict = {}
-    for pair in pairs:
-        key, _, value = pair.partition("=")
-        node = root
-        parts = key.split(".")
-        for part in parts[:-1]:
-            node = node.setdefault(part, {})
-        node[parts[-1]] = value
-    return root
-
-
-def _write_set_overrides_as_values_file(pairs: tuple[str, ...]) -> Path:
-    """Write `--set`-style pins to a temp values file so later `--values` files
-    (e.g. --helm-values) can override them. Applying them as `--set` instead would
-    outrank every `--values` file regardless of order, silently defeating overrides."""
-    fd, path = tempfile.mkstemp(prefix="astro-k3d-image-pins-", suffix=".yaml")
-    with os.fdopen(fd, "w") as handle:
-        json.dump(_set_pairs_to_nested_dict(pairs), handle)  # JSON is valid YAML
-    return Path(path)
 
 
 def _version_specific_values_file(chart_version: str | None) -> Path:
@@ -607,17 +570,14 @@ def _helm_upgrade_install(
     debug: bool,
     chart_version: str | None = None,
     chart_is_prerelease: bool = False,
-    extra_set: tuple[str, ...] = (),
     base_values_files: tuple[Path, ...] = (),
 ) -> None:
     """
     `base_values_files` are applied BEFORE `values_file` (lowest precedence — e.g. the plain
     version-specific overrides in configs/local-*.yaml), so `values_file` (this script's
     per-invocation settings, like CP-vs-DP postgres enable/disable) always wins over them.
-    `extra_set` (version-alias image pins, e.g. MAIN_DEV_IMAGE_SET) is applied as a `--values`
-    layer just before `extra_values_files` — NOT as `--set`, which would outrank every
-    `--values` file regardless of order. `extra_values_files` (e.g. --helm-values) are applied
-    last and win over everything, so a --helm-values file can override an individual image pin.
+    `extra_values_files` (e.g. --helm-values, including configs/pull-main-master-tags.yaml) are
+    applied last and win over everything.
     """
     chart_ref = HELM_CHART if chart_version else str(chart_dir)
     cmd = [
@@ -646,12 +606,6 @@ def _helm_upgrade_install(
         cmd.extend(["--version", chart_version])
         if chart_is_prerelease:
             cmd.append("--devel")
-    # Version-alias image pins (extra_set) go in as a --values layer BEFORE the
-    # user's --helm-values, so --helm-values override individual pins. Applying
-    # them as --set (as before) outranked every --values file regardless of order,
-    # silently defeating image-tag overrides from --helm-values.
-    if extra_set:
-        cmd.extend(["--values", str(_write_set_overrides_as_values_file(extra_set))])
     for extra in extra_values_files:
         cmd.extend(["--values", str(extra)])
     if debug:
@@ -1180,8 +1134,10 @@ def parse_args() -> argparse.Namespace:
             f"{', '.join(VERSION_ALIASES)}, or any exact/partial chart version known to "
             f"{HELM_REPO_URL} (e.g. '1.1.4'). "
             "'0.37' has no CP/DP split and delegates this entire run to bin/setup-037x-k3d.py. "
-            "'main' installs from the locally checked-out chart and floats "
-            "houston/astroUI/dbBootstrapper to the 'main' image tag and commander to 'master'. "
+            "'main' installs from whatever chart is currently checked out locally (no version "
+            "pull). Pass '--helm-values configs/pull-main-master-tags.yaml' separately to also "
+            "float houston/astroUI/commander to their unreleased main/master image tags — works "
+            "with any --version, not just 'main'. "
             f"Omit to fall back to '{MAIN_DEV_ALIAS}' (pass --interactive to be prompted instead)."
         ),
     )
@@ -1192,7 +1148,7 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Exact Astronomer chart version to install from the remote Helm repo "
             f"({HELM_REPO_URL}), e.g. '1.2.3-beta1'. Bypasses --version alias resolution "
-            "(including the 0.37 delegation and the 'main' dev-image overrides)."
+            "(including the 0.37 delegation)."
         ),
     )
 
@@ -1294,9 +1250,9 @@ class Delegate037(Exception):
     """Raised by `_resolve_version` when --version resolves to "0.37" (no CP/DP split)."""
 
 
-def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool, tuple[str, ...]]:
+def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool]:
     """
-    Resolve --version/--chart-version into (chart_version, chart_is_prerelease, extra_helm_set).
+    Resolve --version/--chart-version into (chart_version, chart_is_prerelease).
 
     Raises Delegate037 if the resolved alias is "0.37": the caller must run
     bin/setup-037x-k3d.py instead of continuing with the normal CP/DP flow, since 0.37.x has no
@@ -1310,7 +1266,7 @@ def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool, tuple[
                 f"...` and must be an exact version published on {HELM_REPO_URL} (e.g. "
                 f"'1.2.3-beta1'). Use `--version {args.chart_version}` instead."
             )
-        return args.chart_version, "-" in args.chart_version, ()
+        return args.chart_version, "-" in args.chart_version
 
     alias = args.version_alias
     if alias is None:
@@ -1323,11 +1279,11 @@ def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool, tuple[
     if alias == DELEGATE_037_ALIAS:
         raise Delegate037
     if alias == MAIN_DEV_ALIAS:
-        return None, False, MAIN_DEV_IMAGE_SET
+        return None, False
 
     _ensure_helm_repo()
     resolved = _resolve_chart_version(alias, HELM_CHART)
-    return resolved, "-" in resolved, ()
+    return resolved, "-" in resolved
 
 
 def _run_setup_037(args: argparse.Namespace) -> int:
@@ -1393,7 +1349,7 @@ def main() -> int:  # noqa: C901
 
     _require_executable("helm", hint="Install helm and ensure it is in PATH.")
     try:
-        resolved_chart_version, chart_is_prerelease, extra_helm_set = _resolve_version(args)
+        resolved_chart_version, chart_is_prerelease = _resolve_version(args)
     except Delegate037:
         return _run_setup_037(args)
     except (CommandError, RuntimeError) as e:
@@ -1464,7 +1420,6 @@ def main() -> int:  # noqa: C901
         enable_operator=enable_operator,
         chart_version=resolved_chart_version,
         chart_is_prerelease=chart_is_prerelease,
-        extra_helm_set=extra_helm_set,
         agents=args.num_compute_nodes,
     )
 
@@ -1663,7 +1618,6 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
-                    extra_set=settings.extra_helm_set,
                 )
                 ms.done(h)
 
@@ -1735,7 +1689,6 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
-                    extra_set=settings.extra_helm_set,
                 )
                 ms.done(h)
         else:
