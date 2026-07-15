@@ -99,18 +99,19 @@ global:
     containerdCertCopier:
       startupProbe: {}
     priorityClassName: ~
-  # Global flag that makes Houston/Commander operator-aware. This chart also ships an
-  # airflow-operator subchart, installed by default. To run a true adoption setup — where the
-  # operator already exists on the data plane instead of being installed by this chart — set
-  # `airflow-operator.enabled: false` (see Chart.yaml) while leaving this flag `true`.
-  # This will give commander necessary permissions to read Airflow CRs from the data plane.
-  airflowOperator:
+  operator:
+    # Turn on operator-based Airflow deployments. When enabled, this chart installs
+    # the airflow-operator by default and grants Astronomer the permissions it needs
+    # to manage Airflow deployments through the operator.
+    #
+    # Already running your own operator on the cluster? Keep this enabled, but set
+    # `airflow-operator.enabled: false` (see Chart.yaml) so Astronomer works with your
+    # existing operator instead of installing its own.
     enabled: false
 
-  operator:
-    # Enable adoptDeployment mutation — allows adopting existing Airflow CRs from
-    # customer-managed dataplanes into Houston without recreating Kubernetes resources.
     adoption:
+      # Allow Astronomer to adopt Airflow deployments that already exist on your
+      # cluster, so you can bring them under management without recreating them.
       enabled: true
 
   # Feature flags

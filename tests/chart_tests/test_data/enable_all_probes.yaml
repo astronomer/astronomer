@@ -465,7 +465,7 @@ vector:
         command:
         - /bin/true
 global:
-  airflowOperator:
+  operator:
     enabled: true
   authSidecar:
     enabled: true
