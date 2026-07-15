@@ -65,7 +65,7 @@ These render in every mode (subject to their own enable flag) and run independen
 | PostgreSQL                   | In-cluster database for dev/test (production should use external) | `global.postgresql.enabled`                 |
 | PgBouncer                    | Connection pooling in front of Postgres                           | `global.pgbouncer.enabled`                  |
 | prometheus-postgres-exporter | Database metrics                                                  | `global.prometheusPostgresExporter.enabled` |
-| airflow-operator             | Optional CRD-based Airflow management                             | `global.airflowOperator.enabled`            |
+| airflow-operator             | Optional CRD-based Airflow management                             | `global.operator.enabled`                   |
 | external-secrets (ESO)       | Secret synchronization                                            | `external-secrets.enabled`                  |
 
 `Chart.yaml` is the canonical source for conditions and tags; `values.yaml` is the canonical source for `global.plane.*` defaults.
