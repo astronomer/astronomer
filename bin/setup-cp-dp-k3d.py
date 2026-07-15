@@ -358,7 +358,7 @@ def _version_specific_values_file(chart_version: str | None) -> Path:
 
 
 def _cp_values_yaml(settings: Settings) -> str:
-    operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
+    operator_block = "  operator:\n    enabled: true\n" if settings.enable_operator else ""
     operator_subchart_block = (
         """\
 airflow-operator:
@@ -416,8 +416,8 @@ postgresql:
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     """Generate DP Helm values. Postgres on/off is decided by main() via configs/postgres-*.yaml
     depending on --dp-airflow-db — each DP runs its own database rather than sharing the CP's."""
-    global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
-    # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
+    global_operator_block = "  operator:\n    enabled: true\n" if settings.enable_operator else ""
+    # The airflow-operator subchart is enabled by `global.operator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
     # that flag is on; we emit it only in that case for clarity.
     operator_subchart_block = (
@@ -1227,7 +1227,7 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=None,
         help=(
-            "Enable Airflow operator mode. Sets global.airflowOperator.enabled=true on "
+            "Enable Airflow operator mode. Sets global.operator.enabled=true on "
             "both CP and DP, and renders the airflow-operator subchart values on the DP. "
             "Pass --no-enable-operator to fall back to the helm-based airflow path. "
             "Omit to fall back to enabled (pass --interactive to be prompted instead)."
