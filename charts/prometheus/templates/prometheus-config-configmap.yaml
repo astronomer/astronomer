@@ -76,6 +76,7 @@ data:
         params:
           'match[]':
             - '{job=~".*-kube-state$|airflow|airflow-operator|kubernetes-nodes-cadvisor|node-exporter"}'
+            - '{__name__=~"git_sync.*"}'
         file_sd_configs:
           - files:
             - /prometheusreloader/airflow/clusters.json
