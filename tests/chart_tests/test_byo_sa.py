@@ -173,9 +173,7 @@ class TestServiceAccounts:
             values={
                 "global": {"plane": {"mode": "control"}},
                 "astronomer": {
-                    "dpLink": {
-                        "serviceAccount": {"create": True, "name": "dplink-test", "automountServiceAccountToken": False}
-                    }
+                    "dpLink": {"serviceAccount": {"create": True, "name": "dplink-test", "automountServiceAccountToken": False}}
                 },
             },
             show_only=["charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml"],
