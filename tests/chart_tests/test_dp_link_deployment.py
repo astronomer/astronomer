@@ -4,6 +4,8 @@ from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
+CONTROL_MODE = {"global": {"plane": {"mode": "control"}}}
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -11,9 +13,13 @@ from tests.utils.chart import render_chart
 )
 class TestDpLinkDeployment:
     def test_dp_link_deployment_defaults(self, kube_version):
-        """Test the default configuration of the DP-Link deployment."""
+        """Test the default configuration of the DP-Link deployment.
+
+        dp-link only ever renders in control mode, so it must be requested explicitly here.
+        """
         docs = render_chart(
             kube_version=kube_version,
+            values=CONTROL_MODE,
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
 
@@ -35,7 +41,7 @@ class TestDpLinkDeployment:
             "component": "dp-link",
             "release": "release-name",
             "app": "dp-link",
-            "plane": "unified",
+            "plane": "control",
         }.items() <= dp_link_deployment["spec"]["template"]["metadata"]["labels"].items()
 
         c_by_name = get_containers_by_name(dp_link_deployment)
@@ -92,7 +98,7 @@ class TestDpLinkDeployment:
         }
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"dpLink": custom_probes}},
+            values={"global": {"plane": {"mode": "control"}}, "astronomer": {"dpLink": custom_probes}},
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
 
@@ -108,9 +114,9 @@ class TestDpLinkDeployment:
         assert dp_link_container["readinessProbe"]["httpGet"]["path"] == "/ready"
         assert dp_link_container["readinessProbe"]["initialDelaySeconds"] == 10
 
-    @pytest.mark.parametrize("plane_mode,docs_len", [("control", 1), ("data", 0), ("unified", 1)])
+    @pytest.mark.parametrize("plane_mode,docs_len", [("control", 1), ("data", 0), ("unified", 0)])
     def test_dp_link_deployment_control_mode(self, kube_version, plane_mode, docs_len):
-        """Test that dp-link is deployed in control and unified modes, but not in data mode."""
+        """Test that dp-link is deployed only in control mode, never in data or unified mode."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": plane_mode}}},
@@ -121,11 +127,25 @@ class TestDpLinkDeployment:
         if docs_len != 0:
             assert docs[0]["spec"]["template"]["metadata"]["labels"]["plane"] == plane_mode
 
-    def test_dp_link_deployment_disabled(self, kube_version):
-        """Test that dp-link is not deployed when disabled."""
+    def test_dp_link_deployment_enabled_has_no_effect_outside_control_mode(self, kube_version):
+        """dp-link never renders outside control mode, even if explicitly enabled -- unified/data plane
+        installs have no cross-cluster claim/lease to manage."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"dpLink": {"enabled": False}}},
+            values={
+                "global": {"plane": {"mode": "unified"}},
+                "astronomer": {"dpLink": {"enabled": True}},
+            },
+            show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
+        )
+
+        assert len(docs) == 0
+
+    def test_dp_link_deployment_disabled(self, kube_version):
+        """Test that dp-link is not deployed when disabled in control mode."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}}, "astronomer": {"dpLink": {"enabled": False}}},
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
 
@@ -134,6 +154,7 @@ class TestDpLinkDeployment:
     def test_dp_link_deployment_custom_values(self, kube_version):
         """Test dp-link deployment with custom configuration values."""
         custom_values = {
+            "global": {"plane": {"mode": "control"}},
             "astronomer": {
                 "dpLink": {
                     "claimIntervalSeconds": 60,
@@ -149,7 +170,7 @@ class TestDpLinkDeployment:
                     "replicas": 5,
                     "prismaConnectionLimit": "50",
                 }
-            }
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -178,7 +199,10 @@ class TestDpLinkDeployment:
         """Test dp-link deployment with custom pod annotations."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"dpLink": {"podAnnotations": {"custom-key": "custom-value"}}}},
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"dpLink": {"podAnnotations": {"custom-key": "custom-value"}}},
+            },
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
 
@@ -192,7 +216,9 @@ class TestDpLinkDeployment:
         secret_name = "my-registry-secret"
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"privateRegistry": {"enabled": True, "secretName": secret_name}}},
+            values={
+                "global": {"plane": {"mode": "control"}, "privateRegistry": {"enabled": True, "secretName": secret_name}},
+            },
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
 
@@ -204,6 +230,7 @@ class TestDpLinkDeployment:
         """Test that the init container properly copies SSL certificates."""
         docs = render_chart(
             kube_version=kube_version,
+            values=CONTROL_MODE,
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
 
@@ -224,6 +251,7 @@ class TestDpLinkDeployment:
         docs = render_chart(
             kube_version=kube_version,
             values={
+                "global": {"plane": {"mode": "control"}},
                 "astronomer": {
                     "dpLink": {
                         "env": [
@@ -235,7 +263,7 @@ class TestDpLinkDeployment:
                             {"envName": "ANOTHER_SECRET", "secretName": "other-secret"},
                         ],
                     }
-                }
+                },
             },
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
