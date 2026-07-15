@@ -200,8 +200,7 @@ global:
     tag: 1.31.2
     pullPolicy: IfNotPresent
     port: 8084
-    securityContext:
-      runAsUser: 101
+    securityContext: {}
     readinessProbe: {}
     livenessProbe: {}
     ingressAllowedNamespaces: []
