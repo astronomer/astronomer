@@ -1,7 +1,7 @@
 ###################################
 ## Astronomer Registry ConfigMap ##
 ###################################
-{{ if and .Values.global.baseDomain }}
+{{ if .Values.global.baseDomain }}
 {{- if eq (include "registry.enabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
