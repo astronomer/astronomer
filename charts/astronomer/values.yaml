@@ -583,7 +583,7 @@ dpLink:
   secret: []
 
   # -- Enable DP-Link deployment. Only applicable when global.plane.mode is "control" --
-  # dp-link never renders in "data" or "unified" mode regardless of this value, since its
+  # dp-link never renders in "data" or "unified" mode regardless of this value.
   enabled: true
 
   # -- Service account configuration
