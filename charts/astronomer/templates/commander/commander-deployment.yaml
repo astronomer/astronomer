@@ -253,6 +253,7 @@ spec:
               value: "true"
             {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
+            {{- include "commander_env" . | nindent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs

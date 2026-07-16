@@ -767,6 +767,9 @@ commander:
   # Add extra containers to your commander deployment.
   extraContainers: []
 
+  # Add extra volumesMounts to your commander deployment.
+  extraVolumeMounts: []
+
   # Add extra volumes to your commander deployment.
   extraVolumes: []
 
