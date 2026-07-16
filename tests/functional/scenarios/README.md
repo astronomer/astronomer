@@ -30,7 +30,12 @@ tests/functional/scenarios/<name>/
 
 ## Running a scenario locally
 
+`TEST_SCENARIO` (topology) is resolved from the manifest, not something you set yourself --
+`--print-env` resolves it and `eval`'s it into your shell so both the setup step and pytest
+see the same value (a subprocess can't export env vars back into the shell that started it):
+
 ```sh
+eval "$(uv run bin/run-scenario.py --print-env auth-sidecar)"
 uv run bin/run-scenario.py auth-sidecar
 uv run pytest tests/functional/scenarios/auth-sidecar
 ```

@@ -353,6 +353,7 @@ jobs:
       - run:
           name: "Scenario: auth-sidecar"
           command: |
+            eval "$(uv run bin/run-scenario.py --print-env auth-sidecar)"
             uv run bin/run-scenario.py auth-sidecar
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/auth-sidecar"
       - store_test_results:
