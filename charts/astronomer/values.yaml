@@ -770,6 +770,7 @@ commander:
   # Add extra volumesMounts to your commander deployment.
   extraVolumeMounts: []
 
+  # Add extra volumes to your commander deployment.
   extraVolumes: []
 
   # Values for Dataplane Metadata
