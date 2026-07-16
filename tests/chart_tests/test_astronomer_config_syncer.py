@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 cron_test_data = [
@@ -65,6 +65,24 @@ class TestAstronomerConfigSyncer:
             "runAsNonRoot": True,
             "runAsUser": 1000,
         }
+        env_vars = get_env_vars_dict(c_by_name["config-syncer"]["env"])
+        assert env_vars["COMMANDER_NAMESPACE_POOLS_ENABLED"] == "false"
+        assert env_vars["COMMANDER_DATAPLANE_FAILOVER_ENABLED"] == "false"
+        assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED"] == "false"
+        assert job_container["volumeMounts"] == [
+            {
+                "mountPath": "/app/metadata.yaml",
+                "name": "metadata",
+                "subPath": "metadata.yaml",
+            }
+        ]
+        pod_spec = cronjob["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert pod_spec["volumes"] == [
+            {
+                "configMap": {"name": "release-name-commander-metadata"},
+                "name": "metadata",
+            }
+        ]
 
     def test_astronomer_config_syncer_rbac_namespace_pools_disabled(self, kube_version):
         """Test that if rbac.enabled but namespacePools disabled, helm renders
