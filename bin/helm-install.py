@@ -162,13 +162,17 @@ def create_and_label_namespace(labels: dict[str, str], namespace: str = "astrono
     :param namespace: Namespace name to create and label.
     """
     debug_print(f"Creating namespace {namespace} with labels: {labels}")
-    subprocess.run(
+    result = subprocess.run(
         [KUBECTL_EXE, f"--kubeconfig={KUBECONFIG_FILE}", "create", "namespace", namespace],
-        check=True,
+        capture_output=True,
+        text=True,
     )
+    if result.returncode != 0 and "AlreadyExists" not in result.stderr:
+        raise RuntimeError(f"Failed to create namespace {namespace}: {result.stderr}")
+
     label_args = [f"{key}={value}" for key, value in labels.items()]
     subprocess.run(
-        [KUBECTL_EXE, f"--kubeconfig={KUBECONFIG_FILE}", "label", "namespace", namespace, *label_args],
+        [KUBECTL_EXE, f"--kubeconfig={KUBECONFIG_FILE}", "label", "namespace", namespace, *label_args, "--overwrite"],
         check=True,
     )
 
