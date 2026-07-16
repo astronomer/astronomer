@@ -1,0 +1,212 @@
+# Dev config to always pull the latest floating tags for all components that have one available.
+---
+airflow-operator:
+  images:
+    manager:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/airflow-operator-dev
+      # tag: This has no floating tag
+alertmanager:
+  images:
+    alertmanager:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-alertmanager
+      tag: latest
+astronomer:
+  images:
+    astroUI:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-astro-ui
+      tag: main
+    commander:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-commander
+      tag: master
+    dbBootstrapper:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-db-bootstrapper
+      tag: master
+    houston:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-houston-api
+      tag: main
+    registry:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-registry
+      tag: latest
+    vector:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-vector
+      tag: latest
+elasticsearch:
+  images:
+    curator:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-curator
+      tag: latest
+    es:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-elasticsearch
+      tag: latest
+    exporter:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-elasticsearch-exporter
+      tag: latest
+    init:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-base
+      tag: latest
+    nginx:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-nginx-es
+      tag: latest
+external-es-proxy:
+  images:
+    awsproxy:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-awsesproxy
+      tag: latest
+    esproxy:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-openresty
+      tag: latest
+external-secrets:
+  image:
+    pullPolicy: IfNotPresent
+    repository: quay.io/astronomer/ap-external-secrets
+    tag: latest
+global:
+  airflow:
+    images:
+      gitSync:
+        repository: quay.io/astronomer/ap-git-sync
+        tag: latest
+      pgbouncer:
+        repository: quay.io/astronomer/ap-pgbouncer
+        tag: latest
+      pgbouncerExporter:
+        repository: quay.io/astronomer/ap-pgbouncer-exporter
+        tag: latest
+      redis:
+        repository: quay.io/astronomer/ap-redis
+        tag: latest
+      statsd:
+        repository: quay.io/astronomer/ap-statsd-exporter
+        tag: latest
+      xcom:
+        repository: quay.io/astronomer/ap-init
+        tag: latest
+  authSidecar:
+    repository: quay.io/astronomer/ap-auth-sidecar
+    tag: latest
+    pullPolicy: IfNotPresent
+  certgenerator:
+    images:
+      repository: quay.io/astronomer/ap-certgenerator
+      tag: latest
+  deployMechanisms:
+    dagOnlyDeployment:
+      repository: quay.io/astronomer/ap-dag-deploy
+      # tag: This has no floating tag
+  gitSyncRelay:
+    images:
+      gitDaemon:
+        repository: quay.io/astronomer/ap-git-daemon
+        tag: latest
+      gitSync:
+        repository: quay.io/astronomer/ap-git-sync-relay
+        # tag: This has no floating tag
+  logging:
+    loggingSidecar:
+      repository: quay.io/astronomer/ap-vector
+      tag: latest
+  privateCaCertsAddToHost:
+    certCopier:
+      repository: quay.io/astronomer/ap-db-bootstrapper
+      tag: master
+      pullPolicy: IfNotPresent
+grafana:
+  images:
+    dbBootstrapper:
+      repository: quay.io/astronomer/ap-db-bootstrapper
+      tag: master
+      pullPolicy: IfNotPresent
+    grafana:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-grafana
+      tag: latest
+kube-state:
+  images:
+    kubeState:
+      repository: quay.io/astronomer/ap-kube-state
+      tag: main
+      pullPolicy: IfNotPresent
+nats:
+  images:
+    dbBootstrapper:
+      repository: quay.io/astronomer/ap-db-bootstrapper
+      tag: master
+      pullPolicy: IfNotPresent
+    exporter:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-nats-exporter
+      tag: latest
+    nats:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-nats-server
+      tag: latest
+nginx:
+  images:
+    defaultBackend:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-default-backend
+      tag: master
+    nginx:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-nginx
+      tag: latest
+pgbouncer:
+  image:
+    pullPolicy: IfNotPresent
+    repository: quay.io/astronomer/ap-pgbouncer-krb
+    tag: latest
+postgresql:
+  image:
+    pullPolicy: IfNotPresent
+    registry: quay.io
+    repository: astronomer/ap-postgresql
+    tag: latest
+prometheus:
+  images:
+    configReloader:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-configmap-reloader
+      tag: latest
+    filesdReloader:
+      repository: quay.io/astronomer/ap-kuiper-reloader
+      # tag: This has no floating tag
+      pullPolicy: IfNotPresent
+    prometheus:
+      repository: quay.io/astronomer/ap-prometheus
+      tag: latest
+      pullPolicy: IfNotPresent
+    promproxy:
+      repository: quay.io/astronomer/ap-openresty
+      tag: latest
+      pullPolicy: IfNotPresent
+prometheus-node-exporter:
+  image:
+    pullPolicy: IfNotPresent
+    repository: quay.io/astronomer/ap-node-exporter
+    tag: latest
+prometheus-postgres-exporter:
+  image:
+    pullPolicy: IfNotPresent
+    repository: quay.io/astronomer/ap-postgres-exporter
+    tag: latest
+vector:
+  vector:
+    image:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-vector
+      tag: latest
