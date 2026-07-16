@@ -266,7 +266,7 @@ jobs:
       - run:
           name: "Scenario: {{ scenario }}"
           command: |
-            bin/run-scenario.py {{ scenario }}
+            uv run bin/run-scenario.py {{ scenario }}
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario }}"
       - store_test_results:
           path: test-results

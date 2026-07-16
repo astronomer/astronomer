@@ -353,7 +353,7 @@ jobs:
       - run:
           name: "Scenario: auth-sidecar"
           command: |
-            bin/run-scenario.py auth-sidecar
+            uv run bin/run-scenario.py auth-sidecar
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/auth-sidecar"
       - store_test_results:
           path: test-results
