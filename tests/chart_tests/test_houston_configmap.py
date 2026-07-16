@@ -1124,14 +1124,25 @@ def test_houston_configmap_certgenerator_custom_tag():
 @pytest.mark.parametrize(
     "values,expected",
     [
-        ({}, True),
-        ({"global": {"operator": {"adoption": {"enabled": True}}}}, True),
-        ({"global": {"operator": {"adoption": {"enabled": False}}}}, False),
+        # Adoption requires operator mode; both flags must be true. operator.enabled
+        # defaults to false, so adoption is off unless operator mode is turned on.
+        ({}, False),
+        ({"global": {"operator": {"enabled": True}}}, True),
+        ({"global": {"operator": {"enabled": True, "adoption": {"enabled": True}}}}, True),
+        ({"global": {"operator": {"enabled": True, "adoption": {"enabled": False}}}}, False),
+        ({"global": {"operator": {"enabled": False, "adoption": {"enabled": True}}}}, False),
     ],
-    ids=["default", "explicit-enabled", "explicit-disabled"],
+    ids=[
+        "default-operator-off",
+        "operator-on-adoption-default",
+        "both-on",
+        "operator-on-adoption-off",
+        "operator-off-adoption-on",
+    ],
 )
 def test_houston_configmap_operator_adoption(values, expected):
-    """global.operator.adoption.enabled must propagate to production.yaml, and defaults to true (PLX-500)."""
+    """production.yaml adoption is the AND of global.operator.enabled and
+    global.operator.adoption.enabled — both must be true (PLX-500)."""
     docs = render_chart(
         values=values,
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -1141,19 +1152,18 @@ def test_houston_configmap_operator_adoption(values, expected):
     assert prod["operator"]["adoption"]["enabled"] is expected
 
 
-def test_houston_configmap_operator_adoption_independent_of_airflow_operator():
-    """operator.adoption and airflowOperator are independent flags — enabling
-    one must not affect the other."""
+def test_houston_configmap_operator_mode_reflects_operator_enabled():
+    """global.operator.enabled drives deployments.mode.operator.enabled, and gates
+    adoption regardless of the adoption flag."""
     docs = render_chart(
         values={
             "global": {
-                "operator": {"adoption": {"enabled": False}},
-                "airflowOperator": {"enabled": True},
+                "operator": {"enabled": True, "adoption": {"enabled": False}},
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
 
-    assert prod["operator"]["adoption"]["enabled"] is False
     assert prod["deployments"]["mode"]["operator"]["enabled"] is True
+    assert prod["operator"]["adoption"]["enabled"] is False

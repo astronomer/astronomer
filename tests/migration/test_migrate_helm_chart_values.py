@@ -200,7 +200,6 @@ astronomer:
 
         assert g["networkPolicy"]["enabled"] is True
         assert g["authSidecar"]["enabled"] is False
-        assert g["airflowOperator"]["enabled"] is False
         assert g["nats"]["enabled"] is True
 
 
