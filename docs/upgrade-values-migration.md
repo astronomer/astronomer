@@ -167,7 +167,6 @@ These keys already use the correct schema and are not modified:
 
 - `global.networkPolicy.enabled`
 - `global.authSidecar.*`
-- `global.airflowOperator.*`
 - Most keys under `astronomer` **outside** `astronomer.houston.config`
 - Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled`, migrated as
   described above), `grafana`, `prometheus`, `elasticsearch`, `vector`,
