@@ -40,6 +40,24 @@ def parse_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(description="Install the current chart into the given cluster.")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode (can also be set via DEBUG environment variable)")
+    parser.add_argument(
+        "--helm-values",
+        action="append",
+        default=[],
+        dest="helm_values",
+        metavar="FILE",
+        help="Extra Helm values file, relative to the repo root unless absolute (can be repeated).",
+    )
+    parser.add_argument(
+        "--namespace-label",
+        action="append",
+        default=[],
+        dest="namespace_labels",
+        metavar="KEY=VALUE",
+        help="Label to apply to the astronomer namespace before install (can be repeated). "
+        "Creates the namespace ahead of `helm install` instead of using --create-namespace, "
+        "since PSA enforcement labels must be present before pods are created.",
+    )
     return parser.parse_args()
 
 
@@ -132,11 +150,39 @@ def run_and_monitor_subprocess(command: list, monitor_function: callable, interv
         proc.wait()
 
 
-def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.yaml") -> None:
+def create_and_label_namespace(labels: dict[str, str], namespace: str = "astronomer") -> None:
+    """
+    Create a namespace and apply labels to it before anything is installed into it.
+
+    Pod Security Admission is enforced at pod-creation time, not retroactively, so labels
+    meant to trigger enforcement (e.g. pod-security.kubernetes.io/enforce) must land before
+    `helm install` creates any pods -- `helm install --create-namespace` applies no labels.
+
+    :param labels: Namespace labels to apply, e.g. {"pod-security.kubernetes.io/enforce": "restricted"}.
+    :param namespace: Namespace name to create and label.
+    """
+    debug_print(f"Creating namespace {namespace} with labels: {labels}")
+    subprocess.run(
+        [KUBECTL_EXE, f"--kubeconfig={KUBECONFIG_FILE}", "create", "namespace", namespace],
+        check=True,
+    )
+    label_args = [f"{key}={value}" for key, value in labels.items()]
+    subprocess.run(
+        [KUBECTL_EXE, f"--kubeconfig={KUBECONFIG_FILE}", "label", "namespace", namespace, *label_args],
+        check=True,
+    )
+
+
+def helm_install(
+    values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.yaml",
+    create_namespace: bool = True,
+) -> None:
     """
     Install a Helm chart using the provided kubeconfig and values file.
 
     :param values: Path to the Helm values file or a list of values files.
+    :param create_namespace: Pass --create-namespace to helm. Set False when the namespace
+        was already created (and labeled) ahead of install via create_and_label_namespace().
     """
     debug_print(f"Starting Helm install with values: {values}")
     debug_print(f"Using kubeconfig: {KUBECONFIG_FILE}")
@@ -147,11 +193,12 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
         "install",
         "astronomer",
         str(GIT_ROOT_DIR),
-        "--create-namespace",
         "--namespace=astronomer",
         f"--timeout={HELM_INSTALL_TIMEOUT}",
         f"--kubeconfig={KUBECONFIG_FILE}",
     ]
+    if create_namespace:
+        helm_install_command.append("--create-namespace")
 
     if isinstance(values, str):
         values = [values]
@@ -270,6 +317,9 @@ if __name__ == "__main__":
         f"{GIT_ROOT_DIR}/configs/local-dev.yaml",
         f"{GIT_ROOT_DIR}/tests/data_files/scenario-{TEST_SCENARIO}.yaml",
     ]
+    for extra_values_file in args.helm_values:
+        path = Path(extra_values_file)
+        values.append(str(path if path.is_absolute() else GIT_ROOT_DIR / path))
 
     debug_print(f"Preparing to install with values files: {values}")
     for value_file in values:
@@ -278,5 +328,8 @@ if __name__ == "__main__":
         else:
             debug_print(f"WARNING - Values file not found: {value_file}")
 
-    helm_install(values=values)
+    namespace_labels = dict(kv.split("=", 1) for kv in args.namespace_labels)
+    if namespace_labels:
+        create_and_label_namespace(namespace_labels)
+    helm_install(values=values, create_namespace=not namespace_labels)
     wait_for_healthy_pods()

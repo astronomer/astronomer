@@ -1,0 +1,13 @@
+# PINF-1031: catches the class of regression in PINF-1033 (a PSS-Restricted
+# hardening change broke global.authSidecar, not caught until QA). Neither
+# toggle alone would catch it -- the failure was in the interaction between
+# them, so this scenario combines both rather than testing them separately.
+topology: unified
+values:
+  - configs/enable-auth-sidecar.yaml
+  - configs/psa-restricted-demo.yaml
+namespace_labels:
+  pod-security.kubernetes.io/enforce: restricted
+  pod-security.kubernetes.io/enforce-version: latest
+  pod-security.kubernetes.io/audit: restricted
+  pod-security.kubernetes.io/warn: restricted
