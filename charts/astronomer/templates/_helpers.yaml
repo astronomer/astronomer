@@ -329,13 +329,16 @@ gcp_cloud_logging:
   value: {{ .Values.global.plane.mode | quote }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
   value: "{{ include "houston.authServiceURL" . }}"
+{{- end }}
+
+{{ define "commander_env" -}}
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
   value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
 {{- if .Values.global.namespaceManagement.namespacePools.enabled  }}
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
