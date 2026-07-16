@@ -1,8 +1,9 @@
 ############################
 ## Astronomer configuration
-## Used by bin/setup-cp-dp-k3d.py for --version main (installs from the local checkout, which
-## currently tracks the same schema as the 2.x chart family — see configs/local-2x.yaml, kept
-## identical to this file below the header on purpose).
+## Used by bin/setup-cp-dp-k3d.py for --version local — the local-checkout scenario, which
+## installs whatever chart is currently checked out on disk (no version pull) instead of a
+## published version. Currently tracks the same schema as the 2.x chart family — see
+## configs/local-2x.yaml, kept identical to this file below the header on purpose.
 ## Deliberately separate from configs/local-dev.yaml, which is also used by the unrelated
 ## KinD-based bin/reset-local-dev workflow (see docs/local-development.md) — changes here
 ## can't accidentally affect that path.

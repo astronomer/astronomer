@@ -10,6 +10,7 @@ description: Use when writing, editing, reviewing, or running Helm chart tests f
 1. **Always run tests with `uv run`** — never `python3 -m pytest` or `python bin/...`
 2. **Sub-chart values MUST be nested** under the sub-chart name (see [Values Nesting](#sub-chart-values-nesting--critical))
 3. **No `helm unittest` plugin** — all tests are pytest-based using `render_chart()`
+4. **One `render_chart()` call per test function** — never call it multiple times in the same function to cover different value combinations (see [One Condition Per Test](#one-condition-per-test))
 
 ---
 
@@ -108,6 +109,47 @@ def test_deployment_should_render(kube_version, plane_mode, docs_count):
     )
     assert len(docs) == docs_count
 ```
+
+### One Condition Per Test
+
+Never call `render_chart()` more than once inside the same test function to check several value
+combinations (e.g. default, feature-enabled, feature-disabled). Each `render_chart()` call is its own
+test condition — hiding several behind one function name makes failures ambiguous (which call failed?)
+and hides the test matrix from `pytest --collect-only` / `-k` filtering. Use parametrization when the
+calls only differ by a value/expectation, or separate test functions when they differ conceptually:
+
+```python
+# ❌ WRONG — three renders buried in one function
+def test_secretstore_rule(kube_version):
+    docs = render_chart(kube_version=kube_version, show_only=[ROLE_FILE])
+    assert absent(docs[0])
+
+    docs = render_chart(kube_version=kube_version, values={"global": {"dataPlaneFailover": {"enabled": True}}}, show_only=[ROLE_FILE])
+    assert present(docs[0])
+
+    docs = render_chart(kube_version=kube_version, values={"global": {"dataPlaneFailover": {"enabled": False}}}, show_only=[ROLE_FILE])
+    assert absent(docs[0])
+```
+
+```python
+# ✅ CORRECT — parametrize when only the value/expectation changes
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+@pytest.mark.parametrize(
+    "dataplane_failover_enabled,rule_expected",
+    [(None, False), (True, True), (False, False)],
+    ids=["default", "enabled", "disabled"],
+)
+def test_secretstore_rule(kube_version, dataplane_failover_enabled, rule_expected):
+    values = {}
+    if dataplane_failover_enabled is not None:
+        values = {"global": {"dataPlaneFailover": {"enabled": dataplane_failover_enabled}}}
+    docs = render_chart(kube_version=kube_version, values=values, show_only=[ROLE_FILE])
+    assert (expected_rule in docs[0]["rules"]) == rule_expected
+```
+
+Or, if an existing test function already renders with the exact values you need (e.g. a test for
+`dataPlaneFailover.enabled: True` that targets a related template), prefer adding your assertion to
+that template's doc in the existing `show_only` list over writing a new `render_chart()` call.
 
 ### Testing with All Features Enabled
 

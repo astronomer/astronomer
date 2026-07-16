@@ -19,7 +19,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.1-9
+    tag: 3.1.1-10
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
@@ -32,7 +32,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.14
+    tag: 2.0.15
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
@@ -582,8 +582,8 @@ dpLink:
   #   secretKey: "connection"
   secret: []
 
-  # -- Enable DP-Link deployment
-  # @default -- true
+  # -- Enable DP-Link deployment. Only applicable when global.plane.mode is "control" --
+  # dp-link never renders in "data" or "unified" mode regardless of this value.
   enabled: true
 
   # -- Service account configuration
@@ -766,6 +766,9 @@ commander:
 
   # Add extra containers to your commander deployment.
   extraContainers: []
+
+  # Add extra volumesMounts to your commander deployment.
+  extraVolumeMounts: []
 
   # Add extra volumes to your commander deployment.
   extraVolumes: []
