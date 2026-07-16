@@ -16,6 +16,11 @@ set -ex
 # Download helper tools to ~/.local/share/astronomer-software/bin
 "${BIN_DIR}/install-ci-tools.py"
 
+# install-ci-tools.py only puts this directory on PATH within its own process, which
+# doesn't help anything shelled out to below (e.g. setup-kind.py -> show-docker-images.py's
+# bare `helm template` call). Export it here so it's on PATH for the rest of this script.
+export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+
 # Generate certificates in ~/.local/share/astronomer-software/certs
 "${BIN_DIR}/certs.py" cleanup
 "${BIN_DIR}/certs.py" generate-tls
