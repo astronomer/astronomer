@@ -31,6 +31,6 @@ tests/functional/scenarios/<name>/
 ## Running a scenario locally
 
 ```sh
-bin/run-scenario.py auth-sidecar
+uv run bin/run-scenario.py auth-sidecar
 uv run pytest tests/functional/scenarios/auth-sidecar
 ```
