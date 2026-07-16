@@ -11,24 +11,13 @@ import sys
 import time
 from pathlib import Path
 
-PREREQUISITES = """You MUST set your environment variable TEST_SCENARIO to one of the following values:
-- unified: Install with the unified application mode.
-- data: Install the with the dataplane application mode.
-- control: Install with the controlplane application mode.
-"""
-
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 HELPER_BIN_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "bin"
 KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
 HELM_EXE = str(HELPER_BIN_DIR / "helm")
 HELM_INSTALL_TIMEOUT = os.getenv("HELM_INSTALL_TIMEOUT", "10m0s")
-if not all([(TEST_SCENARIO := os.getenv("TEST_SCENARIO")), TEST_SCENARIO in ["unified", "data", "control"]]):
-    print("ERROR: TEST_SCENARIO environment variable is not set!", file=sys.stderr)
-    print(PREREQUISITES, file=sys.stderr)
-    raise SystemExit(1)
 KUBECONFIG_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
 KUBECONFIG_DIR.mkdir(parents=True, exist_ok=True)
-KUBECONFIG_FILE = str(KUBECONFIG_DIR / TEST_SCENARIO)
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,6 +28,12 @@ def parse_args() -> argparse.Namespace:
         argparse.Namespace: Parsed command line arguments.
     """
     parser = argparse.ArgumentParser(description="Install the current chart into the given cluster.")
+    parser.add_argument(
+        "--topology",
+        required=True,
+        choices=["unified", "control", "data"],
+        help="Install topology: unified (control+data in one cluster), control, or data.",
+    )
     parser.add_argument("--debug", action="store_true", help="Enable debug mode (can also be set via DEBUG environment variable)")
     parser.add_argument(
         "--helm-values",
@@ -305,12 +300,14 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
 
 if __name__ == "__main__":
     args = parse_args()
+    TOPOLOGY = args.topology
+    KUBECONFIG_FILE = str(KUBECONFIG_DIR / TOPOLOGY)
 
     # Set DEBUG based on command line argument or environment variable
     DEBUG = args.debug or os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 
     debug_print("Debug mode enabled")
-    debug_print(f"{TEST_SCENARIO=}")
+    debug_print(f"{TOPOLOGY=}")
     debug_print(f"{GIT_ROOT_DIR=}")
     debug_print(f"{KUBECONFIG_FILE=}")
     debug_print(f"{KUBECTL_EXE=}")
@@ -319,7 +316,7 @@ if __name__ == "__main__":
 
     values = [
         f"{GIT_ROOT_DIR}/configs/local-dev.yaml",
-        f"{GIT_ROOT_DIR}/tests/data_files/scenario-{TEST_SCENARIO}.yaml",
+        f"{GIT_ROOT_DIR}/tests/data_files/scenario-{TOPOLOGY}.yaml",
     ]
     for extra_values_file in args.helm_values:
         path = Path(extra_values_file)

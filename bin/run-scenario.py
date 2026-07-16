@@ -25,14 +25,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "scenario", help="Scenario name, e.g. auth-sidecar (must have a tests/functional/scenarios/<name>/test_profile.yaml)"
     )
-    parser.add_argument(
-        "--print-env",
-        action="store_true",
-        help="Print `export TEST_SCENARIO=...`/`export KUBE_VERSION=...` for this scenario and exit, "
-        "instead of running it. Meant to be eval'd by the caller's shell before running pytest, since "
-        "TEST_SCENARIO is resolved here (from the manifest) and pytest's conftest.py needs it too, but "
-        "a subprocess can't export env vars back into the shell that spawned it.",
-    )
     return parser.parse_args()
 
 
@@ -60,16 +52,11 @@ def main() -> None:
     profile = load_profile(args.scenario)
     kube_version = resolve_kube_version(profile)
 
-    if args.print_env:
-        print(f"export TEST_SCENARIO={profile['topology']}")
-        print(f"export KUBE_VERSION=v{kube_version}")
-        return
-
     env = os.environ.copy()
-    env["TEST_SCENARIO"] = profile["topology"]
     env["KUBE_VERSION"] = f"v{kube_version}"
 
-    reset_local_dev_args = [f"--helm-values={value_file}" for value_file in profile["values"]]
+    reset_local_dev_args = [f"--topology={profile['topology']}"]
+    reset_local_dev_args += [f"--helm-values={value_file}" for value_file in profile["values"]]
     for key, value in profile.get("namespace_labels", {}).items():
         reset_local_dev_args.append(f"--namespace-label={key}={value}")
 
