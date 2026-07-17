@@ -329,6 +329,35 @@ jobs:
       - store_test_results:
           path: test-results
 
+  scenario-auth-sidecar:
+    machine:
+      image: ubuntu-2404:2026.05.1
+      resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: auth-sidecar"
+          command: |
+            uv run bin/run-scenario.py auth-sidecar
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/auth-sidecar"
+      - store_test_results:
+          path: test-results
+
   check-commander-airflow-version:
     docker:
       - image: cimg/base:current-24.04
@@ -391,6 +420,9 @@ workflows:
             - approve-test-all-platforms
 
       - scenario-unified-1-35-1:
+          requires:
+            - build-artifact
+      - scenario-auth-sidecar:
           requires:
             - build-artifact
       - approve-stage-cluster-test:
