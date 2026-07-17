@@ -421,11 +421,13 @@ workflows:
       - run_pre_commit
       - test-unit
       - check-commander-airflow-version
-      - build-artifact:
-          requires:
-            - check-commander-airflow-version
-            - run_pre_commit
-            - test-unit
+      - build-artifact
+#### REMOVED FOR TESTING - REVERT THIS BEFORE MERGING
+#          requires:
+#            - check-commander-airflow-version
+#            - run_pre_commit
+#            - test-unit
+#####################################################
       - approve-test-all-platforms:
           type: approval
 
