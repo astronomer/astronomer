@@ -91,7 +91,7 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_cli
         dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
         dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
         raise
-    wait_for_release_ready(_k8s_apps_v1_client_module, created["releaseName"])
+    wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"])
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
@@ -102,7 +102,7 @@ def test_deployment_reaches_ready(deployment):
     assert deployment["release_name"]
 
 
-def test_deployment_survives_executor_switch(deployment, houston_api, k8s_apps_v1_client):
+def test_deployment_survives_executor_switch(deployment, houston_api, k8s_apps_v1_client, k8s_core_v1_client):
     """
     Exercises the failure class PINF-1033 was caught in: an Airflow Deployment upgrade
     that changes its executor. Re-invokes upsertDeployment on the same deployment_uuid,
@@ -114,4 +114,4 @@ def test_deployment_survives_executor_switch(deployment, houston_api, k8s_apps_v
         executor="KubernetesExecutor",
         deployment_uuid=deployment["id"],
     )
-    wait_for_release_ready(k8s_apps_v1_client, deployment["release_name"])
+    wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, deployment["release_name"])

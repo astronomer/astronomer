@@ -165,7 +165,34 @@ def upsert_deployment(
     return data["upsertDeployment"]
 
 
-def wait_for_release_ready(k8s_apps_v1_client, release_name: str, timeout: int = 600) -> None:
+def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector: str) -> None:
+    """
+    Print actual Pod status and namespace Events for a release that never became ready.
+
+    A Deployment's readyReplicas alone can't distinguish two very different failures:
+    a pod Pod Security Admission rejects is never created at all -- it never becomes an
+    unhealthy Pod, it only ever shows up as a FailedCreate Event on its ReplicaSet -- vs.
+    a pod that *was* created but is stuck (image pull, crash loop, unschedulable). This
+    prints both so the two aren't confused (see PINF-1031's auth-sidecar scenario for the
+    same distinction at the single-Deployment level).
+    """
+    pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
+    if not pods:
+        print(f"dump_release_diagnostics: no pods exist at all in {namespace} for {label_selector}")
+    for pod in pods:
+        statuses = [f"{c.name}: ready={c.ready} state={c.state}" for c in pod.status.container_statuses or []]
+        print(
+            f"pod {namespace}/{pod.metadata.name}: phase={pod.status.phase} -- {'; '.join(statuses) or 'no container statuses yet'}"
+        )
+
+    events = k8s_core_v1_client.list_namespaced_event(namespace).items
+    print(f"--- events in {namespace} ({len(events)}) ---")
+    for event in events:
+        obj = event.involved_object
+        print(f"{event.type} {event.reason}: {obj.kind}/{obj.name}: {event.message}")
+
+
+def wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, release_name: str, timeout: int = 600) -> None:
     """
     Wait for every Deployment/StatefulSet Commander created for this release to reach
     readyReplicas == spec.replicas. Not just "pod visible" -- a rejected or
@@ -195,5 +222,12 @@ def wait_for_release_ready(k8s_apps_v1_client, release_name: str, timeout: int =
         remaining = int(deadline - time.monotonic())
         print(f"Release {release_name!r} not ready yet ({remaining}s remaining): {', '.join(not_ready)}")
         if time.monotonic() >= deadline:
+            namespace = workloads[0].metadata.namespace if workloads else None
+            if namespace:
+                dump_release_diagnostics(k8s_core_v1_client, namespace, label_selector)
+            else:
+                print(
+                    f"dump_release_diagnostics: no Deployments/StatefulSets ever appeared for {label_selector}, can't determine namespace"
+                )
             raise TimeoutError(f"Release {release_name!r} never became fully ready: {', '.join(not_ready)}")
         time.sleep(10)

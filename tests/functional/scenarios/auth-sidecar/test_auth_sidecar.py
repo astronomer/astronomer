@@ -111,7 +111,7 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_cli
         dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
         dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
         raise
-    wait_for_release_ready(_k8s_apps_v1_client_module, created["releaseName"])
+    wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"])
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
