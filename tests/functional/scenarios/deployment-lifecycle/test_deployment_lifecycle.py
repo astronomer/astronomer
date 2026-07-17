@@ -14,182 +14,26 @@ invisible to this kind-based CI by construction (see PINF-716/MV for that gap). 
 catches Helm-values-assembly and upgrade-path regressions that break on any cluster,
 generic or OpenShift alike.
 
-Mutation shapes and the createUser-then-createWorkspace bootstrap sequence are ported
-from software-upgrade-automation's bin/configure-k3d-for-tests.py and
-bin/create-git-sync-deployment.py (QA's own k3d CP/DP test tooling), adapted for the
-unified topology: no registerCluster call is needed here, because houston-api's
-populate-default-cluster script already creates a default Cluster row on startup
-whenever plane.mode is unified.
+Mutation shapes and the createUser-then-createWorkspace bootstrap sequence
+(tests/utils/houston_graphql.py) are ported from software-upgrade-automation's
+bin/configure-k3d-for-tests.py and bin/create-git-sync-deployment.py (QA's own k3d
+CP/DP test tooling), adapted for the unified topology: no registerCluster call is
+needed here, because houston-api's populate-default-cluster script already creates a
+default Cluster row on startup whenever plane.mode is unified.
 """
-
-import json
-import time
 
 import pytest
 import testinfra
 from kubernetes import client, config
 
+from tests.utils.houston_graphql import create_user, create_workspace, get_cluster_id, upsert_deployment, wait_for_release_ready
 from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_by_label_selector
 
 NAMESPACE = "astronomer"
-HOUSTON_URL = "http://localhost:8871/v1"
 ADMIN_EMAIL = "pinf-1035-test@astronomer.io"
 ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = "pinf-1035"
 DEPLOYMENT_LABEL = "pinf-1035-lifecycle"
-
-
-class HoustonError(RuntimeError):
-    """Raised when Houston's GraphQL API returns a non-empty errors[] array."""
-
-
-# houston-api's Alpine-based image only has curl as a build-time dependency -- it's
-# removed via `apk del .build-deps` before the final image layer (see its Dockerfile).
-# Node (the app's own runtime, guaranteed present) has a built-in global fetch since
-# v18, so this shells out to `node -e` instead of relying on any HTTP client binary.
-# Deliberately doesn't check response.ok: Houston can return GraphQL error detail in
-# the JSON body on a non-2xx response, and fetch() only rejects on network failures,
-# not on non-2xx status -- exactly the behavior needed here.
-_GRAPHQL_NODE_SCRIPT = (
-    "const [payload, token] = process.argv.slice(1);"
-    "const headers = {'Content-Type': 'application/json'};"
-    "if (token) headers['Authorization'] = 'Bearer ' + token;"
-    f"fetch('{HOUSTON_URL}', {{method: 'POST', headers, body: payload}})"
-    ".then(r => r.text()).then(t => process.stdout.write(t))"
-    ".catch(e => { process.stderr.write(String(e)); process.exitCode = 1; });"
-)
-
-
-def _graphql(houston_api, query: str, variables: dict | None = None, token: str | None = None) -> dict:
-    """
-    Execute a GraphQL request against Houston from inside the houston-api pod.
-
-    The pytest process has no direct network path into the kind cluster's pod network --
-    the same reason every fixture in conftest.py execs into a pod rather than connecting
-    directly -- so this runs from inside the houston-api container itself.
-    """
-    payload = json.dumps({"query": query, "variables": variables or {}})
-    output = houston_api.check_output("node -e %s %s %s", _GRAPHQL_NODE_SCRIPT, payload, token or "")
-    body = json.loads(output)
-    if body.get("errors"):
-        messages = "; ".join(e.get("message", str(e)) for e in body["errors"])
-        raise HoustonError(messages)
-    return body["data"]
-
-
-def _create_user(houston_api, email: str, password: str) -> str:
-    """Create the initial admin user. Only succeeds unauthenticated on a fresh DB -- true
-    here, since each scenario's CircleCI job installs into a brand new kind cluster."""
-    query = """
-    mutation CreateUser($email: String!, $password: String!) {
-      createUser(email: $email, password: $password) {
-        token { value }
-      }
-    }
-    """
-    data = _graphql(houston_api, query, {"email": email, "password": password})
-    token = data["createUser"]["token"]["value"]
-    assert token, "createUser returned an empty token value"
-    return token
-
-
-def _create_workspace(houston_api, token: str, label: str) -> str:
-    query = """
-    mutation CreateWorkspace($label: String!) {
-      createWorkspace(label: $label) { id }
-    }
-    """
-    data = _graphql(houston_api, query, {"label": label}, token=token)
-    return data["createWorkspace"]["id"]
-
-
-def _get_cluster_id(houston_api, token: str) -> str:
-    """Look up the default Cluster houston-api's populate-default-cluster script creates
-    on startup in unified mode. No registerCluster call is needed for this topology."""
-    query = "query ListClusters { paginatedClusters { clusters { id } } }"
-    data = _graphql(houston_api, query, token=token)
-    clusters = data["paginatedClusters"]["clusters"]
-    assert clusters, "Expected populate-default-cluster to have created a default Cluster in unified mode"
-    return clusters[0]["id"]
-
-
-def _upsert_deployment(
-    houston_api,
-    token: str,
-    *,
-    executor: str,
-    workspace_id: str | None = None,
-    cluster_id: str | None = None,
-    deployment_uuid: str | None = None,
-) -> dict:
-    """
-    Create (deployment_uuid=None) or update (deployment_uuid set) an Airflow Deployment.
-    Same mutation both ways -- upsertDeployment resolves create vs. update from whether
-    deployment_uuid identifies an existing row.
-    """
-    variables: dict = {"executor": executor}
-    if deployment_uuid:
-        variables["deploymentUuid"] = deployment_uuid
-    else:
-        variables.update(
-            {
-                "label": DEPLOYMENT_LABEL,
-                "workspaceUuid": workspace_id,
-                "clusterId": cluster_id,
-                "dagDeployment": {"type": "image"},
-            }
-        )
-    query = """
-    mutation UpsertDeployment(
-      $label: String
-      $workspaceUuid: Uuid
-      $clusterId: Uuid
-      $executor: ExecutorType
-      $dagDeployment: DagDeployment
-      $deploymentUuid: Uuid
-    ) {
-      upsertDeployment(
-        label: $label
-        workspaceUuid: $workspaceUuid
-        clusterId: $clusterId
-        executor: $executor
-        dagDeployment: $dagDeployment
-        deploymentUuid: $deploymentUuid
-      ) {
-        id
-        releaseName
-      }
-    }
-    """
-    data = _graphql(houston_api, query, variables, token=token)
-    return data["upsertDeployment"]
-
-
-def _wait_for_release_ready(k8s_apps_v1_client, release_name: str, timeout: int = 600) -> None:
-    """
-    Wait for every Deployment/StatefulSet Commander created for this release to reach
-    readyReplicas == spec.replicas. Not just "pod visible" -- see PINF-1031's auth-sidecar
-    scenario for why that distinction matters: a rejected or not-yet-scheduled pod never
-    shows up as unhealthy, only as missing.
-    """
-    label_selector = f"release={release_name}"
-    deadline = time.monotonic() + timeout
-    while True:
-        deployments = k8s_apps_v1_client.list_deployment_for_all_namespaces(label_selector=label_selector).items
-        statefulsets = k8s_apps_v1_client.list_stateful_set_for_all_namespaces(label_selector=label_selector).items
-        workloads = deployments + statefulsets
-        not_ready = [
-            f"{w.metadata.namespace}/{w.metadata.name} ({w.status.ready_replicas or 0}/{w.spec.replicas})"
-            for w in workloads
-            if (w.status.ready_replicas or 0) != w.spec.replicas
-        ]
-        if workloads and not not_ready:
-            return
-        if not workloads:
-            not_ready = [f"no Deployments/StatefulSets found yet with label {label_selector}"]
-        if time.monotonic() >= deadline:
-            raise TimeoutError(f"Release {release_name!r} never became fully ready: {', '.join(not_ready)}")
-        time.sleep(10)
 
 
 @pytest.fixture(scope="module")
@@ -217,17 +61,18 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module):
     tests in this file share the one deployment, since creating it is the expensive part
     and the switch test needs an already-ready deployment to switch.
     """
-    token = _create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
-    workspace_id = _create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
-    cluster_id = _get_cluster_id(_houston_api_module, token)
-    created = _upsert_deployment(
+    token = create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
+    workspace_id = create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
+    cluster_id = get_cluster_id(_houston_api_module, token)
+    created = upsert_deployment(
         _houston_api_module,
         token,
         executor="CeleryExecutor",
+        label=DEPLOYMENT_LABEL,
         workspace_id=workspace_id,
         cluster_id=cluster_id,
     )
-    _wait_for_release_ready(_k8s_apps_v1_client_module, created["releaseName"])
+    wait_for_release_ready(_k8s_apps_v1_client_module, created["releaseName"])
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
@@ -244,10 +89,10 @@ def test_deployment_survives_executor_switch(deployment, houston_api, k8s_apps_v
     that changes its executor. Re-invokes upsertDeployment on the same deployment_uuid,
     the same mutation Commander's own upgrade path uses.
     """
-    _upsert_deployment(
+    upsert_deployment(
         houston_api,
         deployment["token"],
         executor="KubernetesExecutor",
         deployment_uuid=deployment["id"],
     )
-    _wait_for_release_ready(k8s_apps_v1_client, deployment["release_name"])
+    wait_for_release_ready(k8s_apps_v1_client, deployment["release_name"])

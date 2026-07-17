@@ -2,10 +2,18 @@
 # hardening change broke global.authSidecar, not caught until QA). Neither
 # toggle alone would catch it -- the failure was in the interaction between
 # them, so this scenario combines both rather than testing them separately.
+#
+# enable-psa.yaml (global.namespaceLabels) covers the OTHER namespace tier
+# namespace_labels below can't reach: it labels Airflow Deployment namespaces
+# that Commander creates, not the static platform namespace. Both are needed
+# to catch PSS-Restricted breaking authSidecar regardless of which tier it
+# breaks in -- test_auth_sidecar.py creates a real Airflow Deployment to
+# exercise this half.
 topology: unified
 values:
   - configs/enable-auth-sidecar.yaml
   - configs/psa-restricted.yaml
+  - configs/enable-psa.yaml
 namespace_labels:
   pod-security.kubernetes.io/enforce: restricted
   pod-security.kubernetes.io/enforce-version: latest
