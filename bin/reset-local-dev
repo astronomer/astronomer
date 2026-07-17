@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
-# This is used in local dev, and in CI. Usage of this script requires exporting the
-# TEST_SCENARIO env var to data, unified, or control.
+# This is used in local dev, and in CI. Usage: reset-local-dev --topology=<unified|control|data>
+# [extra flags forwarded to helm-install.py, e.g. --helm-values=... --namespace-label=key=value]
 
 GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 BIN_DIR="${GIT_ROOT_DIR}/bin"
+
+TOPOLOGY=""
+for arg in "$@"; do
+  case "$arg" in
+    --topology=*) TOPOLOGY="${arg#--topology=}" ;;
+  esac
+done
+if [[ -z "$TOPOLOGY" ]]; then
+  echo "ABORT: --topology=<unified|control|data> is required" >&2
+  exit 1
+fi
 
 # Use the venv if it exists
 [[ -f .venv/bin/activate ]] || { echo "ABORT: .venv does not exist!" ; exit 1 ; }
@@ -16,13 +27,18 @@ set -ex
 # Download helper tools to ~/.local/share/astronomer-software/bin
 "${BIN_DIR}/install-ci-tools.py"
 
+# install-ci-tools.py only puts this directory on PATH within its own process, which
+# doesn't help anything shelled out to below (e.g. setup-kind.py -> show-docker-images.py's
+# bare `helm template` call). Export it here so it's on PATH for the rest of this script.
+export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+
 # Generate certificates in ~/.local/share/astronomer-software/certs
 "${BIN_DIR}/certs.py" cleanup
 "${BIN_DIR}/certs.py" generate-tls
 "${BIN_DIR}/certs.py" generate-private-ca
 
 # Create a KIND cluster and configure it for testing
-"${BIN_DIR}/setup-kind.py"
+"${BIN_DIR}/setup-kind.py" "--topology=${TOPOLOGY}"
 
 # Install helm chart
-"${BIN_DIR}/helm-install.py"
+"${BIN_DIR}/helm-install.py" "$@"

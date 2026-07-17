@@ -107,7 +107,7 @@ The KinD-based setup is a simpler single-cluster alternative. It does not exerci
 Run this script from the root of this repository:
 
 ```sh
-bin/reset-local-dev
+bin/reset-local-dev --topology=unified
 ```
 
 Each time you run the script, the platform will be fully reset to the current helm chart.
@@ -151,7 +151,7 @@ kubectl edit deployment -n astronomer <your deployment>
 #### Specify the Kubernetes version
 
 ```sh
-bin/reset-local-dev -K 1.28.6
+KUBE_VERSION=v1.28.6 bin/reset-local-dev --topology=unified
 ```
 
 ## Searching code
