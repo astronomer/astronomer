@@ -21,7 +21,15 @@ import pytest
 import testinfra
 from kubernetes import client, config
 
-from tests.utils.houston_graphql import create_user, create_workspace, get_cluster_id, upsert_deployment, wait_for_release_ready
+from tests.utils.houston_graphql import (
+    HoustonError,
+    create_user,
+    create_workspace,
+    dump_pod_logs,
+    get_cluster_id,
+    upsert_deployment,
+    wait_for_release_ready,
+)
 from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_by_label_selector
 
 GRAFANA_DEPLOYMENT_NAME = "astronomer-grafana"
@@ -80,7 +88,7 @@ def _houston_api_module():
 
 
 @pytest.fixture(scope="module")
-def deployment(_houston_api_module, _k8s_apps_v1_client_module):
+def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """
     Creates a real Airflow Deployment (dagDeployment.type: dag_deploy, so dag-server
     -- and its own auth-sidecar consumer -- gets created too) under this scenario's
@@ -89,15 +97,20 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module):
     token = create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
     workspace_id = create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
     cluster_id = get_cluster_id(_houston_api_module, token)
-    created = upsert_deployment(
-        _houston_api_module,
-        token,
-        executor="CeleryExecutor",
-        label=DEPLOYMENT_LABEL,
-        workspace_id=workspace_id,
-        cluster_id=cluster_id,
-        dag_deployment_type="dag_deploy",
-    )
+    try:
+        created = upsert_deployment(
+            _houston_api_module,
+            token,
+            executor="CeleryExecutor",
+            label=DEPLOYMENT_LABEL,
+            workspace_id=workspace_id,
+            cluster_id=cluster_id,
+            dag_deployment_type="dag_deploy",
+        )
+    except HoustonError:
+        dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
+        dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
+        raise
     wait_for_release_ready(_k8s_apps_v1_client_module, created["releaseName"])
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 

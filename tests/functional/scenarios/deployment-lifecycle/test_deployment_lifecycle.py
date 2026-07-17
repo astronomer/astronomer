@@ -26,7 +26,15 @@ import pytest
 import testinfra
 from kubernetes import client, config
 
-from tests.utils.houston_graphql import create_user, create_workspace, get_cluster_id, upsert_deployment, wait_for_release_ready
+from tests.utils.houston_graphql import (
+    HoustonError,
+    create_user,
+    create_workspace,
+    dump_pod_logs,
+    get_cluster_id,
+    upsert_deployment,
+    wait_for_release_ready,
+)
 from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_by_label_selector
 
 NAMESPACE = "astronomer"
@@ -46,6 +54,12 @@ def _k8s_apps_v1_client_module() -> client.AppsV1Api:
 
 
 @pytest.fixture(scope="module")
+def _k8s_core_v1_client_module() -> client.CoreV1Api:
+    config.load_kube_config(config_file=KUBECONFIG_UNIFIED)
+    return client.CoreV1Api()
+
+
+@pytest.fixture(scope="module")
 def _houston_api_module():
     """Module-scoped counterpart to conftest.py's houston_api fixture, for the same
     reason as _k8s_apps_v1_client_module above."""
@@ -54,7 +68,7 @@ def _houston_api_module():
 
 
 @pytest.fixture(scope="module")
-def deployment(_houston_api_module, _k8s_apps_v1_client_module):
+def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """
     Bootstraps a fresh admin user and workspace, creates an Airflow Deployment through
     Houston's GraphQL API, and waits for it to reach full readiness. Module-scoped: both
@@ -64,14 +78,19 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module):
     token = create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
     workspace_id = create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
     cluster_id = get_cluster_id(_houston_api_module, token)
-    created = upsert_deployment(
-        _houston_api_module,
-        token,
-        executor="CeleryExecutor",
-        label=DEPLOYMENT_LABEL,
-        workspace_id=workspace_id,
-        cluster_id=cluster_id,
-    )
+    try:
+        created = upsert_deployment(
+            _houston_api_module,
+            token,
+            executor="CeleryExecutor",
+            label=DEPLOYMENT_LABEL,
+            workspace_id=workspace_id,
+            cluster_id=cluster_id,
+        )
+    except HoustonError:
+        dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
+        dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
+        raise
     wait_for_release_ready(_k8s_apps_v1_client_module, created["releaseName"])
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 

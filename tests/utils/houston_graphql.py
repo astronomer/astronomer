@@ -16,6 +16,31 @@ class HoustonError(RuntimeError):
     """Raised when Houston's GraphQL API returns a non-empty errors[] array."""
 
 
+def dump_pod_logs(k8s_core_v1_client, label_selector: str, namespace: str = "astronomer", tail_lines: int = 200) -> None:
+    """
+    Print recent logs for every container in every pod matching label_selector.
+
+    upsertDeployment's GraphQL error messages (e.g. "13 INTERNAL: failed to validate
+    token") come from Commander over gRPC and are often too generic to diagnose on
+    their own -- the real detail is in Commander's (or Houston's) own logs, and this
+    devcontainer has no live cluster to inspect them by hand.
+    """
+    pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
+    if not pods:
+        print(f"dump_pod_logs: no pods found for {namespace}/{label_selector}")
+        return
+    for pod in pods:
+        for container in pod.spec.containers:
+            print(f"--- logs: {namespace}/{pod.metadata.name} ({container.name}), last {tail_lines} lines ---")
+            try:
+                logs = k8s_core_v1_client.read_namespaced_pod_log(
+                    pod.metadata.name, namespace, container=container.name, tail_lines=tail_lines
+                )
+                print(logs)
+            except Exception as exc:  # noqa: BLE001
+                print(f"(failed to fetch logs for {pod.metadata.name}/{container.name}: {exc})")
+
+
 # houston-api's Alpine-based image only has curl as a build-time dependency -- it's
 # removed via `apk del .build-deps` before the final image layer (see its Dockerfile).
 # Node (the app's own runtime, guaranteed present) has a built-in global fetch since
