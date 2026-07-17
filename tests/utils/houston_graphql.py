@@ -145,6 +145,11 @@ def wait_for_release_ready(k8s_apps_v1_client, release_name: str, timeout: int =
     Wait for every Deployment/StatefulSet Commander created for this release to reach
     readyReplicas == spec.replicas. Not just "pod visible" -- a rejected or
     not-yet-scheduled pod never shows up as unhealthy, only as missing.
+
+    Prints progress every iteration, deliberately: CircleCI kills a job after 10
+    minutes with no output at all, which is the same order of magnitude as this
+    function's own timeout -- a silent poll loop risks CI killing the job before this
+    function's own TimeoutError (with the actually useful detail) ever gets to fire.
     """
     label_selector = f"release={release_name}"
     deadline = time.monotonic() + timeout
@@ -158,9 +163,12 @@ def wait_for_release_ready(k8s_apps_v1_client, release_name: str, timeout: int =
             if (w.status.ready_replicas or 0) != w.spec.replicas
         ]
         if workloads and not not_ready:
+            print(f"Release {release_name!r}: all {len(workloads)} Deployment(s)/StatefulSet(s) ready.")
             return
         if not workloads:
             not_ready = [f"no Deployments/StatefulSets found yet with label {label_selector}"]
+        remaining = int(deadline - time.monotonic())
+        print(f"Release {release_name!r} not ready yet ({remaining}s remaining): {', '.join(not_ready)}")
         if time.monotonic() >= deadline:
             raise TimeoutError(f"Release {release_name!r} never became fully ready: {', '.join(not_ready)}")
         time.sleep(10)
