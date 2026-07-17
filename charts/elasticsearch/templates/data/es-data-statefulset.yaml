@@ -1,7 +1,7 @@
 ####################################
 ## Elasticsearch Data StatefulSet ##
 ####################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -49,9 +49,7 @@ spec:
         {{- end }}
     spec:
       terminationGracePeriodSeconds: 3600
-{{- if eq .Values.global.openshift.enabled false }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       nodeSelector:
         {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.data.antiAffinity "hard" }}
@@ -92,7 +90,12 @@ spec:
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         resources: {{- toYaml .Values.data.initResources | nindent 10 }}
         securityContext:
-          readOnlyRootFilesystem: true
+          {{- if .Values.data.securityContext }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required .Values.data.securityContext | toYaml | nindent 10 }}
+          {{- else }}
+          {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
+          {{- end }}
         volumeMounts:
           - name: es-config-dir
             mountPath: /usr/share/elasticsearch/config_copy
@@ -121,7 +124,7 @@ spec:
           {{- $required := dict "readOnlyRootFilesystem" true }}
           {{- merge $required .Values.data.securityContext | toYaml | nindent 10 }}
           {{- else }}
-          {{- include "elasticsearch.securityContext" . | nindent 10 }}
+          {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
           {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
@@ -163,6 +166,15 @@ spec:
           tcpSocket:
             port: {{ .Values.common.ports.transport }}
           initialDelaySeconds: 20
+          periodSeconds: 10
+        {{- end }}
+        {{- if .Values.data.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.data.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          tcpSocket:
+            port: {{ .Values.common.ports.transport }}
+          failureThreshold: 30
           periodSeconds: 10
         {{- end }}
         volumeMounts:

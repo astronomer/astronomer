@@ -1,7 +1,7 @@
 ###########################################################################
 # Vector DaemonSet
 ###########################################################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -78,6 +78,16 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 3
+        {{- end }}
+        {{- if .Values.vector.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.vector.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8686
+          failureThreshold: 30
+          periodSeconds: 10
         {{- end }}
         env:
         - name: VECTOR_SELF_NODE_NAME

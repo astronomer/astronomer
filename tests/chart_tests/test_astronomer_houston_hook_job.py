@@ -1,8 +1,17 @@
 import pytest
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
+
+REFRESH_CP_CHART_VERSION_FILE = "charts/astronomer/templates/houston/helm-hooks/houston-cp-refresh-job.yaml"
+
+
+def _ha_values(**overrides):
+    """global.controlPlaneHA enabled with a valid globalBaseDomain, control plane."""
+    cpha = {"enabled": True, "globalBaseDomain": "astro.example.com"}
+    cpha.update(overrides)
+    return {"global": {"plane": {"mode": "control"}, "controlPlaneHA": cpha}}
 
 
 @pytest.mark.parametrize(
@@ -24,9 +33,21 @@ class TestHoustonHookJob:
         assert docs[0]["kind"] == "Job"
         assert docs[0]["metadata"]["name"] == "release-name-houston-upgrade-deployments"
 
-        assert c_by_name["wait-for-db"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["wait-for-db"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
-        assert c_by_name["houston-bootstrapper"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["houston-bootstrapper"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
         assert c_by_name["post-upgrade-job"]["args"] == [
             "yarn",
@@ -35,7 +56,13 @@ class TestHoustonHookJob:
             "--canary=false",
         ]
 
-        assert c_by_name["post-upgrade-job"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["post-upgrade-job"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
         assert {
             "name": "houston-config-volume",
             "mountPath": "/houston/config/production.yaml",
@@ -72,13 +99,31 @@ class TestHoustonHookJob:
         assert docs[0]["kind"] == "Job"
         assert docs[0]["metadata"]["name"] == "release-name-houston-db-migrations"
 
-        assert c_by_name["wait-for-db"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["wait-for-db"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
-        assert c_by_name["houston-bootstrapper"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["houston-bootstrapper"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
         assert c_by_name["houston-db-migrations-job"]["args"] == ["yarn", "migrate"]
 
-        assert c_by_name["houston-db-migrations-job"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["houston-db-migrations-job"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
         assert {
             "name": "houston-config-volume",
             "mountPath": "/houston/config/production.yaml",
@@ -183,3 +228,91 @@ class TestHoustonHookJob:
         assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+class TestRefreshCpChartVersionHookJob:
+    """The CP chartVersion refresh post-upgrade hook (PINF-930).
+
+    Unlike the cp-identity Secret, this job is gated on controlPlaneHA.enabled in addition
+    to plane mode: cross-CP chartVersion coordination is meaningless with a single CP, and
+    (without HA) CP_ID is never wired to the job either, so running it would just spin up a
+    pod that no-ops.
+    """
+
+    def test_defaults_on_control_plane_with_ha(self, kube_version):
+        """Rendered on a control plane with HA enabled (mirrors db-migration/upgrade-deployments): name, args, mount."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=_ha_values(),
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "Job"
+        assert docs[0]["metadata"]["name"] == "release-name-houston-cp-refresh"
+
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        job = c_by_name["refresh-cp-chart-version-job"]
+        assert job["args"] == ["yarn", "refresh-cp-chart-version"]
+        assert job["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/config/production.yaml",
+            "subPath": "production.yaml",
+        } in job["volumeMounts"]
+
+    @pytest.mark.parametrize("mode", ["control", "unified"])
+    def test_absent_when_ha_disabled(self, kube_version, mode):
+        """No refresh Job on control/unified installs while HA is off (new behavior)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": mode}, "controlPlaneHA": {"enabled": False}}},
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+        assert docs == []
+
+    def test_absent_on_data_plane(self, kube_version):
+        """A data-plane render emits no refresh Job (no CP registry on the data plane), even with HA enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": True}}},
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+        assert docs == []
+
+    def test_hook_weight_and_order(self, kube_version):
+        """post-upgrade hook, ordered after the pre-upgrade db-migration job."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=_ha_values(),
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+
+        assert len(docs) == 1
+        annotations = docs[0]["metadata"].get("annotations", {})
+        assert annotations.get("helm.sh/hook") == "post-upgrade"
+        assert annotations.get("helm.sh/hook-weight") == "0"
+        assert annotations.get("helm.sh/hook-delete-policy") == "before-hook-creation"
+
+    def test_cp_id_env_mounted_in_ha(self, kube_version):
+        """Under HA, CP_ID (from the cp-identity Secret) is wired so the script can resolve its CP."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=_ha_values(),
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env = get_env_vars_dict(c_by_name["refresh-cp-chart-version-job"].get("env", []))
+        assert env.get("CP_ID") == {"secretKeyRef": {"name": "cp-identity", "key": "cp_id"}}

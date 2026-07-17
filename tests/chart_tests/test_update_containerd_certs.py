@@ -317,6 +317,7 @@ class TestInjectConfigPath:
 
         script.CONFIG_TOML = config_toml
         script.CONFIG_TOML_BAK = config_toml_bak
+        script.CONTAINERD_HOST_PATH = containerd_env["containerd_dir"]
         script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
         return config_toml, config_toml_bak
 
@@ -392,6 +393,7 @@ class TestInjectConfigPath:
 
         script.CONFIG_TOML = config_toml
         script.CONFIG_TOML_BAK = config_toml_bak
+        script.CONTAINERD_HOST_PATH = containerd_env["containerd_dir"]
         script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
 
         with patch.object(script, "restart_containerd"):
@@ -452,6 +454,7 @@ class TestInjectConfigPath:
 
         script.CONFIG_TOML = config_toml
         script.CONFIG_TOML_BAK = config_toml_bak
+        script.CONTAINERD_HOST_PATH = containerd_env["containerd_dir"]
         script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
 
         with patch.object(script, "restart_containerd") as mock_restart:
@@ -619,6 +622,140 @@ class TestStripRegistryMirrorsBlocks:
         assert "mirrors" not in out
         assert "configs" in out
         assert "ca_file" in out
+
+
+class TestPreserveMirrorsAsHostsToml:
+    """Tests for translating inline `mirrors.<host>` blocks into per-host
+    `hosts.toml` files before stripping. This preserves cloud-provider
+    behavior (e.g. GKE's `mirror.gcr.io` pull-through cache for `docker.io`)
+    under the hosts.d schema that containerd 2.x reads via `config_path`."""
+
+    def test_translates_gke_133_docker_io_mirror_to_hosts_toml(self, script, containerd_env):
+        """End-to-end: the GKE 1.33 default config.toml has an inline
+        `mirrors."docker.io"` block. After inject_config_path runs, a
+        `certs.d/docker.io/hosts.toml` must exist with the same endpoints in
+        the same order (`mirror.gcr.io` first, `registry-1.docker.io` second),
+        so containerd keeps using the GKE pull-through cache."""
+        config_toml = containerd_env["containerd_dir"] / "config.toml"
+        config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
+        shutil.copy2(DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml", config_toml)
+        shutil.copy2(DATA_FILES_DIR / "gke_1_33_containerd_2x_config.toml", config_toml_bak)
+
+        script.CONFIG_TOML = config_toml
+        script.CONFIG_TOML_BAK = config_toml_bak
+        script.CONTAINERD_HOST_PATH = containerd_env["containerd_dir"]
+        script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
+
+        with patch.object(script, "restart_containerd"):
+            script.inject_config_path(containerd_version=2)
+
+        hosts_toml = containerd_env["containerd_dir"] / "certs.d" / "docker.io" / "hosts.toml"
+        assert hosts_toml.is_file()
+        content = hosts_toml.read_text()
+        assert 'server = "https://docker.io"' in content
+        assert '[host."https://mirror.gcr.io"]' in content
+        assert '[host."https://registry-1.docker.io"]' in content
+        # Endpoint order must be preserved: containerd tries hosts in the order
+        # they appear in the file, and the GKE cache must be tried first.
+        assert content.index('[host."https://mirror.gcr.io"]') < content.index('[host."https://registry-1.docker.io"]')
+
+    def test_skips_translation_when_hosts_toml_already_exists(self, script, containerd_env):
+        """If a hosts.toml already exists for the registry (e.g. hand-authored
+        or written by a previous run), do not overwrite it."""
+        config_toml = containerd_env["containerd_dir"] / "config.toml"
+        config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
+        config_toml.write_text(
+            textwrap.dedent("""\
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+                  endpoint = ["https://mirror.gcr.io", "https://registry-1.docker.io"]
+            """)
+        )
+        config_toml_bak.write_text(config_toml.read_text())
+
+        pre_existing = "# do not clobber me\n"
+        docker_io_dir = containerd_env["containerd_dir"] / "certs.d" / "docker.io"
+        docker_io_dir.mkdir(parents=True)
+        (docker_io_dir / "hosts.toml").write_text(pre_existing)
+
+        script.CONFIG_TOML = config_toml
+        script.CONFIG_TOML_BAK = config_toml_bak
+        script.CONTAINERD_HOST_PATH = containerd_env["containerd_dir"]
+        script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
+
+        with patch.object(script, "restart_containerd"):
+            script.inject_config_path(containerd_version=2)
+
+        assert (docker_io_dir / "hosts.toml").read_text() == pre_existing
+
+    def test_skips_translation_for_registry_host(self, script, containerd_env):
+        """The private-registry hosts.toml is written by _apply_v2_hosts_toml
+        with a `ca = [...]` key. The mirror translator must not write a
+        no-`ca` version that would clobber it."""
+        config_toml = containerd_env["containerd_dir"] / "config.toml"
+        config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
+        config_toml.write_text(
+            textwrap.dedent("""\
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry.example.com"]
+                  endpoint = ["https://registry.example.com"]
+            """)
+        )
+        config_toml_bak.write_text(config_toml.read_text())
+
+        script.CONFIG_TOML = config_toml
+        script.CONFIG_TOML_BAK = config_toml_bak
+        script.CONTAINERD_HOST_PATH = containerd_env["containerd_dir"]
+        script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
+        script.REGISTRY_HOST = "registry.example.com"
+
+        with patch.object(script, "restart_containerd"):
+            script.inject_config_path(containerd_version=2)
+
+        # The translator must have skipped REGISTRY_HOST — no hosts.toml
+        # without a `ca` key should be sitting where _apply_v2_hosts_toml
+        # is going to write later.
+        registry_hosts_toml = containerd_env["containerd_dir"] / "certs.d" / "registry.example.com" / "hosts.toml"
+        assert not registry_hosts_toml.exists()
+
+    def test_translates_multiple_mirrors_independently(self, script, containerd_env):
+        """If config.toml has inline mirror blocks for multiple registries,
+        each gets its own hosts.toml — no hard-coded registry knowledge."""
+        config_toml = containerd_env["containerd_dir"] / "config.toml"
+        config_toml_bak = containerd_env["containerd_dir"] / "config.toml.bak"
+        config_toml.write_text(
+            textwrap.dedent("""\
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+                  endpoint = ["https://mirror.gcr.io", "https://registry-1.docker.io"]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."quay.io"]
+                  endpoint = ["https://quay-mirror.example.com"]
+            """)
+        )
+        config_toml_bak.write_text(config_toml.read_text())
+
+        script.CONFIG_TOML = config_toml
+        script.CONFIG_TOML_BAK = config_toml_bak
+        script.CONTAINERD_HOST_PATH = containerd_env["containerd_dir"]
+        script.CERT_CONFIG_PATH = "/etc/containerd/certs.d"
+
+        with patch.object(script, "restart_containerd"):
+            script.inject_config_path(containerd_version=2)
+
+        docker_io = containerd_env["containerd_dir"] / "certs.d" / "docker.io" / "hosts.toml"
+        quay_io = containerd_env["containerd_dir"] / "certs.d" / "quay.io" / "hosts.toml"
+        assert docker_io.is_file()
+        assert quay_io.is_file()
+        assert '[host."https://mirror.gcr.io"]' in docker_io.read_text()
+        assert '[host."https://quay-mirror.example.com"]' in quay_io.read_text()
+
+    def test_passthrough_hosts_toml_has_no_ca_key(self, script):
+        """The translated file must not include a `ca = [...]` key — these are
+        OS-trust-store mirrors, not private-CA-trusted endpoints. Adding a
+        bogus `ca` would break TLS verification for the upstream."""
+        content = script._generate_passthrough_hosts_toml(
+            "docker.io",
+            ["https://mirror.gcr.io", "https://registry-1.docker.io"],
+        )
+        assert "ca =" not in content
+        assert 'capabilities = ["pull", "resolve"]' in content
 
 
 class TestWriteCustomerConfigToml:

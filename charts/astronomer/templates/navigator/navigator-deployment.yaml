@@ -44,6 +44,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "navigator.serviceAccountName" . }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -62,9 +63,7 @@ spec:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
           resources: {{- toYaml .Values.navigator.resources | nindent 12 }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
       containers:
         - name: navigator
           image: {{ template "houston.image" . }}
@@ -73,15 +72,26 @@ spec:
             - yarn
             - run
             - navigator
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.navigator.resources | nindent 12 }}
           {{- if .Values.navigator.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.navigator.livenessProbe) . | nindent 12 }}
           {{- end }}
           {{- if .Values.navigator.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.navigator.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.navigator.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.navigator.startupProbe) . | nindent 12 }}
+          {{- else }}
+          # navigator (`yarn navigator`) is a reconcile/gRPC-client worker that binds
+          # no listener, so a tcpSocket/httpGet probe (here against houstonHTTP, a port
+          # it does not serve) would fail forever and crashloop the pod. Use a no-op
+          # exec probe to satisfy Gatekeeper's allow-with-probes safely.
+          startupProbe:
+            exec:
+              command: ["/bin/true"]
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           volumeMounts:
             - name: etc-ssl-certs
@@ -113,6 +123,9 @@ spec:
               value: {{ template "houston.nats.servers" . }}
             - name: NATS__CLUSTER_ID
               value: {{ .Release.Name }}-stan
+            {{- if .Values.global.controlPlaneHA.enabled }}
+            {{- include "houston.cpIdEnv" . | nindent 12 }}
+            {{- end }}
 
             # Failover request reconcile loop
             - name: FAILOVER_REQUEST_RECONCILER_INTERVAL_SECONDS

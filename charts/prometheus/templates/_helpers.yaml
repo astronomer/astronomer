@@ -68,15 +68,20 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{- define "prometheus.url" -}}
-{{- if eq .Values.global.plane.mode "data" -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 prometheus.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 prometheus.{{ .Values.global.baseDomain }}
 {{- end -}}
 {{- end -}}
 
+{{/* Global customer-facing host, templated from controlPlaneHA.globalBaseDomain (CP HA only). */}}
+{{- define "prometheus.globalUrl" -}}
+prometheus.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- end -}}
+
 {{- define "prom-proxy.url" -}}
-{{- if eq .Values.global.plane.mode "data" -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 prom-proxy.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 prom-proxy.{{ .Values.global.baseDomain }}
@@ -99,12 +104,6 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
-
-{{- define "prometheus.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
-{{- omit  .Values.securityContext "runAsUser" | toYaml }}
-{{- end -}}
-{{- end }}
 
 {{- define "prometheus.airflowMetricsActionDrop" }}
 - source_labels: [__name__]

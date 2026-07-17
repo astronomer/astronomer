@@ -9,11 +9,21 @@ tolerations: []
 images:
   kubeState:
     repository: quay.io/astronomer/ap-kube-state
-    tag: 2.18.0-2
+    tag: 2.19.1
     pullPolicy: IfNotPresent
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
+  runAsUser: 65534
+
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 env: {}
 resources:
@@ -31,6 +41,7 @@ livenessProbe: {}
 #  initialDelaySeconds: 5
 #  timeoutSeconds: 5
 readinessProbe: {}
+startupProbe: {}
 
 ports:
   scrape: 8080

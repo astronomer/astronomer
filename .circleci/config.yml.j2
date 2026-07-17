@@ -2,7 +2,7 @@
 {%- set python_image_version = '3.13' -%}
 
 {#- https://circleci.com/docs/building-docker-images/#docker-version -#}
-{%- set circleci_docker_version = 'docker23' -%}
+{%- set circleci_docker_version = 'docker28' -%}
 
 {#- https://github.com/sigstore/cosign/releases -#}
 {%- set cosign_version = 'v2.5.0' -%}
@@ -11,10 +11,10 @@
 {%- set base_image_version = 'current-24.04' -%}
 
 {#- https://github.com/astral-sh/uv/releases -#}
-{%- set uv_version = '0.11.3' -%}
+{%- set uv_version = '0.11.25' -%}
 
 {#- https://circleci.com/developer/machine/image/ubuntu-2404#image-tags -#}
-{%- set machine_image_version = 'ubuntu-2404:2025.09.1' -%}
+{%- set machine_image_version = 'ubuntu-2404:2026.05.1' -%}
 
 version: 2.1
 executors:
@@ -241,6 +241,36 @@ jobs:
       - store_test_results:
           path: test-results
 {%- endfor %}
+{% for scenario in scenarios %}
+  scenario-{{ scenario }}:
+    machine:
+      image: {{ machine_image_version }}
+      resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ '{{' }} checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p {{ python_image_version }} --seed && uv sync
+      - run:
+          name: "Scenario: {{ scenario }}"
+          command: |
+            uv run bin/run-scenario.py {{ scenario }}
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario }}"
+      - store_test_results:
+          path: test-results
+{%- endfor %}
 
   check-commander-airflow-version:
     docker:
@@ -293,7 +323,11 @@ workflows:
           requires:
             - build-artifact
             - approve-test-all-platforms
-{% endif %}{% endfor %}
+{% endif %}{% endfor %}{% for scenario in scenarios %}
+      - scenario-{{ scenario }}:
+          requires:
+            - build-artifact
+{%- endfor %}
       - approve-stage-cluster-test:
           type: approval
           filters:

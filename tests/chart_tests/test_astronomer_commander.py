@@ -50,14 +50,18 @@ class TestAstronomerCommander:
         if namespace_labels and rbac_enabled:
             assert metadata_file_contents == {
                 "namespaceLabels": namespace_labels,
+                "extraAnnotations": {},
                 "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
+                "externalSecretManager": {"isClusterSecretStore": True},
             }
         else:
             assert metadata_file_contents == {
                 "namespaceLabels": {},
+                "extraAnnotations": {},
                 "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
+                "externalSecretManager": {"isClusterSecretStore": True},
             }
 
     @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
@@ -85,9 +89,57 @@ class TestAstronomerCommander:
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
         assert metadata_file_contents == {
             "namespaceLabels": {},
+            "extraAnnotations": {},
             "customLogging": {"enabled": enabled},
             "registry": {"version": "99.88.77"},
+            "externalSecretManager": {"isClusterSecretStore": True},
         }
+
+    def test_commander_metadata_extra_annotations(self, kube_version):
+        """Test that global.extraAnnotations are passed through to commander metadata.yaml."""
+        extra_annotations = {
+            "kubernetes.io/ingress.class": "default",
+            "route.openshift.io/termination": "passthrough",
+        }
+        values = {
+            "global": {
+                "extraAnnotations": extra_annotations,
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert metadata_file_contents["extraAnnotations"] == extra_annotations
+
+    def test_commander_metadata_shared_elasticsearch_overrides(self, kube_version):
+        """Test that global.sharedElasticsearch are passed through to commander metadata.yaml."""
+        values = {
+            "global": {
+                "sharedElasticsearch": {
+                    "enabled": True,
+                },
+                "plane": {
+                    "mode": "data",
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert metadata_file_contents["elasticsearch"] == {"sharedElasticsearchEnabled": True}
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
@@ -512,7 +564,7 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": True},
+                    "operator": {"enabled": True},
                 },
             },
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
@@ -530,7 +582,7 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflowOperator": {"enabled": False},
+                    "operator": {"enabled": False},
                 },
             },
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],

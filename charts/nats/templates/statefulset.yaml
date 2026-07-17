@@ -2,7 +2,6 @@
 ## Nats StatefulSet ##
 ######################
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-{{- $natsSecurityContext := (include "nats.securityContext" . | fromYaml) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -54,9 +53,7 @@ spec:
     spec:
       serviceAccountName: {{ template "nats.serviceAccountName" . }}
     {{- include "nats.imagePullSecrets" . | nindent 6 }}
-{{- if eq .Values.global.openshift.enabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
@@ -147,9 +144,7 @@ spec:
       - name: nats
         image: {{ include "nats.image" . }}
         imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
-        securityContext:
-          {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
+        securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
         ports:
         - containerPort: 4222
           name: client
@@ -269,6 +264,16 @@ spec:
           initialDelaySeconds: 10
           timeoutSeconds: 5
         {{- end }}
+        {{- if .Values.nats.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.nats.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8222
+          failureThreshold: 30
+          periodSeconds: 10
+        {{- end }}
 
         # Gracefully stop NATS Server on pod deletion or image upgrade.
         #
@@ -288,7 +293,7 @@ spec:
       - name: reloader
         image: {{ .Values.reloader.image }}
         imagePullPolicy: {{ .Values.reloader.pullPolicy }}
-        securityContext: {{ template "nats.securityContext" . }}
+        securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
         command:
           - "nats-server-config-reloader"
           - "-pid"
@@ -307,9 +312,7 @@ spec:
         {{- if .Values.reloader.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.reloader.readinessProbe) . | nindent 10 }}
         {{- end }}
-        securityContext:
-          {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
+        securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
       {{ end }}
 
       ##############################
@@ -340,9 +343,16 @@ spec:
         {{- if .Values.exporter.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.exporter.readinessProbe) . | nindent 10 }}
         {{- end }}
-        securityContext:
-          {{- $required := dict "readOnlyRootFilesystem" true }}
-          {{- merge $required $natsSecurityContext | toYaml | nindent 10 }}
+        {{- if .Values.exporter.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.exporter.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          tcpSocket:
+            port: 7777
+          failureThreshold: 30
+          periodSeconds: 10
+        {{- end }}
+        securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
       {{ end }}
 
   {{- if and ( or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetStream.fileStorage.enabled (not .Values.nats.jetStream.fileStorage.existingClaim) }}

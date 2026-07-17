@@ -5,7 +5,6 @@
 {{- $planeMode := and (eq .Values.global.plane.mode "unified")  ( not $useClusterRoles ) }}
 {{- $planeCPMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
-{{- $prometheusSecurityContext := (include "prometheus.securityContext" . | fromYaml) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -60,6 +59,7 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       {{- include "prometheus.hostAliases" . | nindent 6 }}
       initContainers:
@@ -79,16 +79,12 @@ spec:
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -119,6 +115,17 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
           {{- end }}
+          {{- if .Values.global.authSidecar.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.global.authSidecar.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           volumeMounts:
             - name: nginx-write-dir
               mountPath: /var/lib/nginx/tmp
@@ -134,9 +141,7 @@ spec:
             - --volume-dir=/etc/prometheus/config
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
           {{- if .Values.configMapReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
@@ -144,22 +149,40 @@ spec:
           {{- if .Values.configMapReloader.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.configMapReloader.readinessProbe) . | nindent 12 }}
           {{- end }}
+          {{- if .Values.configMapReloader.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.configMapReloader.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.ports.http }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           volumeMounts:
             - name: alert-volume
               mountPath: /etc/prometheus/alerts.d
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
+        {{- if $planeCPMode }}
         - name: filesd-reloader
           image: {{ include "filesdReloader.image" . }}
           imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
-          securityContext:
-            readOnlyRootFilesystem: true
+          securityContext: {{- include "platform.containerSecurityContext" (list $ .Values.filesdReloader.securityContext) | nindent 12 }}
           resources: {{ toYaml .Values.filesdReloader.resources | nindent 12 }}
           {{- if .Values.filesdReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.filesdReloader.livenessProbe) . | nindent 12 }}
           {{- end }}
           {{- if .Values.filesdReloader.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.filesdReloader.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.filesdReloader.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.filesdReloader.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.ports.http }}
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           env:
             - name: DATABASE_URL
@@ -187,6 +210,7 @@ spec:
           volumeMounts:
           - mountPath: /prometheusreloader/airflow
             name: filesd
+        {{- end }}
         - name: prometheus
           image: {{ include "prometheus.image" . }}
           env:
@@ -201,9 +225,7 @@ spec:
             - name: UPDATE_CA_CERTS
               value: "true"
           {{- end }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required $prometheusSecurityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           args:
@@ -263,9 +285,16 @@ spec:
             failureThreshold: 3
             timeoutSeconds: 1
           {{- end }}
-{{- if eq .Values.global.openshift.enabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /-/healthy
+              port: {{ .Values.ports.http }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
         - name: nginx-write-dir

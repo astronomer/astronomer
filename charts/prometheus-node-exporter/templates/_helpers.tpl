@@ -79,6 +79,7 @@ Docker repository name
 {{- end }}
 {{- end }}
 
+
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}

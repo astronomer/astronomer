@@ -6,15 +6,15 @@
 images:
   nats:
     repository: quay.io/astronomer/ap-nats-server
-    tag: 2.12.8-1
+    tag: 2.14.3-2
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.17.3-7
+    tag: 0.20.0-9
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.3
+    tag: 2.0.15
     pullPolicy: IfNotPresent
 
 
@@ -64,6 +64,13 @@ nats:
     # initialDelaySeconds: 10
     # timeoutSeconds: 5
 
+  startupProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: 8222
+    # failureThreshold: 30
+    # periodSeconds: 10
+
   # Server settings.
   limits:
     maxConnections:
@@ -80,9 +87,16 @@ nats:
 
   jetStream:
     enabled: true
+    startupProbe: {}
+      # exec:
+      #   command: ["true"]
+      # failureThreshold: 30
+      # periodSeconds: 10
     serviceAccount:
       create: true
       name: ~
+      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+      automountServiceAccountToken: true
 
 
     # Jetstream Domain
@@ -164,8 +178,14 @@ imagePullSecrets: []
 # Toggle whether to use setup a Pod Security Context
 podSecurityContext:
    fsGroup: 1000
+   seccompProfile:
+     type: RuntimeDefault
 # ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext:
+   allowPrivilegeEscalation: false
+   capabilities:
+     drop:
+       - ALL
    runAsUser: 1000
    runAsNonRoot: true
 
@@ -270,6 +290,11 @@ reloader:
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
+  startupProbe: {}
+    # tcpSocket:
+    #   port: 7777
+    # failureThreshold: 30
+    # periodSeconds: 10
   # resource configuration for the metrics sidecar
   resources:
     limits:

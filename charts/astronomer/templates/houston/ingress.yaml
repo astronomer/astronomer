@@ -18,10 +18,10 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       location ~ ^/v1/(alerts|metrics) {
@@ -40,6 +40,9 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
         - houston.{{ .Values.global.baseDomain }}
+        {{- if .Values.global.controlPlaneHA.enabled }}
+        - houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+        {{- end }}
   {{- end }}
   rules:
   - host: houston.{{ .Values.global.baseDomain }}
@@ -52,5 +55,17 @@ spec:
               name: {{ .Release.Name }}-houston
               port:
                 name: houston-http
+  {{- if .Values.global.controlPlaneHA.enabled }}
+  - host: houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-houston
+              port:
+                name: houston-http
+  {{- end }}
 {{- end }}
 {{- end }}

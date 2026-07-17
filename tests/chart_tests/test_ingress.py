@@ -97,7 +97,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/prometheus/templates/ingress.yaml", "charts/prometheus/templates/prometheus-federate-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data", "domainPrefix": "dp01"}}},
         )
 
         assert len(docs) == 2
@@ -168,6 +168,36 @@ class TestIngress:
         assert "registry.example.com" in tls_hosts
         assert "example.com" in tls_hosts
         assert "app.example.com" in tls_hosts
+
+    def test_public_registry_ingress_not_rendered_when_registry_disabled_in_data(self, kube_version):
+        """disables registry when flag is disabled when on data mode."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}},
+                "astronomer": {"registry": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 0
+
+    def test_public_registry_ingress_renders_in_control_when_registry_disabled(self, kube_version):
+        """disables registry when flag is disabled when on control mode.."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"registry": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        hosts = [rule["host"] for rule in docs[0]["spec"]["rules"]]
+        assert "registry.example.com" not in hosts
+        assert "example.com" in hosts
+        assert "app.example.com" in hosts
 
     @pytest.mark.parametrize(
         ("mode", "expected_astro_ui", "expected_registry", "expected_rule_count", "expected_hosts"),
