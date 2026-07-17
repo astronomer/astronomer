@@ -357,6 +357,34 @@ jobs:
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/auth-sidecar"
       - store_test_results:
           path: test-results
+  scenario-deployment-lifecycle:
+    machine:
+      image: ubuntu-2404:2026.05.1
+      resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: deployment-lifecycle"
+          command: |
+            uv run bin/run-scenario.py deployment-lifecycle
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/deployment-lifecycle"
+      - store_test_results:
+          path: test-results
 
   check-commander-airflow-version:
     docker:
@@ -423,6 +451,9 @@ workflows:
           requires:
             - build-artifact
       - scenario-auth-sidecar:
+          requires:
+            - build-artifact
+      - scenario-deployment-lifecycle:
           requires:
             - build-artifact
       - approve-stage-cluster-test:
