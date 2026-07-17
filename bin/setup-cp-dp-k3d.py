@@ -114,28 +114,16 @@ def _install_service_monitor_crd(context: str) -> None:
 #
 # Numbered aliases resolve to a published chart version on HELM_REPO_URL, including
 # prereleases (most release-branch versions are only ever published as `-betaN` / timestamped
-# CI builds — see `_resolve_chart_version`). "main" is special: it installs from whatever chart
-# is currently checked out locally (no version pull) with dev image tags floated in. "0.37" is
-# also special: 0.37.x has no CP/DP split (see bin/setup-037x-k3d.py), so main() delegates the
-# whole run to that script before any CP/DP settings are built.
-VERSION_ALIASES: tuple[str, ...] = ("0.37", "1.1.x", "1.2.x", "2.0.0", "2.0.1", "2.1", "main")
+# CI builds — see `_resolve_chart_version`). "local" is special: it installs from whatever chart
+# is currently checked out on disk (no version pull) — named for "local checkout", not any git
+# branch. Pass `--helm-values configs/pull-main-master-tags.yaml` separately to also float
+# first-party image tags to their unreleased branch builds (main/master) — decoupled from
+# --version so it can be layered on any chart source, not just a local checkout. "0.37" is also
+# special: 0.37.x has no CP/DP split (see bin/setup-037x-k3d.py), so main() delegates the whole
+# run to that script before any CP/DP settings are built.
+VERSION_ALIASES: tuple[str, ...] = ("0.37", "1.1.x", "1.2.x", "2.0.0", "2.0.1", "2.1", "local")
 DELEGATE_037_ALIAS = "0.37"
-MAIN_DEV_ALIAS = "main"
-
-# `main` floats these first-party image tags to their unreleased branch tag instead of whatever
-# the locally checked-out chart pins by default. Houston's API and worker deployments share a
-# single `images.houston.tag` knob, so one override covers both (and so does the db-migrations
-# job, which runs off the same houston image). `ap-registry` / `ap-vector` are vendored/upstream-
-# tracking images with no "main" build, so they are left at chart defaults.
-#
-# NOTE: `charts/astronomer` is installed as a named subchart ("astronomer") of the root umbrella
-# chart, so overrides must be scoped under `astronomer.` — bare `images.houston.tag=...` sets an
-# unused top-level key on the umbrella chart and silently no-ops (verified via `helm template`).
-MAIN_DEV_IMAGE_SET: tuple[str, ...] = (
-    "astronomer.images.houston.tag=main",
-    "astronomer.images.astroUI.tag=main",
-    "astronomer.images.commander.tag=master",
-)
+LOCAL_CHECKOUT_ALIAS = "local"
 
 # Friendly topology labels for the interactive picker, mapped to the actual `global.plane.mode`
 # value the CP is installed with (see docs/architecture.md). "cp/dp" -> "control" because the DP
@@ -178,7 +166,6 @@ class Settings:
     enable_operator: bool
     chart_version: str | None = None
     chart_is_prerelease: bool = False
-    extra_helm_set: tuple[str, ...] = ()
     agents: int = 0
 
 
@@ -347,20 +334,20 @@ def _version_specific_values_file(chart_version: str | None) -> Path:
     """
     Pick the plain, hand-written values file with the `global.*` + `houston.config.deployments.*`
     overrides for this chart version's schema (see configs/local-1x.yaml, configs/local-2x.yaml,
-    configs/local-main.yaml — 1.x and 2.x renamed a bunch of these keys, see
+    configs/k3d-local-scenario.yaml — 1.x and 2.x renamed a bunch of these keys, see
     bin/helm_chart_values_migration_shared.py for the full rename list).
 
-    `chart_version=None` means installing from the local checkout (the `main` alias) — that's
-    exactly what configs/local-main.yaml is for. Deliberately not configs/local-dev.yaml: that
-    file is also used by the unrelated KinD-based bin/reset-local-dev workflow, so sharing it here
-    would mean a change made for one workflow could silently affect the other. 0.37.x (major
+    `chart_version=None` means installing from the local checkout (the `local` alias) — that's
+    exactly what configs/k3d-local-scenario.yaml is for. Deliberately not configs/local-dev.yaml:
+    that file is also used by the unrelated KinD-based bin/reset-local-dev workflow, so sharing it
+    here would mean a change made for one workflow could silently affect the other. 0.37.x (major
     version 0) shares 1.x's shape for everything these files set, so it reuses configs/local-1x.yaml
     too; it isn't actually installed through this code path in normal use (`--version 0.37`
     delegates the whole run to bin/setup-037x-k3d.py — see DELEGATE_037_ALIAS), this only matters
     if `--chart-version` is used to force a 0.37.x chart version directly.
     """
     if chart_version is None:
-        return GIT_ROOT_DIR / "configs" / "local-main.yaml"
+        return GIT_ROOT_DIR / "configs" / "k3d-local-scenario.yaml"
     major = chart_version.split(".", 1)[0]
     try:
         major_num = int(major)
@@ -371,7 +358,7 @@ def _version_specific_values_file(chart_version: str | None) -> Path:
 
 
 def _cp_values_yaml(settings: Settings) -> str:
-    operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
+    operator_block = "  operator:\n    enabled: true\n" if settings.enable_operator else ""
     operator_subchart_block = (
         """\
 airflow-operator:
@@ -429,8 +416,8 @@ postgresql:
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     """Generate DP Helm values. Postgres on/off is decided by main() via configs/postgres-*.yaml
     depending on --dp-airflow-db — each DP runs its own database rather than sharing the CP's."""
-    global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
-    # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
+    global_operator_block = "  operator:\n    enabled: true\n" if settings.enable_operator else ""
+    # The airflow-operator subchart is enabled by `global.operator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
     # that flag is on; we emit it only in that case for clarity.
     operator_subchart_block = (
@@ -583,14 +570,14 @@ def _helm_upgrade_install(
     debug: bool,
     chart_version: str | None = None,
     chart_is_prerelease: bool = False,
-    extra_set: tuple[str, ...] = (),
     base_values_files: tuple[Path, ...] = (),
 ) -> None:
     """
     `base_values_files` are applied BEFORE `values_file` (lowest precedence — e.g. the plain
     version-specific overrides in configs/local-*.yaml), so `values_file` (this script's
     per-invocation settings, like CP-vs-DP postgres enable/disable) always wins over them.
-    `extra_values_files` (e.g. --helm-values) are applied last and win over everything.
+    `extra_values_files` (e.g. --helm-values, including configs/pull-main-master-tags.yaml) are
+    applied last and win over everything.
     """
     chart_ref = HELM_CHART if chart_version else str(chart_dir)
     cmd = [
@@ -621,8 +608,6 @@ def _helm_upgrade_install(
             cmd.append("--devel")
     for extra in extra_values_files:
         cmd.extend(["--values", str(extra)])
-    for s in extra_set:
-        cmd.extend(["--set", s])
     if debug:
         cmd.append("--debug")
     _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
@@ -1149,9 +1134,12 @@ def parse_args() -> argparse.Namespace:
             f"{', '.join(VERSION_ALIASES)}, or any exact/partial chart version known to "
             f"{HELM_REPO_URL} (e.g. '1.1.4'). "
             "'0.37' has no CP/DP split and delegates this entire run to bin/setup-037x-k3d.py. "
-            "'main' installs from the locally checked-out chart and floats "
-            "houston/astroUI/dbBootstrapper to the 'main' image tag and commander to 'master'. "
-            f"Omit to fall back to '{MAIN_DEV_ALIAS}' (pass --interactive to be prompted instead)."
+            "'local' installs from whatever chart is currently checked out on disk (no version "
+            "pull; named for 'local checkout', not any git branch). Pass '--helm-values "
+            "configs/pull-main-master-tags.yaml' separately to also float houston/astroUI/"
+            "commander to their unreleased main/master image tags — works with any --version, "
+            "not just 'local'. "
+            f"Omit to fall back to '{LOCAL_CHECKOUT_ALIAS}' (pass --interactive to be prompted instead)."
         ),
     )
     version_group.add_argument(
@@ -1161,7 +1149,7 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Exact Astronomer chart version to install from the remote Helm repo "
             f"({HELM_REPO_URL}), e.g. '1.2.3-beta1'. Bypasses --version alias resolution "
-            "(including the 0.37 delegation and the 'main' dev-image overrides)."
+            "(including the 0.37 delegation)."
         ),
     )
 
@@ -1239,7 +1227,7 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=None,
         help=(
-            "Enable Airflow operator mode. Sets global.airflowOperator.enabled=true on "
+            "Enable Airflow operator mode. Sets global.operator.enabled=true on "
             "both CP and DP, and renders the airflow-operator subchart values on the DP. "
             "Pass --no-enable-operator to fall back to the helm-based airflow path. "
             "Omit to fall back to enabled (pass --interactive to be prompted instead)."
@@ -1263,9 +1251,9 @@ class Delegate037(Exception):
     """Raised by `_resolve_version` when --version resolves to "0.37" (no CP/DP split)."""
 
 
-def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool, tuple[str, ...]]:
+def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool]:
     """
-    Resolve --version/--chart-version into (chart_version, chart_is_prerelease, extra_helm_set).
+    Resolve --version/--chart-version into (chart_version, chart_is_prerelease).
 
     Raises Delegate037 if the resolved alias is "0.37": the caller must run
     bin/setup-037x-k3d.py instead of continuing with the normal CP/DP flow, since 0.37.x has no
@@ -1279,24 +1267,24 @@ def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool, tuple[
                 f"...` and must be an exact version published on {HELM_REPO_URL} (e.g. "
                 f"'1.2.3-beta1'). Use `--version {args.chart_version}` instead."
             )
-        return args.chart_version, "-" in args.chart_version, ()
+        return args.chart_version, "-" in args.chart_version
 
     alias = args.version_alias
     if alias is None:
         alias = _prompt_choice(
             "Which Astronomer version do you want to install?",
             list(VERSION_ALIASES),
-            default=MAIN_DEV_ALIAS,
+            default=LOCAL_CHECKOUT_ALIAS,
             interactive=args.interactive,
         )
     if alias == DELEGATE_037_ALIAS:
         raise Delegate037
-    if alias == MAIN_DEV_ALIAS:
-        return None, False, MAIN_DEV_IMAGE_SET
+    if alias == LOCAL_CHECKOUT_ALIAS:
+        return None, False
 
     _ensure_helm_repo()
     resolved = _resolve_chart_version(alias, HELM_CHART)
-    return resolved, "-" in resolved, ()
+    return resolved, "-" in resolved
 
 
 def _run_setup_037(args: argparse.Namespace) -> int:
@@ -1362,7 +1350,7 @@ def main() -> int:  # noqa: C901
 
     _require_executable("helm", hint="Install helm and ensure it is in PATH.")
     try:
-        resolved_chart_version, chart_is_prerelease, extra_helm_set = _resolve_version(args)
+        resolved_chart_version, chart_is_prerelease = _resolve_version(args)
     except Delegate037:
         return _run_setup_037(args)
     except (CommandError, RuntimeError) as e:
@@ -1433,7 +1421,6 @@ def main() -> int:  # noqa: C901
         enable_operator=enable_operator,
         chart_version=resolved_chart_version,
         chart_is_prerelease=chart_is_prerelease,
-        extra_helm_set=extra_helm_set,
         agents=args.num_compute_nodes,
     )
 
@@ -1632,7 +1619,6 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
-                    extra_set=settings.extra_helm_set,
                 )
                 ms.done(h)
 
@@ -1704,7 +1690,6 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
-                    extra_set=settings.extra_helm_set,
                 )
                 ms.done(h)
         else:

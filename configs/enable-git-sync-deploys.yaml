@@ -1,16 +1,18 @@
-# Enables the ability to create git-sync deployments. This config is
-# compatible with 2.x
+# Dev config for testing a variety of git-sync related features
 ---
 astronomer:
   # images:
   #   houston:
-  #     tag: danielhoherd_PINF-427-fr11-houston-api
+  #     tag: some-custom-tag
   #     pullPolicy: Always
   #     repository: quay.io/astronomer/ap-houston-api
-  # airflowChartVersion: 1.18.0-build43027
+  # airflowChartVersion: 1.18.2-build43533
   houston:
     config:
       deployments:
+        # CA Secret names git-sync deployments must trust (emitted as global.privateCaCerts)
+        # privateCaCertSecretNames:
+        #   - git-forgejo-ca
         deployMechanisms:
           # Enable dag deployment features
           configureDagDeployment:
@@ -26,20 +28,31 @@ astronomer:
 
 global:
   helmRepo: https://internal-helm.astronomer.io
-#   gitSyncRelay:
-#     images:
-#       gitSync:
-#         tag: danielhoherd_PINF-426-fr11-git-sync-relay
-#         pullPolicy: Always
-#         repository: quay.io/astronomer/ap-git-sync-relay
-#       gitDaemon:
-#         tag: 2026.6.23
-#         pullPolicy: Always
-#         repository: quay.io/astronomer/ap-git-daemon
-#   airflow:
-#     images:
-#       gitSync:
-#         # OSS airflow component's git-sync sidecar
-#         repository: quay.io/astronomer/ap-git-sync
-#         tag: 2026.6.23
-#         pullPolicy: Always
+  # IMPORTANT: Helm REPLACES list values across -f files, it does not merge them.
+  # bin/setup-cp-dp-k3d.py generates each plane's values with
+  # privateCaCerts: [mkcert-root-ca] — the mkcert root CA that signs
+  # houston.localtest.me (created on both CP and DP). This file is passed via
+  # --helm-values, which is applied LAST and wins, so it replaces that list. We
+  # must re-list mkcert-root-ca here or the DP commander stops trusting houston
+  # and its JWKS hook fails with CERTIFICATE_VERIFY_FAILED / self-signed
+  # certificate in chain.
+  # privateCaCerts:
+  #   - mkcert-root-ca
+  #   - git-forgejo-ca
+  # gitSyncRelay:
+  #   images:
+  #     gitSync:
+  #       tag: some-custom-tag
+  #       pullPolicy: Always
+  #       repository: quay.io/astronomer/ap-git-sync-relay
+  #     gitDaemon:
+  #       tag: some-custom-tag
+  #       pullPolicy: Always
+  #       repository: quay.io/astronomer/ap-git-daemon
+  # airflow:
+  #   images:
+  #     gitSync:
+  #       # OSS airflow component's git-sync sidecar
+  #       repository: quay.io/astronomer/ap-git-sync
+  #       tag: some-custom-tag
+  #       pullPolicy: Always

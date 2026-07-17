@@ -52,6 +52,8 @@ spec:
             - name: config-syncer
               image: {{ template "commander.image" . }}
               imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+              env:
+              {{- include "commander_env" . | nindent 14 }}
               securityContext:
                 {{ include "platform.containerSecurityContext" (list . .Values.configSyncer.securityContext) | nindent 16 }}
               resources: {{ toYaml .Values.configSyncer.resources | nindent 16 }}
@@ -79,5 +81,14 @@ spec:
                 failureThreshold: 30
                 periodSeconds: 10
               {{- end }}
+              volumeMounts:
+              - mountPath: /app/metadata.yaml
+                name: metadata
+                subPath: metadata.yaml
+          volumes:
+          - configMap:
+              name: {{ .Release.Name }}-commander-metadata
+            name: metadata
+
 {{- end }}
 {{- end }}
