@@ -29,7 +29,12 @@ def _topology_for(test_path: Path) -> str:
         return parts[0]
     if parts[0] == "scenarios":
         profile_path = FUNCTIONAL_DIR / "scenarios" / parts[1] / "test_profile.yaml"
-        return yaml.safe_load(profile_path.read_text())["topology"]
+        if not profile_path.exists():
+            raise RuntimeError(f"Scenario '{parts[1]}' is missing its test_profile.yaml at {profile_path}")
+        topology = yaml.safe_load(profile_path.read_text()).get("topology")
+        if topology not in TOPOLOGIES:
+            raise RuntimeError(f"{profile_path} must set 'topology' to one of {TOPOLOGIES}, got {topology!r}")
+        return topology
     raise RuntimeError(
         f"Could not infer topology for test at {test_path} -- expected it under "
         "tests/functional/{unified,control,data}/ or tests/functional/scenarios/<name>/"
