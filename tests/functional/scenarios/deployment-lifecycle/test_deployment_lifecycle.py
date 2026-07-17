@@ -43,22 +43,33 @@ class HoustonError(RuntimeError):
     """Raised when Houston's GraphQL API returns a non-empty errors[] array."""
 
 
+# houston-api's Alpine-based image only has curl as a build-time dependency -- it's
+# removed via `apk del .build-deps` before the final image layer (see its Dockerfile).
+# Node (the app's own runtime, guaranteed present) has a built-in global fetch since
+# v18, so this shells out to `node -e` instead of relying on any HTTP client binary.
+# Deliberately doesn't check response.ok: Houston can return GraphQL error detail in
+# the JSON body on a non-2xx response, and fetch() only rejects on network failures,
+# not on non-2xx status -- exactly the behavior needed here.
+_GRAPHQL_NODE_SCRIPT = (
+    "const [payload, token] = process.argv.slice(1);"
+    "const headers = {'Content-Type': 'application/json'};"
+    "if (token) headers['Authorization'] = 'Bearer ' + token;"
+    f"fetch('{HOUSTON_URL}', {{method: 'POST', headers, body: payload}})"
+    ".then(r => r.text()).then(t => process.stdout.write(t))"
+    ".catch(e => { process.stderr.write(String(e)); process.exitCode = 1; });"
+)
+
+
 def _graphql(houston_api, query: str, variables: dict | None = None, token: str | None = None) -> dict:
     """
     Execute a GraphQL request against Houston from inside the houston-api pod.
 
     The pytest process has no direct network path into the kind cluster's pod network --
     the same reason every fixture in conftest.py execs into a pod rather than connecting
-    directly -- so this curls localhost from inside the houston-api container itself.
-    Deliberately no `curl -f`: Houston can return GraphQL error detail in the JSON body
-    on a non-2xx response, and `-f` would make curl fail before that body is readable.
+    directly -- so this runs from inside the houston-api container itself.
     """
     payload = json.dumps({"query": query, "variables": variables or {}})
-    command = f"curl -s -X POST {HOUSTON_URL} -H 'Content-Type: application/json'"
-    if token:
-        command += f" -H 'Authorization: Bearer {token}'"
-    command += " --data %s"
-    output = houston_api.check_output(command, payload)
+    output = houston_api.check_output("node -e %s %s %s", _GRAPHQL_NODE_SCRIPT, payload, token or "")
     body = json.loads(output)
     if body.get("errors"):
         messages = "; ".join(e.get("message", str(e)) for e in body["errors"])
