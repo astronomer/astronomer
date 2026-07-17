@@ -49,24 +49,32 @@ This automates the workflow that is documented step-by-step in [cp-dp-k3d-setup-
 - Stands up a local pull-through registry proxy (so image pulls aren't rate-limited)
 - Installs the Astronomer chart in both clusters (CP in `unified` mode, DP in `data` mode)
 - Reconciles cross-cluster DNS and node-level `/etc/hosts` entries
+- Configures local DNS (dnsmasq) + a host `:443` SNI reverse proxy so CP/DP are reachable at `https://<sub>.<base-domain>` with no manual `/etc/hosts` editing
 
 The script is safe to re-run; cluster, secret, and helm install steps are idempotent.
+
+If `--version`, `--cp-mode`, `--dp-airflow-db`, or `--enable-operator` are omitted, the script silently falls back to their documented defaults (`main` / `unified` / `postgres` / operator-enabled) — safe for CI/automation by default. Pass `--interactive` to get a numbered picker for whichever of those are omitted instead.
 
 See `bin/setup-cp-dp-k3d.py --help` for the full list of flags. Some commonly useful ones:
 
 | Flag                                                                  | Purpose                                                |
 | --------------------------------------------------------------------- | ------------------------------------------------------ |
+| `--version ALIAS`                                                     | Astronomer version to install: `0.37`, `1.1.x`, `1.2.x`, `2.0.0`, `2.0.1`, `2.1`, `main`, or any exact chart version. `0.37` delegates to `bin/setup-037x-k3d.py` (no CP/DP split); `main` installs from the local checkout with houston/astroUI/dbBootstrapper floated to the `main` image tag and commander to `master` |
+| `--chart-version VERSION`                                             | Escape hatch: install an exact chart version, bypassing `--version` alias resolution |
 | `--dp-count {1,2,3,4}`                                                | Spin up multiple data planes (`dp01`, `dp02`, …)       |
-| `--cp-mode CP_MODE`                                                   | `unified` (default) or `control`                       |
+| `--cp-mode {unified,control}`                                         | `unified` (single cluster, CP+DP co-located) or `control` (true CP/DP split); defaults to `unified` when omitted, or prompts as "unified" vs "cp/dp" with `--interactive` |
+| `--interactive`                                                       | Prompt for `--version`/`--cp-mode`/`--dp-airflow-db`/`--enable-operator` when omitted, instead of using their defaults |
+| `--enable-operator` / `--no-enable-operator`                          | Toggle Airflow operator mode                           |
 | `--recreate-clusters`                                                 | Delete and recreate existing k3d clusters              |
 | `--helm-values FILE`                                                  | Extra helm values file (repeatable) for both CP and DP |
 | `--dp-airflow-db {postgres,mysql}`                                    | Database backing Airflow on the DP                     |
 | `--no-local-registry`                                                 | Skip the pull-through registry proxy                   |
+| `--skip-local-networking`                                             | Skip the dnsmasq + SNI-proxy setup; print manual `/etc/hosts` instructions instead |
 | `--skip-certs` / `--skip-clusters` / `--skip-secrets` / `--skip-helm` | Resume after a partial run                             |
 
 ### After setup
 
-`/etc/hosts` is intentionally not modified by the script. To reach the platform from your browser, follow the "Configure Local Machine DNS" step in [cp-dp-k3d-setup-guide.md](cp-dp-k3d-setup-guide.md). For troubleshooting (OrbStack restarts, registry 404s, browser-vs-CLI resolution issues), see the Troubleshooting section of that guide.
+The script configures local DNS + an SNI reverse proxy automatically (see [cp-dp-k3d-setup-guide.md](cp-dp-k3d-setup-guide.md#step-11-configure-local-machine-dns)), so `https://houston.localtest.me`, `https://app.localtest.me`, `https://deployments.dp01.localtest.me`, etc. work with no manual `/etc/hosts` editing. For troubleshooting (OrbStack restarts, registry 404s, browser-vs-CLI resolution issues), see the Troubleshooting section of that guide.
 
 If OrbStack restarts and CP/DP communication breaks, re-sync the pinned hostnames with:
 

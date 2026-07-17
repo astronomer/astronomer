@@ -43,7 +43,6 @@ class TestServiceAccounts:
                 "houston": {"serviceAccount": {"create": True, "name": "houston-test"}},
                 "astroUI": {"serviceAccount": {"create": True, "name": "astroui-test"}},
                 "navigator": {"enabled": True, "serviceAccount": {"create": True, "name": "navigator-test"}},
-                "dpLink": {"serviceAccount": {"create": True, "name": "dplink-test"}},
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "name": "nats-test"}}},
             "grafana": {"serviceAccount": {"create": True, "name": "grafana-test"}},
@@ -61,7 +60,6 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
                 "charts/astronomer/templates/navigator/navigator-serviceaccount.yaml",
-                "charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
@@ -70,7 +68,7 @@ class TestServiceAccounts:
             ],
         )
 
-        assert len(docs) == 12
+        assert len(docs) == 11
         expected_names = {
             "commander-test",
             "registry-test",
@@ -78,7 +76,6 @@ class TestServiceAccounts:
             "houston-test",
             "astroui-test",
             "navigator-test",
-            "dplink-test",
             "grafana-test",
             "alertmanager-test",
             "postgresql-test",
@@ -87,6 +84,21 @@ class TestServiceAccounts:
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
         assert all(doc["automountServiceAccountToken"] is True for doc in docs)
+
+        # dp-link only renders in control mode, which is mutually exclusive with the
+        # data/unified-only components above (commander, registry, configSyncer), so it
+        # needs its own render.
+        dp_link_docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"dpLink": {"serviceAccount": {"create": True, "name": "dplink-test"}}},
+            },
+            show_only=["charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml"],
+        )
+        assert len(dp_link_docs) == 1
+        assert dp_link_docs[0]["metadata"]["name"] == "dplink-test"
+        assert dp_link_docs[0]["automountServiceAccountToken"] is True
 
     def test_automountServiceAccountToken_with_overrides(self, kube_version):
         "Test that automountServiceAccountToken can be overridden to false per component"
@@ -107,7 +119,6 @@ class TestServiceAccounts:
                     "enabled": True,
                     "serviceAccount": {"create": True, "name": "navigator-test", "automountServiceAccountToken": False},
                 },
-                "dpLink": {"serviceAccount": {"create": True, "name": "dplink-test", "automountServiceAccountToken": False}},
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "name": "nats-test", "automountServiceAccountToken": False}}},
             "grafana": {"serviceAccount": {"create": True, "name": "grafana-test", "automountServiceAccountToken": False}},
@@ -129,7 +140,6 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
                 "charts/astronomer/templates/navigator/navigator-serviceaccount.yaml",
-                "charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
@@ -138,7 +148,7 @@ class TestServiceAccounts:
             ],
         )
 
-        assert len(docs) == 12
+        assert len(docs) == 11
         expected_names = {
             "commander-test",
             "registry-test",
@@ -146,7 +156,6 @@ class TestServiceAccounts:
             "houston-test",
             "astroui-test",
             "navigator-test",
-            "dplink-test",
             "grafana-test",
             "alertmanager-test",
             "postgresql-test",
@@ -155,6 +164,23 @@ class TestServiceAccounts:
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
         assert all(doc["automountServiceAccountToken"] is False for doc in docs)
+
+        # dp-link only renders in control mode, which is mutually exclusive with the
+        # data/unified-only components above (commander, registry, configSyncer), so it
+        # needs its own render.
+        dp_link_docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {
+                    "dpLink": {"serviceAccount": {"create": True, "name": "dplink-test", "automountServiceAccountToken": False}}
+                },
+            },
+            show_only=["charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml"],
+        )
+        assert len(dp_link_docs) == 1
+        assert dp_link_docs[0]["metadata"]["name"] == "dplink-test"
+        assert dp_link_docs[0]["automountServiceAccountToken"] is False
 
     def test_serviceaccount_with_create_disabled(self, kube_version):
         "Test that if SA create disabled"
@@ -165,7 +191,7 @@ class TestServiceAccounts:
                 "prometheusPostgresExporter": {"enabled": True},
                 "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
-                "airflowOperator": {"enabled": True},
+                "operator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": False}},
@@ -217,7 +243,7 @@ class TestServiceAccounts:
                 "prometheusPostgresExporter": {"enabled": True},
                 "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
-                "airflowOperator": {"enabled": True},
+                "operator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -334,6 +360,8 @@ def test_default_serviceaccount_names(template_name):
     }
     if any(substring in template_name for substring in data_plane_only_template_substrings):
         default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
+    if any(substring in template_name for substring in control_plane_only_template_substrings):
+        default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "control"}
     if any(substring in template_name for substring in ha_only_template_substrings):
         default_serviceaccount_names_overrides["global"]["controlPlaneHA"] = {
             "enabled": True,
@@ -510,6 +538,9 @@ data_plane_only_template_substrings = (
 # Templates gated on Control Plane HA; render them with controlPlaneHA.enabled=True.
 ha_only_template_substrings = ("houston-cp-refresh-job",)
 
+# Templates that only render in control-plane mode; render them with plane.mode=control.
+control_plane_only_template_substrings = ("dp-link-deployment",)
+
 
 @pytest.mark.parametrize(
     "template_name",
@@ -538,6 +569,9 @@ def test_custom_serviceaccount_names(template_name):
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
     if any(substring in template_name for substring in data_plane_only_template_substrings):
         plane_config = {"global": {"plane": {"mode": "data"}}}
+        values = always_merger.merge(values, plane_config)
+    if any(substring in template_name for substring in control_plane_only_template_substrings):
+        plane_config = {"global": {"plane": {"mode": "control"}}}
         values = always_merger.merge(values, plane_config)
     if any(substring in template_name for substring in ha_only_template_substrings):
         ha_config = {"global": {"controlPlaneHA": {"enabled": True, "globalBaseDomain": "example.com"}}}

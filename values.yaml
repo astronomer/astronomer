@@ -93,24 +93,25 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.14
+      tag: 2.0.15
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
       startupProbe: {}
     priorityClassName: ~
-  # Global flag that makes Houston/Commander operator-aware. This chart also ships an
-  # airflow-operator subchart, installed by default. To run a true adoption setup — where the
-  # operator already exists on the data plane instead of being installed by this chart — set
-  # `airflow-operator.enabled: false` (see Chart.yaml) while leaving this flag `true`.
-  # This will give commander necessary permissions to read Airflow CRs from the data plane.
-  airflowOperator:
+  operator:
+    # Turn on operator-based Airflow deployments. When enabled, this chart installs
+    # the airflow-operator by default and grants Astronomer the permissions it needs
+    # to manage Airflow deployments through the operator.
+    #
+    # Already running your own operator on the cluster? Keep this enabled, but set
+    # `airflow-operator.enabled: false` (see Chart.yaml) so Astronomer works with your
+    # existing operator instead of installing its own.
     enabled: false
 
-  operator:
-    # Enable adoptDeployment mutation — allows adopting existing Airflow CRs from
-    # customer-managed dataplanes into Houston without recreating Kubernetes resources.
     adoption:
+      # Allow Astronomer to adopt Airflow deployments that already exist on your
+      # cluster, so you can bring them under management without recreating them.
       enabled: true
 
   # Feature flags
@@ -199,8 +200,7 @@ global:
     tag: 1.31.2
     pullPolicy: IfNotPresent
     port: 8084
-    securityContext:
-      runAsUser: 101
+    securityContext: {}
     readinessProbe: {}
     livenessProbe: {}
     ingressAllowedNamespaces: []
@@ -407,24 +407,24 @@ global:
         tag: 8.6.4-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-18
+        tag: 1.24.1-19
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
         tag: 0.12.0-5
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.7.6
+        tag: 2026.7.13
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.7.6
+        tag: 2026.7.13
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.7.6
+        tag: 2026.7.13
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.3.0
+        tag: 0.4.0
     metrics:
       enabled: false
   certgenerator:
