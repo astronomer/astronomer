@@ -5,7 +5,7 @@
 topology: unified
 values:
   - configs/enable-auth-sidecar.yaml
-  - configs/psa-restricted-demo.yaml
+  - configs/psa-restricted.yaml
 namespace_labels:
   pod-security.kubernetes.io/enforce: restricted
   pod-security.kubernetes.io/enforce-version: latest
