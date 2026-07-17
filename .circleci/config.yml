@@ -354,6 +354,10 @@ jobs:
           name: "Scenario: auth-sidecar"
           command: |
             uv run bin/run-scenario.py auth-sidecar
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/auth-sidecar"
       - store_test_results:
           path: test-results
@@ -382,6 +386,10 @@ jobs:
           name: "Scenario: deployment-lifecycle"
           command: |
             uv run bin/run-scenario.py deployment-lifecycle
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/deployment-lifecycle"
       - store_test_results:
           path: test-results

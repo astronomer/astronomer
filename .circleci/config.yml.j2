@@ -267,6 +267,10 @@ jobs:
           name: "Scenario: {{ scenario }}"
           command: |
             uv run bin/run-scenario.py {{ scenario }}
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario }}"
       - store_test_results:
           path: test-results
