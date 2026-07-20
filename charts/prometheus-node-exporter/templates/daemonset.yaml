@@ -44,6 +44,10 @@ spec:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
             - --web.listen-address=$(HOST_IP):{{ .Values.service.port }}
+            - --collector.disable-defaults
+{{- range .Values.collectors }}
+            - --collector.{{ . }}
+{{- end }}
 {{- if .Values.extraArgs }}
 {{ toYaml .Values.extraArgs | indent 12 }}
 {{- end }}
