@@ -24,6 +24,17 @@ def dump_pod_logs(k8s_core_v1_client, label_selector: str, namespace: str = "ast
     token") come from Commander over gRPC and are often too generic to diagnose on
     their own -- the real detail is in Commander's (or Houston's) own logs, and this
     devcontainer has no live cluster to inspect them by hand.
+
+    A "13 INTERNAL: failed to validate token" specifically is very likely PINF-1049,
+    not a real regression: Commander's JWKS-fetch cache has no request-coalescing
+    guard, so on a freshly-started Commander pod, concurrent gRPC calls can race to
+    independently fetch Houston's JWKS, and any transient failure on either fetch
+    (Houston momentarily contended during cluster bring-up is enough) hard-fails that
+    one call with this generic message and no retry -- explaining why one call in a
+    request can succeed while the very next fails, and why it's non-deterministic
+    across CI runs. The fix belongs in commander (add single-flight/retry around
+    JWKS-fetching), not in this repo -- from here, re-running the CI job is the only
+    available mitigation for this specific error message.
     """
     pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
     if not pods:
