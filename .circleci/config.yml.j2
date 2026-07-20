@@ -241,6 +241,40 @@ jobs:
       - store_test_results:
           path: test-results
 {%- endfor %}
+{% for scenario in scenarios %}
+  scenario-{{ scenario }}:
+    machine:
+      image: {{ machine_image_version }}
+      resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ '{{' }} checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p {{ python_image_version }} --seed && uv sync
+      - run:
+          name: "Scenario: {{ scenario }}"
+          command: |
+            uv run bin/run-scenario.py {{ scenario }}
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario }}"
+      - store_test_results:
+          path: test-results
+{%- endfor %}
 
   check-commander-airflow-version:
     docker:
@@ -293,7 +327,11 @@ workflows:
           requires:
             - build-artifact
             - approve-test-all-platforms
-{% endif %}{% endfor %}
+{% endif %}{% endfor %}{% for scenario in scenarios %}
+      - scenario-{{ scenario }}:
+          requires:
+            - build-artifact
+{%- endfor %}
       - approve-stage-cluster-test:
           type: approval
           filters:

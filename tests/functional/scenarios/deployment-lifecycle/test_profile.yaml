@@ -1,0 +1,7 @@
+# PINF-1035: no functional test today creates an Airflow Deployment at all --
+# every existing scenario, including auth-sidecar, only installs the platform
+# chart. This scenario needs no extra values overlay, just the plain unified
+# install; the deployment lifecycle itself is driven through Houston's GraphQL
+# API by test_deployment_lifecycle.py after install.
+topology: unified
+values: []
