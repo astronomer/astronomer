@@ -13,6 +13,18 @@ kube_versions = metadata["test_k8s_versions"]
 ci_runner_version = (datetime.datetime.now()).strftime("%Y-%m")
 
 
+def discover_scenarios() -> list[str]:
+    """Find scenario names under tests/functional/scenarios/*/test_profile.yaml.
+
+    The manifest file's presence is the signal, not bare directory presence, so a
+    half-finished or stray directory can't silently create (or hide) a CI job.
+    """
+    scenarios_dir = git_root_dir / "tests" / "functional" / "scenarios"
+    if not scenarios_dir.is_dir():
+        return []
+    return sorted(p.parent.name for p in scenarios_dir.glob("*/test_profile.yaml"))
+
+
 def main():
     """Render the Jinja2 template file."""
     for version in kube_versions:
@@ -27,6 +39,7 @@ def main():
     config = template.render(
         ci_runner_version=ci_runner_version,
         kube_versions=kube_versions,
+        scenarios=discover_scenarios(),
     )
     with open(config_file_path, "w") as circle_ci_config_file:
         warning_header = (

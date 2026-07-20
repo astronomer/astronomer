@@ -1,5 +1,6 @@
 import ast
 
+import pytest
 import yaml
 
 from tests.utils.chart import find_key_paths, render_chart
@@ -75,6 +76,53 @@ def test_houston_configmap_defaults():
     assert git_sync_images["gitDaemon"]["repository"] == "quay.io/astronomer/ap-git-daemon"
     assert git_sync_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync-relay"
     assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+    # certgenerator belongs in astronomer.images, not airflow.images (PR-3284)
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["repository"] == "quay.io/astronomer/ap-certgenerator"
+    assert certgen["tag"]
+    assert "certgenerator" not in af_images
+
+
+def test_houston_configmap_ldap_disabled_by_default():
+    """auth.ldap.enabled should be False in the baseline production.yaml, parallel to auth.local."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["auth"]["ldap"]["enabled"] is False
+    # Sibling auth providers must remain untouched.
+    assert prod["auth"]["local"]["enabled"] is False
+    assert prod["auth"]["openidConnect"]["auth0"]["enabled"] is False
+    assert prod["auth"]["github"]["enabled"] is True
+
+
+def test_houston_configmap_ldap_customer_override():
+    """Customer-supplied auth.ldap.* under houston.config must reach local-production.yaml."""
+    ldap_config = {
+        "enabled": True,
+        "host": "ldap.example.com",
+        "tls": {"mode": "starttls", "verifyServerCert": True},
+        "bindDn": "cn=admin,dc=example,dc=com",
+        "searchBase": "ou=people,dc=example,dc=com",
+        "groups": {
+            "enabled": True,
+            "reconcileTeams": True,
+            "manageSystemPermissions": {
+                "enabled": True,
+                "systemAdmin": ["cn=admins,ou=groups,dc=example,dc=com"],
+            },
+        },
+    }
+    docs = render_chart(
+        values={"astronomer": {"houston": {"config": {"auth": {"ldap": ldap_config}}}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    local_prod = yaml.safe_load(docs[0]["data"]["local-production.yaml"])
+    assert local_prod["auth"]["ldap"] == ldap_config
 
 
 def test_houston_configmap_has_hook_annotations():
@@ -1042,3 +1090,80 @@ def test_houston_configmap_no_vector_enabled_key():
     assert find_key_paths(prod, "vectorEnabled") == [], (
         "Legacy vectorEnabled key reappeared in rendered ConfigMap. Use loggingSidecar.enabled instead."
     )
+
+
+def test_houston_configmap_certgenerator_in_astronomer_images():
+    """certgenerator image must appear under astronomer.images in the houston configmap (PR-3284).
+
+    certgenerator is an Astronomer platform component, so Houston should resolve
+    its image from the astronomer.images block, not the airflow.images block.
+    """
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["repository"] == "quay.io/astronomer/ap-certgenerator"
+    af_images = prod["deployments"]["helm"]["airflow"]["images"]
+    assert "certgenerator" not in af_images, "certgenerator must not appear under airflow.images; it belongs in astronomer.images"
+
+
+def test_houston_configmap_certgenerator_custom_tag():
+    """Custom global.certgenerator.images.tag is reflected in astronomer.images.certgenerator."""
+    docs = render_chart(
+        values={"global": {"certgenerator": {"images": {"tag": "custom-999"}}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["tag"] == "custom-999"
+    # Must remain absent from airflow images even when a custom tag is set
+    assert "certgenerator" not in prod["deployments"]["helm"]["airflow"]["images"]
+
+
+@pytest.mark.parametrize(
+    "values,expected",
+    [
+        # Adoption requires operator mode; both flags must be true. operator.enabled
+        # defaults to false, so adoption is off unless operator mode is turned on.
+        ({}, False),
+        ({"global": {"operator": {"enabled": True}}}, True),
+        ({"global": {"operator": {"enabled": True, "adoption": {"enabled": True}}}}, True),
+        ({"global": {"operator": {"enabled": True, "adoption": {"enabled": False}}}}, False),
+        ({"global": {"operator": {"enabled": False, "adoption": {"enabled": True}}}}, False),
+    ],
+    ids=[
+        "default-operator-off",
+        "operator-on-adoption-default",
+        "both-on",
+        "operator-on-adoption-off",
+        "operator-off-adoption-on",
+    ],
+)
+def test_houston_configmap_operator_adoption(values, expected):
+    """production.yaml adoption is the AND of global.operator.enabled and
+    global.operator.adoption.enabled — both must be true (PLX-500)."""
+    docs = render_chart(
+        values=values,
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["operator"]["adoption"]["enabled"] is expected
+
+
+def test_houston_configmap_operator_mode_reflects_operator_enabled():
+    """global.operator.enabled drives deployments.mode.operator.enabled, and gates
+    adoption regardless of the adoption flag."""
+    docs = render_chart(
+        values={
+            "global": {
+                "operator": {"enabled": True, "adoption": {"enabled": False}},
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["deployments"]["mode"]["operator"]["enabled"] is True
+    assert prod["operator"]["adoption"]["enabled"] is False

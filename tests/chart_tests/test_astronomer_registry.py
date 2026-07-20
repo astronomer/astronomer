@@ -32,6 +32,7 @@ class TestRegistryStatefulset:
             "fsGroup": 1000,
             "runAsGroup": 1000,
             "runAsUser": 1000,
+            "seccompProfile": {"type": "RuntimeDefault"},
         }
         assert {"emptyDir": {}, "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["volumes"]
         assert {
@@ -226,6 +227,26 @@ class TestRegistryStatefulset:
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "control"}}},
+            show_only=sorted(registry_files),
+        )
+
+        assert len(docs) == 0
+
+    @pytest.mark.parametrize("mode", ["data", "unified", "control"])
+    def test_astronomer_registry_all_files_disabled_when_registry_enabled_false(self, kube_version, mode):
+        """registry.enabled=false removes the entire registry stack in every plane mode."""
+        registry_files = [
+            str(x.relative_to(git_root_dir))
+            for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry").glob("*")
+            if x.is_file()
+        ]
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": mode}},
+                "astronomer": {"registry": {"enabled": False}},
+            },
             show_only=sorted(registry_files),
         )
 

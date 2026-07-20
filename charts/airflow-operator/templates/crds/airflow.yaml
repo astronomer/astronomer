@@ -1,10 +1,10 @@
-{{ if .Values.crd.create }}
+{{- if (include "operator.enabled" .) }}
+{{- if .Values.crd.create }}
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
-  # name must be spec.names.plural+"."+spec.group https://github.com/kubernetes/kubernetes/blob/b4f902f037/staging/src/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/validation/validation.go#L80
   name: airflows.airflow.apache.org
 spec:
   conversion:
@@ -59,10 +59,6 @@ spec:
       jsonPath: .status.conditions[?(@.type == "TriggererReady")].status
       name: Triggerer
       type: string
-    - description: allocator ready
-      jsonPath: .status.conditions[?(@.type == "AllocatorReady")].status
-      name: Allocator
-      type: string
     - description: dag processor ready
       jsonPath: .status.conditions[?(@.type == "DAGProcessorReady")].status
       name: DAGProcessor
@@ -83,233 +79,35 @@ spec:
             type: object
           spec:
             properties:
-              allocator:
-                properties:
-                  airflowSecrets:
-                    properties:
-                      fernetKeySecretName:
-                        default: ''
+              airflowPlugins:
+                items:
+                  properties:
+                    airflowComponents:
+                      items:
                         type: string
-                      metadataSecretName:
-                        default: ''
-                        type: string
-                      pgbouncerConnectionSecretName:
-                        default: ''
-                        type: string
-                      redisConnectionSecretName:
-                        default: ''
-                        type: string
-                      redisPasswordSecretName:
-                        default: ''
-                        type: string
-                      resultBackendSecretName:
-                        default: ''
-                        type: string
-                      webserverSecretKeySecretName:
-                        default: ''
-                        type: string
-                    type: object
-                  customLabels:
-                    additionalProperties:
+                      type: array
+                    dbManager:
                       type: string
-                    type: object
-                  databaseSSLMode:
-                    default: ''
-                    type: string
-                  databaseSSLSecretName:
-                    default: ''
-                    type: string
-                  env:
-                    items:
-                      properties:
-                        name:
-                          type: string
-                        value:
-                          type: string
-                        valueFrom:
-                          properties:
-                            configMapKeyRef:
-                              properties:
-                                key:
-                                  type: string
-                                name:
-                                  default: ''
-                                  type: string
-                                optional:
-                                  type: boolean
-                              required:
-                              - key
-                              type: object
-                              x-kubernetes-map-type: atomic
-                            fieldRef:
-                              properties:
-                                apiVersion:
-                                  type: string
-                                fieldPath:
-                                  type: string
-                              required:
-                              - fieldPath
-                              type: object
-                              x-kubernetes-map-type: atomic
-                            resourceFieldRef:
-                              properties:
-                                containerName:
-                                  type: string
-                                divisor:
-                                  anyOf:
-                                  - type: integer
-                                  - type: string
-                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                  x-kubernetes-int-or-string: true
-                                resource:
-                                  type: string
-                              required:
-                              - resource
-                              type: object
-                              x-kubernetes-map-type: atomic
-                            secretKeyRef:
-                              properties:
-                                key:
-                                  type: string
-                                name:
-                                  default: ''
-                                  type: string
-                                optional:
-                                  type: boolean
-                              required:
-                              - key
-                              type: object
-                              x-kubernetes-map-type: atomic
-                          type: object
-                      required:
-                      - name
-                      type: object
-                    type: array
-                  gid:
-                    default: 50000
-                    format: int64
-                    type: integer
-                  image:
-                    type: string
-                  imagePullSecret:
-                    type: string
-                  pgbouncer:
-                    type: boolean
-                  podTemplateSpec:
-                    type: object
-                    x-kubernetes-preserve-unknown-fields: true
-                  replicas:
-                    default: 1
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  runtimeVersion:
-                    pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
-                    type: string
-                  serviceAccountAnnotations:
-                    additionalProperties:
+                    destinationPath:
                       type: string
-                    type: object
-                  statsd:
-                    properties:
-                      customLabels:
-                        additionalProperties:
-                          type: string
-                        type: object
-                      enableNetworkPolicies:
-                        type: boolean
-                      enabled:
-                        default: true
-                        type: boolean
-                      extraNetworkPolicyRules:
-                        type: object
-                        x-kubernetes-preserve-unknown-fields: true
-                      hostName:
-                        type: string
-                      image:
-                        type: string
-                      ingestPort:
-                        default: 9125
-                        format: int32
-                        type: integer
-                      nodeSelector:
-                        additionalProperties:
-                          type: string
-                        type: object
-                      podTemplateSpec:
-                        type: object
-                        x-kubernetes-preserve-unknown-fields: true
-                      replicas:
-                        default: 1
-                        format: int32
-                        minimum: 0
-                        type: integer
-                      resources:
-                        default:
-                          limits:
-                            cpu: 200m
-                            memory: 768Mi
-                          requests:
-                            cpu: 200m
-                            memory: 768Mi
-                        properties:
-                          claims:
-                            items:
-                              properties:
-                                name:
-                                  type: string
-                                request:
-                                  type: string
-                              required:
-                              - name
-                              type: object
-                            type: array
-                            x-kubernetes-list-map-keys:
-                            - name
-                            x-kubernetes-list-type: map
-                          limits:
-                            additionalProperties:
-                              anyOf:
-                              - type: integer
-                              - type: string
-                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                              x-kubernetes-int-or-string: true
-                            type: object
-                          requests:
-                            additionalProperties:
-                              anyOf:
-                              - type: integer
-                              - type: string
-                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                              x-kubernetes-int-or-string: true
-                            type: object
-                        type: object
-                      scrapePort:
-                        default: 9102
-                        format: int32
-                        type: integer
-                      tolerations:
-                        items:
-                          properties:
-                            effect:
-                              type: string
-                            key:
-                              type: string
-                            operator:
-                              type: string
-                            tolerationSeconds:
-                              format: int64
-                              type: integer
-                            value:
-                              type: string
-                          type: object
-                        type: array
-                    type: object
-                  uid:
-                    default: 50000
-                    format: int64
-                    type: integer
-                type: object
+                    image:
+                      type: string
+                    maxKnownImage:
+                      type: string
+                    maxKnownVersion:
+                      type: string
+                    name:
+                      type: string
+                    purgeTables:
+                      type: boolean
+                    pythonPath:
+                      type: string
+                    sourcePath:
+                      type: string
+                    version:
+                      type: string
+                  type: object
+                type: array
               antiAffinity:
                 default: none
                 enum:
@@ -336,6 +134,35 @@ spec:
                         default: ''
                         type: string
                     type: object
+                  airflowPlugins:
+                    items:
+                      properties:
+                        airflowComponents:
+                          items:
+                            type: string
+                          type: array
+                        dbManager:
+                          type: string
+                        destinationPath:
+                          type: string
+                        image:
+                          type: string
+                        maxKnownImage:
+                          type: string
+                        maxKnownVersion:
+                          type: string
+                        name:
+                          type: string
+                        purgeTables:
+                          type: boolean
+                        pythonPath:
+                          type: string
+                        sourcePath:
+                          type: string
+                        version:
+                          type: string
+                      type: object
+                    type: array
                   airflowSecrets:
                     properties:
                       fernetKeySecretName:
@@ -359,6 +186,76 @@ spec:
                       webserverSecretKeySecretName:
                         default: ''
                         type: string
+                    type: object
+                  antiAffinity:
+                    enum:
+                    - node
+                    - zone
+                    - none
+                    type: string
+                  astroAgentSystemImage:
+                    type: string
+                  astroAgentVersion:
+                    pattern: ^(?:|(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$
+                    type: string
+                  autoscaling:
+                    properties:
+                      enabled:
+                        default: false
+                        type: boolean
+                      maxReplicas:
+                        default: 2
+                        format: int32
+                        type: integer
+                      metrics:
+                        items:
+                          properties:
+                            resource:
+                              properties:
+                                name:
+                                  enum:
+                                  - cpu
+                                  - memory
+                                  type: string
+                                target:
+                                  properties:
+                                    averageUtilization:
+                                      format: int32
+                                      type: integer
+                                    averageValue:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                    type:
+                                      type: string
+                                    value:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                  required:
+                                  - type
+                                  type: object
+                              required:
+                              - name
+                              - target
+                              type: object
+                            type:
+                              default: Resource
+                              enum:
+                              - Resource
+                              type: string
+                          required:
+                          - type
+                          type: object
+                        type: array
+                      minReplicas:
+                        default: 2
+                        format: int32
+                        type: integer
                     type: object
                   customLabels:
                     additionalProperties:
@@ -403,6 +300,23 @@ spec:
                               - fieldPath
                               type: object
                               x-kubernetes-map-type: atomic
+                            fileKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                optional:
+                                  default: false
+                                  type: boolean
+                                path:
+                                  type: string
+                                volumeName:
+                                  type: string
+                              required:
+                              - key
+                              - path
+                              - volumeName
+                              type: object
+                              x-kubernetes-map-type: atomic
                             resourceFieldRef:
                               properties:
                                 containerName:
@@ -437,6 +351,31 @@ spec:
                       - name
                       type: object
                     type: array
+                  envFrom:
+                    items:
+                      properties:
+                        configMapRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        prefix:
+                          type: string
+                        secretRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                    type: array
                   executionModes:
                     items:
                       type: string
@@ -448,8 +387,6 @@ spec:
                     - AstroExecutor
                     - CeleryExecutor
                     - KubernetesExecutor
-                    - StellarExecutor
-                    - AstroRuntimeExecutor
                     type: string
                   extraNetworkPolicyRules:
                     type: object
@@ -482,6 +419,16 @@ spec:
                   pgbouncer:
                     type: boolean
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -489,6 +436,9 @@ spec:
                     format: int32
                     minimum: 0
                     type: integer
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   runtimeVersion:
                     pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
                     type: string
@@ -497,7 +447,6 @@ spec:
                       type: string
                     type: object
                   servingPort:
-                    default: 9091
                     format: int32
                     minimum: 0
                     type: integer
@@ -527,7 +476,18 @@ spec:
                         additionalProperties:
                           type: string
                         type: object
+                        x-kubernetes-map-type: atomic
                       podTemplateSpec:
+                        properties:
+                          spec:
+                            properties:
+                              nodeSelector:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                                x-kubernetes-map-type: atomic
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         type: object
                         x-kubernetes-preserve-unknown-fields: true
                       replicas:
@@ -575,6 +535,9 @@ spec:
                               x-kubernetes-int-or-string: true
                             type: object
                         type: object
+                      restrictedProfileEnabled:
+                        default: false
+                        type: boolean
                       scrapePort:
                         default: 9102
                         format: int32
@@ -601,6 +564,13 @@ spec:
                     format: int64
                     type: integer
                 type: object
+              astroAgentClientImage:
+                type: string
+              astroAgentSystemImage:
+                type: string
+              astroAgentVersion:
+                pattern: ^(?:|(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$
+                type: string
               dagProcessor:
                 properties:
                   airflowLocalSettings:
@@ -620,6 +590,35 @@ spec:
                         default: ''
                         type: string
                     type: object
+                  airflowPlugins:
+                    items:
+                      properties:
+                        airflowComponents:
+                          items:
+                            type: string
+                          type: array
+                        dbManager:
+                          type: string
+                        destinationPath:
+                          type: string
+                        image:
+                          type: string
+                        maxKnownImage:
+                          type: string
+                        maxKnownVersion:
+                          type: string
+                        name:
+                          type: string
+                        purgeTables:
+                          type: boolean
+                        pythonPath:
+                          type: string
+                        sourcePath:
+                          type: string
+                        version:
+                          type: string
+                      type: object
+                    type: array
                   airflowSecrets:
                     properties:
                       fernetKeySecretName:
@@ -697,6 +696,23 @@ spec:
                               - fieldPath
                               type: object
                               x-kubernetes-map-type: atomic
+                            fileKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                optional:
+                                  default: false
+                                  type: boolean
+                                path:
+                                  type: string
+                                volumeName:
+                                  type: string
+                              required:
+                              - key
+                              - path
+                              - volumeName
+                              type: object
+                              x-kubernetes-map-type: atomic
                             resourceFieldRef:
                               properties:
                                 containerName:
@@ -731,6 +747,31 @@ spec:
                       - name
                       type: object
                     type: array
+                  envFrom:
+                    items:
+                      properties:
+                        configMapRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        prefix:
+                          type: string
+                        secretRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                    type: array
                   executionModes:
                     items:
                       type: string
@@ -741,8 +782,6 @@ spec:
                     - LocalExecutor
                     - CeleryExecutor
                     - KubernetesExecutor
-                    - StellarExecutor
-                    - AstroRuntimeExecutor
                     - AstroExecutor
                     type: string
                   extraNetworkPolicyRules:
@@ -771,6 +810,16 @@ spec:
                       type: string
                     type: object
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -778,6 +827,9 @@ spec:
                     format: int32
                     minimum: 0
                     type: integer
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   runtimeVersion:
                     pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
                     type: string
@@ -811,7 +863,18 @@ spec:
                         additionalProperties:
                           type: string
                         type: object
+                        x-kubernetes-map-type: atomic
                       podTemplateSpec:
+                        properties:
+                          spec:
+                            properties:
+                              nodeSelector:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                                x-kubernetes-map-type: atomic
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         type: object
                         x-kubernetes-preserve-unknown-fields: true
                       replicas:
@@ -859,6 +922,9 @@ spec:
                               x-kubernetes-int-or-string: true
                             type: object
                         type: object
+                      restrictedProfileEnabled:
+                        default: false
+                        type: boolean
                       scrapePort:
                         default: 9102
                         format: int32
@@ -1025,6 +1091,23 @@ spec:
                           - fieldPath
                           type: object
                           x-kubernetes-map-type: atomic
+                        fileKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            optional:
+                              default: false
+                              type: boolean
+                            path:
+                              type: string
+                            volumeName:
+                              type: string
+                          required:
+                          - key
+                          - path
+                          - volumeName
+                          type: object
+                          x-kubernetes-map-type: atomic
                         resourceFieldRef:
                           properties:
                             containerName:
@@ -1059,6 +1142,485 @@ spec:
                   - name
                   type: object
                 type: array
+              envFrom:
+                items:
+                  properties:
+                    configMapRef:
+                      properties:
+                        name:
+                          default: ''
+                          type: string
+                        optional:
+                          type: boolean
+                      type: object
+                      x-kubernetes-map-type: atomic
+                    prefix:
+                      type: string
+                    secretRef:
+                      properties:
+                        name:
+                          default: ''
+                          type: string
+                        optional:
+                          type: boolean
+                      type: object
+                      x-kubernetes-map-type: atomic
+                  type: object
+                type: array
+              eventScheduler:
+                properties:
+                  airflowLocalSettings:
+                    properties:
+                      configMapName:
+                        type: string
+                      customPodMutationHook:
+                        default: ''
+                        type: string
+                      enableAstroPodMutationHook:
+                        default: false
+                        type: boolean
+                      externallyManaged:
+                        default: false
+                        type: boolean
+                      extra:
+                        default: ''
+                        type: string
+                    type: object
+                  airflowPlugins:
+                    items:
+                      properties:
+                        airflowComponents:
+                          items:
+                            type: string
+                          type: array
+                        dbManager:
+                          type: string
+                        destinationPath:
+                          type: string
+                        image:
+                          type: string
+                        maxKnownImage:
+                          type: string
+                        maxKnownVersion:
+                          type: string
+                        name:
+                          type: string
+                        purgeTables:
+                          type: boolean
+                        pythonPath:
+                          type: string
+                        sourcePath:
+                          type: string
+                        version:
+                          type: string
+                      type: object
+                    type: array
+                  airflowSecrets:
+                    properties:
+                      fernetKeySecretName:
+                        default: ''
+                        type: string
+                      metadataSecretName:
+                        default: ''
+                        type: string
+                      pgbouncerConnectionSecretName:
+                        default: ''
+                        type: string
+                      redisConnectionSecretName:
+                        default: ''
+                        type: string
+                      redisPasswordSecretName:
+                        default: ''
+                        type: string
+                      resultBackendSecretName:
+                        default: ''
+                        type: string
+                      webserverSecretKeySecretName:
+                        default: ''
+                        type: string
+                    type: object
+                  antiAffinity:
+                    enum:
+                    - node
+                    - zone
+                    - none
+                    type: string
+                  astroAgentSystemImage:
+                    type: string
+                  astroAgentVersion:
+                    pattern: ^(?:|(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$
+                    type: string
+                  autoscaling:
+                    properties:
+                      cooldownPeriod:
+                        default: 300
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      enabled:
+                        default: false
+                        type: boolean
+                      maxReplicas:
+                        default: 2
+                        format: int32
+                        type: integer
+                      metrics:
+                        items:
+                          properties:
+                            resource:
+                              properties:
+                                name:
+                                  enum:
+                                  - cpu
+                                  - memory
+                                  type: string
+                                target:
+                                  properties:
+                                    averageUtilization:
+                                      format: int32
+                                      type: integer
+                                    averageValue:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                    type:
+                                      type: string
+                                    value:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                  required:
+                                  - type
+                                  type: object
+                              required:
+                              - name
+                              - target
+                              type: object
+                            type:
+                              default: Resource
+                              enum:
+                              - Resource
+                              type: string
+                          required:
+                          - type
+                          type: object
+                        type: array
+                      minReplicas:
+                        default: 2
+                        format: int32
+                        type: integer
+                      pollingInterval:
+                        default: 30
+                        format: int32
+                        minimum: 1
+                        type: integer
+                    type: object
+                  customLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  databaseSSLMode:
+                    default: ''
+                    type: string
+                  databaseSSLSecretName:
+                    default: ''
+                    type: string
+                  enableNetworkPolicies:
+                    type: boolean
+                  enabled:
+                    default: false
+                    type: boolean
+                  env:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                        valueFrom:
+                          properties:
+                            configMapKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  default: ''
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            fieldRef:
+                              properties:
+                                apiVersion:
+                                  type: string
+                                fieldPath:
+                                  type: string
+                              required:
+                              - fieldPath
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            fileKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                optional:
+                                  default: false
+                                  type: boolean
+                                path:
+                                  type: string
+                                volumeName:
+                                  type: string
+                              required:
+                              - key
+                              - path
+                              - volumeName
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            resourceFieldRef:
+                              properties:
+                                containerName:
+                                  type: string
+                                divisor:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                resource:
+                                  type: string
+                              required:
+                              - resource
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            secretKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  default: ''
+                                  type: string
+                                optional:
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  envFrom:
+                    items:
+                      properties:
+                        configMapRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        prefix:
+                          type: string
+                        secretRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                    type: array
+                  executionModes:
+                    items:
+                      type: string
+                    type: array
+                  executor:
+                    default: AstroExecutor
+                    enum:
+                    - AstroExecutor
+                    type: string
+                  extraNetworkPolicyRules:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  gid:
+                    default: 50000
+                    format: int64
+                    type: integer
+                  httpPort:
+                    default: 12200
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  imagePullSecret:
+                    type: string
+                  logRetentionDays:
+                    default: 15
+                    format: int32
+                    type: integer
+                  maxActiveDagRuns:
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  pgbouncer:
+                    type: boolean
+                  podAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  replicas:
+                    default: 1
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
+                  runtimeVersion:
+                    pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
+                    type: string
+                  serviceAccountAnnotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  statsd:
+                    properties:
+                      customLabels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      enableNetworkPolicies:
+                        type: boolean
+                      enabled:
+                        default: true
+                        type: boolean
+                      extraNetworkPolicyRules:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      hostName:
+                        type: string
+                      image:
+                        type: string
+                      ingestPort:
+                        default: 9125
+                        format: int32
+                        type: integer
+                      nodeSelector:
+                        additionalProperties:
+                          type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      podTemplateSpec:
+                        properties:
+                          spec:
+                            properties:
+                              nodeSelector:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                                x-kubernetes-map-type: atomic
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      replicas:
+                        default: 1
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      resources:
+                        default:
+                          limits:
+                            cpu: 200m
+                            memory: 768Mi
+                          requests:
+                            cpu: 200m
+                            memory: 768Mi
+                        properties:
+                          claims:
+                            items:
+                              properties:
+                                name:
+                                  type: string
+                                request:
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - name
+                            x-kubernetes-list-type: map
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            type: object
+                        type: object
+                      restrictedProfileEnabled:
+                        default: false
+                        type: boolean
+                      scrapePort:
+                        default: 9102
+                        format: int32
+                        type: integer
+                      tolerations:
+                        items:
+                          properties:
+                            effect:
+                              type: string
+                            key:
+                              type: string
+                            operator:
+                              type: string
+                            tolerationSeconds:
+                              format: int64
+                              type: integer
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  uid:
+                    default: 50000
+                    format: int64
+                    type: integer
+                type: object
               executionModes:
                 items:
                   type: string
@@ -1070,8 +1632,6 @@ spec:
                 - AstroExecutor
                 - CeleryExecutor
                 - KubernetesExecutor
-                - AstroRuntimeExecutor
-                - StellarExecutor
                 type: string
               gid:
                 default: 50000
@@ -1333,6 +1893,7 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                    x-kubernetes-map-type: atomic
                   pgbouncerImage:
                     type: string
                   pgbouncerImagePullPolicy:
@@ -1342,8 +1903,20 @@ spec:
                       type: string
                     type: object
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  preStopTerminationSleepDuration:
+                    type: integer
                   replicas:
                     default: 1
                     format: int32
@@ -1389,6 +1962,9 @@ spec:
                           x-kubernetes-int-or-string: true
                         type: object
                     type: object
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   resultBackendPoolSize:
                     default: 5
                     format: int32
@@ -1458,7 +2034,6 @@ spec:
                     - verify-full
                     type: string
                   terminationGracePeriodSeconds:
-                    default: 120
                     format: int64
                     type: integer
                   tolerations:
@@ -1500,12 +2075,22 @@ spec:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   image:
-                    default: docker.io/bitnami/postgresql:11.10.0-debian-10-r60
+                    default: astrocrpublic.azurecr.io/astronomer/ap-postgresql:17.5.0
                     type: string
                   password:
                     default: postgres
                     type: string
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -1553,6 +2138,9 @@ spec:
                           x-kubernetes-int-or-string: true
                         type: object
                     type: object
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   servingPort:
                     default: 5432
                     format: int32
@@ -1564,13 +2152,7 @@ spec:
                 type: object
               rbac:
                 properties:
-                  allowAllocatorPodPatching:
-                    default: false
-                    type: boolean
-                  allowRunnerPodLaunching:
-                    type: boolean
-                  allowRunnerPodPatching:
-                    default: false
+                  allowAPIServerPodLogReading:
                     type: boolean
                   allowSchedulerPodLaunching:
                     default: false
@@ -1610,10 +2192,21 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                    x-kubernetes-map-type: atomic
                   persistentVolumeClaimSpec:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -1661,6 +2254,9 @@ spec:
                           x-kubernetes-int-or-string: true
                         type: object
                     type: object
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   servingport:
                     default: 6379
                     format: int32
@@ -1682,297 +2278,9 @@ spec:
                       type: object
                     type: array
                 type: object
-              runners:
-                items:
-                  properties:
-                    airflowLocalSettings:
-                      properties:
-                        configMapName:
-                          type: string
-                        customPodMutationHook:
-                          default: ''
-                          type: string
-                        enableAstroPodMutationHook:
-                          default: false
-                          type: boolean
-                        externallyManaged:
-                          default: false
-                          type: boolean
-                        extra:
-                          default: ''
-                          type: string
-                      type: object
-                    airflowSecrets:
-                      properties:
-                        fernetKeySecretName:
-                          default: ''
-                          type: string
-                        metadataSecretName:
-                          default: ''
-                          type: string
-                        pgbouncerConnectionSecretName:
-                          default: ''
-                          type: string
-                        redisConnectionSecretName:
-                          default: ''
-                          type: string
-                        redisPasswordSecretName:
-                          default: ''
-                          type: string
-                        resultBackendSecretName:
-                          default: ''
-                          type: string
-                        webserverSecretKeySecretName:
-                          default: ''
-                          type: string
-                      type: object
-                    customLabels:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    databaseSSLMode:
-                      default: ''
-                      type: string
-                    databaseSSLSecretName:
-                      type: string
-                    enableNetworkPolicies:
-                      type: boolean
-                    env:
-                      items:
-                        properties:
-                          name:
-                            type: string
-                          value:
-                            type: string
-                          valueFrom:
-                            properties:
-                              configMapKeyRef:
-                                properties:
-                                  key:
-                                    type: string
-                                  name:
-                                    default: ''
-                                    type: string
-                                  optional:
-                                    type: boolean
-                                required:
-                                - key
-                                type: object
-                                x-kubernetes-map-type: atomic
-                              fieldRef:
-                                properties:
-                                  apiVersion:
-                                    type: string
-                                  fieldPath:
-                                    type: string
-                                required:
-                                - fieldPath
-                                type: object
-                                x-kubernetes-map-type: atomic
-                              resourceFieldRef:
-                                properties:
-                                  containerName:
-                                    type: string
-                                  divisor:
-                                    anyOf:
-                                    - type: integer
-                                    - type: string
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    x-kubernetes-int-or-string: true
-                                  resource:
-                                    type: string
-                                required:
-                                - resource
-                                type: object
-                                x-kubernetes-map-type: atomic
-                              secretKeyRef:
-                                properties:
-                                  key:
-                                    type: string
-                                  name:
-                                    default: ''
-                                    type: string
-                                  optional:
-                                    type: boolean
-                                required:
-                                - key
-                                type: object
-                                x-kubernetes-map-type: atomic
-                            type: object
-                        required:
-                        - name
-                        type: object
-                      type: array
-                    extraNetworkPolicyRules:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
-                    gid:
-                      default: 50000
-                      format: int64
-                      type: integer
-                    image:
-                      type: string
-                    imagePullSecret:
-                      type: string
-                    isDefaultRunner:
-                      default: false
-                      type: boolean
-                    keda:
-                      properties:
-                        cooldownPeriod:
-                          default: 300
-                          format: int32
-                          type: integer
-                        enabled:
-                          default: false
-                          type: boolean
-                        maxWorkers:
-                          default: 10
-                          format: int32
-                          type: integer
-                        minWorkers:
-                          default: 1
-                          format: int32
-                          type: integer
-                        pollingInterval:
-                          default: 10
-                          format: int32
-                          type: integer
-                      type: object
-                    nodeSelector:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    persistData:
-                      default: false
-                      type: boolean
-                    pgbouncer:
-                      type: boolean
-                    podTemplateSpec:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
-                    queueName:
-                      default: default
-                      pattern: '[a-z]([-a-z0-9]*[a-z0-9])?'
-                      type: string
-                    replicas:
-                      default: 1
-                      format: int32
-                      minimum: 0
-                      type: integer
-                    runtimeVersion:
-                      pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
-                      type: string
-                    serviceAccountAnnotations:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    slots:
-                      default: 16
-                      format: int32
-                      minimum: 1
-                      type: integer
-                    statsd:
-                      properties:
-                        customLabels:
-                          additionalProperties:
-                            type: string
-                          type: object
-                        enableNetworkPolicies:
-                          type: boolean
-                        enabled:
-                          default: true
-                          type: boolean
-                        extraNetworkPolicyRules:
-                          type: object
-                          x-kubernetes-preserve-unknown-fields: true
-                        hostName:
-                          type: string
-                        image:
-                          type: string
-                        ingestPort:
-                          default: 9125
-                          format: int32
-                          type: integer
-                        nodeSelector:
-                          additionalProperties:
-                            type: string
-                          type: object
-                        podTemplateSpec:
-                          type: object
-                          x-kubernetes-preserve-unknown-fields: true
-                        replicas:
-                          default: 1
-                          format: int32
-                          minimum: 0
-                          type: integer
-                        resources:
-                          default:
-                            limits:
-                              cpu: 200m
-                              memory: 768Mi
-                            requests:
-                              cpu: 200m
-                              memory: 768Mi
-                          properties:
-                            claims:
-                              items:
-                                properties:
-                                  name:
-                                    type: string
-                                  request:
-                                    type: string
-                                required:
-                                - name
-                                type: object
-                              type: array
-                              x-kubernetes-list-map-keys:
-                              - name
-                              x-kubernetes-list-type: map
-                            limits:
-                              additionalProperties:
-                                anyOf:
-                                - type: integer
-                                - type: string
-                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                x-kubernetes-int-or-string: true
-                              type: object
-                            requests:
-                              additionalProperties:
-                                anyOf:
-                                - type: integer
-                                - type: string
-                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                x-kubernetes-int-or-string: true
-                              type: object
-                          type: object
-                        scrapePort:
-                          default: 9102
-                          format: int32
-                          type: integer
-                        tolerations:
-                          items:
-                            properties:
-                              effect:
-                                type: string
-                              key:
-                                type: string
-                              operator:
-                                type: string
-                              tolerationSeconds:
-                                format: int64
-                                type: integer
-                              value:
-                                type: string
-                            type: object
-                          type: array
-                      type: object
-                    uid:
-                      default: 50000
-                      format: int64
-                      type: integer
-                  type: object
-                type: array
+              restrictedProfileEnabled:
+                default: false
+                type: boolean
               runtimeVersion:
                 pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
                 type: string
@@ -1995,6 +2303,35 @@ spec:
                         default: ''
                         type: string
                     type: object
+                  airflowPlugins:
+                    items:
+                      properties:
+                        airflowComponents:
+                          items:
+                            type: string
+                          type: array
+                        dbManager:
+                          type: string
+                        destinationPath:
+                          type: string
+                        image:
+                          type: string
+                        maxKnownImage:
+                          type: string
+                        maxKnownVersion:
+                          type: string
+                        name:
+                          type: string
+                        purgeTables:
+                          type: boolean
+                        pythonPath:
+                          type: string
+                        sourcePath:
+                          type: string
+                        version:
+                          type: string
+                      type: object
+                    type: array
                   airflowSecrets:
                     properties:
                       fernetKeySecretName:
@@ -2025,6 +2362,11 @@ spec:
                     - zone
                     - none
                     type: string
+                  astroAgentSystemImage:
+                    type: string
+                  astroAgentVersion:
+                    pattern: ^(?:|(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$
+                    type: string
                   customLabels:
                     additionalProperties:
                       type: string
@@ -2035,6 +2377,8 @@ spec:
                   databaseSSLSecretName:
                     default: ''
                     type: string
+                  embeddedDAGProcessor:
+                    type: boolean
                   enableNetworkPolicies:
                     type: boolean
                   env:
@@ -2067,6 +2411,23 @@ spec:
                                   type: string
                               required:
                               - fieldPath
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            fileKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                optional:
+                                  default: false
+                                  type: boolean
+                                path:
+                                  type: string
+                                volumeName:
+                                  type: string
+                              required:
+                              - key
+                              - path
+                              - volumeName
                               type: object
                               x-kubernetes-map-type: atomic
                             resourceFieldRef:
@@ -2103,6 +2464,31 @@ spec:
                       - name
                       type: object
                     type: array
+                  envFrom:
+                    items:
+                      properties:
+                        configMapRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        prefix:
+                          type: string
+                        secretRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                    type: array
                   executionModes:
                     items:
                       type: string
@@ -2113,8 +2499,6 @@ spec:
                     - LocalExecutor
                     - CeleryExecutor
                     - KubernetesExecutor
-                    - StellarExecutor
-                    - AstroRuntimeExecutor
                     - AstroExecutor
                     type: string
                   extraNetworkPolicyRules:
@@ -2149,6 +2533,16 @@ spec:
                   podTemplateConfigMapName:
                     type: string
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -2156,6 +2550,9 @@ spec:
                     format: int32
                     minimum: 0
                     type: integer
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   runtimeVersion:
                     pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
                     type: string
@@ -2189,7 +2586,18 @@ spec:
                         additionalProperties:
                           type: string
                         type: object
+                        x-kubernetes-map-type: atomic
                       podTemplateSpec:
+                        properties:
+                          spec:
+                            properties:
+                              nodeSelector:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                                x-kubernetes-map-type: atomic
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         type: object
                         x-kubernetes-preserve-unknown-fields: true
                       replicas:
@@ -2237,6 +2645,9 @@ spec:
                               x-kubernetes-int-or-string: true
                             type: object
                         type: object
+                      restrictedProfileEnabled:
+                        default: false
+                        type: boolean
                       scrapePort:
                         default: 9102
                         format: int32
@@ -2321,7 +2732,18 @@ spec:
                     additionalProperties:
                       type: string
                     type: object
+                    x-kubernetes-map-type: atomic
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -2369,6 +2791,9 @@ spec:
                           x-kubernetes-int-or-string: true
                         type: object
                     type: object
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   scrapePort:
                     default: 9102
                     format: int32
@@ -2394,6 +2819,7 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+                x-kubernetes-map-type: atomic
               systemTolerations:
                 items:
                   properties:
@@ -2429,6 +2855,35 @@ spec:
                         default: ''
                         type: string
                     type: object
+                  airflowPlugins:
+                    items:
+                      properties:
+                        airflowComponents:
+                          items:
+                            type: string
+                          type: array
+                        dbManager:
+                          type: string
+                        destinationPath:
+                          type: string
+                        image:
+                          type: string
+                        maxKnownImage:
+                          type: string
+                        maxKnownVersion:
+                          type: string
+                        name:
+                          type: string
+                        purgeTables:
+                          type: boolean
+                        pythonPath:
+                          type: string
+                        sourcePath:
+                          type: string
+                        version:
+                          type: string
+                      type: object
+                    type: array
                   airflowSecrets:
                     properties:
                       fernetKeySecretName:
@@ -2498,6 +2953,23 @@ spec:
                               - fieldPath
                               type: object
                               x-kubernetes-map-type: atomic
+                            fileKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                optional:
+                                  default: false
+                                  type: boolean
+                                path:
+                                  type: string
+                                volumeName:
+                                  type: string
+                              required:
+                              - key
+                              - path
+                              - volumeName
+                              type: object
+                              x-kubernetes-map-type: atomic
                             resourceFieldRef:
                               properties:
                                 containerName:
@@ -2532,6 +3004,31 @@ spec:
                       - name
                       type: object
                     type: array
+                  envFrom:
+                    items:
+                      properties:
+                        configMapRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        prefix:
+                          type: string
+                        secretRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                    type: array
                   executionModes:
                     items:
                       type: string
@@ -2542,8 +3039,6 @@ spec:
                     - LocalExecutor
                     - CeleryExecutor
                     - KubernetesExecutor
-                    - StellarExecutor
-                    - AstroRuntimeExecutor
                     - AstroExecutor
                     type: string
                   extraNetworkPolicyRules:
@@ -2566,6 +3061,16 @@ spec:
                   pgbouncer:
                     type: boolean
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -2573,6 +3078,9 @@ spec:
                     format: int32
                     minimum: 0
                     type: integer
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   runtimeVersion:
                     pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
                     type: string
@@ -2606,7 +3114,18 @@ spec:
                         additionalProperties:
                           type: string
                         type: object
+                        x-kubernetes-map-type: atomic
                       podTemplateSpec:
+                        properties:
+                          spec:
+                            properties:
+                              nodeSelector:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                                x-kubernetes-map-type: atomic
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         type: object
                         x-kubernetes-preserve-unknown-fields: true
                       replicas:
@@ -2654,6 +3173,9 @@ spec:
                               x-kubernetes-int-or-string: true
                             type: object
                         type: object
+                      restrictedProfileEnabled:
+                        default: false
+                        type: boolean
                       scrapePort:
                         default: 9102
                         format: int32
@@ -2709,6 +3231,35 @@ spec:
                         default: ''
                         type: string
                     type: object
+                  airflowPlugins:
+                    items:
+                      properties:
+                        airflowComponents:
+                          items:
+                            type: string
+                          type: array
+                        dbManager:
+                          type: string
+                        destinationPath:
+                          type: string
+                        image:
+                          type: string
+                        maxKnownImage:
+                          type: string
+                        maxKnownVersion:
+                          type: string
+                        name:
+                          type: string
+                        purgeTables:
+                          type: boolean
+                        pythonPath:
+                          type: string
+                        sourcePath:
+                          type: string
+                        version:
+                          type: string
+                      type: object
+                    type: array
                   airflowSecrets:
                     properties:
                       fernetKeySecretName:
@@ -2733,6 +3284,12 @@ spec:
                         default: ''
                         type: string
                     type: object
+                  antiAffinity:
+                    enum:
+                    - node
+                    - zone
+                    - none
+                    type: string
                   createDefaultUser:
                     default: false
                     type: boolean
@@ -2779,6 +3336,23 @@ spec:
                               - fieldPath
                               type: object
                               x-kubernetes-map-type: atomic
+                            fileKeyRef:
+                              properties:
+                                key:
+                                  type: string
+                                optional:
+                                  default: false
+                                  type: boolean
+                                path:
+                                  type: string
+                                volumeName:
+                                  type: string
+                              required:
+                              - key
+                              - path
+                              - volumeName
+                              type: object
+                              x-kubernetes-map-type: atomic
                             resourceFieldRef:
                               properties:
                                 containerName:
@@ -2813,14 +3387,37 @@ spec:
                       - name
                       type: object
                     type: array
+                  envFrom:
+                    items:
+                      properties:
+                        configMapRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        prefix:
+                          type: string
+                        secretRef:
+                          properties:
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                    type: array
                   executor:
                     default: LocalExecutor
                     enum:
                     - LocalExecutor
                     - CeleryExecutor
                     - KubernetesExecutor
-                    - StellarExecutor
-                    - AstroRuntimeExecutor
                     - AstroExecutor
                     type: string
                   extraNetworkPolicyRules:
@@ -2830,6 +3427,19 @@ spec:
                     default: 50000
                     format: int64
                     type: integer
+                  gracefulShutdown:
+                    properties:
+                      enabled:
+                        default: true
+                        type: boolean
+                      preStopTerminationSleepDurationSeconds:
+                        minimum: 0
+                        type: integer
+                      terminationGracePeriodSeconds:
+                        format: int64
+                        minimum: 0
+                        type: integer
+                    type: object
                   image:
                     type: string
                   imagePullSecret:
@@ -2860,6 +3470,16 @@ spec:
                   pgbouncer:
                     type: boolean
                   podTemplateSpec:
+                    properties:
+                      spec:
+                        properties:
+                          nodeSelector:
+                            additionalProperties:
+                              type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
                   replicas:
@@ -2867,6 +3487,9 @@ spec:
                     format: int32
                     minimum: 0
                     type: integer
+                  restrictedProfileEnabled:
+                    default: false
+                    type: boolean
                   runtimeVersion:
                     pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
                     type: string
@@ -2905,7 +3528,18 @@ spec:
                         additionalProperties:
                           type: string
                         type: object
+                        x-kubernetes-map-type: atomic
                       podTemplateSpec:
+                        properties:
+                          spec:
+                            properties:
+                              nodeSelector:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                                x-kubernetes-map-type: atomic
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
                         type: object
                         x-kubernetes-preserve-unknown-fields: true
                       replicas:
@@ -2953,6 +3587,9 @@ spec:
                               x-kubernetes-int-or-string: true
                             type: object
                         type: object
+                      restrictedProfileEnabled:
+                        default: false
+                        type: boolean
                       scrapePort:
                         default: 9102
                         format: int32
@@ -3018,6 +3655,35 @@ spec:
                           default: ''
                           type: string
                       type: object
+                    airflowPlugins:
+                      items:
+                        properties:
+                          airflowComponents:
+                            items:
+                              type: string
+                            type: array
+                          dbManager:
+                            type: string
+                          destinationPath:
+                            type: string
+                          image:
+                            type: string
+                          maxKnownImage:
+                            type: string
+                          maxKnownVersion:
+                            type: string
+                          name:
+                            type: string
+                          purgeTables:
+                            type: boolean
+                          pythonPath:
+                            type: string
+                          sourcePath:
+                            type: string
+                          version:
+                            type: string
+                        type: object
+                      type: array
                     airflowSecrets:
                       properties:
                         fernetKeySecretName:
@@ -3042,6 +3708,21 @@ spec:
                           default: ''
                           type: string
                       type: object
+                    antiAffinity:
+                      enum:
+                      - node
+                      - zone
+                      - none
+                      type: string
+                    apiServerServingPort:
+                      format: int32
+                      minimum: 0
+                      type: integer
+                    astroAgentClientImage:
+                      type: string
+                    astroAgentVersion:
+                      pattern: ^(?:|(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$
+                      type: string
                     concurrency:
                       default: 16
                       format: int64
@@ -3090,6 +3771,23 @@ spec:
                                 - fieldPath
                                 type: object
                                 x-kubernetes-map-type: atomic
+                              fileKeyRef:
+                                properties:
+                                  key:
+                                    type: string
+                                  optional:
+                                    default: false
+                                    type: boolean
+                                  path:
+                                    type: string
+                                  volumeName:
+                                    type: string
+                                required:
+                                - key
+                                - path
+                                - volumeName
+                                type: object
+                                x-kubernetes-map-type: atomic
                               resourceFieldRef:
                                 properties:
                                   containerName:
@@ -3124,6 +3822,31 @@ spec:
                         - name
                         type: object
                       type: array
+                    envFrom:
+                      items:
+                        properties:
+                          configMapRef:
+                            properties:
+                              name:
+                                default: ''
+                                type: string
+                              optional:
+                                type: boolean
+                            type: object
+                            x-kubernetes-map-type: atomic
+                          prefix:
+                            type: string
+                          secretRef:
+                            properties:
+                              name:
+                                default: ''
+                                type: string
+                              optional:
+                                type: boolean
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                      type: array
                     executor:
                       default: CeleryExecutor
                       type: string
@@ -3141,8 +3864,16 @@ spec:
                     isDefaultWorker:
                       default: false
                       type: boolean
+                    isLowLatency:
+                      default: false
+                      type: boolean
                     keda:
                       properties:
+                        burstReplicas:
+                          default: 0
+                          format: int32
+                          minimum: 0
+                          type: integer
                         cooldownPeriod:
                           default: 300
                           format: int32
@@ -3162,6 +3893,9 @@ spec:
                           default: 10
                           format: int32
                           type: integer
+                        stabilizationWindowSeconds:
+                          format: int32
+                          type: integer
                       type: object
                     logRetentionDays:
                       default: 15
@@ -3175,6 +3909,7 @@ spec:
                       additionalProperties:
                         type: string
                       type: object
+                      x-kubernetes-map-type: atomic
                     persistData:
                       default: false
                       type: boolean
@@ -3183,6 +3918,16 @@ spec:
                     pgbouncer:
                       type: boolean
                     podTemplateSpec:
+                      properties:
+                        spec:
+                          properties:
+                            nodeSelector:
+                              additionalProperties:
+                                type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
                     queueName:
@@ -3194,6 +3939,9 @@ spec:
                       format: int32
                       minimum: 0
                       type: integer
+                    restrictedProfileEnabled:
+                      default: false
+                      type: boolean
                     runtimeVersion:
                       pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
                       type: string
@@ -3227,7 +3975,18 @@ spec:
                           additionalProperties:
                             type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         podTemplateSpec:
+                          properties:
+                            spec:
+                              properties:
+                                nodeSelector:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
                           type: object
                           x-kubernetes-preserve-unknown-fields: true
                         replicas:
@@ -3275,6 +4034,9 @@ spec:
                                 x-kubernetes-int-or-string: true
                               type: object
                           type: object
+                        restrictedProfileEnabled:
+                          default: false
+                          type: boolean
                         scrapePort:
                           default: 9102
                           format: int32
@@ -3307,6 +4069,8 @@ spec:
             type: object
           status:
             properties:
+              astroAgentSystemImage:
+                type: string
               conditions:
                 items:
                   properties:
@@ -3329,6 +4093,12 @@ spec:
                   - type
                   type: object
                 type: array
+              isReconciliationPaused:
+                type: boolean
+              migrationAstroAgentVersion:
+                type: string
+              migrationExecutor:
+                type: string
               migrationRuntimeImage:
                 type: string
               migrationRuntimeVersion:
@@ -3354,4 +4124,5 @@ spec:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
       status: {}
+{{- end }}
 {{- end }}

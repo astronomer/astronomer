@@ -319,7 +319,6 @@ These keys already use the correct schema and are not modified:
 
 - `global.networkPolicy.enabled`
 - `global.authSidecar.*`
-- `global.airflowOperator.*`
 - `global.nats.enabled`, `global.nats.replicas`
 - `global.customLogging.*`
 - `global.privateCaCerts`, `global.privateCaCertsAddToHost.*`

@@ -46,6 +46,11 @@ Image name.
 alertmanager.{{ .Values.global.baseDomain }}
 {{- end }}
 
+{{/* Global customer-facing host, templated from controlPlaneHA.globalBaseDomain (CP HA only). */}}
+{{ define "alertmanager.globalUrl" -}}
+alertmanager.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- end }}
+
 {{/*
 Return  the proper Storage Class
 */}}
@@ -82,17 +87,6 @@ imagePullSecrets:
     secretName: {{ . }}
 {{- end }}
 {{- end }}
-{{- end }}
-
-{{/*
-Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser  fields on OpenShift Based Installation.
-*/}}
-{{- define "alertmanager.podSecurityContext" -}}
-{{- if .Values.global.openshift.enabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
 {{- end }}
 
 {{ define "alertmanager.serviceAccountName" -}}

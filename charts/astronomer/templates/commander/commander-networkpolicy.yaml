@@ -70,6 +70,11 @@ spec:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
+          component: houston-cp-refresh
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
           component: houston-update-check
     - podSelector:
         matchLabels:

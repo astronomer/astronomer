@@ -7,11 +7,11 @@ replicaCount: 1
 images:
   esproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.29.2-1
+    tag: 1.31.1
     pullPolicy: IfNotPresent
   awsproxy:
     repository: quay.io/astronomer/ap-awsesproxy
-    tag: 1.5.0-27
+    tag: 2026.7.13-1
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -31,20 +31,25 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
   # fsGroup: 2000
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsUser: 1000
+  runAsUser: 65534
 
 awsproxy:
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
+
+startupProbe: {}
 
 service:
   type: ClusterIP

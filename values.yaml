@@ -20,6 +20,53 @@ global:
   clusterLocalServiceAuth:
     token: ""
 
+  # Control Plane High Availability: run multiple active CPs serving traffic concurrently within a region.
+  # Default false keeps single-CP installs unchanged (no behavior change).
+  controlPlaneHA:
+    enabled: false
+    # Only for the FIRST CP install of a fresh HA cluster. When true (with
+    # enabled: true), overrides the HA-mode hard-block on JWKS + registry
+    # keypair generation, allowing the chart to generate the shared secret
+    # material into local k8s Secrets. Customer then copies those Secrets to
+    # subsequent CP clusters before installing them (see runbook).
+    # Default false: subsequent CPs and single-CP-to-HA migrations skip
+    # generation and expect Secrets to be pre-provisioned.
+    bootstrapJwks: false
+    # Parent domain of the global customer-facing hostname. REQUIRED when enabled.
+    # E.g. set to "astro.example.com" when the global URL is "app.astro.example.com".
+    #
+    # TLS cert SANs (customer prerequisite: when
+    # enabled, each CP's ingresses serve two host families, so the per-CP TLS cert
+    # (global.tlsSecret) on EVERY CP must include SANs for both:
+    #   per-CP admin (under baseDomain):  <baseDomain>, app.<baseDomain>,
+    #     houston.<baseDomain>, grafana.<baseDomain>, alertmanager.<baseDomain>,
+    #     prometheus.<baseDomain>
+    #   global customer-facing (under globalBaseDomain): the same subdomains under
+    #     <globalBaseDomain> (app./houston./grafana./alertmanager./prometheus.) plus the
+    #     bare <globalBaseDomain>
+    # One physical cert per CP serves both families. Issue via DNS-01 ACME — HTTP-01 will
+    # not work because the global host only routes to active-region CPs.
+    globalBaseDomain: ~
+    # Stable per-CP identity (UUID), exposed to pods as the CP_ID env var. Generated on
+    # every control/unified plane install regardless of controlPlaneHA.enabled — the value
+    # is preserved for future HA enablement even if not currently in use.
+    # When unset, the chart looks up the existing cp-identity Secret and reuses its value,
+    # or generates a new UUID on first install (preserved across `helm upgrade`).
+    # Set explicitly to keep cp_id deterministic for GitOps / offline `helm template`
+    # workflows where the cluster lookup is unavailable (otherwise a new UUID is rendered
+    # each time). May also point Houston at an externally-managed value.
+    cpId: ~
+    # Optional override for the customer session cookie Domain= attribute.
+    # When unset, Houston defaults it to `.<globalBaseDomain>`. Set explicitly only for the
+    # advanced single-cookie mode: a common parent of globalBaseDomain and the per-CP admin
+    # baseDomain (not derivable from globalBaseDomain alone) so one cookie covers both flows.
+    cookieDomain: ~
+    # Optional override for the customer session cookie name.
+    # When unset, Houston defaults it to `astronomer_<snakeCase(globalBaseDomain)>_auth` (same
+    # on every CP). Set explicitly only to pin an existing cookie name during HA migration so
+    # current sessions aren't invalidated.
+    cookieName: ~
+
   # Labels to add to every pod
   podLabels: {}
 
@@ -46,12 +93,26 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.3
+      tag: 2.0.15
       pullPolicy: IfNotPresent
+      startupProbe: {}
+    containerdCertCopier:
+      startupProbe: {}
     priorityClassName: ~
-  #Global flag to enable Operator based deployment
-  airflowOperator:
+  operator:
+    # Turn on operator-based Airflow deployments. When enabled, this chart installs
+    # the airflow-operator by default and grants Astronomer the permissions it needs
+    # to manage Airflow deployments through the operator.
+    #
+    # Already running your own operator on the cluster? Keep this enabled, but set
+    # `airflow-operator.enabled: false` (see Chart.yaml) so Astronomer works with your
+    # existing operator instead of installing its own.
     enabled: false
+
+    adoption:
+      # Allow Astronomer to adopt Airflow deployments that already exist on your
+      # cluster, so you can bring them under management without recreating them.
+      enabled: true
 
   # Feature flags
   rbac:
@@ -94,6 +155,11 @@ global:
     # The name of a manually created ClusterSecretStore
     # externalSecretManagerName: your-css-name
 
+  # sharedElasticsearch: Allows sharing logging components with control plane.
+  # Built specially for cp dp split mode
+  sharedElasticsearch:
+    enabled: false
+
   # Metrics and reporting features
   metricsReporting:
     taskUsageMetrics:
@@ -111,7 +177,7 @@ global:
     dagOnlyDeployment:
       enabled: false
       repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.9.6
+      tag: 0.9.10
       securityContexts:
         pod:
           fsGroup: 50000
@@ -131,7 +197,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.29.8
+    tag: 1.31.2
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -251,7 +317,7 @@ global:
       enabled: false
       name: sidecar-log-consumer
       repository: quay.io/astronomer/ap-vector
-      tag: 0.55.0-1
+      tag: 0.56.0-2
       customConfig: false
       indexPattern: ~
       extraEnv: []
@@ -335,32 +401,36 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.29.0-4
+        tag: 0.30.0-2
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.6.3
+        tag: 8.6.4-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-9
+        tag: 1.24.1-19
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.0
+        tag: 0.12.0-5
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.5.12
+        tag: 2026.7.13
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.5.12
+        tag: 2026.7.13
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.5.12
+        tag: 2026.7.13
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.9
+        tag: 0.4.0
     metrics:
       enabled: false
+  certgenerator:
+    images:
+      repository: quay.io/astronomer/ap-certgenerator
+      tag: 0.1.18
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:

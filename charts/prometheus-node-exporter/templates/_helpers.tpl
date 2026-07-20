@@ -79,17 +79,6 @@ Docker repository name
 {{- end }}
 {{- end }}
 
-{{/*
-Return podSecurityContext, omitting UID/GID fields on OpenShift where the platform
-assigns them. OpenShift users can also override per-component via values.
-*/}}
-{{- define "prometheus-node-exporter.podSecurityContext" -}}
-{{- if .Values.global.openshift.enabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
-{{- end }}
 
 {{/*
 Return the proper Docker Image Registry Secret Names

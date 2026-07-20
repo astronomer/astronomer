@@ -1,3 +1,5 @@
+import re
+
 import jmespath
 import pytest
 import yaml
@@ -320,7 +322,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"airflowOperator": {"enabled": True}}},
+            values={"global": {"operator": {"enabled": True}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
@@ -334,7 +336,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"airflowOperator": {"enabled": False}}},
+            values={"global": {"operator": {"enabled": False}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
@@ -345,7 +347,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"airflowOperator": {"enabled": True}, "clusterRoles": False}},
+            values={"global": {"operator": {"enabled": True}, "clusterRoles": False}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
@@ -392,3 +394,26 @@ class TestPrometheusConfigConfigmap:
         assert len(federated) == 1
         assert federated[0]["scrape_interval"] == "30s"
         assert federated[0]["scrape_timeout"] == "5s"
+
+    def test_federated_dataplanes_match_includes_operator_job(self, kube_version):
+        """Operator-mode deployments scrape under job 'airflow-operator' on the data plane, while
+        legacy Helm deployments use job 'airflow'. The federation selector is an anchored
+        alternation, so 'airflow' matches only the legacy job — the operator job must be listed
+        explicitly or its per-deployment metrics never federate to the control-plane Prometheus the
+        Houston metrics UI queries. Regression guard for PLX-504 (operator-inheritance metrics)."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        federated = [s for s in scrape_configs if s["job_name"] == "federated-dataplanes"]
+        assert len(federated) == 1
+
+        match_selectors = federated[0]["params"]["match[]"]
+        job_regex = re.search(r'job=~"([^"]+)"', match_selectors[0]).group(1)
+        alternatives = job_regex.split("|")
+        # Both the operator-mode job and the legacy Helm job must be federated, since both carry
+        # per-deployment Airflow metrics the UI renders.
+        assert "airflow-operator" in alternatives, alternatives
+        assert "airflow" in alternatives, alternatives

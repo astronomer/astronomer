@@ -1,8 +1,8 @@
 ###################################
 ## Astronomer DP-Link Deployment ##
 ###################################
-{{- if or .Values.dpLink.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control")) }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq .Values.global.plane.mode "control" }}
+{{- if or .Values.dpLink.enabled .Values.global.dataPlaneFailover.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -44,7 +44,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "dpLink.serviceAccountName" . }}
-      securityContext: {{- include "astronomer.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -62,17 +62,13 @@ spec:
               mountPath: /etc/ssl/certs_copy
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
       containers:
         - name: dp-link
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
@@ -135,6 +131,19 @@ spec:
           {{- end }}
           {{- if .Values.dpLink.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.dpLink.readinessProbe) $ | nindent 12 }}
+          {{- end }}
+          {{- if .Values.dpLink.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.dpLink.startupProbe) $ | nindent 12 }}
+          {{- else }}
+          # dp-link is a dial-out worker (`yarn run dplink`): it consumes a Commander
+          # gRPC stream and runs a per-cluster claim/lease loop, binding no listener,
+          # so a tcpSocket/httpGet probe would fail forever and crashloop the pod. Use
+          # a no-op exec probe to satisfy Gatekeeper's allow-with-probes safely.
+          startupProbe:
+            exec:
+              command: ["/bin/true"]
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
       volumes:
         - name: etc-ssl-certs

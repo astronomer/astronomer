@@ -11,8 +11,12 @@ Create a default fully qualified app name.
 We truncate at 44 chars (63 - len("-headless-discovery")) because some Kubernetes name fields are limited to 63 (by the DNS naming spec).
 */}}
 {{- define "elasticsearch.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- printf "%s-%s" .Release.Name $name | trunc 44 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
 
 {{ define "elasticsearch.serviceAccountName" -}}
@@ -152,29 +156,10 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{- define "elasticsearch.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
-{{- $required := dict "readOnlyRootFilesystem" true }}
-{{- merge $required (omit .Values.securityContext "runAsUser") | toYaml }}
-{{- else }}
-{{- $required := dict "readOnlyRootFilesystem" true }}
-{{- merge $required .Values.securityContext | toYaml }}
-{{- end -}}
-{{- end }}
-
-{{/*
-Return podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
-*/}}
-{{- define "elasticsearch.podSecurityContext" -}}
-{{- if .Values.global.openshift.enabled }}
-{{- omit .Values.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
-{{- else }}
-{{- toYaml .Values.podSecurityContext }}
-{{- end -}}
-{{- end }}
-
 {{/*
 Return exporter podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+Uses .Values.exporter.podSecurityContext as its own base (not the chart-wide .Values.podSecurityContext),
+so it deliberately does not use platform.podSecurityContext, whose merge would layer the chart base underneath.
 */}}
 {{- define "elasticsearch.exporter.podSecurityContext" -}}
 {{- if .Values.global.openshift.enabled }}
@@ -185,7 +170,7 @@ Return exporter podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fi
 {{- end }}
 
 {{- define "elasticsearch.ingressurl" -}}
-{{ if eq .Values.global.plane.mode "data" -}}
+{{ if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 elasticsearch.{{ .Values.global.baseDomain }}

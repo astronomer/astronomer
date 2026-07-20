@@ -1,4 +1,4 @@
-{{ if and .Values.global.airflowOperator.enabled }}
+{{- if (include "operator.enabled" .) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -15,6 +15,6 @@ roleRef:
   name: airflow-operator-manager-role
 subjects:
 - kind: ServiceAccount
-  name: {{ template "operator.serviceAccountName" . }}
+  name: '{{ template "operator.serviceAccountName" $ }}'
   namespace: '{{ $.Release.Namespace }}'
-{{ end -}}
+{{- end }}

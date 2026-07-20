@@ -25,7 +25,7 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: docker23
+          version: docker28
       - cosign/install:
           version: "v2.5.0"
       - run:
@@ -59,7 +59,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-05
+      - image: quay.io/astronomer/ci-helm-release:2026-07
     steps:
       - checkout
       - run:
@@ -69,7 +69,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2026-05
+      - image: quay.io/astronomer/ci-pre-commit:2026-07
     resource_class: small
     steps:
       - checkout
@@ -93,7 +93,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-05
+      - image: quay.io/astronomer/ci-helm-release:2026-07
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -128,7 +128,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-05
+      - image: quay.io/astronomer/ci-helm-release:2026-07
     parameters:
       qa_release:
         type: boolean
@@ -150,7 +150,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-05
+      - image: quay.io/astronomer/ci-helm-release:2026-07
     parameters:
       artifact_subdir:
         type: string
@@ -187,7 +187,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-05
+      - image: quay.io/astronomer/ci-helm-release:2026-07
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -200,7 +200,7 @@ jobs:
 
   scenario-unified-1-31-14:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.31.14
@@ -226,7 +226,7 @@ jobs:
           path: test-results
   scenario-unified-1-32-11:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.32.11
@@ -252,7 +252,7 @@ jobs:
           path: test-results
   scenario-unified-1-33-7:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.33.7
@@ -278,7 +278,7 @@ jobs:
           path: test-results
   scenario-unified-1-34-3:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.34.3
@@ -304,7 +304,7 @@ jobs:
           path: test-results
   scenario-unified-1-35-1:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.35.1
@@ -329,6 +329,35 @@ jobs:
       - store_test_results:
           path: test-results
 
+  scenario-auth-sidecar:
+    machine:
+      image: ubuntu-2404:2026.05.1
+      resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: auth-sidecar"
+          command: |
+            uv run bin/run-scenario.py auth-sidecar
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/auth-sidecar"
+      - store_test_results:
+          path: test-results
+
   check-commander-airflow-version:
     docker:
       - image: cimg/base:current-24.04
@@ -342,7 +371,7 @@ jobs:
 
   create_linear_milestone:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2026-05
+      - image: quay.io/astronomer/ci-pre-commit:2026-07
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -391,6 +420,9 @@ workflows:
             - approve-test-all-platforms
 
       - scenario-unified-1-35-1:
+          requires:
+            - build-artifact
+      - scenario-auth-sidecar:
           requires:
             - build-artifact
       - approve-stage-cluster-test:

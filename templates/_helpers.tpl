@@ -11,11 +11,28 @@ fluentd
 {{- end -}}
 
 
+{{/*
+Base domain for the control-plane auth flow (auth-url / auth-signin subrequests and
+redirects, elasticsearch proxy_pass). Under control-plane HA the customer enters via the
+global hostname and the session cookie is scoped to globalBaseDomain, so these auth URLs
+must resolve to the global host. Falls back to baseDomain when HA is off (single-CP
+rendering unchanged) or when globalBaseDomain is unset (e.g. data planes, where it is
+never templated). Consumers template the surrounding URL/key, so this is reusable for any
+auth-flow URL regardless of annotation key.
+*/}}
+{{- define "global.authBaseDomain" -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- else -}}
+{{- .Values.global.baseDomain -}}
+{{- end -}}
+{{- end -}}
+
 {{ define "houston.internalauthurl" -}}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
 {{- else }}
-nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
+nginx.ingress.kubernetes.io/auth-url: https://houston.{{ include "global.authBaseDomain" . }}/v1/authorization
 {{- end }}
 {{- end }}
 
@@ -59,6 +76,62 @@ registry.{{ .Values.global.baseDomain }}
 {{- end }}
 {{- end }}
 
+{{/*
+Render a container-level securityContext for PSS-Restricted conformance.
+
+Call with a list of two elements: (list $ $override) where
+  - $        is the current context (so the helper can read .Values.securityContext and .Values.global)
+  - $override is a per-container securityContext map (or nil). Its fields are layered on top of the
+    chart's .Values.securityContext, so a container that only differs by runAsUser can pass
+    (dict "runAsUser" 101) and inherit every other field from the chart default.
+
+Behavior:
+  - readOnlyRootFilesystem is always force-merged to true (customers cannot disable it).
+  - Every other field is a default (override layered over .Values.securityContext), so it remains
+    overridable via helm values.
+  - runAsUser is omitted on OpenShift so the cluster's SCC can assign a UID from its allowed range.
+    This matches the prometheus/elasticsearch helpers as of PINF-765.
+  - runAsUser is also omitted when it is set to the string "auto", an escape hatch that lets the
+    platform (or a user) defer UID assignment off OpenShift too. Rendering "runAsUser: auto" is never
+    valid, so omitting it is always correct.
+*/}}
+{{- define "platform.containerSecurityContext" -}}
+{{- $ctx := index . 0 -}}
+{{- $override := index . 1 | default dict -}}
+{{- $required := dict "readOnlyRootFilesystem" true -}}
+{{- $base := merge (deepCopy $override) $ctx.Values.securityContext -}}
+{{- if or $ctx.Values.global.openshift.enabled (eq (toString $base.runAsUser) "auto") -}}
+{{- merge $required (omit $base "runAsUser") | toYaml -}}
+{{- else -}}
+{{- merge $required $base | toYaml -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Render a pod-level securityContext.
+
+Call with a list of two elements: (list $ $override) where
+  - $        is the current context (so the helper can read .Values.podSecurityContext and .Values.global)
+  - $override is a per-pod podSecurityContext map (or nil). Its fields are layered on top of the
+    chart's .Values.podSecurityContext.
+
+Behavior:
+  - fsGroup, runAsGroup and runAsUser are omitted on OpenShift, where the cluster's SCC assigns
+    them from its allowed range. Every other field (e.g. seccompProfile) is preserved.
+  - Off OpenShift the merged podSecurityContext is rendered unchanged.
+This is the pod-level counterpart of platform.containerSecurityContext.
+*/}}
+{{- define "platform.podSecurityContext" -}}
+{{- $ctx := index . 0 -}}
+{{- $override := index . 1 | default dict -}}
+{{- $base := merge (deepCopy $override) $ctx.Values.podSecurityContext -}}
+{{- if $ctx.Values.global.openshift.enabled -}}
+{{- omit $base "fsGroup" "runAsGroup" "runAsUser" | toYaml -}}
+{{- else -}}
+{{- toYaml $base -}}
+{{- end -}}
+{{- end }}
+
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.logging.loggingSidecar.tag }}
@@ -95,10 +168,22 @@ imagePullSecrets:
 {{- if eq .Values.global.plane.mode "unified" -}}
 proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
 {{- else -}}
-proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
+proxy_pass https://houston.{{ include "global.authBaseDomain" . }}/v1/elasticsearch;
 {{- end -}}
 {{- end }}
 
 {{ define "registry.authHeaderSecret" -}}
 {{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
+{{- end }}
+
+{{/*
+Whether the logging stack (Elasticsearch, external-es-proxy, Vector) should be rendered
+for the current plane. Always on for unified. When global.sharedElasticsearch.enabled,
+the control plane hosts shared logging and the data plane runs none; when disabled, the
+data plane runs its own and the control plane runs none.
+Defined in the parent chart so all logging sub-charts can include it.
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "logging.enabled" -}}
+{{- or (eq .Values.global.plane.mode "unified") (and (eq .Values.global.plane.mode "control") .Values.global.sharedElasticsearch.enabled) (and (eq .Values.global.plane.mode "data") (not .Values.global.sharedElasticsearch.enabled)) -}}
 {{- end }}

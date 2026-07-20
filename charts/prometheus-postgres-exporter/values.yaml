@@ -9,7 +9,7 @@ replicaCount: 2
 
 image:
   repository: quay.io/astronomer/ap-postgres-exporter
-  tag: 0.19.1-6
+  tag: 0.20.1
   pullPolicy: IfNotPresent
 
 
@@ -56,12 +56,24 @@ readinessProbe: {}
   # initialDelaySeconds: 5
   # periodSeconds: 10
 
+startupProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.service.targetPort }}
+  # failureThreshold: 30
+  # periodSeconds: 10
 
-podSecurityContext: {}
+
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
   # The securityContext this Pod should use. See https://kubernetes.io/docs/concepts/policy/security-context/ for more.
-  # runAsUser: 65534
+  runAsUser: 65534
 
 config:
   datasource:

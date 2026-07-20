@@ -46,20 +46,18 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "prometheus-postgres-exporter.serviceAccountName" . }}
-      securityContext: {{- include "prometheus-postgres-exporter.podSecurityContext" . | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
 {{- include "prometheus-postgres-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           args:
           - "--extend.query-path=/etc/config.yaml"
           {{- if .Values.config.disableDefaultMetrics }}
           - "--disable-default-metrics"
           {{- end }}
           {{- if .Values.config.disableSettingsMetrics }}
-          - "--disable-settings-metrics"
+          - "--no-collector.settings"
           {{- end }}
           {{- if .Values.config.autoDiscoverDatabases }}
           - "--auto-discover-databases"
@@ -117,6 +115,15 @@ spec:
             tcpSocket:
               port: {{ .Values.service.targetPort }}
             initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- end }}
+          {{ if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{ else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            failureThreshold: 30
             periodSeconds: 10
           {{- end }}
           resources: {{ toYaml .Values.resources | nindent 12 }}

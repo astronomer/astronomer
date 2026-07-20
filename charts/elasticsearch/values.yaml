@@ -10,23 +10,23 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 8.19.14-1
+    tag: 8.19.18
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 2026.5.20
+    tag: 2026.7.13
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.21-14
+    tag: 8.0.21-25
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.10.0-2
+    tag: 1.10.0-6
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.29.8
+    tag: 1.31.2
     pullPolicy: IfNotPresent
 
 common:
@@ -110,6 +110,12 @@ client:
     #   path: /_cluster/health?local=true
     #   port: {{ .Values.common.ports.http }}
     # initialDelaySeconds: 5
+  startupProbe: {}
+    # httpGet:
+    #   path: /_cluster/health
+    #   port: {{ .Values.common.ports.http }}
+    # failureThreshold: 30
+    # periodSeconds: 10
 
   env:
     NODE_DATA: "false"
@@ -152,6 +158,11 @@ data:
     # initialDelaySeconds: 20
     # periodSeconds: 10
   readinessProbe: {}
+  startupProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.transport }}
+    # failureThreshold: 30
+    # periodSeconds: 10
 
   env:
     NODE_DATA: "true"
@@ -209,6 +220,11 @@ master:
   livenessProbe: {}
     # tcpSocket:
     #   port: {{ .Values.common.ports.transport }}
+  startupProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.transport }}
+    # failureThreshold: 30
+    # periodSeconds: 10
 
   env:
     NODE_DATA: "false"
@@ -234,7 +250,11 @@ curator:
   enabled: true
   schedule: "0 1 * * *"
   securityContext:
+    allowPrivilegeEscalation: false
     runAsNonRoot: true
+    capabilities:
+      drop:
+      - ALL
   resources: {}
 
   # Allows modification of the default age-based filter. If you require more
@@ -247,6 +267,7 @@ curator:
 
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
 
 exporter:
   podAnnotations: {}
@@ -256,8 +277,13 @@ exporter:
   # Restart policy for all containers
   restartPolicy: Always
 
-  podSecurityContext: {}
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
   securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 65534
     capabilities:
       drop:
       - ALL
@@ -282,6 +308,12 @@ exporter:
     #   port: http
     # initialDelaySeconds: 10
     # timeoutSeconds: 10
+  startupProbe: {}
+    # httpGet:
+    #   path: /healthz
+    #   port: http
+    # failureThreshold: 30
+    # periodSeconds: 10
 
   service:
     type: ClusterIP
@@ -306,8 +338,18 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
+  startupProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.http }}
+    # failureThreshold: 30
+    # periodSeconds: 10
   securityContext:
+    allowPrivilegeEscalation: false
     runAsNonRoot: true
+    runAsUser: 101
+    capabilities:
+      drop:
+        - ALL
   maxBodySize: "100M"
 
   authCache:
@@ -331,8 +373,11 @@ sysctlInitContainer:
 
 podSecurityContext:
   fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
+  allowPrivilegeEscalation: false
   capabilities:
     drop:
       - ALL
