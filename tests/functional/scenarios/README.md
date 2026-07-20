@@ -28,7 +28,7 @@ tests/functional/scenarios/<name>/
 | Field             | Required | Meaning                                                                                   |
 | ------------------ | -------- | ------------------------------------------------------------------------------------------ |
 | `topology`         | yes      | `unified`, `control`, or `data` — which existing install topology to layer this scenario on |
-| `values`            | yes      | ordered list of values files (repo-relative), passed as `--helm-values` in order            |
+| `values`            | yes      | ordered list of values files (repo-relative), passed as `--helm-values` in order; an empty list is fine if the scenario needs no overlay |
 | `kube_version`      | no       | pinned k8s version; defaults to the latest entry in `metadata.yaml`'s `test_k8s_versions`   |
 | `namespace_labels`  | no       | labels to apply to the `astronomer` namespace *before* install (PSA is not retroactive)      |
 
