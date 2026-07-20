@@ -26,13 +26,17 @@ def dump_pod_logs(k8s_core_v1_client, label_selector: str, namespace: str = "ast
     devcontainer has no live cluster to inspect them by hand.
 
     A "13 INTERNAL: failed to validate token" specifically is very likely PINF-1049,
-    not a real regression: Commander's JWKS-fetch cache has no request-coalescing
-    guard, so on a freshly-started Commander pod, concurrent gRPC calls can race to
-    independently fetch Houston's JWKS, and any transient failure on either fetch
-    (Houston momentarily contended during cluster bring-up is enough) hard-fails that
-    one call with this generic message and no retry -- explaining why one call in a
-    request can succeed while the very next fails, and why it's non-deterministic
-    across CI runs. The fix belongs in commander (add single-flight/retry around
+    not a real regression. Confirmed via Commander's own logs on a real CI run: it's a
+    literal TCP connection refusal when Commander fetches Houston's JWKS via the
+    Service DNS name (`dial tcp ...:8871: connect: connection refused`), because
+    Houston's pod hadn't been marked Ready by Kubernetes yet -- even though Houston's
+    own app log already said "Server ready". This repo's own GraphQL calls succeed
+    regardless, since they reach Houston via `kubectl exec` straight to its pod's
+    localhost, bypassing the Service (and its Ready-endpoints-only routing) entirely --
+    Commander has no such shortcut. This is Commander's first JWKS fetch racing ahead
+    of Houston's own readiness gate during normal multi-pod bring-up, and
+    fetchAndUpdateCache has no retry, so one connection refusal is treated as final.
+    The fix belongs in commander (retry-with-backoff and/or single-flight around
     JWKS-fetching), not in this repo -- from here, re-running the CI job is the only
     available mitigation for this specific error message.
     """
@@ -131,23 +135,33 @@ def upsert_deployment(
     workspace_id: str | None = None,
     cluster_id: str | None = None,
     dag_deployment_type: str = "image",
+    repository_url: str | None = None,
+    auth_type: str | None = None,
     deployment_uuid: str | None = None,
 ) -> dict:
     """
     Create (deployment_uuid=None) or update (deployment_uuid set) an Airflow Deployment.
     Same mutation both ways -- upsertDeployment resolves create vs. update from whether
     deployment_uuid identifies an existing row.
+
+    repository_url/auth_type only apply to dag_deployment_type="git_sync" (the DagDeployment
+    fields git-sync-relay's own repositoryUrl/authType).
     """
     variables: dict = {"executor": executor}
     if deployment_uuid:
         variables["deploymentUuid"] = deployment_uuid
     else:
+        dag_deployment = {"type": dag_deployment_type}
+        if repository_url:
+            dag_deployment["repositoryUrl"] = repository_url
+        if auth_type:
+            dag_deployment["authType"] = auth_type
         variables.update(
             {
                 "label": label,
                 "workspaceUuid": workspace_id,
                 "clusterId": cluster_id,
-                "dagDeployment": {"type": dag_deployment_type},
+                "dagDeployment": dag_deployment,
             }
         )
     query = """

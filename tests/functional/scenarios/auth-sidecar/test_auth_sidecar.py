@@ -4,17 +4,18 @@ this scenario combines authSidecar with a PSS-Restricted-enforcing namespace rat
 than testing them separately.
 
 test_grafana_* covers the platform-namespace tier (astronomer chart: grafana,
-alertmanager, prometheus). test_deployment_* covers the OTHER two authSidecar
-implementations that live in Airflow-Deployment-namespace territory and were
-previously untestable here at all -- no scenario created a real Airflow Deployment
-before PINF-1035 built the mechanism this reuses: houston-api's server-side
-extraContainers() injection onto the deployment's own pods, and airflow-chart's
-dag-server (via dagDeployment.type: dag_deploy, which also turns on dag-server's own
-auth-sidecar consumer -- see dag-server-auth-sidecar-configmap.yaml's `and
-.Values.dagDeploy.enabled .Values.authSidecar.enabled` gate). git-sync-relay (the
-third implementation, airflow-chart's other authSidecar consumer) still isn't
-exercised here -- it needs a real git repo and credentials, a bigger lift than this
-scenario's other two, and is a known remaining gap, not an oversight.
+alertmanager, prometheus). test_deployment_* and test_git_sync_deployment_* cover
+the OTHER two authSidecar implementations that live in Airflow-Deployment-namespace
+territory and were previously untestable here at all -- no scenario created a real
+Airflow Deployment before PINF-1035 built the mechanism this reuses: houston-api's
+server-side extraContainers() injection onto the deployment's own pods (via
+dagDeployment.type: dag_deploy, which also turns on dag-server's own auth-sidecar
+consumer -- see dag-server-auth-sidecar-configmap.yaml's `and .Values.dagDeploy.enabled
+.Values.authSidecar.enabled` gate), and airflow-chart's git-sync-relay (via
+dagDeployment.type: git_sync, authType: HTTPS_NONE, pointed at
+astronomer/apc-test-dags-public -- a small public no-auth fixture repo, chosen
+specifically so this doesn't need real git credentials in CI). All three
+authSidecar implementations are now exercised here.
 """
 
 import pytest
@@ -38,6 +39,13 @@ ADMIN_EMAIL = "pinf-1031-auth-sidecar-test@astronomer.io"
 ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = "pinf-1031-auth-sidecar"
 DEPLOYMENT_LABEL = "pinf-1031-auth-sidecar"
+# Distinct email/workspace from the dag_deploy deployment above -- both fixtures are
+# module-scoped and independently self-contained (each creates its own user +
+# workspace), and createUser rejects a duplicate email, so these can't be shared.
+GIT_SYNC_ADMIN_EMAIL = "pinf-1031-auth-sidecar-git-sync-test@astronomer.io"
+GIT_SYNC_WORKSPACE_LABEL = "pinf-1031-auth-sidecar-git-sync"
+GIT_SYNC_DEPLOYMENT_LABEL = "pinf-1031-auth-sidecar-git-sync"
+GIT_SYNC_REPOSITORY_URL = "https://github.com/astronomer/apc-test-dags-public"
 
 
 def test_grafana_deployment_reaches_ready(k8s_apps_v1_client):
@@ -138,6 +146,70 @@ def test_deployment_has_auth_proxy_containers(deployment, _k8s_core_v1_client_mo
     """
     pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(label_selector=f"release={deployment['release_name']}").items
     assert pods, f"Expected at least one pod for release {deployment['release_name']!r}"
+    containers_by_pod = {pod.metadata.name: [c.name for c in pod.spec.containers] for pod in pods}
+    pods_with_auth_proxy = [name for name, containers in containers_by_pod.items() if "auth-proxy" in containers]
+    assert pods_with_auth_proxy, f"Expected at least one pod with an auth-proxy container, got: {containers_by_pod}"
+
+
+@pytest.fixture(scope="module")
+def git_sync_deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
+    """
+    Creates a second, separate Airflow Deployment (dagDeployment.type: git_sync) to
+    exercise git-sync-relay -- the third and last authSidecar consumer, previously
+    undocumented as a gap rather than fixed (see module docstring). A real, reachable
+    repo is required, not just a syntactically-valid URL: git-sync-relay's git-daemon
+    container's readiness/liveness/startup probes all check for a file a real clone
+    creates (`.git/git-daemon-export-ok`), so an unreachable URL would hang the same
+    way an earlier version of this scenario's own readiness wait once did (see
+    wait_for_release_ready). astronomer/apc-test-dags-public is a small, public,
+    Astronomer-owned fixture repo made for exactly this -- authType HTTPS_NONE, no
+    credentials needed, and it's reachable from any CI runner the same way CI already
+    reaches GitHub for its own checkout.
+    """
+    token = create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
+    workspace_id = create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
+    cluster_id = get_cluster_id(_houston_api_module, token)
+    try:
+        created = upsert_deployment(
+            _houston_api_module,
+            token,
+            executor="CeleryExecutor",
+            label=GIT_SYNC_DEPLOYMENT_LABEL,
+            workspace_id=workspace_id,
+            cluster_id=cluster_id,
+            dag_deployment_type="git_sync",
+            repository_url=GIT_SYNC_REPOSITORY_URL,
+            auth_type="HTTPS_NONE",
+        )
+    except HoustonError:
+        dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
+        dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
+        raise
+    wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"])
+    return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
+
+
+def test_git_sync_deployment_reaches_ready(git_sync_deployment):
+    """
+    Readiness here depends on git-sync-relay's git-daemon container actually cloning
+    apc-test-dags-public successfully (its probes check for a post-clone marker file),
+    so this also incidentally proves the repo choice is reachable from CI, not just
+    that PSS-Restricted admits the pod.
+    """
+    assert git_sync_deployment["release_name"]
+
+
+def test_git_sync_deployment_has_auth_proxy_container(git_sync_deployment, _k8s_core_v1_client_module):
+    """
+    Confirms authSidecar reached git-sync-relay's pod specifically -- the one
+    implementation test_deployment_has_auth_proxy_containers above doesn't cover,
+    since that fixture's dag_deploy deployment never creates a git-sync-relay pod at
+    all (dag-server is a separate, independently-gated consumer).
+    """
+    pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(
+        label_selector=f"release={git_sync_deployment['release_name']}"
+    ).items
+    assert pods, f"Expected at least one pod for release {git_sync_deployment['release_name']!r}"
     containers_by_pod = {pod.metadata.name: [c.name for c in pod.spec.containers] for pod in pods}
     pods_with_auth_proxy = [name for name, containers in containers_by_pod.items() if "auth-proxy" in containers]
     assert pods_with_auth_proxy, f"Expected at least one pod with an auth-proxy container, got: {containers_by_pod}"
