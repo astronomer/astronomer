@@ -64,6 +64,12 @@ class TestAstronomerPilot:
         # Command is 'commander pilot'
         assert pilot["command"] == ["commander", "pilot"]
 
+        # Has a real default resources block, not an empty one
+        assert pilot["resources"] == {
+            "limits": {"cpu": "250m", "memory": "512Mi"},
+            "requests": {"cpu": "100m", "memory": "256Mi"},
+        }
+
     def test_pilot_deployment_env_vars_defaults(self, kube_version):
         """Test that pilot deployment exposes all expected env vars with defaults."""
         docs = render_chart(

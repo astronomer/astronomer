@@ -333,6 +333,11 @@ def test_houston_configmap_with_loggingsidecar_enabled():
         "name": "sidecar-log-consumer",
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
+        # global.logging.loggingSidecar.resources now has a real default (PINF-969)
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -368,6 +373,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
         "image": image,
         "customConfig": False,
         "indexNamePrefix": "test-index-name-prefix-999",
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert image in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -402,6 +411,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -440,6 +453,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
         "image": image_name,
         "customConfig": False,
         "indexPattern": indexPattern,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
 
@@ -475,6 +492,10 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": True,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -539,6 +560,11 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
                 "valueFrom": {"secretKeyRef": {"name": "elastic-creds", "key": "ESPASS"}},
             },
         ],
+        # global.logging.loggingSidecar.resources now has a real default (PINF-969)
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
@@ -622,6 +648,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
         "image": "quay.io/astronomer/ap-vector:unittest-tag",
         "customConfig": False,
         "securityContext": securityContext,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
