@@ -9,6 +9,7 @@ metadata:
   namespace: {{ template "prometheus-node-exporter.namespace" . }}
   labels:
 {{ include "prometheus-node-exporter.labels" . | indent 4 }}
+  {{- include "global.labels" . | nindent 4 }}
 subsets:
   - addresses:
       {{- range .Values.endpoints }}

@@ -13,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.federation.auth.replicas | default 2 }}
   selector:

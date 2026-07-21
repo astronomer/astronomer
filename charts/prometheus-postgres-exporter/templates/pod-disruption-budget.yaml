@@ -6,6 +6,10 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
+  labels:
+    component: {{ template "prometheus-postgres-exporter.name" . }}
+    release: {{ .Release.Name }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   maxUnavailable: 1
   selector:

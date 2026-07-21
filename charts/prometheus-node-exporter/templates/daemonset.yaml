@@ -7,6 +7,7 @@ metadata:
   name: {{ template "prometheus-node-exporter.fullname" . }}
   namespace: {{ template "prometheus-node-exporter.namespace" . }}
   labels: {{ include "prometheus-node-exporter.labels" . | indent 4 }}
+  {{- include "global.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:

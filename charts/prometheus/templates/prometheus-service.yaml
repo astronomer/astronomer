@@ -17,6 +17,7 @@ metadata:
     chart: {{ template "prometheus.chart" $ }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
+    {{- include "global.labels" $ | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
@@ -51,6 +52,7 @@ metadata:
     chart: {{ template "prometheus.chart" $ }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
+    {{- include "global.labels" $ | nindent 4 }}
 spec:
 {{- with .Values.sessionAffinity }}
   sessionAffinity: {{ . }}
