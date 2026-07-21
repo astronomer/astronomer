@@ -493,3 +493,97 @@ def test_nginx_backend_overrides():
     )
 
     assert len(docs) == 0
+
+
+CP_INGRESSCLASS = "charts/nginx/templates/controlplane/nginx-cp-ingressclass.yaml"
+DP_INGRESSCLASS = "charts/nginx/templates/dataplane/nginx-dp-ingressclass.yaml"
+
+
+@pytest.mark.parametrize(
+    ("plane_mode", "ingressclass_file"),
+    [
+        ("control", CP_INGRESSCLASS),
+        ("unified", CP_INGRESSCLASS),
+        ("data", DP_INGRESSCLASS),
+    ],
+)
+class TestNginxIngressClass:
+    def test_default_ingressclass_rendered(self, plane_mode, ingressclass_file):
+        """The default IngressClass is created when no class override is set."""
+        docs = render_chart(
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=[ingressclass_file],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "IngressClass"
+        assert doc["metadata"]["name"] == "release-name-nginx"
+        assert doc["spec"]["controller"] == "k8s.io/ingress-nginx"
+
+    def test_ingressclassname_override_skips_default(self, plane_mode, ingressclass_file):
+        """global.ingressClassName means the operator owns the class; skip the default IngressClass."""
+        docs = render_chart(
+            values={"global": {"plane": {"mode": plane_mode}, "ingressClassName": "custom-class"}},
+            show_only=[ingressclass_file],
+        )
+        assert len(docs) == 0
+
+    def test_ingress_class_annotation_skips_default(self, plane_mode, ingressclass_file):
+        """A class supplied via the kubernetes.io/ingress.class annotation also skips the default IngressClass."""
+        docs = render_chart(
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                    "extraAnnotations": {"kubernetes.io/ingress.class": "annotation-class"},
+                }
+            },
+            show_only=[ingressclass_file],
+        )
+        assert len(docs) == 0
+
+    def test_unrelated_annotation_still_renders_default(self, plane_mode, ingressclass_file):
+        """extraAnnotations without a class key does not suppress the default IngressClass."""
+        docs = render_chart(
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                    "extraAnnotations": {"route.openshift.io/termination": "passthrough"},
+                }
+            },
+            show_only=[ingressclass_file],
+        )
+        assert len(docs) == 1
+        assert docs[0]["metadata"]["name"] == "release-name-nginx"
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified", "data"])
+class TestNginxIngressClassWholeChart:
+    """Whole-chart assertions that no IngressClass object is created when a class override is present."""
+
+    @staticmethod
+    def _ingressclasses(docs):
+        return [d for d in docs if d.get("kind") == "IngressClass"]
+
+    def test_default_creates_ingressclass(self, plane_mode):
+        """By default the chart creates exactly the one default IngressClass."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}}})
+        ingressclasses = self._ingressclasses(docs)
+        assert len(ingressclasses) == 1
+        assert ingressclasses[0]["metadata"]["name"] == "release-name-nginx"
+
+    def test_no_ingressclass_when_ingressClassName_set(self, plane_mode):
+        """No IngressClass object anywhere when global.ingressClassName is provided."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}, "ingressClassName": "custom-class"}})
+        assert self._ingressclasses(docs) == []
+
+    def test_no_ingressclass_when_annotation_set(self, plane_mode):
+        """No IngressClass object anywhere when the class is provided via the ingress.class annotation."""
+        docs = render_chart(
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                    "extraAnnotations": {"kubernetes.io/ingress.class": "annotation-class"},
+                }
+            }
+        )
+        assert self._ingressclasses(docs) == []

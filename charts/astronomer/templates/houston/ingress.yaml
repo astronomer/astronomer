@@ -35,6 +35,13 @@ metadata:
     {{- toYaml .Values.houston.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
+  {{- if .Values.global.ingressClassName }}
+  ingressClassName: {{ .Values.global.ingressClassName }}
+  {{- else if .Values.global.extraAnnotations }}
+  ingressClassName: {{ index .Values.global.extraAnnotations "kubernetes.io/ingress.class" | default (printf "%s-nginx" .Release.Name) }}
+  {{- else }}
+  ingressClassName: "{{ .Release.Name }}-nginx"
+  {{- end }}
   {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}

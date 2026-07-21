@@ -1,0 +1,21 @@
+##########################
+## NGINX IngressClass ##
+##########################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+# use dict to create a new dict and avoid erroring on extraAnnotations key missing in the original dict
+{{- if not (or .Values.global.ingressClassName (index (.Values.global.extraAnnotations | default dict) "kubernetes.io/ingress.class")) }}
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: {{ .Release.Name }}-nginx
+  labels:
+    tier: {{ template "nginx.name" . }}
+    component: cp-ingress-controller
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  controller: k8s.io/ingress-nginx
+{{- end }}
+{{- end }}
