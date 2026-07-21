@@ -85,7 +85,7 @@ class TestCommanderJWKSHookJob:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "data"}, "podLabels": {"gatekeeper.policy": "approved"}},
+                "global": {"plane": {"mode": "data"}, "podLabels": {"chocolate-is": "delicious"}},
                 "astronomer": {"commander": {"serviceAccount": {"create": True}}},
             },
             show_only=["charts/astronomer/templates/commander/jwks-hooks/commander-jwks-hooks.yaml"],
@@ -93,7 +93,7 @@ class TestCommanderJWKSHookJob:
 
         job_doc = docs[0]
         pod_labels = job_doc["spec"]["template"]["metadata"]["labels"]
-        assert pod_labels["gatekeeper.policy"] == "approved"
+        assert pod_labels["chocolate-is"] == "delicious"
         # merge, not replace
         assert pod_labels["component"] == "commander-jwks-hook"
 
