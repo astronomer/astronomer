@@ -42,13 +42,13 @@ nats:
 
   terminationGracePeriodSeconds: 60
 
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
   livenessProbe: {}
     # httpGet:
@@ -279,13 +279,13 @@ gateway:
 # The NATS config reloader image to use.
 reloader:
   enabled: false
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
 
 # Prometheus NATS Exporter configuration.
 exporter:
