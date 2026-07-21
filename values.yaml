@@ -99,7 +99,7 @@ global:
     containerdCertCopier:
       startupProbe: {}
     priorityClassName: ~
-  operator:
+  airflowOperator:
     # Turn on operator-based Airflow deployments. When enabled, this chart installs
     # the airflow-operator by default and grants Astronomer the permissions it needs
     # to manage Airflow deployments through the operator.

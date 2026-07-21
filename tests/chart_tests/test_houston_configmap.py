@@ -1124,13 +1124,13 @@ def test_houston_configmap_certgenerator_custom_tag():
 @pytest.mark.parametrize(
     "values,expected",
     [
-        # Adoption requires operator mode; both flags must be true. operator.enabled
+        # Adoption requires operator mode; both flags must be true. airflowOperator.enabled
         # defaults to false, so adoption is off unless operator mode is turned on.
         ({}, False),
-        ({"global": {"operator": {"enabled": True}}}, True),
-        ({"global": {"operator": {"enabled": True, "adoption": {"enabled": True}}}}, True),
-        ({"global": {"operator": {"enabled": True, "adoption": {"enabled": False}}}}, False),
-        ({"global": {"operator": {"enabled": False, "adoption": {"enabled": True}}}}, False),
+        ({"global": {"airflowOperator": {"enabled": True}}}, True),
+        ({"global": {"airflowOperator": {"enabled": True, "adoption": {"enabled": True}}}}, True),
+        ({"global": {"airflowOperator": {"enabled": True, "adoption": {"enabled": False}}}}, False),
+        ({"global": {"airflowOperator": {"enabled": False, "adoption": {"enabled": True}}}}, False),
     ],
     ids=[
         "default-operator-off",
@@ -1141,8 +1141,8 @@ def test_houston_configmap_certgenerator_custom_tag():
     ],
 )
 def test_houston_configmap_operator_adoption(values, expected):
-    """production.yaml adoption is the AND of global.operator.enabled and
-    global.operator.adoption.enabled — both must be true (PLX-500)."""
+    """production.yaml adoption is the AND of global.airflowOperator.enabled and
+    global.airflowOperator.adoption.enabled — both must be true (PLX-500)."""
     docs = render_chart(
         values=values,
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -1153,12 +1153,12 @@ def test_houston_configmap_operator_adoption(values, expected):
 
 
 def test_houston_configmap_operator_mode_reflects_operator_enabled():
-    """global.operator.enabled drives deployments.mode.operator.enabled, and gates
+    """global.airflowOperator.enabled drives deployments.mode.operator.enabled, and gates
     adoption regardless of the adoption flag."""
     docs = render_chart(
         values={
             "global": {
-                "operator": {"enabled": True, "adoption": {"enabled": False}},
+                "airflowOperator": {"enabled": True, "adoption": {"enabled": False}},
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
