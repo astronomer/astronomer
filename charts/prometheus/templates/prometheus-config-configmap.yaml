@@ -31,7 +31,10 @@ data:
         {{- end }}
 
     # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
-    {{ if .Values.remote_write }}remote_write: {{ .Values.remote_write | toYaml | nindent 6 }}{{ end }}
+    {{- if .Values.remote_write }}
+    remote_write:
+      {{- .Values.remote_write | toYaml | nindent 6 }}
+    {{- end }}
 
     # Configure Alertmanager
     alerting:
@@ -61,11 +64,11 @@ data:
 
     # Configure targets to scrape
     scrape_configs:
-      {{ if .Values.config.enableSelfScrape }}
+      {{- if .Values.config.enableSelfScrape }}
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
-      {{ end }}
+      {{- end }}
       {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
       - job_name: 'federated-dataplanes'
         honor_labels: true
@@ -323,7 +326,7 @@ data:
         file_sd_configs:
           - files:
             - /prometheusreloader/airflow/airflow-*.json
-        {{ else }}
+        {{- else }}
         kubernetes_sd_configs:
           - role: service
           {{- if not $useClusterRoles }}
