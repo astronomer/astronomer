@@ -24,6 +24,12 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $useClusterRoles }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
 metadata:
   name: {{ $.Release.Name }}-commander
+  labels:
+    {{- include "global.labels" $ | nindent 4 }}
+    tier: houston
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
   {{- if not $useClusterRoles }}
   namespace: {{ $namespaceName }}
   {{- end }}
@@ -50,6 +56,12 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 kind: ClusterRoleBinding
 metadata:
   name: {{ $.Release.Name }}-commander-scc
+  labels:
+    {{- include "global.labels" $ | nindent 4 }}
+    tier: houston
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
   {{- if $.Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"

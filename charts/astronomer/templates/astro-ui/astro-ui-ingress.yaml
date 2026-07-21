@@ -8,13 +8,13 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ .Release.Name }}-astroui-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: astroui-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
@@ -56,13 +56,13 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ .Release.Name }}-common-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: common-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}

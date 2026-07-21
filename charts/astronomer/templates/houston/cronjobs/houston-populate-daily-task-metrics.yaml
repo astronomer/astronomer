@@ -8,6 +8,7 @@ kind: CronJob
 metadata:
   name: "{{ .Release.Name }}-houston-populate-daily-task-metrics"
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston-populate-daily-task-metrics
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

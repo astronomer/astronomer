@@ -7,13 +7,13 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ .Release.Name }}-commander-metadata-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: metadata-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: dataplane
-    {{- include "global.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}

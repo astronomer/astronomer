@@ -25,6 +25,13 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $useClusterRoles }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
 metadata:
   name: {{ $.Release.Name }}-config-syncer
+  labels:
+    {{- include "global.labels" $ | nindent 4 }}
+    tier: houston
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
+    plane: {{ $.Values.global.plane.mode }}
   {{- if not $useClusterRoles }}
   namespace: {{ $namespaceName }}
   {{- end }}

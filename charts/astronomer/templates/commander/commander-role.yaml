@@ -27,6 +27,7 @@ metadata:
   {{- end }}
   name: {{ $.Release.Name }}-commander
   labels:
+    {{- include "global.labels" $ | nindent 4 }}
     tier: houston
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
@@ -182,6 +183,7 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ $.Release.Name }}-commander-scc
   labels:
+    {{- include "global.labels" $ | nindent 4 }}
     tier: houston
     plane: {{ .Values.global.plane.mode }}
     release: {{ $.Release.Name }}

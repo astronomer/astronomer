@@ -7,6 +7,7 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-commander-nginx-conf
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: commander-nginx-conf
     tier: astronomer
     release: {{ .Release.Name }}

@@ -8,6 +8,7 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-houston-update-runtime-check
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston-update-runtime-check
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

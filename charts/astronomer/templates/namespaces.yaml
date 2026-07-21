@@ -12,6 +12,7 @@ metadata:
     "helm.sh/resource-policy": keep
   {{- if $namespaceLabels }}
   labels:
+    {{- include "global.labels" $ | nindent 4 }}
     {{- $namespaceLabels | toYaml | nindent 4 }}
   {{- end }}
 {{- end }}

@@ -11,6 +11,11 @@ metadata:
     "helm.sh/hook-weight": "-2"
   namespace: {{ .Release.Namespace }}
   name: {{ .Release.Name }}-labeller
+  labels:
+    {{- include "global.labels" . | nindent 4 }}
+    tier: platform
+    component: labeller
+    release: {{ .Release.Name }}
 rules:
 - apiGroups: [""]
   resources: ["namespaces"]
@@ -24,6 +29,11 @@ metadata:
     "helm.sh/hook-weight": "-2"
   name: {{ .Release.Name }}-labeller
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "global.labels" . | nindent 4 }}
+    tier: platform
+    component: labeller
+    release: {{ .Release.Name }}
 subjects:
 - kind: ServiceAccount
   name: {{ .Release.Name }}-labeller
@@ -42,6 +52,7 @@ metadata:
     "helm.sh/hook-weight": "3"
   name: {{ .Release.Name }}-labeller
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: platform
     component: labeller
     release: {{ .Release.Name }}
@@ -55,6 +66,7 @@ metadata:
     "helm.sh/hook-delete-policy": "before-hook-creation"
     "helm.sh/hook-weight": "5"
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: platform
     component: labeller
     release: {{ .Release.Name }}
