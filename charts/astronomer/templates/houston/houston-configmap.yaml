@@ -113,7 +113,7 @@ data:
 
       mode:
         operator:
-          enabled: {{.Values.global.operator.enabled}}
+          enabled: {{.Values.global.airflowOperator.enabled}}
 
       deployMechanisms:
         dagOnlyDeployment:
@@ -688,7 +688,7 @@ data:
     operator:
       adoption:
         # Adoption requires operator mode to be enabled; only both together enable it.
-        enabled: {{ and .Values.global.operator.enabled .Values.global.operator.adoption.enabled }}
+        enabled: {{ and .Values.global.airflowOperator.enabled .Values.global.airflowOperator.adoption.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |

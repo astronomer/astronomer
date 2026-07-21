@@ -42,7 +42,7 @@ rules:
   resources: ["clusterexternalsecrets", "clusterpushsecrets", "clustersecretstores", "externalsecrets", "pushsecrets", "secretstores", "generatorstates"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 {{- end }}
-{{- if $.Values.global.operator.enabled }}
+{{- if $.Values.global.airflowOperator.enabled }}
 - apiGroups: ["airflow.apache.org"]
   resources: ["airflows"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
