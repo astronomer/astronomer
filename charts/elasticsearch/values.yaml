@@ -255,7 +255,13 @@ curator:
     capabilities:
       drop:
       - ALL
-  resources: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
   # Allows modification of the default age-based filter. If you require more
   # sophisticated filtering, modify the action file specified in
@@ -288,13 +294,13 @@ exporter:
       drop:
       - ALL
 
-  resources: {}
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
 
   livenessProbe: {}
     # httpGet:
@@ -337,7 +343,13 @@ nginx:
   podAnnotations: {}
   fullnameOverride: ~
   ingressClass: ~
-  resources: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   startupProbe: {}
     # tcpSocket:
     #   port: {{ .Values.common.ports.http }}
