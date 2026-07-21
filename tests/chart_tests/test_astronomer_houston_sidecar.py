@@ -191,6 +191,15 @@ class TestHoustonSidecarLogging:
                 "cpu": "50m",
             },
         }
+        # PINF-1067: capabilities.drop has no pod-level fallback in Kubernetes, so this
+        # sidecar's own securityContext must set it explicitly for PSS-Restricted -
+        # unlike seccompProfile, which the pod-level securityContext already covers.
+        security_context_defaults = {
+            "runAsNonRoot": True,
+            "allowPrivilegeEscalation": False,
+            "readOnlyRootFilesystem": True,
+            "capabilities": {"drop": ["ALL"]},
+        }
         docs = render_chart(
             kube_version=kube_version,
             show_only=[
@@ -222,6 +231,7 @@ class TestHoustonSidecarLogging:
         assert "vector" in c_by_name
         assert c_by_name["vector"]["image"].startswith("quay.io/astronomer/ap-vector:")
         assert c_by_name["vector"]["resources"] == resource_defaults
+        assert c_by_name["vector"]["securityContext"] == security_context_defaults
 
         # Test houston worker deployment sidecar
         c_by_name = get_containers_by_name(docs[1])
@@ -229,6 +239,7 @@ class TestHoustonSidecarLogging:
         assert "vector" in c_by_name
         assert c_by_name["vector"]["image"].startswith("quay.io/astronomer/ap-vector:")
         assert c_by_name["vector"]["resources"] == resource_defaults
+        assert c_by_name["vector"]["securityContext"] == security_context_defaults
 
     def test_houston_sidecar_logging_rejects_multiple_sinks(self, kube_version):
         with pytest.raises(CalledProcessError) as excinfo:

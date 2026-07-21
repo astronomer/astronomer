@@ -261,6 +261,9 @@ houston:
       securityContext:
         runAsNonRoot: true
         allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
 
       resources:
         requests:
