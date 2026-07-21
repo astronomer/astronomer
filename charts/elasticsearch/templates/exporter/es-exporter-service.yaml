@@ -14,6 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
     role: exporter
     plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.exporter.service.httpPort | quote }}

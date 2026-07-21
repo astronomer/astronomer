@@ -12,6 +12,7 @@ metadata:
     chart: {{ template "nginx-es.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:

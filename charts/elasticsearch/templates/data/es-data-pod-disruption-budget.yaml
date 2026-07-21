@@ -7,6 +7,12 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-es-data-pdb
+  labels:
+    tier: logging
+    component: {{ template "elasticsearch.name" . }}
+    release: {{ .Release.Name }}
+    role: data
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   maxUnavailable: 1
   selector:

@@ -14,6 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
     plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

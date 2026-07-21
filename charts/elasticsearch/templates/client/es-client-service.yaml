@@ -14,6 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
     role: client
     plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.common.serviceType }}
   selector:

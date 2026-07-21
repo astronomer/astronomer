@@ -13,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}

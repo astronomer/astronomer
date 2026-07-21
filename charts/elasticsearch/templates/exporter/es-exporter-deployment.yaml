@@ -14,6 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
     role: exporter
     plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.exporter.replicas }}
   selector:

@@ -7,6 +7,12 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-es-client-pdb
+  labels:
+    tier: logging
+    component: {{ template "elasticsearch.name" . }}
+    release: {{ .Release.Name }}
+    role: client
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   {{- if lt ( .Values.client.replicas | int ) 4 }}
   maxUnavailable: 1
