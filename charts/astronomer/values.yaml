@@ -261,6 +261,7 @@ houston:
       securityContext:
         runAsNonRoot: true
         allowPrivilegeEscalation: false
+        runAsUser: 65532
         capabilities:
           drop:
             - ALL

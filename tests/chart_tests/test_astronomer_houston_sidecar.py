@@ -198,6 +198,7 @@ class TestHoustonSidecarLogging:
             "runAsNonRoot": True,
             "allowPrivilegeEscalation": False,
             "readOnlyRootFilesystem": True,
+            "runAsUser": 65532,
             "capabilities": {"drop": ["ALL"]},
         }
         docs = render_chart(

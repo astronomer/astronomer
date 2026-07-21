@@ -279,6 +279,8 @@ spec:
             - name: sidecar-log-volume
               mountPath: /var/log/sidecar-log-consumer
               readOnly: true
+            - name: tmp
+              mountPath: /tmp
             {{- if and .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled (not .Values.houston.logging.loggingSidecar.gcpCloudLogging.useWorkloadIdentity) }}
             - name: gcp-credentials
               mountPath: /etc/gcp-credentials
@@ -289,6 +291,12 @@ spec:
               mountPath: /etc/es-tls
               readOnly: true
             {{- end }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8686
+            periodSeconds: 10
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /health
