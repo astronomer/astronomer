@@ -39,10 +39,11 @@ ADMIN_EMAIL = "pinf-1031-auth-sidecar-test@astronomer.io"
 ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = "pinf-1031-auth-sidecar"
 DEPLOYMENT_LABEL = "pinf-1031-auth-sidecar"
-# Distinct email/workspace from the dag_deploy deployment above -- both fixtures are
-# module-scoped and independently self-contained (each creates its own user +
-# workspace), and createUser rejects a duplicate email, so these can't be shared.
-GIT_SYNC_ADMIN_EMAIL = "pinf-1031-auth-sidecar-git-sync-test@astronomer.io"
+# Distinct workspace/deployment label from the dag_deploy deployment above -- but NOT a
+# distinct admin user: createUser's unauthenticated signup only ever succeeds once per
+# cluster (public sign-ups are disabled the moment any user exists, regardless of
+# email), so every deployment in this module shares the one admin token from
+# _admin_token below. Workspace/deployment labels have no such one-time restriction.
 GIT_SYNC_WORKSPACE_LABEL = "pinf-1031-auth-sidecar-git-sync"
 GIT_SYNC_DEPLOYMENT_LABEL = "pinf-1031-auth-sidecar-git-sync"
 GIT_SYNC_REPOSITORY_URL = "https://github.com/astronomer/apc-test-dags-public"
@@ -96,13 +97,24 @@ def _houston_api_module():
 
 
 @pytest.fixture(scope="module")
-def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
+def _admin_token(_houston_api_module):
+    """
+    Bootstraps the cluster's one-and-only admin user. createUser's unauthenticated
+    signup only ever succeeds once per cluster -- shared by every fixture in this
+    module that needs to create a deployment, so it doesn't try to bootstrap a second
+    admin and get rejected with "Public sign ups are disabled".
+    """
+    return create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
+
+
+@pytest.fixture(scope="module")
+def deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """
     Creates a real Airflow Deployment (dagDeployment.type: dag_deploy, so dag-server
     -- and its own auth-sidecar consumer -- gets created too) under this scenario's
     PSS-Restricted + authSidecar overlays, and waits for it to reach full readiness.
     """
-    token = create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
+    token = _admin_token
     workspace_id = create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
     cluster_id = get_cluster_id(_houston_api_module, token)
     try:
@@ -152,7 +164,7 @@ def test_deployment_has_auth_proxy_containers(deployment, _k8s_core_v1_client_mo
 
 
 @pytest.fixture(scope="module")
-def git_sync_deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
+def git_sync_deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """
     Creates a second, separate Airflow Deployment (dagDeployment.type: git_sync) to
     exercise git-sync-relay -- the third and last authSidecar consumer, previously
@@ -164,10 +176,12 @@ def git_sync_deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_co
     wait_for_release_ready). astronomer/apc-test-dags-public is a small, public,
     Astronomer-owned fixture repo made for exactly this -- authType HTTPS_NONE, no
     credentials needed, and it's reachable from any CI runner the same way CI already
-    reaches GitHub for its own checkout.
+    reaches GitHub for its own checkout. Shares the module's one admin token
+    (_admin_token) rather than bootstrapping a second user -- see that fixture's
+    docstring for why a second createUser call would fail.
     """
-    token = create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
-    workspace_id = create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
+    token = _admin_token
+    workspace_id = create_workspace(_houston_api_module, token, GIT_SYNC_WORKSPACE_LABEL)
     cluster_id = get_cluster_id(_houston_api_module, token)
     try:
         created = upsert_deployment(
