@@ -77,6 +77,26 @@ class TestCommanderJWKSHookJob:
         assert configmap_doc["metadata"]["name"] == "release-name-commander-jwks-hook-config"
         assert "commander-jwks.py" in configmap_doc["data"]
 
+    def test_jwks_hook_job_global_pod_labels(self, kube_version):
+        """PINF-972: global.podLabels must reach this Job's pod template, same as every
+        other pod-owning template. This one is easy to miss in the repo-wide sweep
+        (test_global_pod_labels.py) because it only renders in data-plane mode."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "podLabels": {"gatekeeper.policy": "approved"}},
+                "astronomer": {"commander": {"serviceAccount": {"create": True}}},
+            },
+            show_only=["charts/astronomer/templates/commander/jwks-hooks/commander-jwks-hooks.yaml"],
+        )
+
+        job_doc = docs[0]
+        pod_labels = job_doc["spec"]["template"]["metadata"]["labels"]
+        assert pod_labels["gatekeeper.policy"] == "approved"
+        # merge, not replace
+        assert pod_labels["component"] == "commander-jwks-hook"
+
     def test_jwks_hook_job_disabled_control_plane(self, kube_version):
         """Test JWKS Hook Job is not rendered on control plane."""
 
