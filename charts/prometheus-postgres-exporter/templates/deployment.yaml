@@ -1,4 +1,4 @@
-{{- if .Values.global.prometheusPostgresExporterEnabled -}}
+{{- if .Values.global.prometheusPostgresExporter.enabled -}}
 {{- if and .Values.config.datasource.passwordSecret .Values.config.datasource.password -}}
 {{ fail (printf "ERROR: only one of .Values.config.datasource.passwordSecret and .Values.config.datasource.password must be defined") }}
 {{- end -}}
@@ -11,6 +11,7 @@ metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
   labels:
     app: {{ template "prometheus-postgres-exporter.name" . }}
+    component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -24,10 +25,10 @@ spec:
     metadata:
       labels:
         tier: monitoring
-        app: {{ template "prometheus-postgres-exporter.name" . }}
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
-        component: prometheus-postgres-exporter
+        component: {{ template "prometheus-postgres-exporter.name" . }}
+        app: {{ template "prometheus-postgres-exporter.name" . }}
         {{- include "global.podLabels" . | nindent 8 }}
 {{- if .Values.podLabels }}
 {{ toYaml .Values.podLabels | trim | indent 8 }}
@@ -45,19 +46,18 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "prometheus-postgres-exporter.serviceAccountName" . }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
 {{- include "prometheus-postgres-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           args:
           - "--extend.query-path=/etc/config.yaml"
           {{- if .Values.config.disableDefaultMetrics }}
           - "--disable-default-metrics"
           {{- end }}
           {{- if .Values.config.disableSettingsMetrics }}
-          - "--disable-settings-metrics"
+          - "--no-collector.settings"
           {{- end }}
           {{- if .Values.config.autoDiscoverDatabases }}
           - "--auto-discover-databases"
@@ -117,6 +117,15 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           {{- end }}
+          {{ if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{ else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: queries
@@ -125,20 +134,6 @@ spec:
 {{- with .Values.extraContainers }}
 {{ tpl . $ | indent 8 }}
 {{- end }}
-      securityContext:
-{{ toYaml .Values.podSecurityContext | indent 8 }}
-     {{- with .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
       volumes:
       - configMap:
           defaultMode: 420

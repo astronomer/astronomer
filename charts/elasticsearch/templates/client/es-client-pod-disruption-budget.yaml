@@ -1,8 +1,8 @@
 ###########################################################
 ## Astronomer Elasticsearch Client Pod Disruption Budget ##
 ###########################################################
-{{- if .Values.global.podDisruptionBudgetsEnabled }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if .Values.global.podDisruptionBudgets.enabled }}
+{{- if eq (include "logging.enabled" .) "true" }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:

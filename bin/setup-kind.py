@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Setup KIND cluster and install Astronomer software for testing."""
 
+import argparse
 import os
 import shlex
 import subprocess
@@ -17,27 +18,27 @@ from certs import (
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-PREREQUISITES = """You MUST set your environment variable TEST_SCENARIO to one of the following values:
-- unified: Install with the unified application mode.
-- data: Install the with the dataplane application mode.
-- control: Install with the controlplane application mode.
-"""
-
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 HELPER_BIN_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "bin"
 KIND_EXE = str(HELPER_BIN_DIR / "kind")
 KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
 CHART_METADATA = yaml.safe_load((Path(GIT_ROOT_DIR) / "metadata.yaml").read_text())
-KUBECTL_VERSION = CHART_METADATA["test_k8s_versions"][-2]
-
-if (TEST_SCENARIO := os.getenv("TEST_SCENARIO", "")) not in ["unified", "data", "control"]:
-    print("ERROR: TEST_SCENARIO environment variable is not set!", file=sys.stderr)
-    print(PREREQUISITES, file=sys.stderr)
-    raise SystemExit(1)
+KUBECTL_VERSION = os.environ.get("KUBE_VERSION", f"v{CHART_METADATA['test_k8s_versions'][-2]}").removeprefix("v")
 KUBECONFIG_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
 KUBECONFIG_DIR.mkdir(parents=True, exist_ok=True)
-KUBECONFIG_FILE = str(KUBECONFIG_DIR / TEST_SCENARIO)
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--topology",
+        required=True,
+        choices=["unified", "control", "data"],
+        help="Install topology to set up: unified (control+data in one cluster), control, or data.",
+    )
+    return parser.parse_args()
 
 
 def run_command(command: str | list) -> str:
@@ -63,6 +64,14 @@ def run_command(command: str | list) -> str:
     return result.stdout.strip()
 
 
+def list_docker_images():
+    command = f"{GIT_ROOT_DIR}/bin/show-docker-images.py --with-houston"
+    docker_images_output = subprocess.check_output(command, shell=True)
+    docker_image_list = [x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")]
+
+    return sorted(set(docker_image_list))
+
+
 def kind_load_docker_images(cluster: str) -> None:
     """
     Load any available docker images into a KIND cluster.
@@ -74,10 +83,7 @@ def kind_load_docker_images(cluster: str) -> None:
     Args:
         cluster: Name of the KIND cluster to load images into.
     """
-    circleci_config = yaml.safe_load((GIT_ROOT_DIR / ".circleci" / "config.yml").read_text())
-    image_list = circleci_config["workflows"]["scan-docker-images"]["jobs"][0]["trivy-scan-docker"]["matrix"]["parameters"][
-        "docker_image"
-    ]
+    image_list = list_docker_images()
 
     image_allow_list = {
         "unified": [
@@ -163,7 +169,7 @@ def create_kind_cluster() -> None:
             f"{KIND_EXE}",
             "create",
             "cluster",
-            f"--name={TEST_SCENARIO}",
+            f"--name={TOPOLOGY}",
             f"--kubeconfig={KUBECONFIG_FILE}",
             f"--config={GIT_ROOT_DIR}/tests/kind/calico-config.yaml",
             f"--image=kindest/node:v{KUBECTL_VERSION}",
@@ -173,7 +179,7 @@ def create_kind_cluster() -> None:
             run_command(create_cluster_cmd)
         except RuntimeError as e:
             if "already exist for a cluster" in str(e):
-                print(f"ABORT: Cluster '{TEST_SCENARIO}' already exists.", file=sys.stderr)
+                print(f"ABORT: Cluster '{TOPOLOGY}' already exists.", file=sys.stderr)
             else:
                 raise RuntimeError(f"Failed to create KIND cluster: {e}") from e
 
@@ -207,7 +213,7 @@ def create_kind_cluster() -> None:
 
     except Exception:
         # Cleanup if cluster creation fails
-        delete_cluster_cmd = [f"{KIND_EXE}", "delete", "cluster", f"--name={TEST_SCENARIO}"]
+        delete_cluster_cmd = [f"{KIND_EXE}", "delete", "cluster", f"--name={TOPOLOGY}"]
         print(f"Cleaning up after failed cluster creation with command: {shlex.join(delete_cluster_cmd)}")
         run_command(delete_cluster_cmd)
         Path(KUBECONFIG_FILE).unlink(missing_ok=True)
@@ -366,7 +372,7 @@ def check_kube_system_health(apps_v1: client.AppsV1Api, max_wait_seconds: int = 
                 if deployment.status.ready_replicas != deployment.spec.replicas
             ]
             if not unhealthy_deployments:
-                return True, f"All kube-system deployments in {TEST_SCENARIO} cluster are healthy."
+                return True, f"All kube-system deployments in {TOPOLOGY} cluster are healthy."
             last_error = None
         except Exception as e:  # noqa: BLE001
             last_error = e
@@ -374,17 +380,21 @@ def check_kube_system_health(apps_v1: client.AppsV1Api, max_wait_seconds: int = 
         elapsed = time.monotonic() - start_time
         if elapsed >= max_wait_seconds:
             if last_error:
-                return False, f"Failed to check deployment health in {TEST_SCENARIO} cluster: {last_error}"
+                return False, f"Failed to check deployment health in {TOPOLOGY} cluster: {last_error}"
             return False, f"Unhealthy deployments found after {int(elapsed)}s: {', '.join(unhealthy_deployments)}"
         time.sleep(interval)
 
 
 if __name__ == "__main__":
+    args = parse_args()
+    TOPOLOGY = args.topology
+    KUBECONFIG_FILE = str(KUBECONFIG_DIR / TOPOLOGY)
+
     create_kind_cluster()
     setup_common_cluster_configs()
 
     # Load Docker images into the KIND cluster
-    kind_load_docker_images(TEST_SCENARIO)
+    kind_load_docker_images(TOPOLOGY)
 
     # Check deployment health
     config.load_kube_config(config_file=KUBECONFIG_FILE)
@@ -396,4 +406,4 @@ if __name__ == "__main__":
     else:
         print(message)
 
-    print(f"KIND cluster '{TEST_SCENARIO}' setup completed successfully.")
+    print(f"KIND cluster '{TOPOLOGY}' setup completed successfully.")

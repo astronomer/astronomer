@@ -1,20 +1,20 @@
 ###################################
 ## Astronomer Registry ConfigMap ##
 ###################################
-{{ if and .Values.global.baseDomain }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{ if .Values.global.baseDomain }}
+{{- if eq (include "registry.enabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-registry
+  name: {{ template "registry.fullname" . }}
   labels:
-    component: registry
+    component: {{ template "registry.name" . }}
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}

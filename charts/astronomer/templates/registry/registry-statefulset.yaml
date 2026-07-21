@@ -2,7 +2,7 @@
 ## Astronomer Registry StatefulSet ##
 #####################################
 {{- if .Values.global.baseDomain }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "registry.enabled" .) "true" }}
 {{- if or .Values.registry.gcs.enabled .Values.registry.azure.enabled .Values.registry.s3.enabled }}
 kind: Deployment
 apiVersion: apps/v1
@@ -11,15 +11,15 @@ kind: StatefulSet
 apiVersion: apps/v1
 {{- end }}
 metadata:
-  name: {{ .Release.Name }}-registry
+  name: {{ template "registry.fullname" . }}
   labels:
-    component: registry
+    component: {{ template "registry.name" . }}
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
@@ -27,11 +27,11 @@ spec:
   replicas: {{ .Values.registry.replicas }}
   selector:
     matchLabels:
-      component: registry
+      component: {{ template "registry.name" . }}
       tier: astronomer
       release: {{ .Release.Name }}
 {{- if and (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) (not .Values.registry.s3.enabled) }}
-  serviceName: {{ .Release.Name }}-registry
+  serviceName: {{ template "registry.fullname" . }}
 {{- end }}
   template:
     metadata:
@@ -39,10 +39,10 @@ spec:
 {{- with .Values.podLabels }}
 {{ toYaml . | indent 8 }}
 {{- end }}
-        component: registry
+        component: {{ template "registry.name" . }}
         tier: astronomer
         release: {{ .Release.Name }}
-        app: registry
+        app: {{ template "registry.name" . }}
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
         {{- include "global.podLabels" . | nindent 8 }}
@@ -64,9 +64,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
-{{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.registry.podSecurityContext | nindent 8 }}
-{{- end }}
+      securityContext: {{- include "astronomer.registry.podSecurityContext" . | nindent 8 }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       {{- if .Values.registry.hostAliases }}
       hostAliases: {{- toYaml .Values.registry.hostAliases | nindent 8 }}
@@ -88,9 +86,7 @@ spec:
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
           resources: {{- toYaml .Values.registry.resources | nindent 12 }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           env:
           {{- if .Values.registry.extraEnv }}
             {{- toYaml .Values.registry.extraEnv | nindent 12 }}
@@ -98,9 +94,7 @@ spec:
       containers:
         - name: registry
           image: {{ template "registry.image" . }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
             - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
@@ -163,12 +157,22 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
           {{- end }}
+          {{- if .Values.registry.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.registry.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.ports.registryHTTP }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
         - name: config
           configMap:
-            name: {{ .Release.Name }}-registry
+            name: {{ template "registry.fullname" . }}
             items:
               - key: config.yml
                 path: config.yml

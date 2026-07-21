@@ -7,11 +7,11 @@ replicaCount: 1
 images:
   esproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.27.1-8
+    tag: 1.31.1
     pullPolicy: IfNotPresent
   awsproxy:
     repository: quay.io/astronomer/ap-awsesproxy
-    tag: 1.5.0-22
+    tag: 2026.7.13-1
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -19,6 +19,8 @@ nameOverride: ""
 fullnameOverride: ""
 
 serviceAccount:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
   # Specifies whether a service account should be created
   create: true
   # Annotations to add to the service account
@@ -29,20 +31,25 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
   # fsGroup: 2000
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsUser: 1000
+  runAsUser: 65534
 
 awsproxy:
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
+
+startupProbe: {}
 
 service:
   type: ClusterIP

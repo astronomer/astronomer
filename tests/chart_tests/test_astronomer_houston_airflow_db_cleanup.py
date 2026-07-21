@@ -41,14 +41,20 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-airflow-db-data"
         assert docs[0]["spec"]["schedule"] == "23 5 * * *"
-        assert job_container_by_name["cleanup"]["securityContext"] == {"runAsNonRoot": True, "readOnlyRootFilesystem": True}
+        assert job_container_by_name["cleanup"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "runAsNonRoot": True,
+            "readOnlyRootFilesystem": True,
+            "runAsUser": 1000,
+        }
 
     def test_astronomer_airflow_db_cleanup_cron_custom_schedule(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "astronomer": {
-                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "securityContext": {"allowPrivilegeEscalation": False},
                     "houston": {"cleanupAirflowDb": {"enabled": True, "schedule": "22 5 * * *"}},
                 }
             },
@@ -63,9 +69,11 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-airflow-db-data"
         assert docs[0]["spec"]["schedule"] == "22 5 * * *"
         assert job_container_by_name["cleanup"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
-            "allowPriviledgeEscalation": False,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
         }
 
     def test_houston_configmap_with_cleanup_enabled(self, kube_version):
@@ -79,4 +87,4 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
 
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod_yaml["deployments"]["cleanupAirflowDb"]["enabled"] is True
+        assert prod_yaml["deployments"]["deploymentLifecycle"]["cleanupAirflowDb"]["enabled"] is True

@@ -38,8 +38,8 @@ def test_argo_sync_wave():
             show_only=show_only,
             values={
                 "global": {
-                    "enableArgoCDAnnotation": argo_enabled,
-                    "postgresqlEnabled": True,
+                    "argoCD": {"annotation": {"enabled": argo_enabled}},
+                    "postgresql": {"enabled": True},
                 },
                 "postgresql": {"serviceAccount": {"create": True}},
             },

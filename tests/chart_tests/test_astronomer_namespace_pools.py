@@ -5,6 +5,31 @@ from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
+# external-secrets is a data-plane-only component; its RBAC templates render one
+# Role/RoleBinding per pooled namespace (plus the release namespace) when namespace
+# pools are enabled, and fall back to a single ClusterRole/ClusterRoleBinding otherwise.
+ESO_ROLE_TEMPLATE = "charts/external-secrets/templates/role.yaml"
+ESO_ROLEBINDING_TEMPLATE = "charts/external-secrets/templates/rolebinding.yaml"
+
+
+def _eso_namespace_pools_values(*, names, enabled=True, create_rbac=True, cluster_roles=False):
+    """Build render_chart values for external-secrets with namespace pools configured."""
+    return {
+        "external-secrets": {"enabled": True},
+        "global": {
+            "plane": {"mode": "data"},
+            "rbac": {"enabled": True},
+            "clusterRoles": cluster_roles,
+            "namespaceManagement": {
+                "namespacePools": {
+                    "enabled": enabled,
+                    "createRbac": create_rbac,
+                    "namespaces": {"create": True, "names": names},
+                }
+            },
+        },
+    }
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -14,21 +39,21 @@ class TestAstronomerNamespacePools:
     def test_namespace_pools_rbac(self, kube_version):
         """Test that helm renders astronomer/commander RBAC resources properly when working with namespace pools."""
 
-        # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
+        # rbac.enabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
         # and ignore the cluster role configuration
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
                     "clusterRoles": True,
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
+                        }
                     },
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -73,7 +98,7 @@ class TestAstronomerNamespacePools:
         namespaces = ["my-namespace-1", "my-namespace-2"]
         values = {
             "global": {
-                "features": {
+                "namespaceManagement": {
                     "namespacePools": {
                         "enabled": True,
                         "namespaces": {"create": True, "names": namespaces},
@@ -112,7 +137,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -140,7 +165,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": False, "names": namespaces},
@@ -165,7 +190,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": False, "names": namespaces},
@@ -190,7 +215,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -215,7 +240,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
@@ -228,9 +253,13 @@ class TestAstronomerNamespacePools:
 
         deployments_config = yaml.safe_load(doc["data"]["production.yaml"])
 
-        assert deployments_config["deployments"]["hardDeleteDeployment"]
-        assert deployments_config["deployments"]["manualNamespaceNames"]
-        assert deployments_config["deployments"]["preCreatedNamespaces"] == [{"name": namespace} for namespace in namespaces]
+        # hardDeleteDeployment was removed from the chart (PLX-575): hard delete
+        # is now the default and only behaviour in Houston.
+        assert "hardDeleteDeployment" not in deployments_config["deployments"]["namespaceManagement"]
+        assert deployments_config["deployments"]["namespaceManagement"]["manualNamespaceNames"]["enabled"]
+        assert deployments_config["deployments"]["namespaceManagement"]["preCreatedNamespaces"] == [
+            {"name": namespace} for namespace in namespaces
+        ]
         assert "disableManageClusterScopedResources" not in deployments_config["deployments"]
 
     def test_houston_configmap_namespace_pools_disabled_create_true(self, kube_version):
@@ -240,7 +269,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": False,
                             "namespaces": {"create": True, "names": namespaces},
@@ -253,9 +282,9 @@ class TestAstronomerNamespacePools:
 
         deployments_config = yaml.safe_load(doc["data"]["production.yaml"])
 
-        assert "hardDeleteDeployment" not in deployments_config["deployments"]
-        assert "manualNamespaceNames" not in deployments_config["deployments"]
-        assert "preCreatedNamespaces" not in deployments_config["deployments"]
+        assert "hardDeleteDeployment" not in deployments_config["deployments"]["namespaceManagement"]
+        assert "manualNamespaceNames" not in deployments_config["deployments"]["namespaceManagement"]
+        assert "preCreatedNamespaces" not in deployments_config["deployments"]["namespaceManagement"]
 
     def test_namespace_pools_enabled_create_rbac_false(self, kube_version):
         """Test that commander deployment rbac is generating roles and role binding on namespace pools mode."""
@@ -264,7 +293,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "createRbac": False,
@@ -291,7 +320,7 @@ class TestAstronomerNamespacePools:
             kube_version=kube_version,
             values={
                 "global": {
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
@@ -303,3 +332,78 @@ class TestAstronomerNamespacePools:
         )[0]
         expected_filter = f'namespaces = ["{namespaces[0]}", "{namespaces[1]}"]'
         assert expected_filter in doc["data"]["vector-config.yaml"]
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestExternalSecretsNamespacePools:
+    """Namespace-pools RBAC for external-secrets (ESO) data-plane component."""
+
+    def test_eso_namespace_pools_rbac(self, kube_version):
+        """Test that helm renders external-secrets RBAC resources properly when working with namespace pools."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
+        docs = render_chart(
+            kube_version=kube_version,
+            values=_eso_namespace_pools_values(names=namespaces),
+            show_only=[
+                "charts/external-secrets/templates/role.yaml",
+                "charts/external-secrets/templates/rolebinding.yaml",
+            ],
+        )
+
+        # one Role + one RoleBinding per pooled namespace, plus the external-secrets release namespace
+        assert len(docs) == 6
+
+        expected_namespaces = [*namespaces, "default"]
+
+        roles = docs[:3]
+        for i, doc in enumerate(roles):
+            assert doc["kind"] == "Role"
+            assert doc["metadata"]["name"] == "release-name-external-secrets"
+            assert doc["metadata"]["namespace"] == expected_namespaces[i]
+            assert len(doc["rules"]) > 0
+
+        role_bindings = docs[3:]
+        for i, doc in enumerate(role_bindings):
+            expected_subject = {
+                "kind": "ServiceAccount",
+                "name": "release-name-external-secrets",
+                # the controller ServiceAccount always lives in the release namespace
+                "namespace": "default",
+            }
+            expected_role = {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "release-name-external-secrets",
+            }
+
+            assert doc["kind"] == "RoleBinding"
+            assert doc["metadata"]["namespace"] == expected_namespaces[i]
+            assert doc["roleRef"] == expected_role
+            assert doc["subjects"][0] == expected_subject
+
+    def test_eso_namespace_pools_enabled_create_rbac_false(self, kube_version):
+        """Test that external-secrets does not generate roles and role bindings when createRbac is false on namespace pools mode."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
+        docs = render_chart(
+            kube_version=kube_version,
+            values=_eso_namespace_pools_values(names=namespaces, create_rbac=False),
+            show_only=[
+                "charts/external-secrets/templates/role.yaml",
+                "charts/external-secrets/templates/rolebinding.yaml",
+            ],
+        )
+        assert len(docs) == 0
+
+    def test_eso_namespace_pools_disabled_cluster_roles(self, kube_version):
+        """Test that external-secrets falls back to a single ClusterRole/ClusterRoleBinding when namespace pools are disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=_eso_namespace_pools_values(names=[], enabled=False, cluster_roles=True),
+            show_only=[ESO_ROLE_TEMPLATE, ESO_ROLEBINDING_TEMPLATE],
+        )
+
+        assert len(docs) == 2
+        assert {d["kind"] for d in docs} == {"ClusterRole", "ClusterRoleBinding"}
+        for doc in docs:
+            # cluster-scoped resources must not carry a namespace
+            assert doc["metadata"].get("namespace") is None

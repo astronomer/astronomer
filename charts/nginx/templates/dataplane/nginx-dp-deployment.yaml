@@ -44,22 +44,21 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.serviceAccountName" . }}-dp
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       {{- include "nginx.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-nginx-copier
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           command:
             - /bin/sh
             - -c
             - |
               cp -r /etc/nginx/* /etc/nginx_copy
-              mkdir /tmp/nginx
-              mkdir /etc/ingress-controller/auth /etc/ingress-controller/geoip /etc/ingress-controller/ssl /etc/ingress-controller/telemetry
+              mkdir -p /tmp/nginx
+              mkdir -p /etc/ingress-controller/auth /etc/ingress-controller/geoip /etc/ingress-controller/ssl /etc/ingress-controller/telemetry
           volumeMounts:
             - name: etc-nginx
               mountPath: /etc/nginx_copy
@@ -69,9 +68,7 @@ spec:
               mountPath: /etc/ingress-controller
       containers:
         - name: nginx
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
@@ -114,6 +111,16 @@ spec:
           {{- end }}
           {{- if .Values.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.healthz }}
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           env:
             - name: POD_NAME

@@ -15,18 +15,21 @@ secret = base64.b64encode(b"sample-secret").decode()
     supported_k8s_versions,
 )
 class TestExternalElasticSearch:
+    # external-es-proxy templates gated purely by the logging.enabled helper.
+    es_proxy_templates = [
+        "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+        "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
+        "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+        "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
+    ]
+
     def test_externalelasticsearch_with_secret(self, kube_version):
         """Test External ElasticSearch with secret passed from
         config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"customLogging": {"enabled": True, "secret": secret}}},
-            show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
-            ],
+            show_only=self.es_proxy_templates,
         )
 
         expected_nginx_mounts = [
@@ -48,8 +51,11 @@ class TestExternalElasticSearch:
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
         assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
         assert deployment["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
         expected_env = [{"name": "ES_SECRET", "value": secret}]
         assert expected_env == deployment["spec"]["template"]["spec"]["containers"][0]["env"]
@@ -84,12 +90,7 @@ class TestExternalElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"customLogging": {"enabled": True, "secretName": "essecret"}}},
-            show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
-            ],
+            show_only=self.es_proxy_templates,
         )
 
         assert len(docs) == 4
@@ -99,8 +100,11 @@ class TestExternalElasticSearch:
         assert deployment["metadata"]["name"] == "release-name-external-es-proxy"
         assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
         assert deployment["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
         expected_env = [
             {
@@ -163,8 +167,11 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]
@@ -238,8 +245,11 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]
@@ -292,8 +302,11 @@ class TestExternalElasticSearch:
         containers = get_containers_by_name(deployment)
         assert (
             {
+                "allowPrivilegeEscalation": False,
+                "capabilities": {"drop": ["ALL"]},
                 "readOnlyRootFilesystem": True,
                 "runAsNonRoot": True,
+                "runAsUser": 65534,
             }
             == containers["awsproxy"]["securityContext"]
             == containers["external-es-proxy"]["securityContext"]
@@ -394,6 +407,11 @@ class TestExternalElasticSearch:
                     },
                     {"podSelector": {"matchLabels": {"component": "vector", "release": "release-name", "tier": "logging"}}},
                     {"podSelector": {"matchLabels": {"component": "houston", "release": "release-name", "tier": "astronomer"}}},
+                    {
+                        "podSelector": {
+                            "matchLabels": {"component": "houston-worker", "release": "release-name", "tier": "astronomer"}
+                        }
+                    },
                 ],
                 "ports": [{"port": 9201, "protocol": "TCP"}],
             },
@@ -405,13 +423,13 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "authSidecar": {"enabled": True},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
+                    "authSidecar": {"enabled": True},
                     "networkPolicy": {"enabled": True},
                     "plane": {"mode": "data"},
                 },
@@ -437,18 +455,18 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
                     "authSidecar": {
                         "enabled": True,
                         "ingressAllowedNamespaces": [
                             "test-namespace-1",
                             "test-namespace-2",
                         ],
-                    },
-                    "customLogging": {
-                        "enabled": True,
-                        "scheme": "https",
-                        "host": "esdemo.example.com",
-                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
                     "networkPolicy": {"enabled": True},
                     "plane": {"mode": "data"},
@@ -490,7 +508,7 @@ class TestExternalElasticSearch:
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                 },
             },
             show_only=[
@@ -593,8 +611,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "logging": {"indexNamePrefix": "astronomer"},
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"indexNamePrefix": "astronomer", "loggingSidecar": {"enabled": True}},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
@@ -621,7 +638,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                     "customLogging": {
                         "enabled": True,
                         "scheme": "https",
@@ -654,7 +671,7 @@ class TestExternalElasticSearch:
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
-                    "loggingSidecar": {"enabled": True},
+                    "logging": {"loggingSidecar": {"enabled": True}},
                 },
             },
             show_only=[
@@ -773,6 +790,7 @@ class TestExternalElasticSearch:
             },
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+                "charts/elasticsearch/templates/es-ingress.yaml",
             ],
         )
 
@@ -964,3 +982,80 @@ class TestExternalElasticSearch:
         # Verify custom TTL settings
         assert "proxy_cache_valid 200 10m" in nginx_config
         assert "proxy_cache_valid 401 403 2m" in nginx_config
+
+    def test_external_elasticsearch_ingress_with_tls_secret(self, kube_version):
+        """Test that external-es-proxy ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/external-es-proxy/templates/external-es-proxy-ingress.yaml"],
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "my-tls-secret",
+                    "customLogging": {"enabled": True},
+                    "plane": {"mode": "data"},
+                },
+            },
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert len(tls[0]["hosts"]) == 1
+
+    def test_external_elasticsearch_ingress_without_tls_secret(self, kube_version):
+        """Test that external-es-proxy ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/external-es-proxy/templates/external-es-proxy-ingress.yaml"],
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "",
+                    "customLogging": {"enabled": True},
+                    "plane": {"mode": "data"},
+                },
+            },
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]
+
+    @pytest.mark.parametrize(
+        "mode,shared_elasticsearch,should_render",
+        [
+            # unified: logging is always enabled regardless of sharedElasticsearch
+            ("unified", False, True),
+            ("unified", True, True),
+            # control: logging is enabled only when sharedElasticsearch is enabled
+            ("control", False, False),
+            ("control", True, True),
+            # data: logging is enabled only when sharedElasticsearch is disabled
+            ("data", False, True),
+            ("data", True, False),
+        ],
+    )
+    def test_external_es_proxy_logging_enabled_by_mode_and_shared_elasticsearch(
+        self, kube_version, mode, shared_elasticsearch, should_render
+    ):
+        """Test that external-es-proxy renders according to the logging.enabled helper across plane mode and sharedElasticsearch."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.es_proxy_templates,
+            values={
+                "global": {
+                    "customLogging": {"enabled": True},
+                    "plane": {"mode": mode},
+                    "sharedElasticsearch": {"enabled": shared_elasticsearch},
+                },
+            },
+        )
+
+        if should_render:
+            assert len(docs) == len(self.es_proxy_templates)
+            assert all(doc.get("apiVersion") for doc in docs)
+            assert all(doc.get("kind") for doc in docs)
+        else:
+            assert len(docs) == 0

@@ -1,14 +1,14 @@
 #################################
 ## Astronomer Registry Ingress ##
 #################################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if and .Values.global.baseDomain .Values.global.perHostIngress.enabled }}
+{{- if eq (include "registry.enabled" .) "true" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
-  name: {{ .Release.Name }}-registry-ingress
+  name: {{ template "registry.fullname" . }}-ingress
   labels:
-    component: registry-ingress
+    component: {{ template "registry.name" . }}-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -19,10 +19,10 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     {{- end }}
 spec:
@@ -30,17 +30,17 @@ spec:
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
-        - {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+        - {{ include "registry.ingressURL" . }}
   {{- end }}
   rules:
-  - host: {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+  - host: {{ include "registry.ingressURL" . }}
     http:
       paths:
         - path: /
           pathType: Prefix
           backend:
             service:
-              name: {{ .Release.Name }}-registry
+              name: {{ template "registry.fullname" . }}
               port:
                 name: registry-http
 {{- end }}

@@ -13,6 +13,8 @@ metadata:
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
 data:
+  main-snippet: |
+    load_module /etc/nginx/modules/ngx_http_subs_filter_module.so;
   allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
   add-headers: {{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller-headers
   annotations-risk-level: Critical

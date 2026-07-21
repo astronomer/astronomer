@@ -1,7 +1,7 @@
 #################################
 ## Astronomer Astro UI Ingress ##
 #################################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress }}
+{{- if and .Values.global.baseDomain .Values.global.perHostIngress.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -19,10 +19,10 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
@@ -68,6 +68,9 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {

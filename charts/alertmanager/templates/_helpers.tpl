@@ -46,6 +46,11 @@ Image name.
 alertmanager.{{ .Values.global.baseDomain }}
 {{- end }}
 
+{{/* Global customer-facing host, templated from controlPlaneHA.globalBaseDomain (CP HA only). */}}
+{{ define "alertmanager.globalUrl" -}}
+alertmanager.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- end }}
+
 {{/*
 Return  the proper Storage Class
 */}}
@@ -85,7 +90,7 @@ imagePullSecrets:
 {{- end }}
 
 {{ define "alertmanager.serviceAccountName" -}}
-{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "alertmanager.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}

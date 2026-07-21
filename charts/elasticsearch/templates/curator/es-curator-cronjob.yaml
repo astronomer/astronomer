@@ -2,7 +2,7 @@
 ## Curator CronJob ##
 #####################
 {{- if .Values.curator.enabled }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -42,6 +42,7 @@ spec:
             version: {{ .Chart.Version }}
             {{- include "global.podLabels" . | nindent 12 }}
         spec:
+          securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 12 }}
           serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
           nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
           affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
@@ -54,8 +55,7 @@ spec:
             command: ["/bin/sh", "-c"]
             args: ["sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"]
             securityContext:
-              {{- $required := dict "readOnlyRootFilesystem" true }}
-              {{- merge $required .Values.curator.securityContext | toYaml | nindent 14 }}
+              {{- include "platform.containerSecurityContext" (list . .Values.curator.securityContext) | nindent 14 }}
             resources: {{ toYaml .Values.curator.resources | nindent 14 }}
             volumeMounts:
               - name: config-volume
@@ -65,6 +65,15 @@ spec:
             {{- end }}
             {{- if .Values.curator.livenessProbe }}
             livenessProbe: {{- tpl (toYaml .Values.curator.livenessProbe) . | nindent 14 }}
+            {{- end }}
+            {{- if .Values.curator.startupProbe }}
+            startupProbe: {{- tpl (toYaml .Values.curator.startupProbe) . | nindent 14 }}
+            {{- else }}
+            startupProbe:
+              exec:
+                command: ["true"]
+              failureThreshold: 30
+              periodSeconds: 10
             {{- end }}
           volumes:
             - name: config-volume

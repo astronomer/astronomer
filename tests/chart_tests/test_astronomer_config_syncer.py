@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 cron_test_data = [
@@ -58,21 +58,43 @@ class TestAstronomerConfigSyncer:
         job_container = c_by_name["config-syncer"]
         assert job_container["image"].startswith("quay.io/astronomer/ap-commander:")
         assert job_container["imagePullPolicy"] == "IfNotPresent"
-        assert job_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert job_container["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
+        env_vars = get_env_vars_dict(c_by_name["config-syncer"]["env"])
+        assert env_vars["COMMANDER_NAMESPACE_POOLS_ENABLED"] == "false"
+        assert env_vars["COMMANDER_DATAPLANE_FAILOVER_ENABLED"] == "false"
+        assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED"] == "false"
+        assert job_container["volumeMounts"] == [
+            {
+                "mountPath": "/app/metadata.yaml",
+                "name": "metadata",
+                "subPath": "metadata.yaml",
+            }
+        ]
+        pod_spec = cronjob["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert pod_spec["volumes"] == [
+            {
+                "configMap": {"name": "release-name-commander-metadata"},
+                "name": "metadata",
+            }
+        ]
 
     def test_astronomer_config_syncer_rbac_namespace_pools_disabled(self, kube_version):
-        """Test that if rbacEnabled but namespacePools disabled, helm renders
+        """Test that if rbac.enabled but namespacePools disabled, helm renders
         ClusterRole and ClusterRoleBinding resources for config syncer."""
 
-        # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        # First rbac.enabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -108,20 +130,20 @@ class TestAstronomerConfigSyncer:
         """Test that when namespacePools is enabled, helm renders a Role and a
         RoleBinding for each namespace in the pool + release namespace."""
 
-        # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
+        # rbac.enabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
         # and ignore the cluster role configuration
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
+                        }
                     },
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -161,17 +183,51 @@ class TestAstronomerConfigSyncer:
             assert role_binding["roleRef"] == expected_role
             assert role_binding["subjects"][0] == expected_subject
 
+    @pytest.mark.parametrize("failover_enabled", [True, False], ids=["failover_enabled", "failover_disabled"])
+    def test_astronomer_config_syncer_secretstore_rbac(self, kube_version, failover_enabled):
+        """Test that config-syncer is granted external-secrets secretstore permissions
+        only when global.dataPlaneFailover is enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
+                    "dataPlaneFailover": {"enabled": failover_enabled},
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        cluster_role = docs[0]
+        assert cluster_role["kind"] == "ClusterRole"
+
+        secretstore_rules = [
+            rule
+            for rule in cluster_role["rules"]
+            if "external-secrets.io" in rule.get("apiGroups", []) and "secretstores" in rule.get("resources", [])
+        ]
+
+        if failover_enabled:
+            # failover on: config-syncer must be able to sync SecretStores across namespaces
+            assert len(secretstore_rules) == 1
+            assert sorted(secretstore_rules[0]["verbs"]) == ["create", "get", "list", "patch", "update"]
+        else:
+            # failover off: no secretstore permissions should be granted
+            assert secretstore_rules == []
+
     def test_astronomer_config_syncer_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled and namespacePools are disabled, we do not
+        """Test that if rbac.enabled and namespacePools are disabled, we do not
         create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": False,
-                    "features": {
-                        "namespacePools": {"enabled": False},
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": False},
                 }
             },
             show_only=[
@@ -189,13 +245,13 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
-                    "features": {
+                    "namespaceManagement": {
                         "namespacePools": {
                             "enabled": True,
                             "namespaces": {"create": True, "names": namespaces},
-                        },
+                        }
                     },
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -205,7 +261,13 @@ class TestAstronomerConfigSyncer:
         job_container_by_name = get_containers_by_name(doc)
         assert "--target-namespaces" in job_container_by_name["config-syncer"]["args"]
         assert ",".join(namespaces) in job_container_by_name["config-syncer"]["args"]
-        assert job_container_by_name["config-syncer"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert job_container_by_name["config-syncer"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_astronomer_config_syncer_cronjob_security_context_overrides(self, kube_version):
         """Test that config-syncer's container is allowed to configure security context."""
@@ -213,7 +275,7 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
+                    "rbac": {"enabled": True},
                 },
                 "astronomer": {
                     "securityContext": {
@@ -230,8 +292,11 @@ class TestAstronomerConfigSyncer:
         job_container_by_name = get_containers_by_name(doc)
 
         assert job_container_by_name["config-syncer"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
             "snoopy": "dog",
             "woodstock": "bird",
         }
@@ -243,12 +308,8 @@ class TestAstronomerConfigSyncer:
             kube_version=kube_version,
             values={
                 "global": {
-                    "rbacEnabled": True,
-                    "features": {
-                        "namespacePools": {
-                            "enabled": False,
-                        },
-                    },
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
                 }
             },
             show_only=[
@@ -281,7 +342,7 @@ class TestAstronomerConfigSyncer:
     def test_astronomer_config_syncer_disabled(self, kube_version):
         """Test that config syncer is disabled."""
 
-        # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        # First rbac.enabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -303,7 +364,7 @@ class TestAstronomerConfigSyncer:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"rbacEnabled": True},
+                "global": {"rbac": {"enabled": True}},
                 "astronomer": {"configSyncer": {"enabled": True, "serviceAccount": {"create": False}}},
             },
             show_only=[
@@ -322,7 +383,7 @@ class TestAstronomerConfigSyncer:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"rbacEnabled": True, "features": {"namespacePools": {"enabled": True}}},
+                "global": {"namespaceManagement": {"namespacePools": {"enabled": True}}, "rbac": {"enabled": True}},
                 "astronomer": {"configSyncer": {"enabled": True, "serviceAccount": {"create": False}}},
             },
             show_only=[

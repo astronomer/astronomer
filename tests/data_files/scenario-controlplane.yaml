@@ -3,7 +3,8 @@
 global:
   plane:
     mode: control
-  postgresqlEnabled: true
+  postgresql:
+    enabled: true
 
 tags:
   logging: true

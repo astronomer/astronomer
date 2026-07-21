@@ -44,9 +44,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "alertmanager.serviceAccountName" . }}
-{{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -59,9 +57,7 @@ spec:
         - name: etc-ssl-certs-copier
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           command:
             - sh
             - -c
@@ -81,9 +77,7 @@ spec:
         - name: alertmanager
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           env:
             {{- if .Values.enableNonRFC1918 }}
             - name: POD_IP
@@ -127,6 +121,16 @@ spec:
           {{- if .Values.livenessProbe }}
           livenessProbe: {{ .Values.livenessProbe | toYaml | nindent 12 }}
           {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.prefixURL }}/#/status
+              port: {{ .Values.ports.http }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
@@ -142,9 +146,7 @@ spec:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ .Values.global.authSidecar.securityContext) | nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -173,6 +175,17 @@ spec:
               port: {{ .Values.global.authSidecar.port }}
               scheme: HTTP
             initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          {{- if .Values.authProxy.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.authProxy.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            failureThreshold: 30
             periodSeconds: 10
           {{- end }}
           volumeMounts:

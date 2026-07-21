@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.12.6
+    tag: 1.15.8-1
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.29.0
+    tag: 0.30.3
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -26,6 +26,11 @@ securityContext:
       - NET_BIND_SERVICE
   allowPrivilegeEscalation: false
 
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -34,6 +39,8 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ~
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
 
 podAnnotations: {}
 
@@ -62,6 +69,7 @@ livenessProbe: {}
   # initialDelaySeconds: 30
   # timeoutSeconds: 5
 readinessProbe: {}
+startupProbe: {}
 
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"
@@ -128,6 +136,7 @@ defaultBackend:
   resources: {}
   readinessProbe: {}
   livenessProbe: {}
+  startupProbe: {}
   podAnnotations: {}
   serviceAccount:
     # Specifies whether a service account should be created
@@ -137,9 +146,11 @@ defaultBackend:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ~
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
 cspPolicy:
-  cdnEnabled: true
+  enabled: true
   connectsrc: "cdn.jsdelivr.net"
   fontsrc: "fonts.gstatic.com"
   scriptsrc: "fonts.googleapis.com cdn.jsdelivr.net"

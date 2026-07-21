@@ -1,7 +1,7 @@
 ###########################################################################
 # Vector ConfigMap
 ###########################################################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -19,8 +19,6 @@ data:
     api:
       enabled: true
       address: "0.0.0.0:8686"
-      graphql: false
-      playground: false
     log_schema:
       timestamp_key: "@timestamp"
 
@@ -52,11 +50,11 @@ data:
         condition:
           type: "vrl"
           source: |
-            {{- if and .Values.global.features.namespacePools.enabled (gt (len .Values.global.features.namespacePools.namespaces.names) 0) }}
-            namespaces = [{{ range $i, $ns := .Values.global.features.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
+            {{- if and .Values.global.namespaceManagement.namespacePools.enabled (gt (len .Values.global.namespaceManagement.namespacePools.namespaces.names) 0) (not .Values.global.sharedElasticsearch.enabled) }}
+            namespaces = [{{ range $i, $ns := .Values.global.namespaceManagement.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
             includes(namespaces, .kubernetes.pod_namespace)
-            {{- else if or .Values.global.manualNamespaceNamesEnabled .Values.global.disableManageClusterScopedResources }}
-            match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
+            {{- else if or .Values.global.sharedElasticsearch.enabled .Values.global.namespaceManagement.manualNamespaceNames.enabled (not .Values.global.manageClusterScopedResources.enabled) }}
+            exists(.kubernetes.pod_namespace) && is_string(.kubernetes.pod_namespace) && .kubernetes.pod_namespace != ""
             {{- else }}
             .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
             {{- end }}
@@ -91,6 +89,10 @@ data:
             if is_object(parsed) {
               . = merge!(., parsed)
             }
+          }
+          # Normalize level to string for all events
+          if exists(.level) && is_integer(.level) {
+            .level = to_string!(.level)
           }
 
       transform_task_logs:
@@ -145,34 +147,6 @@ data:
           }
           .log_source = "airflow_3_file"
 
-      enrich_k8s_logs:
-        type: remap
-        inputs:
-          - filter_by_component
-        source: |
-          # airflow_k8s_logs source automatically populates pod labels
-          if exists(.kubernetes.pod_labels.component) {
-            .component = .kubernetes.pod_labels.component
-          }
-          if exists(.kubernetes.pod_labels.release) {
-            .release = .kubernetes.pod_labels.release
-          }
-          if exists(.kubernetes.pod_labels.workspace) {
-            .workspace = .kubernetes.pod_labels.workspace
-          }
-          if exists(.kubernetes.pod_namespace) {
-            .namespace = .kubernetes.pod_namespace
-          }
-          # Parse JSON messages
-          if is_string(.message) {
-            parsed = parse_json(.message) ?? {}
-            if is_object(parsed) {
-              . = merge!(., parsed)
-            }
-          }
-          .log_source = "kubernetes_logs"
-
-
       parse_airflowV3_path:
         type: remap
         inputs:
@@ -181,7 +155,7 @@ data:
           file_str = to_string!(.file)
 
           # Try task execution logs: /dag_id=xxx/run_id=yyy/task_id=zzz/attempt=n.log
-          task_parsed, task_err = parse_regex(file_str, r'/dag_id=(?P<dag_id>[a-zA-Z0-9_-]+)/run_id=(?P<run_id>[^/]+)/task_id=(?P<task_id>[a-zA-Z0-9_-]+)/(?:map_index=(?P<map_index>-?[0-9]+)/)?attempt=(?P<attempt>[0-9]+)\.log$')
+          task_parsed, task_err = parse_regex(file_str, r'/dag_id=(?P<dag_id>[a-zA-Z0-9_.-]+)/run_id=(?P<run_id>[^/]+)/task_id=(?P<task_id>[a-zA-Z0-9_.-]+)/(?:map_index=(?P<map_index>-?[0-9]+)/)?attempt=(?P<attempt>[0-9]+)\.log$')
 
           # Try DAG parse logs: /component/YYYY-MM-DD/dag_file_path.log
           dag_parsed, dag_err = parse_regex(file_str, r'/(?:scheduler|dag_processor|dag_processor_manager)/(?P<date>\d{4}-\d{2}-\d{2})/(?P<dag_file>.+)\.log$')
@@ -223,7 +197,6 @@ data:
         type: remap
         inputs:
           - enrich_file_logs
-          - enrich_k8s_logs
         source: |
           # Component from k8s labels if we have it
           if !exists(.component) && exists(.kubernetes.pod_labels.component) {

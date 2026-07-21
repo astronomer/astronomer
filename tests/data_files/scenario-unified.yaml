@@ -4,7 +4,8 @@ global:
   plane:
     mode: unified
 
-  postgresqlEnabled: true
+  postgresql:
+    enabled: true
 
 tags:
   logging: true

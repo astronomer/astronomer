@@ -19,12 +19,12 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{ include "houston.internalauthurl" . | indent 4 }}
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "global.authBaseDomain" . }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
 spec:
@@ -33,6 +33,9 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
         - {{ template "alertmanager.url" . }}
+        {{- if .Values.global.controlPlaneHA.enabled }}
+        - {{ template "alertmanager.globalUrl" . }}
+        {{- end }}
   {{- end }}
   rules:
     - host: {{ template "alertmanager.url" . }}
@@ -49,5 +52,21 @@ spec:
                   {{- else }}
                   name: http
                   {{- end }}
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - host: {{ template "alertmanager.globalUrl" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "alertmanager.fullname" . }}
+                port:
+                  {{- if .Values.global.authSidecar.enabled  }}
+                  name: auth-proxy
+                  {{- else }}
+                  name: http
+                  {{- end }}
+    {{- end }}
 {{- end }}
 {{- end }}

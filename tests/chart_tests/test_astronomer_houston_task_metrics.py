@@ -14,7 +14,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_cleanup_task_usage_cron_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": False}},
+            values={"global": {"metricsReporting": {"taskUsageMetrics": {"enabled": False}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-task-data-cronjob.yaml",
             ],
@@ -24,7 +24,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_cleanup_task_usage_cron_feature_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": True}},
+            values={"global": {"metricsReporting": {"taskUsageMetrics": {"enabled": True}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-task-data-cronjob.yaml",
             ],
@@ -35,15 +35,21 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         job_container_by_name = get_containers_by_name(docs[0])
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-task-usage-data"
         assert docs[0]["spec"]["schedule"] == "40 23 * * *"
-        assert job_container_by_name["cleanup"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert job_container_by_name["cleanup"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_astronomer_cleanup_task_usage_cron_custom_schedule(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"taskUsageMetricsEnabled": True},
+                "global": {"metricsReporting": {"taskUsageMetrics": {"enabled": True}}},
                 "astronomer": {
-                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "securityContext": {"allowPrivilegeEscalation": False},
                     "houston": {"cleanupTaskUsageData": {"schedule": "0 23 * * *"}},
                 },
             },
@@ -58,15 +64,17 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-task-usage-data"
         assert docs[0]["spec"]["schedule"] == "0 23 * * *"
         assert job_container_by_name["cleanup"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
-            "allowPriviledgeEscalation": False,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
         }
 
     def test_astronomer_populate_hourly_task_audit_metrics_cron_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": False}},
+            values={"global": {"metricsReporting": {"taskUsageMetrics": {"enabled": False}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-ta-metrics.yaml",
             ],
@@ -76,7 +84,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_populate_hourly_task_audit_metrics_cron_feature_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": True}},
+            values={"global": {"metricsReporting": {"taskUsageMetrics": {"enabled": True}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-ta-metrics.yaml",
             ],
@@ -88,8 +96,11 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["metadata"]["name"] == "release-name-houston-populate-hourly-ta-metrics"
         assert docs[0]["spec"]["schedule"] == "57 * * * *"
         assert job_container_by_name["populate-daily-task-metrics"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
         }
         assert {
             "name": "houston-config-volume",
@@ -106,7 +117,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"taskUsageMetricsEnabled": True},
+                "global": {"metricsReporting": {"taskUsageMetrics": {"enabled": True}}},
                 "astronomer": {"houston": {"populateHourlyTaskAuditMetrics": {"schedule": "90 * * * *"}}},
             },
             show_only=[
@@ -122,7 +133,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_populate_daily_task_metrics_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": False}},
+            values={"global": {"metricsReporting": {"taskUsageMetrics": {"enabled": False}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-populate-daily-task-metrics.yaml",
             ],
@@ -132,7 +143,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
     def test_astronomer_populate_daily_task_metrics_feature_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"taskUsageMetricsEnabled": True}},
+            values={"global": {"metricsReporting": {"taskUsageMetrics": {"enabled": True}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-populate-daily-task-metrics.yaml",
             ],
@@ -144,15 +155,18 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["metadata"]["name"] == "release-name-houston-populate-daily-task-metrics"
         assert docs[0]["spec"]["schedule"] == "8 0 * * *"
         assert job_container_by_name["populate-daily-task-metrics"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
         }
 
     def test_astronomer_populate_daily_task_metrics_custom_schedule(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"taskUsageMetricsEnabled": True},
+                "global": {"metricsReporting": {"taskUsageMetrics": {"enabled": True}}},
                 "astronomer": {"houston": {"populateDailyTaskMetrics": {"schedule": "0 23 * * *"}}},
             },
             show_only=[
@@ -170,10 +184,10 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         taskUsageMetricsEnabled."""
 
         docs = render_chart(
-            values={"global": {"taskUsageMetricsEnabled": True}},
+            values={"global": {"metricsReporting": {"taskUsageMetrics": {"enabled": True}}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod_yaml["deployments"]["taskUsageReport"]["taskUsageMetricsEnabled"] is True
+        assert prod_yaml["deployments"]["metricsReporting"]["taskUsageMetrics"]["enabled"] is True

@@ -66,8 +66,8 @@ class TestVectorConfigmap:
 
         assert "parsed = parse_json(.message)" in config_yaml
 
-    def test_vector_configmap_merge_logs_receives_both_pipelines(self, kube_version):
-        """Test that merge_logs consolidates both AF2 and AF3 processed logs."""
+    def test_vector_configmap_merge_logs_receives_file_logs_pipeline(self, kube_version):
+        """Test that merge_logs receives enrich_file_logs and not enrich_k8s_logs."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/vector/templates/vector-configmap.yaml"],
@@ -77,16 +77,30 @@ class TestVectorConfigmap:
         doc = docs[0]
         config_yaml = doc["data"]["vector-config.yaml"]
 
-        # Verify merge_logs exists
         assert "merge_logs:" in config_yaml
         assert "type: remap" in config_yaml
 
-        # Verify it receives inputs from both pipelines
         config_dict = yaml.safe_load(config_yaml)
         merge_logs_inputs = config_dict["transforms"]["merge_logs"]["inputs"]
 
         assert "enrich_file_logs" in merge_logs_inputs, "AF3 file logs should feed into merge_logs"
-        assert "enrich_k8s_logs" in merge_logs_inputs, "AF2 processed logs should feed into merge_logs"
+        assert "enrich_k8s_logs" not in merge_logs_inputs, "enrich_k8s_logs should not be an input to merge_logs"
+
+    def test_vector_configmap_no_enrich_k8s_logs_transform(self, kube_version):
+        """Test that the enrich_k8s_logs transform is not present in the vector config."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        config_yaml = doc["data"]["vector-config.yaml"]
+
+        assert "enrich_k8s_logs:" not in config_yaml
+
+        config_dict = yaml.safe_load(config_yaml)
+        assert "enrich_k8s_logs" not in config_dict.get("transforms", {})
 
     def test_vector_configmap_filter_by_component_keeps_airflow_components(self, kube_version):
         """Test that filter_by_component keeps only Airflow components."""
@@ -143,3 +157,20 @@ class TestVectorConfigmap:
         # Verify bulk settings
         assert "mode: bulk" in config_yaml
         assert "max_bytes: 10485760" in config_yaml
+
+    def test_vector_configmap_parse_json_messages_normalizes_level_to_string(self, kube_version):
+        """Test that parse_json_messages transform normalizes integer level to string."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        config_yaml = doc["data"]["vector-config.yaml"]
+
+        config_dict = yaml.safe_load(config_yaml)
+        source = config_dict["transforms"]["parse_json_messages"]["source"]
+
+        assert "is_integer(.level)" in source
+        assert ".level = to_string!(.level)" in source

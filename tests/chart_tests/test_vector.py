@@ -114,8 +114,8 @@ class TestVector:
         assert pod_spec["containers"][0]["volumeMounts"] == volume_mounts
 
     def test_vector_clusterrolebinding_rbac_enabled(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for vector when rbacEnabled=True."""
-        values = {"global": {"rbacEnabled": True}}
+        """Test that helm renders a good ClusterRoleBinding template for vector when rbac.enabled=True."""
+        values = {"global": {"rbac": {"enabled": True}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -132,7 +132,7 @@ class TestVector:
 
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"rbacEnabled": False}},
+            values={"global": {"rbac": {"enabled": False}}},
             show_only=["charts/vector/templates/vector-clusterrolebinding.yaml"],
         )
         assert len(docs) == 0
@@ -142,11 +142,11 @@ class TestVector:
         all namespaces."""
         values = {
             "global": {
-                "manualNamespaceNamesEnabled": True,
-                "features": {
+                "namespaceManagement": {
                     "namespacePools": {
                         "enabled": False,
-                    }
+                    },
+                    "manualNamespaceNames": {"enabled": True},
                 },
             }
         }
@@ -157,19 +157,19 @@ class TestVector:
             show_only=["charts/vector/templates/vector-configmap.yaml"],
         )[0]
 
-        expected_rule = "match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')"
+        expected_rule = "exists(.kubernetes.pod_namespace) && is_string(.kubernetes.pod_namespace) && .kubernetes.pod_namespace != "
         assert expected_rule in doc["data"]["vector-config.yaml"]
 
     def test_vector_configmap_manual_namespaces_and_namespacepools_disabled(self, kube_version):
-        """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default vector configmap
+        """Test that when namespace Pools and manualNamespaceNames are disabled, helm renders a default vector configmap
         looking at platform label."""
         values = {
             "global": {
-                "manualNamespaceNamesEnabled": False,
-                "features": {
+                "namespaceManagement": {
                     "namespacePools": {
                         "enabled": False,
-                    }
+                    },
+                    "manualNamespaceNames": {"enabled": False},
                 },
             }
         }
@@ -222,7 +222,7 @@ class TestVector:
         """Test to validate vector index name prefix defaults in vector configmap."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"rbacEnabled": True}},
+            values={"global": {"rbac": {"enabled": True}}},
             show_only=[
                 "charts/vector/templates/vector-configmap.yaml",
             ],
@@ -390,6 +390,43 @@ class TestVector:
     def test_vector_rendering_by_mode(self, kube_version, mode, expected_count):
         """Test that Vector is deployed only in data and unified plane modes."""
         values = {"global": {"plane": {"mode": mode}}}
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=all_templates,
+        )
+
+        assert len(docs) == expected_count
+
+        if expected_count > 0:
+            assert all(doc.get("apiVersion") for doc in docs)
+            assert all(doc.get("kind") for doc in docs)
+
+    @pytest.mark.parametrize(
+        "mode,shared_elasticsearch,expected_count",
+        [
+            # unified: logging is always enabled regardless of sharedElasticsearch
+            ("unified", False, 6),
+            ("unified", True, 6),
+            # control: logging is enabled only when sharedElasticsearch is enabled
+            ("control", False, 0),
+            ("control", True, 6),
+            # data: logging is enabled only when sharedElasticsearch is disabled
+            ("data", False, 6),
+            ("data", True, 0),
+        ],
+    )
+    def test_vector_logging_enabled_by_mode_and_shared_elasticsearch_feature(
+        self, kube_version, mode, shared_elasticsearch, expected_count
+    ):
+        """Test that Vector renders according to the logging.enabled helper across plane mode and sharedElasticsearch."""
+        values = {
+            "global": {
+                "plane": {"mode": mode},
+                "sharedElasticsearch": {"enabled": shared_elasticsearch},
+            }
+        }
 
         docs = render_chart(
             kube_version=kube_version,

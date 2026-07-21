@@ -15,7 +15,7 @@ class TestPrometheusPostgresExporter:
             kube_version=kube_version,
             values={
                 "global": {
-                    "prometheusPostgresExporterEnabled": True,
+                    "prometheusPostgresExporter": {"enabled": True},
                 },
             },
             show_only=[
@@ -29,7 +29,7 @@ class TestPrometheusPostgresExporter:
         doc = docs[0]
         assert doc["kind"] == "Service"
         assert doc["metadata"]["name"] == "release-name-postgresql-exporter"
-        assert doc["spec"]["selector"]["app"] == "prometheus-postgres-exporter"
+        assert doc["spec"]["selector"]["component"] == "prometheus-postgres-exporter"
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"] == [
             {
@@ -57,8 +57,11 @@ class TestPrometheusPostgresExporter:
             "tcpSocket": {"port": 9187},
         }
         assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
         spec = docs[1]["spec"]["template"]["spec"]
         assert spec["nodeSelector"] == {}
@@ -70,7 +73,7 @@ class TestPrometheusPostgresExporter:
         and tolerations with global values."""
         values = {
             "global": {
-                "prometheusPostgresExporterEnabled": True,
+                "prometheusPostgresExporter": {"enabled": True},
                 "platformNodePool": global_platform_node_pool_config,
             }
         }
@@ -91,7 +94,7 @@ class TestPrometheusPostgresExporter:
 
         global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-postgres-exporter"}
         values = {
-            "global": {"prometheusPostgresExporterEnabled": True},
+            "global": {"prometheusPostgresExporter": {"enabled": True}},
             "prometheus-postgres-exporter": global_platform_node_pool_config,
         }
         docs = render_chart(

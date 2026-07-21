@@ -3,11 +3,21 @@
 #############################
 image:
   repository: quay.io/astronomer/ap-pgbouncer-krb
-  tag: 1.25.0-3
+  tag: 1.25.0-4
   pullPolicy: IfNotPresent
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
+  runAsUser: 1000
+
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 internalPort: 6543
 servicePort: 6543
@@ -20,6 +30,8 @@ networkPolicies:
   enabled: true
 
 serviceAccount:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
   # Specifies whether a service account should be created
   create: true
   # Annotations to add to the service account
@@ -59,6 +71,10 @@ readinessProbe: {}
   #   port: {{ .Values.internalPort }}
 
 livenessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.internalPort }}
+
+startupProbe: {}
   # tcpSocket:
   #   port: {{ .Values.internalPort }}
 

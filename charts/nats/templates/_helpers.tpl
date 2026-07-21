@@ -68,17 +68,8 @@ imagePullSecrets:
 {{ default (printf "%s-jetStream-tls-certificate" .Release.Name)}}
 {{- end }}
 
-{{- define "nats.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
-{{- omit .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
-{{- else }}
-{{- .Values.securityContext | toYaml | nindent 10 }}
-{{- end -}}
-{{- end }}
-
-
 {{ define "nats.serviceAccountName" -}}
-{{- if and .Values.nats.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.nats.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "nats.name" . )) .Values.nats.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.nats.serviceAccount.name }}
@@ -86,7 +77,7 @@ imagePullSecrets:
 {{- end }}
 
 {{ define "jetStream.serviceAccountName" -}}
-{{- if and .Values.nats.jetStream.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.nats.jetStream.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-jetstream-sa" .Release.Name) .Values.nats.jetStream.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.nats.jetStream.serviceAccount.name }}

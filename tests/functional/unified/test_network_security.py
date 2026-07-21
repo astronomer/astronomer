@@ -454,16 +454,18 @@ def test_network_security(k8s_core_v1_client):
 
     scan_result = network_assessment.scan_all_targets()
 
-    # Define allowlist of services that are expected to have open ports
-    # These are core Kubernetes services and expected application components
+    # Define allowlist of k8s objects that are expected to have open ports.
+    # These are core Kubernetes services and expected application components.
+    # These are substrings.
     allow_list = [
+        "pod/astronomer-cp-nginx",  # Astronomer cp ingress pods
+        "pod/astronomer-nginx",  # Astronomer ingress pods
         "pod/coredns-",  # DNS resolution pods
+        "pod/etcd-",  # Kubernetes etcd
+        "service/astronomer-cp-nginx",  # Astronomer CP ingress service
+        "service/astronomer-nginx",  # Astronomer ingress service
         "service/kube-dns",  # DNS service
         "service/kubernetes",  # Kubernetes API server
-        "service/astronomer-nginx",  # Astronomer ingress service
-        "service/astronomer-cp-nginx",  # Astronomer CP ingress service
-        "pod/astronomer-nginx",  # Astronomer ingress pods
-        "pod/astronomer-cp-nginx",  # Astronomer cp ingress pods
     ]
 
     # Validate scan results - fail if any non-allowlisted services have open ports

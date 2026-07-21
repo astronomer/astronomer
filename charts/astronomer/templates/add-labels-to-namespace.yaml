@@ -1,7 +1,7 @@
 ########################################################
 ## Astronomer Platform Namespace label configure Hook ##
 ########################################################
-{{- if .Values.global.networkNSLabels }}
+{{- if .Values.global.networkNSLabels.enabled }}
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
@@ -66,8 +66,10 @@ spec:
         component: labeller
         release: {{ .Release.Name }}
     spec:
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-labeller
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: label-platform-namespace
         image: {{ template "dbBootstrapper.image" . }}

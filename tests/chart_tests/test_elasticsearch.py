@@ -50,7 +50,13 @@ class TestElasticSearch:
         assert curator_container["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
-        assert curator_container["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert curator_container["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
         # elasticsearch master
         assert master_doc["kind"] == "StatefulSet"
@@ -141,7 +147,10 @@ class TestElasticSearch:
         )
         assert len(docs) == 3
         for doc in docs:
-            assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
+            assert doc["spec"]["template"]["spec"]["securityContext"] == {
+                "fsGroup": 1000,
+                "seccompProfile": {"type": "RuntimeDefault"},
+            }
 
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
         """Test ElasticSearch master, data with securityContext default
@@ -256,6 +265,7 @@ class TestElasticSearch:
                     "securityContext": {
                         "denver": "colorado",
                         "detroit": "michigan",
+                        "allowPrivilegeEscalation": False,
                     }
                 }
             },
@@ -277,6 +287,7 @@ class TestElasticSearch:
                     "detroit": "michigan",
                     "runAsNonRoot": True,
                     "runAsUser": 1000,
+                    "allowPrivilegeEscalation": False,
                 }.items()
             )
 
@@ -308,7 +319,7 @@ class TestElasticSearch:
         """Test Nginx ES Service with NetworkPolicies."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"loggingSidecar": {"enabled": True}}},
+            values={"global": {"logging": {"loggingSidecar": {"enabled": True}}}},
             show_only=[
                 "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
             ],
@@ -417,7 +428,7 @@ class TestElasticSearch:
         """Test Nginx ES Service Index Pattern Search with sidecar logging."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"loggingSidecar": {"enabled": True}}},
+            values={"global": {"logging": {"loggingSidecar": {"enabled": True}}}},
             show_only=[
                 "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
             ],
@@ -446,8 +457,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "loggingSidecar": {"enabled": True},
-                    "logging": {"indexNamePrefix": "astronomer"},
+                    "logging": {"loggingSidecar": {"enabled": True}, "indexNamePrefix": "astronomer"},
                 }
             },
             show_only=[
@@ -483,11 +493,14 @@ class TestElasticSearch:
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
 
-        assert pod_data["securityContext"] == {}
+        assert pod_data["securityContext"] == {"seccompProfile": {"type": "RuntimeDefault"}}
 
         assert pod_data["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
 
     def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
@@ -513,9 +526,16 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"] == {"denver": "colorado", "detroit": "michigan"}
+        assert pod_data["securityContext"] == {
+            "denver": "colorado",
+            "detroit": "michigan",
+            "seccompProfile": {"type": "RuntimeDefault"},
+        }
         assert pod_data["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
             "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 65534,
             "capabilities": {"drop": ["ALL"]},
             "snoopy": "dog",
             "woodstock": "bird",
@@ -588,7 +608,7 @@ class TestElasticSearch:
         indexPattern = "%Y.%m"
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"loggingSidecar": {"enabled": True, "indexPattern": indexPattern}}},
+            values={"global": {"logging": {"loggingSidecar": {"enabled": True, "indexPattern": indexPattern}}}},
             show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
         )
         assert len(docs) == 1
@@ -669,8 +689,11 @@ class TestElasticSearch:
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
         assert curator_container["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
             "snoopy": "dog",
             "woodstock": "bird",
         }
@@ -714,8 +737,11 @@ class TestElasticSearch:
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
         assert curator_container["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
             "snoopy": "dog",
             "woodstock": "bird",
         }
@@ -729,7 +755,13 @@ class TestElasticSearch:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["nginx"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["nginx"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 101,
+        }
 
     def test_elasticsearch_nginx_deployment_overrides(self, kube_version):
         """Test ElasticSearch Nginx deployment default overrides."""
@@ -750,8 +782,11 @@ class TestElasticSearch:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["nginx"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 101,
             "snoopy": "dog",
             "woodstock": "bird",
         }
@@ -801,7 +836,7 @@ class TestElasticSearch:
         elasticsearch with SA disabled."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"sccEnabled": True}},
+            values={"global": {"scc": {"enabled": True}}},
             show_only=[
                 "charts/elasticsearch/templates/es-scc.yaml",
             ],
@@ -829,6 +864,45 @@ class TestElasticSearch:
             assert len(docs) == 1, f"Document {doc} should render in {plane_mode} mode"
         else:
             assert len(docs) == 0, f"Document {doc} should not render in {plane_mode} mode"
+
+    @pytest.mark.parametrize("doc", es_component_templates)
+    @pytest.mark.parametrize(
+        "plane_mode,shared_elasticsearch,should_render",
+        [
+            # unified: logging is always enabled regardless of sharedElasticsearch
+            ("unified", False, True),
+            ("unified", True, True),
+            # control: logging is enabled only when sharedElasticsearch is enabled
+            ("control", False, False),
+            ("control", True, True),
+            # data: logging is enabled only when sharedElasticsearch is disabled
+            ("data", False, True),
+            ("data", True, False),
+        ],
+    )
+    def test_elasticsearch_logging_enabled_by_mode_and_shared_elasticsearch(
+        self, kube_version, doc, plane_mode, shared_elasticsearch, should_render
+    ):
+        """Test that elasticsearch templates render according to the logging.enabled helper across plane mode and sharedElasticsearch."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                    "sharedElasticsearch": {"enabled": shared_elasticsearch},
+                },
+                "elasticsearch": {"data": {"persistence": {"enabled": True}}},
+            },
+            show_only=[doc],
+        )
+        if should_render:
+            assert len(docs) == 1, (
+                f"Document {doc} should render in {plane_mode} mode with sharedElasticsearch={shared_elasticsearch}"
+            )
+        else:
+            assert len(docs) == 0, (
+                f"Document {doc} should not render in {plane_mode} mode with sharedElasticsearch={shared_elasticsearch}"
+            )
 
     def test_elasticsearch_ingress_control_mode_default(self, kube_version):
         """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
@@ -985,3 +1059,29 @@ class TestElasticSearch:
         # Verify custom TTL settings
         assert "proxy_cache_valid 200 10m" in nginx_config
         assert "proxy_cache_valid 401 403 2m" in nginx_config
+
+    def test_elasticsearch_ingress_with_tls_secret(self, kube_version):
+        """Test that elasticsearch ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "tlsSecret": "my-tls-secret"}},
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert len(tls[0]["hosts"]) == 1
+
+    def test_elasticsearch_ingress_without_tls_secret(self, kube_version):
+        """Test that elasticsearch ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "tlsSecret": ""}},
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]

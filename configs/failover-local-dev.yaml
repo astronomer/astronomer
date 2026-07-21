@@ -1,0 +1,59 @@
+astronomer:
+  houston:
+    strictSchemaCheck:
+      enabled: true
+#   airflowChartVersion: 1.17.28-build40412
+#   dpLink:
+#     enabled: true
+#   flightDeck:
+#     enabled: true
+#   houston:
+#     worker:
+#       dispatcher:
+#         enabled: true
+#   images:
+#     astroUI:
+#       pullPolicy: Always
+#     commander:
+#       pullPolicy: Always
+#       tag: master
+#     houston:
+#       pullPolicy: Always
+#       tag: main
+#   navigator:
+#     enabled: true
+#     env:
+#       - name: DEBUG
+#         value: "true"
+#   pilot:
+#     enabled: true
+
+# Toggle external-secret chart rendering on
+external-secrets:
+  enabled: true
+global:
+  # Enable the dataPlaneFailover feature
+  dataPlaneFailover:
+    enabled: true
+    externalSecretManagerName: astronomer-cluster-secret-store
+  grafana:
+    enabled: false
+  helmRepo: https://internal-helm.astronomer.io
+  rbac:
+    enabled: true
+  ssl:
+    enabled: true
+    mode: disable
+  prometheusPostgresExporter:
+    enabled: false
+tags:
+  logging: false
+  monitoring: true
+prometheus:
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi

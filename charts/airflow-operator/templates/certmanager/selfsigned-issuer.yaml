@@ -1,7 +1,5 @@
-###############################
-# Operator Self-Signed Issuer #
-###############################
-{{ if and .Values.certManager.enabled  .Values.global.airflowOperator.enabled }}
+{{- if (include "operator.enabled" .) }}
+{{ if .Values.certManager.enabled -}}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -14,4 +12,5 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   selfSigned: {}
+{{- end }}
 {{- end }}

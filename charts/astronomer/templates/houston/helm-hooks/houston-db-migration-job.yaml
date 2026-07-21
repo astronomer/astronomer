@@ -40,12 +40,14 @@ spec:
           {{- end }}
       {{- end }}
     spec:
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Never
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+      # Only run etc-ssl-certs-copier, wait-for-db and houston-bootstrapper if the application is creating and managing the logical DB
       initContainers:
         - name: etc-ssl-certs-copier
           command:
@@ -62,16 +64,12 @@ spec:
               mountPath: /etc/ssl/certs_copy
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
@@ -91,9 +89,7 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: BOOTSTRAP_DB
@@ -135,9 +131,7 @@ spec:
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           args: ["yarn", "migrate"]
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: DATABASE_URL
@@ -151,6 +145,15 @@ spec:
           {{- end }}
           {{- if .Values.houston.dbMigration.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.houston.dbMigration.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.dbMigration.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.houston.dbMigration.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            exec:
+              command: ["true"]
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           volumeMounts:
             - name: etc-ssl-certs

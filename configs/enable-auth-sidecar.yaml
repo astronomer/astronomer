@@ -1,0 +1,7 @@
+# Enables global.authSidecar, the optional bring-your-own-ingress auth proxy.
+# Needed for OpenShift/BYO-ingress customers, since APC's default security
+# model is otherwise coupled to the nginx ingress the chart ships.
+---
+global:
+  authSidecar:
+    enabled: true

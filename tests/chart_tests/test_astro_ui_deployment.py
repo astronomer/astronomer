@@ -2,6 +2,7 @@ import jmespath
 import pytest
 
 from tests import supported_k8s_versions
+from tests.utils import get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -73,3 +74,76 @@ class TestAstroUIDeployment:
         assert "emptyDir" in volumes["tmp"]
         assert "var-cache-nginx" in volumes
         assert "emptyDir" in volumes["var-cache-nginx"]
+
+    def test_astro_ui_extra_volume_mounts(self, kube_version):
+        """Test that user-provided volumeMounts and extraVolumes are rendered with correct indentation."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "astroUI": {
+                        "env": [
+                            {
+                                "name": "NODE_EXTRA_CA_CERTS",
+                                "value": "/usr/local/share/ca-certificates/ldap-ca.crt",
+                            }
+                        ],
+                        "volumeMounts": [
+                            {
+                                "name": "ldap-ca",
+                                "mountPath": "/usr/local/share/ca-certificates/ldap-ca.crt",
+                                "subPath": "ldap-ca.crt",
+                                "readOnly": True,
+                            }
+                        ],
+                        "extraVolumes": [
+                            {
+                                "name": "ldap-ca",
+                                "secret": {
+                                    "secretName": "houston-ldap-tls",
+                                    "items": [{"key": "ca.crt", "path": "ldap-ca.crt"}],
+                                },
+                            }
+                        ],
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        astro_ui_container = get_containers_by_name(doc)["astro-ui"]
+
+        volume_mounts = {mount["name"]: mount for mount in astro_ui_container["volumeMounts"]}
+        assert "ldap-ca" in volume_mounts
+        assert volume_mounts["ldap-ca"]["mountPath"] == "/usr/local/share/ca-certificates/ldap-ca.crt"
+        assert volume_mounts["ldap-ca"]["subPath"] == "ldap-ca.crt"
+        assert volume_mounts["ldap-ca"]["readOnly"] is True
+
+        volumes = {vol["name"]: vol for vol in doc["spec"]["template"]["spec"]["volumes"]}
+        assert "ldap-ca" in volumes
+        assert volumes["ldap-ca"]["secret"]["secretName"] == "houston-ldap-tls"
+
+    def test_astro_ui_user_provided_env_vars(self, kube_version):
+        """Test that user-provided env vars are injected into the astro-ui container."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "astroUI": {
+                        "env": [
+                            {"name": "MY_CUSTOM_VAR", "value": "custom-value"},
+                            {"name": "ANOTHER_VAR", "value": "another-value"},
+                        ],
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        astro_ui_container = get_containers_by_name(docs[0])["astro-ui"]
+        env_vars = get_env_vars_dict(astro_ui_container["env"])
+        assert env_vars["MY_CUSTOM_VAR"] == "custom-value"
+        assert env_vars["ANOTHER_VAR"] == "another-value"

@@ -14,7 +14,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
@@ -47,6 +47,13 @@ spec:
           component: dp-ingress-controller
           release: {{ .Release.Name }}
     {{- end }}
+    {{- if .Values.global.dataPlaneFailover.enabled }}
+    - podSelector:
+        matchLabels:
+          component: pilot
+          release: astronomer
+          tier: astronomer
+    {{- end }}
     {{- end }}
     {{- if (eq .Values.global.plane.mode "unified") }}
     - podSelector:
@@ -59,6 +66,11 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-upgrader
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-cp-refresh
     - podSelector:
         matchLabels:
           tier: astronomer

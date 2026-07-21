@@ -7,7 +7,7 @@ metadata:
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
@@ -64,8 +64,9 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
       securityContext:
-        readOnlyRootFilesystem: true
-      {{- if .Values.securityContext.enabled }}
+        seccompProfile:
+          type: RuntimeDefault
+      {{- if and .Values.securityContext.enabled (not .Values.global.openshift.enabled) }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
@@ -75,10 +76,16 @@ spec:
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         resources: {{- toYaml .Values.resources | nindent 10 }}
         securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
           readOnlyRootFilesystem: true
         {{- if .Values.securityContext.enabled }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+          {{- if not .Values.global.openshift.enabled }}
           runAsUser: {{ .Values.securityContext.runAsUser }}
+          {{- end }}
         {{- end }}
         env:
         - name: POSTGRESQL_PORT_NUMBER
@@ -133,6 +140,24 @@ spec:
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
+        {{- if .Values.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c
+           {{- if (include "postgresql.database" .) }}
+            - exec pg_isready -U {{ include "postgresql.username" . | quote }} -d {{ (include "postgresql.database" .) | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+           {{- else }}
+            - exec pg_isready -U {{ include "postgresql.username" . | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+           {{- end }}
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+        {{- end }}
         {{- if .Values.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 10 }}
         {{- else }}
@@ -192,8 +217,9 @@ spec:
         image: {{ template "postgresql.metrics.image" . }}
         imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
         securityContext:
+          allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-        {{- if .Values.metrics.securityContext.enabled }}
+        {{- if and .Values.metrics.securityContext.enabled (not .Values.global.openshift.enabled) }}
           runAsUser: {{ .Values.metrics.securityContext.runAsUser }}
         {{- end }}
         env:
@@ -219,6 +245,16 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 6
           successThreshold: 1
+        {{- end }}
+        {{- if .Values.metrics.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.metrics.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          httpGet:
+            path: /
+            port: metrics
+          failureThreshold: 30
+          periodSeconds: 10
         {{- end }}
         {{- if .Values.metrics.readinessProbe }}
         readinessProbe:

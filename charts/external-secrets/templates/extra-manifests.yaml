@@ -1,0 +1,13 @@
+---
+###################################
+# external-secrets extra objects ##
+###################################
+{{- if (include "external-secrets.enabled" .) }}
+{{- range .Values.extraObjects }}
+---
+##############################################
+# external-secrets extra objects (rendered) ##
+##############################################
+{{ include "external-secrets.render" (dict "value" . "context" $) }}
+{{- end }}
+{{- end }}

@@ -13,26 +13,23 @@ PATH := ${HOME}/.local/share/astronomer-software/bin:$(PATH)
 .PHONY: venv
 venv: .venv  ## Setup venv required for testing
 .venv:
-	{ uv venv -p 3.13 --seed && uv sync ; } || \
-	{ python3 -m venv .venv -p python3 && .venv/bin/pip install -r tests/requirements.txt ; }
+	uv venv -p 3.13 --seed
+	uv sync
 
 .PHONY: test-functional-control
-test-functional-control: export TEST_SCENARIO=control
 test-functional-control: venv ## Run functional tests on the control installation scenario
-	bin/reset-local-dev
-	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+	bin/reset-local-dev --topology=control
+	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/control
 
 .PHONY: test-functional-data
-test-functional-data: export TEST_SCENARIO=data
 test-functional-data: venv ## Run functional tests on the data installation scenario
-	bin/reset-local-dev
-	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+	bin/reset-local-dev --topology=data
+	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/data
 
 .PHONY: test-functional-unified
-test-functional-unified: export TEST_SCENARIO=unified
 test-functional-unified: venv ## Run functional tests on the unified installation scenario
-	bin/reset-local-dev
-	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+	bin/reset-local-dev --topology=unified
+	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/unified
 
 # unittest-charts is deprecated
 .PHONY: unittest-charts
@@ -40,7 +37,7 @@ unittest-charts: test-unit
 .PHONY: test-unit
 test-unit: venv ## Run unit tests
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
-	.venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
+	uv run pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
 
 .PHONY: validate-commander-airflow-version
 validate-commander-airflow-version: ## Validate that airflowChartVersion is the same in astronomer configs and the commander docker image
@@ -99,8 +96,3 @@ uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.
 .PHONY: uv-lock-upgrade-and-sync
 uv-lock-upgrade-and-sync: uv-lock-upgrade ## Upgrade uv lockfile dependencies and sync venv
 	uv sync
-
-.PHONY: update-requirements
-update-requirements: uv-lock-upgrade ## Update requirements.txt file
-	uv export --format requirements-txt > tests/requirements.txt
-	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure

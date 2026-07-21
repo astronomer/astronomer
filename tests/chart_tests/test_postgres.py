@@ -21,7 +21,7 @@ class TestPostgresql:
         """Test postgresql statefulset is good with defaults."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"postgresqlEnabled": True}},
+            values={"global": {"postgresql": {"enabled": True}}},
             show_only=["charts/postgresql/templates/statefulset.yaml"],
         )
 
@@ -47,7 +47,7 @@ class TestPostgresql:
                         "enabled": True,
                         "repository": repository,
                     },
-                    "postgresqlEnabled": True,
+                    "postgresql": {"enabled": True},
                 },
             },
             show_only=[
@@ -70,7 +70,7 @@ class TestPostgresql:
         doc = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"postgresqlEnabled": True},
+                "global": {"postgresql": {"enabled": True}},
                 "postgresql": {
                     "persistence": {
                         "persistentVolumeClaimRetentionPolicy": test_persistentVolumeClaimRetentionPolicy,
@@ -95,7 +95,7 @@ class TestPostgresql:
         doc = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"postgresqlEnabled": True},
+                "global": {"postgresql": {"enabled": True}},
                 "postgresql": {
                     "replication": {
                         "enabled": True,
@@ -117,7 +117,7 @@ class TestPostgresql:
 
     def test_postgresql_with_global_nodepool_config(self, kube_version, global_platform_node_pool_config):
         """Test Postgresql with nodeSelector, affinity, tolerations and global config."""
-        values = {"global": {"platformNodePool": global_platform_node_pool_config, "postgresqlEnabled": True}}
+        values = {"global": {"platformNodePool": global_platform_node_pool_config, "postgresql": {"enabled": True}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -136,7 +136,7 @@ class TestPostgresql:
         """Test Postgresql with nodeSelector, affinity, tolerations and subchart config overrides."""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astropostgresql"}
         values = {
-            "global": {"postgresqlEnabled": True},
+            "global": {"postgresql": {"enabled": True}},
             "postgresql": {
                 "master": {
                     "nodeSelector": global_platform_node_pool_config["nodeSelector"],
@@ -162,7 +162,7 @@ class TestPostgresql:
     def test_postgresql_platform_nodepool_subchart_overrides_with_ha(self, kube_version, global_platform_node_pool_config):
         """Test Postgresql with nodeSelector, affinity, tolerations and subchart config overrides with ha."""
         values = {
-            "global": {"postgresqlEnabled": True},
+            "global": {"postgresql": {"enabled": True}},
             "postgresql": {
                 "replication": {
                     "enabled": True,

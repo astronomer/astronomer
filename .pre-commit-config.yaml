@@ -1,5 +1,7 @@
 ---
 exclude: '(venv|\.vscode|tests/k8s_schema|tests/chart_tests/test_data)' # regex
+auto_update:
+  cooldown_days: 7
 repos:
   - repo: local
     hooks:
@@ -34,18 +36,24 @@ repos:
         entry: bin/generate_circleci_config.py
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
+      - id: check-chart-version-consistency
+        language: script
+        name: Ensure version and appVersion are consistent across Chart.yaml files
+        entry: bin/check-chart-version-consistency.sh
+        files: 'Chart\.yaml$'
+        pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.2
     hooks:
       - id: codespell
-        args: ["-L", "AKS,aks,showIn,NotIn"]
+        args: ["-L", "AKS,aks,showIn,NotIn,templateAs"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.5
+    rev: v1.5.6
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.8"
+    rev: "v0.15.21"
     hooks:
       - id: ruff-check
         args:
@@ -67,6 +75,7 @@ repos:
         exclude: 'charts|templates\/.*\.yaml'
       - id: debug-statements
       - id: detect-private-key
+        exclude: 'charts/external-secrets/templates/crds/crd-(cluster)?secretstores.external-secrets.io.yaml'
       - id: end-of-file-fixer
       - id: file-contents-sorter
         args:
@@ -77,9 +86,6 @@ repos:
       - id: name-tests-test
         args: ["--pytest-test-first"]
         exclude: "^tests/utils/.*$"
-      - id: requirements-txt-fixer
-        args:
-          - "tests/requirements.txt"
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py

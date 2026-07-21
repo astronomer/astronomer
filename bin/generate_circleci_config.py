@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""This script is used to create the circle config file so that we can stay
-DRY."""
+"""Generate the CircleCI config."""
 
-import subprocess
+import datetime
 from pathlib import Path
 
 import yaml
@@ -11,17 +10,19 @@ from jinja2 import Template
 git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
-
-ci_runner_version = "2025-12"  # This should be the current YYYY-MM
-machine_image_version = "ubuntu-2404:2025.09.1"  # https://circleci.com/developer/machine/image/ubuntu-2204
+ci_runner_version = (datetime.datetime.now()).strftime("%Y-%m")
 
 
-def list_docker_images():
-    command = f"{git_root_dir}/bin/show-docker-images.py --with-houston"
-    docker_images_output = subprocess.check_output(command, shell=True)
-    docker_image_list = [x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")]
+def discover_scenarios() -> list[str]:
+    """Find scenario names under tests/functional/scenarios/*/test_profile.yaml.
 
-    return sorted(set(docker_image_list))
+    The manifest file's presence is the signal, not bare directory presence, so a
+    half-finished or stray directory can't silently create (or hide) a CI job.
+    """
+    scenarios_dir = git_root_dir / "tests" / "functional" / "scenarios"
+    if not scenarios_dir.is_dir():
+        return []
+    return sorted(p.parent.name for p in scenarios_dir.glob("*/test_profile.yaml"))
 
 
 def main():
@@ -33,15 +34,12 @@ def main():
     config_file_template_path = git_root_dir / ".circleci" / "config.yml.j2"
     config_file_path = git_root_dir / ".circleci" / "config.yml"
 
-    docker_images = list_docker_images()
-
     templated_file_content = config_file_template_path.read_text()
     template = Template(templated_file_content)
     config = template.render(
         ci_runner_version=ci_runner_version,
-        docker_images=docker_images,
         kube_versions=kube_versions,
-        machine_image_version=machine_image_version,
+        scenarios=discover_scenarios(),
     )
     with open(config_file_path, "w") as circle_ci_config_file:
         warning_header = (

@@ -2,7 +2,12 @@
 # shellcheck disable=SC1090,SC1091
 set -euo pipefail
 
-BOM_GENERATOR_VERSION=v0.10.0
+latest_github_release() {
+  local repo="${1}"
+  curl -fsSL -H "Authorization: token ${GITHUB_TOKEN}" \
+    "https://api.github.com/repos/${repo}/releases/latest" \
+    | python3 -c "import sys, json; print(json.load(sys.stdin)['tag_name'])"
+}
 
 help() {
   echo "Description:"
@@ -36,8 +41,9 @@ bucket_path="gs://updates.astronomer.io/astronomer-software/releases"
 json_file_name="astronomer-${version}.json"
 max_age="300"
 
-# Install bom-generator
-pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${BOM_GENERATOR_VERSION}"
+# Install bom-generator (latest release)
+bom_tag=$(latest_github_release "astronomer/astronomer-bom-generator")
+pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${bom_tag}"
 
 # Generate bom file and indexes
 bom-generator --version "${version}"

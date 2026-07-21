@@ -1,0 +1,109 @@
+# This was generated with:
+#     uv run bin/get-all-chart-default-values.py . |
+#     yaml-to-json.py |
+#     gron |
+#     grep -i pullpolicy |
+#     gron -u |
+#     json-to-yaml.py |
+#     sed 's/IfNotPresent/Always/g' > configs/always-pull.yaml
+---
+airflow-operator:
+  images:
+    manager:
+      pullPolicy: Always
+alertmanager:
+  images:
+    alertmanager:
+      pullPolicy: Always
+astronomer:
+  images:
+    astroUI:
+      pullPolicy: Always
+    commander:
+      pullPolicy: Always
+    dbBootstrapper:
+      pullPolicy: Always
+    houston:
+      pullPolicy: Always
+    registry:
+      pullPolicy: Always
+elasticsearch:
+  images:
+    curator:
+      pullPolicy: Always
+    es:
+      pullPolicy: Always
+    exporter:
+      pullPolicy: Always
+    init:
+      pullPolicy: Always
+    nginx:
+      pullPolicy: Always
+external-es-proxy:
+  images:
+    awsproxy:
+      pullPolicy: Always
+    esproxy:
+      pullPolicy: Always
+global:
+  ssl:
+    enabled: yes
+    mode: disable
+  authSidecar:
+    pullPolicy: Always
+  privateCaCertsAddToHost:
+    certCopier:
+      pullPolicy: Always
+grafana:
+  images:
+    dbBootstrapper:
+      pullPolicy: Always
+    grafana:
+      pullPolicy: Always
+kube-state:
+  images:
+    kubeState:
+      pullPolicy: Always
+nats:
+  images:
+    dbBootstrapper:
+      pullPolicy: Always
+    exporter:
+      pullPolicy: Always
+    nats:
+      pullPolicy: Always
+nginx:
+  images:
+    defaultBackend:
+      pullPolicy: Always
+    nginx:
+      pullPolicy: Always
+pgbouncer:
+  image:
+    pullPolicy: Always
+postgresql:
+  image:
+    pullPolicy: Always
+  metrics:
+    image:
+      pullPolicy: Always
+  volumePermissions:
+    image:
+      pullPolicy: Always
+prometheus:
+  images:
+    configReloader:
+      pullPolicy: Always
+    filesdReloader:
+      pullPolicy: Always
+    prometheus:
+      pullPolicy: Always
+    promproxy:
+      pullPolicy: Always
+prometheus-postgres-exporter:
+  image:
+    pullPolicy: Always
+vector:
+  vector:
+    image:
+      pullPolicy: Always
