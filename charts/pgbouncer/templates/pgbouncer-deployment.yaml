@@ -7,12 +7,12 @@ apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-pgbouncer
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: pgbouncer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   replicas: 1
   strategy:

@@ -7,10 +7,10 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-nginx-default-backend-pdb
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: {{ template "nginx.name" . }}
     component: default-backend
     release: {{ .Release.Name }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   {{- if lt ( .Values.replicasDefaultBackend | int ) 4 }}
   maxUnavailable: 1

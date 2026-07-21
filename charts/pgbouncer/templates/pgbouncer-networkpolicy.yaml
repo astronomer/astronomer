@@ -7,11 +7,11 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-pgbouncer-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "pgbouncer.name" . }}
     chart: {{ template "pgbouncer.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

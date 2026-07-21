@@ -7,11 +7,11 @@ kind: RoleBinding
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-    {{- include "global.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role

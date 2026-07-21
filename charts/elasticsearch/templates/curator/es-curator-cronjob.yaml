@@ -8,13 +8,13 @@ kind: CronJob
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-curator
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}
     chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   schedule: {{ .Values.curator.schedule }}
   jobTemplate:

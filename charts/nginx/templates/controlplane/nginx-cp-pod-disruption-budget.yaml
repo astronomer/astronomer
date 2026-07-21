@@ -8,10 +8,10 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-cp-nginx-pdb
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: {{ template "nginx.name" . }}
     component: cp-ingress-controller
     release: {{ .Release.Name }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   {{- if lt ( .Values.replicas | int ) 4 }}
   maxUnavailable: 1

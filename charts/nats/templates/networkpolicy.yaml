@@ -8,12 +8,12 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-nats-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: nats-policy
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
   {{ if .Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"

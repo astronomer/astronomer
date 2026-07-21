@@ -10,12 +10,12 @@ metadata:
     "helm.sh/hook": "pre-install,pre-upgrade"
   name: {{ template "elasticsearch.serviceAccountName" . }}-anyuid
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}
     chart: {{ template "elasticsearch.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-    {{- include "global.labels" . | nindent 4 }}
 priority: 10
 readOnlyRootFilesystem: false
 requiredDropCapabilities:

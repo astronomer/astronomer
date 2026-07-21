@@ -7,12 +7,12 @@ kind: ConfigMap
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-config
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
-    {{- include "global.labels" . | nindent 4 }}
 data:
   elasticsearch.yml: |-
     cluster:

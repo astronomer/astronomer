@@ -8,13 +8,13 @@ apiVersion: v1
 metadata:
   name: {{ template "alertmanager.fullname" . }}-nginx-conf
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: {{ template "alertmanager.name" . }}
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 data:
   default.conf: |
     upstream astro-alertmanager {

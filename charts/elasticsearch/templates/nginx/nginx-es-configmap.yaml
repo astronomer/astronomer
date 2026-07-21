@@ -8,12 +8,12 @@ apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-nginx-es
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: nginx
     tier: {{ template "nginx-es.name" . }}
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 data:
   nginx.conf: |-
     worker_processes 1;

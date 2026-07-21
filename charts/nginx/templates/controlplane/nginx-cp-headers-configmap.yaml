@@ -20,12 +20,12 @@ apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}-ingress-controller-headers
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 data:
   # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
   Content-Security-Policy: >-

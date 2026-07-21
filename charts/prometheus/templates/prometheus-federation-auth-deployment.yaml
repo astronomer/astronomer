@@ -7,13 +7,13 @@ kind: Deployment
 metadata:
   name: {{ template "prometheus.fullname" . }}-federation-auth
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: {{ template "prometheus.name" . }}-federation-auth
     chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.federation.auth.replicas | default 2 }}
   selector:

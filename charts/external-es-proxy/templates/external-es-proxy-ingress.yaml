@@ -7,13 +7,13 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ include "external-es-proxy.fullname" . }}-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: elasticsearch-networking
     component: elasticsearch-logging-ingress
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}

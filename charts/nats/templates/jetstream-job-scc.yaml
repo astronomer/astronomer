@@ -12,11 +12,11 @@ metadata:
     "helm.sh/hook": "pre-install,pre-upgrade"
   name: {{ .Release.Name }}-jetstream-sa-anyuid
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: jetstream-migrator
     component: jetstream-migrator
     release: {{ .Release.Name }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 priority: 10
 readOnlyRootFilesystem: false
 requiredDropCapabilities:

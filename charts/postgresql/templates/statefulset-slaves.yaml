@@ -4,11 +4,11 @@ apiVersion: apps/v1
 metadata:
   name: "{{ template "postgresql.fullname" . }}-slave"
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}

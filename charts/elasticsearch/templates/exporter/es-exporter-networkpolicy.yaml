@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-exporter-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}-exporter-policy
     chart: {{ template "elasticsearch.chart" . }}
@@ -15,7 +16,6 @@ metadata:
     heritage: {{ .Release.Service }}
     role: exporter
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

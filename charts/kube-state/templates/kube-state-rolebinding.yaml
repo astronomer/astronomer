@@ -24,13 +24,13 @@ metadata:
   namespace: {{ $namespaceName }}
   {{- end }}
   labels:
+    {{- include "global.labels" $ | nindent 4 }}
     tier: monitoring
     component: {{ $.Chart.Name }}
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
     plane: {{ $.Values.global.plane.mode }}
-    {{- include "global.labels" $ | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}

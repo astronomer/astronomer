@@ -10,12 +10,12 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: {{ template "prometheus.name" . }}
     chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $prometheusRBACresources }}Role{{ else }}ClusterRole{{ end }}

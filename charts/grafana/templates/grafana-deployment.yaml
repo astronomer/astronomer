@@ -7,12 +7,12 @@ apiVersion: apps/v1
 metadata:
   name: {{ template "grafana.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: grafana
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:

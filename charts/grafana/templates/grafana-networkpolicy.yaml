@@ -8,12 +8,12 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "grafana.fullname" . }}-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: grafana-policy
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

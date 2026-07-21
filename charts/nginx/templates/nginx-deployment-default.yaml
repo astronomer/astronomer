@@ -7,12 +7,12 @@ apiVersion: apps/v1
 metadata:
   name: {{ template "nginx.fullname" . }}-default-backend
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: {{ template "nginx.name" . }}
     component: default-backend
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicasDefaultBackend }}
   selector:

@@ -8,13 +8,13 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-nginx-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}
     chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: nginx
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

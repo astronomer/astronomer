@@ -7,9 +7,9 @@ kind: Role
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-    {{- include "global.labels" . | nindent 4 }}
 {{- end }}

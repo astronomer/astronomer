@@ -8,12 +8,12 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "vector.fullname" . }}-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "vector.name" . }}
     chart: {{ template "vector.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

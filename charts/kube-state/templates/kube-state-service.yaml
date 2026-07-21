@@ -8,12 +8,12 @@ metadata:
   name: {{ template "kube-state.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: {{ template "kube-state.name" . }}
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.scrape | quote }}

@@ -10,12 +10,12 @@ apiVersion: apps/v1
 metadata:
   name: {{ template "prometheus.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: {{ template "prometheus.name" . }}
     chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}

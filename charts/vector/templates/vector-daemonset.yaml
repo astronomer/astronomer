@@ -7,12 +7,12 @@ kind: DaemonSet
 metadata:
   name: {{ include "vector.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "vector.name" . }}
     chart: {{ template "vector.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:

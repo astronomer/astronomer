@@ -8,12 +8,12 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "grafana.fullname" . }}-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: grafana-networking
     component: grafana-ingress
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.global.authSidecar.enabled }}
     {{- toYaml .Values.global.extraAnnotations | nindent 4 }}

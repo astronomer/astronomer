@@ -8,11 +8,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
   {{- end }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-    {{- include "global.labels" . | nindent 4 }}
 {{- with .Files.Glob "files/docker-entrypoint-initdb.d/*.sql.gz" }}
 binaryData:
 {{- range $path, $bytes := . }}

@@ -15,11 +15,11 @@ metadata:
   namespace: {{ .Release.Namespace }}
   name: {{ .Release.Name }}-jetstream-role
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: jetstream-migrator
     component: jetstream-migrator
     release: {{ .Release.Name }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 rules:
 - apiGroups: [""]
   resources: ["namespaces"]
@@ -39,11 +39,11 @@ metadata:
   name: {{ .Release.Name }}-jetstream-rolebinding
   namespace: {{ .Release.Namespace }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: jetstream-migrator
     component: jetstream-migrator
     release: {{ .Release.Name }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 subjects:
 - kind: ServiceAccount
   name: {{ template "jetStream.serviceAccountName" . }}
@@ -64,11 +64,11 @@ metadata:
     "helm.sh/hook-weight": "3"
   name: {{ template "jetStream.serviceAccountName" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: jetstream-migrator
     component: jetstream-migrator
     release: {{ .Release.Name }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 {{- end }}
 {{- end }}
 ---
@@ -81,13 +81,13 @@ metadata:
     "helm.sh/hook-delete-policy": "before-hook-creation"
     "helm.sh/hook-weight": "5"
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "nats.name" . }}
     tier: nats
     version: {{ .Chart.Version }}
     component: jetstream-migrator
     release: {{ .Release.Name }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   template:
     metadata:

@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: {{ template "postgresql.fullname" . }}-headless
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   clusterIP: None

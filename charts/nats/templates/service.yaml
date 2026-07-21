@@ -16,10 +16,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   selector:
     tier: astronomer

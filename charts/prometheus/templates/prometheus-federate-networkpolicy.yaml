@@ -7,13 +7,13 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "prometheus.fullname" . }}-prom-proxy-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: {{ template "prometheus.name" . }}-federation-auth
     chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

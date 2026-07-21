@@ -7,12 +7,12 @@ apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: {{ template "nginx.name" . }}
     component: dp-ingress-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
   minReadySeconds: {{ .Values.minReadySeconds }}

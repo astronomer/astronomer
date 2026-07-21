@@ -12,11 +12,11 @@ metadata:
 {{ toYaml .Values.service.annotations | indent 4 }}
 {{- end }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 {{- if .Values.service.labels }}
 {{ toYaml .Values.service.labels | trim | indent 4 }}
 {{- end }}

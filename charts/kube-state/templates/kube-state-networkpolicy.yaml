@@ -8,13 +8,13 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "kube-state.fullname" . }}-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "kube-state.name" . }}-policy
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

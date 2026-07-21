@@ -8,13 +8,13 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-cp-nginx-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: cp-nginx-policy
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

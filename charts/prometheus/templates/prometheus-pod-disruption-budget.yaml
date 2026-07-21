@@ -7,10 +7,10 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-prometheus-pdb
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: {{ template "prometheus.name" . }}
     release: {{ .Release.Name }}
-    {{- include "global.labels" . | nindent 4 }}
 spec:
   maxUnavailable: 1
   selector:

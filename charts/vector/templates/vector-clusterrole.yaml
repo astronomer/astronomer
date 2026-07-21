@@ -8,12 +8,12 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "vector.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "vector.name" . }}
     chart: {{ template "vector.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "global.labels" . | nindent 4 }}
 rules:
 - apiGroups:
   - ""

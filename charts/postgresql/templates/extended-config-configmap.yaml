@@ -4,11 +4,11 @@ kind: ConfigMap
 metadata:
   name: {{ template "postgresql.fullname" . }}-extended-configuration
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-    {{- include "global.labels" . | nindent 4 }}
   {{ if .Values.global.argoCD.annotation.enabled }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
