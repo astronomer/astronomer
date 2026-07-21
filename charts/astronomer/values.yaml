@@ -61,13 +61,13 @@ astroUI:
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   readinessProbe: {}
   livenessProbe: {}
   startupProbe: {}
@@ -172,13 +172,13 @@ houston:
   #   secretKey: "connection"
   secret: []
 
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
@@ -676,7 +676,13 @@ configSyncer:
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
   securityContext: {}
-  resources: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   serviceAccount:
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
@@ -806,13 +812,13 @@ pilot:
   podAnnotations: {}
 
   # -- Resource requests and limits
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 250m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
 
   # -- Liveness probe configuration
   livenessProbe: {}
@@ -1012,13 +1018,13 @@ registry:
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False
   replicas: 1
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 
   livenessProbe: {}
     # httpGet:

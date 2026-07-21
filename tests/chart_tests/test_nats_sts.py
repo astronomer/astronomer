@@ -44,6 +44,20 @@ class TestNatsStatefulSet:
         assert spec["affinity"] == {}
         assert spec["tolerations"] == []
 
+    def test_nats_reloader_sidecar_resources_have_default(self, kube_version):
+        """Test that the optional config-reloader sidecar gets a real default resources block."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"nats": {"reloader": {"enabled": True}}},
+            show_only=["charts/nats/templates/statefulset.yaml"],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["reloader"]["resources"] == {
+            "limits": {"cpu": "100m", "memory": "128Mi"},
+            "requests": {"cpu": "50m", "memory": "64Mi"},
+        }
+
     def test_nats_statefulset_with_metrics_and_resources(self, kube_version):
         """Test that nats statefulset renders good metrics exporter."""
         docs = render_chart(
