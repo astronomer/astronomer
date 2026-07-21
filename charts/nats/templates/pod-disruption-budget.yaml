@@ -7,6 +7,11 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-nats-pdb
+  labels:
+    tier: astronomer
+    app: {{ template "nats.name" . }}
+    release: {{ .Release.Name }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   maxUnavailable: 1
   selector:

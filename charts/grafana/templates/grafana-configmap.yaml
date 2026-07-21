@@ -12,6 +12,7 @@ metadata:
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    {{- include "global.labels" . | nindent 4 }}
 data:
   dashboard.yaml: |-
     apiVersion: 1
@@ -38,6 +39,7 @@ metadata:
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    {{- include "global.labels" . | nindent 4 }}
 data:
   datasource.yaml: |-
     apiVersion: 1
@@ -70,6 +72,7 @@ metadata:
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
     dashboard-provider: {{ $provider }}
+    {{- include "global.labels" $ | nindent 4 }}
 data:
 {{- range $key, $value := $dashboards }}
 {{- if (or (hasKey $value "json") (hasKey $value "file")) }}

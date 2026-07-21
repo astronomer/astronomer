@@ -14,6 +14,12 @@ metadata:
     "helm.sh/hook-weight": "-2"
   namespace: {{ .Release.Namespace }}
   name: {{ .Release.Name }}-jetstream-role
+  labels:
+    tier: jetstream-migrator
+    component: jetstream-migrator
+    release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 rules:
 - apiGroups: [""]
   resources: ["namespaces"]
@@ -32,6 +38,12 @@ metadata:
     "helm.sh/hook-weight": "-2"
   name: {{ .Release.Name }}-jetstream-rolebinding
   namespace: {{ .Release.Namespace }}
+  labels:
+    tier: jetstream-migrator
+    component: jetstream-migrator
+    release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 subjects:
 - kind: ServiceAccount
   name: {{ template "jetStream.serviceAccountName" . }}
@@ -56,6 +68,7 @@ metadata:
     component: jetstream-migrator
     release: {{ .Release.Name }}
     plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 {{- end }}
 {{- end }}
 ---
@@ -74,6 +87,7 @@ metadata:
     component: jetstream-migrator
     release: {{ .Release.Name }}
     plane: {{ .Values.global.plane.mode }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   template:
     metadata:

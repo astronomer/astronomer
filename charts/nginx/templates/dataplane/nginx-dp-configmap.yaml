@@ -11,6 +11,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    {{- include "global.labels" . | nindent 4 }}
 data:
   main-snippet: |
     load_module /etc/nginx/modules/ngx_http_subs_filter_module.so;

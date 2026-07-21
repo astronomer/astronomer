@@ -7,6 +7,11 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-dp-nginx-pdb
+  labels:
+    tier: {{ template "nginx.name" . }}
+    component: dp-ingress-controller
+    release: {{ .Release.Name }}
+    {{- include "global.labels" . | nindent 4 }}
 spec:
   {{- if lt ( .Values.replicas | int ) 4 }}
   maxUnavailable: 1
