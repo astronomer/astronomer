@@ -1645,6 +1645,8 @@ spec:
               inClusterPostgres:
                 default: false
                 type: boolean
+              isLowLatency:
+                type: boolean
               localSettings:
                 default:
                   enableAstroPodMutationHook: false
