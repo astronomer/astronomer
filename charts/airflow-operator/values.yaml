@@ -2,7 +2,7 @@ images:
   manager:
     # TODO: Change it to public image once 1.6.0 is released
     repository: quay.io/astronomer/airflow-operator-dev
-    tag: 1.6.0-rc3
+    tag: 1.6.0-rc4
     pullPolicy: IfNotPresent
 # Whether the chart should create the Airflow Operator CRDs. Set to false if the CRDs are managed
 # out-of-band (e.g. installed separately by a cluster admin or via GitOps).
@@ -45,17 +45,22 @@ webhooks:
 
   # Enables the webhook service for mutating and validating configurations.
   enabled: true
+  # Set to true to use your own TLS certificates for the webhooks instead of
+  # cert-manager-provisioned ones. When true, you must provide both
+  # customCertsSecretName and caBundle below.
   useCustomTlsCerts: false
-  certSecretName: "webhook-server-cert"
-  customCertsSecretName: "webhooks-tls-certs"
-  # for each of the following properties, the full certificate/key/CABundle should be provided in the following way:
+  # Name of a pre-created Secret (in the release namespace) that holds the
+  # webhook server's TLS certificate and key (tls.crt / tls.key). Only used
+  # when useCustomTlsCerts is true.
+  customCertsSecretName: ""
+  # PEM-encoded CA bundle used to validate the webhook server certificate.
+  # Injected into the webhook configurations' clientConfig when
+  # useCustomTlsCerts is true. Provide the full certificate as follows:
   # caBundle: |
   #  -----BEGIN CERTIFICATE-----
   #  .......................
   #  -----END CERTIFICATE-----
   caBundle: ""
-  tlsCert: ""
-  tlsKey: ""
 
 serviceAccount:
   create: true
