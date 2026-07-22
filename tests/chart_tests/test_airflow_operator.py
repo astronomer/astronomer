@@ -346,6 +346,33 @@ class TestAirflowOperator:
         # When privateRegistry is enabled the image is built from the private repo + the dev image name.
         assert image.startswith("my.private.registry/astronomer/airflow-operator-dev:")
 
+    def test_airflow_operator_pod_annotations_merge(self, kube_version):
+        """The controller pod merges global.podAnnotations with the operator-local podAnnotations.
+
+        Distinct keys both survive; on a key collision the operator-local value wins because it
+        is emitted after global (last-writer-wins) — here global sets ``shared: global`` but local
+        overrides it to ``shared: local``.
+        """
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "podAnnotations": {"env": "production", "shared": "global"},
+                },
+                "airflow-operator": {
+                    "podAnnotations": {"team": "platform", "shared": "local"},
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert annotations["env"] == "production"
+        assert annotations["team"] == "platform"
+        assert annotations["shared"] == "local"
+
     def test_airflow_operator_platform_node_pool(self, kube_version):
         """The controller pod inherits global.platformNodePool scheduling when no manager override is set."""
         node_selector = {"astronomer.io/nodepool": "platform"}
