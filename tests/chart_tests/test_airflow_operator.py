@@ -147,35 +147,6 @@ class TestAirflowOperator:
             operator_docs = [f"{doc.get('kind')}/{doc.get('metadata', {}).get('name')}" for doc in docs if _is_operator_doc(doc)]
             assert operator_docs == [], f"control plane must not render operator resources, got: {operator_docs}"
 
-    def test_airflow_operator_secret(self, kube_version):
-        """Test Airflow Operator Webhook tls"""
-        docs = render_chart(
-            validate_objects=False,
-            kube_version=kube_version,
-            values={
-                "airflow-operator": {
-                    "webhooks": {
-                        "useCustomTlsCerts": True,
-                        "caBundle": "abc123",
-                        "tlsCert": "tlscert123",
-                        "tlsKey": "tlskey123",
-                    },
-                },
-                "global": {
-                    "airflowOperator": {"enabled": True},
-                },
-            },
-            show_only=["charts/airflow-operator/templates/secrets/webhooks-tls.yaml"],
-        )
-
-        assert len(docs) == 1
-        assert "v1" in docs[0]["apiVersion"]
-        assert "Secret" in docs[0]["kind"]
-        assert "release-name-webhooks-tls-certs" in docs[0]["metadata"]["name"]
-        assert "kubernetes.io/tls" in docs[0]["type"]
-        expected_data = {"tls.crt": "dGxzY2VydDEyMw==", "tls.key": "dGxza2V5MTIz"}
-        assert docs[0]["data"] == expected_data
-
     def test_airflow_operator_webhooks(self, kube_version):
         """Test Airflow Operator Webhook tls"""
         docs = render_chart(
@@ -311,7 +282,7 @@ class TestAirflowOperator:
         assert len(docs) == 2
         c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
         assert "manager" in c_by_name["manager"]["name"]
-        assert "--metrics-bind-address=127.0.0.1:8080" in c_by_name["manager"]["args"]
+        assert "--metrics-bind-address=:8080" in c_by_name["manager"]["args"]
         assert "/manager" in c_by_name["manager"]["command"]
         doc = docs[1]
         assert doc["kind"] == "Service"
@@ -320,13 +291,15 @@ class TestAirflowOperator:
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"] == [
             {
-                "port": 8443,
+                "port": 8080,
                 "targetPort": 8080,
                 "protocol": "TCP",
                 "name": "metrics",
                 "appProtocol": "http",
             }
         ]
+        assert doc["metadata"]["annotations"]["prometheus.io/port"] == "8080"
+        assert doc["metadata"]["annotations"]["prometheus.io/scrape"] == "true"
 
     def test_airflow_operator_manager_environment_default(self, kube_version):
         """Test the manager container has AIRFLOW_OPERATOR_ENVIRONMENT set to 'apc'."""
@@ -518,7 +491,7 @@ class TestAirflowOperator:
         show_only = [
             "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
             "charts/airflow-operator/templates/manager/controller-manager-metrics-service.yaml",
-            "charts/airflow-operator/templates/secrets/webhooks-tls.yaml",
+            "charts/airflow-operator/templates/manager/webhook-service.yaml",
         ]
         docs = render_chart(
             name=release,
@@ -530,21 +503,16 @@ class TestAirflowOperator:
                 },
                 "airflow-operator": {
                     "manager": {"metrics": {"enabled": True}},
-                    "webhooks": {
-                        "useCustomTlsCerts": True,
-                        "caBundle": "abc123",
-                        "tlsCert": "tlscert123",
-                        "tlsKey": "tlskey123",
-                    },
+                    "webhooks": {"enabled": True},
                 },
             },
             show_only=show_only,
         )
-        names_by_kind = {doc["kind"]: doc["metadata"]["name"] for doc in docs}
-        assert names_by_kind["Deployment"] == f"{release}-aocm"
-        assert names_by_kind["Service"] == f"{release}-aocm-metrics-service"
-        assert names_by_kind["Secret"] == f"{release}-webhooks-tls-certs"
-        for kind, name in names_by_kind.items():
+        names = {(doc["kind"], doc["metadata"]["name"]) for doc in docs}
+        assert ("Deployment", f"{release}-aocm") in names
+        assert ("Service", f"{release}-aocm-metrics-service") in names
+        assert ("Service", f"{release}-airflow-operator-webhook-service") in names
+        for kind, name in names:
             assert name.startswith(f"{release}-"), f"{kind}/{name} is not prefixed by the release name"
 
     @pytest.mark.parametrize("openshift_enabled", [True, False])
