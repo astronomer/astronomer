@@ -6,15 +6,15 @@
 images:
   nats:
     repository: quay.io/astronomer/ap-nats-server
-    tag: 2.14.3-2
+    tag: 2.14.3-3
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.20.0-9
+    tag: 0.20.0-10
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.15
+    tag: 2.0.16
     pullPolicy: IfNotPresent
 
 
