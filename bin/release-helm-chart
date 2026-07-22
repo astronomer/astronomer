@@ -85,8 +85,13 @@ update_index() {
   # bucket, so concurrent releases can otherwise clobber each other's merge.
   gen=$(gcloud storage objects describe "gs://${target_repo}/index.yaml" --format="value(generation)" 2>/dev/null || echo 0)
   if [ "${gen}" -eq 0 ] ; then
-    echo "-> no existing index.yaml found in gs://${target_repo}: creating a new one"
-    helm repo index . --url "https://${target_repo}"
+    echo "!!! P0: gs://${target_repo}/index.yaml is missing or unreadable !!!"
+    echo "Every previously published chart version would become undiscoverable via"
+    echo "'helm repo update' if we silently generated a replacement index.yaml here. Refusing"
+    echo "to proceed -- investigate immediately whether the object was actually deleted, or"
+    echo "the describe call failed for another reason (auth/permissions/network), before"
+    echo "re-running."
+    exit 1
   else
     echo "-> merging into existing index.yaml (generation ${gen}) from gs://${target_repo}"
     rm -f /tmp/index.yaml.current
