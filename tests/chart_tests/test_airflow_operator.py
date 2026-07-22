@@ -346,6 +346,70 @@ class TestAirflowOperator:
         # When privateRegistry is enabled the image is built from the private repo + the dev image name.
         assert image.startswith("my.private.registry/astronomer/airflow-operator-dev:")
 
+    def test_airflow_operator_platform_node_pool(self, kube_version):
+        """The controller pod inherits global.platformNodePool scheduling when no manager override is set."""
+        node_selector = {"astronomer.io/nodepool": "platform"}
+        tolerations = [{"key": "platform", "operator": "Exists", "effect": "NoSchedule"}]
+        affinity = {
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {"matchExpressions": [{"key": "astronomer.io/nodepool", "operator": "In", "values": ["platform"]}]}
+                    ]
+                }
+            }
+        }
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "platformNodePool": {
+                        "nodeSelector": node_selector,
+                        "tolerations": tolerations,
+                        "affinity": affinity,
+                    },
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["nodeSelector"] == node_selector
+        assert pod_spec["tolerations"] == tolerations
+        assert pod_spec["affinity"] == affinity
+
+    def test_airflow_operator_manager_scheduling_overrides_platform_node_pool(self, kube_version):
+        """manager.{nodeSelector,tolerations,affinity} take precedence over the platform node pool (default idiom)."""
+        manager_selector = {"astronomer.io/nodepool": "dedicated-operator"}
+        manager_tolerations = [{"key": "operator", "operator": "Exists", "effect": "NoSchedule"}]
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "platformNodePool": {
+                        "nodeSelector": {"astronomer.io/nodepool": "platform"},
+                        "tolerations": [{"key": "platform", "operator": "Exists", "effect": "NoSchedule"}],
+                        "affinity": {},
+                    },
+                },
+                "airflow-operator": {
+                    "manager": {
+                        "nodeSelector": manager_selector,
+                        "tolerations": manager_tolerations,
+                    },
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["nodeSelector"] == manager_selector
+        assert pod_spec["tolerations"] == manager_tolerations
+
     @pytest.mark.parametrize(
         "operator_enabled,np_enabled,should_render",
         [
