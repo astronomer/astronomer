@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: airflow-operator-manager-rolebinding
+  name: {{ .Release.Name }}-airflow-operator-manager-rolebinding
   labels:
     tier: operator
     release: {{ .Release.Name }}
@@ -11,7 +11,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: airflow-operator-manager-role
+  name: {{ .Release.Name }}-airflow-operator-manager-role
 subjects:
 - kind: ServiceAccount
   name: {{ template "operator.serviceAccountName" . }}
