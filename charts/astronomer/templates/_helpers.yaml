@@ -761,7 +761,7 @@ tls:
 
 {{- define "houston.eventsUrl" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
-https://houston.{{ .Values.global.baseDomain }}/v1/registry/events
+https://houston.{{ include "houston.controlPlaneBaseDomain" . }}/v1/registry/events
 {{- else -}}
 http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events
 {{- end }}
@@ -814,9 +814,25 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 {{- end }}
 {{- end }}
 
+{{- /*
+CP-HA: the control-plane base domain a data plane targets for control-plane services (Houston).
+Under Control Plane HA this is the GLOBAL base domain so DP->CP requests health-route to whichever
+control plane is active as pinning to a single CP's per-CP baseDomain breaks DP->CP calls after a
+CP/region failover (if the pinned CP is the one that is down).
+When HA is enabled, globalBaseDomain is REQUIRED on every plane, so the HA branch always resolves. The
+per-CP fallback below is reached only when HA is disabled. Only meaningful on data planes.
+*/ -}}
+{{- define "houston.controlPlaneBaseDomain" -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- else -}}
+{{- .Values.global.baseDomain -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "houston.authServiceURL" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
-https://houston.{{ .Values.global.baseDomain }}
+https://houston.{{ include "houston.controlPlaneBaseDomain" . }}
 {{- else -}}
 http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}
 {{- end }}

@@ -98,16 +98,18 @@ class TestDualHostIngress:
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 def test_prometheus_data_plane_ha_no_global_host(kube_version):
-    """Prometheus ingress renders on data planes; globalBaseDomain is control-plane-only.
+    """Prometheus ingress renders on data planes and never emits the global customer host.
 
-    A data-plane render with HA enabled (e.g. shared values) and no globalBaseDomain must
-    render cleanly and emit no global host (mirrors PINF-768's data-plane guard).
+    The global host is control-plane-only *by design* (customer UIs live on the CP. The ingress
+    gates it on plane.mode), so a data plane suppresses it even though globalBaseDomain is now
+    also set on DP installs under HA. globalBaseDomain is supplied here because the HA render guard
+    now requires it on every plane.
     """
     values = {
         "global": {
             "plane": {"mode": "data", "domainPrefix": "dp"},
             "baseDomain": BASE_DOMAIN,
-            "controlPlaneHA": {"enabled": True},
+            "controlPlaneHA": {"enabled": True, "globalBaseDomain": GLOBAL_BASE_DOMAIN},
         }
     }
     ingress = _find_ingress(render_chart(kube_version=kube_version, show_only=[PROMETHEUS_INGRESS], values=values))
@@ -129,14 +131,15 @@ def test_public_ingress_global_bare_domain_redirect(kube_version):
 def test_public_ingress_data_plane_ha_no_global_redirect(kube_version):
     """Public ingress renders on data planes; the global bare-domain redirect is control-plane-only.
 
-    A data-plane render with HA enabled and no globalBaseDomain must not emit the global
-    redirect (which would otherwise template `<no value>` into the nginx snippet).
+    The global bare-domain redirect is control-plane-only (gated on plane.mode), so a data-plane
+    render must not emit it even though globalBaseDomain is now also set on DP installs under HA.
+    globalBaseDomain is supplied here because the HA render guard now requires it on every plane.
     """
     values = {
         "global": {
             "plane": {"mode": "data"},
             "baseDomain": BASE_DOMAIN,
-            "controlPlaneHA": {"enabled": True},
+            "controlPlaneHA": {"enabled": True, "globalBaseDomain": GLOBAL_BASE_DOMAIN},
         }
     }
     ingress = _find_ingress(render_chart(kube_version=kube_version, show_only=[PUBLIC_INGRESS], values=values))
