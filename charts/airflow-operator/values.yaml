@@ -2,7 +2,7 @@ images:
   manager:
     # TODO: Change it to public image once 1.6.0 is released
     repository: quay.io/astronomer/airflow-operator-dev
-    tag: 1.6.0-rc
+    tag: 1.6.0-rc4
     pullPolicy: IfNotPresent
 # Whether the chart should create the Airflow Operator CRDs. Set to false if the CRDs are managed
 # out-of-band (e.g. installed separately by a cluster admin or via GitOps).
