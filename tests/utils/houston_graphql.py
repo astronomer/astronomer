@@ -190,6 +190,25 @@ def upsert_deployment(
     return data["upsertDeployment"]
 
 
+def _summarize_pods(k8s_core_v1_client, namespace: str, label_selector: str) -> list[str]:
+    """One line per pod matching label_selector: phase plus each container's ready/state.
+
+    Shared by wait_for_release_ready's per-iteration status line (so a crash-looping
+    container is visible on every poll, not just once the 600s timeout finally fires)
+    and dump_release_diagnostics' fuller post-mortem below.
+    """
+    pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
+    if not pods:
+        return [f"no pods exist yet in {namespace} for {label_selector}"]
+    lines = []
+    for pod in pods:
+        statuses = [f"{c.name}: ready={c.ready} state={c.state}" for c in pod.status.container_statuses or []]
+        lines.append(
+            f"{namespace}/{pod.metadata.name}: phase={pod.status.phase} -- {'; '.join(statuses) or 'no container statuses yet'}"
+        )
+    return lines
+
+
 def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector: str) -> None:
     """
     Print actual Pod status and namespace Events for a release that never became ready.
@@ -201,14 +220,8 @@ def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector:
     prints both so the two aren't confused (see PINF-1031's auth-sidecar scenario for the
     same distinction at the single-Deployment level).
     """
-    pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
-    if not pods:
-        print(f"dump_release_diagnostics: no pods exist at all in {namespace} for {label_selector}")
-    for pod in pods:
-        statuses = [f"{c.name}: ready={c.ready} state={c.state}" for c in pod.status.container_statuses or []]
-        print(
-            f"pod {namespace}/{pod.metadata.name}: phase={pod.status.phase} -- {'; '.join(statuses) or 'no container statuses yet'}"
-        )
+    for line in _summarize_pods(k8s_core_v1_client, namespace, label_selector):
+        print(f"pod {line}")
 
     events = k8s_core_v1_client.list_namespaced_event(namespace).items
     print(f"--- events in {namespace} ({len(events)}) ---")
@@ -227,9 +240,15 @@ def wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, release_name:
     minutes with no output at all, which is the same order of magnitude as this
     function's own timeout -- a silent poll loop risks CI killing the job before this
     function's own TimeoutError (with the actually useful detail) ever gets to fire.
+
+    Also prints per-pod container status every iteration, not just once at the final
+    timeout -- this is intermittent (PINF-1068, PINF-1049 were both this shape: only
+    some runs hit it), so a crash-looping sidecar or a JWKS race needs to be visible on
+    the run that actually hits it, not only inferred after the fact from a rerun.
     """
     label_selector = f"release={release_name}"
-    deadline = time.monotonic() + timeout
+    start = time.monotonic()
+    deadline = start + timeout
     while True:
         deployments = k8s_apps_v1_client.list_deployment_for_all_namespaces(label_selector=label_selector).items
         statefulsets = k8s_apps_v1_client.list_stateful_set_for_all_namespaces(label_selector=label_selector).items
@@ -240,14 +259,21 @@ def wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, release_name:
             if (w.status.ready_replicas or 0) != w.spec.replicas
         ]
         if workloads and not not_ready:
-            print(f"Release {release_name!r}: all {len(workloads)} Deployment(s)/StatefulSet(s) ready.")
+            print(
+                f"Release {release_name!r}: all {len(workloads)} Deployment(s)/StatefulSet(s) ready "
+                f"after {int(time.monotonic() - start)}s."
+            )
             return
         if not workloads:
             not_ready = [f"no Deployments/StatefulSets found yet with label {label_selector}"]
         remaining = int(deadline - time.monotonic())
-        print(f"Release {release_name!r} not ready yet ({remaining}s remaining): {', '.join(not_ready)}")
+        elapsed = int(time.monotonic() - start)
+        print(f"Release {release_name!r} not ready yet ({elapsed}s elapsed, {remaining}s remaining): {', '.join(not_ready)}")
+        namespace = workloads[0].metadata.namespace if workloads else None
+        if namespace:
+            for line in _summarize_pods(k8s_core_v1_client, namespace, label_selector):
+                print(f"  pod {line}")
         if time.monotonic() >= deadline:
-            namespace = workloads[0].metadata.namespace if workloads else None
             if namespace:
                 dump_release_diagnostics(k8s_core_v1_client, namespace, label_selector)
             else:

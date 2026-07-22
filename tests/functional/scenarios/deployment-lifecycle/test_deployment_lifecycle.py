@@ -22,6 +22,8 @@ needed here, because houston-api's populate-default-cluster script already creat
 default Cluster row on startup whenever plane.mode is unified.
 """
 
+import time
+
 import pytest
 import testinfra
 from kubernetes import client, config
@@ -74,10 +76,25 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_cli
     Houston's GraphQL API, and waits for it to reach full readiness. Module-scoped: both
     tests in this file share the one deployment, since creating it is the expensive part
     and the switch test needs an already-ready deployment to switch.
+
+    Prints a timestamped line before/after each step: the failures seen so far
+    (PINF-1068's pgbouncer crash-loop, PINF-1049's JWKS race) are intermittent, and
+    without this the only visibility into this setup phase was wait_for_release_ready's
+    own polling -- nothing showed whether create_user/create_workspace/get_cluster_id/
+    upsert_deployment itself was slow, hung, or where a HoustonError actually came from.
     """
+    start = time.monotonic()
+
+    def _log(step: str) -> None:
+        print(f"[deployment fixture] {step} ({time.monotonic() - start:.1f}s elapsed)")
+
+    _log("creating admin user")
     token = create_user(_houston_api_module, ADMIN_EMAIL, ADMIN_PASSWORD)
+    _log("creating workspace")
     workspace_id = create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
+    _log("looking up default cluster id")
     cluster_id = get_cluster_id(_houston_api_module, token)
+    _log("calling upsertDeployment")
     try:
         created = upsert_deployment(
             _houston_api_module,
@@ -88,10 +105,13 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_cli
             cluster_id=cluster_id,
         )
     except HoustonError:
+        _log("upsertDeployment raised a HoustonError, dumping houston/commander logs")
         dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
         dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
         raise
+    _log(f"upsertDeployment returned releaseName={created['releaseName']!r}, waiting for readiness")
     wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"])
+    _log("release is ready")
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
