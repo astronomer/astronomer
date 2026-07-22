@@ -77,6 +77,31 @@ class TestCommanderJWKSHookJob:
         assert configmap_doc["metadata"]["name"] == "release-name-commander-jwks-hook-config"
         assert "commander-jwks.py" in configmap_doc["data"]
 
+    def test_jwks_hook_job_control_plane_endpoint_cp_ha(self, kube_version):
+        """CP-HA: the JWKS bootstrap hook's CONTROL_PLANE_ENDPOINT must target the
+        GLOBAL control-plane host so it health-routes to the active CP, not a pinned per-CP host.
+
+        baseDomain is passed as the render arg (render_chart --set's global.baseDomain, which
+        overrides values files) and deliberately differs from globalBaseDomain, so this proves the
+        endpoint is built from globalBaseDomain rather than the per-CP baseDomain.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            baseDomain="cp01.example.com",
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "controlPlaneHA": {"enabled": True, "globalBaseDomain": "example.com"},
+                }
+            },
+            show_only=["charts/astronomer/templates/commander/jwks-hooks/commander-jwks-hooks.yaml"],
+        )
+        container = get_containers_by_name(docs[0], include_init_containers=True)["commander-jwks-hook"]
+        env_vars = get_env_vars_dict(container["env"])
+        assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com", (
+            "JWKS bootstrap must target the global Houston host under CP-HA, not the per-CP baseDomain"
+        )
+
     def test_jwks_hook_job_global_pod_labels(self, kube_version):
         """PINF-972: global.podLabels must reach this Job's pod template, same as every
         other pod-owning template. This one is easy to miss in the repo-wide sweep

@@ -79,7 +79,9 @@ spec:
           resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           env:
             - name: CONTROL_PLANE_ENDPOINT
-              value: "https://houston.{{ .Values.global.baseDomain }}"
+              # CP-HA: target the global control-plane host under HA so the
+              # JWKS bootstrap health-routes to whichever CP is active, not a pinned per-CP host.
+              value: "https://houston.{{ include "houston.controlPlaneBaseDomain" . }}"
             - name: SECRET_NAME
               value: "{{ .Release.Name }}-houston-jwt-signing-certificate"
             - name: NAMESPACE

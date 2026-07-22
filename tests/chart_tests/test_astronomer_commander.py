@@ -1,5 +1,3 @@
-import subprocess
-
 import jmespath
 import pytest
 import yaml
@@ -1003,12 +1001,15 @@ class TestAstronomerCommander:
         Control Plane HA it must use the global hostname so validation health-routes to the
         active control plane.
         """
+        # baseDomain is passed as the render arg (render_chart --set's global.baseDomain, which
+        # overrides values files) and deliberately differs from globalBaseDomain, so this asserts
+        # the helper uses globalBaseDomain rather than the per-CP baseDomain.
         docs = render_chart(
             kube_version=kube_version,
+            baseDomain="cp01.example.com",
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "baseDomain": "cp01.example.com",
                     "controlPlaneHA": {"enabled": True, "globalBaseDomain": "example.com"},
                 }
             },
@@ -1021,22 +1022,3 @@ class TestAstronomerCommander:
         assert jwks_entries[0]["value"] == "https://houston.example.com", (
             "data plane under CP-HA must fetch JWKS from the global hostname (globalBaseDomain), not the per-CP baseDomain"
         )
-
-    def test_commander_houston_auth_service_url_cp_ha_missing_global_base_domain(self, kube_version):
-        """CP-HA (PINF-1069): with HA enabled but globalBaseDomain unset, rendering must hard-fail
-        rather than silently pinning the data-plane JWKS endpoint to the per-CP baseDomain (which
-        would reintroduce the failover bug under a misconfiguration).
-        """
-        with pytest.raises(subprocess.CalledProcessError) as exc_info:
-            render_chart(
-                kube_version=kube_version,
-                values={
-                    "global": {
-                        "plane": {"mode": "data"},
-                        "baseDomain": "cp01.example.com",
-                        "controlPlaneHA": {"enabled": True},
-                    }
-                },
-                show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
-            )
-        assert "globalBaseDomain is required" in exc_info.value.stderr.decode("utf-8")

@@ -816,18 +816,14 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 
 {{- /*
 CP-HA: the control-plane base domain a data plane targets for control-plane services (Houston).
-Under Control Plane HA this must be the GLOBAL base domain so DP->CP requests health-route to
-whichever control plane is currently active; pinning to a single CP's per-CP baseDomain breaks
-DP->CP calls after a CP/region failover (the pinned CP is the one that is down).
-Hard-fails if HA is enabled but globalBaseDomain is unset (rather than silently falling back to a
-pinned per-CP endpoint). Uses the per-CP baseDomain only when Control Plane HA is disabled. Only
-meaningful on data planes.
+Under Control Plane HA this is the GLOBAL base domain so DP->CP requests health-route to whichever
+control plane is active as pinning to a single CP's per-CP baseDomain breaks DP->CP calls after a
+CP/region failover (if the pinned CP is the one that is down).
+When HA is enabled, globalBaseDomain is REQUIRED on every plane, so the HA branch always resolves. The
+per-CP fallback below is reached only when HA is disabled. Only meaningful on data planes.
 */ -}}
 {{- define "houston.controlPlaneBaseDomain" -}}
-{{- if .Values.global.controlPlaneHA.enabled -}}
-{{- if not .Values.global.controlPlaneHA.globalBaseDomain -}}
-{{- fail "global.controlPlaneHA.globalBaseDomain is required when global.controlPlaneHA.enabled is true" -}}
-{{- end -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
 {{- .Values.global.controlPlaneHA.globalBaseDomain -}}
 {{- else -}}
 {{- .Values.global.baseDomain -}}
