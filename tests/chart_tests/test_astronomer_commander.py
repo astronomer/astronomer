@@ -1,3 +1,5 @@
+import subprocess
+
 import jmespath
 import pytest
 import yaml
@@ -1017,6 +1019,24 @@ class TestAstronomerCommander:
         jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
         assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
         assert jwks_entries[0]["value"] == "https://houston.example.com", (
-            "data plane under CP-HA must fetch JWKS from the global hostname (globalBaseDomain), "
-            "not the per-CP baseDomain"
+            "data plane under CP-HA must fetch JWKS from the global hostname (globalBaseDomain), not the per-CP baseDomain"
         )
+
+    def test_commander_houston_auth_service_url_cp_ha_missing_global_base_domain(self, kube_version):
+        """CP-HA (PINF-1069): with HA enabled but globalBaseDomain unset, rendering must hard-fail
+        rather than silently pinning the data-plane JWKS endpoint to the per-CP baseDomain (which
+        would reintroduce the failover bug under a misconfiguration).
+        """
+        with pytest.raises(subprocess.CalledProcessError) as exc_info:
+            render_chart(
+                kube_version=kube_version,
+                values={
+                    "global": {
+                        "plane": {"mode": "data"},
+                        "baseDomain": "cp01.example.com",
+                        "controlPlaneHA": {"enabled": True},
+                    }
+                },
+                show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+            )
+        assert "globalBaseDomain is required" in exc_info.value.stderr.decode("utf-8")

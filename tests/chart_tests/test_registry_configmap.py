@@ -1,3 +1,5 @@
+import subprocess
+
 import pytest
 import yaml
 
@@ -123,3 +125,46 @@ class Test_Registry_Configmap:
             None,
         )
         assert houston_endpoint["url"] == "https://houston.example.com/v1/registry/events"
+
+    def test_registry_configmap_houston_event_url_cp_ha(self, kube_version):
+        """CP-HA (PINF-1069): the registry's Houston notification URL must target the GLOBAL
+        hostname under HA so it health-routes to the active control plane, not a pinned per-CP host.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "cp01.example.com",
+                    "plane": {"mode": "data"},
+                    "controlPlaneHA": {"enabled": True, "globalBaseDomain": "example.com"},
+                },
+            },
+            show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        config = yaml.safe_load(docs[0]["data"]["config.yml"])
+        houston_endpoint = next(
+            (endpoint for endpoint in config["notifications"]["endpoints"] if endpoint["name"] == "houston"),
+            None,
+        )
+        assert houston_endpoint["url"] == "https://houston.example.com/v1/registry/events", (
+            "registry notifications must target the global Houston hostname under CP-HA, not the per-CP baseDomain"
+        )
+
+    def test_registry_configmap_houston_event_url_cp_ha_missing_global_base_domain(self, kube_version):
+        """CP-HA (PINF-1069): HA enabled but globalBaseDomain unset must hard-fail rather than
+        silently pinning the registry notification URL to the per-CP baseDomain.
+        """
+        with pytest.raises(subprocess.CalledProcessError) as exc_info:
+            render_chart(
+                kube_version=kube_version,
+                values={
+                    "global": {
+                        "baseDomain": "cp01.example.com",
+                        "plane": {"mode": "data"},
+                        "controlPlaneHA": {"enabled": True},
+                    },
+                },
+                show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
+            )
+        assert "globalBaseDomain is required" in exc_info.value.stderr.decode("utf-8")
