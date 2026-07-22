@@ -101,16 +101,16 @@ global:
     priorityClassName: ~
   airflowOperator:
     # Turn on operator-based Airflow deployments. When enabled, this chart installs
-    # the airflow-operator by default and grants Astronomer the permissions it needs
+    # the airflow-operator by default and grants APC the permissions it needs
     # to manage Airflow deployments through the operator.
     #
     # Already running your own operator on the cluster? Keep this enabled, but set
-    # `airflow-operator.enabled: false` (see Chart.yaml) so Astronomer works with your
+    # `airflow-operator.enabled: false` (see Chart.yaml) so APC works with your
     # existing operator instead of installing its own.
     enabled: false
 
     adoption:
-      # Allow Astronomer to adopt Airflow deployments that already exist on your
+      # Allow APC to adopt Airflow deployments that already exist on your
       # cluster, so you can bring them under management without recreating them.
       enabled: true
 
