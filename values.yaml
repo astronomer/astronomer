@@ -193,7 +193,13 @@ global:
       client:
         readinessProbe: {}
         livenessProbe: {}
-      resources: {}
+      resources:
+        limits:
+          cpu: 200m
+          memory: 384Mi
+        requests:
+          cpu: 200m
+          memory: 384Mi
       persistence: {}
 
   # Deploy auth sidecar to use openshift native features
@@ -327,13 +333,13 @@ global:
       securityContext: {}
       readinessProbe: {}
       livenessProbe: {}
-      resources: {}
-      #  requests:
-      #    cpu: "100m"
-      #    memory: "386Mi"
-      #  limits:
-      #    cpu: "100m"
-      #    memory: "386Mi"
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "384Mi"
+        limits:
+          cpu: "100m"
+          memory: "384Mi"
 
   # External ES logging
   customLogging:
@@ -495,6 +501,10 @@ astronomer:
         securityContext:
           runAsNonRoot: true
           allowPrivilegeEscalation: false
+          runAsUser: 65532
+          capabilities:
+            drop:
+              - ALL
 
         resources:
           requests:
