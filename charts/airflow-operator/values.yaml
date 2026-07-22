@@ -46,16 +46,13 @@ webhooks:
   # Enables the webhook service for mutating and validating configurations.
   enabled: true
   useCustomTlsCerts: false
-  certSecretName: "webhook-server-cert"
-  customCertsSecretName: "webhooks-tls-certs"
-  # for each of the following properties, the full certificate/key/CABundle should be provided in the following way:
+  customCertsSecretName: ""
+  # for the following properties, the full certificate/key/CABundle should be provided in the following way:
   # caBundle: |
   #  -----BEGIN CERTIFICATE-----
   #  .......................
   #  -----END CERTIFICATE-----
   caBundle: ""
-  tlsCert: ""
-  tlsKey: ""
 
 serviceAccount:
   create: true
