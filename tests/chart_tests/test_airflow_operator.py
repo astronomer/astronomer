@@ -583,6 +583,8 @@ class TestAirflowOperator:
             "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
             "charts/airflow-operator/templates/manager/controller-manager-metrics-service.yaml",
             "charts/airflow-operator/templates/manager/webhook-service.yaml",
+            "charts/airflow-operator/templates/rbac/manager-role-clusterrole.yaml",
+            "charts/airflow-operator/templates/rbac/manager-rolebinding-clusterrole.yaml",
         ]
         docs = render_chart(
             name=release,
@@ -591,6 +593,7 @@ class TestAirflowOperator:
             values={
                 "global": {
                     "airflowOperator": {"enabled": True},
+                    "rbac": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {"metrics": {"enabled": True}},
@@ -603,8 +606,12 @@ class TestAirflowOperator:
         assert ("Deployment", f"{release}-aocm") in names
         assert ("Service", f"{release}-aocm-metrics-service") in names
         assert ("Service", f"{release}-airflow-operator-webhook-service") in names
+        assert ("ClusterRole", f"{release}-airflow-operator-manager-role") in names
+        assert ("ClusterRoleBinding", f"{release}-airflow-operator-manager-rolebinding") in names
         for kind, name in names:
             assert name.startswith(f"{release}-"), f"{kind}/{name} is not prefixed by the release name"
+        binding = next(doc for doc in docs if doc["kind"] == "ClusterRoleBinding")
+        assert binding["roleRef"]["name"] == f"{release}-airflow-operator-manager-role"
 
     @pytest.mark.parametrize("openshift_enabled", [True, False])
     def test_airflow_operator_openshift_flag(self, kube_version, openshift_enabled):
