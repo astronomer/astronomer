@@ -992,3 +992,31 @@ class TestAstronomerCommander:
         jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
         assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
         assert jwks_entries[0]["value"] == expected_jwks_endpoint
+
+    def test_commander_houston_auth_service_url_cp_ha_data_plane(self, kube_version):
+        """CP-HA: a data plane must fetch Houston JWKS from the GLOBAL hostname.
+
+        Pinning the JWKS endpoint to a single CP's per-CP baseDomain breaks deployment
+        operations after a CP/region failover (the pinned CP is the one that is down). Under
+        Control Plane HA it must use the global hostname so validation health-routes to the
+        active control plane.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "baseDomain": "cp01.example.com",
+                    "controlPlaneHA": {"enabled": True, "globalBaseDomain": "example.com"},
+                }
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        commander_env = get_containers_by_name(docs[0])["commander"]["env"]
+        jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
+        assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
+        assert jwks_entries[0]["value"] == "https://houston.example.com", (
+            "data plane under CP-HA must fetch JWKS from the global hostname (globalBaseDomain), "
+            "not the per-CP baseDomain"
+        )

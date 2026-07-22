@@ -816,7 +816,14 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 
 {{- define "houston.authServiceURL" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
+{{- /* CP-HA: a data plane must fetch Houston's JWKS from the GLOBAL hostname so
+       token validation health-routes to whichever control plane is currently active. 
+       Falls back to the per-CP baseDomain when Control Plane HA is disabled. */ -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+https://houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- else -}}
 https://houston.{{ .Values.global.baseDomain }}
+{{- end -}}
 {{- else -}}
 http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}
 {{- end }}
