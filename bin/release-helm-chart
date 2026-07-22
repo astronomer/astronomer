@@ -103,7 +103,7 @@ process_and_release_chart_file() {
   sha256sum index.yaml
 
   gcloud storage cp "$helm_chart_path" "gs://${target_repo}"
-  gcloud storage cp --cache-control "public, max-age=${max_age}" ./index.yaml "gs://${target_repo}"
+  gcloud storage cp --cache-control "${index_cache_control}" ./index.yaml "gs://${target_repo}"
 
   set +x
   hr
@@ -117,7 +117,9 @@ release_to_dev() {
   # Copy the artifact
   cp "$helm_chart_path" .
 
-  max_age="0"
+  # index.yaml must never be served stale from cache: CI/stage-cluster
+  # upgrades poll right after a release and need to see the new version.
+  index_cache_control="no-cache, no-store, max-age=0"
   process_and_release_chart_file
 }
 
@@ -128,7 +130,7 @@ release_to_pub() {
   # Fetch artifact from helm-dev
   wget "http://$dev_repo/${helm_chart_path##*/}"
 
-  max_age="300"
+  index_cache_control="public, max-age=300"
   process_and_release_chart_file
 }
 
