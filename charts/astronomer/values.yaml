@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 2.1.10
+    tag: danielhoherd_PINF-1049-commander-jwks-fetch-cache-has-no-single-flight-guard-races
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
