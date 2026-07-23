@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create and validate certificates for Astronomer Software functional tests."""
+"""Create and validate certificates for APC functional tests."""
 
 import argparse
 import shutil
@@ -181,7 +181,7 @@ def create_astronomer_private_ca_certificates():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Astronomer Software Certificate Manager using mkcert")
+    parser = argparse.ArgumentParser(description="APC Certificate Manager using mkcert")
     subparsers = parser.add_subparsers(dest="command", required=True, help="Action to perform")
 
     subparsers.add_parser("cleanup", help="Remove expiring certificates")

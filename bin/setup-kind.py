@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Setup KIND cluster and install Astronomer software for testing."""
+"""Setup KIND cluster and install APC for testing."""
 
 import argparse
 import os
