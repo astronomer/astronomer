@@ -16,6 +16,16 @@ dagDeployment.type: git_sync, authType: HTTPS_NONE, pointed at
 astronomer/apc-test-dags-public -- a small public no-auth fixture repo, chosen
 specifically so this doesn't need real git credentials in CI). All three
 authSidecar implementations are now exercised here.
+
+One deployment, switched from dag_deploy to git_sync via upsertDeployment on the same
+deployment_uuid -- not two independent deployments. Two reasons: (1) it's a strictly
+better test, since it also exercises DagDeploymentType-switching itself (mirroring
+test_deployment_lifecycle.py's executor-switch pattern), a real capability nothing else
+covers; (2) two full concurrent Airflow Deployments (each ~9 components) plus the
+platform chart exhausted the CI node's CPU (FailedScheduling: Insufficient cpu on every
+pod of the second deployment) once PINF-1049's commander-side JWKS fix stopped masking
+it by failing earlier. Switching type on one deployment means only one deployment's
+pods ever exist at a time.
 """
 
 import pytest
@@ -39,13 +49,6 @@ ADMIN_EMAIL = "pinf-1031-auth-sidecar-test@astronomer.io"
 ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = "pinf-1031-auth-sidecar"
 DEPLOYMENT_LABEL = "pinf-1031-auth-sidecar"
-# Distinct workspace/deployment label from the dag_deploy deployment above -- but NOT a
-# distinct admin user: createUser's unauthenticated signup only ever succeeds once per
-# cluster (public sign-ups are disabled the moment any user exists, regardless of
-# email), so every deployment in this module shares the one admin token from
-# _admin_token below. Workspace/deployment labels have no such one-time restriction.
-GIT_SYNC_WORKSPACE_LABEL = "pinf-1031-auth-sidecar-git-sync"
-GIT_SYNC_DEPLOYMENT_LABEL = "pinf-1031-auth-sidecar-git-sync"
 GIT_SYNC_REPOSITORY_URL = "https://github.com/astronomer/apc-test-dags-public"
 
 
@@ -164,33 +167,28 @@ def test_deployment_has_auth_proxy_containers(deployment, _k8s_core_v1_client_mo
 
 
 @pytest.fixture(scope="module")
-def git_sync_deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
+def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """
-    Creates a second, separate Airflow Deployment (dagDeployment.type: git_sync) to
-    exercise git-sync-relay -- the third and last authSidecar consumer, previously
-    undocumented as a gap rather than fixed (see module docstring). A real, reachable
-    repo is required, not just a syntactically-valid URL: git-sync-relay's git-daemon
-    container's readiness/liveness/startup probes all check for a file a real clone
-    creates (`.git/git-daemon-export-ok`), so an unreachable URL would hang the same
-    way an earlier version of this scenario's own readiness wait once did (see
-    wait_for_release_ready). astronomer/apc-test-dags-public is a small, public,
-    Astronomer-owned fixture repo made for exactly this -- authType HTTPS_NONE, no
-    credentials needed, and it's reachable from any CI runner the same way CI already
-    reaches GitHub for its own checkout. Shares the module's one admin token
-    (_admin_token) rather than bootstrapping a second user -- see that fixture's
-    docstring for why a second createUser call would fail.
+    Switches the SAME deployment from dagDeployment.type: dag_deploy to git_sync (via
+    upsertDeployment on deployment["id"]), rather than creating a second, independent
+    Airflow Deployment -- see module docstring for why. Exercises git-sync-relay, the
+    third and last authSidecar consumer, previously undocumented as a gap rather than
+    fixed. A real, reachable repo is required, not just a syntactically-valid URL:
+    git-sync-relay's git-daemon container's readiness/liveness/startup probes all check
+    for a file a real clone creates (`.git/git-daemon-export-ok`), so an unreachable URL
+    would hang the same way an earlier version of this scenario's own readiness wait
+    once did (see wait_for_release_ready). astronomer/apc-test-dags-public is a small,
+    public, Astronomer-owned fixture repo made for exactly this -- authType HTTPS_NONE,
+    no credentials needed, and it's reachable from any CI runner the same way CI already
+    reaches GitHub for its own checkout.
     """
-    token = _admin_token
-    workspace_id = create_workspace(_houston_api_module, token, GIT_SYNC_WORKSPACE_LABEL)
-    cluster_id = get_cluster_id(_houston_api_module, token)
+    token = deployment["token"]
     try:
         created = upsert_deployment(
             _houston_api_module,
             token,
             executor="CeleryExecutor",
-            label=GIT_SYNC_DEPLOYMENT_LABEL,
-            workspace_id=workspace_id,
-            cluster_id=cluster_id,
+            deployment_uuid=deployment["id"],
             dag_deployment_type="git_sync",
             repository_url=GIT_SYNC_REPOSITORY_URL,
             auth_type="HTTPS_NONE",
@@ -216,9 +214,9 @@ def test_git_sync_deployment_reaches_ready(git_sync_deployment):
 def test_git_sync_deployment_has_auth_proxy_container(git_sync_deployment, _k8s_core_v1_client_module):
     """
     Confirms authSidecar reached git-sync-relay's pod specifically -- the one
-    implementation test_deployment_has_auth_proxy_containers above doesn't cover,
-    since that fixture's dag_deploy deployment never creates a git-sync-relay pod at
-    all (dag-server is a separate, independently-gated consumer).
+    implementation test_deployment_has_auth_proxy_containers above doesn't cover, since
+    this same deployment had no git-sync-relay pod at all before the type switch
+    (dag-server is a separate, independently-gated consumer).
     """
     pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(
         label_selector=f"release={git_sync_deployment['release_name']}"

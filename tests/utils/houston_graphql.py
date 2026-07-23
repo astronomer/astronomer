@@ -134,7 +134,7 @@ def upsert_deployment(
     label: str | None = None,
     workspace_id: str | None = None,
     cluster_id: str | None = None,
-    dag_deployment_type: str = "image",
+    dag_deployment_type: str | None = None,
     repository_url: str | None = None,
     auth_type: str | None = None,
     deployment_uuid: str | None = None,
@@ -144,6 +144,13 @@ def upsert_deployment(
     Same mutation both ways -- upsertDeployment resolves create vs. update from whether
     deployment_uuid identifies an existing row.
 
+    dag_deployment_type is optional on update: passing it switches an existing
+    deployment's DagDeploymentType (e.g. dag_deploy -> git_sync), the same way `executor`
+    switches on an existing deployment_uuid -- houston-api has real handling for this
+    (see getMungedArgs' gitSyncTransition logic, which strips stale git-sync fields when
+    transitioning away from it). Omitting it on update leaves the stored dagDeployment
+    config untouched. On create it defaults to "image" if not given.
+
     repository_url/auth_type only apply to dag_deployment_type="git_sync" (the DagDeployment
     fields git-sync-relay's own repositoryUrl/authType).
     """
@@ -151,19 +158,16 @@ def upsert_deployment(
     if deployment_uuid:
         variables["deploymentUuid"] = deployment_uuid
     else:
+        variables.update({"label": label, "workspaceUuid": workspace_id, "clusterId": cluster_id})
+        dag_deployment_type = dag_deployment_type or "image"
+
+    if dag_deployment_type:
         dag_deployment = {"type": dag_deployment_type}
         if repository_url:
             dag_deployment["repositoryUrl"] = repository_url
         if auth_type:
             dag_deployment["authType"] = auth_type
-        variables.update(
-            {
-                "label": label,
-                "workspaceUuid": workspace_id,
-                "clusterId": cluster_id,
-                "dagDeployment": dag_deployment,
-            }
-        )
+        variables["dagDeployment"] = dag_deployment
     query = """
     mutation UpsertDeployment(
       $label: String
