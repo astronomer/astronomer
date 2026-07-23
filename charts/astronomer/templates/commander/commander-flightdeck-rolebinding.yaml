@@ -2,7 +2,7 @@
 ## Commander Flightdeck Role Binding ##
 #######################################
 {{- if .Values.global.rbac.enabled }}
-{{- if or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
+{{- if (include "flightdeck.enabled" .) }}
 {{- $commanderServiceAccountName := ( include "commander.serviceAccountName" . )  }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
