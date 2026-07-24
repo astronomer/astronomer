@@ -875,7 +875,7 @@ class TestAstronomerCommander:
             [("data", 3, 1), ("control", 0, 0), ("unified", 3, 1)],
         )
         def test_flightdeck_enabled_with_no_cluster_role(self, kube_version, plane, init_containers_count, containers_count):
-            """Test that flightdeck works when enabled with various configs."""
+            """Test that flightdeck renders rbac tpl when on clusterRoles is false."""
             docs = render_chart(
                 kube_version=kube_version,
                 values={
