@@ -1,0 +1,88 @@
+# Functional-test scenarios create real Airflow Deployments that never run actual
+# DAG tasks, so apc-airflow's production-sized defaults (500m CPU/1Gi memory requests,
+# 1 CPU/2Gi memory limits per main component) are far more than needed. That's a
+# meaningful chunk of why a single Airflow Deployment plus the platform chart
+# exhausted the CI node's CPU (FailedScheduling: Insufficient cpu) once PINF-1049's
+# commander fix stopped masking it by failing before pods were even created -- see
+# PINF-1080. Sized down to roughly the same "small sidecar" scale already used
+# elsewhere in this repo's own defaults (logGroomerSidecar, pgbouncer's
+# metricsExporterSidecar: 100m/128Mi requests, 200m/256Mi limits).
+---
+global:
+  # Injected onto every authSidecar-enabled pod -- in the auth-sidecar scenario
+  # that's grafana/prometheus/alertmanager AND dag-server/git-sync-relay/webserver
+  # in the Airflow Deployment it creates, so the default 500m/512Mi request is a
+  # real multiplier across that many pods, not just one component's cost.
+  authSidecar:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+# houston.config isn't a `global` value, so it has to be nested under the astronomer
+# subchart's own alias (this repo's Chart.yaml dependency name) to actually reach
+# charts/astronomer's `.Values.houston.config` -- unlike `global:` above, which Helm
+# auto-propagates into every subchart regardless of nesting. Bare `houston:` at this
+# file's top level silently no-ops.
+astronomer:
+  houston:
+    # Escape hatch into houston-api's own config cascade (rendered as
+    # local-production.yaml, the highest-priority layer) -- deployments.helm.airflow.*
+    # is the same path this chart's own houston-configmap.yaml already uses for
+    # ephemeral-storage overrides on these same components; this deep-merges cpu/memory
+    # in alongside that, it doesn't replace it.
+    config:
+      deployments:
+        helm:
+          airflow:
+            scheduler:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+            webserver:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+            workers:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+            triggerer:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+            apiServer:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+            dagProcessor:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi

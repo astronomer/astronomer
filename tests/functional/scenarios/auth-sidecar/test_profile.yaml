@@ -14,6 +14,7 @@ values:
   - configs/enable-auth-sidecar.yaml
   - configs/psa-restricted.yaml
   - configs/enable-psa.yaml
+  - configs/scenario-airflow-reduce-resources.yaml
 namespace_labels:
   pod-security.kubernetes.io/enforce: restricted
   pod-security.kubernetes.io/enforce-version: latest
