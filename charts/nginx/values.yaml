@@ -13,7 +13,7 @@ images:
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.30.3
+    tag: 0.30.4
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -54,13 +54,13 @@ maxUnavailableDefaultBackend: 25%
 
 minReadySeconds: 0
 
-resources: {}
-#  limits:
-#   cpu: 100m
-#   memory: 128Mi
-#  requests:
-#   cpu: 100m
-#   memory: 128Mi
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
 
 livenessProbe: {}
   # httpGet:
@@ -133,7 +133,13 @@ allowSnippetAnnotations: true
 
 defaultBackend:
   enabled: true
-  resources: {}
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
   readinessProbe: {}
   livenessProbe: {}
   startupProbe: {}

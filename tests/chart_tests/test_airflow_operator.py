@@ -39,7 +39,7 @@ class TestAirflowOperator:
                     "certManager": {"enabled": True},
                 },
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
             },
             show_only=sorted(
@@ -67,7 +67,7 @@ class TestAirflowOperator:
                     "crd": {"create": True},
                 },
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
             },
             show_only=sorted(
@@ -88,7 +88,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "crd": {"create": crd_create},
@@ -121,7 +121,7 @@ class TestAirflowOperator:
                 "crd": {"create": True},
             },
             "global": {
-                "operator": {"enabled": True},
+                "airflowOperator": {"enabled": True},
                 "plane": {"mode": plane_mode},
             },
         }
@@ -147,35 +147,6 @@ class TestAirflowOperator:
             operator_docs = [f"{doc.get('kind')}/{doc.get('metadata', {}).get('name')}" for doc in docs if _is_operator_doc(doc)]
             assert operator_docs == [], f"control plane must not render operator resources, got: {operator_docs}"
 
-    def test_airflow_operator_secret(self, kube_version):
-        """Test Airflow Operator Webhook tls"""
-        docs = render_chart(
-            validate_objects=False,
-            kube_version=kube_version,
-            values={
-                "airflow-operator": {
-                    "webhooks": {
-                        "useCustomTlsCerts": True,
-                        "caBundle": "abc123",
-                        "tlsCert": "tlscert123",
-                        "tlsKey": "tlskey123",
-                    },
-                },
-                "global": {
-                    "operator": {"enabled": True},
-                },
-            },
-            show_only=["charts/airflow-operator/templates/secrets/webhooks-tls.yaml"],
-        )
-
-        assert len(docs) == 1
-        assert "v1" in docs[0]["apiVersion"]
-        assert "Secret" in docs[0]["kind"]
-        assert "release-name-webhooks-tls-certs" in docs[0]["metadata"]["name"]
-        assert "kubernetes.io/tls" in docs[0]["type"]
-        expected_data = {"tls.crt": "dGxzY2VydDEyMw==", "tls.key": "dGxza2V5MTIz"}
-        assert docs[0]["data"] == expected_data
-
     def test_airflow_operator_webhooks(self, kube_version):
         """Test Airflow Operator Webhook tls"""
         docs = render_chart(
@@ -183,7 +154,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
                 "airflow-operator": {"webhooks": {"enabled": True}},
             },
@@ -214,7 +185,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
                 "airflow-operator": {"airgapped": True, "runtimeVersions": {"versionsJson": runtime_releases_json}},
             },
@@ -235,7 +206,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {
@@ -276,7 +247,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "webhooks": {"enabled": False},
@@ -293,7 +264,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {
@@ -311,7 +282,7 @@ class TestAirflowOperator:
         assert len(docs) == 2
         c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
         assert "manager" in c_by_name["manager"]["name"]
-        assert "--metrics-bind-address=127.0.0.1:8080" in c_by_name["manager"]["args"]
+        assert "--metrics-bind-address=:8080" in c_by_name["manager"]["args"]
         assert "/manager" in c_by_name["manager"]["command"]
         doc = docs[1]
         assert doc["kind"] == "Service"
@@ -320,13 +291,15 @@ class TestAirflowOperator:
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"] == [
             {
-                "port": 8443,
+                "port": 8080,
                 "targetPort": 8080,
                 "protocol": "TCP",
                 "name": "metrics",
                 "appProtocol": "http",
             }
         ]
+        assert doc["metadata"]["annotations"]["prometheus.io/port"] == "8080"
+        assert doc["metadata"]["annotations"]["prometheus.io/scrape"] == "true"
 
     def test_airflow_operator_manager_environment_default(self, kube_version):
         """Test the manager container has AIRFLOW_OPERATOR_ENVIRONMENT set to 'apc'."""
@@ -335,7 +308,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
             },
             show_only=[
@@ -353,7 +326,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                     "privateRegistry": {
                         "enabled": True,
                         "repository": "my.private.registry/astronomer",
@@ -373,6 +346,97 @@ class TestAirflowOperator:
         # When privateRegistry is enabled the image is built from the private repo + the dev image name.
         assert image.startswith("my.private.registry/astronomer/airflow-operator-dev:")
 
+    def test_airflow_operator_pod_annotations_merge(self, kube_version):
+        """The controller pod merges global.podAnnotations with the operator-local podAnnotations.
+
+        Distinct keys both survive; on a key collision the operator-local value wins because it
+        is emitted after global (last-writer-wins) — here global sets ``shared: global`` but local
+        overrides it to ``shared: local``.
+        """
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "podAnnotations": {"env": "production", "shared": "global"},
+                },
+                "airflow-operator": {
+                    "podAnnotations": {"team": "platform", "shared": "local"},
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert annotations["env"] == "production"
+        assert annotations["team"] == "platform"
+        assert annotations["shared"] == "local"
+
+    def test_airflow_operator_platform_node_pool(self, kube_version):
+        """The controller pod inherits global.platformNodePool scheduling when no manager override is set."""
+        node_selector = {"astronomer.io/nodepool": "platform"}
+        tolerations = [{"key": "platform", "operator": "Exists", "effect": "NoSchedule"}]
+        affinity = {
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {"matchExpressions": [{"key": "astronomer.io/nodepool", "operator": "In", "values": ["platform"]}]}
+                    ]
+                }
+            }
+        }
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "platformNodePool": {
+                        "nodeSelector": node_selector,
+                        "tolerations": tolerations,
+                        "affinity": affinity,
+                    },
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["nodeSelector"] == node_selector
+        assert pod_spec["tolerations"] == tolerations
+        assert pod_spec["affinity"] == affinity
+
+    def test_airflow_operator_manager_scheduling_overrides_platform_node_pool(self, kube_version):
+        """manager.{nodeSelector,tolerations,affinity} take precedence over the platform node pool (default idiom)."""
+        manager_selector = {"astronomer.io/nodepool": "dedicated-operator"}
+        manager_tolerations = [{"key": "operator", "operator": "Exists", "effect": "NoSchedule"}]
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "platformNodePool": {
+                        "nodeSelector": {"astronomer.io/nodepool": "platform"},
+                        "tolerations": [{"key": "platform", "operator": "Exists", "effect": "NoSchedule"}],
+                        "affinity": {},
+                    },
+                },
+                "airflow-operator": {
+                    "manager": {
+                        "nodeSelector": manager_selector,
+                        "tolerations": manager_tolerations,
+                    },
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["nodeSelector"] == manager_selector
+        assert pod_spec["tolerations"] == manager_tolerations
+
     @pytest.mark.parametrize(
         "operator_enabled,np_enabled,should_render",
         [
@@ -387,7 +451,7 @@ class TestAirflowOperator:
         np_file = "charts/airflow-operator/templates/manager/controller-manager-networkpolicy.yaml"
         values = {
             "global": {
-                "operator": {"enabled": operator_enabled},
+                "airflowOperator": {"enabled": operator_enabled},
                 "networkPolicy": {"enabled": np_enabled},
             },
         }
@@ -426,7 +490,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                     "networkPolicy": {"enabled": True},
                 },
             },
@@ -495,7 +559,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {"metrics": {"enabled": True}},
@@ -518,7 +582,9 @@ class TestAirflowOperator:
         show_only = [
             "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
             "charts/airflow-operator/templates/manager/controller-manager-metrics-service.yaml",
-            "charts/airflow-operator/templates/secrets/webhooks-tls.yaml",
+            "charts/airflow-operator/templates/manager/webhook-service.yaml",
+            "charts/airflow-operator/templates/rbac/manager-role-clusterrole.yaml",
+            "charts/airflow-operator/templates/rbac/manager-rolebinding-clusterrole.yaml",
         ]
         docs = render_chart(
             name=release,
@@ -526,26 +592,26 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
+                    "rbac": {"enabled": True},
                 },
                 "airflow-operator": {
                     "manager": {"metrics": {"enabled": True}},
-                    "webhooks": {
-                        "useCustomTlsCerts": True,
-                        "caBundle": "abc123",
-                        "tlsCert": "tlscert123",
-                        "tlsKey": "tlskey123",
-                    },
+                    "webhooks": {"enabled": True},
                 },
             },
             show_only=show_only,
         )
-        names_by_kind = {doc["kind"]: doc["metadata"]["name"] for doc in docs}
-        assert names_by_kind["Deployment"] == f"{release}-aocm"
-        assert names_by_kind["Service"] == f"{release}-aocm-metrics-service"
-        assert names_by_kind["Secret"] == f"{release}-webhooks-tls-certs"
-        for kind, name in names_by_kind.items():
+        names = {(doc["kind"], doc["metadata"]["name"]) for doc in docs}
+        assert ("Deployment", f"{release}-aocm") in names
+        assert ("Service", f"{release}-aocm-metrics-service") in names
+        assert ("Service", f"{release}-airflow-operator-webhook-service") in names
+        assert ("ClusterRole", f"{release}-airflow-operator-manager-role") in names
+        assert ("ClusterRoleBinding", f"{release}-airflow-operator-manager-rolebinding") in names
+        for kind, name in names:
             assert name.startswith(f"{release}-"), f"{kind}/{name} is not prefixed by the release name"
+        binding = next(doc for doc in docs if doc["kind"] == "ClusterRoleBinding")
+        assert binding["roleRef"]["name"] == f"{release}-airflow-operator-manager-role"
 
     @pytest.mark.parametrize("openshift_enabled", [True, False])
     def test_airflow_operator_openshift_flag(self, kube_version, openshift_enabled):
@@ -555,7 +621,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                     "openshift": {"enabled": openshift_enabled},
                 },
             },
@@ -579,7 +645,7 @@ class TestAirflowOperator:
     ):
         values = {
             "global": {
-                "operator": {"enabled": True},
+                "airflowOperator": {"enabled": True},
                 "rbac": {"enabled": rbac_enabled},
             },
             "airflow-operator": {
@@ -608,7 +674,7 @@ class TestAirflowOperator:
     @pytest.mark.parametrize(
         "operator_values",
         [
-            pytest.param({"global": {"operator": {"enabled": False}}}, id="explicitly-disabled"),
+            pytest.param({"global": {"airflowOperator": {"enabled": False}}}, id="explicitly-disabled"),
             pytest.param({}, id="default-unset"),
         ],
     )
@@ -637,7 +703,7 @@ class TestAirflowOperator:
     def test_airflow_operator_subchart_flag_precedence(self, kube_version, airflow_operator_values, global_enabled, should_render):
         values = {
             "global": {
-                "operator": {"enabled": global_enabled},
+                "airflowOperator": {"enabled": global_enabled},
                 "plane": {"mode": "unified"},
             },
         }

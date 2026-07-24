@@ -3,8 +3,9 @@
 Covers:
   * cp-identity Secret: generated on every control/unified plane install regardless of
     HA state (PINF-760), so a stable cp_id exists from initial single-CP install and is
-    already available if/when HA is later enabled; data-plane installs never generate it;
-    required-globalBaseDomain guard still applies only when HA is enabled.
+    already available if/when HA is later enabled; data-plane installs never generate it.
+  * globalBaseDomain requirement when HA is enabled: enforced on EVERY plane, data planes
+    included. see templates/validate-controlplane-ha.yaml.
   * JWT signing keypair generation gating (jwks.generation.enabled / HA)
   * CP_ID env var on every CP reconciliation-loop pod, still gated on HA
     (Houston API + worker, dp-link, navigator)
@@ -147,16 +148,36 @@ class TestCpIdentitySecret:
         assert "pre-upgrade" in secret_annotations["helm.sh/hook"]
         assert int(secret_annotations["helm.sh/hook-weight"]) < int(job_annotations["helm.sh/hook-weight"])
 
-    def test_data_plane_render_not_gated_on_global_base_domain(self, kube_version):
-        """A data-plane render with HA enabled (e.g. shared values) must not require globalBaseDomain.
+    def test_data_plane_render_fails_ha_enabled_without_global_base_domain(self, kube_version):
+        """A data-plane render with HA enabled but no globalBaseDomain must fail the render (PINF-1070).
 
-        globalBaseDomain is control-plane-only, so the fail guard is scoped to control/unified;
-        the data plane renders cleanly and emits no cp-identity Secret.
+        This inverts the earlier expectation. globalBaseDomain was previously treated as
+        control-plane-only, so the guard was scoped to control/unified and a data plane rendered
+        cleanly without it. That framing was incorrect: data planes consume globalBaseDomain too
+        (DP->CP service URLs health-route via the global host, see PINF-1069), so enabling CP-HA
+        now requires globalBaseDomain on every plane and the guard
+        (templates/validate-controlplane-ha.yaml) fires regardless of plane.mode.
         """
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                show_only=[CP_IDENTITY_FILE],
+                values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": True}}},
+            )
+        assert "global.controlPlaneHA.globalBaseDomain is required" in excinfo.value.stderr.decode("utf-8")
+
+    def test_data_plane_render_succeeds_ha_enabled_with_global_base_domain(self, kube_version):
+        """Positive companion: a data-plane HA render WITH globalBaseDomain renders cleanly and
+        still emits no cp-identity Secret (the Secret remains control/unified-only)."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=[CP_IDENTITY_FILE],
-            values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": True}}},
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "controlPlaneHA": {"enabled": True, "globalBaseDomain": "astro.example.com"},
+                }
+            },
         )
         assert docs == []
 
@@ -399,18 +420,16 @@ class TestNginxCspGlobalDomain:
             assert self.GLOBAL_WILDCARD not in sources
             assert self.GLOBAL_WSS not in sources
 
-    def test_no_global_host_when_enabled_but_global_base_domain_unset(self, kube_version):
-        """Guard requires BOTH enabled and globalBaseDomain.
+    def test_ha_enabled_without_global_base_domain_fails_on_all_planes(self, kube_version):
+        """Enabling HA without globalBaseDomain is a hard render failure on EVERY plane (PINF-1070).
 
-        Data plane: renders with `enabled` alone and injects nothing — neither the wildcard
-        nor the `wss://` source. Control plane: enabling HA without globalBaseDomain is a hard
-        render failure (the cp-identity guard), so the CP headers can never reach an
-        enabled-but-unset state; assert that failure rather than a header that never renders.
+        The CSP global host can therefore never reach an enabled-but-unset state — the render
+        aborts first — so assert the failure on both the data-plane and control-plane headers
+        ConfigMaps. (Previously the data plane rendered cleanly and simply injected no global host,
+        under the now-corrected "globalBaseDomain is control-plane-only" framing.)
         """
-        csp = self._headers(kube_version, DP_HEADERS_FILE, "data", "dp.example.com", {"enabled": True})
-        for sources in csp.values():
-            assert self.GLOBAL_WILDCARD not in sources
-            assert self.GLOBAL_WSS not in sources
+        with pytest.raises(CalledProcessError):
+            self._headers(kube_version, DP_HEADERS_FILE, "data", "dp.example.com", {"enabled": True})
 
         with pytest.raises(CalledProcessError):
             self._headers(kube_version, CP_HEADERS_FILE, "control", "cp.example.com", {"enabled": True})

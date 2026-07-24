@@ -15,7 +15,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.15
+    tag: 2.0.16
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -54,13 +54,13 @@ backendConnection:
 ports:
   http: 3000
 
-resources: {}
-#  limits:
-#   cpu: 100m
-#   memory: 128Mi
-#  requests:
-#   cpu: 100m
-#   memory: 128Mi
+resources:
+  limits:
+    cpu: 250m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
 
 ## Configure grafana dashboard to import
 ## NOTE: To use dashboards you must also enable/configure dashboardProviders

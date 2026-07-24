@@ -15,6 +15,12 @@ astronomer:
   navigator:
     enabled: true
   houston:
+    logging:
+      loggingSidecar:
+        enabled: true
+        elasticsearch:
+          enabled: true
+          endpoint: "https://es.example.com:9200"
     cleanupAirflowDb:
       enabled: true
     cleanupClusterAudits:
@@ -32,7 +38,7 @@ astronomer:
     worker:
       enabled: true
 global:
-  operator:
+  airflowOperator:
     enabled: true
   authSidecar:
     enabled: true

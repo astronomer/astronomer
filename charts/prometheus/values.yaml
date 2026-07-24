@@ -42,7 +42,7 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.2.7
+    tag: 0.2.8
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
@@ -50,13 +50,13 @@ images:
     pullPolicy: IfNotPresent
 
 
-resources: {}
-#  limits:
-#   cpu: 100m
-#   memory: 128Mi
-#  requests:
-#   cpu: 100m
-#   memory: 128Mi
+resources:
+  limits:
+    cpu: 500m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 1Gi
 
 podAnnotations: {}
 
@@ -110,25 +110,25 @@ configMapReloader:
   livenessProbe: {}
   readinessProbe: {}
   startupProbe: {}
-  resources: {}
-    # limits:
-    #   cpu: 100m
-    #   memory: 25Mi
-    # requests:
-    #   cpu: 100m
-    #   memory: 25Mi
+  resources:
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 32Mi
 
 filesdReloader:
   livenessProbe: {}
   readinessProbe: {}
   startupProbe: {}
-  resources: {}
-    # limits:
-    #   cpu: 100m
-    #   memory: 25Mi
-    # requests:
-    #   cpu: 100m
-    #   memory: 25Mi
+  resources:
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 32Mi
   extraEnv: []
   securityContext:
     allowPrivilegeEscalation: false
@@ -225,7 +225,13 @@ federation:
   auth:
     enabled: true
     replicas: 2
-    resources: {}
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
   ingress:
     annotations: {}
   livenessProbe: {}

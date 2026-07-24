@@ -37,8 +37,8 @@ def load_profile(scenario: str) -> dict:
 
     if profile.get("topology") not in ["unified", "control", "data"]:
         raise SystemExit(f"ERROR: {profile_path} must set topology to one of unified/control/data, got {profile.get('topology')!r}")
-    if not profile.get("values"):
-        raise SystemExit(f"ERROR: {profile_path} must set a non-empty 'values' list")
+    if profile.get("values") is None:
+        raise SystemExit(f"ERROR: {profile_path} must set a 'values' key (an empty list is fine if no overlay is needed)")
     return profile
 
 
