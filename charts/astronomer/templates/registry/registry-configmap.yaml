@@ -57,7 +57,7 @@ data:
     {{- if not .Values.registry.enableInsecureAuth }}
     auth:
       token:
-        realm: "https://houston.{{ .Values.global.baseDomain }}/v1/registry/authorization"
+        realm: "https://houston.{{ include "houston.controlPlaneBaseDomain" . }}/v1/registry/authorization"
         service: {{ .Values.registry.auth.service | quote }}
         issuer: {{ .Values.registry.auth.issuer | quote }}
         rootcertbundle: /etc/docker/ssl/tls.crt

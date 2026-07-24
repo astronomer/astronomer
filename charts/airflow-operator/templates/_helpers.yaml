@@ -21,7 +21,7 @@ service:
 - name: cert
   secret:
     defaultMode: 420
-    secretName: {{ .Values.webhooks.certSecretName }}
+    secretName: {{ .Release.Name }}-webhook-server-cert
 {{- else -}}
 - name: custom-certs
   secret:
@@ -53,7 +53,7 @@ service:
 - --health-probe-bind-address=:{{ .Values.ports.managerPort }}
 - --leader-elect
 {{ if .Values.manager.metrics.enabled }}
-- --metrics-bind-address=127.0.0.1:{{ .Values.ports.managerUpstreamPort }}
+- --metrics-bind-address=:{{ .Values.ports.managerUpstreamPort }}
 {{- end -}}
 {{- if .Values.airgapped }}
 - --airgapped

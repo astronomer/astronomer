@@ -5,6 +5,11 @@ kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Release.Name }}-airflow-operator-serving-cert
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
   name: {{ .Release.Name }}-airflow-operator-validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
