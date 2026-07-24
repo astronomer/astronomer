@@ -1,7 +1,7 @@
 #######################################
 ## Commander Flightdeck Role Binding ##
 #######################################
-{{- if .Values.global.rbac.enabled }}
+{{- if and .Values.global.rbac.enabled (not .Values.global.clusterRoles )}}
 {{- if (include "flightdeck.enabled" .) }}
 {{- $commanderServiceAccountName := ( include "commander.serviceAccountName" . )  }}
 kind: RoleBinding

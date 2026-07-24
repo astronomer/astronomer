@@ -836,13 +836,15 @@ class TestAstronomerCommander:
                     "flightDeck": {"enabled": True},
                 },
             },
-            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml",
-                       "charts/astronomer/templates/commander/commander-flightdeck-role.yaml",
-                       "charts/astronomer/templates/commander/commander-flightdeck-rolebinding.yaml"],
+            show_only=[
+                "charts/astronomer/templates/commander/commander-deployment.yaml",
+                "charts/astronomer/templates/commander/commander-flightdeck-role.yaml",
+                "charts/astronomer/templates/commander/commander-flightdeck-rolebinding.yaml",
+            ],
         )
 
         if plane in ["data", "unified"]:
-            assert len(docs) == 3
+            assert len(docs) == 1
         else:
             assert len(docs) == 0
             return
@@ -867,6 +869,36 @@ class TestAstronomerCommander:
             }
 
             assert commander_env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
+
+        @pytest.mark.parametrize(
+            "plane,init_containers_count,containers_count",
+            [("data", 3, 1), ("control", 0, 0), ("unified", 3, 1)],
+        )
+        def test_flightdeck_enabled_with_no_cluster_role(self, kube_version, plane, init_containers_count, containers_count):
+            """Test that flightdeck works when enabled with various configs."""
+            docs = render_chart(
+                kube_version=kube_version,
+                values={
+                    "global": {
+                        "plane": {"mode": plane},
+                        "clusterRoles": False,
+                    },
+                    "astronomer": {
+                        "flightDeck": {"enabled": True},
+                    },
+                },
+                show_only=[
+                    "charts/astronomer/templates/commander/commander-deployment.yaml",
+                    "charts/astronomer/templates/commander/commander-flightdeck-role.yaml",
+                    "charts/astronomer/templates/commander/commander-flightdeck-rolebinding.yaml",
+                ],
+            )
+
+            if plane in ["data", "unified"]:
+                assert len(docs) == 3
+            else:
+                assert len(docs) == 0
+                return
 
     @pytest.mark.parametrize(
         "plane_mode,should_render",
