@@ -18,6 +18,16 @@
 # webserver/worker all block on via a wait-for-airflow-migrations init container) has
 # no entry of its own here because houston always derives its resources from a
 # rounded copy of the scheduler's resources -- reducing scheduler here reduces it too.
+#
+# Only `resources.default` is set per component below, deliberately -- houston-api
+# also supports `resources.minimum`/`resources.limit` at this same config path, but
+# those only take effect when a caller passes explicit `resources` for that
+# component in the upsertDeployment GraphQL call (they feed
+# validateDeploymentComponentsResources's bounds check on *that* input), and nothing
+# in this scenario's upsert_deployment() calls ever do that. Adding them here would
+# render and look plausible without doing anything -- confirmed by tracing
+# houston-api/src/lib/deployments/config/index.js's createDeploymentConfig,
+# generateHelmValuesForUpsert, and validateDeploymentComponentsResources.
 ---
 global:
   # Injected onto every authSidecar-enabled pod -- in the auth-sidecar scenario
@@ -25,7 +35,12 @@ global:
   # in the Airflow Deployment it creates, so the default 500m/512Mi request is a
   # real multiplier across that many pods, not just one component's cost. This one
   # IS a plain `.Values`-driven field houston-api never touches, so unlike the
-  # components below it works as a normal Helm override.
+  # components below it works as a normal Helm override. Confirmed two ways: via
+  # `helm template` on the astronomer chart's own grafana-deployment.yaml, and via
+  # charts/astronomer/templates/houston/houston-configmap.yaml explicitly bridging
+  # `.Values.global.authSidecar.resources` into houston-api's own (differently
+  # cased) `authSideCar.resources` config key, which feeds its own webserver/
+  # apiServer auth-proxy sidecar injection.
   authSidecar:
     resources:
       requests:
@@ -52,52 +67,32 @@ astronomer:
           - name: scheduler
             resources:
               default: {cpu: 100, memory: 200}
-              minimum: {cpu: 100, memory: 200}
-              limit: {cpu: 500, memory: 1000}
           - name: webserver
             resources:
               default: {cpu: 100, memory: 200}
-              minimum: {cpu: 100, memory: 200}
-              limit: {cpu: 500, memory: 1000}
           - name: triggerer
             resources:
               default: {cpu: 100, memory: 200}
-              minimum: {cpu: 100, memory: 200}
-              limit: {cpu: 500, memory: 1000}
           - name: workers
             resources:
               default: {cpu: 100, memory: 200}
-              minimum: {cpu: 100, memory: 200}
-              limit: {cpu: 500, memory: 1000}
           - name: apiServer
             resources:
               default: {cpu: 200, memory: 400}
-              minimum: {cpu: 200, memory: 400}
-              limit: {cpu: 500, memory: 1000}
           - name: dagProcessor
             resources:
               default: {cpu: 200, memory: 400}
-              minimum: {cpu: 200, memory: 400}
-              limit: {cpu: 500, memory: 1000}
           # CeleryExecutor-only sidecars -- fixed-size (default == minimum == limit)
           # in houston-api's own defaults too, so this just shrinks that fixed size.
           - name: statsd
             resources:
               default: {cpu: 50, memory: 128}
-              minimum: {cpu: 50, memory: 128}
-              limit: {cpu: 50, memory: 128}
           - name: pgbouncer
             resources:
               default: {cpu: 50, memory: 128}
-              minimum: {cpu: 50, memory: 128}
-              limit: {cpu: 50, memory: 128}
           - name: flower
             resources:
               default: {cpu: 50, memory: 128}
-              minimum: {cpu: 50, memory: 128}
-              limit: {cpu: 50, memory: 128}
           - name: redis
             resources:
               default: {cpu: 50, memory: 128}
-              minimum: {cpu: 50, memory: 128}
-              limit: {cpu: 50, memory: 128}
