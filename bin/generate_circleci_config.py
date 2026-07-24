@@ -13,16 +13,30 @@ kube_versions = metadata["test_k8s_versions"]
 ci_runner_version = (datetime.datetime.now()).strftime("%Y-%m")
 
 
-def discover_scenarios() -> list[str]:
-    """Find scenario names under tests/functional/scenarios/*/test_profile.yaml.
+def discover_scenarios() -> list[dict]:
+    """Find scenarios under tests/functional/scenarios/*/test_profile.yaml.
 
     The manifest file's presence is the signal, not bare directory presence, so a
-    half-finished or stray directory can't silently create (or hide) a CI job.
+    half-finished or stray directory can't silently create (or hide) a CI job. Each
+    scenario's own test_profile.yaml may set an optional `resource_class` (any
+    CircleCI machine-executor resource class, e.g. xlarge/2xlarge) to size that
+    scenario's CI job independently -- most scenarios don't need more than the
+    default, but one running multiple concurrent Airflow Deployments can exhaust it.
     """
     scenarios_dir = git_root_dir / "tests" / "functional" / "scenarios"
     if not scenarios_dir.is_dir():
         return []
-    return sorted(p.parent.name for p in scenarios_dir.glob("*/test_profile.yaml"))
+    profile_paths = sorted(scenarios_dir.glob("*/test_profile.yaml"), key=lambda p: p.parent.name)
+    scenarios = []
+    for profile_path in profile_paths:
+        profile = yaml.safe_load(profile_path.read_text()) or {}
+        scenarios.append(
+            {
+                "name": profile_path.parent.name,
+                "resource_class": profile.get("resource_class", "xlarge"),
+            }
+        )
+    return scenarios
 
 
 def main():

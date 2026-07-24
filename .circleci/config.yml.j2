@@ -242,10 +242,10 @@ jobs:
           path: test-results
 {%- endfor %}
 {% for scenario in scenarios %}
-  scenario-{{ scenario }}:
+  scenario-{{ scenario.name }}:
     machine:
       image: {{ machine_image_version }}
-      resource_class: xlarge
+      resource_class: {{ scenario.resource_class }}
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -264,14 +264,14 @@ jobs:
           name: Create venv
           command: uv venv -p {{ python_image_version }} --seed && uv sync
       - run:
-          name: "Scenario: {{ scenario }}"
+          name: "Scenario: {{ scenario.name }}"
           command: |
-            uv run bin/run-scenario.py {{ scenario }}
+            uv run bin/run-scenario.py {{ scenario.name }}
             # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
             # subprocess tree, not this shell -- needed here too for any fixture (e.g.
             # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
             export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
-            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario }}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario.name }}"
       - store_test_results:
           path: test-results
 {%- endfor %}
@@ -328,7 +328,7 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}{% for scenario in scenarios %}
-      - scenario-{{ scenario }}:
+      - scenario-{{ scenario.name }}:
           requires:
             - build-artifact
 {%- endfor %}
