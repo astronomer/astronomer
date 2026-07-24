@@ -8,6 +8,7 @@ kind: Service
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-data
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}
     chart: {{ template "elasticsearch.chart" . }}

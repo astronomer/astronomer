@@ -12,6 +12,7 @@ metadata:
   name: {{ template "kube-state.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: {{ template "kube-state.name" . }}
     component: kube-state
     release: {{ .Release.Name }}

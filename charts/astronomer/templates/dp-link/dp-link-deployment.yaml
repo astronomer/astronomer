@@ -8,6 +8,7 @@ apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-dp-link
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: dp-link
     tier: astronomer
     release: {{ .Release.Name }}

@@ -8,6 +8,7 @@ apiVersion: {{ template "apiVersion.NetworkPolicy" . }}
 metadata:
   name: {{ template "postgresql.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}

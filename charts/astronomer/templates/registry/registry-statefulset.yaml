@@ -13,6 +13,7 @@ apiVersion: apps/v1
 metadata:
   name: {{ template "registry.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: {{ template "registry.name" . }}
     tier: astronomer
     release: {{ .Release.Name }}

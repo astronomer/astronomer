@@ -7,6 +7,7 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ .Release.Name }}-commander-api-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: api-ingress
     tier: astronomer
     release: {{ .Release.Name }}

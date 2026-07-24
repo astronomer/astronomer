@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "alertmanager.fullname" . }}-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: {{ template "alertmanager.name" . }}-policy
     chart: {{ template "alertmanager.chart" . }}

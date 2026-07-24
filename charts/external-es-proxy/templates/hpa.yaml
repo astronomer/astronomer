@@ -5,6 +5,7 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "external-es-proxy.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     {{- include "external-es-proxy.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:

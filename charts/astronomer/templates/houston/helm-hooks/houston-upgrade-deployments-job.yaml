@@ -8,6 +8,7 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-houston-upgrade-deployments
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston-upgrader
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

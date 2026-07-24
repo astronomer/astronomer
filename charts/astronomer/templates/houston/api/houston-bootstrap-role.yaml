@@ -8,6 +8,7 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ .Release.Name }}-houston-bootstrapper
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: houston
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

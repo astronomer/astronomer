@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "grafana.fullname" . }}-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: grafana-policy
     chart: {{ template "grafana.chart" . }}

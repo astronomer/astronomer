@@ -8,6 +8,7 @@ apiVersion: v1
 metadata:
   name: {{ template "grafana.fullname" . }}-nginx-conf
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: grafana
     chart: {{ template "grafana.chart" . }}

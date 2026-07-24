@@ -7,6 +7,7 @@ kind: Deployment
 metadata:
   name: {{ include "external-es-proxy.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: external-logging
     component: {{ template "external-es-proxy.name" . }}
     chart: {{ template "external-es-proxy.chart" . }}

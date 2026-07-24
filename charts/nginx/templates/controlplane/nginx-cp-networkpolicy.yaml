@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-cp-nginx-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: cp-nginx-policy
     release: {{ .Release.Name }}

@@ -6,6 +6,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     release: {{ .Release.Name }}

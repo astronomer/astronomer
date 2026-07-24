@@ -9,6 +9,7 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: prometheus-networking
     component: prometheus-ingress
     chart: {{ template "prometheus.chart" . }}

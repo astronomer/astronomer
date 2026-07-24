@@ -8,6 +8,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
   {{- end }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}

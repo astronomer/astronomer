@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-cp-nginx-metrics-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: nginx-metrics
     release: {{ .Release.Name }}

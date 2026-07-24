@@ -8,6 +8,7 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ .Release.Name }}-houston-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: houston-ingress
     tier: astronomer
     release: {{ .Release.Name }}

@@ -8,6 +8,7 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}-logging-ingress
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

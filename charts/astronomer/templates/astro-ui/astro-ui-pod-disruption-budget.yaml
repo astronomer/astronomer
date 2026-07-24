@@ -7,6 +7,14 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-astro-ui-pdb
+  labels:
+    {{- include "global.labels" . | nindent 4 }}
+    tier: astronomer
+    component: astro-ui-policy
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   {{- if lt ( .Values.astroUI.replicas | int ) 4 }}
   maxUnavailable: 1
