@@ -41,7 +41,7 @@ from tests.utils.houston_graphql import (
     upsert_deployment,
     wait_for_release_ready,
 )
-from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_by_label_selector
+from tests.utils.k8s import KUBECONFIG_UNIFIED, find_psa_rejection_events, get_pod_by_label_selector
 
 GRAFANA_DEPLOYMENT_NAME = "astronomer-grafana"
 NAMESPACE = "astronomer"
@@ -225,3 +225,17 @@ def test_git_sync_deployment_has_auth_proxy_container(git_sync_deployment, _k8s_
     containers_by_pod = {pod.metadata.name: [c.name for c in pod.spec.containers] for pod in pods}
     pods_with_auth_proxy = [name for name, containers in containers_by_pod.items() if "auth-proxy" in containers]
     assert pods_with_auth_proxy, f"Expected at least one pod with an auth-proxy container, got: {containers_by_pod}"
+
+
+def test_no_psa_rejection_events(git_sync_deployment, _k8s_core_v1_client_module):
+    """
+    None of the readiness/container-presence checks above would catch a PSA rejection on
+    a one-shot Job or Helm hook (e.g. createUserJob, migrateDatabaseJob) -- those aren't
+    Deployments/StatefulSets, so wait_for_release_ready never looks at them, and a
+    rejected Job's pod is never created at all rather than showing up unhealthy. Depends
+    on git_sync_deployment (the last fixture in this module) so it runs after everything
+    this scenario's full lifecycle -- platform install, dag_deploy, and the switch to
+    git_sync -- could have created.
+    """
+    rejections = find_psa_rejection_events(_k8s_core_v1_client_module)
+    assert not rejections, "Pod Security Admission rejected at least one object:\n" + "\n".join(rejections)
