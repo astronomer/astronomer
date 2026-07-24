@@ -1,18 +1,31 @@
 # Functional-test scenarios create real Airflow Deployments that never run actual
-# DAG tasks, so apc-airflow's production-sized defaults (500m CPU/1Gi memory requests,
-# 1 CPU/2Gi memory limits per main component) are far more than needed. That's a
-# meaningful chunk of why a single Airflow Deployment plus the platform chart
-# exhausted the CI node's CPU (FailedScheduling: Insufficient cpu) once PINF-1049's
-# commander fix stopped masking it by failing before pods were even created -- see
-# PINF-1080. Sized down to roughly the same "small sidecar" scale already used
-# elsewhere in this repo's own defaults (logGroomerSidecar, pgbouncer's
-# metricsExporterSidecar: 100m/128Mi requests, 200m/256Mi limits).
+# DAG tasks, so apc-airflow's production-sized defaults are far more than needed.
+# That's a meaningful chunk of why a single Airflow Deployment plus the platform
+# chart exhausted the CI node's CPU (FailedScheduling: Insufficient cpu) once
+# PINF-1049's commander fix stopped masking it by failing before pods were even
+# created -- see PINF-1080.
+#
+# Component resources (scheduler/webserver/workers/triggerer/apiServer/dagProcessor,
+# plus the CeleryExecutor extras statsd/pgbouncer/flower/redis) can't be reduced via
+# Helm values at the apc-airflow chart level, or via `houston.config.deployments.helm.
+# airflow.<component>.resources` -- houston-api computes these server-side per
+# Airflow Deployment (from `resourceManagement.components` config merged with its own
+# hardcoded defaults, then whatever the upsertDeployment GraphQL call passes) and
+# that always wins over any static chart-level override. `resourceManagement.
+# components` is the one config path that actually reaches that computation, since
+# it's houston's own input to it, not something houston overwrites afterwards.
+# migrateDatabaseJob (the one-shot `airflow db migrate` Job scheduler/triggerer/
+# webserver/worker all block on via a wait-for-airflow-migrations init container) has
+# no entry of its own here because houston always derives its resources from a
+# rounded copy of the scheduler's resources -- reducing scheduler here reduces it too.
 ---
 global:
   # Injected onto every authSidecar-enabled pod -- in the auth-sidecar scenario
   # that's grafana/prometheus/alertmanager AND dag-server/git-sync-relay/webserver
   # in the Airflow Deployment it creates, so the default 500m/512Mi request is a
-  # real multiplier across that many pods, not just one component's cost.
+  # real multiplier across that many pods, not just one component's cost. This one
+  # IS a plain `.Values`-driven field houston-api never touches, so unlike the
+  # components below it works as a normal Helm override.
   authSidecar:
     resources:
       requests:
@@ -30,73 +43,61 @@ global:
 astronomer:
   houston:
     # Escape hatch into houston-api's own config cascade (rendered as
-    # local-production.yaml, the highest-priority layer) -- deployments.helm.airflow.*
-    # is the same path this chart's own houston-configmap.yaml already uses for
-    # ephemeral-storage overrides on these same components; this deep-merges cpu/memory
-    # in alongside that, it doesn't replace it.
+    # local-production.yaml, the highest-priority layer). Units are plain numbers
+    # (millicores / MiB, no "m"/"Mi" suffix) -- houston-api's own default/minimum/
+    # limit constants for these components use the same bare-number convention.
     config:
-      deployments:
-        helm:
-          airflow:
-            scheduler:
-              resources:
-                requests:
-                  cpu: 50m
-                  memory: 128Mi
-                limits:
-                  cpu: 200m
-                  memory: 256Mi
-            webserver:
-              resources:
-                requests:
-                  cpu: 50m
-                  memory: 128Mi
-                limits:
-                  cpu: 200m
-                  memory: 256Mi
-            workers:
-              resources:
-                requests:
-                  cpu: 50m
-                  memory: 128Mi
-                limits:
-                  cpu: 200m
-                  memory: 256Mi
-            triggerer:
-              resources:
-                requests:
-                  cpu: 50m
-                  memory: 128Mi
-                limits:
-                  cpu: 200m
-                  memory: 256Mi
-            apiServer:
-              resources:
-                requests:
-                  cpu: 50m
-                  memory: 128Mi
-                limits:
-                  cpu: 200m
-                  memory: 256Mi
-            dagProcessor:
-              resources:
-                requests:
-                  cpu: 50m
-                  memory: 128Mi
-                limits:
-                  cpu: 200m
-                  memory: 256Mi
-            # One-shot Job (runs `airflow db migrate` then exits) that scheduler/
-            # triggerer/webserver/worker all block on via a wait-for-airflow-migrations
-            # init container -- its default 100m/512Mi request was the last piece
-            # still hitting Insufficient cpu after the components above were reduced,
-            # which stalls every pod with that init container even though they
-            # themselves scheduled fine.
-            migrateDatabaseJob:
-              resources:
-                requests:
-                  cpu: 50m
-                  memory: 128Mi
-                limits:
-                  cpu: 200m
-                  memory: 256Mi
+      resourceManagement:
+        components:
+          - name: scheduler
+            resources:
+              default: {cpu: 100, memory: 200}
+              minimum: {cpu: 100, memory: 200}
+              limit: {cpu: 500, memory: 1000}
+          - name: webserver
+            resources:
+              default: {cpu: 100, memory: 200}
+              minimum: {cpu: 100, memory: 200}
+              limit: {cpu: 500, memory: 1000}
+          - name: triggerer
+            resources:
+              default: {cpu: 100, memory: 200}
+              minimum: {cpu: 100, memory: 200}
+              limit: {cpu: 500, memory: 1000}
+          - name: workers
+            resources:
+              default: {cpu: 100, memory: 200}
+              minimum: {cpu: 100, memory: 200}
+              limit: {cpu: 500, memory: 1000}
+          - name: apiServer
+            resources:
+              default: {cpu: 200, memory: 400}
+              minimum: {cpu: 200, memory: 400}
+              limit: {cpu: 500, memory: 1000}
+          - name: dagProcessor
+            resources:
+              default: {cpu: 200, memory: 400}
+              minimum: {cpu: 200, memory: 400}
+              limit: {cpu: 500, memory: 1000}
+          # CeleryExecutor-only sidecars -- fixed-size (default == minimum == limit)
+          # in houston-api's own defaults too, so this just shrinks that fixed size.
+          - name: statsd
+            resources:
+              default: {cpu: 50, memory: 128}
+              minimum: {cpu: 50, memory: 128}
+              limit: {cpu: 50, memory: 128}
+          - name: pgbouncer
+            resources:
+              default: {cpu: 50, memory: 128}
+              minimum: {cpu: 50, memory: 128}
+              limit: {cpu: 50, memory: 128}
+          - name: flower
+            resources:
+              default: {cpu: 50, memory: 128}
+              minimum: {cpu: 50, memory: 128}
+              limit: {cpu: 50, memory: 128}
+          - name: redis
+            resources:
+              default: {cpu: 50, memory: 128}
+              minimum: {cpu: 50, memory: 128}
+              limit: {cpu: 50, memory: 128}
