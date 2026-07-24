@@ -954,3 +954,14 @@ Returns the string "true" or "false" — compare with eq.
 {{- define "registry.enabled" -}}
 {{- and .Values.registry.enabled (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) -}}
 {{- end }}
+
+
+{{/*
+Whether flightdec resources should render: the flightDeck must be enabled, dataPlaneFailover must be enabled
+and the plane mode must be data .
+*/}}
+{{- define "flightdeck.enabled" -}}
+{{- if or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
+true
+{{- end -}}
+{{- end -}}
