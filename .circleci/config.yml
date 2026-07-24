@@ -332,7 +332,7 @@ jobs:
   scenario-auth-sidecar:
     machine:
       image: ubuntu-2404:2026.05.1
-      resource_class: xlarge
+      resource_class: 2xlarge
     steps:
       - attach_workspace:
           at: /tmp/workspace

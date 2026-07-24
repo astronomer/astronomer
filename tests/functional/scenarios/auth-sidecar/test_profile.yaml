@@ -10,6 +10,11 @@
 # breaks in -- test_auth_sidecar.py creates a real Airflow Deployment to
 # exercise this half.
 topology: unified
+# Two concurrent-ish Airflow Deployment lifecycles (dag_deploy then switched to
+# git_sync) plus the platform chart pushed the default xlarge CI machine's CPU past
+# FailedScheduling territory even after scenario-airflow-reduce-resources.yaml -- see
+# PINF-1080.
+resource_class: 2xlarge
 values:
   - configs/enable-auth-sidecar.yaml
   - configs/psa-restricted.yaml
