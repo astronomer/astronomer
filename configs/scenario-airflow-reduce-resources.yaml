@@ -86,3 +86,17 @@ astronomer:
                 limits:
                   cpu: 200m
                   memory: 256Mi
+            # One-shot Job (runs `airflow db migrate` then exits) that scheduler/
+            # triggerer/webserver/worker all block on via a wait-for-airflow-migrations
+            # init container -- its default 100m/512Mi request was the last piece
+            # still hitting Insufficient cpu after the components above were reduced,
+            # which stalls every pod with that init container even though they
+            # themselves scheduled fine.
+            migrateDatabaseJob:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
