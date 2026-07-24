@@ -836,11 +836,13 @@ class TestAstronomerCommander:
                     "flightDeck": {"enabled": True},
                 },
             },
-            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml",
+                       "charts/astronomer/templates/commander/commander-flightdeck-role.yaml",
+                       "charts/astronomer/templates/commander/commander-flightdeck-rolebinding.yaml"],
         )
 
         if plane in ["data", "unified"]:
-            assert len(docs) == 1
+            assert len(docs) == 3
         else:
             assert len(docs) == 0
             return
