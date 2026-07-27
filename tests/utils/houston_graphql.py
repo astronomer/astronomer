@@ -153,7 +153,17 @@ def upsert_deployment(
 
     repository_url/auth_type only apply to dag_deployment_type="git_sync" (the DagDeployment
     fields git-sync-relay's own repositoryUrl/authType).
+
+    Validates label/workspace_id/cluster_id (on create) and repository_url/auth_type (for
+    git_sync) locally rather than letting a caller mistake reach Houston -- a missing
+    required field surfaces there as a generic GraphQL/validation error with none of this
+    helper's own context about *why* the field was required.
     """
+    if not deployment_uuid and not (label and workspace_id and cluster_id):
+        raise ValueError("Creating a deployment (no deployment_uuid) requires label, workspace_id, and cluster_id")
+    if dag_deployment_type == "git_sync" and not (repository_url and auth_type):
+        raise ValueError("dag_deployment_type='git_sync' requires both repository_url and auth_type")
+
     variables: dict = {"executor": executor}
     if deployment_uuid:
         variables["deploymentUuid"] = deployment_uuid
