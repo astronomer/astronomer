@@ -1,0 +1,14 @@
+# PINF-1034: bin/install-kyverno-scan.py installs a live Kyverno admission controller
+# with astronomer/apc-terraform-modules' policies applied -- but every one of those
+# policies scopes its `match` to namespaces labeled `platform: astronomer` (a
+# namespaceSelector, not a pod label), and nothing in this repo sets that label by
+# default. Without it, the scan runs clean by matching nothing, not because nothing's
+# wrong. This only reaches the Airflow-Deployment-namespace tier (global.namespaceLabels
+# flows through the commander-metadata ConfigMap, and Commander stamps it onto every
+# namespace it creates) -- a scenario also wanting the platform namespace itself
+# scanned needs `platform=astronomer` in its own test_profile.yaml namespace_labels too,
+# the same way PSA labels need both halves (see configs/enable-psa.yaml).
+---
+global:
+  namespaceLabels:
+    platform: astronomer

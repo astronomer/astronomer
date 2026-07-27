@@ -15,13 +15,23 @@ topology: unified
 # FailedScheduling territory even after scenario-airflow-reduce-resources.yaml -- see
 # PINF-1080.
 resource_class: 2xlarge
+# PINF-1034: installs a live Kyverno admission controller (audit-only) before this
+# scenario's own tests run, reporting the violations it recorded afterward. Reuses
+# this scenario rather than a dedicated one since it already creates a real Airflow
+# Deployment across both dagDeployment types, giving the scan the broadest existing
+# surface -- see bin/install-kyverno-scan.py and bin/report-kyverno-scan.py.
+kyverno_scan: true
 values:
   - configs/enable-auth-sidecar.yaml
   - configs/psa-restricted.yaml
   - configs/enable-psa.yaml
   - configs/scenario-airflow-reduce-resources.yaml
+  - configs/enable-kyverno-scan.yaml
 namespace_labels:
   pod-security.kubernetes.io/enforce: restricted
   pod-security.kubernetes.io/enforce-version: latest
   pod-security.kubernetes.io/audit: restricted
   pod-security.kubernetes.io/warn: restricted
+  # See configs/enable-kyverno-scan.yaml -- this half covers the platform namespace,
+  # that file's global.namespaceLabels covers Airflow Deployment namespaces.
+  platform: astronomer

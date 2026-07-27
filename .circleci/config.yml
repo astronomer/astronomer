@@ -354,6 +354,14 @@ jobs:
           name: "Scenario: auth-sidecar"
           command: |
             uv run bin/run-scenario.py auth-sidecar
+            # Installed here, right after the cluster + platform chart are up but before
+            # pytest creates this scenario's own resources -- a live admission controller
+            # audits everything from this point on, including short-lived resources (a Job
+            # that completes and may get cleaned up) that a point-in-time scan run only at
+            # the end could never see. Doesn't cover whatever Jobs the platform chart's own
+            # install just created above (no earlier hook point without touching
+            # reset-local-dev/helm-install.py, shared by every topology, not just this one).
+            uv run bin/install-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
             # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
             # subprocess tree, not this shell -- needed here too for any fixture (e.g.
             # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
@@ -361,6 +369,10 @@ jobs:
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/auth-sidecar"
       - store_test_results:
           path: test-results
+      - run:
+          name: "Kyverno report: auth-sidecar"
+          command: |
+            uv run bin/report-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
   scenario-deployment-lifecycle:
     machine:
       image: ubuntu-2404:2026.05.1
@@ -447,6 +459,8 @@ workflows:
       - scenario-auth-sidecar:
           requires:
             - build-artifact
+          context:
+            - github-repo
       - scenario-deployment-lifecycle:
           requires:
             - build-artifact
