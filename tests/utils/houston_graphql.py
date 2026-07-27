@@ -11,6 +11,19 @@ import time
 
 HOUSTON_URL = "http://localhost:8871/v1"
 
+# PINF-1049: commander's first-ever JWKS fetch (cache cold) can race Houston's own K8s
+# Ready-gate and get a literal connection refusal, surfacing here as this exact message.
+# commander PR #560 added its own retry-with-backoff for this (~750ms total across 3
+# attempts) and is present in ap-commander >= 2.1.11, but that window assumes the race
+# resolves "within a few seconds" -- confirmed via a real CI recurrence on 2026-07-27
+# (commander 2.1.12) that it sometimes doesn't: Houston's pod was still not K8s-Ready
+# ~24s after its own app log said "Server ready". Retrying here, client-side, with a
+# more generous window is a second, independent mitigation for the same narrowed-but-
+# not-eliminated race -- not a fix for a bug in this repo's own code.
+JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
+JWKS_COLD_START_MAX_ATTEMPTS = 5
+JWKS_COLD_START_RETRY_DELAY_SECONDS = 10
+
 
 class HoustonError(RuntimeError):
     """Raised when Houston's GraphQL API returns a non-empty errors[] array."""
@@ -90,6 +103,29 @@ def graphql(houston_api, query: str, variables: dict | None = None, token: str |
     return body["data"]
 
 
+def graphql_retrying_jwks_cold_start(houston_api, query: str, variables: dict | None = None, token: str | None = None) -> dict:
+    """
+    Same as graphql(), but retries specifically on PINF-1049's JWKS cold-start race (see
+    the module-level comment above) instead of raising on the first attempt. Any other
+    HoustonError -- a real GraphQL/validation failure -- is raised immediately, on the
+    first attempt, exactly like graphql() itself.
+    """
+    last_exc = None
+    for attempt in range(1, JWKS_COLD_START_MAX_ATTEMPTS + 1):
+        try:
+            return graphql(houston_api, query, variables, token=token)
+        except HoustonError as exc:
+            last_exc = exc
+            if JWKS_COLD_START_ERROR not in str(exc) or attempt == JWKS_COLD_START_MAX_ATTEMPTS:
+                raise
+            print(
+                f"Hit PINF-1049's JWKS cold-start race (attempt {attempt}/{JWKS_COLD_START_MAX_ATTEMPTS}), "
+                f"retrying in {JWKS_COLD_START_RETRY_DELAY_SECONDS}s..."
+            )
+            time.sleep(JWKS_COLD_START_RETRY_DELAY_SECONDS)
+    raise last_exc
+
+
 def create_user(houston_api, email: str, password: str) -> str:
     """Create the initial admin user. Only succeeds unauthenticated on a fresh DB -- true
     for every scenario's CircleCI job, since each one installs into a brand new cluster."""
@@ -158,6 +194,11 @@ def upsert_deployment(
     git_sync) locally rather than letting a caller mistake reach Houston -- a missing
     required field surfaces there as a generic GraphQL/validation error with none of this
     helper's own context about *why* the field was required.
+
+    Retries the mutation itself on PINF-1049's JWKS cold-start race (see
+    graphql_retrying_jwks_cold_start) -- upsertDeployment is the first authenticated RPC
+    Commander ever handles for a freshly-installed cluster, so it's the one most likely
+    to catch that race mid-flight.
     """
     if not deployment_uuid and not (label and workspace_id and cluster_id):
         raise ValueError("Creating a deployment (no deployment_uuid) requires label, workspace_id, and cluster_id")
@@ -200,7 +241,7 @@ def upsert_deployment(
       }
     }
     """
-    data = graphql(houston_api, query, variables, token=token)
+    data = graphql_retrying_jwks_cold_start(houston_api, query, variables, token=token)
     return data["upsertDeployment"]
 
 
