@@ -1,7 +1,10 @@
 """PINF-1035: creates a real Airflow Deployment through Houston's GraphQL API, then
-switches its executor. Closes a gap no other functional test covers -- every other
-scenario (including PINF-1031's auth-sidecar) only installs the platform chart, never
-an Airflow Deployment on top of it.
+switches its executor (CeleryExecutor -> KubernetesExecutor) -- the specific
+regression class PINF-1033 was caught in, via getExecutorConfig/
+replaceWithExecutorSpecificResources. PINF-1031's auth-sidecar scenario also creates a
+real Airflow Deployment and re-invokes upsertDeployment, but to switch dagDeploymentType
+(dag_deploy -> git_sync) instead, via gitSyncTransition -- a different upsertDeployment
+argument and a different houston-api code path than the executor switch here.
 
 Uses the GraphQL API deliberately, not Commander's gRPC interface directly (which
 Commander's own component tests already exercise): GraphQL is the core API for the APC
