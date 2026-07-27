@@ -43,6 +43,17 @@ from tests.utils.houston_graphql import (
 )
 from tests.utils.k8s import KUBECONFIG_UNIFIED, find_psa_rejection_events, get_pod_by_label_selector
 
+# PINF-1049: commander's first-ever JWKS fetch (cache cold) can race Houston's own K8s
+# Ready-gate and get a literal connection refusal, surfacing as this exact HoustonError
+# message from upsertDeployment. commander PR #560 (ap-commander >= 2.1.11) added its
+# own retry-with-backoff for this, but that window (~750ms) assumes the race resolves
+# "within a few seconds" -- confirmed via a real CI recurrence on 2026-07-27 (commander
+# 2.1.12) that it sometimes doesn't. @pytest.mark.flaky(only_rerun=[...]) below re-runs
+# only on this exact message, re-invoking the whole `deployment`/`git_sync_deployment`
+# fixture (including its create_workspace call, so a retry leaves a harmless orphaned
+# extra workspace behind in this ephemeral cluster) -- not a fix for a bug in this repo.
+JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
+
 GRAFANA_DEPLOYMENT_NAME = "astronomer-grafana"
 NAMESPACE = "astronomer"
 ADMIN_EMAIL = "pinf-1031-auth-sidecar-test@astronomer.io"
@@ -138,6 +149,7 @@ def deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
 def test_deployment_reaches_ready(deployment):
     """
     The deployment fixture already waits for readiness under PSS-Restricted -- this
@@ -201,6 +213,7 @@ def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_mod
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
 def test_git_sync_deployment_reaches_ready(git_sync_deployment):
     """
     Readiness here depends on git-sync-relay's git-daemon container actually cloning
