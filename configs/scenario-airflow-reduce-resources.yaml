@@ -1,0 +1,44 @@
+# Functional-test scenarios create real Airflow Deployments that never run actual
+# DAG tasks, so apc-airflow's production-sized defaults are far more than needed.
+# That's a meaningful chunk of why a single Airflow Deployment plus the platform
+# chart exhausted the CI node's CPU (FailedScheduling: Insufficient cpu) once
+# PINF-1049's commander fix stopped masking it by failing before pods were even
+# created -- see PINF-1080.
+#
+# Component resources (scheduler/webserver/workers/triggerer/apiServer/dagProcessor,
+# plus the CeleryExecutor extras statsd/pgbouncer/flower/redis) can't be reduced via
+# Helm values at the apc-airflow chart level -- houston-api computes them
+# server-side per Airflow Deployment and always overwrites any static chart-level
+# override. The one config path that actually reaches that computation is
+# houston.config's `resourceManagement.components`, and an earlier version of this
+# file used it -- but that means hand-mirroring houston-api's own internal
+# component list and resource-config schema, which this repo doesn't own and
+# doesn't get any signal if it changes upstream (the exact silent-drift failure
+# mode this file has already hit twice: a `deployments.helm.airflow.*` override
+# that rendered fine but was never read, then `minimum`/`limit` keys that rendered
+# fine but were only read for a validation path this scenario never exercises).
+# Removed rather than kept as a maintenance burden -- the auth-sidecar scenario's
+# CircleCI job resource_class (see tests/functional/scenarios/auth-sidecar/
+# test_profile.yaml) is bumped to 2xlarge instead, which fixes the CPU exhaustion
+# without depending on houston-api's internals at all.
+---
+global:
+  # Injected onto every authSidecar-enabled pod -- in the auth-sidecar scenario
+  # that's grafana/prometheus/alertmanager AND dag-server/git-sync-relay/webserver
+  # in the Airflow Deployment it creates, so the default 500m/512Mi request is a
+  # real multiplier across that many pods, not just one component's cost. This one
+  # IS a plain `.Values`-driven field houston-api never touches, so unlike the
+  # per-component resources above it works as a normal, stable Helm override.
+  # Confirmed two ways: via `helm template` on the astronomer chart's own
+  # grafana-deployment.yaml, and via charts/astronomer/templates/houston/
+  # houston-configmap.yaml explicitly bridging `.Values.global.authSidecar.resources`
+  # into houston-api's own (differently cased) `authSideCar.resources` config key,
+  # which feeds its own webserver/apiServer auth-proxy sidecar injection.
+  authSidecar:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
