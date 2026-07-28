@@ -1,0 +1,39 @@
+# Test values for Istio Gateway configuration
+# This file is used for testing the helm chart with Istio enabled
+
+global:
+  baseDomain: "test.astronomer.io"
+  tlsSecret: "astronomer-tls"
+  plane:
+    mode: unified
+
+  # Disable NGINX, enable Istio
+  nginxEnabled: false
+  istioEnabled: true
+
+  istio:
+    # Reference to existing Istio Gateway
+    gateway: "istio-system/default-gateway"
+    virtualService:
+      timeout: 600s
+      retries:
+        attempts: 3
+        perTryTimeout: 30s
+        retryOn: "5xx,connect-failure,refused-stream"
+
+tags:
+  platform: true
+  monitoring: false
+  logging: false
+
+astronomer:
+  houston:
+    replicas: 1
+  astroUI:
+    replicas: 1
+  commander:
+    replicas: 1
+  registry:
+    replicas: 1
+    persistence:
+      enabled: false

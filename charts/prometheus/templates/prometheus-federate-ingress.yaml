@@ -1,7 +1,7 @@
 ########################################
 ## Prometheus Federate Ingress ##
 ########################################
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if and (eq .Values.global.plane.mode "data") (not .Values.global.istioEnabled) }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
