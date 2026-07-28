@@ -18,6 +18,7 @@ errors), which means the scan itself didn't run, not that it found something.
 
 import argparse
 import sys
+from collections import Counter, defaultdict
 
 from kubernetes import client, config
 
@@ -57,6 +58,23 @@ def summarize_reports(reports: list[dict]) -> list[str]:
     return lines
 
 
+def count_evaluations(reports: list[dict]) -> dict[str, Counter]:
+    """Per-policy count of each result type seen across the given reports.
+
+    A policy whose namespaceSelector matches zero resources produces zero results,
+    which prints identically to "zero violations" in summarize_reports() above --
+    the exact ambiguity this repo's own notes warn about (a missing namespace label
+    makes the scan "run clean" by matching nothing, not because nothing's wrong).
+    This makes that distinction visible: a policy with an all-zero counter here
+    never actually got evaluated against anything.
+    """
+    counts: dict[str, Counter] = defaultdict(Counter)
+    for report in reports:
+        for result in report.get("results", []):
+            counts[result.get("policy", "?")][result.get("result", "?")] += 1
+    return counts
+
+
 def main() -> None:
     args = parse_args()
     config.load_kube_config(config_file=args.kubeconfig)
@@ -67,6 +85,23 @@ def main() -> None:
     # like PolicyReport too, not just for genuinely cluster-scoped ones.
     cluster_reports = api.list_cluster_custom_object(REPORT_GROUP, REPORT_VERSION, "clusterpolicyreports")["items"]
     namespaced_reports = api.list_cluster_custom_object(REPORT_GROUP, REPORT_VERSION, "policyreports")["items"]
+
+    # The definitive list of policies that were actually installed -- these persist as
+    # their own ClusterPolicy objects from bin/install-kyverno-scan.py, independent of
+    # whether any report ever mentions them. Used below to catch a policy that matched
+    # zero resources, which otherwise looks identical to a policy with zero violations.
+    installed_policies = sorted(
+        item["metadata"]["name"] for item in api.list_cluster_custom_object("kyverno.io", "v1", "clusterpolicies")["items"]
+    )
+    counts = count_evaluations(cluster_reports + namespaced_reports)
+
+    print("--- Kyverno policy evaluation counts ---")
+    for policy in installed_policies:
+        counter = counts.get(policy)
+        if not counter:
+            print(f"{policy}: NO RESULTS -- matched zero resources, this policy was never actually evaluated")
+        else:
+            print(f"{policy}: {dict(counter)}")
 
     findings = summarize_reports(cluster_reports) + summarize_reports(namespaced_reports)
     print(f"--- Kyverno policy report findings ({len(findings)}) ---")
