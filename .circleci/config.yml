@@ -375,7 +375,7 @@ jobs:
       - run:
           name: "Kyverno report: auth-sidecar"
           command: |
-            uv run bin/report-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
+            uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
   scenario-deployment-lifecycle:
     machine:
       image: ubuntu-2404:2026.05.1

@@ -31,16 +31,29 @@ def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kubeconfig", required=True, help="Path to the kubeconfig for the cluster to read reports from.")
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help=(
+            "Also print every individual scanned object -- its namespace, name, and result -- "
+            "not just the non-passing ones. Useful for checking whether a given namespace was "
+            "scanned at all, not only whether it had violations."
+        ),
+    )
     return parser.parse_args()
 
 
-def describe_subject(result: dict, report: dict) -> str:
-    """One resource reference for a result -- its own resources[] entry if present,
+def resource_ref(result: dict, report: dict) -> tuple[str | None, str]:
+    """(namespace, name) for a result -- its own resources[] entry if present,
     falling back to the report's own scope (its default subject) otherwise."""
     resources = result.get("resources") or [report.get("scope", {})]
     subject = resources[0]
-    namespace = subject.get("namespace")
-    name = subject.get("name", "?")
+    return subject.get("namespace"), subject.get("name", "?")
+
+
+def describe_subject(result: dict, report: dict) -> str:
+    """One resource reference for a result, formatted as namespace/name (or just name for a cluster-scoped resource)."""
+    namespace, name = resource_ref(result, report)
     return f"{namespace}/{name}" if namespace else name
 
 
@@ -56,6 +69,33 @@ def summarize_reports(reports: list[dict]) -> list[str]:
                 f"on {describe_subject(result, report)}: {result.get('message', '')}"
             )
     return lines
+
+
+def list_all_results(reports: list[dict]) -> list[str]:
+    """One line per individual result across the given reports, regardless of pass/fail.
+
+    Unlike summarize_reports() below, this includes passing results too. It exists so
+    --verbose can show exactly which namespaces and objects were actually scanned, not
+    just which ones failed -- a namespace that never appears here at all was never
+    evaluated by anything, which looks nothing like a namespace full of passing pods
+    once you can see the full list, but is indistinguishable from one if you can only
+    see violations.
+    """
+    rows = []
+    for report in reports:
+        for result in report.get("results", []):
+            namespace, name = resource_ref(result, report)
+            rows.append(
+                (
+                    namespace or "(cluster-scoped)",
+                    name,
+                    result.get("policy", "?"),
+                    result.get("rule", "?"),
+                    result.get("result", "?"),
+                )
+            )
+    rows.sort()
+    return [f"ns={namespace} {name}: {policy}/{rule} -> {result.upper()}" for namespace, name, policy, rule, result in rows]
 
 
 def count_evaluations(reports: list[dict]) -> dict[str, Counter]:
@@ -87,6 +127,11 @@ def main() -> None:
     # like PolicyReport too, not just for genuinely cluster-scoped ones.
     cluster_reports = api.list_cluster_custom_object(REPORT_GROUP, REPORT_VERSION, "clusterpolicyreports")["items"]
     namespaced_reports = api.list_cluster_custom_object(REPORT_GROUP, REPORT_VERSION, "policyreports")["items"]
+
+    if args.verbose:
+        print("--- Kyverno scanned objects (verbose, includes passing results) ---")
+        for line in list_all_results(cluster_reports + namespaced_reports):
+            print(line)
 
     # The definitive list of policies that were actually installed -- these persist as
     # their own ClusterPolicy objects from bin/install-kyverno-scan.py, independent of

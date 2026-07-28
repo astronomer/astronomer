@@ -291,7 +291,7 @@ jobs:
       - run:
           name: "Kyverno report: {{ scenario.name }}"
           command: |
-            uv run bin/report-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/{{ scenario.topology }}"
+            uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/{{ scenario.topology }}"
 {%- endif %}
 {%- endfor %}
 
