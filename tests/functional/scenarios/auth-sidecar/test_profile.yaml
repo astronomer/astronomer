@@ -15,11 +15,13 @@ topology: unified
 # FailedScheduling territory even after scenario-airflow-reduce-resources.yaml -- see
 # PINF-1080.
 resource_class: 2xlarge
-# PINF-1034: installs a live Kyverno admission controller (audit-only) before this
-# scenario's own tests run, reporting the violations it recorded afterward. Reuses
-# this scenario rather than a dedicated one since it already creates a real Airflow
-# Deployment across both dagDeployment types, giving the scan the broadest existing
-# surface -- see bin/install-kyverno-scan.py and bin/report-kyverno-scan.py.
+# Runs this scenario's tests against a real, live Kyverno admission controller
+# (installed audit-only, so it only reports policy violations and never blocks
+# anything). See bin/install-kyverno-scan.py and bin/report-kyverno-scan.py for the
+# mechanism. This scenario was chosen to carry that scan, rather than adding a new
+# dedicated scenario, because it already creates a real Airflow Deployment covering
+# both dagDeployment types, which gives the scan more real pods to evaluate than most
+# other scenarios would.
 kyverno_scan: true
 values:
   - configs/enable-auth-sidecar.yaml
@@ -32,6 +34,10 @@ namespace_labels:
   pod-security.kubernetes.io/enforce-version: latest
   pod-security.kubernetes.io/audit: restricted
   pod-security.kubernetes.io/warn: restricted
-  # See configs/enable-kyverno-scan.yaml -- this half covers the platform namespace,
-  # that file's global.namespaceLabels covers Airflow Deployment namespaces.
+  # Labels this scenario's platform namespace (where the Astronomer chart itself is
+  # installed) so the Kyverno policies from bin/install-kyverno-scan.py, which match
+  # on this label, actually evaluate pods here too. This only covers the platform
+  # namespace; configs/enable-kyverno-scan.yaml's global.namespaceLabels value
+  # applies the same label to the separate namespaces Commander creates for each
+  # Airflow Deployment -- both are needed to cover every pod this scenario creates.
   platform: astronomer

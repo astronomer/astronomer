@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
-"""Install the real Kyverno admission controller + policies, audit-only (PINF-1034).
+"""Install a real, live Kyverno admission controller into a test cluster, audit-only.
 
-Run this BEFORE the scenario provisions anything (before bin/run-scenario.py, not
-after it) -- the point of installing the real controller rather than just running
-`kyverno apply --cluster` at the end is a live admission webhook that evaluates every
-resource as it's created. A point-in-time scan run only at the end can't see a
-short-lived resource (a Job like migrateDatabaseJob or houston-db-migrations that
-completes and may get cleaned up) that already came and went by then; a live webhook
-running for the scenario's whole lifetime catches it regardless, via
-bin/report-kyverno-scan.py reading the PolicyReport/ClusterPolicyReport objects this
-produces (those persist as their own objects independent of whatever resource they
-describe).
+Installs the actual Kyverno Helm chart plus a set of Kyverno ClusterPolicy manifests,
+and waits for them to be ready to evaluate resources. Call this before creating any of
+the resources you want evaluated (i.e. before a test suite provisions its fixtures),
+not afterward.
 
-Every policy's validationFailureAction is force-overridden to Audit here regardless of
-its own real-world setting (two of the three current policies are Enforce) -- this
-scan must never actually reject anything the scenario creates, matching PINF-1034's
-explicit "don't fail the build" scope.
+The reason to install a real, live admission controller instead of just running a
+one-time `kyverno apply --cluster` scan at the end of a test run is that a live
+controller evaluates every resource as it's created and keeps a permanent record
+(see bin/report-kyverno-scan.py) of the result. A scan run only once, after the fact,
+can only see whatever resources are still alive at that moment -- it will silently
+miss a short-lived resource, such as a Job that runs to completion and is cleaned up
+(e.g. a database-migration Job), even if that resource violated a policy while it
+existed.
+
+Every policy's validationFailureAction is force-overridden to Audit here, regardless
+of what it's set to in the source policy file (some ship as Enforce), because this
+tooling is meant only to report on policy compliance, never to block or fail a build
+over it. See Linear ticket PINF-1034 for the background on why this exists.
 """
 
 import argparse
@@ -34,16 +37,19 @@ HELM_EXE = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "h
 KUBECTL_EXE = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "kubectl"
 
 KYVERNO_NAMESPACE = "kyverno"
-# Matches astronomer/apc-terraform-modules' real Terraform pin for the actual
-# admission controller (its kyverno_chart_version input) -- confirmed this maps to
-# appVersion v1.18.2, the same version this scan used before it ran the standalone
-# CLI instead of the real controller.
+# Pinned to the same Kyverno Helm chart version (which maps to Kyverno appVersion
+# v1.18.2) that astronomer/apc-terraform-modules' own Terraform module installs for
+# real customer clusters (its "kyverno_chart_version" input, defined in
+# src/kyverno/variables.tf in that repo). Keeping the two in sync means this test is
+# exercising the same policy-engine version real deployments actually run.
 KYVERNO_CHART_VERSION = "3.8.2"
 
-# Verified by reading the real Terraform, not guessed: openshift-automation's
-# modules/platform/kyverno.tf pulls this exact module/path for its own Kyverno install.
-# If this scan starts erroring on clone, or runs clean with suspiciously few results,
-# re-trace that chain before assuming these two constants are still right.
+# The astronomer/apc-terraform-modules repo (private) is where Astronomer's actual
+# Kyverno policies live, at the path below -- see that repo's src/kyverno/main.tf,
+# which applies every *.yaml file under this same directory the same way this script
+# does. If cloning starts failing, or this scan runs clean with suspiciously few
+# results, check whether that repo moved the policies directory before assuming these
+# two constants are still right.
 POLICIES_REPO = "astronomer/apc-terraform-modules"
 POLICIES_PATH = "src/kyverno/policies"
 
@@ -154,10 +160,12 @@ def get_ready_condition_field(kubeconfig: str, name: str, field: str) -> str | N
 def wait_for_policies_ready(kubeconfig: str, policy_names: list[str], timeout: int = 120) -> None:
     """Poll each ClusterPolicy's Ready condition until true, or raise on timeout.
 
-    Resources created before a policy's own webhook configuration is actually live
-    (not just the pod Ready, the policy itself registered and validated) wouldn't be
-    evaluated at all -- this is the same kind of pod-Ready-vs-actually-reachable gap
-    PINF-1049 hit with commander's JWKS fetch, just for a different component.
+    Applying a ClusterPolicy manifest and having Kyverno actually register and
+    validate that policy against its admission webhook are two different moments --
+    the object can exist in the API server before Kyverno has finished processing it.
+    Any resource created in that gap would not be evaluated by the policy at all, so
+    this function exists to make callers wait past that gap rather than assuming the
+    policy is active as soon as `kubectl apply` returns.
     """
     deadline = time.monotonic() + timeout
     pending = set(policy_names)

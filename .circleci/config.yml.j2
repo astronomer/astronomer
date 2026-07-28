@@ -268,13 +268,16 @@ jobs:
           command: |
             uv run bin/run-scenario.py {{ scenario.name }}
 {%- if scenario.kyverno_scan %}
-            # Installed here, right after the cluster + platform chart are up but before
-            # pytest creates this scenario's own resources -- a live admission controller
-            # audits everything from this point on, including short-lived resources (a Job
-            # that completes and may get cleaned up) that a point-in-time scan run only at
-            # the end could never see. Doesn't cover whatever Jobs the platform chart's own
-            # install just created above (no earlier hook point without touching
-            # reset-local-dev/helm-install.py, shared by every topology, not just this one).
+            # bin/install-kyverno-scan.py installs a real Kyverno admission controller into
+            # the test cluster, right after run-scenario.py has finished installing the
+            # Astronomer Helm chart above but before pytest below creates this scenario's own
+            # test resources. Because it's a live admission controller rather than a one-time
+            # scan, it evaluates every resource from this point forward as it's created,
+            # including short-lived ones (e.g. a Job that finishes and gets cleaned up) that a
+            # scan run only once at the end of this job would never see. It cannot see
+            # anything the chart install above already created before it started -- there's
+            # no earlier point to run it from without changing reset-local-dev/
+            # bin/helm-install.py, which every scenario shares, not just this one.
             uv run bin/install-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/{{ scenario.topology }}"
 {%- endif %}
             # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that

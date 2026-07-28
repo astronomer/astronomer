@@ -61,12 +61,14 @@ def summarize_reports(reports: list[dict]) -> list[str]:
 def count_evaluations(reports: list[dict]) -> dict[str, Counter]:
     """Per-policy count of each result type seen across the given reports.
 
-    A policy whose namespaceSelector matches zero resources produces zero results,
-    which prints identically to "zero violations" in summarize_reports() above --
-    the exact ambiguity this repo's own notes warn about (a missing namespace label
-    makes the scan "run clean" by matching nothing, not because nothing's wrong).
-    This makes that distinction visible: a policy with an all-zero counter here
-    never actually got evaluated against anything.
+    A policy is only evaluated against resources that match its own `match`/
+    `namespaceSelector` rules. If nothing in the cluster matches (for example, because
+    an expected namespace label was never applied), the policy produces zero results
+    -- which looks identical, in summarize_reports() above, to a policy that was
+    evaluated many times and never found a violation. This function exists to make
+    that difference visible: a policy with an all-zero counter here was never
+    actually evaluated against anything, which is a configuration problem, not a
+    clean compliance result.
     """
     counts: dict[str, Counter] = defaultdict(Counter)
     for report in reports:
