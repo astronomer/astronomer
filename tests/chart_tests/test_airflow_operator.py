@@ -723,3 +723,41 @@ class TestAirflowOperator:
         else:
             names = [f"{doc['kind']}/{doc['metadata']['name']}" for doc in operator_docs]
             assert names == [], f"expected no operator resources, got: {names}"
+
+    @pytest.mark.parametrize(
+        "plane_mode,should_render",
+        [
+            ("data", True),
+            ("unified", True),
+            ("control", False),
+        ],
+    )
+    def test_airflow_operator_rbac(self, kube_version, plane_mode, should_render):
+        """Operator rbac resources only render on planes (data, unified), not on the control plane when on global.rbac.enabled ."""
+        rbac_templates = sorted(
+            str(x.relative_to(git_root_dir)) for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/rbac").glob("*")
+        )
+        values = {
+            "global": {
+                "airflowOperator": {"enabled": True},
+                "plane": {"mode": plane_mode},
+                "rbac": {"enabled": False},
+            },
+        }
+        if should_render:
+            docs = render_chart(
+                kube_version=kube_version,
+                values=values,
+                show_only=rbac_templates,
+            )
+            assert len(docs) == 0
+        else:
+            # On the control plane the operator templates render empty. helm errors with
+            # "could not find template" when --show-only targets an all-empty template, so
+            # render the full chart and assert no operator CRDs are emitted.
+            docs = render_chart(
+                kube_version=kube_version,
+                values=values,
+            )
+            operator_docs = [f"{doc.get('kind')}/{doc.get('metadata', {}).get('name')}" for doc in docs if _is_operator_doc(doc)]
+            assert not operator_docs, f"control plane must not render operator resources, got: {operator_docs}"

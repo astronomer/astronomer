@@ -1,4 +1,8 @@
+####################################
+## Operator Leader Election Role  ##
+####################################
 {{- if (include "operator.enabled" .) }}
+{{- if .Values.global.rbac.enabled  }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -41,4 +45,5 @@ rules:
   verbs:
   - create
   - patch
+{{- end }}
 {{- end }}
