@@ -72,7 +72,7 @@ def summarize_reports(reports: list[dict]) -> list[str]:
 
 
 def list_all_results(reports: list[dict]) -> list[str]:
-    """One line per individual result across the given reports, regardless of pass/fail.
+    """One column-aligned line per individual result across the given reports, regardless of pass/fail.
 
     Unlike summarize_reports() below, this includes passing results too. It exists so
     --verbose can show exactly which namespaces and objects were actually scanned, not
@@ -80,6 +80,11 @@ def list_all_results(reports: list[dict]) -> list[str]:
     evaluated by anything, which looks nothing like a namespace full of passing pods
     once you can see the full list, but is indistinguishable from one if you can only
     see violations.
+
+    Sorted by (namespace, object name) rather than by policy or result, so every result
+    for a given pod (or its Deployment/ReplicaSet/CronJob) reads together as one group
+    -- that's the grouping that answers "was this object scanned at all", which is the
+    question this flag exists to answer.
     """
     rows = []
     for report in reports:
@@ -89,13 +94,20 @@ def list_all_results(reports: list[dict]) -> list[str]:
                 (
                     namespace or "(cluster-scoped)",
                     name,
-                    result.get("policy", "?"),
-                    result.get("rule", "?"),
-                    result.get("result", "?"),
+                    result.get("result", "?").upper(),
+                    f"{result.get('policy', '?')}/{result.get('rule', '?')}",
                 )
             )
-    rows.sort()
-    return [f"ns={namespace} {name}: {policy}/{rule} -> {result.upper()}" for namespace, name, policy, rule, result in rows]
+    rows.sort(key=lambda row: row[:2])
+    if not rows:
+        return []
+    result_width = max(len(result) for _, _, result, _ in rows)
+    namespace_width = max(len(namespace) for namespace, _, _, _ in rows)
+    name_width = max(len(name) for _, name, _, _ in rows)
+    return [
+        f"{result:<{result_width}}  {namespace:<{namespace_width}}  {name:<{name_width}}  {policy_rule}"
+        for namespace, name, result, policy_rule in rows
+    ]
 
 
 def count_evaluations(reports: list[dict]) -> dict[str, Counter]:
