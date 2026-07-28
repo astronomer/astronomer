@@ -126,8 +126,33 @@ def apply_policies(kubeconfig: str, policies_dir: Path) -> None:
     subprocess.run([str(KUBECTL_EXE), f"--kubeconfig={kubeconfig}", "apply", "-f", str(policies_dir)], check=True)
 
 
+def get_ready_condition_field(kubeconfig: str, name: str, field: str) -> str | None:
+    """Read one field (status or message) off a ClusterPolicy's Ready condition, or None before it exists.
+
+    Readiness is a status.conditions entry (type == "Ready"), not a top-level
+    status.ready boolean -- Kyverno v1.18's ClusterPolicy CRD only defines
+    status.conditions/status.rulecount, confirmed against its own CRD schema. A flat
+    `-o jsonpath={.status.ready}` check always returns empty and can never see
+    readiness, which is why this used to hang until the timeout with no explanation.
+    """
+    result = subprocess.run(
+        [
+            str(KUBECTL_EXE),
+            f"--kubeconfig={kubeconfig}",
+            "get",
+            "clusterpolicy",
+            name,
+            "-o",
+            f'jsonpath={{.status.conditions[?(@.type=="Ready")].{field}}}',
+        ],
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip() or None
+
+
 def wait_for_policies_ready(kubeconfig: str, policy_names: list[str], timeout: int = 120) -> None:
-    """Poll each ClusterPolicy's status.ready until true, or raise on timeout.
+    """Poll each ClusterPolicy's Ready condition until true, or raise on timeout.
 
     Resources created before a policy's own webhook configuration is actually live
     (not just the pod Ready, the policy itself registered and validated) wouldn't be
@@ -136,27 +161,21 @@ def wait_for_policies_ready(kubeconfig: str, policy_names: list[str], timeout: i
     """
     deadline = time.monotonic() + timeout
     pending = set(policy_names)
+    last_message: dict[str, str] = {}
     while pending:
         for name in list(pending):
-            result = subprocess.run(
-                [
-                    str(KUBECTL_EXE),
-                    f"--kubeconfig={kubeconfig}",
-                    "get",
-                    "clusterpolicy",
-                    name,
-                    "-o",
-                    "jsonpath={.status.ready}",
-                ],
-                capture_output=True,
-                text=True,
-            )
-            if result.stdout.strip() == "true":
+            message = get_ready_condition_field(kubeconfig, name, "message")
+            if message:
+                last_message[name] = message
+            if get_ready_condition_field(kubeconfig, name, "status") == "True":
                 pending.discard(name)
         if not pending:
             return
         if time.monotonic() >= deadline:
-            raise SystemExit(f"ERROR: ClusterPolicy(s) never became ready within {timeout}s: {sorted(pending)}")
+            details = "\n".join(
+                f"  {name}: {last_message.get(name, '(no Ready condition reported yet)')}" for name in sorted(pending)
+            )
+            raise SystemExit(f"ERROR: ClusterPolicy(s) never became ready within {timeout}s:\n{details}")
         print(f"Waiting for ClusterPolicy readiness: {sorted(pending)} ({int(deadline - time.monotonic())}s remaining)")
         time.sleep(5)
 
