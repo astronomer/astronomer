@@ -109,7 +109,8 @@ def main() -> None:
         print(line)
     if not findings:
         print("No non-passing results found.")
-    print("Not failing the build over these -- audit-only, see PINF-1034.")
+    else:
+        print("Not failing the build over these -- audit-only, see PINF-1034.")
 
 
 if __name__ == "__main__":
