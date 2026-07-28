@@ -96,12 +96,7 @@ def create_astronomer_tls_certificates():
     development and testing, and because it makes this whole process easy.
     """
 
-    domains = [
-        "localtest.me",  # localtest.me and *.localtest.me resolve to 127.0.0.1 using any DNS server
-        "host.docker.internal",  # Orbstack routes this from inside a container to your laptop
-    ]
-
-    domains = [*domains, *[f"*.{x}" for x in domains]]
+    domain = "localtest.me"  # localtest.me and *.localtest.me resolve to 127.0.0.1 using any DNS server
 
     if astronomer_tls_key_file.exists() and astronomer_tls_cert_file.exists():
         print("Using existing astronomer-tls certificates")
@@ -110,7 +105,7 @@ def create_astronomer_tls_certificates():
     # Install the mkcert CA, then generate a wildcard cert and key.
     subprocess.run([MKCERT_EXE, "-install"], check=True)
     subprocess.run(
-        [MKCERT_EXE, f"-cert-file={astronomer_tls_cert_file}", f"-key-file={astronomer_tls_key_file}", *domains],
+        [MKCERT_EXE, f"-cert-file={astronomer_tls_cert_file}", f"-key-file={astronomer_tls_key_file}", domain, f"*.{domain}"],
         check=True,
     )
 
