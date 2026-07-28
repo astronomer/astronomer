@@ -820,11 +820,15 @@ class TestAstronomerCommander:
         assert spec["hostAliases"] == hostAliasSpec
 
     @pytest.mark.parametrize(
-        "plane,init_containers_count,containers_count",
-        [("data", 3, 1), ("control", 0, 0), ("unified", 3, 1)],
+        "plane,commander_renders,flightdeck_provisioned",
+        [("data", True, True), ("control", False, False), ("unified", True, False)],
     )
-    def test_flightdeck_enabled(self, kube_version, plane, init_containers_count, containers_count):
-        """Test that flightdeck works when enabled with various configs."""
+    def test_flightdeck_enabled(self, kube_version, plane, commander_renders, flightdeck_provisioned):
+        """flightDeck.enabled provisions the flightdeck store only on a data plane (PINF-1093).
+
+        The commander Deployment still renders on a unified plane, but without the flightdeck
+        init containers or COMMANDER_FLIGHTDECK_DSN; control planes render no commander at all.
+        """
 
         docs = render_chart(
             kube_version=kube_version,
@@ -843,62 +847,65 @@ class TestAstronomerCommander:
             ],
         )
 
-        if plane in ["data", "unified"]:
-            assert len(docs) == 1
-        else:
+        if not commander_renders:
             assert len(docs) == 0
             return
 
-        if len(docs) > 0:
-            assert docs[0]["kind"] == "Deployment"
-            assert docs[0]["metadata"]["name"] == "release-name-commander"
-            init_containers = docs[0]["spec"]["template"]["spec"]["initContainers"]
-            assert len(init_containers) == init_containers_count
-            containers = docs[0]["spec"]["template"]["spec"]["containers"]
-            assert len(containers) == containers_count
+        # Only the commander Deployment renders here (namespaced RBAC needs clusterRoles=false).
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "Deployment"
+        assert docs[0]["metadata"]["name"] == "release-name-commander"
 
-            commander_env_vars = get_env_vars_dict(containers[0]["env"])
+        init_names = [c["name"] for c in docs[0]["spec"]["template"]["spec"]["initContainers"]]
+        containers = docs[0]["spec"]["template"]["spec"]["containers"]
+        commander_env_vars = get_env_vars_dict(containers[0]["env"])
 
-            assert commander_env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
-                "name": "release-name-cluster-local-data",
-                "key": "local_cluster_id",
-            }
+        if flightdeck_provisioned:
+            assert "flightdeck-bootstrapper" in init_names
+            assert "flightdeck-db-migrations" in init_names
             assert commander_env_vars["COMMANDER_FLIGHTDECK_DSN"].get("secretKeyRef") == {
                 "name": "release-name-flightdeck-backend",
                 "key": "connection",
             }
+        else:
+            assert "flightdeck-bootstrapper" not in init_names
+            assert "flightdeck-db-migrations" not in init_names
+            assert "COMMANDER_FLIGHTDECK_DSN" not in commander_env_vars
 
-            assert commander_env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
+        assert commander_env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
+            "name": "release-name-cluster-local-data",
+            "key": "local_cluster_id",
+        }
+        assert commander_env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
 
-        @pytest.mark.parametrize(
-            "plane,init_containers_count,containers_count",
-            [("data", 3, 1), ("control", 0, 0), ("unified", 3, 1)],
-        )
-        def test_flightdeck_enabled_with_no_cluster_role(self, kube_version, plane, init_containers_count, containers_count):
-            """Test that flightdeck renders rbac tpl when on clusterRoles is false."""
-            docs = render_chart(
-                kube_version=kube_version,
-                values={
-                    "global": {
-                        "plane": {"mode": plane},
-                        "clusterRoles": False,
-                    },
-                    "astronomer": {
-                        "flightDeck": {"enabled": True},
-                    },
+    @pytest.mark.parametrize(
+        "plane,doc_count",
+        [("data", 3), ("control", 0), ("unified", 1)],
+    )
+    def test_flightdeck_enabled_with_no_cluster_role(self, kube_version, plane, doc_count):
+        """Namespaced flightdeck RBAC (Role + RoleBinding) renders only on a data plane (PINF-1093).
+
+        On a unified plane only the commander Deployment renders (flightdeck is data-plane-only);
+        control planes render nothing from these templates.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": plane},
+                    "clusterRoles": False,
                 },
-                show_only=[
-                    "charts/astronomer/templates/commander/commander-deployment.yaml",
-                    "charts/astronomer/templates/commander/commander-flightdeck-role.yaml",
-                    "charts/astronomer/templates/commander/commander-flightdeck-rolebinding.yaml",
-                ],
-            )
-
-            if plane in ["data", "unified"]:
-                assert len(docs) == 3
-            else:
-                assert len(docs) == 0
-                return
+                "astronomer": {
+                    "flightDeck": {"enabled": True},
+                },
+            },
+            show_only=[
+                "charts/astronomer/templates/commander/commander-deployment.yaml",
+                "charts/astronomer/templates/commander/commander-flightdeck-role.yaml",
+                "charts/astronomer/templates/commander/commander-flightdeck-rolebinding.yaml",
+            ],
+        )
+        assert len(docs) == doc_count
 
     @pytest.mark.parametrize(
         "plane_mode,should_render",
