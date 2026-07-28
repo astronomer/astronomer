@@ -1,4 +1,5 @@
 {{- if (include "operator.enabled" .) }}
+{{- if .Values.global.rbac.enabled  }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -225,5 +226,6 @@ rules:
   - patch
   - update
   - watch
- {{ end -}}
- {{- end }}
+{{ end -}}
+{{- end }}
+{{- end }}
