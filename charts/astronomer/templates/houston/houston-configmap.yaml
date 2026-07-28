@@ -78,6 +78,10 @@ data:
       cookieName: {{ . }}
       {{- end }}
       {{- end }}
+      {{- if .Values.global.dataPlaneFailover.enabled }}
+      dataPlaneFailover:
+        enabled: {{ .Values.global.dataPlaneFailover.enabled }}
+      {{- end }}
       {{- if .Values.registry.auth.secretName }}
       registryAuthSecret: {{ .Values.registry.auth.secretName }}
       {{- end }}
