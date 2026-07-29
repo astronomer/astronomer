@@ -21,8 +21,8 @@ def test_cluster_local_data_cm_defaults():
 
 
 def test_cluster_local_data_cm_with_features():
-    """flightDeck.enabled on a data plane renders flightdeck_db_name."""
-    values = {"global": {"plane": {"mode": "data"}}, "astronomer": {"flightDeck": {"enabled": True}}}
+    """flightDeck.enabled renders flightdeck_db_name (mode-agnostic; default plane is unified)."""
+    values = {"astronomer": {"flightDeck": {"enabled": True}}}
 
     docs = render_chart(
         values=values,
@@ -46,9 +46,9 @@ def test_cluster_local_data_cm_with_features():
     assert set(doc["data"]["flightdeck_db_name"]).issubset(allowed_characters)
 
 
-def test_cluster_local_data_cm_no_flightdeck_on_unified():
-    """Flightdeck is data-plane-only (PINF-1093): flightDeck.enabled on a unified plane is a no-op."""
-    values = {"global": {"plane": {"mode": "unified"}}, "astronomer": {"flightDeck": {"enabled": True}}}
+def test_cluster_local_data_cm_no_flightdeck_on_control():
+    """flightdeck_db_name is guarded out on a control plane even with flightDeck.enabled."""
+    values = {"global": {"plane": {"mode": "control"}}, "astronomer": {"flightDeck": {"enabled": True}}}
 
     docs = render_chart(
         values=values,

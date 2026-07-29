@@ -821,13 +821,14 @@ class TestAstronomerCommander:
 
     @pytest.mark.parametrize(
         "plane,commander_renders,flightdeck_provisioned",
-        [("data", True, True), ("control", False, False), ("unified", True, False)],
+        [("data", True, True), ("control", False, False), ("unified", True, True)],
     )
     def test_flightdeck_enabled(self, kube_version, plane, commander_renders, flightdeck_provisioned):
-        """flightDeck.enabled provisions the flightdeck store only on a data plane (PINF-1093).
+        """flightDeck.enabled provisions the flightdeck store on data and unified planes (PINF-1093).
 
-        The commander Deployment still renders on a unified plane, but without the flightdeck
-        init containers or COMMANDER_FLIGHTDECK_DSN; control planes render no commander at all.
+        flightDeck.enabled is mode-agnostic (see the flightdeck.enabled helper); control planes
+        render no commander at all. CP-HA/failover-driven provisioning is data-only and is covered
+        in test_control_plane_ha_flightdeck.py / test_dr_failover.py.
         """
 
         docs = render_chart(
@@ -880,13 +881,15 @@ class TestAstronomerCommander:
 
     @pytest.mark.parametrize(
         "plane,doc_count",
-        [("data", 3), ("control", 0), ("unified", 1)],
+        # data/unified: commander Deployment + flightdeck Role + RoleBinding = 3.
+        # control: no commander Deployment, but flightDeck.enabled is mode-agnostic in the
+        # flightdeck.enabled helper, so the Role + RoleBinding still render (2) — orphaned but
+        # harmless. Tightening that is part of the data-only cleanup follow-up (PINF-1093 sub-issue).
+        [("data", 3), ("control", 2), ("unified", 3)],
     )
     def test_flightdeck_enabled_with_no_cluster_role(self, kube_version, plane, doc_count):
-        """Namespaced flightdeck RBAC (Role + RoleBinding) renders only on a data plane (PINF-1093).
-
-        On a unified plane only the commander Deployment renders (flightdeck is data-plane-only);
-        control planes render nothing from these templates.
+        """flightdeck RBAC (Role + RoleBinding) renders whenever flightDeck.enabled and clusterRoles=false;
+        the commander Deployment additionally renders on data/unified planes.
         """
         docs = render_chart(
             kube_version=kube_version,

@@ -959,14 +959,18 @@ Returns the string "true" or "false" — compare with eq.
 
 
 {{/*
-Whether flightdeck resources should render. Flightdeck is a data-plane-only concept — it
-backs the CP↔DP version-guard CAS (multi-CP message reordering) and DR-failover flight
-processing (migration between DP clusters), neither of which applies on a unified cluster
-(single CP + DP). So the store renders only when plane.mode == data, and then when any of
-flightDeck.enabled, dataPlaneFailover, or controlPlaneHA is set.
+Whether flightdeck resources should render. The store backs the CP↔DP version-guard CAS
+(multi-CP message reordering, needed under controlPlaneHA) and DR-failover flight processing.
+It renders when flightDeck.enabled is set explicitly, OR on a data plane when either
+dataPlaneFailover or controlPlaneHA is enabled.
+
+NOTE: flightdeck is conceptually data-plane-only, but flightDeck.enabled here is intentionally
+mode-agnostic (renders in unified too) to preserve the long-standing tested path. Restricting
+it to data mode — and aligning pilot's DSN gate with this helper — is tracked as a follow-up
+(see PINF-1093 sub-issue); do not tighten it here without that coordinated change.
 */}}
 {{- define "flightdeck.enabled" -}}
-{{- if and (eq .Values.global.plane.mode "data") (or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled .Values.global.controlPlaneHA.enabled) }}
+{{- if or .Values.flightDeck.enabled (and (or .Values.global.dataPlaneFailover.enabled .Values.global.controlPlaneHA.enabled) (eq .Values.global.plane.mode "data")) }}
 true
 {{- end -}}
 {{- end -}}
