@@ -354,6 +354,17 @@ jobs:
           name: "Scenario: auth-sidecar"
           command: |
             uv run bin/run-scenario.py auth-sidecar
+            # bin/install-kyverno-scan.py installs a real Kyverno admission controller into
+            # the test cluster, right after run-scenario.py has finished installing the
+            # Astronomer Helm chart above but before pytest below creates this scenario's own
+            # test resources. Because it's a live admission controller rather than a one-time
+            # scan, it evaluates every resource from this point forward as it's created,
+            # including short-lived ones (e.g. a Job that finishes and gets cleaned up) that a
+            # scan run only once at the end of this job would never see. It cannot see
+            # anything the chart install above already created before it started -- there's
+            # no earlier point to run it from without changing reset-local-dev/
+            # bin/helm-install.py, which every scenario shares, not just this one.
+            uv run bin/install-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
             # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
             # subprocess tree, not this shell -- needed here too for any fixture (e.g.
             # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
@@ -361,6 +372,10 @@ jobs:
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/auth-sidecar"
       - store_test_results:
           path: test-results
+      - run:
+          name: "Kyverno report: auth-sidecar"
+          command: |
+            uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
   scenario-deployment-lifecycle:
     machine:
       image: ubuntu-2404:2026.05.1
@@ -447,6 +462,8 @@ workflows:
       - scenario-auth-sidecar:
           requires:
             - build-artifact
+          context:
+            - github-repo
       - scenario-deployment-lifecycle:
           requires:
             - build-artifact
