@@ -93,7 +93,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.16
+      tag: 2.0.17
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
