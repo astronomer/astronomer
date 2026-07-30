@@ -589,6 +589,8 @@ s3:
 - name: CB_PROBE_MAX_INFLIGHT
   value: {{ .Values.houston.worker.dispatcher.circuitBreaker.probeMaxInflight | quote }}
 {{- end }}
+- name: HELM__RELEASE_VERSION
+  value: {{ .Chart.Version | quote }}
 {{- end }}
 {{- end }}
 
