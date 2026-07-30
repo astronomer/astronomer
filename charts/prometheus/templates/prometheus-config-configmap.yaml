@@ -498,6 +498,7 @@ data:
 
       {{- end }}
 
+      {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
       - job_name: houston-api
         metrics_path: /v1/metrics
         kubernetes_sd_configs:
@@ -518,6 +519,7 @@ data:
           - source_labels: [__meta_kubernetes_endpoint_ready]
             action: keep
             regex: "^true"
+      {{- end }}
 
 
     {{- with .Values.additionalScrapeJobs }}
