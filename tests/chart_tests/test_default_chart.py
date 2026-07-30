@@ -160,10 +160,10 @@ class TestAllPodSpecContainers:
         "repository": f"{private_repo}/ap-auth-sidecar",
     }
     private_repo_docs = render_chart(values=private_values)
-    pod_manager_docs_private = [doc for doc in private_repo_docs if doc["kind"] in pod_and_job_managers]
-    pod_manager_docs_private_ids = [f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_manager_docs_private]
+    pod_and_job_manager_docs_private = [doc for doc in private_repo_docs if doc["kind"] in pod_and_job_managers]
+    pod_and_job_manager_docs_private_ids = [f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_and_job_manager_docs_private]
 
-    pod_manager_containers_public = {
+    pod_and_job_manager_containers_public = {
         f"{doc['kind']}/{doc['metadata']['name']}/{name}": container
         for doc in pod_and_job_manager_docs
         for name, container in get_containers_by_name(doc, include_init_containers=True).items()
@@ -171,8 +171,8 @@ class TestAllPodSpecContainers:
 
     @pytest.mark.parametrize(
         "doc",
-        pod_manager_docs_private,
-        ids=pod_manager_docs_private_ids,
+        pod_and_job_manager_docs_private,
+        ids=pod_and_job_manager_docs_private_ids,
     )
     def test_all_default_containers_with_private_registry(self, doc):
         """Test that each container uses the privateRegistry.
@@ -185,7 +185,8 @@ class TestAllPodSpecContainers:
         for name, container in c_by_name.items():
             pod_container = f"{doc['kind']}/{doc['metadata']['name']}/{name}"
             assert (
-                container["image"].split("/")[-1:] == self.pod_manager_containers_public[pod_container]["image"].split("/")[-1:]
+                container["image"].split("/")[-1:]
+                == self.pod_and_job_manager_containers_public[pod_container]["image"].split("/")[-1:]
             ), f"The spec for '{pod_container}' does not use the same image for public and private registry configurations."
             assert container["image"].startswith(self.private_repo), (
                 f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
