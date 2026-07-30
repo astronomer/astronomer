@@ -3,7 +3,7 @@ import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name, get_env_vars_dict
+from tests.utils import get_chart_version, get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -60,7 +60,7 @@ class TestHoustonApiDeployment:
         assert houston_container_env["DEPLOYMENTS__DATABASE__CONNECTION"] == {
             "secretKeyRef": {"key": "connection", "name": "release-name-houston-backend"}
         }
-
+        assert houston_container_env["HELM__RELEASE_VERSION"] == get_chart_version()
         assert wait_for_db_container["securityContext"]["readOnlyRootFilesystem"]
         wait_for_db_container_env = get_env_vars_dict(wait_for_db_container["env"])
         assert wait_for_db_container_env["COMMANDER_WAIT_ENABLED"] == "true"

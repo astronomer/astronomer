@@ -83,7 +83,6 @@ data:
       {{- end }}
       releaseName: {{ .Release.Name }}
       releaseNamespace: {{ .Release.Namespace }}
-      releaseVersion: {{ .Chart.Version }}
       {{- if .Values.global.tlsSecret }}
       tlsSecretName: {{ .Values.global.tlsSecret }}
       {{- end }}
