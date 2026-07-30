@@ -116,7 +116,7 @@ class TestAllPodSpecContainers:
         the Deployment/StatefulSet/DaemonSet will be rejected by the API server.
         """
         match_labels = doc["spec"]["selector"]["matchLabels"]
-        template_labels = doc["spec"]["template"]["metadata"]["labels"]
+        template_labels = get_pod_template(doc)["metadata"]["labels"]
         for key, value in match_labels.items():
             assert key in template_labels, (
                 f"{doc['kind']}/{doc['metadata']['name']}: selector.matchLabels key '{key}' "
@@ -250,16 +250,7 @@ class TestDuplicateEnvironment:
     )
     def test_env_vars_have_no_duplicates(self, doc):
         """Test that there are no duplicate env vars."""
-        if doc["kind"] in selector_kinds:
-            for container in doc["spec"]["template"]["spec"].get("containers") or []:
-                assert not self.check_env_vars_are_unique(container), "container has duplicate env vars"
-
-            for container in doc["spec"]["template"]["spec"].get("initContainers") or []:
-                assert not self.check_env_vars_are_unique(container), "initContainer has duplicate env vars"
-
-        elif doc["kind"] == "CronJob":
-            for container in doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers") or []:
-                assert not self.check_env_vars_are_unique(container), "container has duplicate env vars"
-
-            for container in doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("initContainers") or []:
-                assert not self.check_env_vars_are_unique(container), "initContainer has duplicate env vars"
+        for name, container in get_containers_by_name(doc, include_init_containers=True).items():
+            assert not self.check_env_vars_are_unique(container), (
+                f"{doc['kind']}/{doc['metadata']['name']}/{name} has duplicate env vars"
+            )
