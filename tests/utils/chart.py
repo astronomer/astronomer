@@ -36,7 +36,7 @@ from tests import supported_k8s_versions
 api_client = ApiClient()
 
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master"
-git_root_dir = [x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()][-1]
+git_root_dir = [x for x in Path(__file__).resolve().parents if (x / ".git").exists()][-1]
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 default_version = supported_k8s_versions[-1]
 

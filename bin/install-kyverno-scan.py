@@ -32,7 +32,7 @@ from pathlib import Path
 
 import yaml
 
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 HELM_EXE = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "helm"
 KUBECTL_EXE = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "kubectl"
 
