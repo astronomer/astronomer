@@ -462,7 +462,7 @@ workflows:
       # Manual gate for the custom functional scenarios on non-release branches.
       # On master and release-X.Y they run automatically (below) and gate the
       # release; on every other branch they wait on this approval before running.
-      - hold-scenarios:
+      - approve-scenarios:
           type: approval
           filters:
             branches:
@@ -481,12 +481,12 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual hold-scenarios approval.
+      # every other branch: gated behind the manual approve-scenarios approval.
       - scenario-auth-sidecar:
           name: scenario-auth-sidecar-approved
           requires:
             - build-artifact
-            - hold-scenarios
+            - approve-scenarios
           context:
             - github-repo
           filters:
@@ -503,12 +503,12 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual hold-scenarios approval.
+      # every other branch: gated behind the manual approve-scenarios approval.
       - scenario-deployment-lifecycle:
           name: scenario-deployment-lifecycle-approved
           requires:
             - build-artifact
-            - hold-scenarios
+            - approve-scenarios
           filters:
             branches:
               ignore:
