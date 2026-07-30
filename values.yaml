@@ -118,6 +118,13 @@ global:
   rbac:
     enabled: true
 
+  # Custom roles: define your own roles from a catalog of granular permissions
+  # instead of assigning only the built-in roles. Covers Workspace and Deployment
+  # access, including access to the Airflow UI and API.
+  # Unrelated to `rbac` above, which controls Kubernetes RBAC resources.
+  customRBAC:
+    enabled: false
+
   scc:
     enabled: false
 
