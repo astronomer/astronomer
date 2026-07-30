@@ -3,7 +3,7 @@ import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name, get_env_vars_dict, get_chart_version
+from tests.utils import get_chart_version, get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 

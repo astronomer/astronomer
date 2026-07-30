@@ -116,7 +116,8 @@ def get_all_features():
 
 def get_chart_version():
     with open("charts/astronomer/Chart.yaml") as chart_file:
-       return yaml.safe_load(chart_file)["version"]
+        return yaml.safe_load(chart_file)["version"]
+
 
 def get_chart_containers(
     k8s_version: str,
