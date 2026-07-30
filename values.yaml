@@ -118,6 +118,13 @@ global:
   rbac:
     enabled: true
 
+  # Custom roles: define your own roles from a catalog of granular permissions
+  # instead of assigning only the built-in roles. Covers Workspace and Deployment
+  # access, including access to the Airflow UI and API.
+  # Unrelated to `rbac` above, which controls Kubernetes RBAC resources.
+  customRBAC:
+    enabled: false
+
   scc:
     enabled: false
 
@@ -407,27 +414,27 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.30.0-2
+        tag: 0.30.0-3
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.6.4-1
+        tag: 8.8.1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-20
+        tag: 1.24.1-21
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
         tag: 0.12.0-5
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.7.20
+        tag: 2026.7.27
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.7.20
+        tag: 2026.7.27
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.7.20
+        tag: 2026.7.27
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.4.0
