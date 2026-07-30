@@ -3,18 +3,15 @@ import re
 import pytest
 
 from tests import k8s_version_too_new, k8s_version_too_old
-from tests.utils import get_all_features, get_containers_by_name, get_pod_template, new_docs_by_kind
-from tests.utils import pod_managers as pod_and_job_managers
+from tests.utils import get_all_features, get_containers_by_name, get_pod_template, new_docs_by_kind, pod_managers
 from tests.utils.chart import render_chart
 
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
-# Kinds whose spec.selector must match spec.template.metadata.labels (test_selector_matches_pod_template_labels).
-# CronJob and Job are deliberately excluded: neither kind has a spec.selector field to validate.
-pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
-# The broader tests.utils.pod_managers (CronJob/DaemonSet/Deployment/Job/StatefulSet/ReplicaSet),
-# imported above as pod_and_job_managers, is for tests that only care about container specs
-# (resources, image, securityContext) and not selector/label matching. Covers CronJobs (e.g. the
-# elasticsearch curator) and Jobs (including Helm hook Jobs like the houston db-migration job).
+# Job/CronJob are pod managers too (they own a container-bearing pod template, same as
+# Deployment/StatefulSet/DaemonSet) -- see tests.utils.pod_managers, imported above. This narrower
+# subset is only for test_selector_matches_pod_template_labels: Job and CronJob don't have a
+# spec.selector field, so they're excluded from that one selector/label-matching test specifically.
+selector_kinds = ["Deployment", "StatefulSet", "DaemonSet"]
 
 # Pods that cannot meet PSS-Restricted, exempt from test_pss_restricted_security_context (PINF-713).
 # Each entry is justified below. In a real cluster these workloads are handled with PSS namespace
@@ -82,8 +79,8 @@ class TestAllPodSpecContainers:
     chart_values = get_all_features()
 
     default_docs = render_chart(values=chart_values)
+    selector_pod_manager_docs = [doc for doc in default_docs if doc["kind"] in selector_kinds]
     pod_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_managers]
-    pod_and_job_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_and_job_managers]
     annotated = [x for x in default_docs if x["metadata"].get("annotations")]
 
     # global.plane.mode defaults to "unified", under which dp-link never renders: unlike every
@@ -95,7 +92,7 @@ class TestAllPodSpecContainers:
     control_mode_values = get_all_features()
     control_mode_values["global"]["plane"] = {"mode": "control"}
     control_mode_docs = render_chart(values=control_mode_values)
-    pod_and_job_manager_docs += new_docs_by_kind(default_docs, control_mode_docs, pod_and_job_managers)
+    pod_manager_docs += new_docs_by_kind(default_docs, control_mode_docs, pod_managers)
 
     @pytest.mark.parametrize(
         "doc",
@@ -109,8 +106,8 @@ class TestAllPodSpecContainers:
 
     @pytest.mark.parametrize(
         "doc",
-        pod_manager_docs,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
+        selector_pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in selector_pod_manager_docs],
     )
     def test_selector_matches_pod_template_labels(self, doc):
         """Test that spec.selector.matchLabels is a subset of spec.template.metadata.labels.
@@ -132,8 +129,8 @@ class TestAllPodSpecContainers:
 
     @pytest.mark.parametrize(
         "doc",
-        pod_and_job_manager_docs,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_and_job_manager_docs],
+        pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
     )
     def test_default_chart_with_basedomain(self, doc):
         """Test that each container in each pod spec renders and has some required fields."""
@@ -160,19 +157,19 @@ class TestAllPodSpecContainers:
         "repository": f"{private_repo}/ap-auth-sidecar",
     }
     private_repo_docs = render_chart(values=private_values)
-    pod_and_job_manager_docs_private = [doc for doc in private_repo_docs if doc["kind"] in pod_and_job_managers]
-    pod_and_job_manager_docs_private_ids = [f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_and_job_manager_docs_private]
+    pod_manager_docs_private = [doc for doc in private_repo_docs if doc["kind"] in pod_managers]
+    pod_manager_docs_private_ids = [f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_manager_docs_private]
 
-    pod_and_job_manager_containers_public = {
+    pod_manager_containers_public = {
         f"{doc['kind']}/{doc['metadata']['name']}/{name}": container
-        for doc in pod_and_job_manager_docs
+        for doc in pod_manager_docs
         for name, container in get_containers_by_name(doc, include_init_containers=True).items()
     }
 
     @pytest.mark.parametrize(
         "doc",
-        pod_and_job_manager_docs_private,
-        ids=pod_and_job_manager_docs_private_ids,
+        pod_manager_docs_private,
+        ids=pod_manager_docs_private_ids,
     )
     def test_all_default_containers_with_private_registry(self, doc):
         """Test that each container uses the privateRegistry.
@@ -185,8 +182,7 @@ class TestAllPodSpecContainers:
         for name, container in c_by_name.items():
             pod_container = f"{doc['kind']}/{doc['metadata']['name']}/{name}"
             assert (
-                container["image"].split("/")[-1:]
-                == self.pod_and_job_manager_containers_public[pod_container]["image"].split("/")[-1:]
+                container["image"].split("/")[-1:] == self.pod_manager_containers_public[pod_container]["image"].split("/")[-1:]
             ), f"The spec for '{pod_container}' does not use the same image for public and private registry configurations."
             assert container["image"].startswith(self.private_repo), (
                 f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
@@ -194,8 +190,8 @@ class TestAllPodSpecContainers:
 
     @pytest.mark.parametrize(
         "doc",
-        pod_and_job_manager_docs,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_and_job_manager_docs],
+        pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
     )
     def test_pss_restricted_security_context(self, doc):
         """Every platform pod must render the full PSS-Restricted container securityContext (PINF-713).
@@ -239,7 +235,7 @@ class TestDuplicateEnvironment:
     values = get_all_features()
 
     docs = render_chart(values=values)
-    trimmed_docs = [x for x in docs if x["kind"] in [*pod_managers, "CronJob"]]
+    trimmed_docs = [x for x in docs if x["kind"] in [*selector_kinds, "CronJob"]]
 
     @staticmethod
     def check_env_vars_are_unique(container):
@@ -254,7 +250,7 @@ class TestDuplicateEnvironment:
     )
     def test_env_vars_have_no_duplicates(self, doc):
         """Test that there are no duplicate env vars."""
-        if doc["kind"] in pod_managers:
+        if doc["kind"] in selector_kinds:
             for container in doc["spec"]["template"]["spec"].get("containers") or []:
                 assert not self.check_env_vars_are_unique(container), "container has duplicate env vars"
 
