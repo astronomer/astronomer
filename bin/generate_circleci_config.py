@@ -18,10 +18,18 @@ def discover_scenarios() -> list[dict]:
 
     The manifest file's presence is the signal, not bare directory presence, so a
     half-finished or stray directory can't silently create (or hide) a CI job. Each
-    scenario's own test_profile.yaml may set an optional `resource_class` (any
-    CircleCI machine-executor resource class, e.g. xlarge/2xlarge) to size that
-    scenario's CI job independently -- most scenarios don't need more than the
-    default, but one running multiple concurrent Airflow Deployments can exhaust it.
+    scenario's own test_profile.yaml may set:
+    - `resource_class` (any CircleCI machine-executor resource class, e.g.
+      xlarge/2xlarge) to size that scenario's CI job independently -- most scenarios
+      don't need more than the default, but one running multiple concurrent Airflow
+      Deployments can exhaust it.
+    - `kyverno_scan: true` (PINF-1034) to install a live Kyverno admission controller
+      (bin/install-kyverno-scan.py) right after this scenario's cluster/platform chart
+      come up but before its own tests run, then report the policy violations it
+      recorded (bin/report-kyverno-scan.py) after those tests pass, without failing
+      the build. Needs a GITHUB_TOKEN with read access to the private
+      astronomer/apc-terraform-modules repo, so this also adds the `github-repo`
+      CircleCI context to just this scenario's job.
     """
     scenarios_dir = git_root_dir / "tests" / "functional" / "scenarios"
     if not scenarios_dir.is_dir():
@@ -30,10 +38,16 @@ def discover_scenarios() -> list[dict]:
     scenarios = []
     for profile_path in profile_paths:
         profile = yaml.safe_load(profile_path.read_text()) or {}
+        if profile.get("topology") not in ("unified", "control", "data"):
+            raise SystemExit(
+                f"ERROR: {profile_path} must set topology to one of unified/control/data, got {profile.get('topology')!r}"
+            )
         scenarios.append(
             {
                 "name": profile_path.parent.name,
+                "topology": profile["topology"],
                 "resource_class": profile.get("resource_class", "xlarge"),
+                "kyverno_scan": profile.get("kyverno_scan", False),
             }
         )
     return scenarios

@@ -1197,3 +1197,25 @@ def test_houston_configmap_operator_mode_reflects_operator_enabled():
 
     assert prod["deployments"]["mode"]["operator"]["enabled"] is True
     assert prod["operator"]["adoption"]["enabled"] is False
+
+
+@pytest.mark.parametrize(
+    "values,expected",
+    [
+        ({}, False),
+        ({"global": {"customRBAC": {"enabled": True}}}, True),
+        ({"global": {"customRBAC": {"enabled": False}}}, False),
+    ],
+    ids=["default-off", "on", "off"],
+)
+def test_houston_configmap_custom_rbac(values, expected):
+    """global.customRBAC.enabled drives whether Houston mints granular permissions and
+    exposes the role builder. Commander reads the same chart value to install the Airflow 2
+    security manager that enforces them, so the two halves cannot be configured apart."""
+    docs = render_chart(
+        values=values,
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["customRBAC"]["enabled"] is expected
