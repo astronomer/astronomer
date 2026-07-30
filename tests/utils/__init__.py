@@ -114,6 +114,10 @@ def get_all_features():
     return yaml.safe_load((Path(__file__).parent.parent / "enable_all_features.yaml").read_text())
 
 
+def get_chart_version():
+    with open("charts/astronomer/Chart.yaml") as chart_file:
+       return yaml.safe_load(chart_file)["version"]
+
 def get_chart_containers(
     k8s_version: str,
     chart_values: dict,
