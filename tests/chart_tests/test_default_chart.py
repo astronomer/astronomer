@@ -3,11 +3,17 @@ import re
 import pytest
 
 from tests import k8s_version_too_new, k8s_version_too_old
-from tests.utils import get_all_features, get_containers_by_name
+from tests.utils import get_all_features, get_containers_by_name, get_pod_template
 from tests.utils.chart import render_chart
 
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
+# Kinds whose spec.selector must match spec.template.metadata.labels (test_selector_matches_pod_template_labels).
+# CronJob and Job are deliberately excluded: neither kind has a spec.selector field to validate.
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
+# Kinds that own a container-bearing pod template, for tests that only care about container specs
+# (resources, image, securityContext) and not selector/label matching. Covers CronJobs (e.g. the
+# elasticsearch curator) and Jobs (including Helm hook Jobs like the houston db-migration job).
+pod_and_job_managers = [*pod_managers, "CronJob", "Job"]
 
 # Pods that cannot meet PSS-Restricted, exempt from test_pss_restricted_security_context (PINF-713).
 # Each entry is justified below. In a real cluster these workloads are handled with PSS namespace
@@ -22,6 +28,12 @@ PSS_RESTRICTED_EXEMPT = {
     "StatefulSet/release-name-elasticsearch-data": "bundled chart: privileged sysctl init container (vm.max_map_count)",
     "StatefulSet/release-name-elasticsearch-master": "bundled chart: privileged sysctl init container (vm.max_map_count)",
 }
+
+
+def new_docs_by_kind(base_docs, candidate_docs, kinds):
+    """Return docs from candidate_docs with a kind in kinds not already present in base_docs."""
+    base_ids = {f"{doc['kind']}/{doc['metadata']['name']}" for doc in base_docs}
+    return [doc for doc in candidate_docs if doc["kind"] in kinds and f"{doc['kind']}/{doc['metadata']['name']}" not in base_ids]
 
 
 class TestK8sVersionConstraints:
@@ -76,7 +88,19 @@ class TestAllPodSpecContainers:
 
     default_docs = render_chart(values=chart_values)
     pod_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_managers]
+    pod_and_job_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_and_job_managers]
     annotated = [x for x in default_docs if x["metadata"].get("annotations")]
+
+    # global.plane.mode defaults to "unified", under which dp-link never renders: unlike every
+    # other plane-gated template (which renders for "control" OR "unified"), dp-link is the one
+    # component gated on "control" alone, by design (it links a genuinely separate data plane back
+    # to the control plane, which is meaningless in a single unified install). Render once more with
+    # plane.mode=control and fold in any pod/job managers that don't already appear in the default
+    # sweep, so dp-link gets the same coverage as everything else without re-testing components twice.
+    control_mode_values = get_all_features()
+    control_mode_values["global"]["plane"] = {"mode": "control"}
+    control_mode_docs = render_chart(values=control_mode_values)
+    pod_and_job_manager_docs += new_docs_by_kind(default_docs, control_mode_docs, pod_and_job_managers)
 
     @pytest.mark.parametrize(
         "doc",
@@ -113,8 +137,8 @@ class TestAllPodSpecContainers:
 
     @pytest.mark.parametrize(
         "doc",
-        pod_manager_docs,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
+        pod_and_job_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_and_job_manager_docs],
     )
     def test_default_chart_with_basedomain(self, doc):
         """Test that each container in each pod spec renders and has some required fields."""
@@ -141,12 +165,12 @@ class TestAllPodSpecContainers:
         "repository": f"{private_repo}/ap-auth-sidecar",
     }
     private_repo_docs = render_chart(values=private_values)
-    pod_manager_docs_private = [doc for doc in private_repo_docs if doc["kind"] in pod_managers]
+    pod_manager_docs_private = [doc for doc in private_repo_docs if doc["kind"] in pod_and_job_managers]
     pod_manager_docs_private_ids = [f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_manager_docs_private]
 
     pod_manager_containers_public = {
         f"{doc['kind']}/{doc['metadata']['name']}/{name}": container
-        for doc in pod_manager_docs
+        for doc in pod_and_job_manager_docs
         for name, container in get_containers_by_name(doc, include_init_containers=True).items()
     }
 
@@ -174,8 +198,8 @@ class TestAllPodSpecContainers:
 
     @pytest.mark.parametrize(
         "doc",
-        pod_manager_docs,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
+        pod_and_job_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_and_job_manager_docs],
     )
     def test_pss_restricted_security_context(self, doc):
         """Every platform pod must render the full PSS-Restricted container securityContext (PINF-713).
@@ -190,7 +214,7 @@ class TestAllPodSpecContainers:
         doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
         if doc_id in PSS_RESTRICTED_EXEMPT:
             pytest.skip(f"PSS-exempt: {PSS_RESTRICTED_EXEMPT[doc_id]}")
-        pod_security_context = doc["spec"]["template"]["spec"].get("securityContext") or {}
+        pod_security_context = get_pod_template(doc).get("spec", {}).get("securityContext") or {}
         pod_seccomp = pod_security_context.get("seccompProfile", {}).get("type")
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
