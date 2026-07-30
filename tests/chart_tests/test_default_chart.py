@@ -3,17 +3,18 @@ import re
 import pytest
 
 from tests import k8s_version_too_new, k8s_version_too_old
-from tests.utils import get_all_features, get_containers_by_name, get_pod_template
+from tests.utils import get_all_features, get_containers_by_name, get_pod_template, new_docs_by_kind
+from tests.utils import pod_managers as pod_and_job_managers
 from tests.utils.chart import render_chart
 
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
 # Kinds whose spec.selector must match spec.template.metadata.labels (test_selector_matches_pod_template_labels).
 # CronJob and Job are deliberately excluded: neither kind has a spec.selector field to validate.
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
-# Kinds that own a container-bearing pod template, for tests that only care about container specs
+# The broader tests.utils.pod_managers (CronJob/DaemonSet/Deployment/Job/StatefulSet/ReplicaSet),
+# imported above as pod_and_job_managers, is for tests that only care about container specs
 # (resources, image, securityContext) and not selector/label matching. Covers CronJobs (e.g. the
 # elasticsearch curator) and Jobs (including Helm hook Jobs like the houston db-migration job).
-pod_and_job_managers = [*pod_managers, "CronJob", "Job"]
 
 # Pods that cannot meet PSS-Restricted, exempt from test_pss_restricted_security_context (PINF-713).
 # Each entry is justified below. In a real cluster these workloads are handled with PSS namespace
@@ -28,12 +29,6 @@ PSS_RESTRICTED_EXEMPT = {
     "StatefulSet/release-name-elasticsearch-data": "bundled chart: privileged sysctl init container (vm.max_map_count)",
     "StatefulSet/release-name-elasticsearch-master": "bundled chart: privileged sysctl init container (vm.max_map_count)",
 }
-
-
-def new_docs_by_kind(base_docs, candidate_docs, kinds):
-    """Return docs from candidate_docs with a kind in kinds not already present in base_docs."""
-    base_ids = {f"{doc['kind']}/{doc['metadata']['name']}" for doc in base_docs}
-    return [doc for doc in candidate_docs if doc["kind"] in kinds and f"{doc['kind']}/{doc['metadata']['name']}" not in base_ids]
 
 
 class TestK8sVersionConstraints:
