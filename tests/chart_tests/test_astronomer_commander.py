@@ -206,6 +206,7 @@ class TestAstronomerCommander:
         }
         assert not env_vars.get("COMMANDER_FLIGHTDECK_DSN")
         assert env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
+        assert env_vars["COMMANDER_CUSTOM_RBAC_ENABLED"] == "false"
         assert "COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME" not in env_vars
 
         volume_mounts = {mount["name"]: mount["mountPath"] for mount in commander_container["volumeMounts"]}
@@ -278,6 +279,21 @@ class TestAstronomerCommander:
 
         env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
+
+    @pytest.mark.parametrize("enabled,expected", [(True, "true"), (False, "false")], ids=["on", "off"])
+    def test_commander_custom_rbac_enabled(self, kube_version, enabled, expected):
+        """global.customRBAC.enabled drives COMMANDER_CUSTOM_RBAC_ENABLED, which installs the
+        Airflow 2 security manager that enforces granular permissions. Houston reads the same
+        chart value to mint them, so enforcement cannot be off while they are being minted."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"customRBAC": {"enabled": enabled}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["commander"]["env"])
+        assert env_vars["COMMANDER_CUSTOM_RBAC_ENABLED"] == expected
 
     def test_commander_rbac_cluster_role_enabled(self, kube_version):
         """Test that if rbac.enabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and

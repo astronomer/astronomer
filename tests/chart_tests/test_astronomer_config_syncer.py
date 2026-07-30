@@ -69,6 +69,7 @@ class TestAstronomerConfigSyncer:
         assert env_vars["COMMANDER_NAMESPACE_POOLS_ENABLED"] == "false"
         assert env_vars["COMMANDER_DATAPLANE_FAILOVER_ENABLED"] == "false"
         assert env_vars["COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED"] == "false"
+        assert env_vars["COMMANDER_CUSTOM_RBAC_ENABLED"] == "false"
         assert job_container["volumeMounts"] == [
             {
                 "mountPath": "/app/metadata.yaml",

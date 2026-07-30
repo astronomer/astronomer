@@ -338,6 +338,8 @@ gcp_cloud_logging:
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
+- name: COMMANDER_CUSTOM_RBAC_ENABLED
+  value: {{ ternary "true" "false" .Values.global.customRBAC.enabled | quote }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
