@@ -38,6 +38,21 @@ def find_all_pod_manager_templates() -> list[str]:
     )
 
 
+def new_docs_by_kind(base_docs: list[dict], candidate_docs: list[dict], kinds: list[str]) -> list[dict]:
+    """Return docs from candidate_docs with a kind in kinds not already present in base_docs.
+
+    Useful for folding in a second render (e.g. a non-default feature-flag combination) without
+    re-testing components that already appeared in the first render.
+    """
+    base_ids = {f"{doc['kind']}/{doc['metadata']['name']}" for doc in base_docs}
+    new_docs = []
+    for doc in candidate_docs:
+        doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+        if doc["kind"] in kinds and doc_id not in base_ids:
+            new_docs.append(doc)
+    return new_docs
+
+
 def get_env_vars_dict(container_env):
     """
     Convert container environment variables list to a dictionary.
