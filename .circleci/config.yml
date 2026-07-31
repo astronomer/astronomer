@@ -408,6 +408,38 @@ jobs:
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/deployment-lifecycle"
       - store_test_results:
           path: test-results
+  scenario-git-sync-private-ca:
+    machine:
+      image: ubuntu-2404:2026.05.1
+      resource_class: 2xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: git-sync-private-ca"
+          command: |
+            uv run bin/run-scenario.py git-sync-private-ca
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/git-sync-private-ca"
+      - store_test_results:
+          path: test-results
 
   check-commander-airflow-version:
     docker:
@@ -515,6 +547,26 @@ workflows:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically, and gate release-to-internal.
+      - scenario-git-sync-private-ca:
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval.
+      - scenario-git-sync-private-ca:
+          name: scenario-git-sync-private-ca
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
       - approve-stage-cluster-test:
           type: approval
           filters:
@@ -569,6 +621,7 @@ workflows:
             - scenario-unified-1-35-1
             - scenario-auth-sidecar
             - scenario-deployment-lifecycle
+            - scenario-git-sync-private-ca
       - approve-public-release:
           type: approval
           requires:

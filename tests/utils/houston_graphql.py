@@ -137,6 +137,8 @@ def upsert_deployment(
     dag_deployment_type: str | None = None,
     repository_url: str | None = None,
     auth_type: str | None = None,
+    https_username: str | None = None,
+    https_token: str | None = None,
     deployment_uuid: str | None = None,
 ) -> dict:
     """
@@ -177,6 +179,11 @@ def upsert_deployment(
             dag_deployment["repositoryUrl"] = repository_url
         if auth_type:
             dag_deployment["authType"] = auth_type
+        # HTTPS+PAT credentials (authType HTTPS_PAT). httpsToken is write-only server-side.
+        if https_username:
+            dag_deployment["httpsUsername"] = https_username
+        if https_token:
+            dag_deployment["httpsToken"] = https_token
         variables["dagDeployment"] = dag_deployment
     query = """
     mutation UpsertDeployment(

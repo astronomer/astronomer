@@ -1,0 +1,17 @@
+# git-sync-private-ca (PINF-1109): git-sync-relay cloning over HTTPS+PAT from a Git host
+# whose TLS cert is signed by a private CA the platform trusts via global.privateCaCerts
+# (the PINF-774 fix), plus commander's config-time credential validation against that host.
+#
+# setup_forgejo_ca.py runs pre-helm (creates the forgejo-ca / forgejo-tls Secrets) so the
+# CA is in place before commander mounts global.privateCaCerts at install. The test's own
+# fixture then deploys Forgejo (forgejo.yaml) and seeds a repo + PAT.
+topology: unified
+# One Airflow Deployment (git-sync) plus the platform chart and Forgejo; sized to 2xlarge
+# to stay clear of the FailedScheduling ceiling seen on xlarge (see auth-sidecar / PINF-1080),
+# with the airflow resource-reduce overlay for the same reason.
+resource_class: 2xlarge
+pre_helm_scripts:
+  - bin/setup-forgejo-ca.py
+values:
+  - configs/enable-git-sync-private-ca.yaml
+  - configs/scenario-airflow-reduce-resources.yaml
