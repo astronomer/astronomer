@@ -14,7 +14,7 @@ from pathlib import Path
 
 import yaml
 
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 SCENARIOS_DIR = GIT_ROOT_DIR / "tests" / "functional" / "scenarios"
 CHART_METADATA = yaml.safe_load((GIT_ROOT_DIR / "metadata.yaml").read_text())
 

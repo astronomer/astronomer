@@ -459,14 +459,61 @@ workflows:
       - scenario-unified-1-35-1:
           requires:
             - build-artifact
+      # Manual gate for the custom functional scenarios on non-release branches.
+      # On master and release-X.Y they run automatically (below) and gate the
+      # release; on every other branch they wait on this approval before running.
+      - approve-scenarios:
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+
+      # master + release-X.Y: run automatically, and gate release-to-internal.
       - scenario-auth-sidecar:
           requires:
             - build-artifact
           context:
             - github-repo
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval.
+      - scenario-auth-sidecar:
+          name: scenario-auth-sidecar-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          context:
+            - github-repo
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically, and gate release-to-internal.
       - scenario-deployment-lifecycle:
           requires:
             - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval.
+      - scenario-deployment-lifecycle:
+          name: scenario-deployment-lifecycle-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
       - approve-stage-cluster-test:
           type: approval
           filters:
@@ -519,6 +566,8 @@ workflows:
             - approve-internal-release
             - scenario-unified-1-31-14
             - scenario-unified-1-35-1
+            - scenario-auth-sidecar
+            - scenario-deployment-lifecycle
       - approve-public-release:
           type: approval
           requires:
