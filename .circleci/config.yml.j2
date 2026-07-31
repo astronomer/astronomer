@@ -332,7 +332,19 @@ workflows:
           requires:
             - build-artifact
             - approve-test-all-platforms
-{% endif %}{% endfor %}{% for scenario in scenarios %}
+{% endif %}{% endfor %}
+      # Manual gate for the custom functional scenarios on non-release branches.
+      # On master and release-X.Y they run automatically (below) and gate the
+      # release; on every other branch they wait on this approval before running.
+      - approve-scenarios:
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+{% for scenario in scenarios %}
+      # master + release-X.Y: run automatically, and gate release-to-internal.
       - scenario-{{ scenario.name }}:
           requires:
             - build-artifact
@@ -340,6 +352,26 @@ workflows:
           context:
             - github-repo
 {%- endif %}
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval.
+      - scenario-{{ scenario.name }}:
+          name: scenario-{{ scenario.name }}-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+{%- if scenario.kyverno_scan %}
+          context:
+            - github-repo
+{%- endif %}
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
 {%- endfor %}
       - approve-stage-cluster-test:
           type: approval
@@ -393,6 +425,9 @@ workflows:
             - approve-internal-release
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - scenario-unified-{{ version | replace(".", "-") }}
+{%- endfor %}
+{%- for scenario in scenarios %}
+            - scenario-{{ scenario.name }}
 {%- endfor %}
       - approve-public-release:
           type: approval

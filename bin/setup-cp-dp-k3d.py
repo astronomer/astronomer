@@ -73,7 +73,7 @@ from k3d_setup_shared import (
     _wait_for_cert_manager,
 )
 
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]))
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]))
 
 # ---------------------------------------------------------------------------
 # Local networking (dnsmasq + SNI reverse proxy) — replaces manual host /etc/hosts editing.
