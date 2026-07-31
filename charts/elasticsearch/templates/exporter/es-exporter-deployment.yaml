@@ -7,6 +7,7 @@ kind: Deployment
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-exporter
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}-exporter
     chart: {{ template "elasticsearch.chart" . }}

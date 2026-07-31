@@ -7,6 +7,7 @@ apiVersion: v1
 metadata:
   name: {{ template "external-es-proxy.fullname" . }}-setenv
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: external-logging
     component: {{ template "external-es-proxy.name" . }}
     chart: {{ template "external-es-proxy.chart" . }}

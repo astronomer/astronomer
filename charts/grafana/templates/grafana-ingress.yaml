@@ -8,6 +8,7 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "grafana.fullname" . }}-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: grafana-networking
     component: grafana-ingress
     chart: {{ template "grafana.chart" . }}

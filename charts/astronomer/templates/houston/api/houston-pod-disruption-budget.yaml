@@ -7,6 +7,11 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-houston-pdb
+  labels:
+    {{- include "global.labels" . | nindent 4 }}
+    tier: astronomer
+    component: houston
+    release: {{ .Release.Name }}
 spec:
   {{- if lt ( .Values.houston.replicas | int ) 4 }}
   maxUnavailable: 1

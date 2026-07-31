@@ -8,6 +8,7 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "grafana.fullname" . }}-bootstrapper
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: grafana
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}

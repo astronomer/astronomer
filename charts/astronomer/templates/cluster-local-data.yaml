@@ -15,6 +15,7 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation
     "helm.sh/resource-policy": keep
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

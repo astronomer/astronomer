@@ -7,6 +7,7 @@ apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-pilot
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: pilot
     tier: astronomer
     plane: {{ .Values.global.plane.mode }}

@@ -7,6 +7,7 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}-federate-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: prometheus-networking
     component: prometheus-federate-ingress
     chart: {{ template "prometheus.chart" . }}

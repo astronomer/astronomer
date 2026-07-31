@@ -8,6 +8,7 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "alertmanager.fullname" . }}-ingress
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: alertmanager-networking
     component: alertmanager-ingress
     chart: {{ template "alertmanager.chart" . }}
