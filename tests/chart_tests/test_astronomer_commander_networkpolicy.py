@@ -23,7 +23,7 @@ class TestCommanderNetworkPolicyDataplaneFailover:
         )
         assert len(docs) == 1
         ingress_from = docs[0]["spec"]["ingress"][0]["from"]
-        pilot_selector = {"podSelector": {"matchLabels": {"component": "pilot", "release": "astronomer", "tier": "astronomer"}}}
+        pilot_selector = {"podSelector": {"matchLabels": {"component": "pilot", "release": "release-name", "tier": "astronomer"}}}
         assert pilot_selector in ingress_from
 
     def test_dataplane_failover_disabled_omits_pilot_ingress_rule(self, kube_version):
@@ -78,7 +78,7 @@ class TestCommanderNetworkPolicyDataplaneFailover:
         )
         assert len(docs) == 1
         ingress_from = docs[0]["spec"]["ingress"][0]["from"]
-        pilot_selector = {"podSelector": {"matchLabels": {"component": "pilot", "release": "astronomer", "tier": "astronomer"}}}
+        pilot_selector = {"podSelector": {"matchLabels": {"component": "pilot", "release": "release-name", "tier": "astronomer"}}}
         assert pilot_selector in ingress_from
 
 
