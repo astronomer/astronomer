@@ -514,9 +514,13 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval.
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
+      # can require it on release branches.
       - scenario-auth-sidecar:
-          name: scenario-auth-sidecar
+          name: scenario-auth-sidecar-approved
           requires:
             - build-artifact
             - approve-scenarios
@@ -536,9 +540,13 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval.
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
+      # can require it on release branches.
       - scenario-deployment-lifecycle:
-          name: scenario-deployment-lifecycle
+          name: scenario-deployment-lifecycle-approved
           requires:
             - build-artifact
             - approve-scenarios
@@ -556,9 +564,13 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval.
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
+      # can require it on release branches.
       - scenario-git-sync-private-ca:
-          name: scenario-git-sync-private-ca
+          name: scenario-git-sync-private-ca-approved
           requires:
             - build-artifact
             - approve-scenarios
