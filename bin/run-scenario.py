@@ -59,6 +59,14 @@ def main() -> None:
     reset_local_dev_args += [f"--helm-values={value_file}" for value_file in profile["values"]]
     for key, value in profile.get("namespace_labels", {}).items():
         reset_local_dev_args.append(f"--namespace-label={key}={value}")
+    # Scenario setup that must run after the cluster exists but before `helm install`
+    # (e.g. creating a Secret the chart's install-time values reference). Forwarded to
+    # reset-local-dev, which runs each between setup-kind.py and helm-install.py.
+    for script in profile.get("pre_helm_scripts", []):
+        script_path = (GIT_ROOT_DIR / script).resolve()
+        if not script_path.exists():
+            raise SystemExit(f"ERROR: pre_helm_scripts entry not found: {script_path}")
+        reset_local_dev_args.append(f"--pre-helm-script={script_path}")
 
     command = [str(GIT_ROOT_DIR / "bin" / "reset-local-dev"), *reset_local_dev_args]
     print(f"Running scenario {args.scenario!r}: topology={profile['topology']} kube_version={kube_version}")
