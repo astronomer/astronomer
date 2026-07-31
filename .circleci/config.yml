@@ -484,7 +484,7 @@ workflows:
                 - '/^release-\d+\.\d+$/'
       # every other branch: gated behind the manual approve-scenarios approval.
       - scenario-auth-sidecar:
-          name: scenario-auth-sidecar-approved
+          name: scenario-auth-sidecar
           requires:
             - build-artifact
             - approve-scenarios
@@ -506,7 +506,7 @@ workflows:
                 - '/^release-\d+\.\d+$/'
       # every other branch: gated behind the manual approve-scenarios approval.
       - scenario-deployment-lifecycle:
-          name: scenario-deployment-lifecycle-approved
+          name: scenario-deployment-lifecycle
           requires:
             - build-artifact
             - approve-scenarios

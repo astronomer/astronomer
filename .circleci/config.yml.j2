@@ -360,7 +360,7 @@ workflows:
                 - '/^release-\d+\.\d+$/'
       # every other branch: gated behind the manual approve-scenarios approval.
       - scenario-{{ scenario.name }}:
-          name: scenario-{{ scenario.name }}-approved
+          name: scenario-{{ scenario.name }}
           requires:
             - build-artifact
             - approve-scenarios
