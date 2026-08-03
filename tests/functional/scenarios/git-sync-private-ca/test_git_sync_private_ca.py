@@ -63,8 +63,11 @@ WORKSPACE_LABEL = "pinf-1109-git-sync-private-ca"
 DEPLOYMENT_LABEL = "pinf-1109-git-sync-private-ca"
 
 
-def _kubectl(*args: str, **kwargs) -> subprocess.CompletedProcess:
-    return subprocess.run(["kubectl", f"--kubeconfig={KUBECONFIG_UNIFIED}", *args], check=True, text=True, **kwargs)
+def _kubectl(*args: str) -> subprocess.CompletedProcess:
+    result = subprocess.run(["kubectl", f"--kubeconfig={KUBECONFIG_UNIFIED}", *args], text=True, capture_output=True)
+    if result.returncode != 0:
+        raise AssertionError(f"kubectl {' '.join(args)} failed (exit {result.returncode}):\n{result.stdout}{result.stderr}")
+    return result
 
 
 @pytest.fixture(scope="module")
@@ -147,7 +150,9 @@ def forgejo(_k8s_apps_v1_client_module):
     forgejo_pod = get_pod_by_label_selector(FORGEJO_NAMESPACE, "app=forgejo", KUBECONFIG_UNIFIED)
 
     def forgejo_cli(*args: str) -> str:
-        return _kubectl("exec", forgejo_pod, "-n", FORGEJO_NAMESPACE, "--", "forgejo", *args, capture_output=True).stdout.strip()
+        # Forgejo refuses to run as root, and the container's default exec user is root, so drop
+        # to the git user (uid 1000) with su-exec -- matching the docker-compose fixture's -u 1000.
+        return _kubectl("exec", forgejo_pod, "-n", FORGEJO_NAMESPACE, "--", "su-exec", "git", "forgejo", *args).stdout.strip()
 
     forgejo_cli(
         "admin",
@@ -278,7 +283,6 @@ def test_relay_trusts_ca_in_system_store(git_sync_deployment):
         "sh",
         "-c",
         "openssl x509 -in /usr/local/share/ca-certificates/private-ca-*.pem -noout -fingerprint -sha256",
-        capture_output=True,
     ).stdout
     fp = mounted_fp.split("=", 1)[-1].strip()
     assert fp, f"Could not read the mounted CA fingerprint from the relay pod: {mounted_fp!r}"
@@ -295,6 +299,5 @@ def test_relay_trusts_ca_in_system_store(git_sync_deployment):
         "-c",
         "awk '/BEGIN CERT/{n++} {print > (\"/tmp/c\" n)}' /etc/ssl/certs/ca-certificates.crt; "
         'for f in /tmp/c*; do openssl x509 -in "$f" -noout -fingerprint -sha256 2>/dev/null; done',
-        capture_output=True,
     ).stdout
     assert fp in present, f"Forgejo CA fingerprint {fp} not found in the relay's /etc/ssl/certs bundle"
