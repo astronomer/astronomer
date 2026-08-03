@@ -232,17 +232,25 @@ def test_git_sync_deployment_reaches_ready(git_sync_deployment):
     assert git_sync_deployment["release_name"]
 
 
+def _relay_pod(core_client, release_name):
+    """The git-sync-relay pod for a release. Read its namespace off pod.metadata.namespace --
+    the Airflow Deployment namespace is astronomer-<release>, not the release name.
+
+    Filter by pod NAME containing 'git-sync-relay', not by a git-sync *container* name: the
+    Airflow component pods (scheduler/worker/webserver/...) each carry a git-sync *sidecar*
+    container, so a container-name match would also hit them. The relay is <release>-git-sync-relay-*.
+    """
+    pods = core_client.list_pod_for_all_namespaces(label_selector=f"release={release_name}").items
+    relay = [p for p in pods if "git-sync-relay" in p.metadata.name]
+    assert relay, f"No git-sync-relay pod for release {release_name!r} (pods: {[p.metadata.name for p in pods]})"
+    return relay[0]
+
+
 def test_relay_has_private_ca_wiring(git_sync_deployment, _k8s_core_v1_client_module):
     """TC-CA-01: the deployed git-sync-relay pod carries the CA wiring derived from
     global.privateCaCerts -- the etc-ssl-certs-copier initContainer, the private-ca-* volume,
     and UPDATE_CA_CERTS=true on the git-sync container."""
-    pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(
-        label_selector=f"release={git_sync_deployment['release_name']}"
-    ).items
-    relay_pods = [p for p in pods if any("git-sync" in c.name for c in p.spec.containers)]
-    assert relay_pods, f"No git-sync-relay pod for release {git_sync_deployment['release_name']!r}"
-    pod = relay_pods[0]
-
+    pod = _relay_pod(_k8s_core_v1_client_module, git_sync_deployment["release_name"])
     init_names = [c.name for c in (pod.spec.init_containers or [])]
     assert "etc-ssl-certs-copier" in init_names, f"Expected the CA-copier initContainer, got: {init_names}"
     volume_names = [v.name for v in pod.spec.volumes]
@@ -256,7 +264,7 @@ def test_forgejo_ca_synced_to_deployment_namespace(git_sync_deployment, _k8s_cor
     """TC-CA-10: commander synced the (commander-sync-annotated) forgejo-ca Secret from the
     platform namespace into the Airflow Deployment namespace, where the relay mounts it -- the
     houston->commander->chart contract that makes the relay trust the CA."""
-    namespace = git_sync_deployment["release_name"]  # deployment namespace == release name
+    namespace = _relay_pod(_k8s_core_v1_client_module, git_sync_deployment["release_name"]).metadata.namespace
     secret = _k8s_core_v1_client_module.read_namespaced_secret(CA_SECRET_NAME, namespace)
     assert "cert.pem" in (secret.data or {}), (
         f"Expected commander to sync Secret {namespace}/{CA_SECRET_NAME} with a cert.pem key, got: "
@@ -265,39 +273,24 @@ def test_forgejo_ca_synced_to_deployment_namespace(git_sync_deployment, _k8s_cor
     base64.b64decode(secret.data["cert.pem"])  # sanity: it's valid base64 cert data
 
 
-def test_relay_trusts_ca_in_system_store(git_sync_deployment):
+def test_relay_trusts_ca_in_system_store(git_sync_deployment, _k8s_core_v1_client_module):
     """TC-CA-02: the forgejo-ca is installed into the git-sync container's system trust store
     (update-ca-certificates ran over /etc/ssl/certs), matched by SHA-256 fingerprint against
     the mounted CA -- not by symlink name, which is hash-derived."""
-    namespace = git_sync_deployment["release_name"]
-    relay_pod = get_pod_by_label_selector(namespace, "component=git-sync-relay", KUBECONFIG_UNIFIED)
+    pod = _relay_pod(_k8s_core_v1_client_module, git_sync_deployment["release_name"])
+    namespace, relay_pod = pod.metadata.namespace, pod.metadata.name
+    git_sync_container = next(c.name for c in pod.spec.containers if "git-sync" in c.name)
+
+    def relay_exec(script: str) -> str:
+        return _kubectl("exec", relay_pod, "-n", namespace, "-c", git_sync_container, "--", "sh", "-c", script).stdout
+
     # Fingerprint of the CA the chart mounted for the relay.
-    mounted_fp = _kubectl(
-        "exec",
-        relay_pod,
-        "-n",
-        namespace,
-        "-c",
-        "git-sync",
-        "--",
-        "sh",
-        "-c",
-        "openssl x509 -in /usr/local/share/ca-certificates/private-ca-*.pem -noout -fingerprint -sha256",
-    ).stdout
+    mounted_fp = relay_exec("openssl x509 -in /usr/local/share/ca-certificates/private-ca-*.pem -noout -fingerprint -sha256")
     fp = mounted_fp.split("=", 1)[-1].strip()
     assert fp, f"Could not read the mounted CA fingerprint from the relay pod: {mounted_fp!r}"
     # Assert that exact fingerprint is present in the system trust bundle git uses.
-    present = _kubectl(
-        "exec",
-        relay_pod,
-        "-n",
-        namespace,
-        "-c",
-        "git-sync",
-        "--",
-        "sh",
-        "-c",
+    present = relay_exec(
         "awk '/BEGIN CERT/{n++} {print > (\"/tmp/c\" n)}' /etc/ssl/certs/ca-certificates.crt; "
-        'for f in /tmp/c*; do openssl x509 -in "$f" -noout -fingerprint -sha256 2>/dev/null; done',
-    ).stdout
+        'for f in /tmp/c*; do openssl x509 -in "$f" -noout -fingerprint -sha256 2>/dev/null; done'
+    )
     assert fp in present, f"Forgejo CA fingerprint {fp} not found in the relay's /etc/ssl/certs bundle"
