@@ -178,6 +178,60 @@ def test_deployment_has_auth_proxy_containers(deployment, _k8s_core_v1_client_mo
     assert pods_with_auth_proxy, f"Expected at least one pod with an auth-proxy container, got: {containers_by_pod}"
 
 
+def _pss_restricted_offenders(pods) -> dict[str, list[str]]:
+    """
+    Mirrors tests/chart_tests/test_default_chart.py's test_pss_restricted_security_context,
+    but against real live pods rather than rendered templates (PINF-986, Group E). This
+    scenario's namespace-level `enforce: restricted` PSA labels already prove
+    runAsNonRoot/allowPrivilegeEscalation/seccompProfile/capabilities at admission time --
+    a pod violating those is never created at all, so re-asserting them here is largely
+    redundant with test_no_psa_rejection_events. The one property PSA does NOT check is
+    the actual numeric runAsUser (only the runAsNonRoot boolean), which is exactly the
+    PINF-986 gap this covers -- and, unlike the chart-render tests, this exercises the
+    auth-proxy container specifically: it's injected server-side by houston-api's
+    extraContainers() (webserver/api-server pods) and airflow-chart's auth_sidecar_container_spec
+    helper (dag-server, git-sync-relay), so no chart-render test in any repo sees it.
+    """
+    offenders = {}
+    for pod in pods:
+        pod_security_context = pod.spec.security_context
+        pod_seccomp = (
+            pod_security_context.seccomp_profile.type if pod_security_context and pod_security_context.seccomp_profile else None
+        )
+        containers = list(pod.spec.containers) + list(pod.spec.init_containers or [])
+        for container in containers:
+            container_id = f"{pod.metadata.name}/{container.name}"
+            sc = container.security_context
+            if sc is None:
+                offenders[container_id] = ["no securityContext set"]
+                continue
+            problems = []
+            if sc.allow_privilege_escalation is not False:
+                problems.append(f"allowPrivilegeEscalation={sc.allow_privilege_escalation!r}")
+            if not sc.capabilities or "ALL" not in (sc.capabilities.drop or []):
+                problems.append(f"capabilities.drop={getattr(sc.capabilities, 'drop', None)!r}")
+            if sc.run_as_non_root is not True:
+                problems.append(f"runAsNonRoot={sc.run_as_non_root!r}")
+            if sc.run_as_user in (None, 0):
+                problems.append(f"runAsUser={sc.run_as_user!r}")
+            container_seccomp = sc.seccomp_profile.type if sc.seccomp_profile else None
+            if "RuntimeDefault" not in (pod_seccomp, container_seccomp):
+                problems.append(f"seccompProfile={container_seccomp!r} (pod-level: {pod_seccomp!r})")
+            if problems:
+                offenders[container_id] = problems
+    return offenders
+
+
+def test_deployment_pods_have_pss_restricted_security_context(deployment, _k8s_core_v1_client_module):
+    """Live-pod counterpart to test_deployment_reaches_ready -- see _pss_restricted_offenders."""
+    pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(label_selector=f"release={deployment['release_name']}").items
+    assert pods, f"Expected at least one pod for release {deployment['release_name']!r}"
+    offenders = _pss_restricted_offenders(pods)
+    assert not offenders, "Containers without a full PSS-Restricted securityContext (container: problems):\n" + "\n".join(
+        f"  {key}: {value}" for key, value in sorted(offenders.items())
+    )
+
+
 @pytest.fixture(scope="module")
 def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """
@@ -238,6 +292,20 @@ def test_git_sync_deployment_has_auth_proxy_container(git_sync_deployment, _k8s_
     containers_by_pod = {pod.metadata.name: [c.name for c in pod.spec.containers] for pod in pods}
     pods_with_auth_proxy = [name for name, containers in containers_by_pod.items() if "auth-proxy" in containers]
     assert pods_with_auth_proxy, f"Expected at least one pod with an auth-proxy container, got: {containers_by_pod}"
+
+
+def test_git_sync_deployment_pods_have_pss_restricted_security_context(git_sync_deployment, _k8s_core_v1_client_module):
+    """Live-pod counterpart to test_git_sync_deployment_reaches_ready -- see _pss_restricted_offenders.
+    Covers git-sync-relay's containers (git-daemon, auth-proxy) specifically, the one
+    implementation test_deployment_pods_have_pss_restricted_security_context above doesn't reach."""
+    pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(
+        label_selector=f"release={git_sync_deployment['release_name']}"
+    ).items
+    assert pods, f"Expected at least one pod for release {git_sync_deployment['release_name']!r}"
+    offenders = _pss_restricted_offenders(pods)
+    assert not offenders, "Containers without a full PSS-Restricted securityContext (container: problems):\n" + "\n".join(
+        f"  {key}: {value}" for key, value in sorted(offenders.items())
+    )
 
 
 def test_no_psa_rejection_events(git_sync_deployment, _k8s_core_v1_client_module):
