@@ -226,6 +226,45 @@ class TestAllPodSpecContainers:
                 f"{container_id} must set seccompProfile.type: RuntimeDefault at the pod or container level"
             )
 
+    # Only prometheus-node-exporter needs to run on every node (including tainted/control-plane
+    # ones) for accurate host metrics -- everything else should have no default tolerations.
+    # (PINF-986/PINF-971: DENYlistTolerations)
+    TOLERATION_EXEMPT = {"DaemonSet/release-name-prometheus-node-exporter"}
+
+    def test_no_unexpected_default_tolerations(self):
+        """Render the whole chart and assert only the documented exception has a default toleration."""
+        offenders = {}
+        for doc in self.pod_manager_docs:
+            doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+            if doc_id in self.TOLERATION_EXEMPT:
+                continue
+            tolerations = get_pod_template(doc).get("spec", {}).get("tolerations")
+            if tolerations:
+                offenders[doc_id] = tolerations
+
+        assert not offenders, "Pods with an unexpected default toleration (doc: tolerations):\n" + "\n".join(
+            f"  {key}: {value}" for key, value in sorted(offenders.items())
+        )
+
+    # mountPropagation isn't a securityContext field; a separate PSA/Kyverno-adjacent control
+    # (Restricted forbids the two unsafe values). Not currently a PSA control itself, but a real
+    # customer ask (PINF-986: MountPropagation).
+    UNSAFE_MOUNT_PROPAGATION = {"HostToContainer", "Bidirectional"}
+
+    def test_no_containers_use_unsafe_mount_propagation(self):
+        """Render the whole chart and assert no volumeMount sets an unsafe mountPropagation."""
+        offenders = {}
+        for doc in self.pod_manager_docs:
+            doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+            for name, container in get_containers_by_name(doc, include_init_containers=True).items():
+                for mount in container.get("volumeMounts") or []:
+                    if mount.get("mountPropagation") in self.UNSAFE_MOUNT_PROPAGATION:
+                        offenders[f"{doc_id}/{name}/{mount['name']}"] = mount["mountPropagation"]
+
+        assert not offenders, "volumeMounts with an unsafe mountPropagation (mount: value):\n" + "\n".join(
+            f"  {key}: {value}" for key, value in sorted(offenders.items())
+        )
+
 
 @pytest.mark.skip("See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this.")
 class TestDuplicateEnvironment:
