@@ -976,3 +976,11 @@ it to data mode — and aligning pilot's DSN gate with this helper — is tracke
 true
 {{- end -}}
 {{- end -}}
+
+{{- define "getCommanderGRPCport" -}}
+{{- if .Values.global.authSidecar.enabled -}}
+{{- .Values.ports.commanderSidecarGRPC -}}
+{{- else -}}
+{{- .Values.ports.commanderGRPC -}}
+{{- end -}}
+{{- end -}}

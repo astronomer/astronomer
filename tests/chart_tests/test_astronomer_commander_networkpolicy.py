@@ -23,7 +23,7 @@ class TestCommanderNetworkPolicyDataplaneFailover:
         )
         assert len(docs) == 1
         ingress_from = docs[0]["spec"]["ingress"][0]["from"]
-        pilot_selector = {"podSelector": {"matchLabels": {"component": "pilot", "release": "astronomer", "tier": "astronomer"}}}
+        pilot_selector = {"podSelector": {"matchLabels": {"component": "pilot", "release": "release-name", "tier": "astronomer"}}}
         assert pilot_selector in ingress_from
 
     def test_dataplane_failover_disabled_omits_pilot_ingress_rule(self, kube_version):
@@ -77,9 +77,11 @@ class TestCommanderNetworkPolicyDataplaneFailover:
             },
         )
         assert len(docs) == 1
-        ingress_from = docs[0]["spec"]["ingress"][0]["from"]
-        pilot_selector = {"podSelector": {"matchLabels": {"component": "pilot", "release": "astronomer", "tier": "astronomer"}}}
-        assert pilot_selector in ingress_from
+        ingress = docs[0]["spec"]["ingress"][0]
+        pilot_selector = {"podSelector": {"matchLabels": {"component": "pilot", "release": "release-name", "tier": "astronomer"}}}
+        assert pilot_selector in ingress["from"]
+        allowed_ports = {p["port"] for p in ingress["ports"]}
+        assert 9090 in allowed_ports
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
