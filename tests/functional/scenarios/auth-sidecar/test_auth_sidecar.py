@@ -194,10 +194,10 @@ def _pss_restricted_offenders(pods) -> dict[str, list[str]]:
     """
     offenders = {}
     for pod in pods:
-        pod_security_context = pod.spec.security_context
-        pod_seccomp = (
-            pod_security_context.seccomp_profile.type if pod_security_context and pod_security_context.seccomp_profile else None
-        )
+        pod_sc = pod.spec.security_context
+        pod_seccomp = pod_sc.seccomp_profile.type if pod_sc and pod_sc.seccomp_profile else None
+        pod_run_as_user = pod_sc.run_as_user if pod_sc else None
+        pod_run_as_non_root = pod_sc.run_as_non_root if pod_sc else None
         containers = list(pod.spec.containers) + list(pod.spec.init_containers or [])
         for container in containers:
             container_id = f"{pod.metadata.name}/{container.name}"
@@ -210,10 +210,15 @@ def _pss_restricted_offenders(pods) -> dict[str, list[str]]:
                 problems.append(f"allowPrivilegeEscalation={sc.allow_privilege_escalation!r}")
             if not sc.capabilities or "ALL" not in (sc.capabilities.drop or []):
                 problems.append(f"capabilities.drop={getattr(sc.capabilities, 'drop', None)!r}")
-            if sc.run_as_non_root is not True:
-                problems.append(f"runAsNonRoot={sc.run_as_non_root!r}")
-            if sc.run_as_user in (None, 0):
-                problems.append(f"runAsUser={sc.run_as_user!r}")
+            # runAsUser/runAsNonRoot are set at either the pod or container level and inherited
+            # down -- apc-airflow's own pattern (PINF-986 Group A) sets runAsUser at the pod
+            # level only, with containers relying on inheritance rather than repeating it.
+            run_as_non_root = sc.run_as_non_root if sc.run_as_non_root is not None else pod_run_as_non_root
+            if run_as_non_root is not True:
+                problems.append(f"runAsNonRoot={run_as_non_root!r}")
+            run_as_user = sc.run_as_user if sc.run_as_user is not None else pod_run_as_user
+            if run_as_user in (None, 0):
+                problems.append(f"runAsUser={run_as_user!r}")
             container_seccomp = sc.seccomp_profile.type if sc.seccomp_profile else None
             if "RuntimeDefault" not in (pod_seccomp, container_seccomp):
                 problems.append(f"seccompProfile={container_seccomp!r} (pod-level: {pod_seccomp!r})")
