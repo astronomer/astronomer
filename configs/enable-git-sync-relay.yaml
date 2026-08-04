@@ -1,0 +1,17 @@
+# Enable the git-sync-relay dag deployment mechanism WITHOUT any private-CA trust
+# (no global.privateCaCerts / deployments.privateCaCertSecretNames). Used by the
+# deployment-lifecycle scenario to exercise the relay's default, no-CA path end-to-end and
+# to assert the relay carries no private-CA wiring when the feature is off (TC-CA-05a,
+# PINF-1109). The git-sync-private-ca scenario is the feature-ON counterpart; this mirrors
+# its git-sync enablement (enable-git-sync-private-ca.yaml) minus the CA.
+---
+astronomer:
+  houston:
+    config:
+      deployments:
+        deployMechanisms:
+          # deployMechanisms is a map, so this merges with the base's dagOnlyDeployment.
+          configureDagDeployment:
+            enabled: true
+          gitSyncDagDeployment:
+            enabled: true

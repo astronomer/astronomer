@@ -1,7 +1,15 @@
-# PINF-1035: no functional test today creates an Airflow Deployment at all --
-# every existing scenario, including auth-sidecar, only installs the platform
-# chart. This scenario needs no extra values overlay, just the plain unified
-# install; the deployment lifecycle itself is driven through Houston's GraphQL
-# API by test_deployment_lifecycle.py after install.
+# PINF-1035 + PINF-1109: creates a real Airflow Deployment and drives it through Houston's
+# GraphQL API. PINF-1035 is the deployment lifecycle itself (the executor switch); PINF-1109
+# adds a git-sync relay switch on the SAME deployment plus TC-CA-05a -- the relay carries no
+# private-CA wiring when global.privateCaCerts is unset, the feature-OFF counterpart to the
+# git-sync-private-ca scenario. enable-git-sync-relay.yaml turns on the relay deployMechanism
+# with no CA; the first (image) deployment is unaffected (a relay is only created for a
+# git_sync deployment).
 topology: unified
-values: []
+# One deployment, switched image -> git_sync relay (never two concurrent), but the relay pods
+# plus the reduce-resources overlay still push past the default xlarge node; 2xlarge matches
+# the other deployment-creating scenarios (see auth-sidecar / PINF-1080).
+resource_class: 2xlarge
+values:
+  - configs/enable-git-sync-relay.yaml
+  - configs/scenario-airflow-reduce-resources.yaml
