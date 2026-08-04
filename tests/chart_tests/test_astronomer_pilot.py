@@ -259,3 +259,45 @@ class TestAstronomerPilot:
 
         expected_addr = "release-name-commander-headless.default.svc.cluster.local.:50051"
         assert env_vars["PILOT_COMMANDER_ADDR"] == expected_addr
+
+    def test_pilot_namespace_pools_config_disabled(self, kube_version):
+        """Test that commander manual namespace config feature is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"pilot": {"enabled": True}},
+                "global": {
+                    "namespaceManagement": {
+                        "namespacePools": {
+                            "enabled": False,
+                        }
+                    }
+                },
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        commander_env = get_env_vars_dict(c_by_name["pilot"]["env"])
+        assert commander_env.get("COMMANDER_NAMESPACE_POOLS_ENABLED") == "false"
+
+    def test_pilot_namespace_pools_config_enabled(self, kube_version):
+        """Test that commander manual namespace config feature is enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"pilot": {"enabled": True}},
+                "global": {
+                    "namespaceManagement": {
+                        "namespacePools": {
+                            "enabled": True,
+                        }
+                    }
+                },
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        commander_env = get_env_vars_dict(c_by_name["pilot"]["env"])
+        assert commander_env.get("COMMANDER_NAMESPACE_POOLS_ENABLED") == "true"
