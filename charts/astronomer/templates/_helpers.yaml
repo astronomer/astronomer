@@ -331,10 +331,14 @@ gcp_cloud_logging:
   value: "{{ include "houston.authServiceURL" . }}"
 {{- end }}
 
-{{ define "commander_env" -}}
+{{ define "common_shared_env" -}}
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
   value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
-{{- if .Values.global.namespaceManagement.namespacePools.enabled  }}
+{{ end }}
+
+{{ define "commander_env" -}}
+{{- include "common_shared_env" . -}}
+{{ if .Values.global.namespaceManagement.namespacePools.enabled -}}
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
