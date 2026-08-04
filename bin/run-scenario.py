@@ -16,7 +16,9 @@ from pathlib import Path
 
 import yaml
 
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
+GIT_ROOT_DIR = next((p for p in Path(__file__).resolve().parents if (p / ".git").exists()), None)
+if GIT_ROOT_DIR is None:
+    raise SystemExit(f"ERROR: could not locate the repository root: no .git entry found above {Path(__file__).resolve()}")
 SCENARIOS_DIR = GIT_ROOT_DIR / "tests" / "functional" / "scenarios"
 CHART_METADATA = yaml.safe_load((GIT_ROOT_DIR / "metadata.yaml").read_text())
 

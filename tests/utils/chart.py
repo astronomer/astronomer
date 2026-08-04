@@ -31,12 +31,11 @@ from kubernetes.client.api_client import ApiClient
 from yamllint import linter
 from yamllint.config import YamlLintConfig
 
-from tests import supported_k8s_versions
+from tests import git_root_dir, supported_k8s_versions
 
 api_client = ApiClient()
 
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master"
-git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 default_version = supported_k8s_versions[-1]
 
