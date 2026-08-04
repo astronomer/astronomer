@@ -211,6 +211,56 @@ def upsert_deployment(
     return data["upsertDeployment"]
 
 
+def validate_git_sync_credentials(
+    houston_api,
+    token: str,
+    *,
+    cluster_id: str,
+    repository_url: str,
+    https_token: str,
+    https_username: str | None = None,
+    deployment_uuid: str | None = None,
+    workspace_uuid: str | None = None,
+) -> dict:
+    """Config-time git HTTPS+PAT credential validation (FR4.3): houston asks commander, in the
+    target data plane, to reach repository_url and check the credentials. Returns
+    {valid, category, message} where category is OK | AUTH_FAILED | UNREACHABLE | TLS_ERROR |
+    INVALID_URL | TIMEOUT. clusterId is required by the schema; workspaceUuid/deploymentUuid only
+    carry an entityId for the permission shield (pass one so an admin's RBAC check resolves)."""
+    query = """
+    mutation ValidateGitSyncCredentials(
+      $clusterId: Uuid!
+      $repositoryUrl: String!
+      $httpsUsername: String
+      $httpsToken: String!
+      $deploymentUuid: Uuid
+      $workspaceUuid: Uuid
+    ) {
+      validateGitSyncCredentials(
+        clusterId: $clusterId
+        repositoryUrl: $repositoryUrl
+        httpsUsername: $httpsUsername
+        httpsToken: $httpsToken
+        deploymentUuid: $deploymentUuid
+        workspaceUuid: $workspaceUuid
+      ) {
+        valid
+        category
+        message
+      }
+    }
+    """
+    variables = {
+        "clusterId": cluster_id,
+        "repositoryUrl": repository_url,
+        "httpsUsername": https_username,
+        "httpsToken": https_token,
+        "deploymentUuid": deployment_uuid,
+        "workspaceUuid": workspace_uuid,
+    }
+    return graphql(houston_api, query, variables, token=token)["validateGitSyncCredentials"]
+
+
 def _summarize_pods(k8s_core_v1_client, namespace: str, label_selector: str) -> list[str]:
     """One line per pod matching label_selector: phase plus each container's ready/state.
 

@@ -88,3 +88,88 @@ spec:
     - name: https
       port: 3000
       targetPort: 3000
+---
+# An "untrusted" Forgejo served with a self-signed cert whose CA is NOT in global.privateCaCerts
+# (forgejo-untrusted-tls, created by bin/setup-forgejo-ca.py). Used to prove TLS fails closed:
+# a relay/commander connecting here fails to validate the cert. No repo/PAT seeding is needed --
+# the failure happens at the TLS handshake, before any git protocol.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo-untrusted
+  namespace: git-forgejo
+  labels:
+    app: forgejo-untrusted
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo-untrusted
+  template:
+    metadata:
+      labels:
+        app: forgejo-untrusted
+    spec:
+      containers:
+        - name: forgejo
+          image: codeberg.org/forgejo/forgejo:11
+          env:
+            - name: FORGEJO__server__PROTOCOL
+              value: https
+            - name: FORGEJO__server__HTTP_PORT
+              value: "3000"
+            - name: FORGEJO__server__CERT_FILE
+              value: /certs/tls.crt
+            - name: FORGEJO__server__KEY_FILE
+              value: /certs/tls.key
+            - name: FORGEJO__server__DOMAIN
+              value: forgejo-untrusted.git-forgejo.svc.cluster.local
+            - name: FORGEJO__server__ROOT_URL
+              value: https://forgejo-untrusted.git-forgejo.svc.cluster.local:3000/
+            - name: FORGEJO__security__INSTALL_LOCK
+              value: "true"
+            - name: FORGEJO__database__DB_TYPE
+              value: sqlite3
+          ports:
+            - name: https
+              containerPort: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tls
+              mountPath: /certs
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 3000
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tls
+          secret:
+            secretName: forgejo-untrusted-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-untrusted
+  namespace: git-forgejo
+  labels:
+    app: forgejo-untrusted
+spec:
+  selector:
+    app: forgejo-untrusted
+  ports:
+    - name: https
+      port: 3000
+      targetPort: 3000

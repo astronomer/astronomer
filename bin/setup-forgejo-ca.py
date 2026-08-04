@@ -34,6 +34,12 @@ CA_SECRET_NAME = "forgejo-ca"  # noqa: S105 -- k8s Secret name, not a credential
 TLS_SECRET_NAME = "forgejo-tls"  # noqa: S105 -- k8s Secret name, not a credential
 COMMANDER_SYNC_ANNOTATION = "astronomer.io/commander-sync"
 
+# A second host served with a self-signed cert whose CA is NEVER added to global.privateCaCerts,
+# so the relay and commander do not trust it -- used to prove TLS fails closed (TC-CA-04, TC-CA-12).
+UNTRUSTED_SERVICE = "forgejo-untrusted"
+UNTRUSTED_FQDN = f"{UNTRUSTED_SERVICE}.{FORGEJO_NAMESPACE}.svc.cluster.local"
+UNTRUSTED_TLS_SECRET_NAME = "forgejo-untrusted-tls"  # noqa: S105 -- k8s Secret name, not a credential
+
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Run a command, echoing it, and fail loudly on non-zero exit."""
@@ -109,6 +115,33 @@ def generate_certs(cert_dir: Path) -> tuple[Path, Path, Path]:
     return ca_crt, server_crt, server_key
 
 
+def generate_untrusted_cert(cert_dir: Path) -> tuple[Path, Path]:
+    """A self-signed cert for the untrusted host. Its (self-signed) CA is never added to
+    global.privateCaCerts, so a relay/commander connecting to it fails TLS -- fails closed."""
+    key, crt = cert_dir / "untrusted.key", cert_dir / "untrusted.crt"
+    run(
+        [
+            "openssl",
+            "req",
+            "-x509",
+            "-newkey",
+            "rsa:2048",
+            "-nodes",
+            "-days",
+            "825",
+            "-keyout",
+            str(key),
+            "-out",
+            str(crt),
+            "-subj",
+            f"/CN={UNTRUSTED_FQDN}",
+            "-addext",
+            f"subjectAltName=DNS:{UNTRUSTED_FQDN}",
+        ]
+    )
+    return crt, key
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="forgejo-ca-") as tmp:
         ca_crt, server_crt, server_key = generate_certs(Path(tmp))
@@ -133,7 +166,24 @@ def main() -> None:
         kubectl("-n", FORGEJO_NAMESPACE, "delete", "secret", TLS_SECRET_NAME, "--ignore-not-found", ignore_not_found=True)
         kubectl("-n", FORGEJO_NAMESPACE, "create", "secret", "tls", TLS_SECRET_NAME, f"--cert={server_crt}", f"--key={server_key}")
 
-    print(f"OK: created Secret {PLATFORM_NAMESPACE}/{CA_SECRET_NAME} and {FORGEJO_NAMESPACE}/{TLS_SECRET_NAME}")
+        # Untrusted host's TLS (self-signed, CA never trusted) -- for the fail-closed cases.
+        untrusted_crt, untrusted_key = generate_untrusted_cert(Path(tmp))
+        kubectl("-n", FORGEJO_NAMESPACE, "delete", "secret", UNTRUSTED_TLS_SECRET_NAME, "--ignore-not-found", ignore_not_found=True)
+        kubectl(
+            "-n",
+            FORGEJO_NAMESPACE,
+            "create",
+            "secret",
+            "tls",
+            UNTRUSTED_TLS_SECRET_NAME,
+            f"--cert={untrusted_crt}",
+            f"--key={untrusted_key}",
+        )
+
+    print(
+        f"OK: created {PLATFORM_NAMESPACE}/{CA_SECRET_NAME}, {FORGEJO_NAMESPACE}/{TLS_SECRET_NAME}, "
+        f"and {FORGEJO_NAMESPACE}/{UNTRUSTED_TLS_SECRET_NAME}"
+    )
 
 
 if __name__ == "__main__":

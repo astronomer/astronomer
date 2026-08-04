@@ -240,6 +240,34 @@ def test_git_sync_deployment_has_auth_proxy_container(git_sync_deployment, _k8s_
     assert pods_with_auth_proxy, f"Expected at least one pod with an auth-proxy container, got: {containers_by_pod}"
 
 
+def test_git_sync_relay_has_no_private_ca_wiring(git_sync_deployment, _k8s_core_v1_client_module):
+    """TC-CA-05a (moved here from the git-sync-private-ca scenario): the feature-OFF half of the
+    private-CA contract. This scenario sets no global.privateCaCerts, so git-sync-relay must carry
+    NONE of the CA wiring the git-sync-private-ca scenario asserts is present when it IS set -- no
+    etc-ssl-certs-copier initContainer, no private-ca-* volume, and no UPDATE_CA_CERTS on the
+    git-sync container. This proves that wiring is genuinely driven by global.privateCaCerts and not
+    always emitted: a regression that quietly always-mounted the CA would still pass the positive
+    assertion in git-sync-private-ca, but fail here.
+    """
+    pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(
+        label_selector=f"release={git_sync_deployment['release_name']}"
+    ).items
+    # Match the relay by pod NAME (<release>-git-sync-relay-*), not a git-sync *container* name: the
+    # Airflow component pods each carry a git-sync sidecar, so a container match would also hit them.
+    relay = next((p for p in pods if "git-sync-relay" in p.metadata.name), None)
+    assert relay is not None, f"No git-sync-relay pod for release {git_sync_deployment['release_name']!r}"
+
+    init_names = [c.name for c in (relay.spec.init_containers or [])]
+    assert "etc-ssl-certs-copier" not in init_names, (
+        f"Unexpected CA-copier initContainer with no global.privateCaCerts set: {init_names}"
+    )
+    volume_names = [v.name for v in relay.spec.volumes]
+    assert not any(v.startswith("private-ca-") for v in volume_names), f"Unexpected private-ca-* volume: {volume_names}"
+    git_sync = next(c for c in relay.spec.containers if "git-sync" in c.name)
+    env = {e.name: e.value for e in (git_sync.env or [])}
+    assert env.get("UPDATE_CA_CERTS") != "true", f"Unexpected UPDATE_CA_CERTS=true with no privateCaCerts set: {env}"
+
+
 def test_no_psa_rejection_events(git_sync_deployment, _k8s_core_v1_client_module):
     """
     None of the readiness/container-presence checks above would catch a PSA rejection on
