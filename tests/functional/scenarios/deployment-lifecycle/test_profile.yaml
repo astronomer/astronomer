@@ -1,15 +1,14 @@
 # PINF-1035 + PINF-1109: creates a real Airflow Deployment and drives it through Houston's
 # GraphQL API. PINF-1035 is the deployment lifecycle itself (the executor switch); PINF-1109
-# adds a git-sync relay switch on the SAME deployment plus TC-CA-05a -- the relay carries no
-# private-CA wiring when global.privateCaCerts is unset, the feature-OFF counterpart to the
-# git-sync-private-ca scenario. enable-git-sync-relay.yaml turns on the relay deployMechanism
-# with no CA; the first (image) deployment is unaffected (a relay is only created for a
-# git_sync deployment).
+# creates that one deployment as a git_sync relay (no global.privateCaCerts) so TC-CA-05a can
+# assert the relay carries no private-CA wiring when the feature is off -- the feature-OFF
+# counterpart to the git-sync-private-ca scenario. git-sync is already enabled by the base
+# configs/local-dev.yaml (deployMechanisms.gitSyncDagDeployment), so no per-scenario enable
+# overlay is needed here.
 topology: unified
-# One deployment, switched image -> git_sync relay (never two concurrent), but the relay pods
-# plus the reduce-resources overlay still push past the default xlarge node; 2xlarge matches
-# the other deployment-creating scenarios (see auth-sidecar / PINF-1080).
+# The one deployment runs the git-sync relay throughout, so the relay pods plus the
+# reduce-resources overlay push past the default xlarge node; 2xlarge matches the other
+# deployment-creating scenarios (see auth-sidecar / PINF-1080).
 resource_class: 2xlarge
 values:
-  - configs/enable-git-sync-relay.yaml
   - configs/scenario-airflow-reduce-resources.yaml
