@@ -90,16 +90,22 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_cli
     inspects the same deployment's git-sync-relay pod.
 
     Created as a git_sync relay deployment (HTTPS_NONE, public apc-test-dags-public) rather
-    than as a plain image deployment: a git_sync deployment must be CREATED as git_sync to
-    get a relay. Transitioning an existing deployment to git_sync via a later upsertDeployment
-    does NOT reliably provision the relay -- CI showed an image->git_sync switch left the
-    deployment with no relay pod at all, and auth-sidecar's dag_deploy->git_sync switch leaves
-    the old dag-downloader sidecar in place -- so the git-sync-private-ca scenario (which works)
-    also creates fresh as git_sync. Creating it here keeps the whole scenario on one deployment:
-    the executor switch (PINF-1035) is orthogonal to the git-sync relay and leaves it intact,
-    and readiness requires the relay to actually clone the public repo (its git-daemon probes
-    check a post-clone marker), so it doubles as the e2e proof the relay's default no-CA path
-    works. TC-CA-05a then asserts that relay carries no private-CA wiring.
+    than being transitioned into git_sync by a later upsertDeployment. The reason is a
+    limitation of wait_for_release_ready, not of houston: houston reconciles a dagDeploymentType
+    switch fine, but the reconcile (NATS -> houston-worker -> commander -> helm upgrade) is async,
+    and wait_for_release_ready returns as soon as every currently-labeled workload is ready --
+    with no observedGeneration/rollout gate. On an *update* the pre-transition workloads are still
+    present and ready when it first polls, so it returns "0s" before the new topology exists, and
+    the test then inspects stale pods (CI showed exactly this: after an image->git_sync switch the
+    deployment still had its original image/Celery pods and no relay; auth-sidecar's
+    dag_deploy->git_sync tests hit the same and observe the old dag-downloader sidecars). A fresh
+    *create* has no prior all-ready state to short-circuit the wait, so it genuinely waits for the
+    full git_sync topology -- relay included -- to come up, which is also why git-sync-private-ca
+    creates fresh. Creating it here keeps the whole scenario on one deployment: the executor switch
+    (PINF-1035) is orthogonal to the git-sync relay and leaves it intact, and readiness requires
+    the relay to actually clone the public repo (its git-daemon probes check a post-clone marker),
+    so it doubles as the e2e proof the relay's default no-CA path works. TC-CA-05a then asserts
+    that relay carries no private-CA wiring.
 
     Prints a timestamped line before/after each step: the failures seen so far
     (PINF-1068's pgbouncer crash-loop, PINF-1049's JWKS race) are intermittent, and
