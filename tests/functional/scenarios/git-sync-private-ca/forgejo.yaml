@@ -22,8 +22,7 @@ spec:
     spec:
       containers:
         - name: forgejo
-          # codeberg.org is reachable from CI for now; vendor into the Astronomer registry later.
-          image: codeberg.org/forgejo/forgejo:11
+          image: quay.io/astronomer/ap-forgejo:PINF-1109-forgejo
           env:
             # Serve TLS directly on HTTP_PORT using the private-CA-signed cert mounted below.
             - name: FORGEJO__server__PROTOCOL
@@ -112,7 +111,7 @@ spec:
     spec:
       containers:
         - name: forgejo
-          image: codeberg.org/forgejo/forgejo:11
+          image: quay.io/astronomer/ap-forgejo:PINF-1109-forgejo
           env:
             - name: FORGEJO__server__PROTOCOL
               value: https
