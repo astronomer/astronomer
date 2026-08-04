@@ -17,6 +17,11 @@ invisible to this kind-based CI by construction (see PINF-716/MV for that gap). 
 catches Helm-values-assembly and upgrade-path regressions that break on any cluster,
 generic or OpenShift alike.
 
+PINF-1109 rides along on the same one deployment: it is created as a git_sync relay
+deployment (no global.privateCaCerts in this scenario), which lets test_relay_has_no_private_ca_wiring
+assert the feature-OFF case -- the relay carries no private-CA wiring unless the CA is
+configured -- as a live counterpart to the git-sync-private-ca scenario's positive tests.
+
 Mutation shapes and the createUser-then-createWorkspace bootstrap sequence
 (tests/utils/houston_graphql.py) are ported from software-upgrade-automation's
 bin/configure-k3d-for-tests.py and bin/create-git-sync-deployment.py (QA's own k3d
@@ -79,9 +84,22 @@ def _houston_api_module():
 def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """
     Bootstraps a fresh admin user and workspace, creates an Airflow Deployment through
-    Houston's GraphQL API, and waits for it to reach full readiness. Module-scoped: both
-    tests in this file share the one deployment, since creating it is the expensive part
-    and the switch test needs an already-ready deployment to switch.
+    Houston's GraphQL API, and waits for it to reach full readiness. Module-scoped: every
+    test in this file shares the one deployment, since creating it is the expensive part;
+    the executor-switch test needs an already-ready deployment to switch, and TC-CA-05a
+    inspects the same deployment's git-sync-relay pod.
+
+    Created as a git_sync relay deployment (HTTPS_NONE, public apc-test-dags-public) rather
+    than as a plain image deployment: a git_sync deployment must be CREATED as git_sync to
+    get a relay. Transitioning an existing deployment to git_sync via a later upsertDeployment
+    does NOT reliably provision the relay -- CI showed an image->git_sync switch left the
+    deployment with no relay pod at all, and auth-sidecar's dag_deploy->git_sync switch leaves
+    the old dag-downloader sidecar in place -- so the git-sync-private-ca scenario (which works)
+    also creates fresh as git_sync. Creating it here keeps the whole scenario on one deployment:
+    the executor switch (PINF-1035) is orthogonal to the git-sync relay and leaves it intact,
+    and readiness requires the relay to actually clone the public repo (its git-daemon probes
+    check a post-clone marker), so it doubles as the e2e proof the relay's default no-CA path
+    works. TC-CA-05a then asserts that relay carries no private-CA wiring.
 
     Prints a timestamped line before/after each step: the failures seen so far
     (PINF-1068's pgbouncer crash-loop, PINF-1049's JWKS race) are intermittent, and
@@ -109,6 +127,9 @@ def deployment(_houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_cli
             label=DEPLOYMENT_LABEL,
             workspace_id=workspace_id,
             cluster_id=cluster_id,
+            dag_deployment_type="git_sync",
+            repository_url=GIT_SYNC_REPOSITORY_URL,
+            auth_type="HTTPS_NONE",
         )
     except HoustonError:
         _log("upsertDeployment raised a HoustonError, dumping houston/commander logs")
@@ -143,40 +164,6 @@ def test_deployment_survives_executor_switch(deployment, houston_api, k8s_apps_v
     wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, deployment["release_name"])
 
 
-@pytest.fixture(scope="module")
-def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
-    """Switches the SAME deployment to a git_sync relay (dagDeployment.type: git_sync, HTTPS_NONE,
-    pointed at the public apc-test-dags-public repo), reusing the one deployment rather than standing
-    up a second -- two concurrent full Airflow Deployments exhaust even a 2xlarge CI node (see
-    auth-sidecar / PINF-1080), so only one deployment's pods ever exist. This scenario sets no
-    global.privateCaCerts, so the resulting relay gets no private-CA wiring: the feature-OFF case
-    for TC-CA-05a. Readiness requires a real clone of the public repo, which proves the relay's
-    default (no-CA) path works end-to-end.
-
-    Passes executor="KubernetesExecutor" -- the executor the deployment is already in after
-    test_deployment_survives_executor_switch -- so this is a pure dagDeploymentType switch with no
-    executor change (mirroring auth-sidecar's git_sync fixture, which likewise doesn't combine the
-    two). KubernetesExecutor also keeps no persistent worker pods at idle, holding the footprint down.
-    """
-    token = deployment["token"]
-    try:
-        created = upsert_deployment(
-            _houston_api_module,
-            token,
-            executor="KubernetesExecutor",
-            deployment_uuid=deployment["id"],
-            dag_deployment_type="git_sync",
-            repository_url=GIT_SYNC_REPOSITORY_URL,
-            auth_type="HTTPS_NONE",
-        )
-    except HoustonError:
-        dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
-        dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
-        raise
-    wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"])
-    return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
-
-
 def _relay_pod(core_client, release_name):
     """The git-sync-relay pod for a release. Match by pod NAME (<release>-git-sync-relay-*), not a
     git-sync *container* name: the Airflow component pods each carry a git-sync sidecar, so a
@@ -188,7 +175,7 @@ def _relay_pod(core_client, release_name):
     return relay[0]
 
 
-def test_relay_has_no_private_ca_wiring(git_sync_deployment, _k8s_core_v1_client_module):
+def test_relay_has_no_private_ca_wiring(deployment, _k8s_core_v1_client_module):
     """TC-CA-05a (PINF-1109): with no global.privateCaCerts configured, the git-sync-relay pod
     carries NONE of the private-CA wiring the git-sync-private-ca scenario asserts is present when
     it IS set -- no etc-ssl-certs-copier initContainer, no private-ca-* volume, and no
@@ -197,7 +184,7 @@ def test_relay_has_no_private_ca_wiring(git_sync_deployment, _k8s_core_v1_client
     always-mounted the CA would still pass the positive test over there but fail here. (The relay
     reaching ready against a public HTTPS repo with no CA is the e2e functional half -- the relay
     clones normally with no private-CA trust configured.)"""
-    pod = _relay_pod(_k8s_core_v1_client_module, git_sync_deployment["release_name"])
+    pod = _relay_pod(_k8s_core_v1_client_module, deployment["release_name"])
     init_names = [c.name for c in (pod.spec.init_containers or [])]
     assert "etc-ssl-certs-copier" not in init_names, f"Unexpected CA-copier initContainer with no privateCaCerts: {init_names}"
     volume_names = [v.name for v in pod.spec.volumes]
