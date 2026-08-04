@@ -54,7 +54,9 @@ export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
 export KUBECONFIG="${HOME}/.local/share/astronomer-software/kubeconfig/${TOPOLOGY}"
 for script in "${PRE_HELM_SCRIPTS[@]}"; do
   echo "Running pre-helm script: ${script}"
-  "${script}"
+  # Each entry may carry arguments (a shell-quoted "path --flag value ..." from run-scenario.py),
+  # so run it through the shell rather than as a bare argv[0].
+  bash -c "${script}"
 done
 
 # Install helm chart
