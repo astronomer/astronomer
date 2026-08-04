@@ -42,6 +42,7 @@ from tests.utils.houston_graphql import (
     create_workspace,
     dump_pod_logs,
     get_cluster_id,
+    snapshot_release_revisions,
     upsert_deployment,
     wait_for_release_ready,
 )
@@ -160,14 +161,20 @@ def test_deployment_survives_executor_switch(deployment, houston_api, k8s_apps_v
     Exercises the failure class PINF-1033 was caught in: an Airflow Deployment upgrade
     that changes its executor. Re-invokes upsertDeployment on the same deployment_uuid,
     the same mutation Commander's own upgrade path uses.
+
+    Snapshots the workload generations before the switch and passes them to
+    wait_for_release_ready, so it waits for Commander to actually apply the new executor's
+    topology (CeleryExecutor's worker/flower/redis are removed and the scheduler/webserver
+    specs change) rather than returning immediately against the still-ready pre-switch pods.
     """
+    before = snapshot_release_revisions(k8s_apps_v1_client, deployment["release_name"])
     upsert_deployment(
         houston_api,
         deployment["token"],
         executor="KubernetesExecutor",
         deployment_uuid=deployment["id"],
     )
-    wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, deployment["release_name"])
+    wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, deployment["release_name"], previous_revisions=before)
 
 
 def _relay_pod(core_client, release_name):

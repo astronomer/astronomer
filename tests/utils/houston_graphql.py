@@ -301,11 +301,80 @@ def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector:
         print(f"{event.type} {event.reason}: {obj.kind}/{obj.name}: {event.message}")
 
 
-def wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, release_name: str, timeout: int = 600) -> None:
+def _workload_settled(w) -> bool:
+    """True when a Deployment/StatefulSet has fully rolled out its current spec and is ready: the
+    controller has observed the latest generation, and every replica is updated, ready, and current
+    with no surplus pod from a prior revision still terminating.
+
+    Stronger than ready_replicas == spec.replicas alone, which can hold *mid-rollout*: during a
+    RollingUpdate the old pod stays Ready until the new one is Ready, so ready_replicas can equal
+    spec.replicas while the change is only half-applied. Requiring observed_generation to have caught
+    up and updated_replicas == replicas == spec.replicas closes that gap.
     """
-    Wait for every Deployment/StatefulSet Commander created for this release to reach
-    readyReplicas == spec.replicas. Not just "pod visible" -- a rejected or
-    not-yet-scheduled pod never shows up as unhealthy, only as missing.
+    spec_replicas = w.spec.replicas or 0
+    status = w.status
+    if status is None:
+        return spec_replicas == 0
+    if (status.observed_generation or 0) < (w.metadata.generation or 0):
+        return False
+    return (
+        (status.ready_replicas or 0) == spec_replicas
+        and (status.updated_replicas or 0) == spec_replicas
+        and (status.replicas or 0) == spec_replicas
+    )
+
+
+def _workload_key(w) -> str:
+    return f"{w.metadata.namespace}/{w.metadata.name}"
+
+
+def snapshot_release_revisions(k8s_apps_v1_client, release_name: str) -> dict[str, int]:
+    """Snapshot each of the release's current Deployments/StatefulSets to its metadata.generation.
+
+    Take this BEFORE an upsertDeployment that mutates an existing release (an executor or
+    dagDeploymentType switch), then pass it to wait_for_release_ready(previous_revisions=...).
+    Commander applies the change asynchronously (NATS -> houston-worker -> commander -> helm
+    upgrade), so without a baseline the pre-update workloads are still present and fully ready the
+    instant the wait is called, and it returns immediately -- before the new topology (e.g. the
+    git-sync relay a git_sync switch adds) exists. With the baseline, the wait blocks until the
+    change is actually applied first. Omit it for a fresh create, which has no prior all-ready state.
+    """
+    label_selector = f"release={release_name}"
+    deployments = k8s_apps_v1_client.list_deployment_for_all_namespaces(label_selector=label_selector).items
+    statefulsets = k8s_apps_v1_client.list_stateful_set_for_all_namespaces(label_selector=label_selector).items
+    return {_workload_key(w): (w.metadata.generation or 0) for w in deployments + statefulsets}
+
+
+def _update_applied(current: dict[str, int], previous: dict[str, int]) -> bool:
+    """True once the release's workloads differ from the pre-update snapshot -- a workload was added
+    or removed, or an existing one's generation advanced (its spec changed) -- i.e. Commander has
+    started applying the requested change rather than the old topology still standing untouched."""
+    if set(current) != set(previous):
+        return True
+    return any(generation > previous.get(key, -1) for key, generation in current.items())
+
+
+def wait_for_release_ready(
+    k8s_apps_v1_client,
+    k8s_core_v1_client,
+    release_name: str,
+    timeout: int = 600,
+    *,
+    previous_revisions: dict[str, int] | None = None,
+) -> None:
+    """
+    Wait for every Deployment/StatefulSet Commander created for this release to finish rolling out
+    its current spec and reach readiness. Not just "pod visible" -- a rejected or not-yet-scheduled
+    pod never shows up as unhealthy, only as missing -- and not just ready_replicas == spec.replicas,
+    which can hold mid-rollout while an old pod is still counted ready (see _workload_settled).
+
+    On an UPDATE to an existing release (an executor switch, a dagDeploymentType switch), Commander
+    applies the change asynchronously, so the pre-update workloads are still present and ready the
+    instant this is called -- returning then inspects stale pods (this is how a git_sync switch could
+    look "ready" with no relay pod, and how auth-sidecar's git_sync tests ended up observing the old
+    dag-downloader sidecars). Pass previous_revisions (a snapshot_release_revisions() taken just
+    before the upsert) so this first waits for the change to actually be applied. Omit it for a fresh
+    create, which has no prior all-ready state to short-circuit on.
 
     Prints progress every iteration, deliberately: CircleCI kills a job after 10
     minutes with no output at all, which is the same order of magnitude as this
@@ -324,12 +393,16 @@ def wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, release_name:
         deployments = k8s_apps_v1_client.list_deployment_for_all_namespaces(label_selector=label_selector).items
         statefulsets = k8s_apps_v1_client.list_stateful_set_for_all_namespaces(label_selector=label_selector).items
         workloads = deployments + statefulsets
+
+        update_pending = previous_revisions is not None and not _update_applied(
+            {_workload_key(w): (w.metadata.generation or 0) for w in workloads}, previous_revisions
+        )
         not_ready = [
-            f"{w.metadata.namespace}/{w.metadata.name} ({w.status.ready_replicas or 0}/{w.spec.replicas})"
+            f"{w.metadata.namespace}/{w.metadata.name} ({(w.status.ready_replicas or 0) if w.status else 0}/{w.spec.replicas})"
             for w in workloads
-            if (w.status.ready_replicas or 0) != w.spec.replicas
+            if not _workload_settled(w)
         ]
-        if workloads and not not_ready:
+        if workloads and not not_ready and not update_pending:
             print(
                 f"Release {release_name!r}: all {len(workloads)} Deployment(s)/StatefulSet(s) ready "
                 f"after {int(time.monotonic() - start)}s."
@@ -337,6 +410,8 @@ def wait_for_release_ready(k8s_apps_v1_client, k8s_core_v1_client, release_name:
             return
         if not workloads:
             not_ready = [f"no Deployments/StatefulSets found yet with label {label_selector}"]
+        elif update_pending and not not_ready:
+            not_ready = ["waiting for Commander to apply the requested update (topology still matches the pre-update snapshot)"]
         remaining = int(deadline - time.monotonic())
         elapsed = int(time.monotonic() - start)
         print(f"Release {release_name!r} not ready yet ({elapsed}s elapsed, {remaining}s remaining): {', '.join(not_ready)}")

@@ -38,6 +38,7 @@ from tests.utils.houston_graphql import (
     create_workspace,
     dump_pod_logs,
     get_cluster_id,
+    snapshot_release_revisions,
     upsert_deployment,
     wait_for_release_ready,
 )
@@ -193,8 +194,16 @@ def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_mod
     public, Astronomer-owned fixture repo made for exactly this -- authType HTTPS_NONE,
     no credentials needed, and it's reachable from any CI runner the same way CI already
     reaches GitHub for its own checkout.
+
+    Snapshots the release's workload generations before the switch and passes them to
+    wait_for_release_ready: the switch is an update Commander applies asynchronously, so
+    without the baseline the wait returns immediately against the still-ready dag_deploy
+    workloads -- which is why this fixture previously "passed" while the deployment was still
+    running dag_deploy (dag-downloader sidecars) and the git-sync-relay pod the tests below
+    assert against had not been created yet.
     """
     token = deployment["token"]
+    before = snapshot_release_revisions(_k8s_apps_v1_client_module, deployment["release_name"])
     try:
         created = upsert_deployment(
             _houston_api_module,
@@ -209,7 +218,9 @@ def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_mod
         dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
         dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
         raise
-    wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"])
+    wait_for_release_ready(
+        _k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"], previous_revisions=before
+    )
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
