@@ -27,6 +27,7 @@ import requests
 import testinfra
 import urllib3
 from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
 
 from tests.utils.houston_graphql import (
     HoustonError,
@@ -424,9 +425,19 @@ def test_untrusted_host_fails_closed(untrusted_git_sync_deployment, _k8s_core_v1
     # the clone on a loop (it does not crash-loop), so the marker accumulates and should show within a
     # couple of sync cycles.
     marker, logs = None, ""
-    deadline = time.monotonic() + 180
+    deadline = time.monotonic() + 240
     while time.monotonic() < deadline:
-        logs = core.read_namespaced_pod_log(pod.metadata.name, namespace, container=git_sync_container).lower()
+        try:
+            logs = core.read_namespaced_pod_log(pod.metadata.name, namespace, container=git_sync_container).lower()
+        except ApiException as exc:
+            # Before the git-sync container starts (its git-config-manager initContainer still running)
+            # the log endpoint returns 400 "waiting to start: PodInitializing"; a just-restarted
+            # container can 404. Neither is the outcome under test -- keep polling until it starts and
+            # logs its clone attempt.
+            if exc.status not in (400, 404):
+                raise
+            time.sleep(5)
+            continue
         marker = next((m for m in TLS_FAILURE_MARKERS if m in logs), None)
         if marker:
             break
