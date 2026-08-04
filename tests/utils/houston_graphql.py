@@ -139,6 +139,7 @@ def upsert_deployment(
     auth_type: str | None = None,
     https_username: str | None = None,
     https_token: str | None = None,
+    git_sync_repo_fetch_mode: str | None = None,
     deployment_uuid: str | None = None,
 ) -> dict:
     """
@@ -184,6 +185,11 @@ def upsert_deployment(
             dag_deployment["httpsUsername"] = https_username
         if https_token:
             dag_deployment["httpsToken"] = https_token
+        # git-sync fetch mode: "poll" (default) or "webhook". webhook mode makes the relay run a
+        # webhook HTTP listener (which global.authSidecar then fronts with an auth-proxy sidecar);
+        # no external webhook needs to be delivered for the relay to clone and become ready.
+        if git_sync_repo_fetch_mode:
+            dag_deployment["gitSyncRepoFetchMode"] = git_sync_repo_fetch_mode
         variables["dagDeployment"] = dag_deployment
     query = """
     mutation UpsertDeployment(
