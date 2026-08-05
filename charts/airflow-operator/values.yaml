@@ -1,6 +1,5 @@
 images:
   manager:
-    # TODO: Change it to public image once 1.6.0 is released
     repository: quay.io/astronomer/airflow-operator-controller
     tag: 1.6.0
     pullPolicy: IfNotPresent
