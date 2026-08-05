@@ -12,10 +12,12 @@ server-side extraContainers() injection onto the deployment's own pods (via
 dagDeployment.type: dag_deploy, which also turns on dag-server's own auth-sidecar
 consumer -- see dag-server-auth-sidecar-configmap.yaml's `and .Values.dagDeploy.enabled
 .Values.authSidecar.enabled` gate), and airflow-chart's git-sync-relay (via
-dagDeployment.type: git_sync, authType: HTTPS_NONE, pointed at
+dagDeployment.type: git_sync, authType: HTTPS_NONE, in WEBHOOK fetch mode, pointed at
 astronomer/apc-test-dags-public -- a small public no-auth fixture repo, chosen
-specifically so this doesn't need real git credentials in CI). All three
-authSidecar implementations are now exercised here.
+specifically so this doesn't need real git credentials in CI). The relay only gets an
+auth-proxy in webhook fetch mode (chart gate: authSidecar.enabled AND repoFetchMode==webhook),
+so the git_sync fixture runs it in webhook mode; no external webhook is delivered -- see that
+fixture. All three authSidecar implementations are now exercised here.
 
 One deployment, switched from dag_deploy to git_sync via upsertDeployment on the same
 deployment_uuid -- not two independent deployments. Two reasons: (1) it's a strictly
@@ -28,6 +30,8 @@ it by failing earlier. Switching type on one deployment means only one deploymen
 pods ever exist at a time.
 """
 
+import re
+
 import pytest
 import testinfra
 from kubernetes import client, config
@@ -38,6 +42,7 @@ from tests.utils.houston_graphql import (
     create_workspace,
     dump_pod_logs,
     get_cluster_id,
+    snapshot_release_revisions,
     upsert_deployment,
     wait_for_release_ready,
 )
@@ -61,6 +66,23 @@ ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = "pinf-1031-auth-sidecar"
 DEPLOYMENT_LABEL = "pinf-1031-auth-sidecar"
 GIT_SYNC_REPOSITORY_URL = "https://github.com/astronomer/apc-test-dags-public"
+
+# The EXACT set of pods (by component) expected to carry an auth-proxy sidecar in each stage.
+# Pinned deliberately as a canary rather than asserting "at least one": authSidecar is implemented
+# several times across repos, and the PINF-1033 regression this scenario exists for was a consumer
+# silently LOSING its sidecar under a PSS-Restricted change -- which an at-least-one check sails
+# right past. Asserting the whole set makes a consumer gaining OR losing the sidecar, or a runtime
+# swap of the web component (webserver <-> api-server), fail loudly for a human to re-confirm.
+# Both stages share the houston-injected web component (webserver on the current runtime) and flower;
+# each adds its own chart-injected consumer: dag-server for dag_deploy, git-sync-relay for git_sync.
+# NOTE: the git-sync-relay's auth-proxy only exists in *webhook* fetch mode -- chart gate
+# `authSidecar.enabled AND gitSyncRelay.repoFetchMode == "webhook"` (git-sync-relay-deployment.yaml).
+# In the default poll mode the relay has no auth-proxy at all, so the git_sync fixture below runs it
+# in webhook mode specifically to exercise this consumer (no external webhook is required -- the relay
+# clones and becomes ready exactly as in poll mode, and the auth-proxy just fronts its idle webhook
+# listener).
+AUTH_PROXY_COMPONENTS_DAG_DEPLOY = {"webserver", "flower", "dag-server"}
+AUTH_PROXY_COMPONENTS_GIT_SYNC = {"webserver", "flower", "git-sync-relay"}
 
 
 def test_grafana_deployment_reaches_ready(k8s_apps_v1_client):
@@ -162,20 +184,47 @@ def test_deployment_reaches_ready(deployment):
     assert deployment["release_name"]
 
 
+def _pod_component(pod, release_name: str) -> str:
+    """A stable identity for a pod: its `component` label, or -- for pods some chart versions leave
+    unlabeled (e.g. git-sync-relay) -- the pod name with the release prefix and the
+    Deployment/StatefulSet hash-or-ordinal suffix stripped (foo-9pkpv/foo-0 -> foo)."""
+    label = (pod.metadata.labels or {}).get("component")
+    if label:
+        return label
+    name = pod.metadata.name.removeprefix(f"{release_name}-")
+    return re.sub(r"-[a-z0-9]{7,10}-[a-z0-9]{5}$|-[0-9]+$", "", name)
+
+
+def _auth_proxy_components(core_client, release_name: str) -> set[str]:
+    """The set of component identities for every pod in the release carrying an auth-proxy container."""
+    pods = core_client.list_pod_for_all_namespaces(label_selector=f"release={release_name}").items
+    return {_pod_component(pod, release_name) for pod in pods if any(c.name == "auth-proxy" for c in pod.spec.containers)}
+
+
+def _assert_auth_proxy_components(core_client, release_name: str, expected: set[str]) -> None:
+    """Assert the EXACT set of auth-proxy-bearing pods equals `expected`, with a diff on mismatch."""
+    actual = _auth_proxy_components(core_client, release_name)
+    assert actual == expected, (
+        f"Set of pods carrying an auth-proxy container changed for release {release_name!r} -- "
+        "re-confirm authSidecar wiring, then update the expected set only if the change is intended.\n"
+        f"  expected:             {sorted(expected)}\n"
+        f"  actual:               {sorted(actual)}\n"
+        f"  unexpectedly present: {sorted(actual - expected)}\n"
+        f"  unexpectedly missing: {sorted(expected - actual)}"
+    )
+
+
 def test_deployment_has_auth_proxy_containers(deployment, _k8s_core_v1_client_module):
     """
-    Confirms authSidecar actually reached the Airflow-Deployment-namespace tier, not
-    just the platform namespace test_grafana_has_auth_proxy_container already covers.
-    Checks across every pod in the release rather than one hardcoded pod name, since
-    which pod carries houston-api's injected auth-proxy (webserver vs. api-server)
-    depends on the Astro Runtime version, and dag-server's copy is a second,
-    independently-injected container this scenario now also exercises.
+    Confirms authSidecar reached the Airflow-Deployment-namespace tier in the dag_deploy stage
+    (the houston-injected web component and flower, plus dag-server's independently-injected copy),
+    not just the platform namespace test_grafana_has_auth_proxy_container already covers.
+
+    Asserts the EXACT set of auth-proxy-bearing pods, not "at least one": the PINF-1033-class
+    regression this scenario exists for was a consumer silently losing its sidecar, which an
+    at-least-one check passes right through.
     """
-    pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(label_selector=f"release={deployment['release_name']}").items
-    assert pods, f"Expected at least one pod for release {deployment['release_name']!r}"
-    containers_by_pod = {pod.metadata.name: [c.name for c in pod.spec.containers] for pod in pods}
-    pods_with_auth_proxy = [name for name, containers in containers_by_pod.items() if "auth-proxy" in containers]
-    assert pods_with_auth_proxy, f"Expected at least one pod with an auth-proxy container, got: {containers_by_pod}"
+    _assert_auth_proxy_components(_k8s_core_v1_client_module, deployment["release_name"], AUTH_PROXY_COMPONENTS_DAG_DEPLOY)
 
 
 @pytest.fixture(scope="module")
@@ -184,17 +233,32 @@ def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_mod
     Switches the SAME deployment from dagDeployment.type: dag_deploy to git_sync (via
     upsertDeployment on deployment["id"]), rather than creating a second, independent
     Airflow Deployment -- see module docstring for why. Exercises git-sync-relay, the
-    third and last authSidecar consumer, previously undocumented as a gap rather than
-    fixed. A real, reachable repo is required, not just a syntactically-valid URL:
-    git-sync-relay's git-daemon container's readiness/liveness/startup probes all check
-    for a file a real clone creates (`.git/git-daemon-export-ok`), so an unreachable URL
-    would hang the same way an earlier version of this scenario's own readiness wait
-    once did (see wait_for_release_ready). astronomer/apc-test-dags-public is a small,
-    public, Astronomer-owned fixture repo made for exactly this -- authType HTTPS_NONE,
-    no credentials needed, and it's reachable from any CI runner the same way CI already
-    reaches GitHub for its own checkout.
+    third and last authSidecar consumer. A real, reachable repo is required, not just a
+    syntactically-valid URL: git-sync-relay's git-daemon container's readiness/liveness/startup
+    probes all check for a file a real clone creates (`.git/git-daemon-export-ok`), so an
+    unreachable URL would hang the same way an earlier version of this scenario's own readiness
+    wait once did (see wait_for_release_ready). astronomer/apc-test-dags-public is a small,
+    public, Astronomer-owned fixture repo made for exactly this -- authType HTTPS_NONE, no
+    credentials needed, and it's reachable from any CI runner the same way CI already reaches
+    GitHub for its own checkout.
+
+    Runs the relay in WEBHOOK fetch mode (gitSyncRepoFetchMode="webhook"), because that is the
+    only mode in which the relay gets an auth-proxy sidecar (chart gate: authSidecar.enabled AND
+    repoFetchMode=="webhook") -- so this is what actually exercises the git-sync-relay authSidecar
+    consumer. No external webhook is set up or delivered: webhook mode only makes the relay run a
+    webhook HTTP listener for the auth-proxy to front; the relay still does its initial clone and
+    reaches ready exactly as in poll mode. (The default poll mode gives the relay NO auth-proxy;
+    poll-mode relay coverage lives in the git-sync-private-ca and deployment-lifecycle scenarios.)
+
+    Snapshots the release's workload generations before the switch and passes them to
+    wait_for_release_ready: the switch is an update Commander applies asynchronously, so
+    without the baseline the wait returns immediately against the still-ready dag_deploy
+    workloads -- which is why this fixture previously "passed" while the deployment was still
+    running dag_deploy (dag-downloader sidecars) and the git-sync-relay pod the tests below
+    assert against had not been created yet.
     """
     token = deployment["token"]
+    before = snapshot_release_revisions(_k8s_apps_v1_client_module, deployment["release_name"])
     try:
         created = upsert_deployment(
             _houston_api_module,
@@ -204,12 +268,15 @@ def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_mod
             dag_deployment_type="git_sync",
             repository_url=GIT_SYNC_REPOSITORY_URL,
             auth_type="HTTPS_NONE",
+            git_sync_repo_fetch_mode="webhook",
         )
     except HoustonError:
         dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
         dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
         raise
-    wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"])
+    wait_for_release_ready(
+        _k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"], previous_revisions=before
+    )
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
@@ -226,18 +293,18 @@ def test_git_sync_deployment_reaches_ready(git_sync_deployment):
 
 def test_git_sync_deployment_has_auth_proxy_container(git_sync_deployment, _k8s_core_v1_client_module):
     """
-    Confirms authSidecar reached git-sync-relay's pod specifically -- the one
-    implementation test_deployment_has_auth_proxy_containers above doesn't cover, since
-    this same deployment had no git-sync-relay pod at all before the type switch
-    (dag-server is a separate, independently-gated consumer).
+    Confirms authSidecar reached git-sync-relay -- the third, chart-injected consumer. Genuinely
+    exercising it needed two fixes: wait_for_release_ready must wait for the dag_deploy->git_sync
+    switch to reconcile (before, it returned early and this asserted against the stale dag_deploy
+    pods, so dag-server's sidecar stood in for the relay's and the check passed without a relay ever
+    existing), and the relay must run in WEBHOOK fetch mode -- the only mode in which it gets an
+    auth-proxy at all (see the git_sync_deployment fixture and the AUTH_PROXY_COMPONENTS note).
+
+    Asserts the EXACT set now expected in the git_sync stage (web component + flower + git-sync-relay,
+    no dag-server) -- so the relay losing its sidecar shows up as unexpectedly missing, and a
+    dag-server left behind by an incomplete transition shows up as unexpectedly present.
     """
-    pods = _k8s_core_v1_client_module.list_pod_for_all_namespaces(
-        label_selector=f"release={git_sync_deployment['release_name']}"
-    ).items
-    assert pods, f"Expected at least one pod for release {git_sync_deployment['release_name']!r}"
-    containers_by_pod = {pod.metadata.name: [c.name for c in pod.spec.containers] for pod in pods}
-    pods_with_auth_proxy = [name for name, containers in containers_by_pod.items() if "auth-proxy" in containers]
-    assert pods_with_auth_proxy, f"Expected at least one pod with an auth-proxy container, got: {containers_by_pod}"
+    _assert_auth_proxy_components(_k8s_core_v1_client_module, git_sync_deployment["release_name"], AUTH_PROXY_COMPONENTS_GIT_SYNC)
 
 
 def test_no_psa_rejection_events(git_sync_deployment, _k8s_core_v1_client_module):

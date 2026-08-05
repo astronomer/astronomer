@@ -6,9 +6,15 @@ GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 BIN_DIR="${GIT_ROOT_DIR}/bin"
 
 TOPOLOGY=""
+PRE_HELM_SCRIPTS=()
+HELM_ARGS=()
 for arg in "$@"; do
   case "$arg" in
-    --topology=*) TOPOLOGY="${arg#--topology=}" ;;
+    # Siphoned off (not forwarded to helm-install.py): scenario setup that runs after
+    # the cluster exists but before `helm install`. See run-scenario.py / scenarios/README.md.
+    --pre-helm-script=*) PRE_HELM_SCRIPTS+=("${arg#--pre-helm-script=}") ;;
+    --topology=*) TOPOLOGY="${arg#--topology=}" ; HELM_ARGS+=("$arg") ;;
+    *) HELM_ARGS+=("$arg") ;;
   esac
 done
 if [[ -z "$TOPOLOGY" ]]; then
@@ -40,5 +46,18 @@ export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
 # Create a KIND cluster and configure it for testing
 "${BIN_DIR}/setup-kind.py" "--topology=${TOPOLOGY}"
 
+# Run scenario pre-helm setup steps (see tests/functional/scenarios/README.md). These run
+# after the cluster exists but before `helm install`, so a scenario can create Secrets or
+# other namespaced objects that the chart's install-time values reference (e.g. a private-CA
+# Secret named in global.privateCaCerts). Each script gets KUBECONFIG pointed at the fresh
+# cluster, the activated venv, and the helper-tools PATH exported above.
+export KUBECONFIG="${HOME}/.local/share/astronomer-software/kubeconfig/${TOPOLOGY}"
+for script in "${PRE_HELM_SCRIPTS[@]}"; do
+  echo "Running pre-helm script: ${script}"
+  # Each entry may carry arguments (a shell-quoted "path --flag value ..." from run-scenario.py),
+  # so run it through the shell rather than as a bare argv[0].
+  bash -c "${script}"
+done
+
 # Install helm chart
-"${BIN_DIR}/helm-install.py" "$@"
+"${BIN_DIR}/helm-install.py" "${HELM_ARGS[@]}"
