@@ -9,7 +9,11 @@ crd:
   create: true
 
 certManager:
-  enabled: false
+  # When true, cert-manager provisions the webhook server's TLS
+  # certificate. Set to false only if you supply your own certificates via
+  # webhooks.useCustomTlsCerts (then customCertsSecretName and caBundle are
+  # required).
+  enabled: true
 
 
 # Restrict the Airflow Operator to only send network requests to Kubernetes API, and read available astro-runtime versions from a local file instead of retrieving it dynamically online.
@@ -45,12 +49,14 @@ webhooks:
   # Enables the webhook service for mutating and validating configurations.
   enabled: true
   # Set to true to use your own TLS certificates for the webhooks instead of
-  # cert-manager-provisioned ones. When true, you must provide both
-  # customCertsSecretName and caBundle below.
+  # cert-manager-provisioned ones. When true, both customCertsSecretName and
+  # caBundle below are required — the chart fails to render otherwise. Requires
+  # certManager.enabled=false is acceptable, but at least one of certManager or
+  # useCustomTlsCerts must be enabled.
   useCustomTlsCerts: false
   # Name of a pre-created Secret (in the release namespace) that holds the
-  # webhook server's TLS certificate and key (tls.crt / tls.key). Only used
-  # when useCustomTlsCerts is true.
+  # webhook server's TLS certificate and key (tls.crt / tls.key). Required when
+  # useCustomTlsCerts is true.
   customCertsSecretName: ""
   # PEM-encoded CA bundle used to validate the webhook server certificate.
   # Injected into the webhook configurations' clientConfig when

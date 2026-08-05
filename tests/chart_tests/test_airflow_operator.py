@@ -1,4 +1,5 @@
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import pytest
 
@@ -56,6 +57,118 @@ class TestAirflowOperator:
         assert "cert-manager.io/v1" == docs[1]["apiVersion"]
         assert "release-name-airflow-operator-serving-cert" == docs[1]["metadata"]["name"]
         assert "release-name-airflow-operator-selfsigned-issuer" == docs[0]["metadata"]["name"]
+
+    def test_airflow_operator_webhook_tls_default_uses_cert_manager(self, kube_version):
+        """With shipped defaults (certManager.enabled=true) the manager mounts the cert-manager
+        secret, not the broken empty custom-certs volume."""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {"airflowOperator": {"enabled": True}},
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        volumes = {v["name"]: v for v in docs[0]["spec"]["template"]["spec"]["volumes"]}
+        assert "cert" in volumes
+        assert volumes["cert"]["secret"]["secretName"] == "release-name-webhook-server-cert"
+        assert "custom-certs" not in volumes
+
+    def test_airflow_operator_webhook_tls_custom_certs(self, kube_version):
+        """certManager off + useCustomTlsCerts on (with both required fields) mounts the
+        user-supplied secret and points the manager at /tmp/custom-certs."""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {"airflowOperator": {"enabled": True}},
+                "airflow-operator": {
+                    "certManager": {"enabled": False},
+                    "webhooks": {
+                        "useCustomTlsCerts": True,
+                        "customCertsSecretName": "my-tls",
+                        "caBundle": "dGVzdA==",
+                    },
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        volumes = {v["name"]: v for v in pod_spec["volumes"]}
+        assert volumes["custom-certs"]["secret"]["secretName"] == "my-tls"
+        env = {e["name"]: e.get("value") for e in get_containers_by_name(docs[0])["manager"]["env"]}
+        assert env["WEBHOOK_CERT_DIRECTORY"] == "/tmp/custom-certs"
+
+    def test_airflow_operator_webhook_tls_requires_a_cert_source(self, kube_version):
+        """Disabling both certManager and useCustomTlsCerts fails the render with a clear message
+        instead of emitting a custom-certs volume with an empty secret name."""
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values={
+                    "global": {"airflowOperator": {"enabled": True}},
+                    "airflow-operator": {
+                        "certManager": {"enabled": False},
+                        "webhooks": {"useCustomTlsCerts": False},
+                    },
+                },
+            )
+        assert "the webhook needs a TLS certificate source" in excinfo.value.stderr.decode("utf-8")
+
+    def test_airflow_operator_custom_certs_requires_secret_name(self, kube_version):
+        """useCustomTlsCerts without customCertsSecretName fails the render with a clear message."""
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values={
+                    "global": {"airflowOperator": {"enabled": True}},
+                    "airflow-operator": {
+                        "certManager": {"enabled": False},
+                        "webhooks": {"useCustomTlsCerts": True, "caBundle": "dGVzdA=="},
+                    },
+                },
+            )
+        assert "webhooks.customCertsSecretName is required" in excinfo.value.stderr.decode("utf-8")
+
+    def test_airflow_operator_custom_certs_requires_ca_bundle(self, kube_version):
+        """useCustomTlsCerts without caBundle fails the render with a clear message."""
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values={
+                    "global": {"airflowOperator": {"enabled": True}},
+                    "airflow-operator": {
+                        "certManager": {"enabled": False},
+                        "webhooks": {"useCustomTlsCerts": True, "customCertsSecretName": "my-tls"},
+                    },
+                },
+            )
+        assert "webhooks.caBundle is required" in excinfo.value.stderr.decode("utf-8")
+
+    def test_airflow_operator_webhook_tls_not_validated_on_control_plane(self, kube_version):
+        """The TLS guard is gated on operator.enabled, so a both-disabled config on the control
+        plane (where the operator does not render) must not fail the render."""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "plane": {"mode": "control"},
+                },
+                "airflow-operator": {
+                    "certManager": {"enabled": False},
+                    "webhooks": {"useCustomTlsCerts": False},
+                },
+            },
+        )
+        operator_docs = [f"{doc.get('kind')}/{doc.get('metadata', {}).get('name')}" for doc in docs if _is_operator_doc(doc)]
+        assert operator_docs == [], f"control plane must not render operator resources, got: {operator_docs}"
 
     def test_airflow_operator_crd(self, kube_version):
         """Test Airflow Operator crd template"""
