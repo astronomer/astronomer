@@ -1,0 +1,174 @@
+# In-cluster Forgejo git host for the git-sync-private-ca scenario (PINF-1109), served over
+# HTTPS with a private-CA-signed cert. Applied by the scenario's pytest fixture AFTER install
+# (the git-forgejo namespace and the forgejo-tls Secret are created before install by
+# bin/setup-forgejo-ca.py). The k8s translation of ops-stuff/forgejo-private-ca/docker-compose.yml.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo
+  namespace: git-forgejo
+  labels:
+    app: forgejo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo
+  template:
+    metadata:
+      labels:
+        app: forgejo
+    spec:
+      containers:
+        - name: forgejo
+          image: "quay.io/astronomer/ap-forgejo:16.0.2"
+          env:
+            # Serve TLS directly on HTTP_PORT using the private-CA-signed cert mounted below.
+            - name: FORGEJO__server__PROTOCOL
+              value: https
+            - name: FORGEJO__server__HTTP_PORT
+              value: "3000"
+            - name: FORGEJO__server__CERT_FILE
+              value: /certs/tls.crt
+            - name: FORGEJO__server__KEY_FILE
+              value: /certs/tls.key
+            - name: FORGEJO__server__DOMAIN
+              value: forgejo.git-forgejo.svc.cluster.local
+            - name: FORGEJO__server__ROOT_URL
+              value: https://forgejo.git-forgejo.svc.cluster.local:3000/
+            # Skip the web installer; the fixture creates the admin via the CLI/API.
+            - name: FORGEJO__security__INSTALL_LOCK
+              value: "true"
+            - name: FORGEJO__database__DB_TYPE
+              value: sqlite3
+          ports:
+            - name: https
+              containerPort: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tls
+              mountPath: /certs
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 3000
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          # Small requests: Forgejo is a rounding error next to the platform, but on a
+          # CPU-tight scenario node even a light pod competes for scheduling headroom.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tls
+          secret:
+            secretName: forgejo-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo
+  namespace: git-forgejo
+  labels:
+    app: forgejo
+spec:
+  selector:
+    app: forgejo
+  ports:
+    - name: https
+      port: 3000
+      targetPort: 3000
+---
+# An "untrusted" Forgejo served with a self-signed cert whose CA is NOT in global.privateCaCerts
+# (forgejo-untrusted-tls, created by bin/setup-forgejo-ca.py). Used to prove TLS fails closed:
+# a relay/commander connecting here fails to validate the cert. No repo/PAT seeding is needed --
+# the failure happens at the TLS handshake, before any git protocol.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo-untrusted
+  namespace: git-forgejo
+  labels:
+    app: forgejo-untrusted
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo-untrusted
+  template:
+    metadata:
+      labels:
+        app: forgejo-untrusted
+    spec:
+      containers:
+        - name: forgejo
+          image: "quay.io/astronomer/ap-forgejo:16.0.2"
+          env:
+            - name: FORGEJO__server__PROTOCOL
+              value: https
+            - name: FORGEJO__server__HTTP_PORT
+              value: "3000"
+            - name: FORGEJO__server__CERT_FILE
+              value: /certs/tls.crt
+            - name: FORGEJO__server__KEY_FILE
+              value: /certs/tls.key
+            - name: FORGEJO__server__DOMAIN
+              value: forgejo-untrusted.git-forgejo.svc.cluster.local
+            - name: FORGEJO__server__ROOT_URL
+              value: https://forgejo-untrusted.git-forgejo.svc.cluster.local:3000/
+            - name: FORGEJO__security__INSTALL_LOCK
+              value: "true"
+            - name: FORGEJO__database__DB_TYPE
+              value: sqlite3
+          ports:
+            - name: https
+              containerPort: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tls
+              mountPath: /certs
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 3000
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tls
+          secret:
+            secretName: forgejo-untrusted-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-untrusted
+  namespace: git-forgejo
+  labels:
+    app: forgejo-untrusted
+spec:
+  selector:
+    app: forgejo-untrusted
+  ports:
+    - name: https
+      port: 3000
+      targetPort: 3000

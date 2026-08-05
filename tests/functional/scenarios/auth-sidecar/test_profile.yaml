@@ -1,14 +1,10 @@
-# PINF-1031: catches the class of regression in PINF-1033 (a PSS-Restricted
-# hardening change broke global.authSidecar, not caught until QA). Neither
-# toggle alone would catch it -- the failure was in the interaction between
-# them, so this scenario combines both rather than testing them separately.
-#
-# enable-psa.yaml (global.namespaceLabels) covers the OTHER namespace tier
-# namespace_labels below can't reach: it labels Airflow Deployment namespaces
-# that Commander creates, not the static platform namespace. Both are needed
-# to catch PSS-Restricted breaking authSidecar regardless of which tier it
-# breaks in -- test_auth_sidecar.py creates a real Airflow Deployment to
-# exercise this half.
+description: >-
+  PINF-1031: catches PINF-1033-class regressions where a PSS-Restricted hardening change breaks
+  global.authSidecar (the failure is in the interaction of the two, so this combines them rather than
+  testing them apart). Creates a real Airflow Deployment under PSS-Restricted + authSidecar and
+  asserts the exact set of pods carrying an auth-proxy sidecar across all three consumers: the
+  platform tier (grafana/alertmanager/prometheus), dag-server, and git-sync-relay (in webhook fetch
+  mode). Also carries the audit-only Kyverno scan.
 topology: unified
 # Two concurrent-ish Airflow Deployment lifecycles (dag_deploy then switched to
 # git_sync) plus the platform chart pushed the default xlarge CI machine's CPU past
@@ -23,6 +19,10 @@ resource_class: 2xlarge
 # both dagDeployment types, which gives the scan more real pods to evaluate than most
 # other scenarios would.
 kyverno_scan: true
+# enable-psa.yaml (global.namespaceLabels) applies PSS-Restricted to the Airflow Deployment
+# namespaces Commander creates; namespace_labels below applies it to the static platform namespace.
+# Both are needed so a PSS-Restricted break in authSidecar is caught regardless of which tier it
+# breaks in.
 values:
   - configs/enable-auth-sidecar.yaml
   - configs/psa-restricted.yaml
