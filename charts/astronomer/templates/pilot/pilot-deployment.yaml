@@ -152,6 +152,7 @@ spec:
               value: {{ .Values.pilot.cbCooloffSeconds | quote }}
             - name: PILOT_CB_PROBE_MAX_INFLIGHT
               value: {{ .Values.pilot.cbProbeMaxInflight | quote }}
+            {{- include "common_shared_env" . | nindent 12  -}}
             {{- if .Values.pilot.env }}
             {{- tpl (toYaml .Values.pilot.env) $ | nindent 12 }}
             {{- end }}
