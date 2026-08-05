@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: forgejo
-          image: quay.io/astronomer/ap-forgejo:PINF-1109-forgejo
+          image: "quay.io/astronomer/ap-forgejo:16.0.2"
           env:
             # Serve TLS directly on HTTP_PORT using the private-CA-signed cert mounted below.
             - name: FORGEJO__server__PROTOCOL
@@ -111,7 +111,7 @@ spec:
     spec:
       containers:
         - name: forgejo
-          image: quay.io/astronomer/ap-forgejo:PINF-1109-forgejo
+          image: "quay.io/astronomer/ap-forgejo:16.0.2"
           env:
             - name: FORGEJO__server__PROTOCOL
               value: https
