@@ -56,7 +56,7 @@ Now that you've installed the platform, you are ready to get started and create 
 {{- end }}
 
 
-We have guides available at https://www.astronomer.io/docs/learn/ and are always available to help.
+We have guides available at https://www.astronomer.io/docs/astro-private-cloud/ and are always available to help.
 {{- else }}
 To see dashboard URLs here, provide baseDomain in your config.
 {{- end }}
