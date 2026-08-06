@@ -20,4 +20,6 @@ data:
     namespaceLabels: {{ include "commander.metadata.namespaceLabels" . }}
     customLogging:
       enabled: {{ ternary "true" "false" .Values.global.customLogging.enabled }}
+    openshift:
+      enabled: {{ ternary "true" "false" .Values.global.openshift.enabled }}
 {{- end }}
