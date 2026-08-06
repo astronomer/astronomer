@@ -77,6 +77,30 @@ class TestCommanderJWKSHookJob:
         assert configmap_doc["metadata"]["name"] == "release-name-commander-jwks-hook-config"
         assert "commander-jwks.py" in configmap_doc["data"]
 
+    def test_jwks_hook_job_service_account_overrides(self, kube_version):
+        """jwksHook service account name overrides to assert again Role, RoleBinding and ServiceAccount."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}},
+                "astronomer": {"commander": {"jwksHook": {"serviceAccount": {"create": True, "name": "jwks-custom-sa"}}}},
+            },
+            show_only=sorted(
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/astronomer/templates/commander/jwks-hooks").glob("*")
+                ]
+            ),
+        )
+        docs_by_kind = {doc["kind"]: doc for doc in docs}
+
+        assert len(docs) == 5
+        # the custom name flows into the SA and the binding subject
+        assert docs_by_kind["ServiceAccount"]["metadata"]["name"] == "jwks-custom-sa"
+        assert docs_by_kind["RoleBinding"]["subjects"][0]["name"] == "jwks-custom-sa"
+        # roleRef is unaffected by the SA name override
+        assert docs_by_kind["RoleBinding"]["roleRef"]["name"] == "release-name-commander-jwks-role"
+
     def test_jwks_hook_job_control_plane_endpoint_cp_ha(self, kube_version):
         """CP-HA: the JWKS bootstrap hook's CONTROL_PLANE_ENDPOINT must target the
         GLOBAL control-plane host so it health-routes to the active CP, not a pinned per-CP host.
