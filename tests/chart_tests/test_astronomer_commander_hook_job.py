@@ -78,8 +78,7 @@ class TestCommanderJWKSHookJob:
         assert "commander-jwks.py" in configmap_doc["data"]
 
     def test_jwks_hook_job_service_account_overrides(self, kube_version):
-        """jwksHook service account name overrides to assert again Role, RoleBinding and ServiceAccount.
-        """
+        """jwksHook service account name overrides to assert again Role, RoleBinding and ServiceAccount."""
         docs = render_chart(
             kube_version=kube_version,
             values={
