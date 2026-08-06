@@ -77,6 +77,66 @@ class TestCommanderJWKSHookJob:
         assert configmap_doc["metadata"]["name"] == "release-name-commander-jwks-hook-config"
         assert "commander-jwks.py" in configmap_doc["data"]
 
+    def test_jwks_hook_job_service_account_overrides(self, kube_version):
+        """Test JWKS Hook Job default service account overrides on data plane."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}},
+                "astronomer": {"commander": {"jwksHook": {"serviceAccount": {"create": True, "name": "jwks-custom-sa"}}}},
+            },
+            show_only=sorted(
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/astronomer/templates/commander/jwks-hooks").glob("*")
+                ]
+            ),
+        )
+        for doc in docs:
+            match doc["kind"]:
+                case "Job":
+                    job_doc = doc
+                case "ServiceAccount":
+                    sa_doc = doc
+                case "Role":
+                    role_doc = doc
+                case "RoleBinding":
+                    rolebinding_doc = doc
+                case "ConfigMap":
+                    configmap_doc = doc
+                case _:
+                    print(f"Unhandled kind {doc['kind']}")
+
+        assert len(docs) == 5
+        assert job_doc["metadata"]["name"] == "release-name-commander-jwks-hook"
+
+        annotations = job_doc["metadata"]["annotations"]
+        assert annotations["helm.sh/hook"] == "pre-install,pre-upgrade"
+        assert annotations["helm.sh/hook-weight"] == "-1"
+        assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation,hook-succeeded,hook-failed"
+        assert annotations["astronomer.io/commander-sync"] == "platform-release=release-name"
+
+        c_by_name = get_containers_by_name(job_doc, include_init_containers=True)
+        assert "commander-jwks-hook" in c_by_name
+
+        container = c_by_name["commander-jwks-hook"]
+        assert container["command"] == ["/bin/sh", "-c", "update-ca-certificates;python3 /scripts/commander-jwks.py"]
+        assert container["resources"] == {
+            "requests": {"cpu": "250m", "memory": "1Gi"},
+            "limits": {"cpu": "500m", "memory": "2Gi"},
+        }
+
+        assert sa_doc["metadata"]["name"] == "jwks-custom-sa"
+
+        assert role_doc["metadata"]["name"] == "release-name-commander-jwks-role"
+
+        assert rolebinding_doc["metadata"]["name"] == "release-name-commander-jwks-binding"
+        assert rolebinding_doc["subjects"][0]["name"] == "jwks-custom-sa"
+        assert rolebinding_doc["roleRef"]["name"] == "release-name-commander-jwks-role"
+
+        assert configmap_doc["metadata"]["name"] == "release-name-commander-jwks-hook-config"
+        assert "commander-jwks.py" in configmap_doc["data"]
+
     def test_jwks_hook_job_control_plane_endpoint_cp_ha(self, kube_version):
         """CP-HA: the JWKS bootstrap hook's CONTROL_PLANE_ENDPOINT must target the
         GLOBAL control-plane host so it health-routes to the active CP, not a pinned per-CP host.
