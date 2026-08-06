@@ -46,20 +46,48 @@ If you already run Airflow with the Astro Runtime Operator, you can bring those 
 
 Adoption is the second stage of a two-stage path onto the platform:
 
-- **Stage 1**: you run Airflow with the Astro Runtime Operator on your own Kubernetes cluster. The operator owns the Airflow custom resource and everything it creates.
+- **Stage 1**: you run Airflow with the Astro Runtime Operator on your own Kubernetes cluster. Each Airflow deployment is defined by one Airflow custom resource, and the operator turns that resource into the running Kubernetes workloads.
 - **Stage 2**: you register that cluster as an APC data plane and adopt its Airflow deployments. APC takes ownership of a defined set of settings, and the operator continues to own the rest.
 
-When you adopt a deployment, APC applies the configuration it owns to the running Airflow custom resource, so expect the deployment's pods to restart once shortly after you adopt. Read [What adoption changes](#what-adoption-changes) before you begin so you know what APC takes over.
+How the pieces fit together, since the terms are easy to mix up:
+
+- The operator's **Custom Resource Definition (CRD)** is installed once on the cluster. It only defines the shape of an Airflow resource; it doesn't hold any deployment's configuration.
+- Each of your Airflow deployments is one **Airflow custom resource**, created against that definition. It holds that deployment's configuration.
+- The **operator** watches those custom resources and builds the real Kubernetes objects from them: schedulers, workers, services, and the rest.
+
+Adoption doesn't rearrange any of that. APC writes directly to an individual custom resource, and the operator reconciles the change exactly as it would if you had edited the resource yourself. Nothing is written to the CRD, and APC never replaces the operator.
+
+```mermaid
+flowchart TD
+  crd["Airflow CRD: installed once per cluster, defines the shape only"]
+  apc["APC control plane"]
+  you["Your pipeline, Helm chart, or kubectl"]
+  cr["Airflow custom resource: one per Deployment, holds its configuration"]
+  operator["Astro Runtime Operator"]
+  workloads["Scheduler, workers, API server or webserver, triggerer"]
+
+  crd -.->|defines the shape of| cr
+  apc -->|writes only the fields it owns| cr
+  you -->|writes everything else| cr
+  cr -->|watched by| operator
+  operator -->|creates and reconciles| workloads
+```
+
+Both writers act on the same custom resource, so which fields each one owns is the thing to understand before you adopt: see [What adoption changes](#what-adoption-changes). If you stop touching the resource yourself after adoption, the second arrow simply goes away; if you keep managing it, read [Keep your own pipeline and APC from fighting](#keep-your-own-pipeline-and-apc-from-fighting).
+
+When you adopt a deployment, APC applies the configuration it owns to that deployment's Airflow custom resource, so expect the deployment's pods to restart once shortly after you adopt. Read [What adoption changes](#what-adoption-changes) before you begin so you know what APC takes over.
 
 ## What adoption changes
 
 When APC adopts an Airflow deployment, it takes ownership of a specific set of fields and leaves everything else to you and the operator. Nothing outside the "APC takes over" column is modified, now or on later updates.
 
+Ownership is split rather than transferred wholesale because your custom resource can express things APC has no equivalent for: more than one worker queue, KEDA autoscaling, per-component pod templates, sidecars. APC claims only the fields it needs in order to manage the deployment, which is what image it runs, which executor, the web component it puts authentication in front of, and the labels its monitoring and log shipping key on. If it claimed the rest, every update would have to overwrite your configuration with APC's narrower model. Leaving those fields alone is what makes adoption non-destructive. The trade-off is that they stay managed where they are today, through the operator, rather than through APC.
+
 | APC takes over | Stays yours |
 | --- | --- |
-| Airflow image and Astro Runtime version | Scheduler, worker, and triggerer sizing and replica counts |
+| Airflow image and Astro Runtime version. APC owns these fields from adoption, but seeds them from your existing custom resource, so the deployment keeps running the image it already had until you deploy new code. | Sizing and replica counts for every component except the webserver or API server, including the scheduler, workers, triggerer, and DAG processor |
 | Executor selection (see the warning under [Worker queues and autoscaling](#worker-queues-and-autoscaling)) | Your `airflow.cfg` and any config you set through it |
-| The webserver (Airflow 2) or API server (Airflow 3) component **in full**, including its ingress, authentication, resources, and replicas | Pod template overrides on every other component, including custom volumes, sidecars, tolerations, and node selectors |
+| The webserver (Airflow 2) or API server (Airflow 3) component **in full**, including its ingress, authentication, resources, and replicas | Pod template overrides on every other component, including custom volumes, sidecars, tolerations, and node selectors. APC adds its own labels to those pod templates for attribution and log routing, but changes nothing else in them |
 | Environment variables you set through APC | Environment variables referencing your own Secrets or ConfigMaps |
 | Metrics exporter labels and the network policy rules needed to scrape them | Your metadata database, its connection Secrets, and its credentials |
 | Nothing in the worker section | Every worker queue and its KEDA autoscaling, including queues beyond the first |
@@ -74,15 +102,22 @@ This is why [importing the deployment's users](#step-4-import-the-deployments-us
 Two more things before you start:
 
 - **Component resources are brought into your platform's supported range.** If a component in your custom resource requests less than your platform's minimum or more than its maximum, APC adjusts it to the nearest supported value at adoption. See [Configure component size limits](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/configure-component-size-limits).
-- **Adoption is not a migration of history.** Existing task logs stay wherever they are today. If you switch task logging to APC, only logs written after the switch appear in APC.
+- **Adoption is not a migration of history.** Existing task logs stay wherever they are today. If you switch task logging to APC, only logs written after the switch are readable from the Airflow UI; older ones remain in your own store but the Airflow UI no longer resolves them.
+
+<Warning>
+**Don't adopt a deployment whose image is pinned by digest.** If your custom resource references its image by digest (`myrepo/airflow@sha256:...`) rather than by tag, adoption rewrites it to a tag reference built from the deployment's Astro Runtime version (`myrepo/airflow:<runtime-version>`). The digest pin is lost, and if that tag doesn't exist in your repository the deployment stops being able to pull its image.
+
+This happens on the first apply, before you deploy anything. Re-tag the image and update the custom resource to reference it by tag before adopting, or hold off on adopting that deployment. Astronomer is addressing this.
+</Warning>
 
 ## Prerequisites
 
 - Airflow deployments running under the Astro Runtime Operator.
 - The operator's cluster registered as an APC data plane. See [Install a data plane cluster](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/install-data-plane) and [Register a data plane cluster](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/register-data-plane).
 - Operator support and adoption enabled on your platform. See [Enable adoption on your platform](#enable-adoption-on-your-platform).
-- **Workspace Admin** in the workspace you're adopting into, to adopt a deployment. **System Admin** to browse adoption candidates, because listing candidates scans an entire cluster. See [Manage permissions](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/manage-permissions) and the [role and permission reference](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/role-permission-reference).
+- Permission to adopt. Two permissions are involved: `workspace.deployments.adopt` to adopt a deployment into a workspace, and `system.deployments.adopt` to browse adoption candidates, which is separate because listing candidates scans a whole cluster. Among the built-in roles, **Workspace Admin** carries the first and **System Admin** the second. **Cluster Admin does not carry either**, because it governs cluster configuration rather than deployments. If your platform uses custom roles, both permissions can be granted to one. See [Manage permissions](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/manage-permissions) and the [role and permission reference](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/role-permission-reference).
 - No existing APC deployment using the custom resource's name, or the namespace it runs in. Adoption is rejected if either is already taken.
+- The custom resource references its image **by tag, not by digest**. See the warning under [What adoption changes](#what-adoption-changes).
 - To use the Astro CLI instead of the UI, APC **2.1.0 or later** and a matching Astro CLI. See [Install the Astro CLI](https://www.astronomer.io/docs/astro/cli/install-cli).
 
 <Note>
@@ -160,19 +195,41 @@ Adoption asks you to make two choices, logging and images. Both are set when you
 
 Choose whether APC becomes the destination for your task logs.
 
-- **Route logs to APC.** APC configures Airflow to write task logs to APC's configured log store and reads them back in the Airflow UI and in APC. This **overrides your deployment's existing remote logging**. If your tasks currently log to Amazon S3, Google Cloud Storage, or your own Elasticsearch, they log to APC instead after adoption, and your existing logs stay where they are.
-- **Keep your own logging.** APC changes nothing about logging. Your tasks keep logging where they do today, and task logs do not appear in APC's log views.
+- **Route logs to APC.** APC configures Airflow to write task logs to APC's configured log store, and the Airflow UI reads them back from there. This **overrides your deployment's existing remote logging**. If your tasks currently log to Amazon S3, Google Cloud Storage, or your own Elasticsearch, they log to APC instead from then on. Logs written before the switch stay where they are, and the Airflow UI no longer resolves them.
+- **Keep your own logging.** APC changes nothing about logging. Your tasks keep logging where they do prior to adoption, not in APC's configured log store.
 
 See [Configure logging](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/logs-configuration), [Export task logs](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/export-task-logs), and [Send logs to S3](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/logs-to-s3).
 
 ### Image registry
 
-Choose whether APC's registry becomes the source of your deployment's image.
+Two separate settings decide where your deployment's image comes from. Don't confuse them.
 
-- **Use APC's registry.** Required if you want to deploy code with `astro deploy` or a CI/CD pipeline after adoption. APC provisions the pull credential the deployment's pods need. Sync your images to APC's registry before you adopt.
-- **Keep your own registry.** APC leaves your image and pull Secret untouched. You keep updating the image the way you do today, outside APC.
+**Your platform's registry** is configured once, for every deployment on the platform, adopted or not. By default that's APC's built-in registry. To use your own instead, configure a custom image registry before you adopt: see [Use a custom image registry](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/custom-image-registry) and [Registry backend](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/registry-backend). APC synchronizes that registry's credential into every deployment namespace, including adopted ones.
 
-See [Use a custom image registry](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/custom-image-registry) and [Registry backend](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/registry-backend).
+**The adoption choice** is narrower. It decides whether APC manages *this deployment's* image reference and pull credential:
+
+- **Use APC's registry** (`--use-apc-registry`). APC takes over the deployment's image and provisions the pull credential its pods need. Push your existing image to your platform's registry before you adopt, so the deployment has something to pull. Afterwards, deploy code with `astro deploy` or a CI/CD pipeline as normal. See [Deploy code overview](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/deploy-code-overview) and [CI/CD](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/ci-cd).
+- **Keep your own** (the default). APC leaves the deployment's image and pull Secret exactly as they are and never manages them. Use this when something outside APC builds and pushes the image.
+
+#### Deploying code when you keep your own image
+
+You can still ship new code through APC. Build and push the image to your own registry, then point the deployment at it:
+
+```bash
+astro deploy --remote --image-name=<your-registry>/<repository>:<tag> --runtime-version=<runtime-version> <deployment-id>
+```
+
+APC updates the deployment to run that image without touching your registry or your pull credential. `--runtime-version` is required with `--remote`. Your platform administrator must have set `deployments.enableUpdateDeploymentImageEndpoint: true`, which the [custom image registry](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/custom-image-registry) setup already covers.
+
+<Warning>
+**Don't run plain `astro deploy` on a deployment that kept its own image.** Without `--remote`, `astro deploy` builds your project and pushes it to APC's built-in registry, then repoints the deployment at it. Because you opted out, APC never provisioned a credential for that registry, so the deployment's pods fail to pull the new image and stop starting. The command reports success, and the previous working image reference is gone.
+
+Use `--remote --image-name` as shown above, or adopt with `--use-apc-registry` if you want APC to own the deployment's image.
+</Warning>
+
+<Note>
+The adoption choice is fixed at adoption. To change it later, release the deployment and adopt it again with the setting you want.
+</Note>
 
 <Note>
 If APC detects that your custom resource already points at this cluster's own log store or image registry, for example because the deployment was previously managed by a different control plane, it takes ownership of that wiring regardless of what you choose here. Leaving it half-owned would break the deployment.
@@ -371,14 +428,14 @@ Imported users are created as pending invitations with no password. They set the
 2. Your Airflow is still serving, and its DAGs and history are intact.
 3. Sign in to the Airflow UI as an imported user and confirm the expected role.
 4. Change something in APC and confirm it reaches the running Airflow. Adding an environment variable is the simplest check. See [Environment variables](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/environment-variables).
-5. If you routed logs to APC, run a task and confirm its logs appear in the Airflow UI and in APC.
+5. If you routed logs to APC, run a task and confirm its logs appear in the Airflow UI.
 6. Confirm the deployment's metrics are populating. See [Deployment metrics](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/deployment-metrics).
 
 ## Manage an adopted deployment
 
 An adopted deployment behaves like any other APC deployment for everything APC owns:
 
-- **Deploy code**: [Deploy code overview](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/deploy-code-overview), [Deploy DAGs](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/deploy-dags), [CI/CD](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/ci-cd). Requires that you use APC's registry.
+- **Deploy code**: [Deploy code overview](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/deploy-code-overview), [Deploy DAGs](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/deploy-dags), [CI/CD](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/ci-cd). If the deployment kept its own image, deploy with `--remote --image-name` instead: see [Deploying code when you keep your own image](#deploying-code-when-you-keep-your-own-image).
 - **Environment variables**: [Environment variables](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/environment-variables). Variables that were set per-component in your custom resource are shown read-only, because APC applies variables to all components uniformly. Variables that reference your own Secrets or ConfigMaps are not shown and keep working untouched.
 - **Executor**: [Kubernetes executor](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/kubernetes-executor). APC applies the change and the operator adjusts the supporting components.
 - **Resources**: [Scale deployment resources](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/scale-deployment-resources), [Configure component size limits](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/configure-component-size-limits). Webserver or API server sizing is set through APC; scheduler, worker, and triggerer sizing stays with your custom resource. Worker settings in particular are not applicable, see [Worker queues and autoscaling](#worker-queues-and-autoscaling).
@@ -418,6 +475,32 @@ See [Data plane failover](https://www.astronomer.io/docs/astro-private-cloud/v-2
 After adoption, two things write to the same Airflow custom resource: APC, and whatever you use to manage the resource yourself, such as a GitOps controller, a Helm chart, or `kubectl` in a CI job. If you still patch or upgrade the deployment through your own pipeline, read this section. If you manage the deployment only through APC after adoption, you can skip it.
 
 APC writes only the fields listed in [What adoption changes](#what-adoption-changes). It writes them with Kubernetes server-side apply, under the field manager `houston`, and it force-claims them, so a deployment update always wins over whatever wrote those fields last.
+
+What happens when you upgrade the resource yourself depends entirely on how your tooling writes it:
+
+```mermaid
+flowchart TD
+  start["You upgrade the custom resource from your own pipeline"]
+  scoped["Server-side apply, with APC-owned fields removed from your manifest"]
+  full["Client-side apply, kubectl replace, or delete and recreate"]
+  forced["Server-side apply with force-conflicts, APC-owned fields still in your manifest"]
+  ok["APC fields untouched. Nothing to do"]
+  wiped["APC fields wiped from the resource. Airflow keeps running without them"]
+  flap["Your tooling and APC revert each other on every reconcile"]
+  resync["Trigger a deployment update to restore the APC fields"]
+  strip["Remove the APC-owned fields from your manifest, then trigger a deployment update"]
+
+  start --> scoped
+  start --> full
+  start --> forced
+  scoped --> ok
+  full --> wiped
+  wiped --> resync
+  forced --> flap
+  flap --> strip
+```
+
+The middle path is the one to watch: your upgrade succeeds, Airflow keeps running, and nothing reports a problem, but the deployment is now missing the configuration APC applied, including the authentication on its web component. Only a deployment update puts it back.
 
 ### Use server-side apply, and remove APC-owned fields from your manifest
 
@@ -554,8 +637,11 @@ Releasing is not the same as deleting. Deleting a deployment removes the underly
 - **A platform upgrade can restart adopted deployments.** Cordon any adopted deployment you don't want APC to act on during an upgrade, and uncordon it afterwards.
 - **Worker settings in APC don't reach an adopted deployment.** Worker count, worker resources, and autoscaling are accepted and stored but never applied, and changing the executor discards the deployment's worker queues and KEDA configuration. See [Worker queues and autoscaling](#worker-queues-and-autoscaling).
 - **Data plane failover does not cover adopted deployments,** and nothing blocks you from initiating failover on a data plane that has them. Plan their recovery separately. See [Data plane failover](#data-plane-failover).
+- **Images pinned by digest are converted to tag references at adoption.** The digest pin is not preserved, and the substituted tag may not exist. Re-tag before adopting. See the warning under [What adoption changes](#what-adoption-changes).
+- **Plain `astro deploy` breaks a deployment that kept its own image.** It pushes to APC's built-in registry and repoints the deployment there, but no pull credential was provisioned for it. Use `--remote --image-name`. See [Deploying code when you keep your own image](#deploying-code-when-you-keep-your-own-image).
+- **The registry and logging choices are fixed at adoption.** Changing either means releasing the deployment and adopting it again.
 - **Users can't be discovered on Airflow 3 with the default auth manager.** Add those users manually from the deployment's **Users** tab.
-- **Existing task logs are not migrated** when you route logging to APC. Only logs written after adoption appear in APC.
+- **Existing task logs are not migrated** when you route logging to APC. Only logs written after the switch are readable from the Airflow UI; older logs stay in your own store and the Airflow UI no longer resolves them.
 - **Deleted APC Secrets can't be restored by a deployment update.** If `<cr-name>-registry`, `<cr-name>-elasticsearch`, or `<cr-name>-env` is deleted or pruned, reissuing it requires Astronomer support. See [Never let your pipeline prune APC's Secrets](#never-let-your-pipeline-prune-apcs-secrets).
 - **Clusters using the authentication sidecar don't get an ingress for adopted deployments**, so the Airflow UI link is not reachable from APC on those clusters.
 
