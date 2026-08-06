@@ -1,0 +1,33 @@
+# Scenario overlay for git-sync-private-ca (PINF-1109): enable git-sync dag deployment
+# and make the platform + git-sync relay trust the Forgejo private CA.
+#
+# The forgejo-ca Secret is created before install by bin/setup-forgejo-ca.py (this
+# scenario's pre_helm_script), so it exists when commander mounts global.privateCaCerts
+# at startup.
+---
+astronomer:
+  houston:
+    config:
+      deployments:
+        # Cluster-scoped CA Secret names the git-sync relay must trust. houston emits these
+        # as global.privateCaCerts onto each Airflow Deployment's airflow-chart; commander
+        # syncs the (commander-sync-annotated) forgejo-ca Secret into the deployment namespace
+        # where the relay mounts it.
+        privateCaCertSecretNames:
+          - forgejo-ca
+        deployMechanisms:
+          # deployMechanisms is a map, so this merges with the base's dagOnlyDeployment.
+          configureDagDeployment:
+            enabled: true
+          gitSyncDagDeployment:
+            enabled: true
+
+global:
+  # Helm REPLACES list values across -f files. configs/local-dev.yaml (applied earlier in
+  # the values order) sets [private-ca], so it MUST be re-listed here or the platform stops
+  # trusting its own astronomer-tls CA. forgejo-ca is added so commander trusts it too, which
+  # is what config-time credential validation against the private-CA Forgejo host needs
+  # (TC-CA-12) -- a distinct trust layer from the relay's deployment-namespace mount.
+  privateCaCerts:
+    - private-ca
+    - forgejo-ca

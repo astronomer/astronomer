@@ -54,6 +54,7 @@ class TestAstronomerCommander:
                 "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
                 "externalSecretManager": {"isClusterSecretStore": True},
+                "openshift": {"enabled": False},
             }
         else:
             assert metadata_file_contents == {
@@ -62,6 +63,7 @@ class TestAstronomerCommander:
                 "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
                 "externalSecretManager": {"isClusterSecretStore": True},
+                "openshift": {"enabled": False},
             }
 
     @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
@@ -93,6 +95,7 @@ class TestAstronomerCommander:
             "customLogging": {"enabled": enabled},
             "registry": {"version": "99.88.77"},
             "externalSecretManager": {"isClusterSecretStore": True},
+            "openshift": {"enabled": False},
         }
 
     def test_commander_metadata_extra_annotations(self, kube_version):

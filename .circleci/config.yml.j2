@@ -333,6 +333,7 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}
+{% if scenarios %}
       # Manual gate for the custom functional scenarios on non-release branches.
       # On master and release-X.Y they run automatically (below) and gate the
       # release; on every other branch they wait on this approval before running.
@@ -343,7 +344,7 @@ workflows:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
-{% for scenario in scenarios %}
+{% endif %}{% for scenario in scenarios %}
       # master + release-X.Y: run automatically, and gate release-to-internal.
       - scenario-{{ scenario.name }}:
           requires:
@@ -357,7 +358,11 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval.
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
+      # can require it on release branches.
       - scenario-{{ scenario.name }}:
           name: scenario-{{ scenario.name }}-approved
           requires:
