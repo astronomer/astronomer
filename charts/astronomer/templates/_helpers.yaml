@@ -241,9 +241,9 @@ gcp_cloud_logging:
 
 {{ define "commander.jwksServiceAccountName" -}}
 {{- if and .Values.commander.serviceAccount.create .Values.global.rbac.enabled -}}
-{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.serviceAccount.name }}
+{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.jwksHook.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.commander.serviceAccount.name }}
+    {{ default "default" .Values.commander.jwksHook.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
