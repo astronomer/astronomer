@@ -105,31 +105,6 @@ rules:
     - "delete"
     - "deletecollection"
   - apiGroups:
-    - "generators.external-secrets.io"
-    resources:
-    - "acraccesstokens"
-    - "cloudsmithaccesstokens"
-    {{- if and $.Values.processClusterGenerator $useClusterRoles }}
-    - "clustergenerators"
-    {{- end }}
-    - "ecrauthorizationtokens"
-    - "fakes"
-    - "gcraccesstokens"
-    - "githubaccesstokens"
-    - "quayaccesstokens"
-    - "passwords"
-    - "sshkeys"
-    - "stssessiontokens"
-    - "uuids"
-    - "vaultdynamicsecrets"
-    - "webhooks"
-    - "grafanas"
-    - "mfas"
-    verbs:
-    - "get"
-    - "list"
-    - "watch"
-  - apiGroups:
     - ""
     resources:
     - "serviceaccounts"
@@ -192,7 +167,7 @@ rules:
     {{- end }}
   {{- end }}
   {{- end }}
-  {{- if .Values.rbac.serviceAccountTokenCreate }}
+  {{- if $.Values.rbac.serviceAccountTokenCreate }}
   - apiGroups:
     - ""
     resources:
