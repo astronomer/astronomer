@@ -79,9 +79,11 @@ When you adopt a deployment, APC applies the configuration it owns to that deplo
 
 ## What adoption changes
 
-When APC adopts an Airflow deployment, it takes ownership of a specific set of fields and leaves everything else to you and the operator. Nothing outside the "APC takes over" column is modified, now or on later updates.
+When APC adopts an Airflow deployment, it takes ownership of a specific set of fields and leaves everything else to you and the operator. In this release, nothing outside the "APC takes over" column is modified, either at adoption or on any later update.
 
 Ownership is split rather than transferred wholesale because your custom resource can express things APC has no equivalent for: more than one worker queue, KEDA autoscaling, per-component pod templates, sidecars. APC claims only the fields it needs in order to manage the deployment, which is what image it runs, which executor, the web component it puts authentication in front of, and the labels its monitoring and log shipping key on. If it claimed the rest, every update would have to overwrite your configuration with APC's narrower model. Leaving those fields alone is what makes adoption non-destructive. The trade-off is that they stay managed where they are today, through the operator, rather than through APC.
+
+This is where the line falls today, not a permanent boundary. APC does not yet cover everything the Astro Runtime Operator can express, and the set of settings it manages is expected to widen in future releases. Check this page against the version of APC you are running rather than assuming the split is fixed.
 
 | APC takes over | Stays yours |
 | --- | --- |
@@ -208,7 +210,7 @@ Two separate settings decide where your deployment's image comes from. Don't con
 
 **The adoption choice** is narrower. It decides whether APC manages *this deployment's* image reference and pull credential:
 
-- **Use APC's registry** (`--use-apc-registry`). APC takes over the deployment's image and provisions the pull credential its pods need. Push your existing image to your platform's registry before you adopt, so the deployment has something to pull. Afterwards, deploy code with `astro deploy` or a CI/CD pipeline as normal. See [Deploy code overview](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/deploy-code-overview) and [CI/CD](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/ci-cd).
+- **Use APC's registry** (`--use-apc-registry`). APC takes over the deployment's image and provisions the pull credential its pods need. You don't have to move the image yourself first: adoption leaves the deployment on the image it already runs, and the switch to your platform's registry happens on your first `astro deploy`, which moves the image and the pull credential together. Deploy code with `astro deploy` or a CI/CD pipeline as normal. See [Deploy code overview](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/deploy-code-overview) and [CI/CD](https://www.astronomer.io/docs/astro-private-cloud/v-2-x/ci-cd).
 - **Keep your own** (the default). APC leaves the deployment's image and pull Secret exactly as they are and never manages them. Use this when something outside APC builds and pushes the image.
 
 #### Deploying code when you keep your own image

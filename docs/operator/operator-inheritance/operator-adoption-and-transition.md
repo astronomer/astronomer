@@ -1,9 +1,10 @@
 # Adopting the Astro Runtime Operator itself, and transitioning off a customer-run operator
 
-> **Status: internal draft. Design input and hazard analysis, not a runbook.**
-> Nothing here has been validated on a cluster. The candidate procedure below is a sketch with a
-> known-destructive failure mode; do not hand any part of it to a customer until the open questions
-> are closed and the steps have been exercised end to end. See "What would make this publishable".
+> **Status: internal draft. Not yet exercised on a cluster.**
+> The sequence below is grounded in the two charts rather than in a tested migration, so treat steps
+> 3 to 5 as unvalidated. **Step 1 is different**: it is a metadata-only change that closes a
+> data-loss hazard, it is safe to apply today, and it should be applied whether or not a customer
+> ever moves to a managed operator. See "What would make this publishable".
 
 ## Why this doc exists
 
@@ -81,92 +82,147 @@ difference that makes the transition dangerous.
 
 ## Hazards, worst first
 
-### 1. Uninstalling the standalone operator can destroy every Airflow deployment on the cluster
+### 1. Uninstalling the standalone operator destroys every Airflow deployment on the cluster
 
 The standalone chart renders its CRDs as ordinary templates with `crd.create: true` by default and
-**no `helm.sh/resource-policy: keep`**. So `helm uninstall` of that release deletes the CRDs. Deleting
-a CRD cascades to every custom resource of that kind, which means every Airflow deployment on the
-cluster, adopted or not.
+**no `helm.sh/resource-policy: keep`** (confirmed absent from the entire history of that chart, not
+just current `main`). So `helm uninstall` of that release deletes the CRDs, and deleting a CRD
+cascades to every custom resource of that kind: every Airflow deployment on the cluster, adopted or
+not.
 
-This matters more than any other item here because "uninstall the standalone operator, then enable
-the bundled one" is the obvious first instinct for this transition, and it is catastrophic.
+This ranks first because "uninstall the standalone operator, then enable the bundled one" is the
+obvious first instinct for this transition.
 
-The umbrella subchart does carry `resource-policy: keep`, so the hazard is asymmetric: uninstalling
-APC's operator is survivable, uninstalling the customer's is not.
+**The fix is one command, and it is worth applying immediately, transition or not:**
 
-### 2. Helm will refuse to adopt the existing CRDs
+```bash
+kubectl get crd -o name | grep airflow.apache.org \
+  | xargs kubectl annotate --overwrite helm.sh/resource-policy=keep
+```
 
-The subchart ships the CRDs as templates, so enabling it on a cluster where those CRDs already
-exist under another Helm release fails the upgrade with an ownership error along the lines of
-`invalid ownership metadata; annotation validation error: key "meta.helm.sh/release-name" must equal ...`.
+Helm honours that annotation both when an upgrade would remove the resource and when an uninstall
+would delete it, so after this no Helm command against the operator release can take the CRDs with
+it. It changes metadata only and has no effect on anything running.
 
-The transition therefore has to deal with CRD ownership explicitly. Candidate approaches, none
-tested:
+The umbrella subchart already carries the annotation on all 13 of its CRDs, so the exposure is
+asymmetric: uninstalling APC's operator is survivable, uninstalling an un-annotated standalone one
+is not.
 
-- Re-label and re-annotate the existing CRDs to the astronomer release
-  (`meta.helm.sh/release-name`, `meta.helm.sh/release-namespace`, `app.kubernetes.io/managed-by`)
-  before enabling the subchart.
-- Set `crd.create: false` on the standalone release first so it stops claiming them, then decide
-  whether that leaves them unowned in a way Helm will accept.
-- Leave the CRDs owned by the customer's release permanently and never enable the subchart's CRD
-  templates, which needs a subchart option that does not exist today.
+### 2. Stopping the old manager on its own blocks every write to an Airflow resource
 
-### 3. Two operators reconciling the same resources
+Both charts set `failurePolicy: Fail` on the mutating webhook. So if the manager is scaled to zero
+while its webhook configuration still exists, the API server has no backend to admit CR writes and
+rejects all of them, including APC's applies and any `kubectl edit`.
 
-Because the namespaced resources do not collide, a partially completed transition leaves two
-managers running. Both watch the same custom resources, and both register a mutating webhook, so
-every write to an Airflow resource is defaulted twice by two possibly different operator versions,
-and two controllers reconcile the same sub-resources. This is not a supported configuration and the
-failure modes have not been characterised.
+This inverts the intuitive order. "Stop the old operator first, then switch" is precisely the wrong
+move. The manager and its webhook configuration have to go together, which is what `helm uninstall`
+does for the standalone release.
 
-The standalone chart has an `airflowNamespaces` value that scopes the operator to a namespace list,
-which is the obvious lever for a phased, namespace-by-namespace migration rather than a cutover.
-Whether the umbrella subchart can be scoped the same way needs checking.
+Already-running Airflow is unaffected either way: the webhook gates writes to the custom resource,
+not the pods that already exist.
 
-### 4. Version skew
+### 3. Helm will not adopt the existing CRDs by default
 
-The customer's operator version and the version the umbrella chart pins are independent today. A
-transition changes the running operator version at the same time as changing who owns it, which
-couples an ownership change to a functional upgrade. Those are worth separating.
+The subchart ships the CRDs as templates, so enabling it where those CRDs already belong to another
+Helm release fails with `invalid ownership metadata; annotation validation error: key
+"meta.helm.sh/release-name" must equal ...`.
 
-## A candidate transition, unvalidated
+There are two ways through, because **the umbrella subchart also exposes `crd.create`**
+(`charts/airflow-operator/values.yaml:8`, default `true`):
 
-Recording the shape of it so the open questions have something to attach to. **Do not follow this.**
+- **Leave the CRDs unmanaged.** Install with `airflow-operator.crd.create: false`. Nothing contends
+  for ownership. The cost is that CRD schema changes become a manual `kubectl apply` whenever an
+  operator upgrade needs them.
+- **Transfer ownership to the platform release.** Set `meta.helm.sh/release-name`,
+  `meta.helm.sh/release-namespace` and `app.kubernetes.io/managed-by=Helm` on the CRDs, and leave
+  `crd.create: true`. CRD updates then flow with the platform chart and inherit its
+  `resource-policy: keep`. Cleaner long-term, one more step to get wrong.
 
-1. Inventory: operator version, whether `crd.create` was true, which namespaces it watches, and
-   every Airflow custom resource on the cluster.
-2. Stop the standalone manager without uninstalling its release, for example by scaling
-   `airflow-operator-controller-manager` to zero, so nothing reconciles during the switch.
-3. Resolve CRD ownership by one of the approaches in hazard 2.
-4. Enable `airflow-operator.enabled: true` and upgrade the platform release.
-5. Remove the standalone release in a way that cannot delete CRDs, which means confirming
-   `crd.create: false` or removing the CRDs from that release's manifest first.
-6. Verify: one manager running, one mutating and one validating webhook configuration serving,
-   every Airflow resource still present, and a reconcile actually happening.
+### 4. This is a cutover, not a phased migration
 
-Every one of those steps needs the "what if it fails halfway" answer written down before this is
-usable, because the halfway states include "no operator is reconciling anything".
+The standalone chart has `airflowNamespaces` for scoping the operator to a namespace list. The
+umbrella subchart does **not**, and the webhooks carry no `namespaceSelector`. So there is no
+supported way to migrate namespace by namespace: every Airflow resource on the cluster changes
+operator at the same moment.
+
+### 5. Two operators reconciling the same resources
+
+Because the namespaced resources are named differently, both operators can be installed at once
+without Helm objecting. Both then watch the same custom resources and both register a mutating
+webhook, so every write is defaulted twice by two possibly different versions while two controllers
+reconcile the same sub-resources. Not a supported configuration, and the failure modes are
+uncharacterised. The sequence below avoids the state entirely.
+
+### 6. Version skew
+
+The customer's operator version and the version the umbrella chart pins are independent today, so a
+transition changes the running operator version at the same time as changing who owns it. Worth
+separating: land the ownership change on the version they already run where possible.
+
+### 7. CRD CA injection is name and namespace sensitive
+
+The umbrella subchart's 13 CRDs annotate
+`cert-manager.io/inject-ca-from: <namespace>/airflow-operator-serving-cert`, but the Certificate the
+chart creates is `<release>-airflow-operator-serving-cert`. The names do not match, so cert-manager
+cannot populate the CA on the CRD conversion webhook. Its own webhook configurations get this right
+and use the release-prefixed name.
+
+Latent today, because the CRD serves a single version so conversion never fires. It becomes real the
+day a second API version is introduced. The same shape of problem applies to standalone-created CRDs
+kept across a namespace move, since the annotation names a namespace that may no longer hold a
+Certificate.
+
+## The transition sequence
+
+Grounded in both charts; steps 3 to 5 have not been exercised on a cluster.
+
+1. **Protect the CRDs.** Apply the annotation from hazard 1. Safe today, independent of everything
+   else.
+2. **Cordon the adopted deployments.** Stops APC writing to any custom resource during the window,
+   which is what makes the gap in step 3 harmless.
+3. **`helm uninstall` the standalone operator release.** Manager and webhook configuration go
+   together, so there is never an orphaned webhook rejecting writes. The CRDs survive because of
+   step 1, and running Airflow keeps running because its workloads are ordinary Deployments and
+   StatefulSets that Kubernetes maintains without the operator.
+4. **Choose CRD ownership** using one of the two options in hazard 3.
+5. **Set `airflow-operator.enabled: true`** and upgrade the platform release.
+6. **Verify:** exactly one manager, one mutating and one validating webhook configuration, every
+   Airflow custom resource still present, and a reconcile actually happening.
+7. **Uncordon**, then trigger a deployment update so APC re-applies and the new operator reconciles.
+
+Uninstalling before installing, rather than overlapping the two operators, is deliberate. An overlap
+means two mutating webhooks defaulting the same resource and two controllers reconciling the same
+sub-resources at possibly different versions. A brief no-operator gap has nothing fighting in it,
+and its only real cost, CR writes landing undefaulted, is what the cordon in step 2 removes.
 
 ## Open questions
 
+Answered while writing this, recorded so they are not re-investigated:
+
+- ~~Can the subchart install without its CRD templates?~~ Yes, `airflow-operator.crd.create: false`.
+- ~~Can the umbrella subchart be namespace-scoped like `airflowNamespaces`?~~ No. Cutover only.
+- ~~Should the standalone chart gain `helm.sh/resource-policy: keep`?~~ Yes, and it is filed as its
+  own bug: it endangers any customer who uninstalls their operator release, with or without this
+  work.
+
+Still open:
+
 - Is this a product commitment or a support-assisted migration? The answer decides whether the
-  output is a customer doc or an internal runbook.
-- Can the subchart install without its CRD templates, so CRD ownership can stay where it is?
-- Can the umbrella subchart be namespace-scoped like the standalone chart's `airflowNamespaces`,
-  which would allow phased migration instead of cutover?
-- Should the standalone chart gain `helm.sh/resource-policy: keep` on its CRDs regardless of this
-  work? It looks like a latent footgun independent of any transition, and it is a one-line change.
-- What is the rollback? Once CRD ownership moves to the astronomer release, moving it back is the
-  same problem in reverse.
+  output is a customer doc or an internal runbook, and it is the only question blocking that call.
+- What is the rollback once CRD ownership has moved to the platform release? The same problem in
+  reverse, and it needs an answer before this is customer-facing.
+- How long is the no-operator gap in practice, and is a cordon sufficient protection for it, or does
+  the platform need to refuse applies while no operator is present?
 - Does any of this need to happen before adopted deployments can be covered by data-plane failover,
   or are those independent?
 
 ## What would make this publishable
 
 1. A decision on the first open question, since it sets the audience.
-2. The CRD ownership approach chosen and exercised on a cluster with real Airflow deployments,
-   including a deliberate mid-transition failure.
-3. `helm.sh/resource-policy: keep` on the standalone chart's CRDs, or a documented reason not to.
+2. Steps 3 to 5 exercised on a cluster with real Airflow deployments, including a deliberate
+   mid-transition failure to establish the recovery path.
+3. `helm.sh/resource-policy: keep` shipped on the standalone chart's CRDs, so step 1 becomes the
+   default rather than a prerequisite the customer has to be told about.
 4. A verification procedure that proves exactly one operator is live and reconciling.
 5. Automation coverage, most naturally alongside the adoption tests in
    `software-upgrade-automation/tests/cpdp/operator_adoption/`.
