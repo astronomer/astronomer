@@ -240,10 +240,23 @@ class TestExternalSecretsRBAC:
         assert len(docs) == 0
 
     def test_serviceaccount_token_create_rule_present_by_default(self, kube_version):
-        """Test that the serviceaccounts/token create rule is present by default."""
+        """Test that the serviceaccounts/token create rule disabled by default."""
         docs = render_chart(
             kube_version=kube_version,
             values=ESO_VALUES,
+            show_only=[ROLE_TEMPLATE],
+        )
+        cluster_role = next(d for d in docs if d["kind"] == "ClusterRole")
+        assert all(rule.get("resources") != ["serviceaccounts/token"] for rule in cluster_role["rules"])
+
+    def test_serviceaccount_token_create_rule_absent_when_enabled(self, kube_version):
+        """Test that the serviceaccounts/token create rule enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                **ESO_VALUES,
+                "external-secrets": {"enabled": True, "rbac": {"serviceAccountTokenCreate": True}},
+            },
             show_only=[ROLE_TEMPLATE],
         )
         cluster_role = next(d for d in docs if d["kind"] == "ClusterRole")
@@ -255,19 +268,6 @@ class TestExternalSecretsRBAC:
             and rule.get("verbs") == ["create"]
         ]
         assert len(token_rules) == 1
-
-    def test_serviceaccount_token_create_rule_absent_when_disabled(self, kube_version):
-        """Test that the serviceaccounts/token create rule is omitted when disabled."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                **ESO_VALUES,
-                "external-secrets": {"enabled": True, "rbac": {"serviceAccountTokenCreate": False}},
-            },
-            show_only=[ROLE_TEMPLATE],
-        )
-        cluster_role = next(d for d in docs if d["kind"] == "ClusterRole")
-        assert all(rule.get("resources") != ["serviceaccounts/token"] for rule in cluster_role["rules"])
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
