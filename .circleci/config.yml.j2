@@ -112,7 +112,7 @@ jobs:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
-    parallelism: 4
+    parallelism: 5
     steps:
       - checkout
       - run:
@@ -242,10 +242,10 @@ jobs:
           path: test-results
 {%- endfor %}
 {% for scenario in scenarios %}
-  scenario-{{ scenario }}:
+  scenario-{{ scenario.name }}:
     machine:
       image: {{ machine_image_version }}
-      resource_class: xlarge
+      resource_class: {{ scenario.resource_class }}
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -264,16 +264,35 @@ jobs:
           name: Create venv
           command: uv venv -p {{ python_image_version }} --seed && uv sync
       - run:
-          name: "Scenario: {{ scenario }}"
+          name: "Scenario: {{ scenario.name }}"
           command: |
-            uv run bin/run-scenario.py {{ scenario }}
+            uv run bin/run-scenario.py {{ scenario.name }}
+{%- if scenario.kyverno_scan %}
+            # bin/install-kyverno-scan.py installs a real Kyverno admission controller into
+            # the test cluster, right after run-scenario.py has finished installing the
+            # Astronomer Helm chart above but before pytest below creates this scenario's own
+            # test resources. Because it's a live admission controller rather than a one-time
+            # scan, it evaluates every resource from this point forward as it's created,
+            # including short-lived ones (e.g. a Job that finishes and gets cleaned up) that a
+            # scan run only once at the end of this job would never see. It cannot see
+            # anything the chart install above already created before it started -- there's
+            # no earlier point to run it from without changing reset-local-dev/
+            # bin/helm-install.py, which every scenario shares, not just this one.
+            uv run bin/install-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/{{ scenario.topology }}"
+{%- endif %}
             # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
             # subprocess tree, not this shell -- needed here too for any fixture (e.g.
             # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
             export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
-            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario }}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario.name }}"
       - store_test_results:
           path: test-results
+{%- if scenario.kyverno_scan %}
+      - run:
+          name: "Kyverno report: {{ scenario.name }}"
+          command: |
+            uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/{{ scenario.topology }}"
+{%- endif %}
 {%- endfor %}
 
   check-commander-airflow-version:
@@ -286,20 +305,6 @@ jobs:
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
-
-  create_linear_milestone:
-    docker:
-      - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - run:
-          name: Create Linear milestone
-          command: |
-            set -eo pipefail
-            export PATH="$HOME/.local/bin:$PATH"
-            uv run python bin/create-linear-beta-milestone.py --workspace /tmp/workspace
 
 workflows:
   version: 2.1
@@ -327,10 +332,51 @@ workflows:
           requires:
             - build-artifact
             - approve-test-all-platforms
-{% endif %}{% endfor %}{% for scenario in scenarios %}
-      - scenario-{{ scenario }}:
+{% endif %}{% endfor %}
+{% if scenarios %}
+      # Manual gate for the custom functional scenarios on non-release branches.
+      # On master and release-X.Y they run automatically (below) and gate the
+      # release; on every other branch they wait on this approval before running.
+      - approve-scenarios:
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+{% endif %}{% for scenario in scenarios %}
+      # master + release-X.Y: run automatically, and gate release-to-internal.
+      - scenario-{{ scenario.name }}:
           requires:
             - build-artifact
+{%- if scenario.kyverno_scan %}
+          context:
+            - github-repo
+{%- endif %}
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
+      # can require it on release branches.
+      - scenario-{{ scenario.name }}:
+          name: scenario-{{ scenario.name }}-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+{%- if scenario.kyverno_scan %}
+          context:
+            - github-repo
+{%- endif %}
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
 {%- endfor %}
       - approve-stage-cluster-test:
           type: approval
@@ -385,6 +431,9 @@ workflows:
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
+{%- for scenario in scenarios %}
+            - scenario-{{ scenario.name }}
+{%- endfor %}
       - approve-public-release:
           type: approval
           requires:
@@ -414,15 +463,6 @@ workflows:
             - software-cosign-keys
           requires:
             - release-to-public
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
-      - create_linear_milestone:
-          context:
-            - linear
-          requires:
-            - release-to-internal
           filters:
             branches:
               only:

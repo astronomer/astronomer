@@ -1,0 +1,22 @@
+# Every policy installed by bin/install-kyverno-scan.py restricts its `match` rules to
+# namespaces carrying the label `platform: astronomer` (matched via namespaceSelector,
+# not a pod label). Nothing in this chart sets that namespace label by default, so
+# without this file, none of those policies would ever match any pod -- the scan would
+# report zero violations not because everything is compliant, but because it never
+# evaluated anything.
+#
+# This value only reaches namespaces that Commander creates for individual Airflow
+# Deployments (the "global.namespaceLabels" value flows into a ConfigMap that
+# Commander reads, and Commander stamps those labels onto every namespace it creates).
+# It does NOT reach the platform namespace that the Astronomer chart itself is
+# installed into -- that namespace already exists (via `helm install
+# --create-namespace`) before Commander or this value comes into play at all. A test
+# scenario that also wants pods in the platform namespace covered by these policies
+# has to label that namespace separately, via its own test_profile.yaml's
+# `namespace_labels` key (see tests/functional/scenarios/auth-sidecar/test_profile.yaml
+# for an example, and configs/enable-psa.yaml for the same two-namespace-tier split
+# applied to a different label).
+---
+global:
+  namespaceLabels:
+    platform: astronomer

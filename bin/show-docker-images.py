@@ -71,7 +71,7 @@ def job_template_spec_parser(doc, args):
 def get_images_from_values_yaml():
     """Load values.yaml and all the images defined in it."""
     GIT_ROOT = next(
-        iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+        iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]),
         None,
     )
     with open(GIT_ROOT / "values.yaml") as f:
@@ -133,7 +133,7 @@ def get_images_from_houston_configmap(doc, args):
 def helm_template(args, label, files):
     """Run helm template for the given value files and return the parsed yaml."""
     GIT_ROOT = next(
-        iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+        iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]),
         None,
     )
 

@@ -346,6 +346,84 @@ class TestHoustonConfigHelmValues:
         assert helm["cookieName"] == "astronomer_custom_auth"
 
 
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestHoustonConfigDataPlaneFailover:
+    """global.dataPlaneFailover.enabled surfaced into houston's own config, independent of
+    controlPlaneHA (PINF-1XXX).
+
+    global.dataPlaneFailover.enabled already exists as the chart-wide DR failover master switch
+    (values.yaml:149-154; gates navigator/dp-link on the control plane and pilot/flightDeck/
+    commander's StartFlight RPC on the data plane). This adds the one piece it was missing:
+    surfacing it into houston's own production.yaml as helm.dataPlaneFailover.enabled, which
+    houston's appConfig resolver exposes as AppConfig.dataPlaneFailoverEnabled — the UI ORs that
+    with controlPlaneHAEnabled to gate the Regions admin surface, since failover is region-local
+    rather than CP-HA-local.
+    """
+
+    @staticmethod
+    def production_yaml_prod_helm(docs):
+        assert len(docs) == 1
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+        return prod["helm"]
+
+    def test_absent_when_disabled(self, kube_version):
+        """Default (disabled) configmap omits the key entirely, matching helm.controlPlaneHA's
+        own default-off behavior — no behavior change for existing installs."""
+        helm = self.production_yaml_prod_helm(
+            render_chart(
+                kube_version=kube_version,
+                show_only=[CONFIGMAP_FILE],
+                values={"global": {"plane": {"mode": "control"}, "baseDomain": "example.com"}},
+            )
+        )
+        assert "dataPlaneFailover" not in helm
+
+    def test_emitted_when_enabled(self, kube_version):
+        """Enabling the flag emits helm.dataPlaneFailover.enabled: true, independent of HA."""
+        helm = self.production_yaml_prod_helm(
+            render_chart(
+                kube_version=kube_version,
+                show_only=[CONFIGMAP_FILE],
+                values={
+                    "global": {
+                        "plane": {"mode": "control"},
+                        "baseDomain": "example.com",
+                        "dataPlaneFailover": {"enabled": True},
+                    }
+                },
+            )
+        )
+        assert helm["dataPlaneFailover"]["enabled"] is True
+
+    def test_enabled_without_control_plane_ha(self, kube_version):
+        """Dataplane failover does not require (or imply) controlPlaneHA."""
+        helm = self.production_yaml_prod_helm(
+            render_chart(
+                kube_version=kube_version,
+                show_only=[CONFIGMAP_FILE],
+                values={
+                    "global": {
+                        "plane": {"mode": "control"},
+                        "baseDomain": "example.com",
+                        "controlPlaneHA": {"enabled": False},
+                        "dataPlaneFailover": {"enabled": True},
+                    }
+                },
+            )
+        )
+        assert "controlPlaneHA" not in helm
+        assert helm["dataPlaneFailover"]["enabled"] is True
+
+    def test_both_ha_and_failover_enabled_together(self, kube_version):
+        """The two flags are independent and can both be on at once."""
+        values = _ha_values()
+        values["global"]["baseDomain"] = "example.com"
+        values["global"]["dataPlaneFailover"] = {"enabled": True}
+        helm = self.production_yaml_prod_helm(render_chart(kube_version=kube_version, show_only=[CONFIGMAP_FILE], values=values))
+        assert helm["controlPlaneHA"]["enabled"] is True
+        assert helm["dataPlaneFailover"]["enabled"] is True
+
+
 DP_HEADERS_FILE = "charts/nginx/templates/dataplane/nginx-dp-headers-configmap.yaml"
 CP_HEADERS_FILE = "charts/nginx/templates/controlplane/nginx-cp-headers-configmap.yaml"
 

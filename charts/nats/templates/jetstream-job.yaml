@@ -119,6 +119,7 @@ spec:
       containers:
       - name: jetstream-template-fixer
         image: {{ template "dbBootstrapper.image" . }}
+        imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
         securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
         {{- if .Values.nats.readinessProbe }}
         readinessProbe: {{- tpl (toYaml .Values.nats.readinessProbe) . | nindent 10 }}

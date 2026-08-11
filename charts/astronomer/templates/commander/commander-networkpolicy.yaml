@@ -52,7 +52,7 @@ spec:
     - podSelector:
         matchLabels:
           component: pilot
-          release: astronomer
+          release: {{ .Release.Name }}
           tier: astronomer
     {{- end }}
     {{- end }}

@@ -79,12 +79,15 @@ data:
       cookieName: {{ . }}
       {{- end }}
       {{- end }}
+      {{- if .Values.global.dataPlaneFailover.enabled }}
+      dataPlaneFailover:
+        enabled: {{ .Values.global.dataPlaneFailover.enabled }}
+      {{- end }}
       {{- if .Values.registry.auth.secretName }}
       registryAuthSecret: {{ .Values.registry.auth.secretName }}
       {{- end }}
       releaseName: {{ .Release.Name }}
       releaseNamespace: {{ .Release.Namespace }}
-      releaseVersion: {{ .Chart.Version }}
       {{- if .Values.global.tlsSecret }}
       tlsSecretName: {{ .Values.global.tlsSecret }}
       {{- end }}
@@ -689,6 +692,9 @@ data:
       adoption:
         # Adoption requires operator mode to be enabled; only both together enable it.
         enabled: {{ and .Values.global.airflowOperator.enabled .Values.global.airflowOperator.adoption.enabled }}
+
+    customRBAC:
+      enabled: {{ .Values.global.customRBAC.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |

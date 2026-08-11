@@ -139,7 +139,7 @@ Name of the controller-manager ServiceAccount. Defaults to
 
 {{ define "operator.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/airflow-operator-dev:{{ .Values.images.manager.tag }}
+{{ .Values.global.privateRegistry.repository }}/airflow-operator-controller:{{ .Values.images.manager.tag }}
 {{- else -}}
 {{ .Values.images.manager.repository }}:{{ .Values.images.manager.tag }}
 {{- end }}

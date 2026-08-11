@@ -1,13 +1,43 @@
-# PINF-1031: catches the class of regression in PINF-1033 (a PSS-Restricted
-# hardening change broke global.authSidecar, not caught until QA). Neither
-# toggle alone would catch it -- the failure was in the interaction between
-# them, so this scenario combines both rather than testing them separately.
+description: >-
+  PINF-1031: catches PINF-1033-class regressions where a PSS-Restricted hardening change breaks
+  global.authSidecar (the failure is in the interaction of the two, so this combines them rather than
+  testing them apart). Creates a real Airflow Deployment under PSS-Restricted + authSidecar and
+  asserts the exact set of pods carrying an auth-proxy sidecar across all three consumers: the
+  platform tier (grafana/alertmanager/prometheus), dag-server, and git-sync-relay (in webhook fetch
+  mode). Also carries the audit-only Kyverno scan.
 topology: unified
+# Two concurrent-ish Airflow Deployment lifecycles (dag_deploy then switched to
+# git_sync) plus the platform chart pushed the default xlarge CI machine's CPU past
+# FailedScheduling territory even after scenario-airflow-reduce-resources.yaml -- see
+# PINF-1080.
+resource_class: 2xlarge
+# Runs this scenario's tests against a real, live Kyverno admission controller
+# (installed audit-only, so it only reports policy violations and never blocks
+# anything). See bin/install-kyverno-scan.py and bin/report-kyverno-scan.py for the
+# mechanism. This scenario was chosen to carry that scan, rather than adding a new
+# dedicated scenario, because it already creates a real Airflow Deployment covering
+# both dagDeployment types, which gives the scan more real pods to evaluate than most
+# other scenarios would.
+kyverno_scan: true
+# enable-psa.yaml (global.namespaceLabels) applies PSS-Restricted to the Airflow Deployment
+# namespaces Commander creates; namespace_labels below applies it to the static platform namespace.
+# Both are needed so a PSS-Restricted break in authSidecar is caught regardless of which tier it
+# breaks in.
 values:
   - configs/enable-auth-sidecar.yaml
   - configs/psa-restricted.yaml
+  - configs/enable-psa.yaml
+  - configs/scenario-airflow-reduce-resources.yaml
+  - configs/enable-kyverno-scan.yaml
 namespace_labels:
   pod-security.kubernetes.io/enforce: restricted
   pod-security.kubernetes.io/enforce-version: latest
   pod-security.kubernetes.io/audit: restricted
   pod-security.kubernetes.io/warn: restricted
+  # Labels this scenario's platform namespace (where the Astronomer chart itself is
+  # installed) so the Kyverno policies from bin/install-kyverno-scan.py, which match
+  # on this label, actually evaluate pods here too. This only covers the platform
+  # namespace; configs/enable-kyverno-scan.yaml's global.namespaceLabels value
+  # applies the same label to the separate namespaces Commander creates for each
+  # Airflow Deployment -- both are needed to cover every pod this scenario creates.
+  platform: astronomer

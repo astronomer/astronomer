@@ -109,7 +109,7 @@ spec:
               value: "true"
             # Infrastructure
             - name: PILOT_COMMANDER_ADDR
-              value: {{ printf "%s-commander-headless.%s.svc.cluster.local.:%d" .Release.Name .Release.Namespace (int .Values.ports.commanderGRPC) | quote }}
+              value: {{ printf "%s-commander-headless.%s.svc.cluster.local.:%d" .Release.Name .Release.Namespace (int (include "getCommanderGRPCport" .)) | quote }}
             {{- if or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
@@ -153,6 +153,7 @@ spec:
               value: {{ .Values.pilot.cbCooloffSeconds | quote }}
             - name: PILOT_CB_PROBE_MAX_INFLIGHT
               value: {{ .Values.pilot.cbProbeMaxInflight | quote }}
+            {{- include "common_shared_env" . | nindent 12  -}}
             {{- if .Values.pilot.env }}
             {{- tpl (toYaml .Values.pilot.env) $ | nindent 12 }}
             {{- end }}
