@@ -28,7 +28,7 @@ images:
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 2.1.9
+    tag: 2.1.10
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -38,7 +38,6 @@ images:
     repository: quay.io/astronomer/ap-vector
     tag: "0.56.0-3"
     pullPolicy: IfNotPresent
-
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -112,8 +111,7 @@ houston:
   regenerateCaEachUpgrade: false
   # Houston datastore
   backendSecretName: ~
-  backendConnection:
-    {}
+  backendConnection: {}
     # user: ~
     # pass: ~
     # host: ~
@@ -122,8 +120,7 @@ houston:
 
   # Airflow backends
   airflowBackendSecretName: ~
-  airflowBackendConnection:
-    {}
+  airflowBackendConnection: {}
     # user: ~
     # pass: ~
     # host: ~
@@ -407,7 +404,7 @@ houston:
   # This runs as a CronJob
   cleanupTaskUsageData:
     # Run at 23:40 every night
-    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
+    schedule: "40 23 * * *" # https://crontab.guru/#40_23_*_*_*
 
     # Cleanup deployments older than this many days
     olderThan: 90
@@ -428,7 +425,7 @@ houston:
     enabled: true
 
     # Run at 23:11 every night
-    schedule: "11 23 * * *"  # https://crontab.guru/#11_23_*_*_*
+    schedule: "11 23 * * *" # https://crontab.guru/#11_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
@@ -444,7 +441,7 @@ houston:
     enabled: true
 
     # Run at 23:49 every night
-    schedule: "49 23 * * *"  # https://crontab.guru/#49_23_*_*_*
+    schedule: "49 23 * * *" # https://crontab.guru/#49_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
@@ -717,14 +714,12 @@ flightDeck:
     livenessProbe: {}
     readinessProbe: {}
 
-
 commander:
   replicas: 2
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources:
-    {}
+  resources: {}
     # limits:
     #  cpu: 100m
     #  memory: 128Mi
