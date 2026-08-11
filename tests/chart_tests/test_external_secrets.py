@@ -235,7 +235,7 @@ class TestExternalSecretsRBAC:
                 **ESO_VALUES,
                 "external-secrets": {"enabled": True, "rbac": {"create": False}},
             },
-            show_only=[ROLE_TEMPLATE, ROLEBINDING_TEMPLATE],
+            show_only=[ROLE_TEMPLATE, ROLEBINDING_TEMPLATE,SERVICEACCOUNT_TEMPLATE],
         )
         assert len(docs) == 0
 
