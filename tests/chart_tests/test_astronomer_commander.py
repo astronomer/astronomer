@@ -611,8 +611,6 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["external-secrets.io", "generators.external-secrets.io"],
             "resources": [
-                "clusterexternalsecrets",
-                "clusterpushsecrets",
                 "clustersecretstores",
                 "externalsecrets",
                 "pushsecrets",
@@ -637,8 +635,6 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["external-secrets.io", "generators.external-secrets.io"],
             "resources": [
-                "clusterexternalsecrets",
-                "clusterpushsecrets",
                 "clustersecretstores",
                 "externalsecrets",
                 "pushsecrets",
