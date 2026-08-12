@@ -171,6 +171,9 @@ global:
   metricsReporting:
     taskUsageMetrics:
       enabled: false
+    grafana:
+      # Whether the UI shows a link to Grafana. Disable if Grafana is not in use.
+      enabled: true
 
   # Deployment lifecycle features
   deploymentLifecycle:

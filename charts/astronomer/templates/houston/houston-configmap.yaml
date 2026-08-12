@@ -126,7 +126,7 @@ data:
           enabled: {{ .Values.global.metricsReporting.taskUsageMetrics.enabled }}
           reportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
         grafana:
-          enabled: true
+          enabled: {{ .Values.global.metricsReporting.grafana.enabled }}
 
       deploymentLifecycle:
         deployRollback:

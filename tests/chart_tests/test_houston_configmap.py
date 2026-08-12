@@ -1084,12 +1084,22 @@ def test_houston_configmap_features_elasticsearch_custom_logging():
 
 
 def test_houston_configmap_features_grafana_defaults():
-    """Validate that metricsReporting.grafana.enabled is always true."""
+    """Validate that metricsReporting.grafana.enabled defaults to true."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
+
+
+def test_houston_configmap_features_grafana_disabled():
+    """Validate that metricsReporting.grafana.enabled can be disabled via values."""
+    docs = render_chart(
+        values={"global": {"metricsReporting": {"grafana": {"enabled": False}}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is False
 
 
 def test_houston_configmap_no_flat_enabled_flags_under_deployments():
