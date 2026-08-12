@@ -1093,9 +1093,9 @@ def test_houston_configmap_features_grafana_defaults():
 
 
 def test_houston_configmap_features_grafana_disabled():
-    """Validate that metricsReporting.grafana.enabled can be disabled via values."""
+    """Validate that metricsReporting.grafana.enabled follows global.grafana.enabled."""
     docs = render_chart(
-        values={"global": {"metricsReporting": {"grafana": {"enabled": False}}}},
+        values={"global": {"grafana": {"enabled": False}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
