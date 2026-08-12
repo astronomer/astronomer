@@ -324,20 +324,22 @@ proxy:
 """
 
 
-def _write_registry_config(config_path: Path, content: str) -> None:
-    """Write a registry proxy config file, clearing a directory left behind at that path.
+def _write_bind_mount_file(path: Path, content: str) -> None:
+    """Write a file that is bind-mounted into a container, clearing a directory left at that path.
 
-    Docker creates the source of a bind mount as an empty directory when the source does not
-    exist. If the config file goes missing while the container is registered (a wiped
-    `~/.local/share`, a Docker/OrbStack restart that re-runs `--restart always` containers), the
-    daemon recreates the path as a directory. That wedges the setup permanently: the container
-    can no longer mount a directory onto a file and exits 127, and writing the config here fails
-    with `[Errno 21] Is a directory`. Removing the stub restores a plain file.
+    Use this for every host file mounted with `-v <host file>:<container file>`, never a plain
+    `write_text`. Docker creates the source of a bind mount as an empty directory when the source
+    does not exist. If the file goes missing while its container still exists (a wiped
+    `~/.local/share`, a Docker/OrbStack restart that re-runs `--restart` containers), the daemon
+    recreates the path as a directory. That wedges the setup permanently: the container can no
+    longer mount a directory onto a file and exits 127, and writing the file here fails with
+    `[Errno 21] Is a directory`. Removing the stub restores a plain file.
     """
-    if config_path.is_dir() and not config_path.is_symlink():
-        _print(f"  Removing stale directory left at {config_path} (expected a file)")
-        shutil.rmtree(config_path)
-    config_path.write_text(content)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_dir() and not path.is_symlink():
+        _print(f"  Removing stale directory left at {path} (expected a file)")
+        shutil.rmtree(path)
+    path.write_text(content)
 
 
 def _container_state(name: str) -> str | None:
@@ -412,7 +414,7 @@ def _ensure_local_registries(docker_network: str) -> None:
     REGISTRY_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     for spec in _REGISTRY_SPECS:
         config_path = REGISTRY_CONFIG_DIR / f"{spec.name}.yml"
-        _write_registry_config(config_path, _registry_docker_config(spec))
+        _write_bind_mount_file(config_path, _registry_docker_config(spec))
         _ensure_registry(spec, docker_network)
 
 
