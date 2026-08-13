@@ -40,6 +40,7 @@ from pathlib import Path
 
 from k3d_setup_shared import (
     CERT_MANAGER_VERSION,
+    DEFAULT_DOCKER_NETWORK,
     HELM_CHART,
     HELM_REPO_NAME,
     HELM_REPO_URL,
@@ -71,6 +72,7 @@ from k3d_setup_shared import (
     _run,
     _validate_prereqs,
     _wait_for_cert_manager,
+    _write_bind_mount_file,
 )
 
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]))
@@ -799,8 +801,7 @@ def _write_dnsmasq_conf(base_domain: str) -> None:
         f"local=/{base_domain}/",
         f"address=/{base_domain}/127.0.0.1",
     ]
-    HELPER_DIR.mkdir(parents=True, exist_ok=True)
-    DNSMASQ_CONF_PATH.write_text("\n".join(lines) + "\n")
+    _write_bind_mount_file(DNSMASQ_CONF_PATH, "\n".join(lines) + "\n")
 
 
 def _ensure_dnsmasq_container() -> None:
@@ -871,8 +872,7 @@ stream {{
     }}
 }}
 """
-    HELPER_DIR.mkdir(parents=True, exist_ok=True)
-    PROXY_CONF_PATH.write_text(conf)
+    _write_bind_mount_file(PROXY_CONF_PATH, conf)
 
 
 def _ensure_proxy_container() -> None:
@@ -924,8 +924,14 @@ def _ensure_resolver_file(base_domain: str) -> bool:
     return True
 
 
-def _verify_local_networking(base_domain: str, hosts: list[str]) -> None:
-    """Best-effort end-to-end check: name -> 127.0.0.1 (dnsmasq) -> :443 proxy -> right cluster."""
+def _verify_local_networking(settings: Settings) -> None:
+    """Best-effort end-to-end check: name -> 127.0.0.1 (dnsmasq) -> :443 proxy -> right cluster.
+
+    Only meaningful once the platform is installed and serving, so it runs at the end of a run
+    rather than as part of `_setup_local_networking`. Never raises — it prints per-host markers.
+    """
+    base_domain = settings.base_domain
+    hosts = [f"houston.{base_domain}"] + [f"commander.{dp.domain_prefix}.{base_domain}" for dp in settings.data_planes]
     for host in hosts:
         dns = _run(["dscacheutil", "-q", "host", "-a", "name", host], check=False)
         ips = [ln.split(":", 1)[1].strip() for ln in (dns.stdout or "").splitlines() if ln.startswith("ip_address")]
@@ -948,6 +954,9 @@ def _setup_local_networking(settings: Settings) -> str:
     `DataPlane.https_port`, fixed at cluster-creation time — no container-IP lookup needed).
     Raises on failure; the caller falls back to `_print_manual_etc_hosts_fallback` so a dev is
     never fully blocked.
+
+    Needs nothing but `settings`, so it runs before the Helm installs — the DP install depends on
+    the proxy (see the call site).
     """
     base = settings.base_domain
     primary_cp = settings.control_planes[0]
@@ -963,9 +972,6 @@ def _setup_local_networking(settings: Settings) -> str:
     _print(f"  dnsmasq `{DNSMASQ_CONTAINER_NAME}`: *.{base} -> 127.0.0.1 (127.0.0.1:{LOCAL_DNS_PORT})")
     dp_summary = ", ".join(f"{prefix}->:{port}" for prefix, port in dp_entries) or "<none>"
     _print(f"  proxy `{PROXY_CONTAINER_NAME}` on :443 by SNI: {dp_summary} (DP), else -> :{primary_cp.https_port} (CP)")
-
-    check_hosts = [f"houston.{base}"] + [f"commander.{prefix}.{base}" for prefix, _ in dp_entries]
-    _verify_local_networking(base, check_hosts)
     return f"resolver {'created' if changed else 'present'}; proxy CP:{primary_cp.https_port} DP:{[p for _, p in dp_entries]}"
 
 
@@ -1059,7 +1065,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-domain", default="localtest.me")
     parser.add_argument("--namespace", default="astronomer")
     parser.add_argument("--release-name", default="astronomer")
-    parser.add_argument("--docker-network", default="astronomer-net")
+    parser.add_argument("--docker-network", default=DEFAULT_DOCKER_NETWORK)
     parser.add_argument(
         "--cp-count",
         type=int,
@@ -1439,7 +1445,7 @@ def main() -> int:  # noqa: C901
         if not args.no_local_registry:
             h = ms.start("Ensure local pull-through registry proxy containers are running")
             _ensure_local_registries(settings.docker_network)
-            registry_config = _get_registry_config_path(settings.docker_network)
+            registry_config = _get_registry_config_path()
             ms.done(h, detail=f"config={registry_config}")
         else:
             ms.skip("Local registry proxy setup", reason="--no-local-registry set")
@@ -1547,6 +1553,25 @@ def main() -> int:  # noqa: C901
                 h = ms.start(f"Deploy MySQL in DP cluster ({dp.cluster_name})")
                 _deploy_mysql(context=dp_ctx, namespace=settings.namespace, release_name=settings.release_name)
                 ms.done(h, detail=f"svc={_mysql_service_name(settings.release_name)}")
+
+        # Step: local DNS + SNI proxy (replaces manual host /etc/hosts editing).
+        # Runs BEFORE the Helm installs, not just for the developer's browser: from the second run
+        # onward the DP's `coredns-custom` override (written at the end of the previous run)
+        # resolves houston.<baseDomain> to the astronomer-net gateway, so the DP's pre-upgrade
+        # JWKS hook reaches the CP only through this proxy. With the proxy down, that hook fails
+        # (`BackoffLimitExceeded`) and takes the whole DP install with it.
+        if not args.skip_local_networking:
+            h = ms.start(f"Configure local DNS + SNI proxy for `{settings.base_domain}` (no /etc/hosts editing)")
+            try:
+                detail = _setup_local_networking(settings)
+                ms.done(h, detail=detail)
+            except Exception as e:  # noqa: BLE001
+                ms.fail(h, error=str(e))
+                _print(f"\n⚠️  Local networking setup failed ({e}); falling back to manual /etc/hosts instructions.")
+                _print_manual_etc_hosts_fallback(settings)
+        else:
+            ms.skip("Configure local DNS + SNI proxy", reason="--skip-local-networking set")
+            _print_manual_etc_hosts_fallback(settings)
 
         # Step: values files
         h = ms.start("Write CP/DP Helm values files")
@@ -1732,26 +1757,12 @@ def main() -> int:  # noqa: C901
                 reason="--skip-node-registry-check set",
             )
 
-        # Step: local DNS + SNI proxy (replaces manual host /etc/hosts editing)
-        if not args.skip_local_networking:
-            h = ms.start(f"Configure local DNS + SNI proxy for `{settings.base_domain}` (no /etc/hosts editing)")
-            try:
-                detail = _setup_local_networking(settings)
-                ms.done(h, detail=detail)
-            except Exception as e:  # noqa: BLE001
-                ms.fail(h, error=str(e))
-                _print(f"\n⚠️  Local networking setup failed ({e}); falling back to manual /etc/hosts instructions.")
-                _print_manual_etc_hosts_fallback(settings)
-        else:
-            ms.skip("Configure local DNS + SNI proxy", reason="--skip-local-networking set")
-            _print_manual_etc_hosts_fallback(settings)
-
         # Step: drift-free cross-cluster POD DNS. The reconcile pins NodeHosts to node/LB IPs that
         # drift on OrbStack restart AND that k3s rewrites away; this instead writes a coredns-custom
         # template resolving the peer plane's hostnames to the fixed astronomer-net gateway (-> the
-        # SNI proxy set up above), so CP<->DP pod traffic (e.g. Houston->Commander) keeps working
-        # across restarts without re-running the reconcile. Requires the SNI proxy, so it is gated on
-        # (and runs after) local networking.
+        # SNI proxy set up before the Helm installs), so CP<->DP pod traffic (e.g. Houston->Commander)
+        # keeps working across restarts without re-running the reconcile. Requires the SNI proxy, so
+        # it is gated on local networking.
         if not args.skip_local_networking:
             h = ms.start("Drift-free cross-cluster pod DNS (coredns-custom -> gateway -> SNI proxy)")
             _ensure_cross_cluster_coredns_routing(settings)
@@ -1761,6 +1772,15 @@ def main() -> int:  # noqa: C901
                 "Drift-free cross-cluster pod DNS (coredns-custom -> gateway -> SNI proxy)",
                 reason="--skip-local-networking set",
             )
+
+        # Step: end-to-end check of the local DNS + proxy path. Deferred to here because it only
+        # means anything once the platform is installed and serving.
+        if not args.skip_local_networking:
+            h = ms.start("Verify local DNS + SNI proxy end-to-end (name -> dnsmasq -> :443 proxy -> cluster)")
+            _verify_local_networking(settings)
+            ms.done(h)
+        else:
+            ms.skip("Verify local DNS + SNI proxy end-to-end", reason="--skip-local-networking set")
 
         ms.print_summary_table()
         _print("\n✅ Completed.")
