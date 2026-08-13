@@ -76,7 +76,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "external-secrets.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
+{{- $rbacEnabled := and .Values.rbac.create .Values.serviceAccount.create  }}
+{{- if $rbacEnabled }}
 {{- default (include "external-secrets.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
