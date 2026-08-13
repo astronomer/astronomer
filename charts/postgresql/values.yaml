@@ -273,8 +273,21 @@ master:
   podLabels: {}
   podAnnotations: {}
   ## Additional PostgreSQL Master Volume mounts
+  ## PINF-347: with securityContext.readOnlyRootFilesystem enabled, the
+  ## container's root filesystem can't absorb writes to /var/run/postgresql
+  ## (the unix socket dir) or /opt/bitnami/postgresql/conf (rendered config
+  ## templates), which fails upgrades with the data dir already initialized.
+  ## Reuses the "pg-conf" emptyDir already declared unconditionally in
+  ## templates/statefulset.yaml, split by subPath so the two dirs don't share
+  ## content.
   ##
-  extraVolumeMounts: []
+  extraVolumeMounts:
+    - name: pg-conf
+      mountPath: /var/run/postgresql
+      subPath: run
+    - name: pg-conf
+      mountPath: /opt/bitnami/postgresql/conf
+      subPath: conf
   ## Additional PostgreSQL Master Volumes
   ##
   extraVolumes: []
@@ -293,11 +306,22 @@ slave:
   podLabels: {}
   podAnnotations: {}
   ## Additional PostgreSQL Slave Volume mounts
+  ## PINF-347: see the equivalent comment under `master` above. Unlike the
+  ## master StatefulSet, templates/statefulset-slaves.yaml doesn't declare a
+  ## "pg-conf" volume on its own, so it's declared below via extraVolumes.
   ##
-  extraVolumeMounts: []
+  extraVolumeMounts:
+    - name: pg-conf
+      mountPath: /var/run/postgresql
+      subPath: run
+    - name: pg-conf
+      mountPath: /opt/bitnami/postgresql/conf
+      subPath: conf
   ## Additional PostgreSQL Slave Volumes
   ##
-  extraVolumes: []
+  extraVolumes:
+    - name: pg-conf
+      emptyDir: {}
 
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/

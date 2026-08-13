@@ -33,8 +33,36 @@ class TestPostgresql:
         assert containers["release-name-postgresql"]["volumeMounts"] == [
             {"mountPath": "/tmp", "name": "tmp"},
             {"name": "data", "mountPath": "/bitnami/postgresql", "subPath": None},
+            {"mountPath": "/var/run/postgresql", "name": "pg-conf", "subPath": "run"},
+            {"mountPath": "/opt/bitnami/postgresql/conf", "name": "pg-conf", "subPath": "conf"},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in sts["spec"]
+
+    def test_postgresql_readonly_rootfs_volume_mounts(self, kube_version):
+        """PINF-347: readOnlyRootFilesystem needs writable mounts for the postgres
+        socket dir and rendered config templates, or upgrades with an existing data
+        dir fail with 'chmod: /var/run/postgresql: Read-only file system' followed by
+        a missing postgresql.conf. Covers both the master and slave (replication)
+        StatefulSets, since only the master template declares "pg-conf" on its own."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"postgresql": {"enabled": True}},
+                "postgresql": {"replication": {"enabled": True}},
+            },
+            show_only=[
+                "charts/postgresql/templates/statefulset.yaml",
+                "charts/postgresql/templates/statefulset-slaves.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        for doc in docs:
+            container = get_containers_by_name(doc=doc, include_init_containers=True)["release-name-postgresql"]
+            assert {"mountPath": "/var/run/postgresql", "name": "pg-conf", "subPath": "run"} in container["volumeMounts"]
+            assert {"mountPath": "/opt/bitnami/postgresql/conf", "name": "pg-conf", "subPath": "conf"} in container["volumeMounts"]
+            volumes = {v["name"]: v for v in doc["spec"]["template"]["spec"]["volumes"]}
+            assert "emptyDir" in volumes["pg-conf"]
 
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):
         """Test postgresql with privateRegistry=True."""
