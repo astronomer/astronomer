@@ -3,7 +3,7 @@
 ###################################
 {{- if and .Values.global.pgbouncer.enabled .Values.podDisruptionBudget.enabled }}
 kind: PodDisruptionBudget
-apiVersion: policy/v1beta1
+apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 metadata:
   name: {{ .Release.Name }}-pgbouncer-pdb
   labels:

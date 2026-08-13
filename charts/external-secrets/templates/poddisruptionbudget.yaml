@@ -4,7 +4,7 @@
 ##########################
 {{- if .Values.global.podDisruptionBudgets.enabled }}
 {{- if and (include "external-secrets.enabled" .) .Values.podDisruptionBudget.enabled }}
-apiVersion: policy/v1
+apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ include "external-secrets.pdbName" . | quote }}
