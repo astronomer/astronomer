@@ -1,6 +1,7 @@
-###################################
+#####################################
 ## Pgbouncer Pod Disruption Budget ##
-###################################
+#####################################
+{{- if .Values.global.podDisruptionBudgets.enabled }}
 {{- if and .Values.global.pgbouncer.enabled .Values.podDisruptionBudget.enabled }}
 kind: PodDisruptionBudget
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
@@ -19,4 +20,5 @@ spec:
       component: pgbouncer
       release: {{ .Release.Name }}
 {{ toYaml .Values.podDisruptionBudget.config | indent 2 }}
+{{- end }}
 {{- end }}
