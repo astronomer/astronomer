@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -27,6 +28,8 @@ HELPER_BIN_DIR = HELPER_DIR / "bin"
 REGISTRY_CONFIG_DIR = HELPER_DIR / "registry-configs"
 K3D_REGISTRY_CONFIG_PATH = HELPER_DIR / "k3d-registry.yaml"
 REGISTRY_IMAGE = "registry:2"
+
+DEFAULT_DOCKER_NETWORK = "astronomer-net"
 
 HELM_REPO_NAME = "astronomer-internal"
 HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
@@ -256,23 +259,51 @@ def _ensure_helm_repo(repo_name: str = HELM_REPO_NAME, repo_url: str = HELM_REPO
 
 # ---------------------------------------------------------------------------
 # Local pull-through registry helpers
-# (See bin/setup-local-registry.py for the standalone management script.)
+# (bin/setup-local-registry.py is the standalone CLI over these same helpers.)
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class _RegistrySpec:
-    name: str
-    upstream: str
-    host_port: int
+    name: str  # Docker container name
+    upstream: str  # Full upstream URL the proxy caches
+    host_port: int  # Port published on the host for direct `docker pull`
+    mirror_hosts: tuple[str, ...]  # Registry hostnames containerd routes to this proxy
 
 
 _REGISTRY_SPECS: tuple[_RegistrySpec, ...] = (
-    _RegistrySpec(name="astronomer-registry-proxy-quay", upstream="https://quay.io", host_port=15001),
-    _RegistrySpec(name="astronomer-registry-proxy-docker", upstream="https://registry-1.docker.io", host_port=15002),
-    _RegistrySpec(name="astronomer-registry-proxy-elastic", upstream="https://docker.elastic.co", host_port=15003),
-    _RegistrySpec(name="astronomer-registry-proxy-k8s", upstream="https://registry.k8s.io", host_port=15004),
-    _RegistrySpec(name="astronomer-registry-proxy-astrocrpublic", upstream="https://astrocrpublic.azurecr.io", host_port=15005),
+    _RegistrySpec(
+        name="astronomer-registry-proxy-quay",
+        upstream="https://quay.io",
+        host_port=15001,
+        mirror_hosts=("quay.io",),
+    ),
+    # `docker.io` and `index.docker.io` are two aliases Docker clients use for Docker Hub; both
+    # are mirrored so pulls from either path are intercepted.
+    _RegistrySpec(
+        name="astronomer-registry-proxy-docker",
+        upstream="https://registry-1.docker.io",
+        host_port=15002,
+        mirror_hosts=("docker.io", "index.docker.io"),
+    ),
+    _RegistrySpec(
+        name="astronomer-registry-proxy-elastic",
+        upstream="https://docker.elastic.co",
+        host_port=15003,
+        mirror_hosts=("docker.elastic.co",),
+    ),
+    _RegistrySpec(
+        name="astronomer-registry-proxy-k8s",
+        upstream="https://registry.k8s.io",
+        host_port=15004,
+        mirror_hosts=("registry.k8s.io",),
+    ),
+    _RegistrySpec(
+        name="astronomer-registry-proxy-astrocrpublic",
+        upstream="https://astrocrpublic.azurecr.io",
+        host_port=15005,
+        mirror_hosts=("astrocrpublic.azurecr.io",),
+    ),
 )
 
 
@@ -291,6 +322,24 @@ http:
 proxy:
   remoteurl: {spec.upstream}
 """
+
+
+def _write_bind_mount_file(path: Path, content: str) -> None:
+    """Write a file that is bind-mounted into a container, clearing a directory left at that path.
+
+    Use this for every host file mounted with `-v <host file>:<container file>`, never a plain
+    `write_text`. Docker creates the source of a bind mount as an empty directory when the source
+    does not exist. If the file goes missing while its container still exists (a wiped
+    `~/.local/share`, a Docker/OrbStack restart that re-runs `--restart` containers), the daemon
+    recreates the path as a directory. That wedges the setup permanently: the container can no
+    longer mount a directory onto a file and exits 127, and writing the file here fails with
+    `[Errno 21] Is a directory`. Removing the stub restores a plain file.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_dir() and not path.is_symlink():
+        _print(f"  Removing stale directory left at {path} (expected a file)")
+        shutil.rmtree(path)
+    path.write_text(content)
 
 
 def _container_state(name: str) -> str | None:
@@ -325,10 +374,17 @@ def _ensure_registry(spec: _RegistrySpec, docker_network: str) -> None:
 
     if state is not None:
         _print(f"  Starting stopped registry container: {spec.name}")
-        _run(["docker", "start", spec.name])
-        if docker_network not in _container_networks(spec.name):
-            _run(["docker", "network", "connect", docker_network, spec.name])
-        return
+        _run(["docker", "start", spec.name], check=False)
+        time.sleep(1)
+        if _container_state(spec.name) == "running":
+            if docker_network not in _container_networks(spec.name):
+                _run(["docker", "network", "connect", docker_network, spec.name])
+            return
+        # The container will not come back up — its mounts or network no longer resolve. The
+        # image cache lives in a named volume, so recreating the container keeps every cached
+        # layer; only the container itself is thrown away.
+        _print(f"  {spec.name} did not stay running; recreating it")
+        _run(["docker", "rm", "-f", spec.name], check=False)
 
     _print(f"  Creating registry proxy: {spec.name} -> {spec.upstream} (host port {spec.host_port})")
     _run(
@@ -358,35 +414,27 @@ def _ensure_local_registries(docker_network: str) -> None:
     REGISTRY_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     for spec in _REGISTRY_SPECS:
         config_path = REGISTRY_CONFIG_DIR / f"{spec.name}.yml"
-        config_path.write_text(_registry_docker_config(spec))
+        _write_bind_mount_file(config_path, _registry_docker_config(spec))
         _ensure_registry(spec, docker_network)
 
 
-def _get_registry_config_path(_docker_network: str = "") -> Path:
+def _k3d_registry_config_yaml() -> str:
+    """Render the k3d `--registry-config` YAML from the registry specs.
+
+    Maps each upstream registry hostname to its local pull-through proxy, so that containerd
+    inside every k3d node pulls through the cache.
+    """
+    lines = ["mirrors:"]
+    for spec in _REGISTRY_SPECS:
+        for host in spec.mirror_hosts:
+            lines += [f'  "{host}":', "    endpoint:", f'      - "http://{spec.name}:5000"']
+    return "\n".join(lines) + "\n"
+
+
+def _get_registry_config_path() -> Path:
     """Write the k3d registry mirror config and return its path."""
-    content = """\
-mirrors:
-  "quay.io":
-    endpoint:
-      - "http://astronomer-registry-proxy-quay:5000"
-  "docker.io":
-    endpoint:
-      - "http://astronomer-registry-proxy-docker:5000"
-  "index.docker.io":
-    endpoint:
-      - "http://astronomer-registry-proxy-docker:5000"
-  "docker.elastic.co":
-    endpoint:
-      - "http://astronomer-registry-proxy-elastic:5000"
-  "registry.k8s.io":
-    endpoint:
-      - "http://astronomer-registry-proxy-k8s:5000"
-  "astrocrpublic.azurecr.io":
-    endpoint:
-      - "http://astronomer-registry-proxy-astrocrpublic:5000"
-"""
     HELPER_DIR.mkdir(parents=True, exist_ok=True)
-    K3D_REGISTRY_CONFIG_PATH.write_text(content)
+    K3D_REGISTRY_CONFIG_PATH.write_text(_k3d_registry_config_yaml())
     return K3D_REGISTRY_CONFIG_PATH
 
 

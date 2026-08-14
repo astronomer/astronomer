@@ -21,6 +21,11 @@ astronomer:
             enabled: true
           gitSyncDagDeployment:
             enabled: true
+        helm:
+          gitSyncRelay:
+            metrics:
+              enabled: true
+
 
 global:
   # Helm REPLACES list values across -f files. configs/local-dev.yaml (applied earlier in
@@ -29,5 +34,5 @@ global:
   # is what config-time credential validation against the private-CA Forgejo host needs
   # (TC-CA-12) -- a distinct trust layer from the relay's deployment-namespace mount.
   privateCaCerts:
-    - private-ca
+    - mkcert-root-ca
     - forgejo-ca
