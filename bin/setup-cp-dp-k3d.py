@@ -40,6 +40,7 @@ from pathlib import Path
 
 from k3d_setup_shared import (
     CERT_MANAGER_VERSION,
+    DEFAULT_DOCKER_NETWORK,
     HELM_CHART,
     HELM_REPO_NAME,
     HELM_REPO_URL,
@@ -71,6 +72,7 @@ from k3d_setup_shared import (
     _run,
     _validate_prereqs,
     _wait_for_cert_manager,
+    _write_bind_mount_file,
 )
 
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]))
@@ -799,8 +801,7 @@ def _write_dnsmasq_conf(base_domain: str) -> None:
         f"local=/{base_domain}/",
         f"address=/{base_domain}/127.0.0.1",
     ]
-    HELPER_DIR.mkdir(parents=True, exist_ok=True)
-    DNSMASQ_CONF_PATH.write_text("\n".join(lines) + "\n")
+    _write_bind_mount_file(DNSMASQ_CONF_PATH, "\n".join(lines) + "\n")
 
 
 def _ensure_dnsmasq_container() -> None:
@@ -871,8 +872,7 @@ stream {{
     }}
 }}
 """
-    HELPER_DIR.mkdir(parents=True, exist_ok=True)
-    PROXY_CONF_PATH.write_text(conf)
+    _write_bind_mount_file(PROXY_CONF_PATH, conf)
 
 
 def _ensure_proxy_container() -> None:
@@ -924,8 +924,14 @@ def _ensure_resolver_file(base_domain: str) -> bool:
     return True
 
 
-def _verify_local_networking(base_domain: str, hosts: list[str]) -> None:
-    """Best-effort end-to-end check: name -> 127.0.0.1 (dnsmasq) -> :443 proxy -> right cluster."""
+def _verify_local_networking(settings: Settings) -> None:
+    """Best-effort end-to-end check: name -> 127.0.0.1 (dnsmasq) -> :443 proxy -> right cluster.
+
+    Only meaningful once the platform is installed and serving, so it runs at the end of a run
+    rather than as part of `_setup_local_networking`. Never raises — it prints per-host markers.
+    """
+    base_domain = settings.base_domain
+    hosts = [f"houston.{base_domain}"] + [f"commander.{dp.domain_prefix}.{base_domain}" for dp in settings.data_planes]
     for host in hosts:
         dns = _run(["dscacheutil", "-q", "host", "-a", "name", host], check=False)
         ips = [ln.split(":", 1)[1].strip() for ln in (dns.stdout or "").splitlines() if ln.startswith("ip_address")]
@@ -948,6 +954,9 @@ def _setup_local_networking(settings: Settings) -> str:
     `DataPlane.https_port`, fixed at cluster-creation time — no container-IP lookup needed).
     Raises on failure; the caller falls back to `_print_manual_etc_hosts_fallback` so a dev is
     never fully blocked.
+
+    Needs nothing but `settings`, so it runs before the Helm installs — the DP install depends on
+    the proxy (see the call site).
     """
     base = settings.base_domain
     primary_cp = settings.control_planes[0]
@@ -963,9 +972,6 @@ def _setup_local_networking(settings: Settings) -> str:
     _print(f"  dnsmasq `{DNSMASQ_CONTAINER_NAME}`: *.{base} -> 127.0.0.1 (127.0.0.1:{LOCAL_DNS_PORT})")
     dp_summary = ", ".join(f"{prefix}->:{port}" for prefix, port in dp_entries) or "<none>"
     _print(f"  proxy `{PROXY_CONTAINER_NAME}` on :443 by SNI: {dp_summary} (DP), else -> :{primary_cp.https_port} (CP)")
-
-    check_hosts = [f"houston.{base}"] + [f"commander.{prefix}.{base}" for prefix, _ in dp_entries]
-    _verify_local_networking(base, check_hosts)
     return f"resolver {'created' if changed else 'present'}; proxy CP:{primary_cp.https_port} DP:{[p for _, p in dp_entries]}"
 
 
@@ -1054,12 +1060,91 @@ def _ensure_cross_cluster_coredns_routing(settings: Settings) -> None:
         _apply_coredns_custom(dp_ctx, "cross-cluster-cp.override", _coredns_custom_override(dp_matches, gateway))
 
 
+def _cluster_dns_clusterip(context: str) -> str:
+    """Return the ClusterIP of the cluster's DNS Service (`kube-dns`, the name k3s/CoreDNS keep
+    for compatibility) in kube-system — the same address nginx's own resolver is already
+    configured to query (from the pod's `/etc/resolv.conf` at controller startup)."""
+    proc = _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            "kube-system",
+            "get",
+            "svc",
+            "kube-dns",
+            "-o",
+            "jsonpath={.spec.clusterIP}",
+        ],
+        check=True,
+    )
+    ip = proc.stdout.strip()
+    if not ip:
+        raise RuntimeError(f"Could not read kube-dns ClusterIP in kube-system for context {context}")
+    return ip
+
+
+def _ensure_nginx_resolver_ipv6_off(*, context: str, namespace: str, configmap_name: str) -> None:
+    """
+    Work around a k3d/CoreDNS bug that 500s every ingress fronted by an `auth-url` annotation
+    (Prometheus, Grafana, ...): nginx's own resolver (used for `auth_request`'s dynamic
+    `proxy_pass` to Houston's `/v1/authorization`, since it's a literal hostname in an
+    annotation rather than a chart-known Service) queries both A and AAAA for every lookup. On
+    this single-stack-IPv4 cluster, CoreDNS's `kubernetes` plugin errors on the AAAA leg for
+    cluster-local Service names (verified via CoreDNS query logs: the A query gets a clean
+    NOERROR, the AAAA query gets no answer at all, `- - 0`) instead of a clean NODATA — and nginx
+    treats that as the whole resolution failing, even though the A record it actually needs
+    resolved fine. `ping`/`nslookup` never hit this because they only ever ask for A.
+
+    There's no Helm value in charts/nginx/ for this (the `resolver` line is generated by the
+    controller binary from the pod's own /etc/resolv.conf at startup, not templated), so we patch
+    the already-generated-and-hand-rolled ConfigMap directly with the raw `server-snippet` key —
+    the controller reads it regardless of whether this chart's templates parameterize it — to add
+    a second `resolver` line with `ipv6=off` *inside each generated `server{}` block*, which stops
+    that server from ever asking for AAAA. Deliberately NOT `http-snippet`: that lands in the same
+    `http{}` context as the controller's own auto-generated `resolver` line, and this build treats
+    a duplicate `resolver` directive in one context as a hard config-test failure — every reload
+    fails, so nginx gets stuck serving stale upstream endpoints for *everything*, not just the
+    AAAA-affected routes (confirmed the hard way: `"resolver" directive is duplicate`, 16 failed
+    reloads in under 3 minutes, 502/500s across unrelated ingresses). `server-snippet` nests one
+    level deeper than the auto-generated line, so it overrides rather than duplicates — the same
+    mechanism as the `nginx.ingress.kubernetes.io/server-snippet` per-Ingress annotation already
+    validated live before this function existed, just applied globally instead of per-Ingress.
+    Also clears any stale `http-snippet` key a prior (broken) run may have left behind, so this
+    is safe to run against a cluster that hit that bug. The controller watches its ConfigMap and
+    hot-reloads nginx.conf on change, so no pod restart is needed. `kubectl patch --type=merge` is
+    idempotent, consistent with this script's "safe to re-run" design.
+
+    Local-dev-only shim: this is a workaround in setup tooling, not a fix to the chart itself.
+    """
+    dns_ip = _cluster_dns_clusterip(context)
+    patch = json.dumps({"data": {"http-snippet": None, "server-snippet": f"resolver {dns_ip} valid=30s ipv6=off;"}})
+    _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "patch",
+            "configmap",
+            configmap_name,
+            "--type=merge",
+            "-p",
+            patch,
+        ],
+        check=True,
+    )
+    _debug(f"{context}/{configmap_name}: http-snippet set (resolver {dns_ip} valid=30s ipv6=off;)")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Automate Astronomer CP/DP local setup using k3d.")
     parser.add_argument("--base-domain", default="localtest.me")
     parser.add_argument("--namespace", default="astronomer")
     parser.add_argument("--release-name", default="astronomer")
-    parser.add_argument("--docker-network", default="astronomer-net")
+    parser.add_argument("--docker-network", default=DEFAULT_DOCKER_NETWORK)
     parser.add_argument(
         "--cp-count",
         type=int,
@@ -1194,6 +1279,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help=(
             "Skip the local dnsmasq + SNI-proxy setup (host :443, /etc/resolver) and print manual /etc/hosts instructions instead."
+        ),
+    )
+    parser.add_argument(
+        "--enable-nginx-resolver-ipv6",
+        action="store_true",
+        help=(
+            "Let each plane's nginx resolver make AAAA lookups (the default patches its "
+            "ConfigMap with `ipv6=off`, since these clusters are single-stack IPv4 and nothing "
+            "needs IPv6 resolution here). Leaving it enabled reintroduces a k3d/CoreDNS bug where "
+            "AAAA lookups for cluster-local Service names error instead of returning clean "
+            "NODATA, 500ing every ingress fronted by an `auth-url` annotation (Prometheus, "
+            "Grafana, ...)."
         ),
     )
 
@@ -1439,7 +1536,7 @@ def main() -> int:  # noqa: C901
         if not args.no_local_registry:
             h = ms.start("Ensure local pull-through registry proxy containers are running")
             _ensure_local_registries(settings.docker_network)
-            registry_config = _get_registry_config_path(settings.docker_network)
+            registry_config = _get_registry_config_path()
             ms.done(h, detail=f"config={registry_config}")
         else:
             ms.skip("Local registry proxy setup", reason="--no-local-registry set")
@@ -1548,6 +1645,25 @@ def main() -> int:  # noqa: C901
                 _deploy_mysql(context=dp_ctx, namespace=settings.namespace, release_name=settings.release_name)
                 ms.done(h, detail=f"svc={_mysql_service_name(settings.release_name)}")
 
+        # Step: local DNS + SNI proxy (replaces manual host /etc/hosts editing).
+        # Runs BEFORE the Helm installs, not just for the developer's browser: from the second run
+        # onward the DP's `coredns-custom` override (written at the end of the previous run)
+        # resolves houston.<baseDomain> to the astronomer-net gateway, so the DP's pre-upgrade
+        # JWKS hook reaches the CP only through this proxy. With the proxy down, that hook fails
+        # (`BackoffLimitExceeded`) and takes the whole DP install with it.
+        if not args.skip_local_networking:
+            h = ms.start(f"Configure local DNS + SNI proxy for `{settings.base_domain}` (no /etc/hosts editing)")
+            try:
+                detail = _setup_local_networking(settings)
+                ms.done(h, detail=detail)
+            except Exception as e:  # noqa: BLE001
+                ms.fail(h, error=str(e))
+                _print(f"\n⚠️  Local networking setup failed ({e}); falling back to manual /etc/hosts instructions.")
+                _print_manual_etc_hosts_fallback(settings)
+        else:
+            ms.skip("Configure local DNS + SNI proxy", reason="--skip-local-networking set")
+            _print_manual_etc_hosts_fallback(settings)
+
         # Step: values files
         h = ms.start("Write CP/DP Helm values files")
         values_dir: Path
@@ -1622,6 +1738,17 @@ def main() -> int:  # noqa: C901
                 )
                 ms.done(h)
 
+                if not args.enable_nginx_resolver_ipv6:
+                    h = ms.start(f"Patch CP nginx resolver (ipv6=off) on {cp.cluster_name}")
+                    _ensure_nginx_resolver_ipv6_off(
+                        context=cp_ctx,
+                        namespace=settings.namespace,
+                        configmap_name=f"{settings.release_name}-cp-nginx-ingress-controller",
+                    )
+                    ms.done(h)
+                else:
+                    ms.skip(f"Patch CP nginx resolver (ipv6=off) on {cp.cluster_name}", reason="--enable-nginx-resolver-ipv6 set")
+
             # Step: create astronomer-bootstrap secrets in DP clusters using MySQL.
             # Postgres mode needs no manual step: the `postgresql` subchart's own
             # astronomer-bootstrap-secret.yaml template creates it automatically whenever
@@ -1692,6 +1819,17 @@ def main() -> int:  # noqa: C901
                     chart_is_prerelease=settings.chart_is_prerelease,
                 )
                 ms.done(h)
+
+                if not args.enable_nginx_resolver_ipv6:
+                    h = ms.start(f"Patch DP nginx resolver (ipv6=off) on {dp.cluster_name}")
+                    _ensure_nginx_resolver_ipv6_off(
+                        context=dp_ctx,
+                        namespace=settings.namespace,
+                        configmap_name=f"{settings.release_name}-dp-nginx-ingress-controller",
+                    )
+                    ms.done(h)
+                else:
+                    ms.skip(f"Patch DP nginx resolver (ipv6=off) on {dp.cluster_name}", reason="--enable-nginx-resolver-ipv6 set")
         else:
             ms.skip("Helm dependency update + CP/DP install", reason="--skip-helm set")
 
@@ -1732,26 +1870,12 @@ def main() -> int:  # noqa: C901
                 reason="--skip-node-registry-check set",
             )
 
-        # Step: local DNS + SNI proxy (replaces manual host /etc/hosts editing)
-        if not args.skip_local_networking:
-            h = ms.start(f"Configure local DNS + SNI proxy for `{settings.base_domain}` (no /etc/hosts editing)")
-            try:
-                detail = _setup_local_networking(settings)
-                ms.done(h, detail=detail)
-            except Exception as e:  # noqa: BLE001
-                ms.fail(h, error=str(e))
-                _print(f"\n⚠️  Local networking setup failed ({e}); falling back to manual /etc/hosts instructions.")
-                _print_manual_etc_hosts_fallback(settings)
-        else:
-            ms.skip("Configure local DNS + SNI proxy", reason="--skip-local-networking set")
-            _print_manual_etc_hosts_fallback(settings)
-
         # Step: drift-free cross-cluster POD DNS. The reconcile pins NodeHosts to node/LB IPs that
         # drift on OrbStack restart AND that k3s rewrites away; this instead writes a coredns-custom
         # template resolving the peer plane's hostnames to the fixed astronomer-net gateway (-> the
-        # SNI proxy set up above), so CP<->DP pod traffic (e.g. Houston->Commander) keeps working
-        # across restarts without re-running the reconcile. Requires the SNI proxy, so it is gated on
-        # (and runs after) local networking.
+        # SNI proxy set up before the Helm installs), so CP<->DP pod traffic (e.g. Houston->Commander)
+        # keeps working across restarts without re-running the reconcile. Requires the SNI proxy, so
+        # it is gated on local networking.
         if not args.skip_local_networking:
             h = ms.start("Drift-free cross-cluster pod DNS (coredns-custom -> gateway -> SNI proxy)")
             _ensure_cross_cluster_coredns_routing(settings)
@@ -1761,6 +1885,15 @@ def main() -> int:  # noqa: C901
                 "Drift-free cross-cluster pod DNS (coredns-custom -> gateway -> SNI proxy)",
                 reason="--skip-local-networking set",
             )
+
+        # Step: end-to-end check of the local DNS + proxy path. Deferred to here because it only
+        # means anything once the platform is installed and serving.
+        if not args.skip_local_networking:
+            h = ms.start("Verify local DNS + SNI proxy end-to-end (name -> dnsmasq -> :443 proxy -> cluster)")
+            _verify_local_networking(settings)
+            ms.done(h)
+        else:
+            ms.skip("Verify local DNS + SNI proxy end-to-end", reason="--skip-local-networking set")
 
         ms.print_summary_table()
         _print("\n✅ Completed.")
