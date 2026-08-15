@@ -9,15 +9,16 @@ consumer Deployment mounts it, and (PINF-1190 critical-review round) gates the P
 on a `lookup` check so it's also created on a mode-switch upgrade without ever destroying an
 existing one.
 
-configs/pin-git-sync-shared-volume-test-images.yaml pins ap-git-sync-relay:0.5.0 and this
-airflow-chart branch's build, so the fix under test actually runs rather than whatever
-airflowChartVersion/gitSyncRelay tag ships as the scenario's default.
+configs/pin-git-sync-shared-volume-test-images.yaml pins ap-git-sync-relay's repository (not a
+specific tag -- see GIT_SYNC_RELAY_IMAGE_PREFIX below) and this airflow-chart branch's build, so
+the fix under test actually runs rather than whatever airflowChartVersion ships as the scenario's
+default.
 
 Structure mirrors deployment-lifecycle/git-sync-private-ca: module-scoped fixtures, since
 creating an Airflow Deployment is the expensive part and every test in this file shares its
 deployment(s).
 
-Two things this file does NOT cover (see PINF-1194 / the PR #592 critical-review discussion for
+Three things this file does NOT cover (see PINF-1194 / the PR #592 critical-review discussion for
 why these need a different kind of test than this framework gives cheaply):
   - The concurrent-sync race between the pre-upgrade hook Job and an already-running relay
     Deployment's own poll/webhook cycle -- timing-dependent, not something this fixture's
@@ -26,6 +27,10 @@ why these need a different kind of test than this framework gives cheaply):
     fix) -- git-sync-private-ca already covers private-CA trust for git_daemon mode; a
     shared_volume + private-CA combination would need its own Forgejo-backed fixture, not
     attempted here to keep this scenario scoped to the shared_volume-specific fixes.
+  - The SSH and HTTPS+PAT credential-helper wiring -- the actual PINF-1190 reason the init Job
+    reuses the ap-git-sync-relay image instead of upstream git-sync. Both deployments here use
+    HTTPS_NONE against a public repo, so the credential helper itself is render-tested
+    (airflow-chart's own chart tests) but never exercised live by this scenario.
 """
 
 import subprocess
@@ -54,7 +59,9 @@ WORKSPACE_LABEL = "pinf-1115-git-sync-shared-volume"
 FRESH_DEPLOYMENT_LABEL = "pinf-1115-shared-volume-fresh"
 TRANSITION_DEPLOYMENT_LABEL = "pinf-1115-shared-volume-transition"
 
-EXPECTED_GIT_SYNC_RELAY_TAG = "0.5.0"
+# Repository only, not a specific tag -- the tag gets bumped continuously for CVE fixes,
+# independently of this scenario, and no other scenario test asserts on an exact image tag.
+GIT_SYNC_RELAY_IMAGE_PREFIX = "quay.io/astronomer/ap-git-sync-relay:"
 
 
 def _kubectl(*args: str) -> subprocess.CompletedProcess:
@@ -232,11 +239,12 @@ def test_shared_volume_dags_mount_has_no_stale_handle(shared_volume_deployment, 
     assert result.stdout.strip(), "dags mount listing was unexpectedly empty"
 
 
-def test_shared_volume_init_hook_used_pinned_images(shared_volume_deployment, _k8s_batch_v1_client_module):
-    """Sanity check that configs/pin-git-sync-shared-volume-test-images.yaml actually took effect
-    -- without this, a wrong path/typo in the overlay would silently fall back to the chart's
-    default gitSyncRelay tag and this whole scenario would test the wrong version without any
-    other test here noticing."""
+def test_shared_volume_init_hook_used_relay_image(shared_volume_deployment, _k8s_batch_v1_client_module):
+    """The init hook Job succeeded and used the ap-git-sync-relay image family -- the core
+    PINF-1190 change (the hook previously used the upstream git-sync image, which has no
+    equivalent of the relay's HTTPS+PAT credential helper). Checks the repository only, not a
+    specific tag: the tag gets bumped continuously for CVE fixes independently of this scenario,
+    and no other scenario test asserts on an exact image tag."""
     release_name = shared_volume_deployment["release_name"]
     namespace = _deployment_namespace(release_name)
     jobs = _k8s_batch_v1_client_module.list_namespaced_job(namespace, label_selector="component=git-sync-relay").items
@@ -245,10 +253,9 @@ def test_shared_volume_init_hook_used_pinned_images(shared_volume_deployment, _k
     job = init_jobs[0]
     assert job.status.succeeded == 1, f"init Job did not succeed: status={job.status}"
     image = job.spec.template.spec.containers[0].image
-    assert image.endswith(f":{EXPECTED_GIT_SYNC_RELAY_TAG}"), (
-        f"init Job container image {image!r} does not match the pinned tag "
-        f"{EXPECTED_GIT_SYNC_RELAY_TAG!r} -- configs/pin-git-sync-shared-volume-test-images.yaml "
-        "may not have taken effect"
+    assert image.startswith(GIT_SYNC_RELAY_IMAGE_PREFIX), (
+        f"init Job container image {image!r} is not from {GIT_SYNC_RELAY_IMAGE_PREFIX!r} -- "
+        "expected the ap-git-sync-relay image, not upstream git-sync"
     )
 
 
