@@ -41,7 +41,7 @@ global:
   # reintroduce a separately-named KIND-only secret here (see PR #3494 / commit 11c238ebd for
   # the regression that shipped from having two names for this one concept).
   privateCaCerts:
-  - mkcert-root-ca
+    - mkcert-root-ca
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true
@@ -118,7 +118,6 @@ astronomer:
       requests:
         cpu: "0m"
         memory: "0Mi"
-
 
 #################################
 ## Nginx configuration

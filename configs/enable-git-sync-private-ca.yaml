@@ -26,7 +26,6 @@ astronomer:
             metrics:
               enabled: true
 
-
 global:
   # Helm REPLACES list values across -f files. configs/local-dev.yaml (applied earlier in
   # the values order) sets [mkcert-root-ca], so it MUST be re-listed here or the platform stops
