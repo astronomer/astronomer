@@ -32,9 +32,34 @@ class TestPostgresql:
         containers = get_containers_by_name(doc=sts, include_init_containers=True)
         assert containers["release-name-postgresql"]["volumeMounts"] == [
             {"mountPath": "/tmp", "name": "tmp"},
+            {"mountPath": "/var/run/postgresql", "name": "postgresql-run"},
             {"name": "data", "mountPath": "/bitnami/postgresql", "subPath": None},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in sts["spec"]
+
+    def test_postgresql_statefulset_slaves_volume_mounts(self, kube_version):
+        """Test postgresql slave statefulset mounts a writable /var/run/postgresql.
+
+        readOnlyRootFilesystem is set on the slave container, so unix_socket_directories
+        must resolve to a writable, mounted path. See PINF-347.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"postgresql": {"enabled": True}},
+                "postgresql": {"replication": {"enabled": True}},
+            },
+            show_only=["charts/postgresql/templates/statefulset-slaves.yaml"],
+        )
+
+        assert len(docs) == 1
+        sts = docs[0]
+        containers = get_containers_by_name(doc=sts, include_init_containers=True)
+        volume_mounts = containers["release-name-postgresql"]["volumeMounts"]
+        assert {"name": "postgresql-run", "mountPath": "/var/run/postgresql"} in volume_mounts
+
+        volumes = sts["spec"]["template"]["spec"]["volumes"]
+        assert {"name": "postgresql-run", "emptyDir": {}} in volumes
 
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):
         """Test postgresql with privateRegistry=True."""
