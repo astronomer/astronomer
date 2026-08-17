@@ -170,6 +170,23 @@ python3 bin/setup-local-registry.py --destroy
 python3 bin/setup-local-registry.py
 ```
 
+### Containers exit 127, or setup fails with `[Errno 21] Is a directory`
+
+Docker creates the source of a bind mount as an empty directory when that source does not exist.
+If the per-registry configs under `~/.local/share/astronomer-software/registry-configs/` are removed
+while the containers still exist, the next Docker/OrbStack restart recreates each `*.yml` path as a
+directory. The containers then fail to start (`not a directory: Are you trying to mount a directory
+onto a file`), and the setup scripts fail to write the config over it.
+
+Re-running the setup repairs this — the stub directories are removed, the configs rewritten, and any
+container that will not restart is recreated:
+
+```bash
+python3 bin/setup-local-registry.py
+```
+
+Cached layers live in the `*-data` volumes and survive the container being recreated.
+
 ### `Too Many Requests` from quay.io or docker.io
 
 The proxy is not being used. Verify:

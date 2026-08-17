@@ -121,12 +121,16 @@ data:
         dagOnlyDeployment:
           enabled: {{ .Values.global.deployMechanisms.dagOnlyDeployment.enabled }}
 
+      {{- $grafanaLinkEnabled := true }}
+      {{- if and (hasKey .Values.global "grafana") (kindIs "map" .Values.global.grafana) (hasKey .Values.global.grafana "enabled") }}
+      {{- $grafanaLinkEnabled = .Values.global.grafana.enabled }}
+      {{- end }}
       metricsReporting:
         taskUsageMetrics:
           enabled: {{ .Values.global.metricsReporting.taskUsageMetrics.enabled }}
           reportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
         grafana:
-          enabled: true
+          enabled: {{ $grafanaLinkEnabled }}
 
       deploymentLifecycle:
         deployRollback:

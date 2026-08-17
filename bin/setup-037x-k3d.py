@@ -29,6 +29,7 @@ from pathlib import Path
 
 from k3d_setup_shared import (
     CERT_MANAGER_VERSION,
+    DEFAULT_DOCKER_NETWORK,
     HELM_CHART,
     HELM_REPO_NAME,
     Milestones,
@@ -381,7 +382,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-domain", default="localtest.me")
     parser.add_argument("--namespace", default="astronomer")
     parser.add_argument("--release-name", default="astronomer")
-    parser.add_argument("--docker-network", default="astronomer-net")
+    parser.add_argument("--docker-network", default=DEFAULT_DOCKER_NETWORK)
     parser.add_argument("--cluster-name", default="astro037")
     parser.add_argument("--https-port", type=int, default=443, help="HTTPS port. Default: '%(default)s'")
     parser.add_argument("--http-port", type=int, default=80, help="HTTP port. Default: '%(default)s'")
@@ -471,7 +472,7 @@ def main() -> int:
         if not args.no_local_registry:
             h = ms.start("Ensure local pull-through registry proxy containers are running")
             _ensure_local_registries(settings.docker_network)
-            registry_config = _get_registry_config_path(settings.docker_network)
+            registry_config = _get_registry_config_path()
             ms.done(h, detail=f"config={registry_config}")
         else:
             ms.skip("Local registry proxy setup", reason="--no-local-registry set")
