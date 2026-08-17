@@ -33,10 +33,15 @@ global:
     enabled: true
   ssl:
     enabled: false
-  # Custom CA TLS certificates
-  # Each secret must have one data entry 'cert.pem'
+  # Custom CA TLS certificates. Each secret must have one data entry 'cert.pem'.
+  # mkcert-root-ca (bin/setup-kind.py) is mkcert's own root CA -- the same CA that signs
+  # astronomer-tls above -- so the platform trusts its own dev TLS chain. This is the same
+  # secret name/content/mechanism the k3d CP/DP topology uses (bin/setup-cp-dp-k3d.py's
+  # --mkcert-root-ca-secret-name, default mkcert-root-ca) -- keep the two in sync; do not
+  # reintroduce a separately-named KIND-only secret here (see PR #3494 / commit 11c238ebd for
+  # the regression that shipped from having two names for this one concept).
   privateCaCerts:
-  - private-ca
+  - mkcert-root-ca
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true

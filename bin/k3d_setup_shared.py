@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Shared helpers for the local k3d setup scripts (setup-cp-dp-k3d.py, setup-037x-k3d.py).
+Shared helpers for the local k3d setup scripts (setup-cp-dp-k3d.py, setup-037x-k3d.py), plus
+the mkcert helpers (_mkcert_path, _mkcert_caroot) also used by the KIND-topology setup-kind.py.
 
-Not a standalone entry point — imported directly (both scripts live in this same `bin/`
+Not a standalone entry point — imported directly (all these scripts live in this same `bin/`
 directory, which Python puts on `sys.path` automatically when the script is run, matching the
 existing `helm_chart_values_migration_shared.py` / `certs.py` sibling-import pattern in this repo).
 
