@@ -14,6 +14,12 @@ specific tag -- see GIT_SYNC_RELAY_IMAGE_PREFIX below) and this airflow-chart br
 the fix under test actually runs rather than whatever airflowChartVersion ships as the scenario's
 default.
 
+shared_volume mode's PVC requires a ReadWriteMany-capable StorageClass, which this scenario's
+single-node kind cluster doesn't have by default (see _create_static_shared_volume_pv below and
+configs/git-sync-shared-volume-static-storage.yaml) -- each fixture statically pre-binds a
+hostPath PersistentVolume for its own release before the PVC is ever created, standing in for
+the real network storage (NFS/EFS/Filestore) a production RWX StorageClass would provide.
+
 Structure mirrors deployment-lifecycle/git-sync-private-ca: module-scoped fixtures, since
 creating an Airflow Deployment is the expensive part and every test in this file shares its
 deployment(s).
@@ -63,12 +69,68 @@ TRANSITION_DEPLOYMENT_LABEL = "pinf-1115-shared-volume-transition"
 # independently of this scenario, and no other scenario test asserts on an exact image tag.
 GIT_SYNC_RELAY_IMAGE_PREFIX = "quay.io/astronomer/ap-git-sync-relay:"
 
+# Known JWKS cold-start race (see git-sync-private-ca's own use of this) -- houston's JWKS cache
+# can be cold for the very first token validation after a fresh install, independent of anything
+# under test here.
+JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
 
-def _kubectl(*args: str) -> subprocess.CompletedProcess:
-    result = subprocess.run(["kubectl", f"--kubeconfig={KUBECONFIG_UNIFIED}", *args], text=True, capture_output=True)
+# Must match configs/git-sync-shared-volume-static-storage.yaml's storageClassName. Deliberately
+# not a real StorageClass object -- see _create_static_shared_volume_pv below.
+STATIC_STORAGE_CLASS_NAME = "git-sync-shared-volume-test-static"
+
+
+def _kubectl(*args: str, input_text: str | None = None) -> subprocess.CompletedProcess:
+    result = subprocess.run(
+        ["kubectl", f"--kubeconfig={KUBECONFIG_UNIFIED}", *args], text=True, capture_output=True, input=input_text
+    )
     if result.returncode != 0:
         raise AssertionError(f"kubectl {' '.join(args)} failed (exit {result.returncode}):\n{result.stdout}{result.stderr}")
     return result
+
+
+def _create_static_shared_volume_pv(release_name: str) -> None:
+    """Pre-bind a hostPath PersistentVolume for this release's git-repo-contents PVC.
+
+    This scenario's kind cluster is single-node with no ReadWriteMany-capable dynamic
+    provisioner (its default StorageClass is backed by a local-path-style provisioner that only
+    supports ReadWriteOnce/ReadWriteOncePod), and shared_volume mode's PVC hardcodes
+    accessModes: [ReadWriteMany] -- a real product requirement (in production, the Airflow
+    component pods sharing this volume can land on different nodes), not something to relax for
+    this test. So the dynamic-provisioning path can never succeed here, no matter how generous
+    the init hook Job's activeDeadlineSeconds is.
+
+    Since every pod in this single-node cluster lands on the same node anyway, a hostPath-backed
+    PV serves just as well as real network storage would for proving the fix. This statically
+    pre-binds one via claimRef before the PVC exists: static PV/PVC binding only requires
+    matching accessModes/capacity/storageClassName (a name that need not correspond to any real
+    StorageClass object, see configs/git-sync-shared-volume-static-storage.yaml), so this alone
+    gives the PVC somewhere real to bind once the init hook Job creates it.
+
+    Must run after upsert_deployment() returns (so release_name, and therefore the target
+    namespace, is known) but before commander's helm install/upgrade for this release actually
+    reaches the init hook Job. Commander notices and applies a new/changed deployment
+    asynchronously, well after the near-instant kubectl apply below, so there's no real race.
+    """
+    namespace = _deployment_namespace(release_name)
+    manifest = f"""
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: git-sync-shared-volume-test-{release_name}
+spec:
+  accessModes: ["ReadWriteMany"]
+  capacity:
+    storage: 20Gi
+  storageClassName: {STATIC_STORAGE_CLASS_NAME}
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/git-sync-shared-volume-test/{release_name}
+    type: DirectoryOrCreate
+  claimRef:
+    namespace: {namespace}
+    name: git-repo-contents
+"""
+    _kubectl("apply", "-f", "-", input_text=manifest)
 
 
 @pytest.fixture(scope="module")
@@ -156,6 +218,7 @@ def shared_volume_deployment(_admin_token, _houston_api_module, _k8s_apps_v1_cli
         dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
         dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
         raise
+    _create_static_shared_volume_pv(created["releaseName"])
     # Helm blocks applying the release's Deployments/StatefulSets until the pre-install hook Job
     # succeeds, so reaching this point at all already proves the hook Job populated the PVC --
     # if it had failed, the whole helm install would have failed and no workloads would exist to
@@ -199,6 +262,7 @@ def transition_deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client
 
     # Now the actual transition: switch this existing deployment to git_sync + shared_volume.
     before = snapshot_release_revisions(_k8s_apps_v1_client_module, created["releaseName"])
+    _create_static_shared_volume_pv(created["releaseName"])
     try:
         upsert_deployment(
             _houston_api_module,
@@ -220,10 +284,15 @@ def transition_deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client
     return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
 def test_shared_volume_deployment_reaches_ready(shared_volume_deployment):
     """Headline: a fresh-create shared_volume deployment reaches ready, meaning the pre-install
     hook Job populated the PVC successfully before Helm ever applied the Airflow component
-    Deployments/StatefulSets that mount it."""
+    Deployments/StatefulSets that mount it.
+
+    Carries the JWKS-cold-start retry guard: this is the first test to touch the module-scoped
+    shared_volume_deployment fixture, and a rerun redoes the fixture's own upsert_deployment
+    call too (see git-sync-private-ca's identical use of this)."""
     assert shared_volume_deployment["release_name"]
 
 
@@ -259,11 +328,16 @@ def test_shared_volume_init_hook_used_relay_image(shared_volume_deployment, _k8s
     )
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
 def test_pvc_created_on_transition_to_shared_volume(transition_deployment, _k8s_core_v1_client_module):
     """The PVC install-vs-upgrade lifecycle fix: a deployment created plain and then upgraded to
     shared_volume mode gets the git-repo-contents PVC created via the pre-upgrade hook, and it's
     Bound -- before the fix, the PVC's hook was pre-install only and this transition would leave
-    the Job with nothing to mount."""
+    the Job with nothing to mount.
+
+    Carries the JWKS-cold-start retry guard: this is the first test to touch the module-scoped
+    transition_deployment fixture, and a rerun redoes both of the fixture's own
+    upsert_deployment calls too (see git-sync-private-ca's identical use of this)."""
     release_name = transition_deployment["release_name"]
     namespace = _deployment_namespace(release_name)
     pvc = _k8s_core_v1_client_module.read_namespaced_persistent_volume_claim("git-repo-contents", namespace)
