@@ -21,7 +21,14 @@ What it does, against a data-plane context you name explicitly:
   attach-deployment --release-name <r>
     - copies the deployment's Airflow metadata-DB connection secret into the `laminar`
       namespace under the name and key Laminar actually reads
+    - stamps the Astro identity labels Laminar requires (see below)
     - annotates the Airflow CR so the hypervisor will act on it
+
+VERIFIED GAP (2026-08-17, on a real APC data plane): CRD-watch discovery alone is NOT enough.
+Laminar ignores any Airflow CR missing ALL THREE of astronomer.io/deploymentId, /workspaceId
+and /organizationId. APC's CR carries only deploymentId — the workspace id is under a bare
+`workspace` key, and APC has no Organization entity at all. Symptom: the watcher logs
+"Could not find Astro IDs on Airflow CR" and num_airflows stays 0 forever.
 
 Why `attach-deployment` is a separate action: it is the exact step the design doc assigns to
 Commander (decision D4). Running it by hand, per deployment, is the point — it shows what
@@ -42,7 +49,12 @@ trusting on a newer tag):
                           (astro apps/harmony/plugins/airflows/types/types.go)
 
 Prerequisites: a data plane from `bin/setup-cp-dp-k3d.py --enable-operator`, a checkout of
-astronomer/laminar, and docker/kubectl/k3d/kustomize on PATH.
+astronomer/laminar, and docker (with buildx) / kubectl / k3d / kustomize / git / gh on PATH.
+
+The image build needs a GitHub token, because laminar's Dockerfile sets
+GOPRIVATE=github.com/astronomer and fetches private Go modules. It is taken from $GH_TOKEN, or
+`gh auth token` — the same order laminar's own Justfile uses. Without one the build fails at
+`go mod download` with "could not read Username for 'https://github.com'".
 
 Examples:
 
@@ -60,6 +72,8 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -78,6 +92,14 @@ KEDA_MANIFEST_URL = f"https://github.com/kedacore/keda/releases/download/v{KEDA_
 
 LAMINAR_NAMESPACE = "laminar"
 LAMINAR_IMAGE = "laminar:apc-poc"
+
+# Matches laminar's Justfile LAMINAR_VERSION. The Dockerfile requires the build arg.
+LAMINAR_VERSION = "0.1.0"
+
+# Laminar's Dockerfile pins its base images by amd64-only digests, so an arm64 build emits
+# InvalidBaseImagePlatform warnings and produces a mixed image. Build amd64 explicitly, as
+# laminar's own release path does (`just docker-build-amd64`); it runs emulated on Apple silicon.
+DEFAULT_BUILD_PLATFORM = "linux/amd64"
 
 # Laminar's own database, provisioned in Astro by the external-db-operator via the `Scheme` CR in
 # manifests/base. We do not run that operator here, so we create the database directly and drop
@@ -133,6 +155,15 @@ def parse_args() -> argparse.Namespace:
     )
     install.add_argument("--image", default=LAMINAR_IMAGE, help=f"Image tag to build. Default: {LAMINAR_IMAGE}")
     install.add_argument(
+        "--platform",
+        default=DEFAULT_BUILD_PLATFORM,
+        help=(
+            "Build platform. Default: "
+            f"{DEFAULT_BUILD_PLATFORM}, because laminar's Dockerfile pins amd64-only base image "
+            "digests. On Apple silicon the image runs under emulation."
+        ),
+    )
+    install.add_argument(
         "--postgres-dsn",
         default="",
         help=(
@@ -160,6 +191,24 @@ def parse_args() -> argparse.Namespace:
         help="Namespace the deployment runs in. No default, on purpose.",
     )
     attach.add_argument(
+        "--workspace-id",
+        default="",
+        help="Value for astronomer.io/workspaceId. Defaults to the CR's existing `workspace` label.",
+    )
+    attach.add_argument(
+        "--organization-id",
+        default="",
+        help=(
+            "Value for astronomer.io/organizationId. APC has no Organization entity, so this is "
+            "synthesized: defaults to the CR's `clusterid` label, else 'apc-no-organization'."
+        ),
+    )
+    attach.add_argument(
+        "--no-astro-id-labels",
+        action="store_true",
+        help="Skip stamping the Astro identity labels (Laminar will then ignore the deployment).",
+    )
+    attach.add_argument(
         "--no-enable-scaling",
         action="store_true",
         help=f"Skip setting {ENABLE_SCALING_ANNOTATION}=true on the CR (copy the DB secret only).",
@@ -183,17 +232,75 @@ def _install_keda(context: str) -> None:
     _kubectl(context, "wait", "-n", "keda", "deployment/keda-operator", "--for", "condition=available", "--timeout", "300s")
 
 
-def _build_and_import_image(*, context: str, laminar_repo: Path, image: str) -> None:
+def _gh_token() -> str:
+    """Resolve a GitHub token for the build.
+
+    Laminar's Dockerfile sets GOPRIVATE=github.com/astronomer and fetches private Go modules, so
+    `go mod download` fails with "could not read Username for https://github.com" without one.
+    Same resolution order as laminar's own Justfile: $GH_TOKEN, else `gh auth token`.
+    """
+    token = os.environ.get("GH_TOKEN", "").strip()
+    if token:
+        return token
+    proc = _run(["gh", "auth", "token"], check=False)
+    token = (proc.stdout or "").strip()
+    if not token:
+        raise CommandError(
+            "No GitHub token available for the image build. Run `gh auth login`, or export GH_TOKEN. "
+            "Laminar's Dockerfile needs it to fetch private github.com/astronomer Go modules."
+        )
+    return token
+
+
+def _git_describe(laminar_repo: Path) -> tuple[str, str]:
+    """Return (commit, branch-ish tag) for the LAMINAR_COMMIT / LAMINAR_IMAGE build args."""
+    commit = (_run(["git", "-C", str(laminar_repo), "rev-parse", "HEAD"], check=False).stdout or "").strip()
+    ref = (_run(["git", "-C", str(laminar_repo), "rev-parse", "--abbrev-ref", "HEAD"], check=False).stdout or "").strip()
+    return commit or "unknown", (ref or "unknown").replace("/", "-")
+
+
+def _build_and_import_image(*, context: str, laminar_repo: Path, image: str, platform: str) -> None:
     """Build Laminar from source and side-load it into k3d.
 
     Building beats pulling `astrocr.azurecr.io/astronomer/laminar`: no Azure login, no token that
     expires mid-session, and the image can be patched to test a change.
+
+    Mirrors laminar's own `just docker-build`: buildx with the GH_TOKEN secret mount and the
+    LAMINAR_* build args. Plain `docker build` cannot satisfy the Dockerfile's
+    `--mount=type=secret,id=GH_TOKEN`.
     """
     dockerfile = laminar_repo / "Dockerfile"
     if not dockerfile.is_file():
         raise CommandError(f"{dockerfile} not found — is --laminar-repo really a laminar checkout?")
 
-    _run(["docker", "build", "-t", image, "-f", str(dockerfile), str(laminar_repo)], capture=False)
+    commit, ref = _git_describe(laminar_repo)
+    env = {**os.environ, "GH_TOKEN": _gh_token()}
+
+    _run(
+        [
+            "docker",
+            "buildx",
+            "build",
+            "--load",
+            "--platform",
+            platform,
+            "--secret",
+            "id=GH_TOKEN,env=GH_TOKEN",
+            "--build-arg",
+            f"LAMINAR_VERSION={LAMINAR_VERSION}",
+            "--build-arg",
+            f"LAMINAR_COMMIT={commit}",
+            "--build-arg",
+            f"LAMINAR_IMAGE={ref}",
+            "-t",
+            image,
+            "-f",
+            str(dockerfile),
+            str(laminar_repo),
+        ],
+        capture=False,
+        env=env,
+    )
 
     cluster = context.removeprefix("k3d-")
     _run(["k3d", "image", "import", image, "-c", cluster], capture=False)
@@ -240,6 +347,14 @@ def _platform_postgres_dsn(*, context: str, platform_namespace: str) -> str:
 
 
 def _postgres_master_pod(*, context: str, platform_namespace: str, release_name: str) -> str:
+    """Find the platform postgres pod.
+
+    `role=master` alone is NOT specific enough: the elasticsearch master StatefulSet carries the
+    same `release=<r>,role=master` pair, and sorts first, so selecting on it and taking item 0
+    silently hands back `<release>-elasticsearch-master-0`. Pin `app=postgresql` too, and refuse
+    to guess if more than one pod still matches.
+    """
+    selector = f"app=postgresql,release={release_name},role=master"
     proc = _kubectl(
         context,
         "-n",
@@ -247,17 +362,23 @@ def _postgres_master_pod(*, context: str, platform_namespace: str, release_name:
         "get",
         "pods",
         "-l",
-        f"release={release_name},role=master",
+        selector,
         "-o",
-        "jsonpath={.items[0].metadata.name}",
+        "jsonpath={range .items[*]}{.metadata.name}{'\\n'}{end}",
         check=False,
     )
-    pod = (proc.stdout or "").strip()
-    if proc.returncode != 0 or not pod:
+    pods = [line.strip() for line in (proc.stdout or "").splitlines() if line.strip()]
+    if proc.returncode != 0 or not pods:
         raise CommandError(
-            f"Could not find the postgres master pod in {platform_namespace} (context={context}, release={release_name})."
+            f"Found no pod matching `{selector}` in {platform_namespace} (context={context}). "
+            "Is the postgresql subchart enabled on this plane?"
         )
-    return pod
+    if len(pods) > 1:
+        raise CommandError(
+            f"`{selector}` matched {len(pods)} pods in {platform_namespace} ({', '.join(pods)}). "
+            "Refusing to guess which one is the primary — pass --postgres-dsn instead."
+        )
+    return pods[0]
 
 
 def _create_laminar_database(*, context: str, platform_namespace: str, release_name: str) -> None:
@@ -311,13 +432,25 @@ def _apply_laminar_connection_secret(*, context: str, base_dsn: str) -> None:
     _kubectl(context, "apply", "-f", "-", stdin=secret_yaml)
 
 
-def _kustomization(*, laminar_repo: Path, image: str, components: str, enable_healers: bool) -> str:
-    """Overlay built the same way astro's harmony plugin builds its own: point at the repo's
-    manifest dirs, retarget the image, drop the Scheme, patch the deployments."""
-    resources = [f"{laminar_repo}/manifests/base", f"{laminar_repo}/manifests/hypervisor"]
+def _manifest_dirs(components: str) -> list[str]:
+    """Laminar manifest directories to assemble, in kustomize order."""
+    dirs = ["base", "hypervisor"]
     if components == "both":
-        resources.insert(1, f"{laminar_repo}/manifests/apiserver")
-    resource_block = "\n".join(f"  - {r}" for r in resources)
+        dirs.insert(1, "apiserver")
+    return dirs
+
+
+def _kustomization(*, image: str, components: str) -> str:
+    """Overlay in the spirit of astro's harmony plugin: assemble the repo's manifest dirs,
+    retarget the image, drop the Scheme, patch the deployments.
+
+    Resources are referenced by bare relative name because kustomize refuses an absolute path as
+    a resource root ("new root ... cannot be absolute"), and a relative path escaping the
+    kustomization root trips the load restrictor. `_render_and_apply` copies the directories in
+    alongside this file so every path stays local. Each of base/, hypervisor/ and apiserver/ is
+    self-contained — their kustomizations reference only sibling files — so copying is lossless.
+    """
+    resource_block = "\n".join(f"  - {d}" for d in _manifest_dirs(components))
 
     patches = ["  - path: drop-scheme.yaml", "  - path: hypervisor-patch.yaml"]
     if components == "both":
@@ -388,9 +521,20 @@ metadata:
 def _render_and_apply(*, context: str, laminar_repo: Path, image: str, components: str, enable_healers: bool) -> None:
     with tempfile.TemporaryDirectory(prefix="laminar-poc-") as tmp:
         overlay = Path(tmp)
-        (overlay / "kustomization.yaml").write_text(
-            _kustomization(laminar_repo=laminar_repo, image=image, components=components, enable_healers=enable_healers)
-        )
+
+        # Copy rather than reference: kustomize will not accept an absolute resource root, and a
+        # relative one pointing outside the kustomization directory trips the load restrictor.
+        # Copying keeps every path inside the overlay and leaves the laminar checkout untouched.
+        for name in _manifest_dirs(components):
+            source = laminar_repo / "manifests" / name
+            if not (source / "kustomization.yaml").is_file():
+                raise CommandError(
+                    f"{source}/kustomization.yaml not found. Is --laminar-repo a laminar checkout, "
+                    "and does this tag still lay its manifests out under manifests/<component>/?"
+                )
+            shutil.copytree(source, overlay / name)
+
+        (overlay / "kustomization.yaml").write_text(_kustomization(image=image, components=components))
         (overlay / "drop-scheme.yaml").write_text(DROP_SCHEME)
         (overlay / "hypervisor-patch.yaml").write_text(_deployment_patch("hypervisor", enable_healers=enable_healers))
         if components == "both":
@@ -444,6 +588,60 @@ def _copy_metadata_secret(*, context: str, release_name: str, deployment_namespa
     return target
 
 
+def _ensure_astro_id_labels(
+    *, context: str, release_name: str, deployment_namespace: str, workspace_id: str, organization_id: str
+) -> dict[str, str]:
+    """Stamp the three Astro identity labels Laminar requires before it will manage a CR.
+
+    Laminar drops any Airflow CR that does not carry ALL THREE of
+    `astronomer.io/deploymentId`, `astronomer.io/workspaceId` and `astronomer.io/organizationId`
+    (`AstroResourceIDs.all()` in src/laminar/common/kubernetes/crds.py). On a miss it logs
+    "Could not find Astro IDs on Airflow CR", sets the id to UNKNOWN_DEPLOYMENT_ID, and
+    `astro_deployment_service.py` returns before caching it — so the deployment is discovered and
+    then silently ignored, and `num_airflows` stays 0 forever.
+
+    APC's CR carries only `astronomer.io/deploymentId`. It has the workspace id under a bare
+    `workspace` key, and no organization id at all — Houston has no Organization model. So this
+    is not a pure label copy; the organization id has to be synthesized.
+    """
+    existing = _kubectl(
+        context,
+        "-n",
+        deployment_namespace,
+        "get",
+        "airflow",
+        release_name,
+        "-o",
+        "jsonpath={.metadata.labels}",
+        check=False,
+    ).stdout
+    labels: dict[str, str] = json.loads(existing) if (existing or "").strip() else {}
+
+    resolved_workspace = workspace_id or labels.get("workspace", "")
+    # No APC equivalent exists. The cluster id is at least a real, stable APC identifier; fall back
+    # to a visible sentinel so nothing masquerades as a genuine Astro organization.
+    resolved_org = organization_id or labels.get("clusterid", "") or "apc-no-organization"
+
+    if not resolved_workspace:
+        raise CommandError(f"No workspace id on {release_name}: the CR has no `workspace` label. Pass --workspace-id.")
+
+    applied = {
+        "astronomer.io/workspaceId": resolved_workspace,
+        "astronomer.io/organizationId": resolved_org,
+    }
+    _kubectl(
+        context,
+        "-n",
+        deployment_namespace,
+        "label",
+        "airflow",
+        release_name,
+        *[f"{k}={v}" for k, v in applied.items()],
+        "--overwrite",
+    )
+    return applied
+
+
 def _annotate_airflow_cr(*, context: str, release_name: str, deployment_namespace: str, hibernate: bool) -> None:
     """Set the annotations that decide whether the hypervisor acts on this deployment.
 
@@ -481,8 +679,8 @@ def _do_install(args: argparse.Namespace, ms: Milestones) -> None:
 
     if not args.skip_image_build:
         h = ms.start(f"Build laminar image from {laminar_repo} and import into k3d")
-        _build_and_import_image(context=args.context, laminar_repo=laminar_repo, image=args.image)
-        ms.done(h, detail=args.image)
+        _build_and_import_image(context=args.context, laminar_repo=laminar_repo, image=args.image, platform=args.platform)
+        ms.done(h, detail=f"{args.image} ({args.platform})")
     else:
         ms.skip("Build laminar image", reason="--skip-image-build set")
 
@@ -522,6 +720,19 @@ def _do_attach(args: argparse.Namespace, ms: Milestones) -> None:
     )
     ms.done(h, detail=f"{LAMINAR_NAMESPACE}/{target}")
 
+    if args.no_astro_id_labels:
+        ms.skip("Stamp Astro identity labels on the Airflow CR", reason="--no-astro-id-labels set")
+    else:
+        h = ms.start("Stamp Astro identity labels (Laminar ignores the CR without all three)")
+        applied = _ensure_astro_id_labels(
+            context=args.context,
+            release_name=args.release_name,
+            deployment_namespace=args.deployment_namespace,
+            workspace_id=args.workspace_id,
+            organization_id=args.organization_id,
+        )
+        ms.done(h, detail=", ".join(f"{k.split('/')[-1]}={v}" for k, v in applied.items()))
+
     if args.no_enable_scaling:
         ms.skip("Annotate the Airflow CR", reason="--no-enable-scaling set")
     else:
@@ -549,6 +760,9 @@ def main() -> int:
     if args.action == "install-laminar":
         _require_executable("docker", hint="Install Docker Desktop/OrbStack and ensure `docker` works.")
         _require_executable("k3d", hint="Install k3d (e.g. `brew install k3d`).")
+        if not args.skip_image_build:
+            _require_executable("git", hint="Install git; the build args are derived from the laminar checkout.")
+            _require_executable("gh", hint="Install the GitHub CLI and run `gh auth login`, or export GH_TOKEN.")
 
     ms = Milestones()
     try:
