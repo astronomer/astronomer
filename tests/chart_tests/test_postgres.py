@@ -37,6 +37,19 @@ class TestPostgresql:
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in sts["spec"]
 
+        # The postgresql-run emptyDir is created root-owned by kubelet; fsGroup only
+        # changes its GID, not its UID, so the non-root postgres container can't chmod
+        # it itself. This init container hands ownership to the runAsUser before the
+        # main container starts..
+        init_containers = sts["spec"]["template"]["spec"]["initContainers"]
+        assert len(init_containers) == 1
+        init_container = init_containers[0]
+        assert init_container["name"] == "init-postgresql-run"
+        assert init_container["securityContext"]["runAsUser"] == 0
+        assert init_container["securityContext"]["runAsNonRoot"] is False
+        assert init_container["volumeMounts"] == [{"name": "postgresql-run", "mountPath": "/var/run/postgresql"}]
+        assert "chown 1001:1001 /var/run/postgresql" in "\n".join(init_container["command"])
+
     def test_postgresql_statefulset_slaves_volume_mounts(self, kube_version):
         """Test postgresql slave statefulset mounts a writable /var/run/postgresql.
 
@@ -60,6 +73,9 @@ class TestPostgresql:
 
         volumes = sts["spec"]["template"]["spec"]["volumes"]
         assert {"name": "postgresql-run", "emptyDir": {}} in volumes
+
+        init_containers = sts["spec"]["template"]["spec"]["initContainers"]
+        assert any(c["name"] == "init-postgresql-run" for c in init_containers)
 
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):
         """Test postgresql with privateRegistry=True."""
