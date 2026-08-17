@@ -21,7 +21,7 @@ def test_cluster_local_data_cm_defaults():
 
 
 def test_cluster_local_data_cm_with_features():
-    """Test that cluster local data configmap is rendered correctly."""
+    """flightDeck.enabled renders flightdeck_db_name (mode-agnostic; default plane is unified)."""
     values = {"astronomer": {"flightDeck": {"enabled": True}}}
 
     docs = render_chart(
@@ -44,3 +44,16 @@ def test_cluster_local_data_cm_with_features():
     # db-bootstrapper changes dashes to underscores, so dashes are not allowed in the db name.
     allowed_characters = set("abcdefghijklmnopqrstuvwxyz0123456789_")
     assert set(doc["data"]["flightdeck_db_name"]).issubset(allowed_characters)
+
+
+def test_cluster_local_data_cm_no_flightdeck_on_control():
+    """flightdeck_db_name is guarded out on a control plane even with flightDeck.enabled."""
+    values = {"global": {"plane": {"mode": "control"}}, "astronomer": {"flightDeck": {"enabled": True}}}
+
+    docs = render_chart(
+        values=values,
+        show_only=["charts/astronomer/templates/cluster-local-data.yaml"],
+    )
+
+    assert len(docs) == 1
+    assert not docs[0]["data"].get("flightdeck_db_name")

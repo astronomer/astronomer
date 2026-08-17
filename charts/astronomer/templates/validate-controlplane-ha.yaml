@@ -1,0 +1,15 @@
+{{- /*
+Control Plane HA value validation.
+
+globalBaseDomain is REQUIRED on ANY plane when controlPlaneHA is enabled as data planes consume it
+too. DP->CP service URLs (commander JWKS endpoint, registry events, the JWKS bootstrap hook) are
+templated from the global control-plane host so they health-route to whichever CP is active. A
+per-CP-pinned URL breaks after a CP/region failover.
+Enabling CP-HA now requires every data plane to be helm-upgraded with globalBaseDomain provided.
+
+This guard is intentionally NOT gated on global.plane.mode so it renders on every install and
+`helm template` / `helm upgrade` fails fast with a clear message. It emits no Kubernetes object.
+*/ -}}
+{{- if and .Values.global.controlPlaneHA.enabled (not .Values.global.controlPlaneHA.globalBaseDomain) }}
+{{- fail "global.controlPlaneHA.globalBaseDomain is required when global.controlPlaneHA.enabled is true (required on data-plane installs too)" }}
+{{- end }}

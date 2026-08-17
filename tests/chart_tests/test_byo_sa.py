@@ -191,7 +191,7 @@ class TestServiceAccounts:
                 "prometheusPostgresExporter": {"enabled": True},
                 "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
-                "operator": {"enabled": True},
+                "airflowOperator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": False}},
@@ -243,7 +243,7 @@ class TestServiceAccounts:
                 "prometheusPostgresExporter": {"enabled": True},
                 "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
-                "operator": {"enabled": True},
+                "airflowOperator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -393,7 +393,7 @@ custom_service_account_names = {
         "astronomer": {"commander": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/commander/jwks-hooks/commander-jwks-hooks.yaml": {
-        "astronomer": {"commander": {"serviceAccount": {"create": True, "name": "prothean"}}}
+        "astronomer": {"commander": {"jwksHook": {"serviceAccount": {"create": True, "name": "prothean"}}}}
     },
     "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml": {
         "astronomer": {"configSyncer": {"serviceAccount": {"create": True, "name": "prothean"}}}

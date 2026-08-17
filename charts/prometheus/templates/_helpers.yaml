@@ -105,7 +105,7 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{- define "prometheus.airflowMetricsActionDrop" }}
+{{- define "prometheus.airflowMetricsActionDrop" -}}
 - source_labels: [__name__]
   regex: 'airflow_task_instance_created_.*'
   action: drop

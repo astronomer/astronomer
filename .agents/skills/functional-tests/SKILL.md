@@ -14,7 +14,7 @@ Functional tests run against a live Kubernetes cluster (kind) with the Helm char
 ## Critical Rules
 
 1. **Always run tests with `uv run`** — never `python3 -m pytest` or `python -m pytest`
-2. **Always set `TEST_SCENARIO`** before running or the kubeconfig path will be `None`
+2. **Pass `--topology` to `bin/reset-local-dev`** (`unified`/`control`/`data`) before running — pytest itself needs no env var, it infers topology from the test's own location on disk
 3. **Always use uppercase kubeconfig constants** from `tests.utils.k8s` — `KUBECONFIG_UNIFIED`, `KUBECONFIG_CONTROL`, `KUBECONFIG_DATA` (not lowercase variants)
 4. **Run `bin/reset-local-dev` before the first test run** to set up the cluster
 
@@ -37,16 +37,13 @@ Three scenarios exist, each with its own test directory:
 ## Local Setup Workflow
 
 ```bash
-# 1. Choose a scenario
-export TEST_SCENARIO=unified   # or: control, data
+# 1. Set up the cluster for your chosen topology (downloads tools, generates certs, launches kind, installs chart)
+bin/reset-local-dev --topology=unified   # or: control, data
 
-# 2. Set up the cluster (downloads tools, generates certs, launches kind, installs chart)
-bin/reset-local-dev
+# 2. Run the tests (does NOT tear down the cluster — re-run freely while iterating)
+uv run pytest tests/functional/unified
 
-# 3. Run the tests (does NOT tear down the cluster — re-run freely while iterating)
-uv run pytest tests/functional/${TEST_SCENARIO}
-
-# 4. See helper file paths (kubeconfig, etc.)
+# 3. See helper file paths (kubeconfig, etc.)
 make show-test-helper-files
 ```
 

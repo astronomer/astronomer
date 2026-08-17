@@ -322,7 +322,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"operator": {"enabled": True}}},
+            values={"global": {"airflowOperator": {"enabled": True}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
@@ -336,7 +336,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"operator": {"enabled": False}}},
+            values={"global": {"airflowOperator": {"enabled": False}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
@@ -347,7 +347,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"operator": {"enabled": True}, "clusterRoles": False}},
+            values={"global": {"airflowOperator": {"enabled": True}, "clusterRoles": False}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]

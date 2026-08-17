@@ -3,17 +3,20 @@
 Follow-up to the dual-host work (PINF-809). Five non-auth-sidecar templates on the auth
 flow still hardcoded `global.baseDomain`; under control-plane HA they must resolve to
 `global.controlPlaneHA.globalBaseDomain` (the global customer-facing host the session cookie
-is scoped to), falling back to `baseDomain` when HA is off or globalBaseDomain is unset:
+is scoped to), falling back to `baseDomain` when HA is off:
 
   * `houston.internalauthurl` helper  -> `auth-url` annotation (shared by the three ingresses)
   * `houston-proxy` helper            -> elasticsearch `proxy_pass`
   * `auth-signin` annotation          -> prometheus / alertmanager / grafana ingresses
 
-Precedence is gated on `and controlPlaneHA.enabled controlPlaneHA.globalBaseDomain`: the
-auth-url / proxy_pass helper branches are only reachable in non-control modes, where
-globalBaseDomain may be unset (e.g. data planes) and must fall back to baseDomain rather
-than render a broken `https://houston./...` URL.
+Precedence is gated on `and controlPlaneHA.enabled controlPlaneHA.globalBaseDomain`. The
+helper fallback to `baseDomain` is now reachable only when HA is off: PINF-1070 makes
+globalBaseDomain REQUIRED on every plane (data planes included) whenever HA is enabled, so an
+HA-on-without-globalBaseDomain render is a hard failure (validate-controlplane-ha.yaml guard)
+rather than the graceful data-plane fallback assumed here originally.
 """
+
+from subprocess import CalledProcessError
 
 import pytest
 
@@ -81,22 +84,19 @@ class TestAuthSigninGlobalBaseDomain:
         )
         assert docs[0]["metadata"]["annotations"][AUTH_SIGNIN] == f"https://app.{BASE_DOMAIN}/login"
 
-    def test_ha_on_without_global_base_domain_falls_back_to_base_domain(self, kube_version):
-        """HA on but globalBaseDomain unset must not emit a broken empty-host redirect.
-
-        Only the prometheus ingress can render auth-signin in this state: grafana/alertmanager
-        render on control/unified only, and a control-plane render with HA on + no
-        globalBaseDomain fails the cp-identity-secret guard. The prometheus data-plane render
-        exercises the shared global.authBaseDomain fallback for the auth-signin annotation.
+    def test_ha_on_without_global_base_domain_fails(self, kube_version):
+        """PINF-1070: enabling HA without globalBaseDomain is a hard render failure on every plane
+        (the shared validate-controlplane-ha.yaml guard), so the data-plane auth-signin fallback
+        path is now unreachable. Previously this rendered and fell back to baseDomain, under the
+        now-corrected "globalBaseDomain is control-plane-only" framing.
         """
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=[PROMETHEUS_INGRESS],
-            values=_values("data", ha=True),
-        )
-        auth_signin = docs[0]["metadata"]["annotations"][AUTH_SIGNIN]
-        assert auth_signin == f"https://app.{BASE_DOMAIN}/login"
-        assert "app./login" not in auth_signin
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                show_only=[PROMETHEUS_INGRESS],
+                values=_values("data", ha=True),
+            )
+        assert "global.controlPlaneHA.globalBaseDomain is required" in excinfo.value.stderr.decode("utf-8")
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -123,17 +123,17 @@ class TestAuthUrlGlobalBaseDomain:
         )
         assert docs[0]["metadata"]["annotations"][AUTH_URL] == f"https://houston.{BASE_DOMAIN}/v1/authorization"
 
-    def test_ha_on_without_global_base_domain_falls_back_to_base_domain(self, kube_version):
-        """Data plane with HA on but no globalBaseDomain (never templated there) must not
-        emit a broken empty-host URL — it falls back to baseDomain."""
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=[PROMETHEUS_INGRESS],
-            values=_values("data", ha=True),
-        )
-        auth_url = docs[0]["metadata"]["annotations"][AUTH_URL]
-        assert auth_url == f"https://houston.{BASE_DOMAIN}/v1/authorization"
-        assert "houston./" not in auth_url
+    def test_ha_on_without_global_base_domain_fails(self, kube_version):
+        """PINF-1070: HA on without globalBaseDomain now fails the render on every plane (the
+        shared validate-controlplane-ha.yaml guard), so the data-plane auth-url fallback path is
+        unreachable. Previously this rendered and fell back to baseDomain."""
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                show_only=[PROMETHEUS_INGRESS],
+                values=_values("data", ha=True),
+            )
+        assert "global.controlPlaneHA.globalBaseDomain is required" in excinfo.value.stderr.decode("utf-8")
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -160,12 +160,14 @@ class TestHoustonProxyGlobalBaseDomain:
         )
         assert f"proxy_pass https://houston.{BASE_DOMAIN}/v1/elasticsearch;" in _es_nginx_conf(docs)
 
-    def test_ha_on_without_global_base_domain_falls_back_to_base_domain(self, kube_version):
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=[ES_NGINX_CONFIGMAP],
-            values=_values("data", ha=True),
-        )
-        nginx_conf = _es_nginx_conf(docs)
-        assert f"proxy_pass https://houston.{BASE_DOMAIN}/v1/elasticsearch;" in nginx_conf
-        assert "houston./v1/elasticsearch" not in nginx_conf
+    def test_ha_on_without_global_base_domain_fails(self, kube_version):
+        """PINF-1070: HA on without globalBaseDomain now fails the render on every plane (the
+        shared validate-controlplane-ha.yaml guard), so the data-plane proxy_pass fallback path is
+        unreachable. Previously this rendered and fell back to baseDomain."""
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                show_only=[ES_NGINX_CONFIGMAP],
+                values=_values("data", ha=True),
+            )
+        assert "global.controlPlaneHA.globalBaseDomain is required" in excinfo.value.stderr.decode("utf-8")

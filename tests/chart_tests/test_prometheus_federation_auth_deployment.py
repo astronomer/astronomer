@@ -71,6 +71,11 @@ class TestPrometheusFederationAuthDeployment:
         assert "var-run" in volumes
         assert volumes["var-run"]["emptyDir"] == {}
 
+        assert federation_auth_container["resources"] == {
+            "limits": {"cpu": "200m", "memory": "256Mi"},
+            "requests": {"cpu": "100m", "memory": "128Mi"},
+        }
+
     def test_prometheus_federation_auth_deployment_not_created_in_control_mode(self, kube_version):
         """Test that the deployment is not created when plane mode is control."""
         docs = render_chart(
@@ -140,7 +145,7 @@ class TestPrometheusFederationAuthDeployment:
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "data"}},
-                "federation": {"auth": {"resources": custom_resources}},
+                "prometheus": {"federation": {"auth": {"resources": custom_resources}}},
             },
             show_only=["charts/prometheus/templates/prometheus-federation-auth-deployment.yaml"],
         )

@@ -96,6 +96,12 @@ class TestHoustonPodManagers:
                     assert {"mountPath": "/houston/node_modules/.cache", "name": "tmp"} not in container["volumeMounts"], (
                         f"{pod_name}/{container['name']} unnecessary mount: /houston/node_modules/.cache"
                     )
+                case "vector":
+                    # Not a Houston Node.js process - no node_modules cache or Houston TLS
+                    # trust store to write, just the generic RORFS scratch space.
+                    assert {"mountPath": "/tmp", "name": "tmp"} in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} missing mount: /tmp"
+                    )
                 case _:
                     assert {"mountPath": "/tmp", "name": "tmp"} in container["volumeMounts"], (
                         f"{pod_name}/{container['name']} missing mount: /tmp"

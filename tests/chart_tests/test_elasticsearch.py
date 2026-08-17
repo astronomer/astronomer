@@ -57,6 +57,10 @@ class TestElasticSearch:
             "runAsNonRoot": True,
             "runAsUser": 1000,
         }
+        assert curator_container["resources"] == {
+            "limits": {"cpu": "200m", "memory": "256Mi"},
+            "requests": {"cpu": "100m", "memory": "128Mi"},
+        }
 
         # elasticsearch master
         assert master_doc["kind"] == "StatefulSet"

@@ -12,7 +12,7 @@ metadata:
     astronomer.io/platform-release: {{ .Release.Name }}
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/port: "{{ .Values.ports.managerContainerPort }}"
+    prometheus.io/port: "{{ .Values.ports.managerUpstreamPort }}"
 
   name: {{ .Release.Name }}-aocm-metrics-service
   namespace: '{{ .Release.Namespace }}'
@@ -21,7 +21,7 @@ spec:
   type: ClusterIP
   ports:
   - name: metrics
-    port: {{ .Values.ports.managerContainerPort }}
+    port: {{ .Values.ports.managerUpstreamPort }}
     targetPort: {{ .Values.ports.managerUpstreamPort }}
     appProtocol: http
     protocol: TCP

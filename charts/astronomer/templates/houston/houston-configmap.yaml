@@ -78,12 +78,15 @@ data:
       cookieName: {{ . }}
       {{- end }}
       {{- end }}
+      {{- if .Values.global.dataPlaneFailover.enabled }}
+      dataPlaneFailover:
+        enabled: {{ .Values.global.dataPlaneFailover.enabled }}
+      {{- end }}
       {{- if .Values.registry.auth.secretName }}
       registryAuthSecret: {{ .Values.registry.auth.secretName }}
       {{- end }}
       releaseName: {{ .Release.Name }}
       releaseNamespace: {{ .Release.Namespace }}
-      releaseVersion: {{ .Chart.Version }}
       {{- if .Values.global.tlsSecret }}
       tlsSecretName: {{ .Values.global.tlsSecret }}
       {{- end }}
@@ -112,18 +115,22 @@ data:
 
       mode:
         operator:
-          enabled: {{.Values.global.operator.enabled}}
+          enabled: {{.Values.global.airflowOperator.enabled}}
 
       deployMechanisms:
         dagOnlyDeployment:
           enabled: {{ .Values.global.deployMechanisms.dagOnlyDeployment.enabled }}
 
+      {{- $grafanaLinkEnabled := true }}
+      {{- if and (hasKey .Values.global "grafana") (kindIs "map" .Values.global.grafana) (hasKey .Values.global.grafana "enabled") }}
+      {{- $grafanaLinkEnabled = .Values.global.grafana.enabled }}
+      {{- end }}
       metricsReporting:
         taskUsageMetrics:
           enabled: {{ .Values.global.metricsReporting.taskUsageMetrics.enabled }}
           reportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
         grafana:
-          enabled: true
+          enabled: {{ $grafanaLinkEnabled }}
 
       deploymentLifecycle:
         deployRollback:
@@ -687,7 +694,10 @@ data:
     operator:
       adoption:
         # Adoption requires operator mode to be enabled; only both together enable it.
-        enabled: {{ and .Values.global.operator.enabled .Values.global.operator.adoption.enabled }}
+        enabled: {{ and .Values.global.airflowOperator.enabled .Values.global.airflowOperator.adoption.enabled }}
+
+    customRBAC:
+      enabled: {{ .Values.global.customRBAC.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |

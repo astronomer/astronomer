@@ -93,7 +93,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.15
+      tag: 2.0.19
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
@@ -102,24 +102,31 @@ global:
   # If you do NOT want to use the default configured nginx ingress controller, add the ingressClassName you want to replace it with
   # If no value is provided, the default will be set to <release-name>-nginx and the nginx ingress controller will be created with that name
   ingressClassName: ~
-  operator:
+  airflowOperator:
     # Turn on operator-based Airflow deployments. When enabled, this chart installs
-    # the airflow-operator by default and grants Astronomer the permissions it needs
+    # the airflow-operator by default and grants APC the permissions it needs
     # to manage Airflow deployments through the operator.
     #
     # Already running your own operator on the cluster? Keep this enabled, but set
-    # `airflow-operator.enabled: false` (see Chart.yaml) so Astronomer works with your
+    # `airflow-operator.enabled: false` (see Chart.yaml) so APC works with your
     # existing operator instead of installing its own.
     enabled: false
 
     adoption:
-      # Allow Astronomer to adopt Airflow deployments that already exist on your
+      # Allow APC to adopt Airflow deployments that already exist on your
       # cluster, so you can bring them under management without recreating them.
       enabled: true
 
   # Feature flags
   rbac:
     enabled: true
+
+  # Custom roles: define your own roles from a catalog of granular permissions
+  # instead of assigning only the built-in roles. Covers Workspace and Deployment
+  # access, including access to the Airflow UI and API.
+  # Unrelated to `rbac` above, which controls Kubernetes RBAC resources.
+  customRBAC:
+    enabled: false
 
   scc:
     enabled: false
@@ -180,7 +187,7 @@ global:
     dagOnlyDeployment:
       enabled: false
       repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.9.10
+      tag: 0.9.11
       securityContexts:
         pod:
           fsGroup: 50000
@@ -193,14 +200,20 @@ global:
       client:
         readinessProbe: {}
         livenessProbe: {}
-      resources: {}
+      resources:
+        limits:
+          cpu: 200m
+          memory: 384Mi
+        requests:
+          cpu: 200m
+          memory: 384Mi
       persistence: {}
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.31.2
+    tag: 1.31.3
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -320,20 +333,20 @@ global:
       enabled: false
       name: sidecar-log-consumer
       repository: quay.io/astronomer/ap-vector
-      tag: 0.56.0-2
+      tag: 0.56.0-3
       customConfig: false
       indexPattern: ~
       extraEnv: []
       securityContext: {}
       readinessProbe: {}
       livenessProbe: {}
-      resources: {}
-      #  requests:
-      #    cpu: "100m"
-      #    memory: "386Mi"
-      #  limits:
-      #    cpu: "100m"
-      #    memory: "386Mi"
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "384Mi"
+        limits:
+          cpu: "100m"
+          memory: "384Mi"
 
   # External ES logging
   customLogging:
@@ -403,36 +416,36 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.30.0-2
+        tag: 0.30.0-4
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.6.4-1
+        tag: 8.8.1-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-19
+        tag: 1.24.1-22
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.0-5
+        tag: 0.12.1-4
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.7.13
+        tag: 2026.8.3
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.7.13
+        tag: 2026.8.3
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.7.13
+        tag: 2026.8.3
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.4.0
+        tag: 0.4.3
     metrics:
       enabled: false
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.18
+      tag: 0.1.19
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
@@ -494,6 +507,10 @@ astronomer:
         securityContext:
           runAsNonRoot: true
           allowPrivilegeEscalation: false
+          runAsUser: 65532
+          capabilities:
+            drop:
+              - ALL
 
         resources:
           requests:

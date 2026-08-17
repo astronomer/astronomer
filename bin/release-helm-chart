@@ -79,6 +79,31 @@ pre-flight-setup() {
   export BOTO_CONFIG=/dev/null
 }
 
+update_index() {
+  # Update index.yaml transactionally: only overwrite it if nobody else has
+  # updated it since we last read it. airflow-chart publishes to this same
+  # bucket, so concurrent releases can otherwise clobber each other's merge.
+  gen=$(gcloud storage objects describe "gs://${target_repo}/index.yaml" --format="value(generation)" 2>/dev/null || echo 0)
+  if [ "${gen}" -eq 0 ] ; then
+    echo "!!! P0: gs://${target_repo}/index.yaml is missing or unreadable !!!"
+    echo "Every previously published chart version would become undiscoverable via"
+    echo "'helm repo update' if we silently generated a replacement index.yaml here. Refusing"
+    echo "to proceed -- investigate immediately whether the object was actually deleted, or"
+    echo "the describe call failed for another reason (auth/permissions/network), before"
+    echo "re-running."
+    exit 1
+  else
+    echo "-> merging into existing index.yaml (generation ${gen}) from gs://${target_repo}"
+    rm -f /tmp/index.yaml.current
+    gcloud storage cp "gs://${target_repo}/index.yaml#${gen}" /tmp/index.yaml.current
+    sha256sum /tmp/index.yaml.current
+    helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
+    diff /tmp/index.yaml.current index.yaml || true
+  fi
+  sha256sum index.yaml
+  gcloud storage cp --cache-control "${index_cache_control}" --if-generation-match "${gen}" ./index.yaml "gs://${target_repo}"
+}
+
 process_and_release_chart_file() {
   # Unzip the artifact
   tar -xvzf "$helm_chart_path" -C .
@@ -94,16 +119,18 @@ process_and_release_chart_file() {
   echo "Releasing chart..."
 
   set -x
-  # Set up the index.yaml file
-  rm -f /tmp/index.yaml.current
-  gcloud storage cp "gs://${target_repo}/index.yaml" /tmp/index.yaml.current
-  sha256sum /tmp/index.yaml.current
-  helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
-  diff /tmp/index.yaml.current index.yaml || true
-  sha256sum index.yaml
-
   gcloud storage cp "$helm_chart_path" "gs://${target_repo}"
-  gcloud storage cp --cache-control "public, max-age=${max_age}" ./index.yaml "gs://${target_repo}"
+
+  attempt=1
+  until update_index ; do
+    echo "Index update failed (attempt ${attempt})"
+    if (( attempt++ == 3 )) ; then
+      echo "ERROR: failed to update index after 3 attempts!"
+      exit 1
+    fi
+    echo "Retrying in 5 seconds..."
+    sleep 5
+  done
 
   set +x
   hr
@@ -117,7 +144,9 @@ release_to_dev() {
   # Copy the artifact
   cp "$helm_chart_path" .
 
-  max_age="0"
+  # index.yaml must never be served stale from cache: CI/stage-cluster
+  # upgrades poll right after a release and need to see the new version.
+  index_cache_control="no-cache, no-store, max-age=0"
   process_and_release_chart_file
 }
 
@@ -128,7 +157,7 @@ release_to_pub() {
   # Fetch artifact from helm-dev
   wget "http://$dev_repo/${helm_chart_path##*/}"
 
-  max_age="300"
+  index_cache_control="public, max-age=300"
   process_and_release_chart_file
 }
 

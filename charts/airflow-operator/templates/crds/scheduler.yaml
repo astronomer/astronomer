@@ -4,6 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    helm.sh/resource-policy: keep
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
   name: schedulers.airflow.apache.org
 spec:

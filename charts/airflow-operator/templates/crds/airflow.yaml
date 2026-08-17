@@ -4,6 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    helm.sh/resource-policy: keep
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
   name: airflows.airflow.apache.org
 spec:
@@ -1644,6 +1645,8 @@ spec:
                 type: string
               inClusterPostgres:
                 default: false
+                type: boolean
+              isLowLatency:
                 type: boolean
               localSettings:
                 default:
