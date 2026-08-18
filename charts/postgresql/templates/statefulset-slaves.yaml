@@ -76,7 +76,9 @@ spec:
             chown {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} /var/run/postgresql
             chmod 0700 /var/run/postgresql
         securityContext:
+        {{- if not .Values.global.openshift.enabled }}
           runAsUser: {{ .Values.volumePermissions.securityContext.runAsUser }}
+        {{- end }}
           runAsNonRoot: {{ ne (.Values.volumePermissions.securityContext.runAsUser | int) 0 }}
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
