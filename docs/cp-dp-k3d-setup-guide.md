@@ -854,6 +854,29 @@ kubectl --context k3d-dp01 run test-curl --rm -it --restart=Never --image=curlim
 docker exec k3d-dp01-server-0 sh -c 'grep -n "houston.localtest.me" /etc/hosts || true'
 ```
 
+### Helper containers exit 127, or setup fails with `[Errno 21] Is a directory`
+
+Three helper containers bind-mount a single config file from `~/.local/share/astronomer-software/`:
+the DNS container (`cp-dp-dnsmasq.conf`), the SNI proxy (`cp-dp-proxy-nginx.conf`), and each registry
+proxy (`registry-configs/*.yml`).
+
+Docker creates the source of a bind mount as an empty directory when that source does not exist. If
+those files are removed while the containers still exist, the next Docker/OrbStack restart recreates
+each path as a directory. The containers then fail to start (`not a directory: Are you trying to
+mount a directory onto a file`), and the setup script fails to write its config over the directory.
+
+Re-running the setup repairs it — the stub directories are removed and the configs rewritten:
+
+```bash
+python3 bin/setup-cp-dp-k3d.py --interactive
+```
+
+To confirm the containers came back:
+
+```bash
+docker ps --filter name=astro-cp-dp --filter name=astronomer-registry-proxy
+```
+
 ### Browser works but CLI (`astro`, `curl`) fails
 
 If the browser can load `https://houston.localtest.me` but `astro login localtest.me` fails, it usually means the

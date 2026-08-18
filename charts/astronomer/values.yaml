@@ -19,7 +19,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.1-12
+    tag: 3.1.1-13
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
@@ -32,7 +32,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.19
+    tag: 2.0.20
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
@@ -786,6 +786,17 @@ commander:
     retryAttempts: 2
     retryDelay: 10
     extraEnv: []
+    # -- Service account configuration
+    serviceAccount:
+      # -- Specifies whether a service account should be created
+      create: true
+      # -- Annotations to add to the service account
+      annotations: {}
+      # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+      name: ""
+      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+      automountServiceAccountToken: true
+
 
 pilot:
   # -- Enable Pilot deployment (data plane only)

@@ -111,8 +111,8 @@ jobs:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     # https://circleci.com/docs/using-docker/#x86
-    resource_class: large
-    parallelism: 5
+    resource_class: "medium+"
+    parallelism: 8
     steps:
       - checkout
       - run:
