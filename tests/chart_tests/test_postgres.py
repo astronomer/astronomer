@@ -165,9 +165,6 @@ class TestPostgresql:
         assert "init-postgresql-run" in init_containers_by_name
         assert init_containers_by_name["init-postgresql-run"]["securityContext"]["runAsUser"] == 0
 
-        init_containers = sts["spec"]["template"]["spec"]["initContainers"]
-        assert any(c["name"] == "init-postgresql-run" for c in init_containers)
-
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):
         """Test postgresql with privateRegistry=True."""
         repository = "private-repository.example.com"
