@@ -41,7 +41,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 2026.7.13
+      tag: 2026.8.17
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -128,7 +128,7 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.9.10
+    tag: 0.9.12
     securityContexts:
       pod:
         fsGroup: 50000
@@ -152,7 +152,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.56.0-2
+    tag: 0.56.0-3
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -171,7 +171,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.31.2
+    tag: 1.31.3
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -302,34 +302,34 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.30.0-2
+        tag: 0.30.0-4
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.6.4-1
+        tag: 8.8.1-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-19
+        tag: 1.24.1-24
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.1-2
+        tag: 0.12.1-6
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.7.13
+        tag: 2026.8.17
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.7.13
+        tag: 2026.8.17
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.7.13
+        tag: 2026.8.17
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.2.15
+        tag: 0.5.1
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.18
+      tag: 0.1.20
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
