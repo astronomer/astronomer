@@ -92,8 +92,7 @@ class TestPostgresql:
     def test_postgresql_statefulset_init_postgresql_run_on_openshift(self, kube_version):
         """On OpenShift the SCC assigns each container's UID, so init-postgresql-run must
         not pin runAsUser when global.openshift.enabled is True - same guard the main
-        container already uses elsewhere in this template. See PINF-347 review discussion.
-        """
+        container already uses elsewhere in this template. See PINF-347 review discussion."""
         for show_only in [
             "charts/postgresql/templates/statefulset.yaml",
             "charts/postgresql/templates/statefulset-slaves.yaml",
@@ -113,6 +112,14 @@ class TestPostgresql:
             init_container = next(c for c in init_containers if c["name"] == "init-postgresql-run")
             assert "runAsUser" not in init_container["securityContext"], (
                 f"{show_only}: init-postgresql-run must not pin runAsUser when global.openshift.enabled is True"
+            )
+            command = "\n".join(init_container["command"])
+            assert 'chown "$(id -u)" /var/run/postgresql' in command, (
+                f"{show_only}: init-postgresql-run must chown to its own runtime UID on OpenShift, "
+                f"not a hardcoded values.yaml UID that won't match the SCC-assigned one"
+            )
+            assert "chown 1001:1001" not in command, (
+                f"{show_only}: init-postgresql-run must not chown to the hardcoded non-OpenShift UID/GID on OpenShift"
             )
 
     def test_postgresql_statefulset_slaves_volume_mounts(self, kube_version):
