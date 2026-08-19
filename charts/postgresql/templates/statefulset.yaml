@@ -71,7 +71,7 @@ spec:
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
       initContainers:
-      {{- if .Values.volumePermissions.enabled }}
+      {{- if .Values.postgresqlRunPermissions.enabled }}
       - name: init-postgresql-run
         image: {{ template "postgresql.image" . }}
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
@@ -95,9 +95,9 @@ spec:
             chmod 0700 /var/run/postgresql
         securityContext:
         {{- if not .Values.global.openshift.enabled }}
-          runAsUser: {{ .Values.volumePermissions.securityContext.runAsUser }}
+          runAsUser: {{ .Values.postgresqlRunPermissions.securityContext.runAsUser }}
         {{- end }}
-          runAsNonRoot: {{ ne (.Values.volumePermissions.securityContext.runAsUser | int) 0 }}
+          runAsNonRoot: {{ ne (.Values.postgresqlRunPermissions.securityContext.runAsUser | int) 0 }}
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
           capabilities:

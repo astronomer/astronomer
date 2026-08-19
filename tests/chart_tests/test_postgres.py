@@ -37,29 +37,32 @@ class TestPostgresql:
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in sts["spec"]
 
-        # init-postgresql-run is gated behind volumePermissions.enabled (default
-        # false) and must not render unconditionally: it requires a root (or
-        # capability-added) init container, which OpenShift/restricted-PodSecurity
-        # clusters may not permit at all. See PINF-347 review discussion.
-        assert not sts["spec"]["template"]["spec"]["initContainers"]
+        # init-postgresql-run is on by default (postgresqlRunPermissions.enabled
+        # defaults true) - without it, upgrades from a pre-Chainguard image crash on
+        # startup, which is the bug PINF-347 exists to fix, so this can't be opt-in
+        # only. It's a dedicated flag, separate from the pre-existing
+        # volumePermissions/init-chmod-data toggle (which stays opt-in, unaffected).
+        # See PINF-347 review discussion.
+        init_containers = sts["spec"]["template"]["spec"]["initContainers"]
+        assert len(init_containers) == 1
+        assert init_containers[0]["name"] == "init-postgresql-run"
 
     def test_postgresql_statefulset_init_postgresql_run(self, kube_version):
-        """Test the postgresql-run ownership-fix init container, opt-in via
-        volumePermissions.enabled.
+        """Test the postgresql-run ownership-fix init container, on by default via its
+        own dedicated postgresqlRunPermissions.enabled flag.
 
         The postgresql-run emptyDir is created root-owned by kubelet; fsGroup only
         changes its GID, not its UID, so the non-root postgres container can't chmod
         it itself. This init container hands ownership to the runAsUser before the
-        main container starts. It must stay opt-in (not unconditional) since some
-        clusters (OpenShift SCC, restricted PodSecurity) disallow root/capability-
-        adding init containers outright. See PINF-347.
+        main container starts. It defaults to enabled, since without it every
+        upgrade from a pre-Chainguard image crashes on startup - the bug PINF-347
+        exists to fix. Clusters that can't run a root (or capability-adding) init
+        container at all (e.g. some restricted-PodSecurity/OpenShift SCCs) can
+        explicitly disable it. See PINF-347.
         """
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {"postgresql": {"enabled": True}},
-                "postgresql": {"volumePermissions": {"enabled": True}},
-            },
+            values={"global": {"postgresql": {"enabled": True}}},
             show_only=["charts/postgresql/templates/statefulset.yaml"],
         )
         sts = docs[0]
@@ -80,7 +83,7 @@ class TestPostgresql:
             values={
                 "global": {"postgresql": {"enabled": True}},
                 "postgresql": {
-                    "volumePermissions": {"enabled": True, "securityContext": {"runAsUser": 1002}},
+                    "postgresqlRunPermissions": {"securityContext": {"runAsUser": 1002}},
                 },
             },
             show_only=["charts/postgresql/templates/statefulset.yaml"],
@@ -89,10 +92,38 @@ class TestPostgresql:
         assert init_container["securityContext"]["runAsUser"] == 1002
         assert init_container["securityContext"]["runAsNonRoot"] is True
 
+    def test_postgresql_statefulset_init_postgresql_run_disabled(self, kube_version):
+        """Clusters whose PodSecurityPolicy/SCC disallows a root (or capability-adding)
+        init container outright must be able to opt out of init-postgresql-run entirely,
+        even though it's on by default. See PINF-347.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"postgresql": {"enabled": True}},
+                "postgresql": {"postgresqlRunPermissions": {"enabled": False}},
+            },
+            show_only=["charts/postgresql/templates/statefulset.yaml"],
+        )
+        init_containers = docs[0]["spec"]["template"]["spec"]["initContainers"] or []
+        assert not any(c["name"] == "init-postgresql-run" for c in init_containers)
+
     def test_postgresql_statefulset_init_postgresql_run_on_openshift(self, kube_version):
         """On OpenShift the SCC assigns each container's UID, so init-postgresql-run must
         not pin runAsUser when global.openshift.enabled is True - same guard the main
-        container already uses elsewhere in this template. See PINF-347 review discussion."""
+        container already uses elsewhere in this template. See PINF-347 review discussion.
+
+        It also must not chown to the hardcoded securityContext.runAsUser/fsGroup values.yaml
+        values, since neither this init container nor the main container pins a UID on
+        OpenShift - the SCC assigns one arbitrary UID to the whole pod, shared identically by
+        every container that doesn't override it. A hardcoded chown target wouldn't match that
+        assigned UID and would reintroduce the original permission failure, so the command must
+        chown to its own runtime UID ($(id -u)) instead. See PINF-347 review discussion.
+
+        This container's enablement itself is not OpenShift-aware - same as the pre-existing
+        init-chmod-data sibling container, it's on (or off) uniformly regardless of platform,
+        and only the internal securityContext/command details branch on global.openshift.enabled.
+        """
         for show_only in [
             "charts/postgresql/templates/statefulset.yaml",
             "charts/postgresql/templates/statefulset-slaves.yaml",
@@ -101,10 +132,7 @@ class TestPostgresql:
                 kube_version=kube_version,
                 values={
                     "global": {"postgresql": {"enabled": True}, "openshift": {"enabled": True}},
-                    "postgresql": {
-                        "replication": {"enabled": True},
-                        "volumePermissions": {"enabled": True},
-                    },
+                    "postgresql": {"replication": {"enabled": True}},
                 },
                 show_only=[show_only],
             )
@@ -146,24 +174,20 @@ class TestPostgresql:
         volumes = sts["spec"]["template"]["spec"]["volumes"]
         assert {"name": "postgresql-run", "emptyDir": {}} in volumes
 
-        # init-postgresql-run must not render by default - it's opt-in via
-        # volumePermissions.enabled, same reasoning as the master statefulset. See
-        # test_postgresql_statefulset_init_postgresql_run and PINF-347.
+        # init-postgresql-run is on by default here too, same reasoning as the master
+        # statefulset. See test_postgresql_statefulset_init_postgresql_run and PINF-347.
         init_containers = sts["spec"]["template"]["spec"]["initContainers"] or []
-        assert not any(c["name"] == "init-postgresql-run" for c in init_containers)
+        assert any(c["name"] == "init-postgresql-run" for c in init_containers)
 
     def test_postgresql_statefulset_slaves_init_postgresql_run(self, kube_version):
         """Test the postgresql-run ownership-fix init container renders on the slave
-        statefulset when opted in via volumePermissions.enabled. See PINF-347.
+        statefulset by default. See PINF-347.
         """
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {"postgresql": {"enabled": True}},
-                "postgresql": {
-                    "replication": {"enabled": True},
-                    "volumePermissions": {"enabled": True},
-                },
+                "postgresql": {"replication": {"enabled": True}},
             },
             show_only=["charts/postgresql/templates/statefulset-slaves.yaml"],
         )
