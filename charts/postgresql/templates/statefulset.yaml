@@ -71,7 +71,11 @@ spec:
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
       initContainers:
-      {{- if .Values.postgresqlRunPermissions.enabled }}
+      {{/* Hard-disabled on OpenShift regardless of postgresqlRunPermissions.enabled - see
+           the "postgresql.postgresqlRunPermissions.enabled" helper in _helpers.tpl for why.
+           Because of that, everything below can assume global.openshift.enabled is false
+           whenever it actually renders, so it doesn't need its own OpenShift branching. */}}
+      {{- if eq (include "postgresql.postgresqlRunPermissions.enabled" .) "true" }}
       - name: init-postgresql-run
         image: {{ template "postgresql.image" . }}
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
@@ -81,22 +85,10 @@ spec:
           - -c
           - |
             mkdir -p /var/run/postgresql
-          {{- if .Values.global.openshift.enabled }}
-            # On OpenShift neither this init container nor the main container pins
-            # runAsUser (see the guard above), so the SCC assigns one arbitrary UID
-            # to the pod and both containers inherit it identically. Chowning to a
-            # hardcoded values.yaml UID would not match that assigned UID and would
-            # reintroduce the original permission failure - chown to our own runtime
-            # UID instead, which the main container is guaranteed to share.
-            chown "$(id -u)" /var/run/postgresql
-          {{- else }}
             chown {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} /var/run/postgresql
-          {{- end }}
             chmod 0700 /var/run/postgresql
         securityContext:
-        {{- if not .Values.global.openshift.enabled }}
           runAsUser: {{ .Values.postgresqlRunPermissions.securityContext.runAsUser }}
-        {{- end }}
           runAsNonRoot: {{ ne (.Values.postgresqlRunPermissions.securityContext.runAsUser | int) 0 }}
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false

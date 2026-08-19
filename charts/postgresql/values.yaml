@@ -78,10 +78,15 @@ volumePermissions:
 ## postgresql.conf still points unix_socket_directories at this path) crash on
 ## startup.
 ##
-## Disable this if your cluster's PodSecurityPolicy/SCC disallows an init container
-## that runs as root or adds CHOWN/FOWNER capabilities (e.g. some restricted-PodSecurity
-## or OpenShift clusters) - a fresh install doesn't need it, since unix_socket_directories
-## resolves to /tmp there instead.
+## Automatically forced off whenever global.openshift.enabled is true, regardless of
+## this setting - see the "postgresql.postgresqlRunPermissions.enabled" helper in
+## templates/_helpers.tpl. This container needs capabilities.add [CHOWN, FOWNER],
+## which OpenShift's default restricted SCC does not grant, so enabling it there
+## risks the pod failing SCC admission entirely rather than just crash-looping. A
+## fresh install doesn't need it either way, since unix_socket_directories resolves
+## to /tmp there. Clusters running a custom SCC that does permit this can't override
+## the auto-disable via values - the real fix for OpenShift is the image-level
+## entrypoint change (see the ap-vendor/postgresql companion fix).
 postgresqlRunPermissions:
   enabled: true
   securityContext:

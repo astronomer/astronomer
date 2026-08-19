@@ -108,21 +108,17 @@ class TestPostgresql:
         init_containers = docs[0]["spec"]["template"]["spec"]["initContainers"] or []
         assert not any(c["name"] == "init-postgresql-run" for c in init_containers)
 
-    def test_postgresql_statefulset_init_postgresql_run_on_openshift(self, kube_version):
-        """On OpenShift the SCC assigns each container's UID, so init-postgresql-run must
-        not pin runAsUser when global.openshift.enabled is True - same guard the main
-        container already uses elsewhere in this template. See PINF-347 review discussion.
+    def test_postgresql_statefulset_init_postgresql_run_hard_disabled_on_openshift(self, kube_version):
+        """init-postgresql-run must never render when global.openshift.enabled is True, even if
+        postgresqlRunPermissions.enabled is explicitly set to True.
 
-        It also must not chown to the hardcoded securityContext.runAsUser/fsGroup values.yaml
-        values, since neither this init container nor the main container pins a UID on
-        OpenShift - the SCC assigns one arbitrary UID to the whole pod, shared identically by
-        every container that doesn't override it. A hardcoded chown target wouldn't match that
-        assigned UID and would reintroduce the original permission failure, so the command must
-        chown to its own runtime UID ($(id -u)) instead. See PINF-347 review discussion.
-
-        This container's enablement itself is not OpenShift-aware - same as the pre-existing
-        init-chmod-data sibling container, it's on (or off) uniformly regardless of platform,
-        and only the internal securityContext/command details branch on global.openshift.enabled.
+        This container needs capabilities.add [CHOWN, FOWNER], which OpenShift's default
+        restricted SCC does not grant - enabling it there risks the pod failing SCC admission
+        entirely rather than just falling back to the original crash-loop bug. There's currently
+        no way to override this via values; the real fix for OpenShift is the image-level
+        entrypoint change (the ap-vendor/postgresql companion fix), which needs no k8s-side
+        chown at all. See the "postgresql.postgresqlRunPermissions.enabled" helper in
+        templates/_helpers.tpl and PINF-347 review discussion.
         """
         for show_only in [
             "charts/postgresql/templates/statefulset.yaml",
@@ -132,22 +128,19 @@ class TestPostgresql:
                 kube_version=kube_version,
                 values={
                     "global": {"postgresql": {"enabled": True}, "openshift": {"enabled": True}},
-                    "postgresql": {"replication": {"enabled": True}},
+                    "postgresql": {
+                        "replication": {"enabled": True},
+                        # Explicitly true, to prove the OpenShift guard overrides it rather than
+                        # merely relying on some other default happening to already be off.
+                        "postgresqlRunPermissions": {"enabled": True},
+                    },
                 },
                 show_only=[show_only],
             )
-            init_containers = docs[0]["spec"]["template"]["spec"]["initContainers"]
-            init_container = next(c for c in init_containers if c["name"] == "init-postgresql-run")
-            assert "runAsUser" not in init_container["securityContext"], (
-                f"{show_only}: init-postgresql-run must not pin runAsUser when global.openshift.enabled is True"
-            )
-            command = "\n".join(init_container["command"])
-            assert 'chown "$(id -u)" /var/run/postgresql' in command, (
-                f"{show_only}: init-postgresql-run must chown to its own runtime UID on OpenShift, "
-                f"not a hardcoded values.yaml UID that won't match the SCC-assigned one"
-            )
-            assert "chown 1001:1001" not in command, (
-                f"{show_only}: init-postgresql-run must not chown to the hardcoded non-OpenShift UID/GID on OpenShift"
+            init_containers = docs[0]["spec"]["template"]["spec"]["initContainers"] or []
+            assert not any(c["name"] == "init-postgresql-run" for c in init_containers), (
+                f"{show_only}: init-postgresql-run must not render when global.openshift.enabled is "
+                f"True, even with postgresqlRunPermissions.enabled explicitly set to True"
             )
 
     def test_postgresql_statefulset_slaves_volume_mounts(self, kube_version):
