@@ -38,10 +38,12 @@ set -ex
 # bare `helm template` call). Export it here so it's on PATH for the rest of this script.
 export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
 
-# Generate certificates in ~/.local/share/astronomer-software/certs
+# Generate certificates in ~/.local/share/astronomer-software/certs. (No separate
+# "private CA" step: setup-kind.py resolves mkcert's own root CA directly, via the same
+# mkcert -CAROOT mechanism the k3d CP/DP topology's setup script uses, and generate-tls
+# above already ran `mkcert -install` so that CA root exists.)
 "${BIN_DIR}/certs.py" cleanup
 "${BIN_DIR}/certs.py" generate-tls
-"${BIN_DIR}/certs.py" generate-private-ca
 
 # Create a KIND cluster and configure it for testing
 "${BIN_DIR}/setup-kind.py" "--topology=${TOPOLOGY}"

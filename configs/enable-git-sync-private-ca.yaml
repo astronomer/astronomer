@@ -26,13 +26,20 @@ astronomer:
             metrics:
               enabled: true
 
-
 global:
   # Helm REPLACES list values across -f files. configs/local-dev.yaml (applied earlier in
-  # the values order) sets [private-ca], so it MUST be re-listed here or the platform stops
+  # the values order) sets [mkcert-root-ca], so it MUST be re-listed here or the platform stops
   # trusting its own astronomer-tls CA. forgejo-ca is added so commander trusts it too, which
   # is what config-time credential validation against the private-CA Forgejo host needs
   # (TC-CA-12) -- a distinct trust layer from the relay's deployment-namespace mount.
+  #
+  # mkcert-root-ca is the SAME secret name/content/mechanism the k3d CP/DP topology uses
+  # (bin/setup-cp-dp-k3d.py's --mkcert-root-ca-secret-name) -- bin/setup-kind.py creates it here
+  # via the same _mkcert_caroot() helper. It used to be a separately-named, separately-generated
+  # `private-ca` fixture unique to this KIND topology; that duplication is what let PR #3494
+  # accidentally swap in the (at the time, different and nonexistent-here) k3d name, hanging
+  # every pod that mounts global.privateCaCerts until the install timed out (reverted in
+  # 11c238ebd, then unified for real by collapsing both topologies onto this one name/mechanism).
   privateCaCerts:
     - mkcert-root-ca
     - forgejo-ca
