@@ -1,6 +1,7 @@
 ########################################
 ## Elasticsearch Logging Ingress ##
 ########################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
 {{- if not .Values.global.customLogging.enabled }}
 {{- if eq (include "logging.enabled" .) "true" }}
 kind: Ingress
@@ -50,5 +51,6 @@ spec:
                 name: {{ .Release.Name }}-elasticsearch
                 port:
                   number: {{ .Values.common.ports.http }}
+{{- end }}
 {{- end }}
 {{- end }}

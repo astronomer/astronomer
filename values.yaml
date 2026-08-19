@@ -317,12 +317,15 @@ global:
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true
 
-
   manageClusterScopedResources:
     enabled: true
 
   perHostIngress:
     enabled: false
+
+  # Global Ingress flag to control ingress spec creation.
+  ingress:
+    enabled: true
 
   logging:
     indexNamePrefix: ~
