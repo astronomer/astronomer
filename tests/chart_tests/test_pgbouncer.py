@@ -351,7 +351,7 @@ class TestPGBouncerNetworkPolicy:
             values={
                 "global": {
                     "pgbouncer": {"enabled": True},
-                    "podDisruptionBudget": {
+                    "podDisruptionBudgets": {
                         "enabled": False,
                     },
                 }
