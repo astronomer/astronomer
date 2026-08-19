@@ -350,6 +350,7 @@ class TestPGBouncerNetworkPolicy:
             kube_version=kube_version,
             values={
                 "global": {
+                    "pgbouncer": {"enabled": True},
                     "podDisruptionBudget": {
                         "enabled": False,
                     }
