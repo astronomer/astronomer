@@ -46,6 +46,12 @@ dependencies:
     tags:
       - monitoring
 
+  # Laminar hibernator (apiserver + hypervisor) - data plane
+  - name: hibernator
+    condition: global.hibernator.enabled
+    tags:
+      - hibernator
+
   # Logging stack
   - name: elasticsearch
     condition: global.elasticsearch.enabled

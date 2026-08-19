@@ -303,6 +303,10 @@ global:
     enabled: false
   nodeExporter:
     enabled: false
+
+  # Laminar hibernator (apiserver + hypervisor). Data plane only.
+  hibernator:
+    enabled: false
   cadvisor:
     enabled: false
 
