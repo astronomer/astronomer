@@ -353,7 +353,7 @@ class TestPGBouncerNetworkPolicy:
                     "pgbouncer": {"enabled": True},
                     "podDisruptionBudget": {
                         "enabled": False,
-                    }
+                    },
                 }
             },
             show_only=["charts/pgbouncer/templates/pgbouncer-poddisruptionbudget.yaml"],
