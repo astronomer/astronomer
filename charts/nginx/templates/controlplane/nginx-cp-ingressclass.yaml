@@ -16,7 +16,7 @@ metadata:
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
 spec:
-  controller: k8s.io/ingress-nginx
+  controller: k8s.io/ingress-nginx-{{ .Release.Name }}
 {{- end }}
 {{- end }}
 {{- end }}

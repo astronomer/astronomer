@@ -518,7 +518,7 @@ class TestNginxIngressClass:
         doc = docs[0]
         assert doc["kind"] == "IngressClass"
         assert doc["metadata"]["name"] == "release-name-nginx"
-        assert doc["spec"]["controller"] == "k8s.io/ingress-nginx"
+        assert doc["spec"]["controller"] == "k8s.io/ingress-nginx-release-name"
 
     def test_ingressclassname_override_skips_default(self, plane_mode, ingressclass_file):
         """global.ingressClassName means the operator owns the class; skip the default IngressClass."""
