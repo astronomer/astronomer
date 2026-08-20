@@ -139,7 +139,7 @@ class TestAstronomerFileLogs:
                         self.fleuntd_container(container=container)
 
                 elif name == "astro-file-logs-houston-worker":
-                    if container["name"] == "houston":
+                    if container["name"] == "houston-worker":
                         self.houston_worker_container(container=container)
                     elif container["name"] == "vector":
                         self.fleuntd_container(container)

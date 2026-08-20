@@ -83,7 +83,7 @@ class TestHoustonApiDeployment:
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
-        env_vars = get_env_vars_dict(c_by_name["wait-for-db"]["env"])
+        env_vars = get_env_vars_dict(c_by_name["houston-wait-for-db"]["env"])
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
