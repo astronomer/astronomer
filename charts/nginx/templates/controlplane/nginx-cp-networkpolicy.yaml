@@ -1,6 +1,7 @@
 ##################################################
 ## Control Plane Nginx controller NetworkPolicy ##
 ##################################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if .Values.global.networkPolicy.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
@@ -34,5 +35,6 @@ spec:
       port: {{ .Values.ports.https }}
     - protocol: TCP
       port: {{ .Values.ports.defaultBackendHTTP }}
+{{- end }}
 {{- end }}
 {{- end }}

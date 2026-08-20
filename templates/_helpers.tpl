@@ -189,6 +189,21 @@ Returns the string "true" or "false" — compare with eq.
 {{- end }}
 
 {{/*
+Resolve the ingressClassName for Ingress resources. Uses global.ingressClassName if set,
+otherwise falls back to the value from the kubernetes.io/ingress.class annotation in
+global.extraAnnotations, or the default <release>-nginx.
+*/}}
+{{- define "global.ingressClassName" -}}
+{{- if .Values.global.ingressClassName -}}
+{{- .Values.global.ingressClassName -}}
+{{- else if .Values.global.extraAnnotations -}}
+{{- index .Values.global.extraAnnotations "kubernetes.io/ingress.class" | default (printf "%s-nginx" .Release.Name) -}}
+{{- else -}}
+{{- printf "%s-nginx" .Release.Name -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Master switch for all platform Ingress objects. Defaults to enabled so upgrades are a no-op;
 set global.ingress.enabled: false to suppress every Ingress. Defaults to true only when the
 key is absent (not via `default`, which treats a boolean false as empty).
