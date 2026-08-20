@@ -71,10 +71,6 @@ spec:
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
       initContainers:
-      {{/* Hard-disabled on OpenShift regardless of postgresqlRunPermissions.enabled - see
-           the "postgresql.postgresqlRunPermissions.enabled" helper in _helpers.tpl for why.
-           Because of that, everything below can assume global.openshift.enabled is false
-           whenever it actually renders, so it doesn't need its own OpenShift branching. */}}
       {{- if eq (include "postgresql.postgresqlRunPermissions.enabled" .) "true" }}
       - name: init-postgresql-run
         image: {{ template "postgresql.image" . }}
