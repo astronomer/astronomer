@@ -73,8 +73,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "external-secrets.rbacEnabled" -}}
-{{- and .Values.rbac.create .Values.serviceAccount.create -}}
+{{- if and .Values.rbac.create .Values.serviceAccount.create -}}
 true
+{{- end -}}
 {{- end -}}
 
 {{/*
