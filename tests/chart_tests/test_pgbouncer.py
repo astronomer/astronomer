@@ -343,3 +343,19 @@ class TestPGBouncerNetworkPolicy:
             doc for doc in docs if doc["kind"] == "NetworkPolicy" and doc["metadata"]["name"] == "release-name-pgbouncer-policy"
         ]
         assert len(pgbouncer_policies) == 0
+
+    def test_pgbouncer_pdb_overrides(self, kube_version):
+        """Test that the pgbouncer PodDisruptionBudget Not created when disabled globally with  global.podDisruptionBudget set to false."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "pgbouncer": {"enabled": True},
+                    "podDisruptionBudgets": {
+                        "enabled": False,
+                    },
+                }
+            },
+            show_only=["charts/pgbouncer/templates/pgbouncer-poddisruptionbudget.yaml"],
+        )
+        assert len(docs) == 0
