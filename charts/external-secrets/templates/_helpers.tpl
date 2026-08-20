@@ -72,12 +72,16 @@ app.kubernetes.io/name: {{ include "external-secrets.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{- define "external-secrets.rbacEnabled" -}}
+{{- and .Values.rbac.create .Values.serviceAccount.create -}}
+true
+{{- end -}}
+
 {{/*
 Create the name of the service account to use
 */}}
 {{- define "external-secrets.serviceAccountName" -}}
-{{- $rbacEnabled := and .Values.rbac.create .Values.serviceAccount.create  }}
-{{- if $rbacEnabled }}
+{{- if (include "external-secrets.rbacEnabled" . ) }}
 {{- default (include "external-secrets.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
@@ -153,7 +157,7 @@ Create the name of the pod disruption budget to use
 */}}
 {{- define "external-secrets.pdbName" -}}
 {{- .Values.podDisruptionBudget.nameOverride | default (printf "%s-pdb" (include "external-secrets.fullname" .)) }}
-{{- end }}
+{{- end -}}
 
 {{/*
 Fail the install if a cluster scoped reconciler is enabled while its namespace scoped counterpart is disabled
