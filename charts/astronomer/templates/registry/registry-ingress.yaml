@@ -1,6 +1,7 @@
 #################################
 ## Astronomer Registry Ingress ##
 #################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
 {{- if and .Values.global.baseDomain .Values.global.perHostIngress.enabled }}
 {{- if eq (include "registry.enabled" .) "true" }}
 kind: Ingress
@@ -45,5 +46,6 @@ spec:
               name: {{ template "registry.fullname" . }}
               port:
                 name: registry-http
+{{- end }}
 {{- end }}
 {{- end }}

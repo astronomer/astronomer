@@ -93,6 +93,17 @@ class TestIngress:
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
         assert all(doc["spec"]["ingressClassName"] == "release-name-nginx" for doc in ingresses)
 
+    def test_global_disabled_overrides(self, kube_version):
+        """global.ingress.enabled=false disables Ingress templates rendered by default from the platform."""
+        # perHostIngress enabled so the most ingresses would otherwise render (see
+        # test_single_ingress_per_host, which counts 8 with the gate on).
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"ingress": {"enabled": False}, "perHostIngress": {"enabled": True}}},
+        )
+        ingresses = [doc for doc in docs if doc["kind"].lower() == "Ingress".lower()]
+        assert not ingresses
+
     def test_prometheus_federate_ingress(self, kube_version):
         """Test prometheus federate ingress configuration"""
         docs = render_chart(

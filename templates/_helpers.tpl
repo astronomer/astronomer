@@ -202,3 +202,18 @@ global.extraAnnotations, or the default <release>-nginx.
 {{- printf "%s-nginx" .Release.Name -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+Master switch for all platform Ingress objects. Defaults to enabled so upgrades are a no-op;
+set global.ingress.enabled: false to suppress every Ingress. Defaults to true only when the
+key is absent (not via `default`, which treats a boolean false as empty).
+Defined in the parent chart so all sub-charts can include it.
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "global.ingress.enabled" -}}
+{{- if hasKey (.Values.global.ingress | default dict) "enabled" -}}
+{{- .Values.global.ingress.enabled -}}
+{{- else -}}
+true
+{{- end -}}
+{{- end }}

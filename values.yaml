@@ -93,7 +93,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.19
+      tag: 2.0.21
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
@@ -187,7 +187,7 @@ global:
     dagOnlyDeployment:
       enabled: false
       repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.9.11
+      tag: 0.9.12
       securityContexts:
         pod:
           fsGroup: 50000
@@ -320,12 +320,15 @@ global:
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true
 
-
   manageClusterScopedResources:
     enabled: true
 
   perHostIngress:
     enabled: false
+
+  # Global Ingress flag to control ingress spec creation.
+  ingress:
+    enabled: true
 
   logging:
     indexNamePrefix: ~
@@ -419,33 +422,33 @@ global:
         tag: 0.30.0-4
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.8.1-1
+        tag: 8.8.2
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-22
+        tag: 1.24.1-24
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.1-4
+        tag: 0.12.1-6
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.8.3
+        tag: 2026.8.17
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.8.3
+        tag: 2026.8.17
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.8.3
+        tag: 2026.8.17
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.4.3
+        tag: 0.5.1
     metrics:
       enabled: false
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.19
+      tag: 0.1.20
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:

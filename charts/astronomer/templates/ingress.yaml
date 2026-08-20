@@ -1,6 +1,7 @@
 ########################
 ## Astronomer Ingress ##
 ########################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
 {{- if and .Values.global.baseDomain ( not .Values.global.perHostIngress.enabled ) }}
 {{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- /* The global customer-facing host is served from the control plane only (customer UIs live on
@@ -114,6 +115,7 @@ spec:
               name: {{ template "registry.fullname" . }}
               port:
                 name: registry-http
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
