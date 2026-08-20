@@ -67,6 +67,31 @@ volumePermissions:
   securityContext:
     runAsUser: 0
 
+## Init container parameters:
+## postgresqlRunPermissions: Change ownership of the writable /var/run/postgresql
+## socket directory (mounted since the main container runs with
+## readOnlyRootFilesystem) so the non-root PostgreSQL container can chmod/chown it
+## itself on startup. A plain emptyDir is created root-owned by kubelet; fsGroup only
+## changes its GID, not its UID, so this ownership handoff has to happen in an init
+## container. Enabled by default, separately from the volumePermissions/init-chmod-data
+## fix above, since without it upgrades from a pre-Chainguard image (where
+## postgresql.conf still points unix_socket_directories at this path) crash on
+## startup.
+##
+## Automatically forced off whenever global.openshift.enabled is true, regardless of
+## this setting - see the "postgresql.postgresqlRunPermissions.enabled" helper in
+## templates/_helpers.tpl. This container needs capabilities.add [CHOWN, FOWNER],
+## which OpenShift's default restricted SCC does not grant, so enabling it there
+## risks the pod failing SCC admission entirely rather than just crash-looping. A
+## fresh install doesn't need it either way, since unix_socket_directories resolves
+## to /tmp there. Clusters running a custom SCC that does permit this can't override
+## the auto-disable via values - the real fix for OpenShift is the image-level
+## entrypoint change (see the ap-vendor/postgresql companion fix).
+postgresqlRunPermissions:
+  enabled: true
+  securityContext:
+    runAsUser: 0
+
 ## Use an alternate scheduler, e.g. "stork".
 ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
 ##

@@ -77,7 +77,7 @@ class TestHoustonPodManagers:
         pod_template = get_pod_template(pod_manager_doc, include_init_containers=True)
         assert {"emptyDir": {}, "name": "etc-ssl-certs"} in pod_template["spec"]["volumes"]
         assert {"emptyDir": {}, "name": "tmp"} in pod_template["spec"]["volumes"]
-        for container in pod_template["spec"]["containers"] + pod_template["spec"]["initContainers"]:
+        for container in (pod_template["spec"]["containers"] or []) + (pod_template["spec"]["initContainers"] or []):
             assert container["securityContext"].get("readOnlyRootFilesystem"), (
                 f"{pod_name}/{container['name']} missing readOnlyRootFilesystem"
             )
