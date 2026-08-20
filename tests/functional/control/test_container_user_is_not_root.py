@@ -7,6 +7,7 @@ from tests.utils.k8s import kubeconfig_control as kubeconfig
 container_ignore_list = [
     "kube-state",
     "houston",
+    "houston-worker",
 ]
 
 

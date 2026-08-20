@@ -266,7 +266,6 @@ class TestAllPodSpecContainers:
         )
 
 
-@pytest.mark.skip("See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this.")
 class TestDuplicateEnvironment:
     """Parametrize all the docs that have container specs and test them for
     duplicate env vars."""
