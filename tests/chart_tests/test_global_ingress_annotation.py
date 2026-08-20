@@ -105,3 +105,30 @@ class TestGlobalIngressAnnotation:
         assert len(docs) == 6
         for doc in docs:
             assert doc["metadata"]["annotations"]["kubernetes.io/ingress.class"].endswith("-nginx")
+
+    def test_ingress_class_annotation_present_without_ingressClassName(self, kube_version):
+        """Without global.ingressClassName, the kubernetes.io/ingress.class annotation is present on all ingresses."""
+        docs = render_chart(kube_version=kube_version)
+        ingresses = [d for d in docs if d.get("kind") == "Ingress"]
+        assert ingresses
+        for ingress in ingresses:
+            annotations = ingress["metadata"]["annotations"]
+            assert "kubernetes.io/ingress.class" in annotations, (
+                f"Ingress {ingress['metadata']['name']!r} missing kubernetes.io/ingress.class annotation"
+            )
+            assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
+
+    def test_ingress_class_annotation_absent_with_ingressClassName(self, kube_version):
+        """With global.ingressClassName set, the kubernetes.io/ingress.class annotation must not be present."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"ingressClassName": "custom-class"}},
+        )
+        ingresses = [d for d in docs if d.get("kind") == "Ingress"]
+        assert ingresses
+        for ingress in ingresses:
+            annotations = ingress["metadata"].get("annotations", {})
+            assert "kubernetes.io/ingress.class" not in annotations, (
+                f"Ingress {ingress['metadata']['name']!r} should not have kubernetes.io/ingress.class "
+                f"annotation when global.ingressClassName is set, got {annotations.get('kubernetes.io/ingress.class')!r}"
+            )

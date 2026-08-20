@@ -1,6 +1,7 @@
 #########################################
 ## NGINX Control Plane Metrics service ##
 #########################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
@@ -28,4 +29,5 @@ spec:
       {{- if and (eq .Values.serviceType "NodePort") .Values.metricsNodePort }}
       nodePort: {{ .Values.metricsNodePort }}
       {{- end }}
+{{- end }}
 {{- end }}

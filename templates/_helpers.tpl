@@ -187,3 +187,18 @@ Returns the string "true" or "false" — compare with eq.
 {{- define "logging.enabled" -}}
 {{- or (eq .Values.global.plane.mode "unified") (and (eq .Values.global.plane.mode "control") .Values.global.sharedElasticsearch.enabled) (and (eq .Values.global.plane.mode "data") (not .Values.global.sharedElasticsearch.enabled)) -}}
 {{- end }}
+
+{{/*
+Resolve the ingressClassName for Ingress resources. Uses global.ingressClassName if set,
+otherwise falls back to the value from the kubernetes.io/ingress.class annotation in
+global.extraAnnotations, or the default <release>-nginx.
+*/}}
+{{- define "global.ingressClassName" -}}
+{{- if .Values.global.ingressClassName -}}
+{{- .Values.global.ingressClassName -}}
+{{- else if .Values.global.extraAnnotations -}}
+{{- index .Values.global.extraAnnotations "kubernetes.io/ingress.class" | default (printf "%s-nginx" .Release.Name) -}}
+{{- else -}}
+{{- printf "%s-nginx" .Release.Name -}}
+{{- end -}}
+{{- end }}

@@ -1,13 +1,13 @@
 ##########################
 ## NGINX IngressClass ##
 ##########################
+{{- if include "nginx.deployBundledController" . }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-# use dict to create a new dict and avoid erroring on extraAnnotations key missing in the original dict
-{{- if not (or .Values.global.ingressClassName (index (.Values.global.extraAnnotations | default dict) "kubernetes.io/ingress.class")) }}
+{{- if not (index (.Values.global.extraAnnotations | default dict) "kubernetes.io/ingress.class") }}
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
 metadata:
-  name: {{ .Release.Name }}-nginx
+  name: {{ template "nginx.ingress.class" . }}
   labels:
     tier: {{ template "nginx.name" . }}
     component: cp-ingress-controller
@@ -17,5 +17,6 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 spec:
   controller: k8s.io/ingress-nginx
+{{- end }}
 {{- end }}
 {{- end }}

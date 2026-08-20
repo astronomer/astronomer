@@ -1,19 +1,22 @@
 ##########################
 ## NGINX IngressClass ##
 ##########################
+{{- if include "nginx.deployBundledController" . }}
 {{- if eq .Values.global.plane.mode "data" }}
-{{- if not (or .Values.global.ingressClassName (index (.Values.global.extraAnnotations | default dict) "kubernetes.io/ingress.class")) }}
+{{- if not (index (.Values.global.extraAnnotations | default dict) "kubernetes.io/ingress.class") }}
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
 metadata:
-  name: {{ .Release.Name }}-nginx
+  name: {{ template "nginx.ingress.class" . }}
   labels:
     tier: {{ template "nginx.name" . }}
     component: dp-ingress-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   controller: k8s.io/ingress-nginx
+{{- end }}
 {{- end }}
 {{- end }}

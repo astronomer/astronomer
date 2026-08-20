@@ -1,6 +1,7 @@
 ########################################################
 ## NGINX Control Plane RoleBinding/ClusterRoleBinding ##
 ########################################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if .Values.global.rbac.enabled }}
 kind: ClusterRoleBinding
@@ -21,5 +22,6 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "nginx.serviceAccountName" . }}-cp
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
 {{- end }}
