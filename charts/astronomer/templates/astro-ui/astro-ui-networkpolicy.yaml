@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-astro-ui-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: astro-ui-policy
     release: {{ .Release.Name }}

@@ -14,6 +14,12 @@ metadata:
     "helm.sh/hook-weight": "-2"
   namespace: {{ .Release.Namespace }}
   name: {{ .Release.Name }}-jetstream-role
+  labels:
+    {{- include "global.labels" . | nindent 4 }}
+    tier: jetstream-migrator
+    component: jetstream-migrator
+    release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
 rules:
 - apiGroups: [""]
   resources: ["namespaces"]
@@ -32,6 +38,12 @@ metadata:
     "helm.sh/hook-weight": "-2"
   name: {{ .Release.Name }}-jetstream-rolebinding
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "global.labels" . | nindent 4 }}
+    tier: jetstream-migrator
+    component: jetstream-migrator
+    release: {{ .Release.Name }}
+    plane: {{ .Values.global.plane.mode }}
 subjects:
 - kind: ServiceAccount
   name: {{ template "jetStream.serviceAccountName" . }}
@@ -52,6 +64,7 @@ metadata:
     "helm.sh/hook-weight": "3"
   name: {{ template "jetStream.serviceAccountName" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: jetstream-migrator
     component: jetstream-migrator
     release: {{ .Release.Name }}
@@ -68,6 +81,7 @@ metadata:
     "helm.sh/hook-delete-policy": "before-hook-creation"
     "helm.sh/hook-weight": "5"
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "nats.name" . }}
     tier: nats
     version: {{ .Chart.Version }}

@@ -8,6 +8,7 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 metadata:
   name: {{ .Release.Name }}-pgbouncer-pdb
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: pgbouncer
     release: {{ .Release.Name }}

@@ -7,6 +7,11 @@ apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-commander-pdb
+  labels:
+    {{- include "global.labels" . | nindent 4 }}
+    component: commander
+    tier: astronomer
+    release: {{ .Release.Name }}
 spec:
   {{- if lt ( .Values.commander.replicas | int ) 4 }}
   maxUnavailable: 1

@@ -7,6 +7,7 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-houston-db-migrations
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston-db-migrations
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

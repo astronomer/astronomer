@@ -8,6 +8,7 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-houston-cleanup-deployments
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston-cleanup
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

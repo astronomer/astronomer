@@ -7,6 +7,7 @@ kind: DaemonSet
 metadata:
   name: {{ include "vector.fullname" . }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "vector.name" . }}
     chart: {{ template "vector.chart" . }}

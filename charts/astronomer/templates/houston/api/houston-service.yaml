@@ -7,6 +7,7 @@ apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-houston
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     component: houston
     tier: astronomer
     release: {{ .Release.Name }}

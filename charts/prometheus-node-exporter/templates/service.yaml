@@ -10,7 +10,9 @@ metadata:
   annotations:
 {{ toYaml .Values.service.annotations | indent 4 }}
 {{- end }}
-  labels: {{ include "prometheus-node-exporter.labels" . | indent 4 }}
+  labels:
+    {{- include "global.labels" . | nindent 4 }}
+    {{- include "prometheus-node-exporter.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:

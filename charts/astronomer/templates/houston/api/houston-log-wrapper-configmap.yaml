@@ -10,6 +10,7 @@ metadata:
   name: {{ .Release.Name }}-houston-log-wrapper
   namespace: {{ .Release.Namespace }}
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
