@@ -253,3 +253,93 @@ class TestAstronomerPilot:
 
         expected_addr = "release-name-commander-headless.default.svc.cluster.local.:50051"
         assert env_vars["PILOT_COMMANDER_ADDR"] == expected_addr
+
+    def test_pilot_secrets_from_files_disabled_by_default(self, kube_version):
+        """Test that pilot injects the flightdeck DSN as an env var by default."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}},
+                "astronomer": {"pilot": {"enabled": True}, "flightDeck": {"enabled": True}},
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        pilot = get_containers_by_name(docs[0])["pilot"]
+        env_vars = get_env_vars_dict(pilot["env"])
+
+        assert env_vars["COMMANDER_FLIGHTDECK_DSN"]["secretKeyRef"] == {
+            "name": "release-name-flightdeck-backend",
+            "key": "connection",
+        }
+        assert "COMMANDER_SECRETS_FROM_FILES" not in env_vars
+        assert "flightdeck-dsn-secret" not in {volume["name"] for volume in docs[0]["spec"]["template"]["spec"]["volumes"]}
+
+    def test_pilot_secrets_from_files_enabled(self, kube_version):
+        """Test that pilot reads the flightdeck DSN from a file when enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "secretsFromFiles": {"enabled": True}},
+                "astronomer": {"pilot": {"enabled": True}, "flightDeck": {"enabled": True}},
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        pilot = get_containers_by_name(docs[0])["pilot"]
+        env_vars = get_env_vars_dict(pilot["env"])
+
+        assert "COMMANDER_FLIGHTDECK_DSN" not in env_vars
+        assert env_vars["COMMANDER_SECRETS_FROM_FILES"] == "true"
+
+        volumes = {volume["name"]: volume for volume in docs[0]["spec"]["template"]["spec"]["volumes"]}
+        assert volumes["flightdeck-dsn-secret"]["secret"] == {
+            "secretName": "release-name-flightdeck-backend",
+            "items": [{"key": "connection", "path": "COMMANDER_FLIGHTDECK_DSN"}],
+        }
+
+        mounts = {mount["name"]: mount for mount in pilot["volumeMounts"]}
+        assert mounts["flightdeck-dsn-secret"] == {
+            "name": "flightdeck-dsn-secret",
+            "mountPath": "/run/secrets",
+            "readOnly": True,
+        }
+
+    def test_pilot_secrets_from_files_enabled_without_flightdeck(self, kube_version):
+        """Test that pilot mounts nothing when it has no flightdeck DSN to read."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "secretsFromFiles": {"enabled": True}},
+                "astronomer": {"pilot": {"enabled": True}},
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        pilot = get_containers_by_name(docs[0])["pilot"]
+        env_vars = get_env_vars_dict(pilot["env"])
+
+        assert "COMMANDER_FLIGHTDECK_DSN" not in env_vars
+        assert "COMMANDER_SECRETS_FROM_FILES" not in env_vars
+        assert "flightdeck-dsn-secret" not in {volume["name"] for volume in docs[0]["spec"]["template"]["spec"]["volumes"]}
+
+    def test_pilot_secrets_from_files_override_precedence(self, kube_version):
+        """Test that pilot.secretsFromFiles.enabled overrides the global default."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "secretsFromFiles": {"enabled": True}},
+                "astronomer": {
+                    "pilot": {"enabled": True, "secretsFromFiles": {"enabled": False}},
+                    "flightDeck": {"enabled": True},
+                },
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["pilot"]["env"])
+        assert "COMMANDER_SECRETS_FROM_FILES" not in env_vars
+        assert env_vars["COMMANDER_FLIGHTDECK_DSN"]["secretKeyRef"] == {
+            "name": "release-name-flightdeck-backend",
+            "key": "connection",
+        }

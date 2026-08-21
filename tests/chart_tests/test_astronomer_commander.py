@@ -874,3 +874,131 @@ class TestAstronomerCommander:
         env_vars = get_env_vars_dict(c_by_name["commander"]["env"])
         assert env_vars["MY_CUSTOM_VAR"] == "custom-value"
         assert env_vars["ANOTHER_VAR"] == "another-value"
+
+    def test_commander_secrets_from_files_disabled_by_default(self, kube_version):
+        """Test that commander injects its secrets as env vars by default."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"flightDeck": {"enabled": True}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+
+        commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert commander_env["COMMANDER_FLIGHTDECK_DSN"]["secretKeyRef"] == {
+            "name": "release-name-flightdeck-backend",
+            "key": "connection",
+        }
+        assert commander_env["COMMANDER_DATAPLANE_DATABASE_URL"]["secretKeyRef"] == {
+            "name": "astronomer-bootstrap",
+            "key": "connection",
+        }
+        assert "COMMANDER_SECRETS_FROM_FILES" not in commander_env
+
+        migrations = c_by_name["flightdeck-db-migrations"]
+        assert migrations["args"] == ["migrate", "up", "--db", "$(COMMANDER_FLIGHTDECK_DSN)"]
+        assert "COMMANDER_FLIGHTDECK_DSN" in get_env_vars_dict(migrations["env"])
+
+        assert "commander-secrets" not in {volume["name"] for volume in spec["volumes"]}
+        assert "/run/secrets" not in {mount["mountPath"] for mount in c_by_name["commander"]["volumeMounts"]}
+
+    def test_commander_secrets_from_files_enabled(self, kube_version):
+        """Test that commander reads its secrets from files when enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"secretsFromFiles": {"enabled": True}},
+                "astronomer": {"flightDeck": {"enabled": True}},
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+
+        commander_env = get_env_vars_dict(c_by_name["commander"]["env"])
+        assert "COMMANDER_FLIGHTDECK_DSN" not in commander_env
+        assert "COMMANDER_DATAPLANE_DATABASE_URL" not in commander_env
+        assert commander_env["COMMANDER_SECRETS_FROM_FILES"] == "true"
+
+        # The --db flag wins over the env var the loader populates, so it must be
+        # dropped for the migrations to pick up the file-sourced DSN.
+        migrations = c_by_name["flightdeck-db-migrations"]
+        assert migrations["args"] == ["migrate", "up"]
+        migrations_env = get_env_vars_dict(migrations["env"])
+        assert "COMMANDER_FLIGHTDECK_DSN" not in migrations_env
+        assert migrations_env["COMMANDER_SECRETS_FROM_FILES"] == "true"
+
+        # Both secrets land in one directory named after the env vars they replace.
+        volumes = {volume["name"]: volume for volume in spec["volumes"]}
+        assert volumes["commander-secrets"]["projected"]["sources"] == [
+            {
+                "secret": {
+                    "name": "release-name-flightdeck-backend",
+                    "items": [{"key": "connection", "path": "COMMANDER_FLIGHTDECK_DSN"}],
+                }
+            },
+            {
+                "secret": {
+                    "name": "astronomer-bootstrap",
+                    "items": [{"key": "connection", "path": "COMMANDER_DATAPLANE_DATABASE_URL"}],
+                }
+            },
+        ]
+
+        for container_name in ["commander", "flightdeck-db-migrations"]:
+            mounts = {mount["name"]: mount for mount in c_by_name[container_name]["volumeMounts"]}
+            assert mounts["commander-secrets"] == {
+                "name": "commander-secrets",
+                "mountPath": "/run/secrets",
+                "readOnly": True,
+            }
+
+    def test_commander_secrets_from_files_enabled_without_flightdeck(self, kube_version):
+        """Test that only the secrets commander actually consumes are projected."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"secretsFromFiles": {"enabled": True}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        volumes = {volume["name"]: volume for volume in docs[0]["spec"]["template"]["spec"]["volumes"]}
+        assert volumes["commander-secrets"]["projected"]["sources"] == [
+            {
+                "secret": {
+                    "name": "astronomer-bootstrap",
+                    "items": [{"key": "connection", "path": "COMMANDER_DATAPLANE_DATABASE_URL"}],
+                }
+            },
+        ]
+
+    @pytest.mark.parametrize(
+        "global_enabled,component_enabled,expected",
+        [
+            (None, None, False),
+            (False, None, False),
+            (True, None, True),
+            (True, False, False),
+            (False, True, True),
+            (None, True, True),
+        ],
+    )
+    def test_commander_secrets_from_files_override_precedence(self, kube_version, global_enabled, component_enabled, expected):
+        """Test that commander.secretsFromFiles.enabled overrides the global default."""
+        values = {"astronomer": {"flightDeck": {"enabled": True}}}
+        if global_enabled is not None:
+            values["global"] = {"secretsFromFiles": {"enabled": global_enabled}}
+        if component_enabled is not None:
+            values["astronomer"]["commander"] = {"secretsFromFiles": {"enabled": component_enabled}}
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["commander"]["env"])
+        assert (env_vars.get("COMMANDER_SECRETS_FROM_FILES") == "true") is expected
+        assert ("COMMANDER_FLIGHTDECK_DSN" in env_vars) is not expected

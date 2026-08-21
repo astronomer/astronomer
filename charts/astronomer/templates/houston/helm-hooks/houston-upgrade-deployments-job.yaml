@@ -2,6 +2,7 @@
 ## Airflow Post Deployment Upgrade Hook
 #######################################
 {{- if .Values.houston.upgradeDeployments.enabled }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
@@ -84,11 +85,13 @@ spec:
             - "echo"
             - "DB ready"
           env:
+            {{- if not $secretsFromFiles }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
+            {{- end }}
             {{- include "houston_environment" . | indent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
@@ -145,11 +148,13 @@ spec:
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           env:
+            {{- if not $secretsFromFiles }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
+            {{- end }}
             {{- include "houston_environment" . | indent 12 }}
           {{- if .Values.houston.upgradeDeployments.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.readinessProbe) . | nindent 12 }}
@@ -165,6 +170,7 @@ spec:
             - name: tmp
               mountPath: /houston/node_modules/.cache
           {{- include "houston_volume_mounts" . | indent 12 }}
+          {{- include "houston_secret_volume_mounts" . | indent 12 }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
       volumes:
         - name: etc-ssl-certs
@@ -172,6 +178,7 @@ spec:
         - name: tmp
           emptyDir: {}
         {{- include "houston_volumes" . | indent 8 }}
+        {{- include "houston_secret_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
 {{- end }}
 {{- end }}

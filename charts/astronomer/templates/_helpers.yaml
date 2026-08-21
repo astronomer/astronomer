@@ -259,11 +259,13 @@
   value: {{ .Values.commander.region | default "local" | quote }}
 - name: COMMANDER_VERSION
   value: {{ .Values.images.commander.tag | quote }}
+{{- if not (eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.commander))) }}
 - name: COMMANDER_DATAPLANE_DATABASE_URL
   valueFrom:
     secretKeyRef:
       name: astronomer-bootstrap
       key: connection
+{{- end }}
 - name: COMMANDER_DATAPLANE_ID
   value: {{ .Values.global.plane.domainPrefix | default "astronomer" }}
 - name: COMMANDER_BASE_DOMAIN
@@ -334,14 +336,29 @@ s3:
 {{- end }}
 
 {{- define "dp_link_environment" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink)) }}
 - name: NODE_ENV
   value: "production"
+{{- if $secretsFromFiles }}
+- name: HOUSTON_SECRETS_FROM_FILES
+  value: "true"
+{{- /* The loader cannot know operator-defined secret env var names at build time, so pass them through. */}}
+{{- $extraSecrets := list }}
+{{- range $i, $config := .Values.dpLink.secret }}
+{{- $extraSecrets = append $extraSecrets $config.envName }}
+{{- end }}
+{{- if $extraSecrets }}
+- name: HOUSTON_SECRETS_FROM_FILES_EXTRA
+  value: {{ join "," $extraSecrets | quote }}
+{{- end }}
+{{- end }}
 {{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.dpLink.env }}
 - name: {{ $config.name }}
   value: {{ $config.value | quote }}
 {{- end }}
 {{- /* Dynamically created secret envs */ -}}
+{{- if not $secretsFromFiles }}
 {{- range $i, $config := .Values.dpLink.secret }}
 - name: {{ $config.envName }}
   valueFrom:
@@ -349,11 +366,14 @@ s3:
       name: {{ $config.secretName }}
       key: {{ default "value" $config.secretKey }}
 {{- end }}
+{{- end }}
+{{- if not $secretsFromFiles }}
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- end }}
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
@@ -362,17 +382,21 @@ s3:
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
   value: {{ .Values.registry.auth.service }}
+{{- if not $secretsFromFiles }}
 - name: DATABASE_URL
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- end }}
 {{- if not (((.Values.houston.config.deployments).database).connection) }}
+{{- if not $secretsFromFiles }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
+{{- end }}
 {{ end }}
 # These are set here for Houston's entrypoint script
 - name: HOUSTON__HOST
@@ -396,13 +420,69 @@ s3:
 {{- end }}
 
 
+{{/*
+Same idea as houston_secret_volumes, scoped to dp-link's own toggle and its own
+operator-defined secret list.
+*/}}
+{{- define "dp_link_secret_volumes" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink)) }}
+- name: dp-link-secrets
+  projected:
+    sources:
+      - secret:
+          name: {{ template "houston.backendSecret" . }}
+          items:
+            - key: connection
+              path: DATABASE__CONNECTION
+            - key: connection
+              path: DATABASE_URL
+      {{- if not (((.Values.houston.config.deployments).database).connection) }}
+      - secret:
+          name: {{ template "houston.airflowBackendSecret" . }}
+          items:
+            - key: connection
+              path: DEPLOYMENTS__DATABASE__CONNECTION
+      {{- end }}
+      {{- range $i, $config := .Values.dpLink.secret }}
+      - secret:
+          name: {{ $config.secretName }}
+          items:
+            - key: {{ default "value" $config.secretKey }}
+              path: {{ $config.envName }}
+      {{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "dp_link_secret_volume_mounts" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink)) }}
+- name: dp-link-secrets
+  mountPath: /run/secrets
+  readOnly: true
+{{- end }}
+{{- end }}
+
 {{- define "houston_environment" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston)) }}
+{{- if $secretsFromFiles }}
+- name: HOUSTON_SECRETS_FROM_FILES
+  value: "true"
+{{- /* The loader cannot know operator-defined secret env var names at build time, so pass them through. */}}
+{{- $extraSecrets := list }}
+{{- range $i, $config := .Values.houston.secret }}
+{{- $extraSecrets = append $extraSecrets $config.envName }}
+{{- end }}
+{{- if $extraSecrets }}
+- name: HOUSTON_SECRETS_FROM_FILES_EXTRA
+  value: {{ join "," $extraSecrets | quote }}
+{{- end }}
+{{- end }}
 {{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.houston.env }}
 - name: {{ $config.name }}
   value: {{ $config.value | quote }}
 {{- end }}
 {{- /* Dynamically created secret envs */ -}}
+{{- if not $secretsFromFiles }}
 {{- range $i, $config := .Values.houston.secret }}
 - name: {{ $config.envName }}
   valueFrom:
@@ -410,13 +490,16 @@ s3:
       name: {{ $config.secretName }}
       key: {{ default "value" $config.secretKey }}
 {{- end }}
+{{- end }}
 - name: NODE_ENV
   value: "production"
+{{- if not $secretsFromFiles }}
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- end }}
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
@@ -425,17 +508,21 @@ s3:
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
   value: {{ .Values.registry.auth.service }}
+{{- if not $secretsFromFiles }}
 - name: DATABASE_URL
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- end }}
 {{- if not (((.Values.houston.config.deployments).database).connection) }}
+{{- if not $secretsFromFiles }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
+{{- end }}
 {{- end }}
 # These are set here for Houston's entrypoint script
 - name: HOUSTON__HOST
@@ -541,6 +628,60 @@ s3:
 - mountPath: /houston/astro_runtime_releases.json
   name: runtimeversions
   subPath: astro_runtime_releases.json
+{{- end }}
+{{- end }}
+
+{{/*
+Mount for the file-based secrets. Paired with houston_secret_volumes.
+
+Included explicitly by each houston workload rather than from
+houston_volume_mounts, because dp-link also includes houston_volume_mounts but
+has its own toggle and its own secret list -- sharing would either mount two
+volumes at the same path or leave dp-link with no mount at all.
+*/}}
+{{- define "houston_secret_volume_mounts" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston)) }}
+- name: houston-secrets
+  mountPath: /run/secrets
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{/*
+Houston reads its secrets from files named after the environment variables they
+replace. Several different Secrets have to land in one directory, so they are
+combined into a single projected volume.
+
+REGISTRY__AUTH_HEADER is deliberately absent: it is only consumed by the API
+container, so it gets its own volume there rather than being mounted into all
+~14 houston workloads.
+*/}}
+{{- define "houston_secret_volumes" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston)) }}
+- name: houston-secrets
+  projected:
+    sources:
+      - secret:
+          name: {{ template "houston.backendSecret" . }}
+          items:
+            - key: connection
+              path: DATABASE__CONNECTION
+            - key: connection
+              path: DATABASE_URL
+      {{- if not (((.Values.houston.config.deployments).database).connection) }}
+      - secret:
+          name: {{ template "houston.airflowBackendSecret" . }}
+          items:
+            - key: connection
+              path: DEPLOYMENTS__DATABASE__CONNECTION
+      {{- end }}
+      {{- range $i, $config := .Values.houston.secret }}
+      - secret:
+          name: {{ $config.secretName }}
+          items:
+            - key: {{ default "value" $config.secretKey }}
+              path: {{ $config.envName }}
+      {{- end }}
 {{- end }}
 {{- end }}
 

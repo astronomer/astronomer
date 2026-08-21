@@ -3,6 +3,7 @@
 ###################################
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -88,11 +89,14 @@ spec:
           livenessProbe: {{ tpl (toYaml .Values.houston.waitForDB.livenessProbe) . | nindent 12 }}
           {{- end }}
           env:
+            {{- /* The entrypoint only runs `nc` waits, so this is unused here. */}}
+            {{- if not $secretsFromFiles }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
+            {{- end }}
            {{- include "houston_environment" . | indent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
@@ -160,6 +164,12 @@ spec:
             - name: tmp
               mountPath: /houston/node_modules/.cache
             {{- include "houston_volume_mounts" . | indent 12 }}
+            {{- include "houston_secret_volume_mounts" . | indent 12 }}
+            {{- if $secretsFromFiles }}
+            - name: houston-registry-auth-secret
+              mountPath: /etc/houston/secrets/registry
+              readOnly: true
+            {{- end }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
             {{- if .Values.houston.volumeMounts }}
             {{- tpl (toYaml .Values.houston.volumeMounts) $ | nindent 12 }}
@@ -225,11 +235,18 @@ spec:
               value: {{ template "houston.image" . }}
             - name: APOLLO_SERVER_PLATFORM
               value: "kubernetes/deployment"
+            {{- if $secretsFromFiles }}
+            {{- /* Only the API consumes this, so it gets its own volume rather
+                   than a source in the shared /run/secrets projected volume. */}}
+            - name: REGISTRY__AUTH_HEADER_FILE
+              value: /etc/houston/secrets/registry/token
+            {{- else }}
             - name: REGISTRY__AUTH_HEADER
               valueFrom:
                 secretKeyRef:
                   name: {{ template "registry.authHeaderSecret" . }}
                   key: token
+            {{- end }}
           {{- if .Values.houston.extraContainers }}
           {{- tpl (toYaml .Values.houston.extraContainers) $ | nindent 8 }}
           {{- end }}
@@ -329,6 +346,15 @@ spec:
       {{- tpl (toYaml .Values.houston.extraVolumes) $ | nindent 8 }}
       {{- end }}
         {{- include "houston_volumes" . | nindent 8 }}
+        {{- include "houston_secret_volumes" . | nindent 8 }}
+        {{- if $secretsFromFiles }}
+        - name: houston-registry-auth-secret
+          secret:
+            secretName: {{ template "registry.authHeaderSecret" . }}
+            items:
+              - key: token
+                path: token
+        {{- end }}
         {{- include "custom_ca_volumes" . | indent 8 }}
         {{- if .Values.houston.logging.loggingSidecar.enabled }}
         - name: vector-config

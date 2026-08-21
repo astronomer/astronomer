@@ -83,3 +83,28 @@ proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
 {{ define "registry.authHeaderSecret" -}}
 {{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
+
+{{/*
+Resolve whether a component should load its secrets from mounted files instead
+of injecting them into the environment with valueFrom.secretKeyRef.
+
+A component's own `secretsFromFiles.enabled` wins when it is explicitly set to a
+boolean; otherwise `global.secretsFromFiles.enabled` applies. This lets an
+operator flip the whole platform with one value while still holding back any
+component whose image cannot read secrets from files yet.
+
+Renders the string "true" or "false", so call it through `eq`:
+
+  {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.commander)) }}
+*/}}
+{{- define "secretsFromFiles.enabled" -}}
+{{- $component := get (get (.component | default dict) "secretsFromFiles" | default dict) "enabled" -}}
+{{- $global := get (get (.ctx.Values.global | default dict) "secretsFromFiles" | default dict) "enabled" -}}
+{{- if kindIs "bool" $component -}}
+{{- $component -}}
+{{- else if kindIs "bool" $global -}}
+{{- $global -}}
+{{- else -}}
+false
+{{- end -}}
+{{- end }}

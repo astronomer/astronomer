@@ -68,6 +68,15 @@ astroUI:
   podAnnotations: {}
 
 houston:
+  # -- Load houston's secrets from files mounted at /run/secrets instead of
+  # injecting them with valueFrom.secretKeyRef. Applies to the API, worker,
+  # helm-hook jobs and every cronjob. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
+  # supports HOUSTON_SECRETS_FROM_FILES.
+  # @default -- inherits global.secretsFromFiles.enabled
+  secretsFromFiles:
+    enabled: ~
+
   prismaConnectionLimit: 5
   replicas: 2
   # This only applies when replicas > 3
@@ -512,6 +521,14 @@ houston:
 
 # -- DP-Link configuration for data plane linking
 dpLink:
+  # -- Load dp-link's secrets from files mounted at /run/secrets instead of
+  # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
+  # supports HOUSTON_SECRETS_FROM_FILES.
+  # @default -- inherits global.secretsFromFiles.enabled
+  secretsFromFiles:
+    enabled: ~
+
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
     # - name: DEBUG
@@ -652,6 +669,15 @@ flightDeck:
 commander:
   replicas: 2
   env: []
+
+  # -- Load commander's secrets from files mounted at /run/secrets instead of
+  # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`. Requires an ap-commander image that
+  # supports COMMANDER_SECRETS_FROM_FILES.
+  # @default -- inherits global.secretsFromFiles.enabled
+  secretsFromFiles:
+    enabled: ~
+
   # This only applies when replicas > 3
   maxUnavailable: 25%
   resources:
@@ -722,6 +748,14 @@ pilot:
   # -- Number of Pilot replicas (data plane only)
   # @default -- 3
   replicas: 3
+
+  # -- Load pilot's secrets from files mounted at /run/secrets instead of
+  # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`. Requires an ap-commander image that
+  # supports COMMANDER_SECRETS_FROM_FILES.
+  # @default -- inherits global.secretsFromFiles.enabled
+  secretsFromFiles:
+    enabled: ~
 
   # -- Service account configuration
   serviceAccount:
@@ -825,6 +859,14 @@ pilot:
   cbProbeMaxInflight: 1
 
 navigator:
+  # -- Load navigator's secrets from files mounted at /run/secrets instead of
+  # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
+  # supports HOUSTON_SECRETS_FROM_FILES.
+  # @default -- inherits global.secretsFromFiles.enabled
+  secretsFromFiles:
+    enabled: ~
+
   # -- Enable Navigator deployment (control plane or unified mode only)
   # @default -- false
   enabled: false

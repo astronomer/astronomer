@@ -20,6 +20,16 @@ global:
   internalServiceAuth:
     token: ""
 
+  # Platform-wide default for loading secrets from files mounted into the pod
+  # instead of injecting them with valueFrom.secretKeyRef. Each component may
+  # override this with its own `secretsFromFiles.enabled`. Components whose
+  # image cannot read secrets from files keep using environment variables
+  # regardless of this setting.
+  secretsFromFiles:
+    # -- Load secrets from mounted files instead of environment variables
+    # @default -- false
+    enabled: false
+
   # Labels to add to every pod
   podLabels: {}
 

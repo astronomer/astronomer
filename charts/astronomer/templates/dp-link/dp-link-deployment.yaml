@@ -75,6 +75,7 @@ spec:
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
+            {{- include "dp_link_secret_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
@@ -144,6 +145,7 @@ spec:
         {{- tpl (toYaml .Values.dpLink.extraVolumes) $ | nindent 8 }}
         {{- end }}
         {{- include "houston_volumes" . | nindent 8 }}
+        {{- include "dp_link_secret_volumes" . | nindent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
 
 {{- end }}

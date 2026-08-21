@@ -2,6 +2,8 @@
 ## Astronomer Commander Deployment ##
 #####################################
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.commander)) }}
+{{- $flightDeckEnabled := or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -81,7 +83,7 @@ spec:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
 
-      {{- if or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
+      {{- if $flightDeckEnabled }}
         - name: flightdeck-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -127,18 +129,28 @@ spec:
           args:
            - "migrate"
            - "up"
+          {{- if not $secretsFromFiles }}
            - "--db"
            - "$(COMMANDER_FLIGHTDECK_DSN)"
+          {{- end }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           env:
+          {{- if $secretsFromFiles }}
+            # The loader reads /run/secrets/COMMANDER_FLIGHTDECK_DSN before the
+            # migrate subcommand runs, so `migrate up` is invoked without --db
+            # and falls back to the environment the loader populated.
+            - name: COMMANDER_SECRETS_FROM_FILES
+              value: "true"
+          {{- else }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-flightdeck-backend
                   key: connection
+          {{- end }}
           {{- if .Values.flightDeck.migrations.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.flightDeck.migrations.readinessProbe) . | nindent 12 }}
           {{- end }}
@@ -150,6 +162,11 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
+            {{- if $secretsFromFiles }}
+            - name: commander-secrets
+              mountPath: /run/secrets
+              readOnly: true
+            {{- end }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
       {{- end }}
 
@@ -204,7 +221,7 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
-            {{- if or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
+            {{- if and $flightDeckEnabled (not $secretsFromFiles) }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:
@@ -248,12 +265,21 @@ spec:
             - name: UPDATE_CA_CERTS
               value: "true"
             {{- end }}
+            {{- if $secretsFromFiles }}
+            - name: COMMANDER_SECRETS_FROM_FILES
+              value: "true"
+            {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
             - name: tmp-workspace
               mountPath: /tmp
+            {{- if $secretsFromFiles }}
+            - name: commander-secrets
+              mountPath: /run/secrets
+              readOnly: true
+            {{- end }}
             - name: commander-home
               mountPath: /home/commander
               subPath: home
@@ -330,6 +356,26 @@ spec:
         - name: internal-service-auth
           secret:
             secretName: {{ .Release.Name }}-internal-service-auth
+        {{- if $secretsFromFiles }}
+        # Commander reads its secrets from files named after the environment
+        # variables they replace. Two different Secrets have to land in the same
+        # directory, so they are combined with a projected volume.
+        - name: commander-secrets
+          projected:
+            sources:
+              {{- if $flightDeckEnabled }}
+              - secret:
+                  name: {{ .Release.Name }}-flightdeck-backend
+                  items:
+                    - key: connection
+                      path: COMMANDER_FLIGHTDECK_DSN
+              {{- end }}
+              - secret:
+                  name: astronomer-bootstrap
+                  items:
+                    - key: connection
+                      path: COMMANDER_DATAPLANE_DATABASE_URL
+        {{- end }}
         {{- include "custom_ca_volumes" . | nindent 8 }}
       {{- if .Values.commander.extraVolumes }}
       {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}

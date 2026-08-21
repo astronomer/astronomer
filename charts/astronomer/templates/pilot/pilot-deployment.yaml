@@ -2,6 +2,8 @@
 ## Astronomer Pilot Deployment  ##
 ##################################
 {{- if and (or .Values.pilot.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data"))) (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) }}
+{{- $flightDeckEnabled := or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled }}
+{{- $secretsFromFiles := and $flightDeckEnabled (eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.pilot))) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -92,14 +94,23 @@ spec:
             - name: internal-service-auth
               mountPath: /etc/astronomer/internal-service-auth
               readOnly: true
+            {{- if $secretsFromFiles }}
+            - name: flightdeck-dsn-secret
+              mountPath: /run/secrets
+              readOnly: true
+            {{- end }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
             - name: PILOT_ENABLED
               value: "true"
+            {{- if $secretsFromFiles }}
+            - name: COMMANDER_SECRETS_FROM_FILES
+              value: "true"
+            {{- end }}
             # Infrastructure
             - name: PILOT_COMMANDER_ADDR
               value: {{ printf "%s-commander-headless.%s.svc.cluster.local.:%d" .Release.Name .Release.Namespace (int .Values.ports.commanderGRPC) | quote }}
-            {{- if or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled }}
+            {{- if and $flightDeckEnabled (not $secretsFromFiles) }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:
@@ -153,6 +164,14 @@ spec:
         - name: internal-service-auth
           secret:
             secretName: {{ .Release.Name }}-internal-service-auth
+        {{- if $secretsFromFiles }}
+        - name: flightdeck-dsn-secret
+          secret:
+            secretName: {{ .Release.Name }}-flightdeck-backend
+            items:
+              - key: connection
+                path: COMMANDER_FLIGHTDECK_DSN
+        {{- end }}
         {{- include "custom_ca_volumes" . | nindent 8 }}
         {{- if .Values.pilot.extraVolumes }}
         {{- tpl (toYaml .Values.pilot.extraVolumes) $ | nindent 8 }}

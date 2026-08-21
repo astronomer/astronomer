@@ -92,6 +92,7 @@ spec:
                 - name: tmp
                   mountPath: /houston/node_modules/.cache
               {{- include "houston_volume_mounts" . | indent 16 }}
+              {{- include "houston_secret_volume_mounts" . | indent 16 }}
               {{- include "custom_ca_volume_mounts" . | indent 16 }}
           volumes:
             - name: etc-ssl-certs
@@ -99,6 +100,7 @@ spec:
             - name: tmp
               emptyDir: {}
             {{- include "houston_volumes" . | indent 12 }}
+            {{- include "houston_secret_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
 {{- end }}
 {{- end }}
