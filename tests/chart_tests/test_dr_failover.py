@@ -213,7 +213,7 @@ class TestDataPlaneFailoverFlag:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
-        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
+        env_vars = get_env_vars_dict(c_by_name["houston-worker"]["env"])
         assert env_vars["DISPATCHER_ENABLED"] == "true"
 
     def test_flag_data_mode_does_not_enable_navigator(self, kube_version):

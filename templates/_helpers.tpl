@@ -187,3 +187,18 @@ Returns the string "true" or "false" — compare with eq.
 {{- define "logging.enabled" -}}
 {{- or (eq .Values.global.plane.mode "unified") (and (eq .Values.global.plane.mode "control") .Values.global.sharedElasticsearch.enabled) (and (eq .Values.global.plane.mode "data") (not .Values.global.sharedElasticsearch.enabled)) -}}
 {{- end }}
+
+{{/*
+Master switch for all platform Ingress objects. Defaults to enabled so upgrades are a no-op;
+set global.ingress.enabled: false to suppress every Ingress. Defaults to true only when the
+key is absent (not via `default`, which treats a boolean false as empty).
+Defined in the parent chart so all sub-charts can include it.
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "global.ingress.enabled" -}}
+{{- if hasKey (.Values.global.ingress | default dict) "enabled" -}}
+{{- .Values.global.ingress.enabled -}}
+{{- else -}}
+true
+{{- end -}}
+{{- end }}
