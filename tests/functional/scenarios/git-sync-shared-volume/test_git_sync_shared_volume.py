@@ -88,6 +88,68 @@ def _kubectl(*args: str, input_text: str | None = None) -> subprocess.CompletedP
     return result
 
 
+def _fix_static_shared_volume_pv_hostpath_permissions(release_name: str) -> None:
+    """chmod the hostPath directory backing this release's static PV so git-sync-relay's
+    non-root init container can actually write into it.
+
+    `gitSyncRelay.securityContext` runs the init hook Job's container as `runAsUser: 50000`
+    with a pod-level `fsGroup: 65533` meant to grant it write access. But Kubernetes does not
+    apply `fsGroup`-based ownership fixups to `hostPath` volumes -- a deliberate, long-standing
+    limitation (unlike most real network/CSI-backed RWX volumes, where fsGroup does apply). The
+    directory kubelet creates via the PV's `DirectoryOrCreate` stays root:root 0755, so uid 50000
+    can't write into it: `git-sync-once` fails immediately with a permission error (surfaced only
+    as a bare `exit_code: 1`, `reason: Error`, no message -- confirmed by reading the raw
+    CircleCI build log for build 302666, since this sandbox has no CircleCI API/browser access to
+    fetch it directly). Same failure class as PINF-156's real NFS/Filestore case (see the
+    "owned subdirectory" design discussion in pinf-1115-notes.md), except here it's an artifact
+    of this test's hostPath stand-in rather than a real product bug -- a genuine RWX export
+    (NFS/EFS/Filestore) doesn't enforce per-UID ownership the way a fresh hostPath dir does.
+
+    Runs a throwaway root-privileged Job that mounts the identical hostPath and chmods it, rather
+    than reaching for docker/node-level access from the test process -- portable regardless of
+    which container runtime/CI environment actually hosts the node.
+    """
+    namespace = _deployment_namespace(release_name)
+    job_name = f"fix-shared-volume-perms-{release_name}"
+    # `transition_deployment`'s namespace already exists by this point (created earlier for its
+    # initial plain deployment); `shared_volume_deployment`'s doesn't yet (Commander hasn't
+    # applied anything for it). A leading Namespace doc in the same `apply` is idempotent either
+    # way -- unlike `kubectl create namespace`, which would fail outright on the former.
+    manifest = f"""
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {namespace}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {job_name}
+  namespace: {namespace}
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: chmod
+          image: busybox:1.36
+          command: ["chmod", "0777", "/mnt/target"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: target
+              mountPath: /mnt/target
+      volumes:
+        - name: target
+          hostPath:
+            path: /tmp/git-sync-shared-volume-test/{release_name}
+            type: DirectoryOrCreate
+"""
+    _kubectl("apply", "-f", "-", input_text=manifest)
+    _kubectl("wait", f"job/{job_name}", "-n", namespace, "--for=condition=complete", "--timeout=60s")
+
+
 def _create_static_shared_volume_pv(release_name: str) -> None:
     """Pre-bind a hostPath PersistentVolume for this release's git-repo-contents PVC.
 
@@ -112,6 +174,7 @@ def _create_static_shared_volume_pv(release_name: str) -> None:
     asynchronously, well after the near-instant kubectl apply below, so there's no real race.
     """
     namespace = _deployment_namespace(release_name)
+    _fix_static_shared_volume_pv_hostpath_permissions(release_name)
     manifest = f"""
 apiVersion: v1
 kind: PersistentVolume
