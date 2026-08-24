@@ -268,7 +268,11 @@ class TestAllPodSpecContainers:
 
 class TestDuplicateEnvironment:
     """Parametrize all the docs that have container specs and test them for
-    duplicate env vars."""
+    duplicate env vars.
+
+    This test can be deleted once we move to Helm 4, which treats duplicate env
+    vars as a blocking error and therefore enforces this on its own.
+    """
 
     values = get_all_features()
 
