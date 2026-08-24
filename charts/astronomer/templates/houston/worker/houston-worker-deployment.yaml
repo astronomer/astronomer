@@ -137,14 +137,8 @@ spec:
         {{- end }}
 
       containers:
-        # NOTE: renamed from "houston" in the same release that removed the
-        # duplicate DATABASE_URL env var. Renaming makes Helm delete the old
-        # container and add a new one, instead of emitting an ambiguous
-        # `{"name":"DATABASE_URL","$patch":"delete"}` directive that the apiserver
-        # would apply to *every* entry with that name, wiping the var entirely.
-        # See https://github.com/kubernetes/kubernetes/issues/58477 and PINF-74.
-        # The name now also matches the component/service labels this pod's vector
-        # sidecar already ships logs under.
+        # Renamed from "houston" with the DATABASE_URL dedup so Helm replaces the
+        # container instead of emitting an ambiguous env delete.
         - name: houston-worker
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
