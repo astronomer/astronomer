@@ -274,25 +274,26 @@ class TestDuplicateEnvironment:
     vars as a blocking error and therefore enforces this on its own.
     """
 
-    values = get_all_features()
-
-    docs = render_chart(values=values)
-    trimmed_docs = [x for x in docs if x["kind"] in [*selector_kinds, "CronJob"]]
-
     @staticmethod
     def check_env_vars_are_unique(container):
         """Return a list of env var keys that are not unique in the container env."""
         c_env_names = [x["name"] for x in container.get("env") or []]
         return [x for x in set(c_env_names) if c_env_names.count(x) > 1]
 
-    @pytest.mark.parametrize(
-        "doc",
-        trimmed_docs,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in trimmed_docs],
-    )
-    def test_env_vars_have_no_duplicates(self, doc):
-        """Test that there are no duplicate env vars."""
-        for name, container in get_containers_by_name(doc, include_init_containers=True).items():
-            assert not self.check_env_vars_are_unique(container), (
-                f"{doc['kind']}/{doc['metadata']['name']}/{name} has duplicate env vars"
-            )
+    @pytest.mark.parametrize("plane_mode", ["unified", "control", "data"])
+    def test_env_vars_have_no_duplicates(self, plane_mode):
+        """Test that there are no duplicate env vars.
+
+        enable_all_features.yaml sets no plane mode, so rendering once would only cover
+        "unified" -- templates gated to control-only or data-only would go unchecked.
+        """
+        values = get_all_features()
+        values.setdefault("global", {}).setdefault("plane", {})["mode"] = plane_mode
+
+        for doc in render_chart(values=values):
+            if doc["kind"] not in [*selector_kinds, "CronJob"]:
+                continue
+            for name, container in get_containers_by_name(doc, include_init_containers=True).items():
+                assert not self.check_env_vars_are_unique(container), (
+                    f"[plane={plane_mode}] {doc['kind']}/{doc['metadata']['name']}/{name} has duplicate env vars"
+                )
