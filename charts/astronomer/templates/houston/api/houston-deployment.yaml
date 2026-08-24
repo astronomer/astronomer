@@ -68,6 +68,8 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
+        # Renamed from "wait-for-db" with the DATABASE_URL dedup so Helm replaces the
+        # container instead of emitting an ambiguous env delete.
         - name: houston-wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
