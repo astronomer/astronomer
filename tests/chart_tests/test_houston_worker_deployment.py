@@ -61,7 +61,7 @@ class TestHoustonWorkerDeployment:
         assert doc["kind"] == "Deployment"
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
-        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
+        env_vars = get_env_vars_dict(c_by_name["houston-worker"]["env"])
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
@@ -85,7 +85,7 @@ class TestHoustonWorkerDeployment:
         assert len(docs) == 1
         doc = docs[0]
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = c_by_name["houston"]["env"]
+        houston_container_env = c_by_name["houston-worker"]["env"]
 
         dispatcher_enabled_env = next(
             (x for x in houston_container_env if x["name"] == "DISPATCHER_ENABLED"),
@@ -115,7 +115,7 @@ class TestHoustonWorkerDeployment:
         assert len(docs) == 1
         doc = docs[0]
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
+        houston_container_env = get_env_vars_dict(c_by_name["houston-worker"]["env"])
 
         # Verify all dispatcher environment variables are present with correct default values
         assert houston_container_env["DISPATCHER_ENABLED"] == "true"
@@ -173,7 +173,7 @@ class TestHoustonWorkerDeployment:
         assert len(docs) == 1
         doc = docs[0]
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
+        houston_container_env = get_env_vars_dict(c_by_name["houston-worker"]["env"])
 
         # Verify all dispatcher custom values
         assert houston_container_env["DISPATCHER_ENABLED"] == "true"
