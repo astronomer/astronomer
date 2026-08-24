@@ -14,7 +14,7 @@ images:
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 2026.8.17
+    tag: 2026.8.24
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
