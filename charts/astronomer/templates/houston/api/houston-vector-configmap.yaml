@@ -4,6 +4,7 @@
 ##########################################
 {{- if .Values.houston.logging.loggingSidecar.enabled }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
+{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar)) }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap
@@ -22,6 +23,27 @@ data:
     api:
       enabled: true
       address: "0.0.0.0:8686"
+{{- $cwSecret := and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.cloudwatch.enabled (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) }}
+{{- $esSecret := and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.elasticsearch.enabled (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") }}
+{{- if or $cwSecret $esSecret }}
+
+    # Sink credentials are read from mounted files rather than the environment.
+    # remove_trailing_whitespace is required: without it the newline a Kubernetes
+    # Secret mount adds becomes a trailing space inside the quoted YAML scalar.
+    secret:
+{{- if $cwSecret }}
+      cloudwatch:
+        type: directory
+        path: /etc/vector/secrets/cloudwatch
+        remove_trailing_whitespace: true
+{{- end }}
+{{- if $esSecret }}
+      elasticsearch:
+        type: directory
+        path: /etc/vector/secrets/elasticsearch
+        remove_trailing_whitespace: true
+{{- end }}
+{{- end }}
 
     data_dir: "/var/lib/vector"
 
@@ -97,7 +119,11 @@ data:
         region: {{ .Values.houston.logging.loggingSidecar.cloudwatch.region | quote }}
         group_name: {{ .Values.houston.logging.loggingSidecar.cloudwatch.logGroupName | quote }}
         stream_name: "{{ "{{" }} kubernetes.pod_name {{ "}}" }}"
-    {{- if not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA }}
+    {{- if and (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) $vectorSecretsFromFiles }}
+        auth:
+          access_key_id: "SECRET[cloudwatch.aws_access_key_id]"
+          secret_access_key: "SECRET[cloudwatch.aws_secret_access_key]"
+    {{- else if not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA }}
         auth:
           access_key_id: "${AWS_ACCESS_KEY_ID}"
           secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
@@ -155,7 +181,12 @@ data:
           - normalize_levels
         endpoints: ["${ES_ENDPOINT}"]
         api_version: {{ .Values.houston.logging.loggingSidecar.elasticsearch.apiVersion | quote }}
-    {{- if eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic" }}
+    {{- if and (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") $vectorSecretsFromFiles }}
+        auth:
+          strategy: basic
+          user: "SECRET[elasticsearch.username]"
+          password: "SECRET[elasticsearch.password]"
+    {{- else if eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic" }}
         auth:
           strategy: basic
           user: "${ES_USERNAME}"
