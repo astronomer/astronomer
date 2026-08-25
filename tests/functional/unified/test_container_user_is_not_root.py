@@ -9,6 +9,7 @@ container_ignore_list = [
     "configmap-reloader",
     "default-backend",
     "houston",
+    "houston-worker",
     "kube-state",
     "nginx",
     "vector",

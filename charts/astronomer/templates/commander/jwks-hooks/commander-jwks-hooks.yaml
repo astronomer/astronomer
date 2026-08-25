@@ -31,6 +31,7 @@ spec:
         app: commander-jwks-hook
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
         {{- if .Values.global.istio.enabled }}
@@ -78,7 +79,7 @@ spec:
           resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           env:
             - name: CONTROL_PLANE_ENDPOINT
-              value: "https://houston.{{ .Values.global.baseDomain }}"
+              value: "https://houston.{{ include "houston.controlPlaneBaseDomain" . }}"
             - name: SECRET_NAME
               value: "{{ .Release.Name }}-houston-jwt-signing-certificate"
             - name: NAMESPACE

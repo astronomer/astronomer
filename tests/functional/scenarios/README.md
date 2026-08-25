@@ -19,7 +19,7 @@ and aren't being migrated into it.
 
 ```
 tests/functional/scenarios/<name>/
-├── test_profile.yaml   # manifest: topology, values, kube_version (optional), namespace_labels (optional)
+├── test_profile.yaml   # manifest: topology, values, kube_version / namespace_labels / pre_helm_scripts (optional)
 └── test_*.py           # this scenario's own assertions
 ```
 
@@ -28,9 +28,13 @@ tests/functional/scenarios/<name>/
 | Field             | Required | Meaning                                                                                   |
 | ------------------ | -------- | ------------------------------------------------------------------------------------------ |
 | `topology`         | yes      | `unified`, `control`, or `data` — which existing install topology to layer this scenario on |
-| `values`            | yes      | ordered list of values files (repo-relative), passed as `--helm-values` in order            |
+| `description`       | no       | one-paragraph summary of what the scenario validates; printed when the scenario runs and when `bin/run-scenario.py` is invoked with no argument to list scenarios |
+| `values`            | yes      | ordered list of values files (repo-relative), passed as `--helm-values` in order; an empty list is fine if the scenario needs no overlay |
 | `kube_version`      | no       | pinned k8s version; defaults to the latest entry in `metadata.yaml`'s `test_k8s_versions`   |
 | `namespace_labels`  | no       | labels to apply to the `astronomer` namespace *before* install (PSA is not retroactive)      |
+| `pre_helm_scripts`  | no       | ordered list of scripts run *after* the cluster is created but *before* `helm install` — for setup the chart's install-time values depend on (e.g. creating a private-CA Secret named in `global.privateCaCerts`). Each entry is a repo-relative script path, optionally followed by arguments (e.g. `bin/setup-forgejo-ca.py --platform-namespace astronomer --forgejo-namespace git-forgejo`). Each runs with `KUBECONFIG` pointed at the fresh cluster and the helper-tools PATH, and must be executable (shebang + `chmod +x`). |
+| `resource_class`    | no       | CircleCI machine-executor resource class for this scenario's CI job (e.g. `xlarge`, `2xlarge`); defaults to `xlarge` |
+| `kyverno_scan`      | no       | if `true`, installs a live Kyverno admission controller before this scenario's own tests run (`bin/install-kyverno-scan.py`) and reports the violations it recorded afterward (`bin/report-kyverno-scan.py`), without failing the build (PINF-1034); defaults to `false` |
 
 ## Running a scenario locally
 

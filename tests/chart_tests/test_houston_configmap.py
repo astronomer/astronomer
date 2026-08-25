@@ -333,6 +333,11 @@ def test_houston_configmap_with_loggingsidecar_enabled():
         "name": "sidecar-log-consumer",
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
+        # global.logging.loggingSidecar.resources now has a real default (PINF-969)
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -408,6 +413,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
         "image": image,
         "customConfig": False,
         "indexNamePrefix": "test-index-name-prefix-999",
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert image in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -442,6 +451,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -480,6 +493,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
         "image": image_name,
         "customConfig": False,
         "indexPattern": indexPattern,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
 
@@ -515,6 +532,10 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": True,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -579,6 +600,11 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
                 "valueFrom": {"secretKeyRef": {"name": "elastic-creds", "key": "ESPASS"}},
             },
         ],
+        # global.logging.loggingSidecar.resources now has a real default (PINF-969)
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
@@ -662,6 +688,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
         "image": "quay.io/astronomer/ap-vector:unittest-tag",
         "customConfig": False,
         "securityContext": securityContext,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
@@ -1094,12 +1124,22 @@ def test_houston_configmap_features_elasticsearch_custom_logging():
 
 
 def test_houston_configmap_features_grafana_defaults():
-    """Validate that metricsReporting.grafana.enabled is always true."""
+    """Validate that metricsReporting.grafana.enabled defaults to true."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
+
+
+def test_houston_configmap_features_grafana_disabled():
+    """Validate that metricsReporting.grafana.enabled follows global.grafana.enabled."""
+    docs = render_chart(
+        values={"global": {"grafana": {"enabled": False}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is False
 
 
 def test_houston_configmap_no_flat_enabled_flags_under_deployments():
@@ -1164,13 +1204,13 @@ def test_houston_configmap_certgenerator_custom_tag():
 @pytest.mark.parametrize(
     "values,expected",
     [
-        # Adoption requires operator mode; both flags must be true. operator.enabled
+        # Adoption requires operator mode; both flags must be true. airflowOperator.enabled
         # defaults to false, so adoption is off unless operator mode is turned on.
         ({}, False),
-        ({"global": {"operator": {"enabled": True}}}, True),
-        ({"global": {"operator": {"enabled": True, "adoption": {"enabled": True}}}}, True),
-        ({"global": {"operator": {"enabled": True, "adoption": {"enabled": False}}}}, False),
-        ({"global": {"operator": {"enabled": False, "adoption": {"enabled": True}}}}, False),
+        ({"global": {"airflowOperator": {"enabled": True}}}, True),
+        ({"global": {"airflowOperator": {"enabled": True, "adoption": {"enabled": True}}}}, True),
+        ({"global": {"airflowOperator": {"enabled": True, "adoption": {"enabled": False}}}}, False),
+        ({"global": {"airflowOperator": {"enabled": False, "adoption": {"enabled": True}}}}, False),
     ],
     ids=[
         "default-operator-off",
@@ -1181,8 +1221,8 @@ def test_houston_configmap_certgenerator_custom_tag():
     ],
 )
 def test_houston_configmap_operator_adoption(values, expected):
-    """production.yaml adoption is the AND of global.operator.enabled and
-    global.operator.adoption.enabled — both must be true (PLX-500)."""
+    """production.yaml adoption is the AND of global.airflowOperator.enabled and
+    global.airflowOperator.adoption.enabled — both must be true (PLX-500)."""
     docs = render_chart(
         values=values,
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -1193,12 +1233,12 @@ def test_houston_configmap_operator_adoption(values, expected):
 
 
 def test_houston_configmap_operator_mode_reflects_operator_enabled():
-    """global.operator.enabled drives deployments.mode.operator.enabled, and gates
+    """global.airflowOperator.enabled drives deployments.mode.operator.enabled, and gates
     adoption regardless of the adoption flag."""
     docs = render_chart(
         values={
             "global": {
-                "operator": {"enabled": True, "adoption": {"enabled": False}},
+                "airflowOperator": {"enabled": True, "adoption": {"enabled": False}},
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -1207,3 +1247,25 @@ def test_houston_configmap_operator_mode_reflects_operator_enabled():
 
     assert prod["deployments"]["mode"]["operator"]["enabled"] is True
     assert prod["operator"]["adoption"]["enabled"] is False
+
+
+@pytest.mark.parametrize(
+    "values,expected",
+    [
+        ({}, False),
+        ({"global": {"customRBAC": {"enabled": True}}}, True),
+        ({"global": {"customRBAC": {"enabled": False}}}, False),
+    ],
+    ids=["default-off", "on", "off"],
+)
+def test_houston_configmap_custom_rbac(values, expected):
+    """global.customRBAC.enabled drives whether Houston mints granular permissions and
+    exposes the role builder. Commander reads the same chart value to install the Airflow 2
+    security manager that enforces them, so the two halves cannot be configured apart."""
+    docs = render_chart(
+        values=values,
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["customRBAC"]["enabled"] is expected

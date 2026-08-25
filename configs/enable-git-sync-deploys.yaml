@@ -36,6 +36,12 @@ global:
   # must re-list mkcert-root-ca here or the DP commander stops trusting houston
   # and its JWKS hook fails with CERTIFICATE_VERIFY_FAILED / self-signed
   # certificate in chain.
+  #
+  # mkcert-root-ca is the same secret name/content/mechanism topology=unified (KIND) uses too
+  # (bin/setup-kind.py, via the shared _mkcert_caroot() helper in k3d_setup_shared.py) -- see
+  # configs/enable-git-sync-private-ca.yaml. The two topologies used to have separately-named,
+  # separately-generated secrets for this, which is what let PR #3494 accidentally swap the
+  # wrong one in over there; they're unified onto this one name now.
   # privateCaCerts:
   #   - mkcert-root-ca
   #   - git-forgejo-ca

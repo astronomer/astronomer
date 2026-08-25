@@ -282,10 +282,19 @@ class TestRefreshCpChartVersionHookJob:
         assert docs == []
 
     def test_absent_on_data_plane(self, kube_version):
-        """A data-plane render emits no refresh Job (no CP registry on the data plane), even with HA enabled."""
+        """A data-plane render emits no refresh Job (no CP registry on the data plane), even with HA enabled.
+
+        globalBaseDomain is required on data planes too once HA is enabled, so it is
+        supplied here to get past the render guard.
+        """
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}, "controlPlaneHA": {"enabled": True}}},
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "controlPlaneHA": {"enabled": True, "globalBaseDomain": "astro.example.com"},
+                }
+            },
             show_only=[REFRESH_CP_CHART_VERSION_FILE],
         )
         assert docs == []

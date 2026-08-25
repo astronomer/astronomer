@@ -61,6 +61,15 @@ class TestPrometheusNodeExporterDaemonset:
             "requests": {"cpu": "10m", "memory": "128Mi"},
         }
 
+        # PINF-971: node-exporter is a DaemonSet and needs to run on every
+        # node, including control-plane/master, so it tolerates that taint by
+        # default. This default is a plain, fully-overridable values.yaml
+        # entry (see test_node_exporter_nodepool_config_overrides) — same
+        # pattern as nodeSelector/affinity on this same DaemonSet.
+        assert doc["spec"]["template"]["spec"]["tolerations"] == [
+            {"effect": "NoSchedule", "operator": "Exists"},
+        ]
+
     def test_prometheus_node_exporter_daemonset_custom_resources(self, kube_version):
         doc = render_chart(
             kube_version=kube_version,

@@ -23,7 +23,7 @@ astronomer:
     worker:
       enabled: true
 global:
-  operator:
+  airflowOperator:
     enabled: true
   authSidecar:
     enabled: true

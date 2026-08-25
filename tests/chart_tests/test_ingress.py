@@ -92,6 +92,17 @@ class TestIngress:
         assert all(doc["kind"] == "Ingress" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
 
+    def test_global_disabled_overrides(self, kube_version):
+        """global.ingress.enabled=false disables Ingress templates rendered by default from the platform."""
+        # perHostIngress enabled so the most ingresses would otherwise render (see
+        # test_single_ingress_per_host, which counts 8 with the gate on).
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"ingress": {"enabled": False}, "perHostIngress": {"enabled": True}}},
+        )
+        ingresses = [doc for doc in docs if doc["kind"].lower() == "Ingress".lower()]
+        assert not ingresses
+
     def test_prometheus_federate_ingress(self, kube_version):
         """Test prometheus federate ingress configuration"""
         docs = render_chart(
@@ -326,3 +337,48 @@ class TestIngress:
 
         assert len(docs) == 1
         assert "tls" not in docs[0]["spec"]
+
+    def test_registry_name_per_host_ingress_overrides(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"perHostIngress": {"enabled": True}},
+                "astronomer": {"registry": {"fullnameOverride": "custom-registry"}},
+            },
+            show_only=[
+                "charts/astronomer/templates/registry/registry-ingress.yaml",
+                "charts/astronomer/templates/ingress.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        expected_rules_v1 = json.loads(
+            """
+                [{"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                {"service":{"name":"custom-registry","port":{"name":"registry-http"}}}}]}}]
+                """
+        )
+        assert docs[0]["spec"]["rules"] == expected_rules_v1
+
+    def test_registry_name_common_ingress_overrides(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"registry": {"fullnameOverride": "custom-registry"}},
+            },
+            show_only=[
+                "charts/astronomer/templates/registry/registry-ingress.yaml",
+                "charts/astronomer/templates/ingress.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        expected_rules_v1 = json.loads(
+            """
+                    [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                    {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+                    {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                    {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+                    {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                    {"service":{"name":"custom-registry","port":{"name":"registry-http"}}}}]}}]
+                    """
+        )
+        assert docs[0]["spec"]["rules"] == expected_rules_v1

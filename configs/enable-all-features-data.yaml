@@ -13,7 +13,7 @@ astronomer:
         cpu: 100m
         memory: 128Mi
 global:
-  operator:
+  airflowOperator:
     enabled: true
   authSidecar:
     enabled: true

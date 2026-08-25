@@ -5,6 +5,11 @@ kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Release.Name }}-airflow-operator-serving-cert
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
   name: {{ .Release.Name }}-airflow-operator-validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -147,11 +152,7 @@ webhooks:
   sideEffects: None
 - admissionReviewVersions:
   - v1
-  clientConfig:
-    service:
-      name: {{ .Release.Name }}-airflow-operator-webhook-service
-      namespace: airflow-operator-system
-      path: /validate-airflow-apache-org-v1beta1-webserver-scale
+  clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-webserver-scale" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
   name: vwebserverscale.kb.io
   rules:

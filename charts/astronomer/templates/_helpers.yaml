@@ -240,10 +240,10 @@ gcp_cloud_logging:
 {{- end }}
 
 {{ define "commander.jwksServiceAccountName" -}}
-{{- if and .Values.commander.serviceAccount.create .Values.global.rbac.enabled -}}
-{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.serviceAccount.name }}
+{{- if and .Values.commander.jwksHook.serviceAccount.create .Values.global.rbac.enabled -}}
+{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.jwksHook.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.commander.serviceAccount.name }}
+    {{ default "default" .Values.commander.jwksHook.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
@@ -331,16 +331,22 @@ gcp_cloud_logging:
   value: "{{ include "houston.authServiceURL" . }}"
 {{- end }}
 
-{{ define "commander_env" -}}
+{{ define "common_shared_env" -}}
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
   value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
-{{- if .Values.global.namespaceManagement.namespacePools.enabled  }}
+{{ end }}
+
+{{ define "commander_env" -}}
+{{- include "common_shared_env" . -}}
+{{ if .Values.global.namespaceManagement.namespacePools.enabled -}}
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
+- name: COMMANDER_CONTROL_PLANE_HA_ENABLED
+  value: {{ ternary "true" "false" .Values.global.controlPlaneHA.enabled | quote }}
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 {{- if .Values.global.dataPlaneFailover.enabled }}
@@ -587,6 +593,8 @@ s3:
 - name: CB_PROBE_MAX_INFLIGHT
   value: {{ .Values.houston.worker.dispatcher.circuitBreaker.probeMaxInflight | quote }}
 {{- end }}
+- name: HELM__RELEASE_VERSION
+  value: {{ .Chart.Version | quote }}
 {{- end }}
 {{- end }}
 
@@ -761,7 +769,7 @@ tls:
 
 {{- define "houston.eventsUrl" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
-https://houston.{{ .Values.global.baseDomain }}/v1/registry/events
+https://houston.{{ include "houston.controlPlaneBaseDomain" . }}/v1/registry/events
 {{- else -}}
 http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events
 {{- end }}
@@ -814,9 +822,25 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 {{- end }}
 {{- end }}
 
+{{- /*
+CP-HA: the control-plane base domain a data plane targets for control-plane services (Houston).
+Under Control Plane HA this is the GLOBAL base domain so DP->CP requests health-route to whichever
+control plane is active as pinning to a single CP's per-CP baseDomain breaks DP->CP calls after a
+CP/region failover (if the pinned CP is the one that is down).
+When HA is enabled, globalBaseDomain is REQUIRED on every plane, so the HA branch always resolves. The
+per-CP fallback below is reached only when HA is disabled. Only meaningful on data planes.
+*/ -}}
+{{- define "houston.controlPlaneBaseDomain" -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- else -}}
+{{- .Values.global.baseDomain -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "houston.authServiceURL" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
-https://houston.{{ .Values.global.baseDomain }}
+https://houston.{{ include "houston.controlPlaneBaseDomain" . }}
 {{- else -}}
 http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}
 {{- end }}
@@ -938,3 +962,29 @@ Returns the string "true" or "false" — compare with eq.
 {{- define "registry.enabled" -}}
 {{- and .Values.registry.enabled (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) -}}
 {{- end }}
+
+
+{{/*
+Whether flightdeck resources should render. The store backs the CP↔DP version-guard CAS
+(multi-CP message reordering, needed under controlPlaneHA) and DR-failover flight processing.
+It renders when flightDeck.enabled is set explicitly, OR on a data plane when either
+dataPlaneFailover or controlPlaneHA is enabled.
+
+NOTE: flightdeck is conceptually data-plane-only, but flightDeck.enabled here is intentionally
+mode-agnostic (renders in unified too) to preserve the long-standing tested path. Restricting
+it to data mode — and aligning pilot's DSN gate with this helper — is tracked as a follow-up
+(see PINF-1093 sub-issue); do not tighten it here without that coordinated change.
+*/}}
+{{- define "flightdeck.enabled" -}}
+{{- if or .Values.flightDeck.enabled (and (or .Values.global.dataPlaneFailover.enabled .Values.global.controlPlaneHA.enabled) (eq .Values.global.plane.mode "data")) }}
+true
+{{- end -}}
+{{- end -}}
+
+{{- define "getCommanderGRPCport" -}}
+{{- if .Values.global.authSidecar.enabled -}}
+{{- .Values.ports.commanderSidecarGRPC -}}
+{{- else -}}
+{{- .Values.ports.commanderGRPC -}}
+{{- end -}}
+{{- end -}}

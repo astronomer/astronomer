@@ -80,7 +80,7 @@ spec:
           resources: {{ toYaml .Values.commander.resources | nindent 12 }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
 
-      {{- if or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
+      {{- if (include "flightdeck.enabled" .) }}
         - name: flightdeck-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -208,7 +208,7 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
-            {{- if or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
+            {{- if (include "flightdeck.enabled" .) }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:

@@ -18,5 +18,5 @@ global:
     # sysctl init); disable those or keep the platform ns on audit/warn only.
     pod-security.kubernetes.io/enforce: "restricted"
     pod-security.kubernetes.io/enforce-version: "latest"
-    pod-security.kubernetes.io/audit: "restricted"  # check the audit logs. This is nontrivial in k3d.
-    pod-security.kubernetes.io/warn: "restricted"  # check commander logs for `"msg"="Warning`
+    pod-security.kubernetes.io/audit: "restricted" # check the audit logs. This is nontrivial in k3d.
+    pod-security.kubernetes.io/warn: "restricted" # check commander logs for `"msg"="Warning`

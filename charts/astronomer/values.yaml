@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.18.4
+airflowChartVersion: 1.18.8
 
 nodeSelector: {}
 affinity: {}
@@ -15,30 +15,29 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 2.1.7
+    tag: 2.1.19
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.1-10
+    tag: 3.1.1-14
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 2.1.5
+    tag: 2.1.21
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 2.1.1
+    tag: 2.1.10
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.15
+    tag: 2.0.21
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.56.0-2"
+    tag: "0.56.0-3"
     pullPolicy: IfNotPresent
-
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -61,13 +60,13 @@ astroUI:
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   readinessProbe: {}
   livenessProbe: {}
   startupProbe: {}
@@ -112,8 +111,7 @@ houston:
   regenerateCaEachUpgrade: false
   # Houston datastore
   backendSecretName: ~
-  backendConnection:
-    {}
+  backendConnection: {}
     # user: ~
     # pass: ~
     # host: ~
@@ -122,8 +120,7 @@ houston:
 
   # Airflow backends
   airflowBackendSecretName: ~
-  airflowBackendConnection:
-    {}
+  airflowBackendConnection: {}
     # user: ~
     # pass: ~
     # host: ~
@@ -172,13 +169,13 @@ houston:
   #   secretKey: "connection"
   secret: []
 
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
@@ -261,6 +258,10 @@ houston:
       securityContext:
         runAsNonRoot: true
         allowPrivilegeEscalation: false
+        runAsUser: 65532
+        capabilities:
+          drop:
+            - ALL
 
       resources:
         requests:
@@ -403,7 +404,7 @@ houston:
   # This runs as a CronJob
   cleanupTaskUsageData:
     # Run at 23:40 every night
-    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
+    schedule: "40 23 * * *" # https://crontab.guru/#40_23_*_*_*
 
     # Cleanup deployments older than this many days
     olderThan: 90
@@ -424,7 +425,7 @@ houston:
     enabled: true
 
     # Run at 23:11 every night
-    schedule: "11 23 * * *"  # https://crontab.guru/#11_23_*_*_*
+    schedule: "11 23 * * *" # https://crontab.guru/#11_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
@@ -440,7 +441,7 @@ houston:
     enabled: true
 
     # Run at 23:49 every night
-    schedule: "49 23 * * *"  # https://crontab.guru/#49_23_*_*_*
+    schedule: "49 23 * * *" # https://crontab.guru/#49_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
@@ -676,7 +677,13 @@ configSyncer:
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
   securityContext: {}
-  resources: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   serviceAccount:
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
@@ -707,14 +714,12 @@ flightDeck:
     livenessProbe: {}
     readinessProbe: {}
 
-
 commander:
   replicas: 2
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources:
-    {}
+  resources: {}
     # limits:
     #  cpu: 100m
     #  memory: 128Mi
@@ -781,6 +786,17 @@ commander:
     retryAttempts: 2
     retryDelay: 10
     extraEnv: []
+    # -- Service account configuration
+    serviceAccount:
+      # -- Specifies whether a service account should be created
+      create: true
+      # -- Annotations to add to the service account
+      annotations: {}
+      # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+      name: ""
+      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+      automountServiceAccountToken: true
+
 
 pilot:
   # -- Enable Pilot deployment (data plane only)
@@ -806,13 +822,13 @@ pilot:
   podAnnotations: {}
 
   # -- Resource requests and limits
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 250m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
 
   # -- Liveness probe configuration
   livenessProbe: {}
@@ -1012,13 +1028,13 @@ registry:
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False
   replicas: 1
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 
   livenessProbe: {}
     # httpGet:

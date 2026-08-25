@@ -11,14 +11,14 @@ from pathlib import Path
 
 import yaml
 from certs import (
-    astronomer_private_ca_cert_file,
     astronomer_tls_cert_file,
     astronomer_tls_key_file,
 )
+from k3d_setup_shared import _mkcert_caroot, _mkcert_path
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 HELPER_BIN_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "bin"
 KIND_EXE = str(HELPER_BIN_DIR / "kind")
 KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
@@ -280,16 +280,22 @@ def setup_common_cluster_configs() -> None:
     """
     create_namespace()
     create_astronomer_tls_secret()
-    create_private_ca_secret()
+    create_mkcert_root_ca_secret()
 
 
-def create_private_ca_secret() -> None:
+def create_mkcert_root_ca_secret() -> None:
     """
-    Create the private-ca secret in the KIND cluster using self-signed certificates.
+    Create the mkcert-root-ca secret in the KIND cluster: mkcert's own root CA (the same
+    CA that signs astronomer-tls, via create_astronomer_tls_certificates()'s `mkcert -install`),
+    so the platform trusts its own dev TLS chain -- the identical role the k3d CP/DP topology's
+    `--mkcert-root-ca-secret-name` secret plays via _mkcert_caroot() in k3d_setup_shared.py.
+    Both topologies now share that one helper and one secret name/content; there is no separate
+    KIND-only "private CA" concept.
 
     Raises:
         RuntimeError: If secret creation fails.
     """
+    root_ca = _mkcert_caroot(_mkcert_path())
 
     cmd = [
         KUBECTL_EXE,
@@ -298,14 +304,19 @@ def create_private_ca_secret() -> None:
         "create",
         "secret",
         "generic",
-        "private-ca",
-        f"--from-file={astronomer_private_ca_cert_file}",
+        "mkcert-root-ca",
+        # Every consumer of global.privateCaCerts (custom_ca_volume_mounts / custom_ca_volumes
+        # in charts/astronomer/templates/_helpers.yaml, plus the copies in the alertmanager,
+        # prometheus, and vector subcharts) mounts each secret with `subPath: cert.pem`, per the
+        # contract documented in configs/local-dev.yaml ("Each secret must have one data entry
+        # 'cert.pem'"), so the key= prefix here is required, not optional.
+        f"--from-file=cert.pem={root_ca}",
     ]
     if DEBUG:
         cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(f"Failed to create secret private-ca in namespace astronomer: {result.stderr}")
+        raise RuntimeError(f"Failed to create secret mkcert-root-ca in namespace astronomer: {result.stderr}")
 
 
 def wait_for_pods_ready(timeout: int = 300) -> None:

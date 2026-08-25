@@ -43,7 +43,7 @@ repos:
         files: 'Chart\.yaml$'
         pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.2
+    rev: v2.4.3
     hooks:
       - id: codespell
         args: ["-L", "AKS,aks,showIn,NotIn,templateAs"]
@@ -53,7 +53,7 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.21"
+    rev: "v0.16.0"
     hooks:
       - id: ruff-check
         args:
