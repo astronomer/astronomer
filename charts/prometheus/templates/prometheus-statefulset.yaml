@@ -189,15 +189,14 @@ spec:
             name: filesd
         - name: prometheus
           image: {{ include "prometheus.image" . }}
-          env:
-          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-            - name: FEDERATION_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "prometheus.federationAuthSecret" . }}
-                  key: token
-          {{- end }}
+          {{- /* The federation bearer token is read from a file, not the environment:
+                 the federated-dataplanes scrape job uses
+                 authorization.credentials_file, fed by the federation-auth volume
+                 below. Prometheus expands env vars only in global.external_labels,
+                 so an env var could never have supplied it. UPDATE_CA_CERTS is the
+                 container's only env var, so the key is emitted with it. */}}
           {{- if .Values.global.privateCaCerts }}
+          env:
             - name: UPDATE_CA_CERTS
               value: "true"
           {{- end }}

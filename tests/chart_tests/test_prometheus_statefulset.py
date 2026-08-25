@@ -77,11 +77,21 @@ class TestPrometheusStatefulset:
         }
         assert c_by_name["etc-ssl-certs-copier"]["volumeMounts"] == [{"name": "etc-ssl-certs", "mountPath": "/etc/ssl/certs_copy"}]
 
-        assert "env" in c_by_name["prometheus"]
-        env_vars = c_by_name["prometheus"]["env"]
-        fed_auth_token = next((e for e in env_vars if e["name"] == "FEDERATION_AUTH_TOKEN"), None)
-        assert fed_auth_token is not None
-        assert fed_auth_token["valueFrom"]["secretKeyRef"]["key"] == "token"
+        # The federation bearer token reaches prometheus as a file, never as an env
+        # var: the scrape job uses authorization.credentials_file, and prometheus
+        # expands env vars only in global.external_labels. The container has no env
+        # at all unless global.privateCaCerts adds UPDATE_CA_CERTS.
+        assert "env" not in c_by_name["prometheus"]
+
+        federation_mount = next(
+            m for m in c_by_name["prometheus"]["volumeMounts"] if m["name"] == "federation-auth"
+        )
+        assert federation_mount["mountPath"] == "/etc/prometheus/federation-auth"
+        assert federation_mount["readOnly"] is True
+
+        federation_volume = next(v for v in spec["volumes"] if v["name"] == "federation-auth")
+        # The projected filename must match the credentials_file path in the config.
+        assert federation_volume["secret"]["items"] == [{"key": "token", "path": "federation-token"}]
 
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(
