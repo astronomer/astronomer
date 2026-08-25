@@ -3,6 +3,7 @@
 ####################
 {{- if and .Values.houston.worker.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
 {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
+{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar)) }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
 kind: Deployment
 apiVersion: apps/v1
@@ -34,6 +35,9 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
+        {{- if .Values.houston.logging.loggingSidecar.enabled }}
+        checksum/vector-config: {{ include (print $.Template.BasePath "/houston/worker/houston-worker-vector-configmap.yaml") . | sha256sum }}
+        {{- end }}
         {{- include "houston.jetStreamTLSChecksum" . | nindent 8 }}
         {{- if .Values.global.podAnnotations }}
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
@@ -237,7 +241,7 @@ spec:
             {{- if .Values.houston.logging.loggingSidecar.cloudwatch.enabled }}
             - name: AWS_REGION
               value: {{ .Values.houston.logging.loggingSidecar.cloudwatch.region | quote }}
-            {{- if not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA }}
+            {{- if and (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) (not $vectorSecretsFromFiles) }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -253,7 +257,7 @@ spec:
             {{- if .Values.houston.logging.loggingSidecar.elasticsearch.enabled }}
             - name: ES_ENDPOINT
               value: {{ include "houston.logging.loggingSidecar.elasticsearch" . | quote }}
-            {{- if eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic" }}
+            {{- if and (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") (not $vectorSecretsFromFiles) }}
             - name: ES_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -271,6 +275,16 @@ spec:
             - name: vector-config
               mountPath: /etc/vector/config
               readOnly: true
+            {{- if and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.cloudwatch.enabled (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) }}
+            - name: vector-cloudwatch-secret
+              mountPath: /etc/vector/secrets/cloudwatch
+              readOnly: true
+            {{- end }}
+            {{- if and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.elasticsearch.enabled (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") }}
+            - name: vector-elasticsearch-secret
+              mountPath: /etc/vector/secrets/elasticsearch
+              readOnly: true
+            {{- end }}
             - name: vector-data
               mountPath: /var/lib/vector
             - name: sidecar-log-volume
@@ -316,6 +330,26 @@ spec:
         {{- include "houston_secret_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
         {{- if .Values.houston.logging.loggingSidecar.enabled }}
+        {{- if and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.cloudwatch.enabled (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) }}
+        - name: vector-cloudwatch-secret
+          secret:
+            secretName: {{ .Values.houston.logging.loggingSidecar.cloudwatch.secretName }}
+            items:
+              - key: aws_access_key_id
+                path: aws_access_key_id
+              - key: aws_secret_access_key
+                path: aws_secret_access_key
+        {{- end }}
+        {{- if and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.elasticsearch.enabled (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") }}
+        - name: vector-elasticsearch-secret
+          secret:
+            secretName: {{ .Values.houston.logging.loggingSidecar.elasticsearch.auth.secretName }}
+            items:
+              - key: username
+                path: username
+              - key: password
+                path: password
+        {{- end }}
         - name: vector-config
           configMap:
             name: {{ .Release.Name }}-houston-worker-vector-config
