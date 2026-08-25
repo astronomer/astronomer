@@ -234,6 +234,15 @@ houston:
     loggingSidecar:
       enabled: false
 
+      # Have Vector read its sink credentials from mounted files instead of
+      # environment variables, using Vector's native `secret` directory backend.
+      # This is Vector's own mechanism, independent of the houston loader, so it
+      # has its own toggle. Leave unset to inherit
+      # `global.secretsFromFiles.enabled`. Requires ap-vector >= 0.43.
+      # @default -- inherits global.secretsFromFiles.enabled
+      secretsFromFiles:
+        enabled: ~
+
       securityContext:
         runAsNonRoot: true
         allowPrivilegeEscalation: false
