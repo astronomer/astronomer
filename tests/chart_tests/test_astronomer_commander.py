@@ -89,7 +89,6 @@ class TestAstronomerCommander:
             "namespaceLabels": {},
             "customLogging": {"enabled": enabled},
             "registry": {"version": "99.88.77"},
-            "externalSecretManager": {"isClusterSecretStore": True},
             "openshift": {"enabled": False},
         }
 
