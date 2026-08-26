@@ -52,12 +52,14 @@ class TestAstronomerCommander:
                 "namespaceLabels": namespace_labels,
                 "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
+                "openshift": {"enabled": False},
             }
         else:
             assert metadata_file_contents == {
                 "namespaceLabels": {},
                 "registry": {"version": "99.88.77"},
                 "customLogging": {"enabled": False},
+                "openshift": {"enabled": False},
             }
 
     @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
@@ -87,6 +89,7 @@ class TestAstronomerCommander:
             "namespaceLabels": {},
             "customLogging": {"enabled": enabled},
             "registry": {"version": "99.88.77"},
+            "openshift": {"enabled": False},
         }
 
     def test_commander_deployment_default(self, kube_version):
