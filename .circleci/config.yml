@@ -22,6 +22,10 @@ jobs:
   sign-released-image:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2026-08
+    parameters:
+      image_tag:
+        type: string
+        default: ""
     steps:
       - checkout
       - cosign/install:
@@ -42,6 +46,9 @@ jobs:
             # For custom QA release job
             elif [ -n "$IMG_TAG" ]; then
               echo "export IMAGE_TAG=$IMG_TAG" >> $BASH_ENV
+            # TEMPORARY: lets the test-release-jobs workflow pass a tag on a branch build
+            elif [ -n "<< parameters.image_tag >>" ]; then
+              echo "export IMAGE_TAG=<< parameters.image_tag >>" >> $BASH_ENV
             else
               echo "No specific release tag found, skipping image signing"
               exit 0
@@ -58,12 +65,19 @@ jobs:
   release_bom:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2026-08
+    parameters:
+      version:
+        type: string
+        default: "${CIRCLE_TAG}"
+      extra_args:
+        type: string
+        default: ""
     steps:
       - checkout
       - run:
           name: Run Release BOM Script
           command: |
-            bin/release-bom -x ${CIRCLE_TAG}
+            bin/release-bom -x << parameters.extra_args >> << parameters.version >>
 
   run_pre_commit:
     docker:
@@ -665,6 +679,32 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
+
+  # TEMPORARY, can be removed before merging this PR.
+  # Lets us run both release jobs from this branch to prove the fixes work.
+  # release_bom runs with -n so it generates the BOM without touching the bucket.
+  test-release-jobs:
+    jobs:
+      - release_bom:
+          name: test-release-bom
+          version: "1.2.1"
+          extra_args: "-n"
+          context:
+            - github-repo
+            - gcp-astronomer-prod
+          filters:
+            branches:
+              only: fix-bom-python
+      - sign-released-image:
+          name: test-sign-released-image
+          image_tag: "1.2.1"
+          context:
+            - quay.io
+            - docker.io
+            - software-cosign-keys
+          filters:
+            branches:
+              only: fix-bom-python
 
   release-bom-workflow:
     jobs:

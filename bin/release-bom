@@ -15,13 +15,19 @@ help() {
   echo "    in the public release repository."
   echo
   echo "Usage:"
-  echo "    ${0##*/} [-x] <version>"
+  echo "    ${0##*/} [-x] [-n] <version>"
+  echo
+  echo "Options:"
+  echo "    -x  trace execution"
+  echo "    -n  dry run: generate the BOM, but do not upload it or update the indexes"
 }
 
-while getopts ':hx' option ; do
+dry_run=""
+while getopts ':hxn' option ; do
   case "${option}" in
     h) help ; exit ;;
     x) set -x ;;
+    n) dry_run="1" ;;
     *) help ; exit 1 ;;
   esac
 done
@@ -44,7 +50,7 @@ max_age="300"
 # Install bom-generator (latest release)
 # The CI image ships Python 3.12, but bom-generator requires >=3.13
 bom_tag=$(latest_github_release "astronomer/astronomer-bom-generator")
-uv tool install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${bom_tag}"
+uv tool install --python 3.13 "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${bom_tag}"
 
 # Generate bom file and indexes
 "$HOME/.local/bin/bom-generator" --version "${version}"
@@ -53,6 +59,11 @@ uv tool install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bo
 if [ ! -f "${json_file_name}" ]; then
   echo "ERROR: Failed to generate ${json_file_name}"
   exit 1
+fi
+
+if [[ -n "${dry_run}" ]] ; then
+  echo "Dry run: generated ${json_file_name}, skipping upload to ${bucket_path}"
+  exit 0
 fi
 
 gcloud auth activate-service-account --key-file=<(echo "${GCP_TOKEN}")
