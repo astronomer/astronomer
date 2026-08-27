@@ -137,7 +137,9 @@ spec:
         {{- end }}
 
       containers:
-        - name: houston
+        # Renamed from "houston" with the DATABASE_URL dedup so Helm replaces the
+        # container instead of emitting an ambiguous env delete.
+        - name: houston-worker
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
@@ -203,11 +205,6 @@ spec:
               value: "INFO"
             - name: GRPC_TRACE
               value: "all"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.backendSecret" . }}
-                  key: connection
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:
