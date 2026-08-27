@@ -964,15 +964,7 @@ PGBOUNCER_HELM_PATH: Final[list[str]] = [
     "pgbouncer",
 ]
 
-# PgBouncer client authentication is not part of the 2.x deployment contract. On
-# 2.x the airflow-operator owns the pgbouncer workload, and
-# `addPgBouncerComponentToSpec` (houston-api src/lib/deployments/operator/index.js)
-# maps only resources, exporterResources, maxClientConn, metadataPoolSize,
-# replicas, sslmode and the images onto the Airflow CR. There is no CR field for
-# `auth_type` or `extraIni`, so anything set under
-# `deployments.helm.airflow.pgbouncer.auth_type` is silently dropped after the
-# upgrade. Carrying the key forward would imply it is still in force, so the
-# migration removes it and the notes below explain the behaviour change.
+
 PGBOUNCER_AUTH_TYPE_NOTE: Final[str] = (
     "PgBouncer client authentication changes on 2.x.\n"
     "  On 0.37.x and 1.x the Airflow Helm chart sets pgbouncer `auth_type` to\n"
