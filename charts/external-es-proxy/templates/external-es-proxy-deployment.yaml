@@ -2,6 +2,7 @@
 ## Elasticsearch Proxy Deployment ##
 ####################################
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.global.customLogging)) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -71,7 +72,7 @@ spec:
 {{- if .Values.global.customLogging.secret }}
           - name: ES_SECRET
             value: {{.Values.global.customLogging.secret }}
-{{- else if .Values.global.customLogging.secretName }}
+{{- else if and .Values.global.customLogging.secretName (not $secretsFromFiles) }}
           - name: ES_SECRET_NAME
             valueFrom:
               secretKeyRef:
@@ -79,6 +80,11 @@ spec:
                 key: elastic
 {{- end }}
           volumeMounts:
+            {{- if and .Values.global.customLogging.secretName (not .Values.global.customLogging.secret) $secretsFromFiles }}
+            - name: es-secret
+              mountPath: /run/secrets
+              readOnly: true
+            {{- end }}
             - name: nginx-config-volume
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
@@ -124,7 +130,15 @@ spec:
         - name: awsproxy
           image: {{ template "awsesproxy.image" . }}
           command: ["/bin/sh", "-c"]
+          {{- if and .Values.global.customLogging.awsSecretName $secretsFromFiles }}
+          {{- /* aws-es-proxy uses the AWS SDK default credential chain and has no
+                 *_FILE convention, so the values are read from the mounted files
+                 here and exported before exec. The container already runs
+                 /bin/sh -c, so this stays a chart-only change. */}}
+          args: ["export AWS_ACCESS_KEY_ID=\"$(cat /run/secrets/aws_access_key)\"; export AWS_SECRET_ACCESS_KEY=\"$(cat /run/secrets/aws_secret_key)\"; exec aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
+          {{- else }}
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
+          {{- end }}
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
@@ -137,8 +151,14 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if and .Values.global.customLogging.awsSecretName $secretsFromFiles }}
+          volumeMounts:
+            - name: awssecret
+              mountPath: /run/secrets
+              readOnly: true
+          {{- end }}
           env:
-          {{- if .Values.global.customLogging.awsSecretName }}
+          {{- if and .Values.global.customLogging.awsSecretName (not $secretsFromFiles) }}
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
@@ -192,5 +212,13 @@ spec:
         - name: awssecret
           secret:
             secretName: {{ .Values.global.customLogging.awsSecretName }}
+        {{- end }}
+        {{- if and .Values.global.customLogging.secretName (not .Values.global.customLogging.secret) $secretsFromFiles }}
+        - name: es-secret
+          secret:
+            secretName: {{ .Values.global.customLogging.secretName }}
+            items:
+              - key: elastic
+                path: ES_SECRET
         {{- end }}
 {{- end }}
