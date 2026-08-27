@@ -47,7 +47,7 @@ bom_tag=$(latest_github_release "astronomer/astronomer-bom-generator")
 uv tool install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${bom_tag}"
 
 # Generate bom file and indexes
-"${bom_venv}/bin/bom-generator" --version "${version}"
+"$HOME/.local/bin/bom-generator" --version "${version}"
 
 # Verify that we generated the desired bom file
 if [ ! -f "${json_file_name}" ]; then
