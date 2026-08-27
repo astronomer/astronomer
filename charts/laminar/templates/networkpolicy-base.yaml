@@ -1,0 +1,46 @@
+########################################
+## Shared Laminar NetworkPolicies ##
+########################################
+{{- if eq (include "hibernator.enabled" .) "true" }}
+{{- if .Values.global.networkPolicy.enabled }}
+---
+# Deny all traffic from outside the namespace by default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: laminar-default-deny-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hibernator.labels" (list $ "laminar") | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+---
+# Allow monitoring scrapers to reach all Laminar pods on the app port
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: laminar-allow-monitoring-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hibernator.labels" (list $ "laminar") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: laminar
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: {{ .Values.apiServer.port }}
+{{- end }}
+{{- end }}

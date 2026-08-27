@@ -1,0 +1,33 @@
+##################################
+## Laminar API Server NetworkPolicies ##
+##################################
+{{- if eq (include "hibernator.enabled" .) "true" }}
+{{- if .Values.global.networkPolicy.enabled }}
+{{- $port := .Values.apiServer.port }}
+{{- range $name, $ns := dict "allow-istio-ingress" "istio-system" "allow-symphony-ingress" "symphony" "allow-keda-ingress" "keda" }}
+---
+# allow traffic from the {{ $ns }} namespace to the api server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "hibernator.labels" (list $ "apiserver") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "hibernator.selectorLabels" (list $ "apiserver") | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $ns }}
+      ports:
+        - protocol: TCP
+          port: {{ $port }}
+{{- end }}
+{{- end }}
+{{- end }}

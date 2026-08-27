@@ -1,0 +1,17 @@
+#####################
+## laminar.env file ##
+#####################
+{{- if eq (include "hibernator.enabled" .) "true" }}
+{{- if and .Values.envConfigMap.enabled .Values.envConfigMap.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.envConfigMap.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hibernator.labels" (list $ "laminar") | nindent 4 }}
+data:
+  laminar.env: |
+{{ .Values.envConfigMap.content | indent 4 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,84 @@
+##########################
+## Laminar API Server RBAC ##
+##########################
+{{- if eq (include "hibernator.enabled" .) "true" }}
+{{- if .Values.global.rbac.enabled }}
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: laminar-apiserver-airflows
+  labels:
+    {{- include "hibernator.labels" (list $ "apiserver") | nindent 4 }}
+rules:
+  - apiGroups: ["airflow.apache.org"]
+    resources: ["airflows"]
+    verbs: ["get", "list", "patch", "watch"]
+  - apiGroups: ["airflow.apache.org"]
+    resources: ["airflows/status"]
+    verbs: ["get"]
+  - apiGroups: ["airflow.apache.org"]
+    resources: ["schedulers/scale"]
+    verbs: ["get"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: laminar-apiserver-airflows
+  labels:
+    {{- include "hibernator.labels" (list $ "apiserver") | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: laminar-apiserver-airflows
+subjects:
+  - kind: ServiceAccount
+    name: apiserver
+    namespace: {{ .Release.Namespace }}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: laminar-apiserver
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hibernator.labels" (list $ "apiserver") | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: laminar-apiserver
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hibernator.labels" (list $ "apiserver") | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: laminar-apiserver
+subjects:
+  - kind: ServiceAccount
+    name: apiserver
+    namespace: {{ .Release.Namespace }}
+---
+# Allow the laminar apiserver to use the (cluster-scoped) TokenReview API to validate
+# tokens issued to KEDA for worker scaling metrics. See ADR-0009.
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: laminar-apiserver-token-review
+  labels:
+    {{- include "hibernator.labels" (list $ "apiserver") | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: apiserver
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
