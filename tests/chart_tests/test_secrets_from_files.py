@@ -565,3 +565,300 @@ def test_vector_toggle_is_independent_of_houston_toggle():
     assert get_env_vars_dict(containers["houston"]["env"])["HOUSTON_SECRETS_FROM_FILES"] == "true"
     assert VECTOR_SECRET_ENVS <= set(get_env_vars_dict(containers["vector"]["env"]))
     assert "secret" not in vector_config(docs)
+
+
+# ── PostgreSQL ─────────────────────────────────────────────────────────────────
+#
+# ap-postgresql is NOT a Bitnami image -- it is a Chainguard/Wolfi build running
+# docker-library's docker-entrypoint.sh, so the mechanism is that entrypoint's
+# file_env() helper and the var is POSTGRES_PASSWORD_FILE. POSTGRESQL_PASSWORD_FILE
+# does not exist in the image; verified by running ap-postgresql:17.9.0-1, where
+# that name leaves the DB uninitialised and the container exits 1.
+
+PG_STATEFULSETS = [
+    ("master", "charts/postgresql/templates/statefulset.yaml"),
+    ("slave", "charts/postgresql/templates/statefulset-slaves.yaml"),
+]
+
+PG_PASSWORD_FILE = "/run/secrets/postgresql-password"
+
+
+def pg_values(enabled=None, **postgresql):
+    values = {
+        "global": {"postgresql": {"enabled": True}},
+        "postgresql": {"postgresqlDatabase": "astrodb", "replication": {"enabled": True}, **postgresql},
+    }
+    if enabled is not None:
+        values["postgresql"]["secretsFromFiles"] = {"enabled": enabled}
+    return values
+
+
+@pytest.mark.parametrize("label,template", PG_STATEFULSETS, ids=[t[0] for t in PG_STATEFULSETS])
+class TestPostgresqlSecretsFromFiles:
+    def test_defaults_keep_env_vars(self, label, template):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=pg_values(), show_only=[template])
+        spec = docs[0]["spec"]["template"]["spec"]
+        postgres = next(c for c in spec["containers"] if "postgresql" in c["name"])
+        env_vars = get_env_vars_dict(postgres["env"])
+
+        assert env_vars["POSTGRES_PASSWORD"]["secretKeyRef"]["key"] == "postgresql-password"
+        assert "POSTGRES_PASSWORD_FILE" not in env_vars
+        assert "postgresql-password" not in {v["name"] for v in spec.get("volumes") or []}
+
+    def test_enabled_uses_the_file_env_var(self, label, template):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=pg_values(enabled=True), show_only=[template])
+        spec = docs[0]["spec"]["template"]["spec"]
+        postgres = next(c for c in spec["containers"] if "postgresql" in c["name"])
+        env_vars = get_env_vars_dict(postgres["env"])
+
+        assert env_vars["POSTGRES_PASSWORD_FILE"] == PG_PASSWORD_FILE
+        # The Bitnami-style name would be silently ignored by this image.
+        assert "POSTGRESQL_PASSWORD_FILE" not in env_vars
+
+        volumes = {v["name"]: v for v in spec["volumes"]}
+        assert volumes["postgresql-password"]["secret"]["items"] == [{"key": "postgresql-password", "path": "postgresql-password"}]
+        mount = next(m for m in postgres["volumeMounts"] if m["name"] == "postgresql-password")
+        assert mount["mountPath"] == PG_PASSWORD_FILE.rsplit("/", 1)[0]
+        assert mount["readOnly"] is True
+
+    @pytest.mark.parametrize("enabled", [None, False, True], ids=["unset", "off", "on"])
+    def test_password_and_password_file_are_never_both_set(self, label, template, enabled):
+        """The entrypoint's file_env() exits 1 if both are set, on every start.
+
+        Verified against ap-postgresql:17.9.0-1:
+          "error: both POSTGRES_PASSWORD and POSTGRES_PASSWORD_FILE are set
+           (but are exclusive)"
+        Emitting both would crash-loop the database, so this must stay either/or.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=pg_values(enabled=enabled), show_only=[template])
+        for container in docs[0]["spec"]["template"]["spec"]["containers"]:
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            assert not ("POSTGRES_PASSWORD" in env_vars and "POSTGRES_PASSWORD_FILE" in env_vars)
+
+    def test_replication_password_is_dropped_rather_than_filed(self, label, template):
+        """This image has no replication support at all, so the var is already unread.
+
+        Dropping it removes a secret from the pod spec; projecting it to a file
+        would create something nothing opens.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=pg_values(enabled=True), show_only=[template])
+        spec = docs[0]["spec"]["template"]["spec"]
+        postgres = next(c for c in spec["containers"] if "postgresql" in c["name"])
+        env_vars = get_env_vars_dict(postgres["env"])
+
+        assert "POSTGRES_REPLICATION_PASSWORD" not in env_vars
+        assert "POSTGRES_REPLICATION_PASSWORD_FILE" not in env_vars
+        projected = {item["path"] for v in spec["volumes"] if v["name"] == "postgresql-password" for item in v["secret"]["items"]}
+        assert "postgresql-replication-password" not in projected
+
+
+class TestPostgresqlMetricsSidecarSecretsFromFiles:
+    show_only = ["charts/postgresql/templates/statefulset.yaml"]
+
+    def test_defaults_keep_env_var(self):
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=pg_values(metrics={"enabled": True}),
+            show_only=self.show_only,
+        )
+        metrics = next(c for c in docs[0]["spec"]["template"]["spec"]["containers"] if c["name"] == "metrics")
+        assert get_env_vars_dict(metrics["env"])["DATA_SOURCE_PASS"]["secretKeyRef"]["key"] == "postgresql-password"
+        assert metrics["volumeMounts"] == []
+
+    def test_enabled_uses_data_source_pass_file(self):
+        """postgres_exporter's precedence is DATA_SOURCE_NAME > *_FILE > *, and it
+        TrimSpace's the file, so a Secret mount's trailing newline is handled."""
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=pg_values(enabled=True, metrics={"enabled": True}),
+            show_only=self.show_only,
+        )
+        spec = docs[0]["spec"]["template"]["spec"]
+        metrics = next(c for c in spec["containers"] if c["name"] == "metrics")
+        env_vars = get_env_vars_dict(metrics["env"])
+
+        assert env_vars["DATA_SOURCE_PASS_FILE"] == PG_PASSWORD_FILE
+        assert "DATA_SOURCE_PASS" not in env_vars
+        # DATA_SOURCE_NAME would take precedence over the file and silently win.
+        assert "DATA_SOURCE_NAME" not in env_vars
+
+        mount = next(m for m in metrics["volumeMounts"] if m["name"] == "postgresql-password")
+        assert mount["mountPath"] == PG_PASSWORD_FILE.rsplit("/", 1)[0]
+        assert mount["name"] in {v["name"] for v in spec["volumes"]}
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [(None, None, False), (True, None, True), (True, False, False), (False, True, True)],
+)
+def test_postgresql_toggle_override_precedence(global_enabled, component_enabled, expected):
+    values = pg_values(enabled=component_enabled)
+    if global_enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": global_enabled}
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/postgresql/templates/statefulset.yaml"],
+    )
+    postgres = next(c for c in docs[0]["spec"]["template"]["spec"]["containers"] if "postgresql" in c["name"])
+    env_vars = get_env_vars_dict(postgres["env"])
+    assert ("POSTGRES_PASSWORD_FILE" in env_vars) is expected
+    assert ("POSTGRES_PASSWORD" in env_vars) is not expected
+
+
+# ── external-es-proxy ──────────────────────────────────────────────────────────
+#
+# Neither image has a *_FILE convention, so both halves are chart-owned:
+#   esproxy  (ap-openresty)   -- nginx.conf and setenv.lua are mounted over the
+#                                image's copies via subPath, so the lua is ours.
+#                                The credential is read once in init_by_lua_block;
+#                                setenv.lua runs per request and must not do I/O.
+#   awsproxy (ap-awsesproxy)  -- aws-es-proxy uses the AWS SDK default credential
+#                                chain, so a shell preamble exports the values
+#                                before exec. The container already runs /bin/sh -c.
+#
+# Both verified against the pinned images: the esproxy set
+# "Basic ZXN1c2VyOmVzcGFzcw==" from a mounted file, and the preamble set both AWS
+# vars to the newline-stripped file contents.
+
+ESP_TEMPLATES = [
+    "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+    "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+    "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
+]
+
+
+def esp_values(enabled=None, **custom_logging):
+    logging_values = {
+        "enabled": True,
+        "host": "es.example.com",
+        "secretName": "my-es-creds",
+        "awsSecretName": "my-aws-creds",
+        **custom_logging,
+    }
+    if enabled is not None:
+        logging_values["secretsFromFiles"] = {"enabled": enabled}
+    return {"global": {"plane": {"mode": "unified"}, "customLogging": logging_values}}
+
+
+def esp_docs(enabled=None, **custom_logging):
+    return render_chart(
+        kube_version=newest_supported_kube_version,
+        values=esp_values(enabled, **custom_logging),
+        show_only=ESP_TEMPLATES,
+    )
+
+
+def esp_parts(docs):
+    deployment = next(d for d in docs if d["kind"] == "Deployment")
+    configs = {}
+    for d in docs:
+        if d["kind"] == "ConfigMap":
+            configs.update(d["data"])
+    return deployment, configs
+
+
+class TestExternalEsProxySecretsFromFiles:
+    def test_defaults_keep_env_vars(self):
+        deployment, configs = esp_parts(esp_docs())
+        spec = deployment["spec"]["template"]["spec"]
+        containers = {c["name"]: c for c in spec["containers"]}
+
+        esproxy_env = get_env_vars_dict(containers["external-es-proxy"]["env"])
+        assert esproxy_env["ES_SECRET_NAME"]["secretKeyRef"]["key"] == "elastic"
+
+        aws_env = get_env_vars_dict(containers["awsproxy"]["env"])
+        assert aws_env["AWS_ACCESS_KEY_ID"]["secretKeyRef"]["key"] == "aws_access_key"
+        assert aws_env["AWS_SECRET_ACCESS_KEY"]["secretKeyRef"]["key"] == "aws_secret_key"
+        assert containers["awsproxy"]["args"] == ["aws-es-proxy -listen :9203"]
+
+        assert "es-secret" not in {v["name"] for v in spec["volumes"]}
+        assert "init_by_lua_block" not in configs["nginx.conf"]
+        assert "ES_SECRET_FROM_FILE" not in configs["setenv.lua"]
+
+    def test_enabled_reads_both_credentials_from_files(self):
+        deployment, configs = esp_parts(esp_docs(enabled=True))
+        spec = deployment["spec"]["template"]["spec"]
+        volumes = {v["name"]: v for v in spec["volumes"]}
+        containers = {c["name"]: c for c in spec["containers"]}
+
+        # esproxy: no env, file mounted, lua reads it at startup and encodes it.
+        esproxy = containers["external-es-proxy"]
+        assert "ES_SECRET_NAME" not in get_env_vars_dict(esproxy.get("env") or [])
+        assert volumes["es-secret"]["secret"]["items"] == [{"key": "elastic", "path": "ES_SECRET"}]
+        esproxy_mount = next(m for m in esproxy["volumeMounts"] if m["name"] == "es-secret")
+        assert esproxy_mount["mountPath"] == "/run/secrets"
+        assert esproxy_mount["readOnly"] is True
+
+        assert "init_by_lua_block" in configs["nginx.conf"]
+        assert "/run/secrets/ES_SECRET" in configs["nginx.conf"]
+        # The `elastic` key holds raw credentials, so the lua must encode them --
+        # matching the ES_SECRET_NAME branch, not the pre-encoded ES_SECRET one.
+        assert "ngx.encode_base64(ES_SECRET_FROM_FILE)" in configs["setenv.lua"]
+
+        # awsproxy: no env, preamble reads the files before exec.
+        awsproxy = containers["awsproxy"]
+        aws_env = get_env_vars_dict(awsproxy.get("env") or [])
+        assert "AWS_ACCESS_KEY_ID" not in aws_env
+        assert "AWS_SECRET_ACCESS_KEY" not in aws_env
+        args = awsproxy["args"][0]
+        assert 'export AWS_ACCESS_KEY_ID="$(cat /run/secrets/aws_access_key)"' in args
+        assert 'export AWS_SECRET_ACCESS_KEY="$(cat /run/secrets/aws_secret_key)"' in args
+        assert args.strip().endswith("exec aws-es-proxy -listen :9203")
+        aws_mount = next(m for m in awsproxy["volumeMounts"] if m["name"] == "awssecret")
+        assert aws_mount["mountPath"] == "/run/secrets"
+
+    def test_setenv_lua_does_no_file_io_itself(self):
+        """setenv.lua runs per request; reading the file there would hit the disk
+        on every proxied request. The read belongs in init_by_lua_block."""
+        _deployment, configs = esp_parts(esp_docs(enabled=True))
+        assert "io.open" in configs["nginx.conf"]
+        assert "io.open" not in configs["setenv.lua"]
+
+    def test_inline_secret_value_takes_precedence_over_the_file(self):
+        """global.customLogging.secret is a literal value, not a Secret reference,
+        so there is nothing to move to a file and the lua's ES_SECRET branch wins.
+
+        The literal below is a test fixture standing in for an operator-supplied
+        value, hence the S106 suppression.
+        """
+        deployment, _configs = esp_parts(esp_docs(enabled=True, secret="cHJlLWVuY29kZWQ="))  # noqa: S106
+        spec = deployment["spec"]["template"]["spec"]
+        esproxy = next(c for c in spec["containers"] if c["name"] == "external-es-proxy")
+
+        assert get_env_vars_dict(esproxy["env"])["ES_SECRET"] == "cHJlLWVuY29kZWQ="
+        assert "es-secret" not in {v["name"] for v in spec["volumes"]}
+        assert "es-secret" not in {m["name"] for m in esproxy["volumeMounts"]}
+
+    def test_no_preamble_when_aws_credentials_are_not_used(self):
+        """With an IAM role instead of keys, awsproxy still renders but has no
+        credentials to read, so the args must stay untouched."""
+        docs = esp_docs(enabled=True, awsSecretName=None, awsIAMRole="arn:aws:iam::123:role/es")
+        deployment, _configs = esp_parts(docs)
+        awsproxy = next(c for c in deployment["spec"]["template"]["spec"]["containers"] if c["name"] == "awsproxy")
+        assert awsproxy["args"] == ["aws-es-proxy -listen :9203"]
+        assert "cat /run/secrets" not in awsproxy["args"][0]
+
+    def test_no_dangling_mounts(self):
+        deployment, _configs = esp_parts(esp_docs(enabled=True))
+        spec = deployment["spec"]["template"]["spec"]
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for container in spec["containers"]:
+            for mount in container.get("volumeMounts") or []:
+                assert mount["name"] in volume_names, f"{container['name']} mounts {mount['name']}"
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [(None, None, False), (True, None, True), (True, False, False), (False, True, True)],
+)
+def test_external_es_proxy_toggle_override_precedence(global_enabled, component_enabled, expected):
+    values = esp_values(component_enabled)
+    if global_enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": global_enabled}
+    docs = render_chart(kube_version=newest_supported_kube_version, values=values, show_only=ESP_TEMPLATES)
+    deployment, configs = esp_parts(docs)
+    esproxy = next(c for c in deployment["spec"]["template"]["spec"]["containers"] if c["name"] == "external-es-proxy")
+    env_vars = get_env_vars_dict(esproxy.get("env") or [])
+    assert ("ES_SECRET_NAME" in env_vars) is not expected
+    assert ("init_by_lua_block" in configs["nginx.conf"]) is expected
