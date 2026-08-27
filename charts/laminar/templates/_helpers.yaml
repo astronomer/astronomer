@@ -1,10 +1,10 @@
 {{/* vim: set filetype=mustache: */}}
 
 {{/*
-Whether the hibernator (Laminar) components should be rendered.
+Whether the laminar (Laminar) components should be rendered.
 Laminar runs on the data plane, so only in data / unified mode.
 */}}
-{{- define "hibernator.enabled" -}}
+{{- define "laminar.enabled" -}}
 {{- or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
 {{- end -}}
 
@@ -12,7 +12,7 @@ Laminar runs on the data plane, so only in data / unified mode.
 Fully qualified component name: <release>-<component>.
 Call with (list $ "<component>"), e.g. (list $ "api-server").
 */}}
-{{- define "hibernator.fullname" -}}
+{{- define "laminar.fullname" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 {{- printf "%s-%s" $.Release.Name $component | trunc 63 | trimSuffix "-" -}}
@@ -22,11 +22,11 @@ Call with (list $ "<component>"), e.g. (list $ "api-server").
 ServiceAccount name for a component. Mirrors prometheus.serviceAccountName.
 Call with (list $ "<component>").
 */}}
-{{- define "hibernator.serviceAccountName" -}}
+{{- define "laminar.serviceAccountName" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 {{- if and $.Values.serviceAccount.create $.Values.global.rbac.enabled -}}
-{{- include "hibernator.fullname" (list $ $component) -}}
+{{- include "laminar.fullname" (list $ $component) -}}
 {{- else -}}
 default
 {{- end -}}
@@ -35,7 +35,7 @@ default
 {{/*
 Laminar container image.
 */}}
-{{- define "hibernator.image" -}}
+{{- define "laminar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-laminar:{{ .Values.images.laminar.tag }}
 {{- else -}}
@@ -46,7 +46,7 @@ Laminar container image.
 {{/*
 Image pull secrets.
 */}}
-{{- define "hibernator.imagePullSecrets" -}}
+{{- define "laminar.imagePullSecrets" -}}
 {{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
@@ -56,7 +56,7 @@ imagePullSecrets:
 {{/*
 Common metadata labels for a component. Call with (list $ "<component>").
 */}}
-{{- define "hibernator.labels" -}}
+{{- define "laminar.labels" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 app.kubernetes.io/component: {{ $component }}
@@ -70,7 +70,7 @@ plane: {{ $.Values.global.plane.mode }}
 Pod selector / match labels for a component. Call with (list $ "<component>").
 Kept identical to the original Kustomize manifests so Services/ServiceMonitors match.
 */}}
-{{- define "hibernator.selectorLabels" -}}
+{{- define "laminar.selectorLabels" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 app.kubernetes.io/name: laminar
@@ -82,7 +82,7 @@ The env block shared by both deployments: injects LAMINAR_DATABASE_URL from the
 database secret, then appends the component's own env list.
 Call with (list $ $componentValues).
 */}}
-{{- define "hibernator.env" -}}
+{{- define "laminar.env" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 - name: LAMINAR_DATABASE_URL
@@ -98,7 +98,7 @@ Call with (list $ $componentValues).
 {{/*
 laminar.env volumeMount (mounted read-only at /laminar.env).
 */}}
-{{- define "hibernator.envVolumeMount" -}}
+{{- define "laminar.envVolumeMount" -}}
 {{- if .Values.envConfigMap.enabled }}
 - name: laminar-env
   mountPath: /laminar.env
@@ -110,7 +110,7 @@ laminar.env volumeMount (mounted read-only at /laminar.env).
 {{/*
 laminar.env volume.
 */}}
-{{- define "hibernator.envVolume" -}}
+{{- define "laminar.envVolume" -}}
 {{- if .Values.envConfigMap.enabled }}
 - name: laminar-env
   configMap:

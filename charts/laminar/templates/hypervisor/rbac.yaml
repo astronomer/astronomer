@@ -1,7 +1,7 @@
 #############################
 ## Laminar Hypervisor RBAC ##
 #############################
-{{- if eq (include "hibernator.enabled" .) "true" }}
+{{- if eq (include "laminar.enabled" .) "true" }}
 {{- if .Values.global.rbac.enabled }}
 ---
 kind: ClusterRole
@@ -9,7 +9,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: laminar-hypervisor-airflows
   labels:
-    {{- include "hibernator.labels" (list $ "hypervisor") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 rules:
   - apiGroups: ["airflow.apache.org"]
     resources: ["airflows"]
@@ -57,14 +57,14 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: laminar-hypervisor-airflows
   labels:
-    {{- include "hibernator.labels" (list $ "hypervisor") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: laminar-hypervisor-airflows
 subjects:
   - kind: ServiceAccount
-    name: hypervisor
+    name: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
     namespace: {{ .Release.Namespace }}
 ---
 kind: Role
@@ -73,7 +73,7 @@ metadata:
   name: laminar-hypervisor
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "hibernator.labels" (list $ "hypervisor") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -89,14 +89,14 @@ metadata:
   name: laminar-hypervisor
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "hibernator.labels" (list $ "hypervisor") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: laminar-hypervisor
 subjects:
   - kind: ServiceAccount
-    name: hypervisor
+    name: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
     namespace: {{ .Release.Namespace }}
 ---
 kind: ClusterRole
@@ -104,7 +104,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: laminar-airflow-configmaps
   labels:
-    {{- include "hibernator.labels" (list $ "hypervisor") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 rules:
   - apiGroups: [""]
     resources: ["configmaps"]
@@ -115,14 +115,14 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: laminar-airflow-configmaps
   labels:
-    {{- include "hibernator.labels" (list $ "hypervisor") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: laminar-airflow-configmaps
 subjects:
   - kind: ServiceAccount
-    name: hypervisor
+    name: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
     namespace: {{ .Release.Namespace }}
 {{- end }}
 {{- end }}

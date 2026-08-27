@@ -1,7 +1,7 @@
 ########################################
 ## Shared Laminar NetworkPolicies ##
 ########################################
-{{- if eq (include "hibernator.enabled" .) "true" }}
+{{- if eq (include "laminar.enabled" .) "true" }}
 {{- if .Values.global.networkPolicy.enabled }}
 ---
 # Deny all traffic from outside the namespace by default
@@ -11,7 +11,7 @@ metadata:
   name: laminar-default-deny-ingress
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "hibernator.labels" (list $ "laminar") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "laminar") | nindent 4 }}
 spec:
   podSelector: {}
   policyTypes:
@@ -27,7 +27,7 @@ metadata:
   name: laminar-allow-monitoring-ingress
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "hibernator.labels" (list $ "laminar") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "laminar") | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

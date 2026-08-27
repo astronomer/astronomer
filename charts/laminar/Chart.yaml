@@ -1,8 +1,7 @@
 apiVersion: v1
-name: hibernator
+name: laminar
 version: 0.12.0
-description: A Helm chart to deploy the Astronomer Laminar hibernator (apiserver + hypervisor)
+description: A Helm chart to deploy the Astronomer Laminar
 keywords:
   - astronomer
-  - hibernator
   - laminar

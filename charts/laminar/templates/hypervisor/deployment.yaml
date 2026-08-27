@@ -1,14 +1,14 @@
 ########################
-## Laminar Hypervisor ##
+## Laminar Deployment ##
 ########################
-{{- if eq (include "hibernator.enabled" .) "true" }}
+{{- if eq (include "laminar.enabled" .) "true" }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: hypervisor
+  name: {{ include "laminar.fullname" (list $ "hypervisor") }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "hibernator.labels" (list $ "hypervisor") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 spec:
   progressDeadlineSeconds: {{ .Values.hypervisor.progressDeadlineSeconds }}
   replicas: {{ .Values.hypervisor.replicas }}
@@ -18,15 +18,15 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      {{- include "hibernator.selectorLabels" (list $ "hypervisor") | nindent 6 }}
+      {{- include "laminar.selectorLabels" (list $ "hypervisor") | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "hibernator.selectorLabels" (list $ "hypervisor") | nindent 8 }}
+        {{- include "laminar.selectorLabels" (list $ "hypervisor") | nindent 8 }}
         {{- include "global.podLabels" . | nindent 8 }}
     spec:
       restartPolicy: Always
-      serviceAccountName: hypervisor
+      serviceAccountName: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
@@ -34,10 +34,10 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
-      {{- include "hibernator.imagePullSecrets" . | nindent 6 }}
+      {{- include "laminar.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: hypervisor
-          image: {{ include "hibernator.image" . }}
+          image: {{ include "laminar.image" . }}
           imagePullPolicy: {{ .Values.images.laminar.pullPolicy }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           command:
@@ -50,7 +50,7 @@ spec:
             - name: http
               containerPort: {{ .Values.hypervisor.port }}
           env:
-            {{- include "hibernator.env" (list $ .Values.hypervisor) | nindent 12 }}
+            {{- include "laminar.env" (list $ .Values.hypervisor) | nindent 12 }}
           {{- with .Values.hypervisor.livenessProbe }}
           livenessProbe: {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -58,9 +58,9 @@ spec:
           readinessProbe: {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            {{- include "hibernator.envVolumeMount" . | nindent 12 }}
+            {{- include "laminar.envVolumeMount" . | nindent 12 }}
       volumes:
-        {{- include "hibernator.envVolume" . | nindent 8 }}
+        {{- include "laminar.envVolume" . | nindent 8 }}
       dnsConfig:
         options:
           - name: ndots

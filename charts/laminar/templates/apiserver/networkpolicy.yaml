@@ -1,7 +1,7 @@
 ##################################
 ## Laminar API Server NetworkPolicies ##
 ##################################
-{{- if eq (include "hibernator.enabled" .) "true" }}
+{{- if eq (include "laminar.enabled" .) "true" }}
 {{- if .Values.global.networkPolicy.enabled }}
 {{- $port := .Values.apiServer.port }}
 {{- range $name, $ns := dict "allow-istio-ingress" "istio-system" "allow-symphony-ingress" "symphony" "allow-keda-ingress" "keda" }}
@@ -13,11 +13,11 @@ metadata:
   name: {{ $name }}
   namespace: {{ $.Release.Namespace }}
   labels:
-    {{- include "hibernator.labels" (list $ "apiserver") | nindent 4 }}
+    {{- include "laminar.labels" (list $ "apiserver") | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
-      {{- include "hibernator.selectorLabels" (list $ "apiserver") | nindent 6 }}
+      {{- include "laminar.selectorLabels" (list $ "apiserver") | nindent 6 }}
   policyTypes:
     - Ingress
   ingress:
