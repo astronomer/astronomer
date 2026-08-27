@@ -24,16 +24,13 @@ jobs:
       - image: quay.io/astronomer/ci-helm-release:2026-08
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-          version: docker28
       - cosign/install:
           version: "v2.5.0"
       - run:
           name: Login to docker registry
           command: |
-            echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin docker.io
-            echo "$QUAY_PASSWORD" | docker login --username $QUAY_USERNAME --password-stdin quay.io
+            echo "$DOCKER_PASSWORD" | cosign login docker.io --username $DOCKER_USERNAME --password-stdin
+            echo "$QUAY_PASSWORD" | cosign login quay.io --username $QUAY_USERNAME --password-stdin
       - run:
           name: Set image tag to sign
           command: |
