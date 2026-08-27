@@ -122,11 +122,11 @@ which is when this surfaces.
 
 **Action required**: upgrade deployments outside their scheduled batch windows,
 watch PGBouncer CPU and restarts through the first peak run, and size PGBouncer
-for the peak login rate (the default request is `200m`). To remove the
-per-login PBKDF2 cost, set
-`astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type: md5` — still
-supported on 2.x for Helm-mode deployments, with the usual `md5` security
-trade-off.
+for the peak login rate (the default request is `200m`). To remove the per-login
+PBKDF2 cost, set
+`astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type: md5` in
+your values file — still supported on 2.x for Helm-mode deployments, with the
+usual `md5` security trade-off.
 
 **Exception**: deployments *created* in operator mode (2.1+, opt-in, new
 deployments only) don't use these values. The operator maps no `auth_type` onto

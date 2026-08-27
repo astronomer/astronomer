@@ -142,10 +142,10 @@ surfaces.
 - Size PGBouncer for the login rate at peak, not the average. The default request
   is `200m`.
 - If you need to remove the per-login PBKDF2 cost, set
-  `deployments.helm.airflow.pgbouncer.auth_type: md5`. This still works on 2.x for
-  Helm-mode deployments. Note the security trade-off: `md5` is weaker, though the
-  credential is already plain text in a Secret mounted on both sides of a
-  namespace-restricted connection.
+  `astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type: md5`
+  in your values file. This still works on 2.x for Helm-mode deployments. Note the
+  security trade-off: `md5` is weaker, though the credential is already plain text
+  in a Secret mounted on both sides of a namespace-restricted connection.
 
 **Exception**: deployments *created* in operator mode (2.1+, opt-in, new
 deployments only) don't use these values.
@@ -490,8 +490,8 @@ This overrides the script's update to `6543`.
 
 Yes, for Helm-mode deployments — which is every deployment that survives an
 upgrade, since Helm is the default mode and existing deployments can't be
-converted to operator mode. `deployments.helm.airflow.pgbouncer.auth_type` and
-`extraIni` both still apply, and the migration script leaves them alone. Only
+converted to operator mode. `astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type`
+and `extraIni` both still apply, and the migration script leaves them alone. Only
 deployments created in operator mode (2.1+) ignore them. See
 [PGBouncer client authentication carries over](#pgbouncer-client-authentication-carries-over-scram-sha-256).
 
