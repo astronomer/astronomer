@@ -97,32 +97,39 @@ helm upgrade <release-name> astronomer/astronomer \
 
 ## Behaviour Changes
 
-### PGBouncer client authentication (scram-sha-256 → md5)
+### PGBouncer client authentication carries over (scram-sha-256)
 
-On 1.x, each Airflow deployment's PGBouncer is rendered by the Airflow Helm
-chart, which sets `auth_type = scram-sha-256` (the upstream default since Airflow
-chart 1.12.0). On 2.x the airflow-operator owns the PGBouncer workload and uses
-`md5`. The Airflow CR has no field for `auth_type`, so a platform-level override
-at `astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type` is
-not honored after the upgrade — the migration script removes it rather than
-leaving a value in the file that no longer applies. The same is true of an
-`auth_type` line supplied through `...pgbouncer.extraIni`, which the script
-leaves in place but which has no effect on 2.x.
+This is not a values change — the migration script rewrites nothing here. It is
+documented because the SCRAM CPU cost travels into 2.x with the values, and the
+script prints an advisory to that effect.
 
-This affects only the in-namespace hop from Airflow pods to their own PGBouncer.
-The PGBouncer-to-database connection is unchanged and still negotiates whatever
-the database requires.
+The Airflow Helm chart sets PGBouncer `auth_type = scram-sha-256`, the upstream
+default since Airflow chart 1.12.0. Helm remains the default deployment mode on
+2.x (`deployments.mode.operator.enabled` comes from
+`global.airflowOperator.enabled`, which defaults to `false`), and an existing
+deployment cannot be converted from Helm mode to operator mode. So every
+deployment that survives the upgrade stays Helm-rendered, and
+`astronomer.houston.config.deployments.helm.airflow.pgbouncer.*` — `auth_type`
+and `extraIni` included — stays fully effective.
 
-With `scram-sha-256` and a plain-text password in the PGBouncer auth file, the
-proxy derives a SCRAM secret (PBKDF2, 4096 iterations) on **every client login**,
-and PGBouncer is single-threaded. If you raised PGBouncer CPU on 1.x to absorb
-that cost, revisit the sizing after the upgrade — the MD5 path does not need the
-same headroom.
+**Impact**: With `scram-sha-256` and a plain-text password in the PGBouncer auth
+file, the proxy derives a SCRAM secret (PBKDF2, 4096 iterations) on **every
+client login**, and PGBouncer is single-threaded. Both probes are `tcpSocket`
+checks, so saturation produces no log output: only probe failures, container
+restarts during peak runs, and idle server connections accumulating on the
+database side. Upgrading a deployment re-renders and restarts its PGBouncer,
+which is when this surfaces.
 
-Everything else under `deployments.helm.airflow.pgbouncer` — `resources`,
-`replicas`, `maxClientConn`, `metadataPoolSize`,
-`metricsExporterSidecar.resources` — is still honored on 2.x and carries over
-unchanged.
+**Action required**: upgrade deployments outside their scheduled batch windows,
+watch PGBouncer CPU and restarts through the first peak run, and size PGBouncer
+for the peak login rate (the default request is `200m`). To remove the per-login
+PBKDF2 cost, set `deployments.helm.airflow.pgbouncer.auth_type: md5` — still
+supported on 2.x for Helm-mode deployments, with the usual `md5` security
+trade-off.
+
+**Exception**: deployments *created* in operator mode (2.1+, opt-in, new
+deployments only) don't use these values. The operator maps no `auth_type` onto
+the Airflow CR and uses `md5`.
 
 ## Complete Migration Mapping
 

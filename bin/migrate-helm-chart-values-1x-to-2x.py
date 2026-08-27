@@ -41,7 +41,6 @@ from helm_chart_values_migration_shared import (  # noqa: E402
     apply_houston_config_flag_migrations,
     apply_houston_deployment_migrations,
     apply_nginx_csp_policy_migrations,
-    apply_pgbouncer_auth_type_migrations,
     collect_pgbouncer_auth_type_notes,
     dump_yaml,
     load_yaml,
@@ -70,7 +69,6 @@ def migrate_values(data: Any) -> list[MigrationChange]:
     all_changes.extend(apply_houston_config_flag_migrations(data))
     all_changes.extend(apply_houston_deployment_migrations(data))
     all_changes.extend(apply_nginx_csp_policy_migrations(data))
-    all_changes.extend(apply_pgbouncer_auth_type_migrations(data))
     all_changes.extend(AddKeyIfMissing(["astronomer", "houston", "strictSchemaCheck"], value={"enabled": True}).apply(data))
 
     return all_changes

@@ -966,83 +966,27 @@ PGBOUNCER_HELM_PATH: Final[list[str]] = [
 
 
 PGBOUNCER_AUTH_TYPE_NOTE: Final[str] = (
-    "PgBouncer client authentication changes on 2.x.\n"
-    "  On 0.37.x and 1.x the Airflow Helm chart sets pgbouncer `auth_type` to\n"
-    "  scram-sha-256 (the upstream default since Airflow chart 1.12.0). On 2.x the\n"
-    "  airflow-operator owns pgbouncer and uses md5; `auth_type` has no field on the\n"
-    "  Airflow CR, so `deployments.helm.airflow.pgbouncer.auth_type` is not honored\n"
-    "  and is removed by this migration if it was set.\n"
-    "  scram-sha-256 makes pgbouncer derive a SCRAM secret (PBKDF2, 4096 iterations)\n"
-    "  on every client login, and pgbouncer is single-threaded. If you raised\n"
-    "  pgbouncer CPU on 0.37.x/1.x to absorb that cost, revisit the sizing after the\n"
-    "  upgrade — the md5 path does not need the same headroom.\n"
-    "  Other keys under `deployments.helm.airflow.pgbouncer` (resources, replicas,\n"
-    "  maxClientConn, metadataPoolSize, metricsExporterSidecar.resources) are still\n"
-    "  honored on 2.x."
+    "PgBouncer client authentication carries over unchanged, including its CPU cost.\n"
+    "  The Airflow Helm chart sets pgbouncer `auth_type` to scram-sha-256 — the upstream\n"
+    "  default since Airflow chart 1.12.0, first bundled in platform 0.37.4. Helm is still\n"
+    "  the default deployment mode on 2.x and existing Deployments cannot be converted to\n"
+    "  operator mode, so `deployments.helm.airflow.pgbouncer.auth_type` remains effective\n"
+    "  after the upgrade. This migration leaves it, and `extraIni`, untouched.\n"
+    "  With scram-sha-256 and a plain-text password in the auth file, pgbouncer derives a\n"
+    "  SCRAM secret (PBKDF2, 4096 iterations) on every client login, and pgbouncer is\n"
+    "  single-threaded. Upgrading a Deployment re-renders and restarts its pgbouncer:\n"
+    "  size it for the peak login rate and upgrade outside scheduled batch windows.\n"
+    "  Deployments created in operator mode (2.1+, opt-in, new Deployments only) are the\n"
+    "  exception — the operator uses md5 and has no auth_type field."
 )
-
-PGBOUNCER_EXTRA_INI_NOTE: Final[str] = (
-    "Your `deployments.helm.airflow.pgbouncer.extraIni` sets `auth_type`.\n"
-    "  `extraIni` is also absent from the Airflow CR, so this line has no effect on\n"
-    "  2.x. It is left in place untouched — remove it once you have confirmed the\n"
-    "  upgrade, or keep it if you may roll back to 0.37.x/1.x."
-)
-
-
-def _extra_ini_sets_auth_type(extra_ini: str) -> bool:
-    """Report whether a PgBouncer ``extraIni`` string assigns ``auth_type``.
-
-    Parameters:
-        extra_ini: Raw INI text of ``key = value`` lines.
-
-    Returns:
-        True if a non-comment line assigns ``auth_type``.
-    """
-    for line in extra_ini.splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith((";", "#")):
-            continue
-        key, separator, _ = stripped.partition("=")
-        if separator and key.strip().lower() == "auth_type":
-            return True
-    return False
-
-
-def apply_pgbouncer_auth_type_migrations(root: CommentedMap) -> list[MigrationChange]:
-    """Remove the inert PgBouncer ``auth_type`` passthrough key.
-
-    See ``PGBOUNCER_AUTH_TYPE_NOTE`` for why the key cannot be honored on 2.x.
-
-    Parameters:
-        root: The parsed YAML document root.
-
-    Returns:
-        Migration changes applied under
-        ``astronomer.houston.config.deployments.helm.airflow.pgbouncer``, if any.
-    """
-    pgbouncer = _get_nested_mapping(root, PGBOUNCER_HELM_PATH)
-    if pgbouncer is None or "auth_type" not in pgbouncer:
-        return []
-
-    previous = pgbouncer["auth_type"]
-    _delete_key(pgbouncer, "auth_type")
-
-    path_str = f"{_path_to_str(PGBOUNCER_HELM_PATH)}.auth_type"
-    return [
-        MigrationChange(
-            path_str,
-            "(deleted)",
-            f"Deleted {path_str} (was {previous!r}): the airflow-operator owns pgbouncer on 2.x and uses md5",
-        )
-    ]
 
 
 def collect_pgbouncer_auth_type_notes(root: Any) -> list[str]:
-    """Build advisory notes about the 2.x PgBouncer authentication change.
+    """Build the advisory note about PgBouncer authentication and its CPU cost.
 
-    Unlike ``apply_pgbouncer_auth_type_migrations`` these notes are emitted for
-    every migration, because the common case is a customer running the
-    scram-sha-256 chart default without any ``auth_type`` key of their own.
+    The note is emitted for every migration rather than only when an `auth_type`
+    key is present, because the common case is a customer running the
+    scram-sha-256 chart default without any `auth_type` key of their own.
 
     Parameters:
         root: The parsed YAML document root.
@@ -1053,15 +997,7 @@ def collect_pgbouncer_auth_type_notes(root: Any) -> list[str]:
     if not isinstance(root, CommentedMap):
         return []
 
-    notes = [PGBOUNCER_AUTH_TYPE_NOTE]
-
-    pgbouncer = _get_nested_mapping(root, PGBOUNCER_HELM_PATH)
-    if pgbouncer is not None:
-        extra_ini = pgbouncer.get("extraIni")
-        if isinstance(extra_ini, str) and _extra_ini_sets_auth_type(extra_ini):
-            notes.append(PGBOUNCER_EXTRA_INI_NOTE)
-
-    return notes
+    return [PGBOUNCER_AUTH_TYPE_NOTE]
 
 
 def print_migration_notes(notes: list[str], stream: Any = None) -> None:
