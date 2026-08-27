@@ -779,7 +779,7 @@ class TestHoustonDeploymentDeleteKey:
 
 
 # ---------------------------------------------------------------------------
-# PgBouncer auth_type (inert on 2.x: the airflow-operator owns pgbouncer)
+# PgBouncer auth_type (effective for Helm-mode deployments on 2.x)
 # ---------------------------------------------------------------------------
 
 
