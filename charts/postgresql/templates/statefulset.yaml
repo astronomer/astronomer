@@ -1,3 +1,4 @@
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values)) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -101,11 +102,17 @@ spec:
           value: "master"
         - name: POSTGRES_REPLICATION_USER
           value: {{ include "postgresql.replication.username" . | quote }}
+        {{- /* Dropped under the flag rather than converted to a file: this image's
+               entrypoint has no replication handling at all, so the value is
+               already unread. Omitting it removes a secret from the pod spec
+               without needing a file nothing would open. */}}
+        {{- if not $secretsFromFiles }}
         - name: POSTGRES_REPLICATION_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ template "postgresql.secretName" . }}
               key: postgresql-replication-password
+        {{- end }}
         {{- if not (eq .Values.replication.synchronousCommit "off")}}
         - name: POSTGRES_SYNCHRONOUS_COMMIT_MODE
           value: {{ .Values.replication.synchronousCommit | quote }}
@@ -117,11 +124,19 @@ spec:
         {{- end }}
         - name: POSTGRES_USER
           value: {{ include "postgresql.username" . | quote }}
+        {{- if $secretsFromFiles }}
+        {{- /* POSTGRES_PASSWORD and POSTGRES_PASSWORD_FILE are mutually exclusive:
+               the entrypoint's file_env() exits 1 on every start if both are set,
+               so these must stay strictly either/or. */}}
+        - name: POSTGRES_PASSWORD_FILE
+          value: /run/secrets/postgresql-password
+        {{- else }}
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ template "postgresql.secretName" . }}
               key: postgresql-password
+        {{- end }}
         {{- if (include "postgresql.database" .) }}
         - name: POSTGRES_DB
           value: {{ (include "postgresql.database" .) | quote }}
@@ -183,6 +198,11 @@ spec:
           mountPath: {{ .Values.persistence.mountPath }}
           subPath: {{ .Values.persistence.subPath }}
         {{- end }}
+        {{- if $secretsFromFiles }}
+        - name: postgresql-password
+          mountPath: /run/secrets
+          readOnly: true
+        {{- end }}
         {{- if .Values.master.extraVolumeMounts }}
         {{- toYaml .Values.master.extraVolumeMounts | nindent 8 }}
         {{- end }}
@@ -199,11 +219,16 @@ spec:
         {{- $database := required "In order to enable metrics you need to specify a database (.Values.postgresqlDatabase or .Values.global.postgresql.postgresqlDatabase)" (include "postgresql.database" .) }}
         - name: DATA_SOURCE_URI
           value: {{ printf "127.0.0.1:%d/%s?sslmode=disable" (int (include "postgresql.port" .)) $database | quote }}
+        {{- if $secretsFromFiles }}
+        - name: DATA_SOURCE_PASS_FILE
+          value: /run/secrets/postgresql-password
+        {{- else }}
         - name: DATA_SOURCE_PASS
           valueFrom:
             secretKeyRef:
               name: {{ template "postgresql.secretName" . }}
               key: postgresql-password
+        {{- end }}
         - name: DATA_SOURCE_USER
           value: {{ template "postgresql.username" . }}
         {{- if .Values.metrics.livenessProbe }}
@@ -230,7 +255,14 @@ spec:
           failureThreshold: 6
           successThreshold: 1
         {{- end }}
+        {{- if $secretsFromFiles }}
+        volumeMounts:
+        - name: postgresql-password
+          mountPath: /run/secrets
+          readOnly: true
+        {{- else }}
         volumeMounts: []
+        {{- end }}
         ports:
         - name: metrics
           containerPort: 9187
@@ -251,10 +283,13 @@ spec:
         configMap:
           name: {{ template "postgresql.extendedConfigurationCM" . }}
       {{- end }}
-      {{- if .Values.usePasswordFile }}
+      {{- if $secretsFromFiles }}
       - name: postgresql-password
         secret:
           secretName: {{ template "postgresql.secretName" . }}
+          items:
+            - key: postgresql-password
+              path: postgresql-password
       {{- end }}
       {{- if  or (.Files.Glob "files/docker-entrypoint-initdb.d/*.{sh,sql,sql.gz}") .Values.initdbScriptsConfigMap .Values.initdbScripts }}
       - name: custom-init-scripts
