@@ -1,5 +1,10 @@
-# Default values for the hibernator (Laminar) chart.
-# Ported from laminar/manifests (Kustomize astro overlay) to Helm.
+# Default values for the Laminar.
+
+# Node scheduling. Defaults fall back to global.platformNodePool when unset.
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
 
 images:
   laminar:
@@ -7,20 +12,24 @@ images:
     tag: latest
     pullPolicy: IfNotPresent
 
-# Node scheduling. Defaults fall back to global.platformNodePool when unset.
-nodeSelector: {}
-affinity: {}
-tolerations: []
-
 priorityClassName: ~
 
 # Pod/container security contexts (rendered via platform helpers).
-securityContext: {}
-podSecurityContext: {}
+securityContext: 
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 65534
+podSecurityContext:
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
 
 # Prometheus ServiceMonitor (monitoring.coreos.com/v1).
 serviceMonitor:
-  enabled: true
+  enabled: false
   path: /laminar/metrics
 
 # ---------------------------------------------------------------------------
@@ -47,9 +56,15 @@ envConfigMap:
   content: ""
 
 serviceAccount:
-  create: true
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   automountServiceAccountToken: true
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
   annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
 
 # ---------------------------------------------------------------------------
 # apiServer component
