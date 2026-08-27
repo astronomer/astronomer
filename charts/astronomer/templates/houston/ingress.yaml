@@ -1,6 +1,7 @@
 #####################
 ## Houston Ingress ##
 #####################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
 {{- if .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
@@ -67,5 +68,6 @@ spec:
               port:
                 name: houston-http
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

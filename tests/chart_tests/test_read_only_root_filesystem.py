@@ -86,7 +86,8 @@ class TestHoustonPodManagers:
                     assert container["volumeMounts"] == [{"name": "etc-ssl-certs", "mountPath": "/etc/ssl/certs_copy"}], (
                         f"{pod_name}/{container['name']} etc-ssl-certs-copier mounts are wrong"
                     )
-                case "wait-for-db":
+                # both names are intentional:  the api pod's init container is renamed, the worker pod's is not.
+                case "wait-for-db" | "houston-wait-for-db":
                     assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in container["volumeMounts"], (
                         f"{pod_name}/{container['name']} missing mount: /etc/ssl/certs"
                     )
