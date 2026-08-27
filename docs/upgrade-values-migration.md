@@ -95,6 +95,35 @@ helm upgrade <release-name> astronomer/astronomer \
   --namespace <namespace>
 ```
 
+## Behaviour Changes
+
+### PGBouncer client authentication (scram-sha-256 → md5)
+
+On 1.x, each Airflow deployment's PGBouncer is rendered by the Airflow Helm
+chart, which sets `auth_type = scram-sha-256` (the upstream default since Airflow
+chart 1.12.0). On 2.x the airflow-operator owns the PGBouncer workload and uses
+`md5`. The Airflow CR has no field for `auth_type`, so a platform-level override
+at `astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type` is
+not honored after the upgrade — the migration script removes it rather than
+leaving a value in the file that no longer applies. The same is true of an
+`auth_type` line supplied through `...pgbouncer.extraIni`, which the script
+leaves in place but which has no effect on 2.x.
+
+This affects only the in-namespace hop from Airflow pods to their own PGBouncer.
+The PGBouncer-to-database connection is unchanged and still negotiates whatever
+the database requires.
+
+With `scram-sha-256` and a plain-text password in the PGBouncer auth file, the
+proxy derives a SCRAM secret (PBKDF2, 4096 iterations) on **every client login**,
+and PGBouncer is single-threaded. If you raised PGBouncer CPU on 1.x to absorb
+that cost, revisit the sizing after the upgrade — the MD5 path does not need the
+same headroom.
+
+Everything else under `deployments.helm.airflow.pgbouncer` — `resources`,
+`replicas`, `maxClientConn`, `metadataPoolSize`,
+`metricsExporterSidecar.resources` — is still honored on 2.x and carries over
+unchanged.
+
 ## Complete Migration Mapping
 
 | Old Path (1.x) | New Path (2.x) | Type |

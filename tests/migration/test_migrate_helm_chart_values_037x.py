@@ -6,7 +6,7 @@ import importlib.util
 import sys
 from io import StringIO
 from pathlib import Path
-from textwrap import dedent
+from textwrap import dedent, indent
 
 import pytest
 from ruamel.yaml import YAML
@@ -776,6 +776,128 @@ class TestHoustonDeploymentDeleteKey:
         changes = rule.apply(data)
 
         assert len(changes) == 0
+
+
+# ---------------------------------------------------------------------------
+# PgBouncer auth_type (inert on 2.x: the airflow-operator owns pgbouncer)
+# ---------------------------------------------------------------------------
+
+
+_PGBOUNCER_PREFIX = (
+    "astronomer:\n  houston:\n    config:\n      deployments:\n        helm:\n          airflow:\n            pgbouncer:\n"
+)
+
+
+def _pgbouncer_values(body: str) -> str:
+    """Wrap a PgBouncer passthrough block in the Houston config path.
+
+    Parameters:
+        body: YAML for the keys under ``pgbouncer``, at any uniform indentation.
+
+    Returns:
+        A full values document as YAML text.
+    """
+    return _PGBOUNCER_PREFIX + indent(dedent(body).strip("\n") + "\n", " " * 14)
+
+
+class TestPgbouncerAuthType:
+    """Test removal of the inert PgBouncer auth_type passthrough key."""
+
+    def test_deletes_auth_type(self):
+        """auth_type is removed because the 2.x Airflow CR has no field for it."""
+        data = _load_rt(
+            _pgbouncer_values("""
+                auth_type: md5
+                replicas: 2
+                """)
+        )
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        pgbouncer = result["astronomer"]["houston"]["config"]["deployments"]["helm"]["airflow"]["pgbouncer"]
+        assert "auth_type" not in pgbouncer
+        assert pgbouncer["replicas"] == 2
+
+        auth_changes = [c for c in changes if c.old_path.endswith("pgbouncer.auth_type")]
+        assert len(auth_changes) == 1
+        assert auth_changes[0].new_path == "(deleted)"
+        assert "md5" in auth_changes[0].description
+
+    def test_preserves_other_pgbouncer_keys(self):
+        """Keys the operator still honors are left untouched."""
+        data = _load_rt(
+            _pgbouncer_values("""
+                auth_type: scram-sha-256
+                maxClientConn: 400
+                metadataPoolSize: 20
+                resources:
+                  requests:
+                    cpu: 800m
+                """)
+        )
+        migrate_values(data)
+
+        result = _to_plain(data)
+        pgbouncer = result["astronomer"]["houston"]["config"]["deployments"]["helm"]["airflow"]["pgbouncer"]
+        assert pgbouncer["maxClientConn"] == 400
+        assert pgbouncer["metadataPoolSize"] == 20
+        assert pgbouncer["resources"]["requests"]["cpu"] == "800m"
+
+    def test_no_auth_type_is_a_noop(self):
+        """No change is recorded when auth_type was never set."""
+        data = _load_rt(_pgbouncer_values("replicas: 1"))
+        changes = migrate_values(data)
+
+        assert [c for c in changes if "pgbouncer.auth_type" in c.old_path] == []
+
+    def test_missing_pgbouncer_section(self):
+        """No change is recorded when the passthrough block is absent."""
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        changes = migrate_values(data)
+
+        assert [c for c in changes if "pgbouncer.auth_type" in c.old_path] == []
+
+    def test_note_always_emitted(self):
+        """The advisory note is emitted even when no auth_type key was present."""
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        notes = migrate_mod.collect_pgbouncer_auth_type_notes(data)
+
+        assert len(notes) == 1
+        assert "scram-sha-256" in notes[0]
+
+    def test_extra_ini_auth_type_adds_note_and_is_not_rewritten(self):
+        """An auth_type line in extraIni is flagged but left in place."""
+        data = _load_rt(
+            _pgbouncer_values("""
+                extraIni: |
+                  auth_type = md5
+                  server_idle_timeout = 30
+                """)
+        )
+        notes = migrate_mod.collect_pgbouncer_auth_type_notes(data)
+        migrate_values(data)
+
+        result = _to_plain(data)
+        pgbouncer = result["astronomer"]["houston"]["config"]["deployments"]["helm"]["airflow"]["pgbouncer"]
+        assert "auth_type = md5" in pgbouncer["extraIni"]
+        assert len(notes) == 2
+        assert "extraIni" in notes[1]
+
+    @pytest.mark.parametrize(
+        "extra_ini,expected",
+        [
+            ("auth_type = md5", True),
+            ("  AUTH_TYPE=scram-sha-256  ", True),
+            ("# auth_type = md5", False),
+            ("; auth_type = md5", False),
+            ("server_idle_timeout = 30", False),
+            ("auth_type", False),
+            ("", False),
+        ],
+    )
+    def test_extra_ini_detection(self, extra_ini: str, expected: bool):
+        """auth_type detection ignores comments and unassigned keys."""
+        assert migrate_mod._shared._extra_ini_sets_auth_type(extra_ini) is expected
 
 
 # ---------------------------------------------------------------------------

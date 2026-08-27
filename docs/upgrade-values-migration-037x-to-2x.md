@@ -104,6 +104,45 @@ automatically.
 **Action required**: Verify that the value carried over correctly after
 migration. The underlying Kubernetes Secret is unchanged.
 
+### PGBouncer client authentication changes (scram-sha-256 → md5)
+
+On 0.37.x and 1.x, each Airflow deployment's PGBouncer is rendered by the Airflow
+Helm chart, which sets `auth_type = scram-sha-256`. That has been the upstream
+default since Airflow chart 1.12.0, and Astronomer inherited it in platform
+0.37.4 when the bundled chart moved from `1.11.1-astro` to `1.15.5-astro`.
+
+On 2.x the airflow-operator owns the PGBouncer workload and uses `md5`. The
+Airflow CR has no field for `auth_type`, so a platform-level override at
+`astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type` is not
+honored after the upgrade. The migration script removes the key rather than
+leaving a value in the file that no longer applies.
+
+**Impact**: Client authentication between Airflow components and their PGBouncer
+changes from SCRAM to MD5. This affects only the in-namespace hop from Airflow
+pods to their own PGBouncer — the PGBouncer-to-database connection is unchanged
+and still negotiates whatever the database requires.
+
+With `scram-sha-256` and a plain-text password in the PGBouncer auth file, the
+proxy derives a SCRAM secret (PBKDF2, 4096 iterations) on **every client login**,
+and PGBouncer is single-threaded. Deployments with high connection churn — large
+DAG fan-outs, or many task pods starting at the same scheduled time — can
+saturate the PGBouncer CPU, which shows up as failing `tcpSocket` probes,
+container restarts during peak runs, and idle server connections accumulating on
+the database side.
+
+**Action required**:
+
+- If you raised PGBouncer CPU on 0.37.x or 1.x to absorb the SCRAM cost, revisit
+  the sizing after the upgrade. The MD5 path does not need the same headroom.
+- If an `auth_type` line is set through
+  `deployments.helm.airflow.pgbouncer.extraIni`, note that `extraIni` is also
+  absent from the Airflow CR and has no effect on 2.x. The migration leaves the
+  string untouched so it remains valid if you roll back.
+- Everything else under `deployments.helm.airflow.pgbouncer` — `resources`,
+  `replicas`, `maxClientConn`, `metadataPoolSize`,
+  `metricsExporterSidecar.resources` — is still honored on 2.x and carries over
+  unchanged.
+
 ### NATS JetStream enabled by default
 
 In 0.37.x, `global.nats.jetStream.enabled` defaults to `false`. In 2.x, it
@@ -271,6 +310,7 @@ replaced:
 | `stan` (top-level) | NATS Streaming deployment removed |
 | `kibana` (top-level) | Kibana replaced; see [Breaking Changes](#kibana-removed) |
 | `prometheus-blackbox-exporter` (top-level) | Blackbox exporter removed; see [Breaking Changes](#prometheus-blackbox-exporter-removed) |
+| `astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type` | No field on the Airflow CR; the operator manages PGBouncer authentication on 2.x. See [Breaking Changes](#pgbouncer-client-authentication-changes-scram-sha-256--md5) |
 
 ### Renamed Keys
 
@@ -437,6 +477,13 @@ global:
 ```
 
 This overrides the script's update to `6543`.
+
+### Can I keep `scram-sha-256` for PGBouncer on 2.x?
+
+Not through the values file. On 2.x the airflow-operator manages PGBouncer and
+uses `md5`; neither `auth_type` nor `extraIni` has a field on the Airflow CR, so
+there is no supported override. Setting either key has no effect. See
+[PGBouncer client authentication changes](#pgbouncer-client-authentication-changes-scram-sha-256--md5).
 
 ### How does this differ from the 1.x-to-2.x migration?
 
