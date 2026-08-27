@@ -1,3 +1,4 @@
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values)) }}
 {{- if .Values.replication.enabled }}
 kind: StatefulSet
 apiVersion: apps/v1
@@ -108,22 +109,36 @@ spec:
           value: "slave"
         - name: POSTGRES_REPLICATION_USER
           value: {{ include "postgresql.replication.username" . | quote }}
+        {{- /* Dropped under the flag rather than converted to a file: this image's
+               entrypoint has no replication handling at all, so the value is
+               already unread. Omitting it removes a secret from the pod spec
+               without needing a file nothing would open. */}}
+        {{- if not $secretsFromFiles }}
         - name: POSTGRES_REPLICATION_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ template "postgresql.secretName" . }}
               key: postgresql-replication-password
+        {{- end }}
         - name: POSTGRES_CLUSTER_APP_NAME
           value: {{ .Values.replication.applicationName }}
         - name: POSTGRES_MASTER_HOST
           value: {{ template "postgresql.fullname" . }}
         - name: POSTGRES_MASTER_PORT_NUMBER
           value: {{ include "postgresql.port" . | quote }}
+        {{- if $secretsFromFiles }}
+        {{- /* POSTGRES_PASSWORD and POSTGRES_PASSWORD_FILE are mutually exclusive:
+               the entrypoint's file_env() exits 1 on every start if both are set,
+               so these must stay strictly either/or. */}}
+        - name: POSTGRES_PASSWORD_FILE
+          value: /run/secrets/postgresql-password
+        {{- else }}
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ template "postgresql.secretName" . }}
               key: postgresql-password
+        {{- end }}
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
@@ -163,6 +178,11 @@ spec:
           successThreshold: 1
         {{- end }}
         volumeMounts:
+        {{- if $secretsFromFiles }}
+        - name: postgresql-password
+          mountPath: /run/secrets
+          readOnly: true
+        {{- end }}
         {{- if .Values.persistence.enabled }}
         - name: data
           mountPath: {{ .Values.persistence.mountPath }}
@@ -172,10 +192,13 @@ spec:
         {{- toYaml .Values.slave.extraVolumeMounts | nindent 8 }}
         {{- end }}
       volumes:
-      {{- if .Values.usePasswordFile }}
+      {{- if $secretsFromFiles }}
       - name: postgresql-password
         secret:
           secretName: {{ template "postgresql.secretName" . }}
+          items:
+            - key: postgresql-password
+              path: postgresql-password
       {{- end }}
       {{- if or (.Files.Glob "files/postgresql.conf") (.Files.Glob "files/pg_hba.conf") .Values.postgresqlConfiguration .Values.pgHbaConfiguration .Values.configurationConfigMap}}
       - name: postgresql-config
