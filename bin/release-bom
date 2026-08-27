@@ -45,8 +45,8 @@ max_age="300"
 # The CI image ships Python 3.12, but bom-generator requires >=3.13
 bom_tag=$(latest_github_release "astronomer/astronomer-bom-generator")
 bom_venv="$(mktemp -d)/venv"
-uv venv -p 3.13 "${bom_venv}"
-VIRTUAL_ENV="${bom_venv}" uv pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${bom_tag}"
+uv venv -p 3.13 --seed "${bom_venv}"
+"${bom_venv}/bin/pip" install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${bom_tag}"
 
 # Generate bom file and indexes
 "${bom_venv}/bin/bom-generator" --version "${version}"
