@@ -119,8 +119,20 @@ servicePort: 5432
 ## PostgreSQL password using existing secret
 ## existingSecret: secret
 
-## Mount PostgreSQL secret as a file instead of passing environment variable
+## Superseded by secretsFromFiles below. usePasswordFile was inherited from the
+## upstream Bitnami chart and never worked: it rendered a secret volume that no
+## container mounted, and no *_FILE env var referenced it.
 # usePasswordFile: false
+
+## Read the postgres password from a mounted file instead of injecting it with
+## valueFrom.secretKeyRef, using the image entrypoint's POSTGRES_PASSWORD_FILE
+## support. Leave unset to inherit global.secretsFromFiles.enabled.
+##
+## NOTE: this removes the password from the pod spec and the Kubernetes API, but
+## not from the server process environment -- the entrypoint still exports
+## POSTGRES_PASSWORD after reading the file.
+secretsFromFiles:
+  enabled: ~
 
 ## Create a database
 ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#creating-a-database-on-first-run
