@@ -276,6 +276,14 @@ global:
   # External ES logging
   customLogging:
     enabled: false
+    # -- Read the Elasticsearch credentials and AWS keys from mounted files
+    # instead of injecting them with valueFrom.secretKeyRef. The esproxy reads
+    # its file in nginx's init_by_lua (once at startup, not per request); the
+    # awsproxy reads its files in a shell preamble before exec'ing aws-es-proxy.
+    # Leave unset to inherit `global.secretsFromFiles.enabled`.
+    # @default -- inherits global.secretsFromFiles.enabled
+    secretsFromFiles:
+      enabled: ~
     scheme: https
     host: ""
     port: ""
