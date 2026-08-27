@@ -5,7 +5,6 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
-
 images:
   laminar:
     repository: quay.io/astronomer/ap-laminar
@@ -26,11 +25,6 @@ podSecurityContext:
   fsGroup: 65534
   seccompProfile:
     type: RuntimeDefault
-
-# Prometheus ServiceMonitor (monitoring.coreos.com/v1).
-serviceMonitor:
-  enabled: false
-  path: /laminar/metrics
 
 # ---------------------------------------------------------------------------
 # Database connection (LAMINAR_DATABASE_URL).

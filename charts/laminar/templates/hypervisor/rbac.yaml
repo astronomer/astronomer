@@ -7,7 +7,7 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: laminar-hypervisor-airflows
+  name: {{ .Release.Name }}-hypervisor-airflows
   labels:
     {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 rules:
@@ -55,7 +55,7 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: laminar-hypervisor-airflows
+  name: {{ .Release.Name }}-laminar-hypervisor-airflows
   labels:
     {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 roleRef:
@@ -70,7 +70,7 @@ subjects:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: laminar-airflow-configmaps
+  name: {{ .Release.Name }}-laminar-airflow-configmaps
   labels:
     {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 rules:
@@ -81,13 +81,13 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: laminar-airflow-configmaps
+  name: {{ .Release.Name }}-laminar-airflow-configmaps
   labels:
     {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: laminar-airflow-configmaps
+  name: {{ .Release.Name }}-laminar-airflow-configmaps
 subjects:
   - kind: ServiceAccount
     name: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}

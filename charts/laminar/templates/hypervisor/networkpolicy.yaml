@@ -6,7 +6,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-symphony-ingress-hypervisor
+  name: ingress-hypervisor
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
