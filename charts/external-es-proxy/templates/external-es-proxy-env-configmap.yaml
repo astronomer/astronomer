@@ -2,6 +2,7 @@
 ## Elasticsearch Proxy ConfigMap ##
 ###################################
 {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.global.customLogging)) }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -15,6 +16,15 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   setenv.lua: |-
+{{- if $secretsFromFiles }}
+    -- Credential read from its mounted file by init_by_lua_block in nginx.conf.
+    -- The `elastic` secret key holds raw credentials, so encode it here -- the
+    -- same handling as the ES_SECRET_NAME branch below, not the ES_SECRET one
+    -- (which expects an already-encoded value).
+    if not (ES_SECRET_FROM_FILE == nil or ES_SECRET_FROM_FILE == '') then
+        return ngx.req.set_header("Authorization", string.format("Basic %s", ngx.encode_base64(ES_SECRET_FROM_FILE)))
+    end
+{{- end }}
     -- check if  variable is defined
     if not (os.getenv("ES_SECRET") == nil or os.getenv("ES_SECRET") == '') then
         local api_key = os.getenv("ES_SECRET")
