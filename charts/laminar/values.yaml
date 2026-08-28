@@ -74,7 +74,6 @@ apiServer:
     limits:
       cpu: "1"
       memory: "1Gi"
-  # Extra env (LAMINAR_DATABASE_URL is injected automatically from `database`).
   env:
     - name: LAMINAR_API_URL
       value: http://0.0.0.0:8000/laminar
@@ -110,7 +109,6 @@ hypervisor:
     limits:
       cpu: "1"
       memory: "1Gi"
-  # Extra env (LAMINAR_DATABASE_URL is injected automatically from `database`).
   env:
     - name: LAMINAR_API_URL
       value: http://0.0.0.0:8000/laminar
