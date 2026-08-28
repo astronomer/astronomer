@@ -680,7 +680,7 @@ workflows:
               only:
                 - '/^release-\d+\.\d+$/'
 
-  # TEMPORARY, can be removed before merging this PR.
+  # TEMPORARY -- remove before merging this PR.
   # Lets us run both release jobs from this branch to prove the fixes work.
   # release_bom runs with -n so it generates the BOM without touching the bucket.
   test-release-jobs:
