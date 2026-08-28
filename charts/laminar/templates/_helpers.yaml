@@ -85,6 +85,10 @@ Call with (list $ $componentValues).
 {{- define "laminar.env" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
+- name: LAMINAR_KUBE_NAMESPACE
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.namespace
 - name: LAMINAR_DATABASE_URL
   valueFrom:
     secretKeyRef:
@@ -99,7 +103,7 @@ Call with (list $ $componentValues).
 laminar.env volumeMount (mounted read-only at /laminar.env).
 */}}
 {{- define "laminar.envVolumeMount" -}}
-{{- if .Values.envConfigMap.enabled }}
+{{- if .Values.envConfigMap.enabled -}}
 - name: laminar-env
   mountPath: /laminar.env
   subPath: laminar.env
@@ -111,7 +115,7 @@ laminar.env volumeMount (mounted read-only at /laminar.env).
 laminar.env volume.
 */}}
 {{- define "laminar.envVolume" -}}
-{{- if .Values.envConfigMap.enabled }}
+{{- if .Values.envConfigMap.enabled -}}
 - name: laminar-env
   configMap:
     name: {{ .Values.envConfigMap.name }}

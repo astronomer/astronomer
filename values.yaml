@@ -304,7 +304,6 @@ global:
   nodeExporter:
     enabled: false
 
-  # Laminar (apiserver + hypervisor). Data plane only.
   laminar:
     enabled: false
   cadvisor:

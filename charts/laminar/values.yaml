@@ -7,7 +7,7 @@ tolerations: []
 
 images:
   laminar:
-    repository: quay.io/astronomer/ap-laminar
+    repository: core.harbor.astro-qa.link/astrocloud/laminar
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -32,9 +32,9 @@ podSecurityContext:
 # When create=false, an existing Secret named `secretName` is referenced.
 # ---------------------------------------------------------------------------
 database:
-  create: true
-  secretName: laminar-connection
-  secretKey: connection-string
+  create: false
+  secretName: astronomer-bootstrap
+  secretKey: connection
   connectionString: ""
 
 # ---------------------------------------------------------------------------
@@ -53,7 +53,7 @@ serviceAccount:
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   automountServiceAccountToken: true
   # Specifies whether a service account should be created
-  create: false
+  create: true
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.

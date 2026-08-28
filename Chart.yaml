@@ -46,7 +46,7 @@ dependencies:
     tags:
       - monitoring
 
-  # Laminar (apiserver + hypervisor) - data plane
+  # APC Laminar
   - name: laminar
     condition: global.laminar.enabled
     tags:
