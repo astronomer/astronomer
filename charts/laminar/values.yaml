@@ -14,7 +14,7 @@ images:
 priorityClassName: ~
 
 # Pod/container security contexts (rendered via platform helpers).
-securityContext: 
+securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
