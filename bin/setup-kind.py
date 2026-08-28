@@ -28,7 +28,7 @@ HELPER_BIN_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "bin
 KIND_EXE = str(HELPER_BIN_DIR / "kind")
 KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
 CHART_METADATA = yaml.safe_load((Path(GIT_ROOT_DIR) / "metadata.yaml").read_text())
-KUBECTL_VERSION = CHART_METADATA["test_k8s_versions"][-2]
+KUBECTL_VERSION = os.environ.get("KUBE_VERSION", f"v{CHART_METADATA['test_k8s_versions'][-2]}").removeprefix("v")
 
 if (TEST_SCENARIO := os.getenv("TEST_SCENARIO", "")) not in ["unified", "data", "control"]:
     print("ERROR: TEST_SCENARIO environment variable is not set!", file=sys.stderr)

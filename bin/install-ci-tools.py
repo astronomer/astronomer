@@ -13,7 +13,7 @@ import yaml
 
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 CHART_METADATA = yaml.safe_load((Path(GIT_ROOT_DIR) / "metadata.yaml").read_text())
-KUBECTL_VERSION = CHART_METADATA["test_k8s_versions"][-2]
+KUBECTL_VERSION = os.environ.get("KUBE_VERSION", f"v{CHART_METADATA['test_k8s_versions'][-2]}").removeprefix("v")
 
 
 HELM_VERSION = CHART_METADATA["tools"]["helm"]["version"]

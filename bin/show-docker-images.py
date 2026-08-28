@@ -82,6 +82,9 @@ def get_images_from_values_yaml():
     images.append(
         f"{values['global']['privateCaCertsAddToHost']['certCopier']['repository']}:{values['global']['privateCaCertsAddToHost']['certCopier']['tag']}"
     )
+    images.append(
+        f"{values['global']['certgenerator']['images']['repository']}:{values['global']['certgenerator']['images']['tag']}"
+    )
 
     return images
 
