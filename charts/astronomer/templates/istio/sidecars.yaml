@@ -1,57 +1,47 @@
-{{- if .Values.global.istio.enabled }}
-# The default side configuration will apply
-# to the Airflow namespaces.
-apiVersion: {{ template "apiVersion.istio.networking" . }}
-kind: Sidecar
-metadata:
-  name: default-sidecar-config
-  # A Sidecar resource in the istio 'root namespace' will act
-  # as a default for any Istio namespace without a Sidecar resource.
-  namespace: {{ .Values.global.istio.rootNamespace }}
-spec:
-  # Egress will also be allowed to any public IP:
-  # https://github.com/astronomer/terraform-google-astronomer-cloud/pull/91/files
-  egress:
-  - hosts:
-    # allow egress traffic to pods in the same namespace
-    - "./*"
-    # allow egress traffic to pods in istio-system
-    - "istio-system/*"
-    # allow egress to pods in the nginx-elasticsearch service
-    - "{{ .Release.Namespace }}/{{ .Release.Name }}-elasticsearch-nginx.{{ .Release.Namespace }}.svc.cluster.local"
-    # allow egress to sql proxy
-    - "{{ .Release.Namespace }}/pg-sqlproxy-gcloud-sqlproxy.{{ .Release.Namespace }}.svc.cluster.local"
----
-# This is used to overwrite the default configuration
-# for the platform namespace. This is the defaults
-# for sidecars in the platform namespace.
+{{- if .Values.global.istioEnabled }}
+{{- $istioNamespace := .Values.global.istio.gateway | regexFind "^[^/]+" }}
+# The default sidecar configuration will apply to the Airflow namespaces.
+# Note: This is only needed if you're using Istio service mesh with sidecar injection.
+# For gateway-only deployments, sidecar injection is not required.
 apiVersion: {{ template "apiVersion.istio.networking" . }}
 kind: Sidecar
 metadata:
   name: {{ .Release.Namespace }}-sidecar-config
   namespace: {{ .Release.Namespace }}
+  labels:
+    component: istio-sidecar
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
 spec:
   egress:
   - hosts:
     # allow egress traffic to pods in the same namespace
     - "./*"
     # allow egress traffic to pods in istio-system
-    - "istio-system/*"
+    - "{{ $istioNamespace }}/*"
     # allow egress traffic to kube-system pods
     - "kube-system/*"
 ---
-# This overwrites the defaults in the platform namespace.
+# Prometheus needs broader egress for scraping metrics
 apiVersion: {{ template "apiVersion.istio.networking" . }}
 kind: Sidecar
 metadata:
   name: {{ .Release.Namespace }}-prometheus-sidecar-config
   namespace: {{ .Release.Namespace }}
+  labels:
+    component: istio-sidecar
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
 spec:
   workloadSelector:
     labels:
       component: prometheus
   egress:
   - hosts:
-    # allow egress traffic everywhere
+    # allow egress traffic everywhere for metrics scraping
     - "*/*"
 {{- end }}
