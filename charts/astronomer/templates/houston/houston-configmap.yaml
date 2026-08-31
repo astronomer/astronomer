@@ -121,6 +121,10 @@ data:
         dagOnlyDeployment:
           enabled: {{ .Values.global.deployMechanisms.dagOnlyDeployment.enabled }}
 
+      workerQueues:
+        enabled: {{ .Values.global.workerQueues.enabled }}
+        maxPerDeployment: {{ .Values.global.workerQueues.maxPerDeployment }}
+
       {{- $grafanaLinkEnabled := true }}
       {{- if and (hasKey .Values.global "grafana") (kindIs "map" .Values.global.grafana) (hasKey .Values.global.grafana "enabled") }}
       {{- $grafanaLinkEnabled = .Values.global.grafana.enabled }}
