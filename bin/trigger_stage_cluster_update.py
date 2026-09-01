@@ -15,7 +15,7 @@ CHECK_PIPELINE_STATUES_TIMER_MIN = 5
 GITHUB_ORG = "astronomer"
 CIRCLECI_URL = "circleci.com"
 REPO = "terraform-aws-astronomer"
-REPO_BRANCH = "master"
+REPO_BRANCH = "run-p0-p1"
 
 parent_directory = Path(__file__).parent.parent
 circleci_directory = parent_directory / ".circleci"
@@ -74,7 +74,7 @@ def wait_for_pipeline_completion(circleci_token: str, pipeline_id: str, wait_tim
     raise TimeoutError(f"Pipeline did not complete within {wait_time_min} minutes.")
 
 
-def main(circleci_token: str, astro_path: str, branch: str):
+def main(circleci_token: str, astro_path: str, branch: str, split_software_automation_tests: bool = False):
     # Getting Astronomer Helm Chart - FileName
     file_list = os.listdir(astro_path)
 
@@ -98,6 +98,7 @@ def main(circleci_token: str, astro_path: str, branch: str):
         "workflow_gen": True,
         "workflow_name": "feature_stack",
         "workflow_extra_params_json": json.dumps({"release": branch}),
+        "split_software_automation_tests": split_software_automation_tests,
     }
 
     print("INFO: Printing parameters")
@@ -123,6 +124,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--circleci_token", type=str, required=True)
     arg_parser.add_argument("--astro_path", type=str, required=True)
     arg_parser.add_argument("--branch", type=str, required=True)
+    arg_parser.add_argument("--split_software_automation_tests", type=str, required=False, default="false")
 
     args = arg_parser.parse_args()
 
@@ -130,4 +132,5 @@ if __name__ == "__main__":
         astro_path=args.astro_path,
         circleci_token=args.circleci_token,
         branch=args.branch,
+        split_software_automation_tests=args.split_software_automation_tests == "true",
     )
