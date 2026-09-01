@@ -699,14 +699,14 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-\d+\.\d+$/'
+                - 'run-po-p1'
       - trigger-stage-cluster-build:
           requires:
             - release-to-internal
           filters:
             branches:
               only:
-                - '/^release-\d+\.\d+$/'
+                - 'run-po-p1'
 
 commands:
   push-to-quay-io:
