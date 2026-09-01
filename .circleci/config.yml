@@ -589,7 +589,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-\d+\.\d+$/'
+                - 'run-po-p1'
       - build-artifact:
           name: build-artifact-stage-cluster
           qa_release: true
@@ -599,7 +599,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-\d+\.\d+$/'
+                - 'run-po-p1'
       - release-to-internal:
           name: release-to-internal-stage-cluster
           artifact_subdir: qa
@@ -610,7 +610,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/^release-\d+\.\d+$/'
+                - 'run-po-p1'
       - trigger-stage-cluster-build:
           artifact_subdir: qa
           split_software_automation_tests: true
