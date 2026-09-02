@@ -104,9 +104,9 @@ spec:
             # we need to hardcode it to be able to upgrade from prisma1 to prisma2
             - name: SCHEMA_NAME
               value: "houston$default"
-            {{ if .Values.global.sslmodeEnabled }}
+            {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
             - name: SSLMODE
-              value: "require"
+              value: {{ .Values.global.ssl.mode }}
             {{- end }}
             # Connection Limit for Prisma Connection Pool: https://www.prisma.io/docs/concepts/components/prisma-client/deployment#database-connection-limit
             {{ if .Values.houston.prismaConnectionLimit }}
