@@ -289,6 +289,9 @@ global:
   # Use cluster roles
   clusterRoles: true
 
+  istioGateway:
+    enabled: false
+
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
     enabled: false
