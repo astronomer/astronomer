@@ -184,11 +184,11 @@ jobs:
           name: Triggering update to stage cluster
           command: |
             set -e
-            bin/trigger_stage_cluster_update.py \
-              --astro_path=/tmp/workspace/<< parameters.artifact_subdir >> \
-              --circleci_token=$CIRCLECI_API_KEY_TEST \
-              --branch=$CIRCLE_BRANCH \
-              --split_software_automation_tests=<< parameters.split_software_automation_tests >>
+            args=(--astro_path=/tmp/workspace/<< parameters.artifact_subdir >> --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH)
+            if [ "<< parameters.split_software_automation_tests >>" = "true" ]; then
+              args+=(--split_software_automation_tests)
+            fi
+            bin/trigger_stage_cluster_update.py "${args[@]}"
 
   release-to-public:
     docker:

@@ -121,10 +121,26 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
 
     # Required positional argument
-    arg_parser.add_argument("--circleci_token", type=str, required=True)
-    arg_parser.add_argument("--astro_path", type=str, required=True)
-    arg_parser.add_argument("--branch", type=str, required=True)
-    arg_parser.add_argument("--split_software_automation_tests", type=str, required=False, default="false")
+    arg_parser.add_argument(
+        "--circleci_token",
+        type=str,
+        required=True,
+        help="CircleCI API token used to trigger the terraform-aws-astronomer pipeline.",
+    )
+    arg_parser.add_argument(
+        "--astro_path", type=str, required=True, help="Path to the directory containing the built astronomer-*.tgz chart artifact."
+    )
+    arg_parser.add_argument(
+        "--branch",
+        type=str,
+        required=True,
+        help="Branch name to pass as the `release` used to look up the stage cluster in terraform-aws-astronomer's ci_config.yml.",
+    )
+    arg_parser.add_argument(
+        "--split_software_automation_tests",
+        action="store_true",
+        help="If set, run the p0 and p1/p2 software automation suites as separate sequential jobs instead of the combined one.",
+    )
 
     args = arg_parser.parse_args()
 
@@ -132,5 +148,5 @@ if __name__ == "__main__":
         astro_path=args.astro_path,
         circleci_token=args.circleci_token,
         branch=args.branch,
-        split_software_automation_tests=args.split_software_automation_tests == "true",
+        split_software_automation_tests=args.split_software_automation_tests,
     )
