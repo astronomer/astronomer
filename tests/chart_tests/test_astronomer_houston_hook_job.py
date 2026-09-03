@@ -229,6 +229,31 @@ class TestHoustonHookJob:
         assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
 
+    @pytest.mark.parametrize(
+        "ssl,sslmode_expected",
+        [
+            (None, None),
+            ({"enabled": True, "mode": "verify-full"}, "verify-full"),
+            ({"enabled": False, "mode": "require"}, None),
+            ({"enabled": True, "mode": ""}, None),
+        ],
+        ids=["default", "enabled-uses-mode", "disabled-mode-ignored", "enabled-empty-mode"],
+    )
+    def test_upgrade_deployments_job_sslmode(self, kube_version, ssl, sslmode_expected):
+        """SSLMODE is set from global.ssl.mode only when global.ssl.enabled and a mode are both set."""
+
+        values = {"global": {"ssl": ssl}} if ssl is not None else {}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml"],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env = get_env_vars_dict(c_by_name["houston-bootstrapper"].get("env", []))
+        assert env.get("SSLMODE") == sslmode_expected
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -325,3 +350,30 @@ class TestRefreshCpChartVersionHookJob:
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
         env = get_env_vars_dict(c_by_name["refresh-cp-chart-version-job"].get("env", []))
         assert env.get("CP_ID") == {"secretKeyRef": {"name": "cp-identity", "key": "cp_id"}}
+
+    @pytest.mark.parametrize(
+        "ssl,sslmode_expected",
+        [
+            (None, None),
+            ({"enabled": True, "mode": "verify-full"}, "verify-full"),
+            ({"enabled": False, "mode": "require"}, None),
+            ({"enabled": True, "mode": ""}, None),
+        ],
+        ids=["default", "enabled-uses-mode", "disabled-mode-ignored", "enabled-empty-mode"],
+    )
+    def test_sslmode(self, kube_version, ssl, sslmode_expected):
+        """SSLMODE is set from global.ssl.mode only when global.ssl.enabled and a mode are both set."""
+
+        values = _ha_values()
+        if ssl is not None:
+            values["global"]["ssl"] = ssl
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env = get_env_vars_dict(c_by_name["houston-bootstrapper"].get("env", []))
+        assert env.get("SSLMODE") == sslmode_expected
