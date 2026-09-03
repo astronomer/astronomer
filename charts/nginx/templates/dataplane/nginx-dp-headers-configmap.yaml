@@ -20,6 +20,7 @@ apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}-ingress-controller-headers
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}

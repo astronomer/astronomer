@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-houston-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston-policy
     release: {{ .Release.Name }}

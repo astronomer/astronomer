@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-prometheus-postgresql-exporter-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: postgresql-exporter-policy
     release: {{ .Release.Name }}

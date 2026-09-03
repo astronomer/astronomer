@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: {{ template "postgresql.fullname" . }}-headless
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}

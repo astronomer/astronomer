@@ -27,6 +27,7 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-houston-cp-refresh
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston-cp-refresh
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

@@ -28,6 +28,7 @@ metadata:
   {{- end }}
   name: {{ $.Release.Name }}-config-syncer
   labels:
+    {{- include "global.labels" $ | nindent 4 }}
     tier: houston
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"

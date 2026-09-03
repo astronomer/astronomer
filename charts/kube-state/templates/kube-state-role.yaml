@@ -24,6 +24,7 @@ metadata:
   namespace: {{ $namespaceName }}
   {{- end }}
   labels:
+    {{- include "global.labels" $ | nindent 4 }}
     tier: monitoring
     component: {{ $.Chart.Name }}
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}

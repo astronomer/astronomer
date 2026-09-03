@@ -4,6 +4,7 @@ apiVersion: apps/v1
 metadata:
   name: "{{ template "postgresql.fullname" . }}-slave"
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
     release: {{ .Release.Name | quote }}

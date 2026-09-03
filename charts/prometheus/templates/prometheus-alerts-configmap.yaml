@@ -16,6 +16,7 @@ apiVersion: v1
 metadata:
   name: {{ template "prometheus.fullname" . }}-alerts
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: monitoring
     component: {{ template "prometheus.name" . }}
     chart: {{ template "prometheus.chart" . }}

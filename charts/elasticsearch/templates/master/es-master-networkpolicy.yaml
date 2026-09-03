@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-master-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: logging
     component: {{ template "elasticsearch.name" . }}-master-policy
     release: {{ .Release.Name }}

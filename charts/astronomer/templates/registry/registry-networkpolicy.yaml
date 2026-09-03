@@ -8,6 +8,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-registry-policy
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: registry-policy
     release: {{ .Release.Name }}

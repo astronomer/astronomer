@@ -8,6 +8,7 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-houston-cleanup-airflow-db-data
   labels:
+    {{- include "global.labels" . | nindent 4 }}
     tier: astronomer
     component: houston-cleanup-airflow-db
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
