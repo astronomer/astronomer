@@ -70,6 +70,34 @@ spec:
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
+      initContainers:
+      {{- if eq (include "postgresql.postgresqlRunPermissions.enabled" .) "true" }}
+      - name: init-postgresql-run
+        image: {{ template "postgresql.image" . }}
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+        command:
+          - sh
+          - -c
+          - |
+            mkdir -p /var/run/postgresql
+            chown {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} /var/run/postgresql
+            chmod 0700 /var/run/postgresql
+        securityContext:
+          runAsUser: {{ .Values.postgresqlRunPermissions.securityContext.runAsUser }}
+          runAsNonRoot: {{ ne (.Values.postgresqlRunPermissions.securityContext.runAsUser | int) 0 }}
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - CHOWN
+              - FOWNER
+        volumeMounts:
+        - name: postgresql-run
+          mountPath: /var/run/postgresql
+      {{- end }}
       containers:
       - name: {{ template "postgresql.fullname" . }}
         image: {{ template "postgresql.image" . }}
@@ -196,6 +224,8 @@ spec:
         volumeMounts:
         - mountPath: /tmp
           name: tmp
+        - mountPath: /var/run/postgresql
+          name: postgresql-run
         {{- if or (.Files.Glob "files/docker-entrypoint-initdb.d/*.{sh,sql,sql.gz}") .Values.initdbScriptsConfigMap .Values.initdbScripts }}
         - name: custom-init-scripts
           mountPath: /docker-entrypoint-initdb.d/
@@ -277,7 +307,7 @@ spec:
       - emptyDir: {}
         name: tmp
       - emptyDir: {}
-        name: pg-conf
+        name: postgresql-run
       {{- if or (.Files.Glob "files/postgresql.conf") (.Files.Glob "files/pg_hba.conf") .Values.postgresqlConfiguration .Values.pgHbaConfiguration .Values.configurationConfigMap}}
       - name: postgresql-config
         configMap:
