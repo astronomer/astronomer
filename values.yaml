@@ -179,6 +179,18 @@ global:
       dagTarballVersionValidation:
         enabled: true
 
+  # Worker queues: multiple named Celery worker groups per Airflow deployment.
+  workerQueues:
+    enabled: false
+    # Maximum worker queues per deployment. This is not resource protection --
+    # per-queue CPU, memory and replica bounds already come from
+    # resourceManagement.components[workers]. The cap exists because every queue
+    # adds a full podTemplateSpec to the Airflow CR's spec.workers[] array, and a
+    # Kubernetes object has a hard ceiling of roughly 1.5 MiB. Past it the apply
+    # is rejected outright, so the deployment stops reconciling. Raise at your
+    # own risk.
+    maxPerDeployment: 10
+
   # Deploy mechanisms
   deployMechanisms:
     dagOnlyDeployment:
