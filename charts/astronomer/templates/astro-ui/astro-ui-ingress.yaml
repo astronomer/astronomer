@@ -2,6 +2,7 @@
 ## Astronomer Astro UI Ingress ##
 #################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if not (.Values.global.istioGateway | default dict).enabled }}
 {{- if and .Values.global.baseDomain .Values.global.perHostIngress.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
@@ -94,6 +95,7 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

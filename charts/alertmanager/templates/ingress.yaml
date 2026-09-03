@@ -2,6 +2,7 @@
 ## alertmanager Ingress ##
 ##########################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if not (.Values.global.istioGateway | default dict).enabled }}
 {{- if .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
@@ -68,6 +69,7 @@ spec:
                   name: http
                   {{- end }}
     {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

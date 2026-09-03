@@ -2,6 +2,7 @@
 ## Commander GRPC Ingress ##
 ############################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if not (.Values.global.istioGateway | default dict).enabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -54,5 +55,6 @@ spec:
               name: {{ .Release.Name }}-commander
               port:
                 name: commander-grpc
+{{- end }}
 {{- end }}
 {{- end }}

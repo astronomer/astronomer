@@ -289,8 +289,16 @@ global:
   # Use cluster roles
   clusterRoles: true
 
+  # Route platform traffic through an Istio Gateway instead of nginx Ingress.
+  # When enabled, every platform Ingress is suppressed and VirtualServices are
+  # rendered in its place. This is independent of global.istio.enabled below,
+  # which only controls service-mesh sidecar compatibility.
   istioGateway:
     enabled: false
+    # Pre-existing Istio Gateway that the platform VirtualServices attach to.
+    # Required when enabled.
+    # Example: "istio-system/default-gateway"
+    gateway: "istio-system/default-gateway"
 
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:

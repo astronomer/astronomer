@@ -74,8 +74,9 @@ def create_validator(api_version, kind, kube_version=default_version):
 def validate_k8s_object(instance, kube_version=default_version):
     """Validate the k8s object."""
     # These kinds are not present in the kubernetes-json-schema repository, so skip validation
-    # for them: CRDs, and the cert-manager custom resources the airflow-operator renders.
-    if instance.get("kind") in ("CustomResourceDefinition", "Certificate", "Issuer"):
+    # for them: CRDs, the cert-manager custom resources the airflow-operator renders, and the
+    # Istio custom resources.
+    if instance.get("kind") in ("CustomResourceDefinition", "Certificate", "Issuer", "VirtualService", "Gateway", "Sidecar"):
         return
     validate = create_validator(instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version)
     validate.validate(instance)

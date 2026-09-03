@@ -2,6 +2,7 @@
 ## Prometheus Federate Ingress ##
 ########################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if not (.Values.global.istioGateway | default dict).enabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -45,5 +46,6 @@ spec:
                 name: {{ template "prometheus.fullname" . }}-prom-proxy
                 port:
                   name: http
+{{- end }}
 {{- end }}
 {{- end }}

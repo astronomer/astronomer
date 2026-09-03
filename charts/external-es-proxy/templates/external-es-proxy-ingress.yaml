@@ -2,6 +2,7 @@
 ## External Elasticsearch Logging Ingress ##
 ############################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if not (.Values.global.istioGateway | default dict).enabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -48,5 +49,6 @@ spec:
                 name: {{ include "external-es-proxy.fullname" . }}
                 port:
                   number: {{ .Values.service.http }}
+{{- end }}
 {{- end }}
 {{- end }}
