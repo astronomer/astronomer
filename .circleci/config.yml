@@ -21,7 +21,7 @@ parameters:
 jobs:
   sign-released-image:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     steps:
       - checkout
       - setup_remote_docker:
@@ -60,7 +60,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     steps:
       - checkout
       - run:
@@ -70,7 +70,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2026-08
+      - image: quay.io/astronomer/ci-pre-commit:2026-09
     resource_class: small
     steps:
       - checkout
@@ -94,7 +94,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 5
@@ -129,7 +129,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     parameters:
       qa_release:
         type: boolean
@@ -151,7 +151,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     parameters:
       artifact_subdir:
         type: string
@@ -173,6 +173,9 @@ jobs:
       artifact_subdir:
         type: string
         default: "."
+      split_software_automation_tests:
+        type: boolean
+        default: false
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -181,14 +184,15 @@ jobs:
           name: Triggering update to stage cluster
           command: |
             set -e
-            bin/trigger_stage_cluster_update.py \
-              --astro_path=/tmp/workspace/<< parameters.artifact_subdir >> \
-              --circleci_token=$CIRCLECI_API_KEY_TEST \
-              --branch=$CIRCLE_BRANCH
+            args=(--astro_path=/tmp/workspace/<< parameters.artifact_subdir >> --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH)
+            if [ "<< parameters.split_software_automation_tests >>" = "true" ]; then
+              args+=(--split_software_automation_tests)
+            fi
+            bin/trigger_stage_cluster_update.py "${args[@]}"
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -609,6 +613,7 @@ workflows:
                 - '/^release-\d+\.\d+$/'
       - trigger-stage-cluster-build:
           artifact_subdir: qa
+          split_software_automation_tests: true
           requires:
             - release-to-internal-stage-cluster
           filters:

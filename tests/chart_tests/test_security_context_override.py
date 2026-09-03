@@ -111,7 +111,7 @@ def test_container_security_context_overrides_merge_everywhere(kube_version):
         if doc.get("kind") not in POD_MANAGER_KINDS:
             continue
         spec = get_pod_template(doc).get("spec", {})
-        for container in spec.get("containers", []) + spec.get("initContainers", []):
+        for container in (spec.get("containers") or []) + (spec.get("initContainers") or []):
             name = container["name"].split("release-name-")[-1]
             if name in CONTAINER_OVERRIDE_IGNORE:
                 continue

@@ -62,8 +62,35 @@ spec:
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
-      {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       initContainers:
+      {{- if eq (include "postgresql.postgresqlRunPermissions.enabled" .) "true" }}
+      - name: init-postgresql-run
+        image: {{ template "postgresql.image" . }}
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+        command:
+          - sh
+          - -c
+          - |
+            mkdir -p /var/run/postgresql
+            chown {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} /var/run/postgresql
+            chmod 0700 /var/run/postgresql
+        securityContext:
+          runAsUser: {{ .Values.postgresqlRunPermissions.securityContext.runAsUser }}
+          runAsNonRoot: {{ ne (.Values.postgresqlRunPermissions.securityContext.runAsUser | int) 0 }}
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - CHOWN
+              - FOWNER
+        volumeMounts:
+        - name: postgresql-run
+          mountPath: /var/run/postgresql
+      {{- end }}
+      {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       - name: init-chmod-data
         image: {{ template "postgresql.volumePermissions.image" . }}
         imagePullPolicy: "{{ .Values.volumePermissions.image.pullPolicy }}"
@@ -188,6 +215,8 @@ spec:
           successThreshold: 1
         {{- end }}
         volumeMounts:
+        - name: postgresql-run
+          mountPath: /var/run/postgresql
         {{- if .Values.persistence.enabled }}
         - name: data
           mountPath: {{ .Values.persistence.mountPath }}
@@ -197,6 +226,8 @@ spec:
         {{- toYaml .Values.slave.extraVolumeMounts | nindent 8 }}
         {{- end }}
       volumes:
+      - name: postgresql-run
+        emptyDir: {}
       {{- if .Values.usePasswordFile }}
       - name: postgresql-password
         secret:
