@@ -1,0 +1,22 @@
+##########################
+## Laminar API Server Service ##
+##########################
+{{- if eq (include "laminar.enabled" .) "true" }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "laminar.fullname" (list $ "api-server") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "laminar.labels" (list $ "apiserver") | nindent 4 }}
+    app.kubernetes.io/name: apiserver
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "laminar.selectorLabels" (list $ "apiserver") | nindent 4 }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.apiServer.port }}
+      targetPort: http
+{{- end }}

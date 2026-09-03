@@ -1,0 +1,96 @@
+#############################
+## Laminar Hypervisor RBAC ##
+#############################
+{{- if eq (include "laminar.enabled" .) "true" }}
+{{- if .Values.global.rbac.enabled }}
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-laminar-hypervisor-airflows
+  labels:
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
+rules:
+  - apiGroups: ["airflow.apache.org"]
+    resources: ["airflows"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["airflow.apache.org"]
+    resources:
+      - airflows/status
+      - schedulers
+      - statsds
+      - triggerers
+      - redis
+      - webservers
+      - pgbouncers
+      - dagprocessors
+      - eventschedulers
+      - apiservers
+    verbs: ["get"]
+  - apiGroups: ["airflow.apache.org"]
+    resources:
+      - schedulers/scale
+      - statsds/scale
+      - triggerers/scale
+      - redis/scale
+      - webservers/scale
+      - pgbouncers/scale
+      - dagprocessors/scale
+      - eventschedulers/scale
+      - apiservers/scale
+    verbs: ["*"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/status", "deployments/scale"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete", "deletecollection"]
+  - apiGroups: [""]
+    resources: ["pods/status"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["keda.sh"]
+    resources: ["scaledobjects"]
+    verbs: ["get", "list", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-laminar-hypervisor-airflows
+  labels:
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-laminar-hypervisor-airflows
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
+    namespace: {{ .Release.Namespace }}
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-laminar-airflow-configmaps
+  labels:
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-laminar-airflow-configmaps
+  labels:
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-laminar-airflow-configmaps
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}

@@ -303,6 +303,9 @@ global:
     enabled: false
   nodeExporter:
     enabled: false
+
+  laminar:
+    enabled: false
   cadvisor:
     enabled: false
 

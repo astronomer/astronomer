@@ -1,0 +1,144 @@
+# Default values for the Laminar.
+
+# Node scheduling. Defaults fall back to global.platformNodePool when unset.
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
+images:
+  laminar:
+    repository: core.harbor.astro-qa.link/astrocloud/laminar
+    tag: latest
+    pullPolicy: IfNotPresent
+
+priorityClassName: ~
+
+# Pod/container security contexts (rendered via platform helpers).
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 65534
+podSecurityContext:
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+
+# ---------------------------------------------------------------------------
+# Database connection (LAMINAR_DATABASE_URL).
+# When create=true, a Secret is templated from connectionString.
+# When create=false, an existing Secret named `secretName` is referenced.
+# ---------------------------------------------------------------------------
+database:
+  create: false
+  secretName: astronomer-bootstrap
+  secretKey: connection
+  connectionString: ""
+
+# ---------------------------------------------------------------------------
+# laminar.env config file mounted at /laminar.env (subPath laminar.env).
+# When create=true, a ConfigMap named `name` is templated from `content`.
+# When create=false, an existing ConfigMap named `name` is referenced.
+# Set enabled=false to skip the mount entirely.
+# ---------------------------------------------------------------------------
+envConfigMap:
+  enabled: true
+  create: true
+  name: laminar-env
+  content: ""
+
+serviceAccount:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# ---------------------------------------------------------------------------
+# apiServer component
+# ---------------------------------------------------------------------------
+apiServer:
+  replicas: 2
+  progressDeadlineSeconds: 1200
+  port: 8000
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  env:
+    - name: LAMINAR_API_URL
+      value: http://0.0.0.0:8000/laminar
+    - name: LAMINAR_SCALING__DRY_RUN_STRATEGY
+      value: NEVER
+  livenessProbe:
+    httpGet:
+      port: 8000
+      path: /laminar/healthz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      port: 8000
+      path: /laminar/healthz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+
+# ---------------------------------------------------------------------------
+# hypervisor component
+# ---------------------------------------------------------------------------
+hypervisor:
+  replicas: 1
+  progressDeadlineSeconds: 1200
+  minReadySeconds: 5
+  port: 8000
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  env:
+    - name: LAMINAR_API_URL
+      value: http://0.0.0.0:8000/laminar
+    - name: LAMINAR_SCALING__DRY_RUN_STRATEGY
+      value: NEVER
+    - name: LAMINAR_HYPERVISOR__QUEUED_TASK_SECOND_THRESHOLD
+      value: "480"
+    - name: LAMINAR_APPLY_CUSTOM_DDL
+      value: "true"
+    # explicitly true: Harmony uses server-side apply
+    - name: LAMINAR_HYPERVISOR__CONFIGMAP_METRICS_ENABLED
+      value: "true"
+    # explicitly empty: Harmony uses server-side apply
+    - name: LAMINAR_HYPERVISOR__DISABLED_METRICS_CSV
+      value: ""
+    - name: LAMINAR_HYPERVISOR__DRY_RUN_HEALERS_CSV
+      value: "CatatonicWorkerTerminator"
+    - name: LAMINAR_HYPERVISOR__ENABLE_HEALERS
+      value: "True"
+  livenessProbe:
+    httpGet:
+      port: 8000
+      path: /laminar/healthz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      port: 8000
+      path: /laminar/healthz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
