@@ -189,6 +189,9 @@ jobs:
       artifact_subdir:
         type: string
         default: "."
+      split_software_automation_tests:
+        type: boolean
+        default: false
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -197,10 +200,11 @@ jobs:
           name: Triggering update to stage cluster
           command: |
             set -e
-            bin/trigger_stage_cluster_update.py \
-              --astro_path=/tmp/workspace/<< parameters.artifact_subdir >> \
-              --circleci_token=$CIRCLECI_API_KEY_TEST \
-              --branch=$CIRCLE_BRANCH
+            args=(--astro_path=/tmp/workspace/<< parameters.artifact_subdir >> --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH)
+            if [ "<< parameters.split_software_automation_tests >>" = "true" ]; then
+              args+=(--split_software_automation_tests)
+            fi
+            bin/trigger_stage_cluster_update.py "${args[@]}"
 
   release-to-public:
     docker:
@@ -408,6 +412,7 @@ workflows:
                 - '/^release-\d+\.\d+$/'
       - trigger-stage-cluster-build:
           artifact_subdir: qa
+          split_software_automation_tests: true
           requires:
             - release-to-internal-stage-cluster
           filters:
