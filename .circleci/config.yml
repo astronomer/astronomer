@@ -21,7 +21,7 @@ parameters:
 jobs:
   sign-released-image:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     steps:
       - checkout
       - setup_remote_docker:
