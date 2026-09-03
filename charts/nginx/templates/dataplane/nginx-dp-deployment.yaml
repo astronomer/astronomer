@@ -1,6 +1,7 @@
 #################################
 ## NGINX Data Plane Deployment ##
 #################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Deployment
 apiVersion: apps/v1
@@ -77,6 +78,7 @@ spec:
             - --default-backend-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-default-backend
             - --configmap={{ .Release.Namespace }}/{{ .Release.Name }}-dp-{{ template "nginx.name" . }}-ingress-controller
             - --ingress-class={{ template "nginx.ingress.class" . }}
+            - --controller-class=k8s.io/ingress-nginx-{{ .Release.Name }}
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
             - --enable-annotation-validation=true
             {{- if .Values.disableLeaderElection }}
@@ -174,4 +176,5 @@ spec:
           emptyDir: {}
         - name: etc-nginx
           emptyDir: {}
+{{- end }}
 {{- end }}

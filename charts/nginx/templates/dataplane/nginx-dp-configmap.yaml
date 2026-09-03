@@ -1,6 +1,7 @@
 ################################
 ## NGINX Data Plane ConfigMap ##
 ################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: ConfigMap
 apiVersion: v1
@@ -34,4 +35,5 @@ data:
     "$request_length", "responseSize": "$upstream_response_length", "userAgent": "$http_user_agent",
     "remoteIp": "$remote_addr", "referer": "$http_referer", "latency": "$upstream_response_time
     s", "protocol":"$server_protocol"}}'
+{{- end }}
 {{- end }}

@@ -18,7 +18,9 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    {{- if not .Values.global.ingressClassName }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- end }}
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
@@ -31,6 +33,7 @@ metadata:
     {{- end }}
 
 spec:
+  ingressClassName: {{ include "global.ingressClassName" . }}
   {{- if .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
