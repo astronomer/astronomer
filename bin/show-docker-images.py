@@ -22,7 +22,9 @@ HELM_RUNS = [
 
 def get_containers_from_spec(spec):
     """Return a list of images used in a kubernetes pod spec."""
-    return [container["image"] for container in spec.get("containers", []) + spec.get("initContainers", [])]
+    containers = spec.get("containers") or []
+    init_containers = spec.get("initContainers") or []
+    return [container["image"] for container in containers + init_containers]
 
 
 def print_results(items):
