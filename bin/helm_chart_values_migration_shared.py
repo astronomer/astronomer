@@ -7,6 +7,7 @@ in one place.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from io import StringIO
 from pathlib import Path
@@ -950,6 +951,72 @@ def apply_nginx_csp_policy_migrations(root: CommentedMap) -> list[MigrationChang
         return []
     rule = BoolToNested("cdnEnabled", ["enabled"], path_prefix="nginx.cspPolicy")
     return rule.apply(csp_policy)
+
+
+# Path to the platform-level PgBouncer passthrough block in a values file.
+PGBOUNCER_HELM_PATH: Final[list[str]] = [
+    "astronomer",
+    "houston",
+    "config",
+    "deployments",
+    "helm",
+    "airflow",
+    "pgbouncer",
+]
+
+
+PGBOUNCER_AUTH_TYPE_NOTE: Final[str] = (
+    "PgBouncer client authentication carries over unchanged, including its CPU cost.\n"
+    "  The Airflow Helm chart sets pgbouncer `auth_type` to scram-sha-256 — the upstream\n"
+    "  default since Airflow chart 1.12.0, first bundled in platform 0.37.4. Helm is still\n"
+    "  the default deployment mode on 2.x and existing Deployments cannot be converted to\n"
+    "  operator mode, so an `auth_type` override under\n"
+    "  `astronomer.houston.config.deployments.helm.airflow.pgbouncer` remains effective\n"
+    "  after the upgrade. This migration leaves it, and `extraIni`, untouched.\n"
+    "  With scram-sha-256 and a plain-text password in the auth file, pgbouncer derives a\n"
+    "  SCRAM secret (PBKDF2, 4096 iterations) on every client login, and pgbouncer is\n"
+    "  single-threaded. Upgrading a Deployment re-renders and restarts its pgbouncer:\n"
+    "  size it for the peak login rate and upgrade outside scheduled batch windows.\n"
+    "  Deployments created in operator mode (2.1+, opt-in, new Deployments only) are the\n"
+    "  exception — the operator uses md5 and has no auth_type field."
+)
+
+
+def collect_pgbouncer_auth_type_notes(root: Any) -> list[str]:
+    """Build the advisory note about PgBouncer authentication and its CPU cost.
+
+    The note is emitted for every migration rather than only when an `auth_type`
+    key is present, because the common case is a customer running the
+    scram-sha-256 chart default without any `auth_type` key of their own.
+
+    Parameters:
+        root: The parsed YAML document root.
+
+    Returns:
+        Advisory note strings to print for the operator running the migration.
+    """
+    if not isinstance(root, CommentedMap):
+        return []
+
+    return [PGBOUNCER_AUTH_TYPE_NOTE]
+
+
+def print_migration_notes(notes: list[str], stream: Any = None) -> None:
+    """Print advisory notes, aligning wrapped lines under the bullet.
+
+    Parameters:
+        notes: Advisory note strings, each possibly multi-line.
+        stream: Output stream. Defaults to ``sys.stderr``.
+    """
+    if not notes:
+        return
+    out = stream if stream is not None else sys.stderr
+    print("\nNotes — review before upgrading:", file=out)
+    for note in notes:
+        first, *rest = note.splitlines()
+        print(f"  - {first}", file=out)
+        for line in rest:
+            print(f"    {line.strip()}", file=out)
 
 
 def apply_houston_config_flag_migrations(root: CommentedMap) -> list[MigrationChange]:
