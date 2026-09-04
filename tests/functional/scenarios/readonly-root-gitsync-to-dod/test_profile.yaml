@@ -1,10 +1,13 @@
 description: >-
   Creates a real Airflow Deployment (CeleryExecutor, dagDeploymentType git_sync), then
-  disables Houston's default readOnlyRootFilesystem via a live platform helm upgrade and forces
-  the already-existing deployment to pick it up with a throwaway upsertDeployment call
-  (upgradeDeployments is left disabled -- see configs/disable-airflow-readonly-root.yaml for
-  why its own automatic hook wouldn't propagate a config-only change like this one). Then
-  switches the same deployment GitSync -> DagOnlyDeployment (dag_deploy) via upsertDeployment and
+  disables Houston's default readOnlyRootFilesystem on the deployment's cluster via
+  updateCluster's deploymentsConfigOverride and forces the already-existing deployment to pick
+  it up with a throwaway upsertDeployment call. Deliberately not a platform helm upgrade of
+  astronomer's own houston.config.deployments.* -- that only changes the live platform config,
+  which houston-api snapshots into a Cluster's own stored config once, at that cluster's
+  creation, and never refreshes -- so it would never reach this scenario's own already-existing
+  cluster (see tests/utils/houston_graphql.py's update_cluster/upsert_deployment docstrings).
+  Then switches the same deployment GitSync -> DagOnlyDeployment (dag_deploy) via upsertDeployment and
   re-asserts, to prove the override survives a DagDeploymentType switch too. One of four
   readonly-root-*-to-* scenarios that are identical except for which DagDeploymentType they
   start and end on (see tests/utils/readonly_root.py for the shared assertion).

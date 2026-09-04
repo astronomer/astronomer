@@ -167,21 +167,28 @@ def upsert_deployment(
     (e.g. a public repositoryUrl needs no credentials of any kind).
 
     environment_variables is [{"key": ..., "value": ..., "isSecret": bool}, ...] (isSecret
-    optional). On update it's the one reliable way to FORCE Commander to actually re-render
-    and re-apply a deployment's Helm values when nothing about the deployment's own upsert
-    arguments changed -- e.g. after a platform-level houston.config change (like disabling
-    readOnlyRootFilesystem) that this deployment needs to pick up. Deliberately not
-    `upgradeDeployments`'s automatic post-upgrade hook Job for that: its
+    optional). On update it's the one reliable way to FORCE Commander to actually re-render and
+    re-apply a deployment's Helm values when nothing about the deployment's own upsert arguments
+    changed -- e.g. after update_cluster has changed the config the deployment should now pick
+    up. Deliberately not `upgradeDeployments`'s automatic post-upgrade hook Job for that: its
     `yarn upgrade-deployments` script publishes its NATS message with no globalDeploymentsConfig
     at all (see src/scripts/upgrade-deployments/index.js), and the consuming worker
     (deployment-upserted-for-update) reads globalDeploymentsConfig straight off that message with
-    no fallback fetch -- so securityHardeningConfig's `get(globalDeploymentsConfig,
-    "securityContext.container", DEFAULT_CONTAINER_SECURITY_CONTEXT)` silently falls back to the
-    hardcoded default instead of the platform's actual current config, and the deployment's
-    rendered values never change. upsertDeployment's own resolver, by contrast, freshly fetches
-    globalDeploymentsConfig via `gdc.get(...)` before publishing (upsert-deployment/index.ts),
-    so re-invoking it -- with a throwaway env var if there's nothing else to change -- is what
-    actually reaches the current config.
+    no fallback fetch -- so it always renders with the hardcoded default, never the deployment's
+    actual current config, regardless of what changed.
+
+    Note this alone is NOT enough to pick up a platform-level `houston.config.deployments.*`
+    change made via a plain `helm upgrade` of the platform release: upsertDeployment's resolver
+    does call gdc.get(...) fresh on every invocation, but gdc.get()'s Platform -> Cluster ->
+    Workspace -> Deployment merge prefers the deployment's CLUSTER's own stored
+    config.deployments over the live platform config whenever the cluster has one at all -- and
+    every cluster does, because populate-default-cluster snapshots config.get("deployments") into
+    the Cluster row once, at houston's first-ever startup, and never refreshes it. So a plain helm
+    upgrade changes the live platform config but is invisible to any cluster that already existed
+    before it ran. See update_cluster's docstring for the actual fix (updateCluster's
+    deploymentsConfigOverride, merged straight into that stored config.deployments) -- do that
+    first, then re-invoke upsertDeployment (this function) to make the deployment re-render
+    against the now-updated cluster config.
 
     Validates label/workspace_id/cluster_id (on create) and repository_url (for git_sync)
     locally rather than letting a caller mistake reach Houston -- a missing required field
@@ -464,3 +471,56 @@ def wait_for_release_ready(
                 )
             raise TimeoutError(f"Release {release_name!r} never became fully ready: {', '.join(not_ready)}")
         time.sleep(10)
+
+
+def update_cluster(houston_api, token: str, *, cluster_id: str, deployments_config_override: dict) -> dict:
+    """
+    Merge deployments_config_override into a Cluster's stored config.deployments -- the tier
+    gdc.get() actually reads (ahead of the live platform config) for every deployment on that
+    cluster. See src/lib/clusters/index.js's updateCluster: it does
+    `mergeConfigs(currentConfig=clusterDetails.config.deployments, overrideConfig=
+    deployments_config_override)` and writes the result straight back to config.deployments (also
+    separately recording the raw override under configOverride.deployments).
+
+    This is the only way to make an ALREADY-REGISTERED cluster (e.g. the default cluster
+    populate-default-cluster creates on houston's first startup in unified mode) pick up a
+    houston.config.deployments.* change -- a plain `helm upgrade` of the platform release alone
+    is not enough, because populate-default-cluster snapshots config.get("deployments") into the
+    Cluster row exactly once, at first startup, and nothing ever refreshes it afterward (it's
+    create-once: `if (cluster) return`). See upsert_deployment's docstring for the second half of
+    this: this call alone doesn't touch any already-running deployment's actual Helm
+    values -- follow it with an upsert_deployment call to force a re-render.
+    """
+    query = """
+    mutation UpdateCluster($id: Uuid!, $deploymentsConfigOverride: JSON) {
+      updateCluster(id: $id, deploymentsConfigOverride: $deploymentsConfigOverride) {
+        id
+      }
+    }
+    """
+    variables = {"id": cluster_id, "deploymentsConfigOverride": deployments_config_override}
+    data = graphql(houston_api, query, variables, token=token)
+    return data["updateCluster"]
+
+
+def get_effective_config(houston_api, token: str, deployment_uuid: str) -> dict:
+    """
+    Deployment.effectiveConfig: the final Platform -> Cluster -> Workspace -> Deployment merged
+    config Houston actually renders this deployment's Helm values from.
+
+    Much cheaper to assert against than inspecting live pod securityContexts, and narrows a
+    failure to one of two very different causes: if effectiveConfig doesn't show the expected
+    value, the config never reached this deployment (an update_cluster/gdc.get()-tier problem);
+    if it does but a live pod still enforces readOnlyRootFilesystem, the config reached Houston
+    fine but Commander/the chart didn't apply it (or the deployment hasn't been re-rendered since
+    -- see upsert_deployment's environment_variables trick).
+    """
+    query = """
+    query DeploymentEffectiveConfig($id: String!) {
+      deployment(where: { id: $id }) {
+        effectiveConfig
+      }
+    }
+    """
+    data = graphql(houston_api, query, {"id": deployment_uuid}, token=token)
+    return data["deployment"]["effectiveConfig"]

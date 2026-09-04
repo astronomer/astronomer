@@ -1,12 +1,19 @@
 """readonly-root-image-to-dod: creates a real Airflow Deployment (CeleryExecutor, dagDeploymentType
-image), then disables Houston's default readOnlyRootFilesystem via a live platform helm
-upgrade (configs/disable-airflow-readonly-root.yaml, tests/utils/helm.py) and forces the
-already-existing deployment to pick up the change with a throwaway upsertDeployment call
-(upgradeDeployments is left disabled -- see that config file for why its own automatic hook
-wouldn't actually propagate a config-only change like this one). Finally switches the same
+image), then disables Houston's default readOnlyRootFilesystem for the cluster it's on
+via updateCluster's deploymentsConfigOverride, and forces the already-existing deployment to
+pick up the change with a throwaway upsertDeployment call. Finally switches the same
 deployment's DagDeploymentType Image -> DagOnlyDeployment (dag_deploy) via upsertDeployment and
 re-asserts, to prove the override survives a DagDeploymentType switch too -- not just a forced
 redeploy with the deployment's mechanism left untouched.
+
+Deliberately NOT a platform helm upgrade of astronomer's own houston.config.deployments.*: a
+plain `helm upgrade` only changes the live platform config, which houston-api only ever reads
+into a Cluster's OWN stored config.deployments once, at that cluster's creation
+(populate-default-cluster snapshots it on houston's first-ever startup and never refreshes it) --
+so it's invisible to any cluster (like the one this scenario's deployment already runs on)
+that existed before the upgrade ran. update_cluster's deploymentsConfigOverride is what actually
+reaches an already-registered cluster's deployments. See update_cluster's and
+upsert_deployment's docstrings in tests/utils/houston_graphql.py for the full mechanics.
 
 One of four readonly-root-*-to-* scenarios that are identical except for which
 DagDeploymentType they start and end on; the shared assertion lives in
@@ -17,7 +24,6 @@ import pytest
 import testinfra
 from kubernetes import client, config
 
-from tests.utils.helm import GIT_ROOT_DIR, upgrade_platform_release
 from tests.utils.houston_graphql import (
     HoustonError,
     create_user,
@@ -25,6 +31,7 @@ from tests.utils.houston_graphql import (
     dump_pod_logs,
     get_cluster_id,
     snapshot_release_revisions,
+    update_cluster,
     upsert_deployment,
     wait_for_release_ready,
 )
@@ -41,7 +48,10 @@ DEPLOYMENT_LABEL = SCENARIO_LABEL
 FROM_DAG_DEPLOYMENT_TYPE = "image"
 TO_DAG_DEPLOYMENT_TYPE = "dag_deploy"
 
-DISABLE_READONLY_ROOT_VALUES = str(GIT_ROOT_DIR / "configs" / "disable-airflow-readonly-root.yaml")
+# Merged into the cluster's config.deployments via update_cluster -- see that function's
+# docstring for why this, and not a platform helm upgrade, is what actually disables
+# readOnlyRootFilesystem for deployments already on this cluster.
+DISABLE_READONLY_ROOT_OVERRIDE = {"securityContext": {"container": {"readOnlyRootFilesystem": False}}}
 
 # A throwaway env var, added via upsertDeployment purely to force Commander to re-render and
 # re-apply this deployment's Helm values -- see upsert_deployment's docstring for why this is
@@ -64,12 +74,10 @@ def _dag_deployment_kwargs(dag_deployment_type: str) -> dict:
 
 
 def _houston_api():
-    """Resolve the current houston pod fresh -- deliberately not cached in a fixture. The live
-    platform helm upgrade in test_forced_redeploy_disables_readonly_root changes houston's own
-    ConfigMap, which restarts houston (and houston-worker) via their checksum/houston-config
-    pod-template annotation -- so a pod name resolved before that upgrade is deleted by the time
-    a later test tries to exec into it. Re-resolving on every call costs one cheap pod-list call
-    and is correct across any number of restarts, not just the one this file causes.
+    """Resolve the current houston pod fresh -- deliberately not cached in a fixture, so a test
+    file that ever needs to survive a houston restart (a platform helm upgrade, a config change
+    that flips houston's own checksum/houston-config pod-template annotation) can't be holding a
+    stale, since-deleted pod name. Costs one cheap pod-list call per invocation.
     """
     pod = get_pod_by_label_selector(NAMESPACE, "component=houston", KUBECONFIG_UNIFIED)
     return testinfra.get_host(f"kubectl://{pod}?container=houston&namespace={NAMESPACE}", kubeconfig=KUBECONFIG_UNIFIED)
@@ -79,9 +87,7 @@ def _houston_api():
 def _k8s_apps_v1_client_module() -> client.AppsV1Api:
     """Module-scoped so the deployment fixture below (also module-scoped, to avoid paying for a
     fresh Airflow Deployment per test) can depend on it -- conftest.py's own k8s_apps_v1_client
-    is function-scoped and can't be used by a module-scoped fixture. Unlike the houston pod
-    above, this client object stays valid across houston's own restarts: it just points at a
-    kubeconfig, not any specific pod."""
+    is function-scoped and can't be used by a module-scoped fixture."""
     config.load_kube_config(config_file=KUBECONFIG_UNIFIED)
     return client.AppsV1Api()
 
@@ -117,7 +123,7 @@ def deployment(_k8s_apps_v1_client_module, _k8s_core_v1_client_module):
         dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
         raise
     wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"])
-    return {"token": token, "id": created["id"], "release_name": created["releaseName"]}
+    return {"token": token, "id": created["id"], "release_name": created["releaseName"], "cluster_id": cluster_id}
 
 
 def test_deployment_reaches_ready(deployment):
@@ -128,23 +134,29 @@ def test_deployment_reaches_ready(deployment):
 
 
 def test_forced_redeploy_disables_readonly_root(deployment, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
-    """Upgrades the platform release to disable readOnlyRootFilesystem, then forces the
-    already-existing deployment to pick it up with a throwaway upsertDeployment call -- nothing
-    about the deployment's own executor/dagDeployment changes, only a new environment variable,
-    which is enough to make Commander re-render and re-apply its Helm values. That re-render
-    freshly fetches the platform's current config server-side (upsertDeployment's own resolver
-    behavior), which is exactly what upgradeDeployments' own automatic hook does NOT do -- see
-    upsert_deployment's docstring and configs/disable-airflow-readonly-root.yaml.
+    """Disables readOnlyRootFilesystem on the deployment's cluster via update_cluster, then
+    forces the already-existing deployment to pick it up with a throwaway upsertDeployment call
+    -- nothing about the deployment's own executor/dagDeployment changes, only a new environment
+    variable, which is enough to make Commander re-render and re-apply its Helm values. That
+    re-render reads the cluster's now-updated config.deployments (upsertDeployment's resolver
+    calls gdc.get(...) fresh every time) -- see update_cluster's and upsert_deployment's
+    docstrings for why a platform helm upgrade alone would not have been enough here.
 
     Snapshots the deployment's workload generations first and passes them to
     wait_for_release_ready: Commander applies the change asynchronously, so without the baseline
-    the wait would return immediately against the still-ready pre-upgrade pods.
+    the wait would return immediately against the still-ready pre-change pods.
     """
+    houston_api = _houston_api()
+    update_cluster(
+        houston_api,
+        deployment["token"],
+        cluster_id=deployment["cluster_id"],
+        deployments_config_override=DISABLE_READONLY_ROOT_OVERRIDE,
+    )
     before = snapshot_release_revisions(_k8s_apps_v1_client_module, deployment["release_name"])
-    upgrade_platform_release(KUBECONFIG_UNIFIED, DISABLE_READONLY_ROOT_VALUES)
     try:
         upsert_deployment(
-            _houston_api(),
+            houston_api,
             deployment["token"],
             executor="CeleryExecutor",
             deployment_uuid=deployment["id"],
@@ -162,12 +174,12 @@ def test_forced_redeploy_disables_readonly_root(deployment, _k8s_apps_v1_client_
 
 def test_deployment_survives_dag_deployment_type_switch(deployment, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """Switches the same deployment Image -> DagOnlyDeployment (dag_deploy) via upsertDeployment on the
-    same deployment_uuid, after readOnlyRootFilesystem has already been disabled platform-wide
-    (relies on running after test_forced_redeploy_disables_readonly_root, the same implicit
-    within-module ordering deployment-lifecycle.py and auth-sidecar's own executor/
-    DagDeploymentType-switch tests already rely on), and re-asserts no container on the new
-    topology re-enables it. Resolves the houston pod fresh (_houston_api()) rather than reusing
-    one from earlier in the module: the previous test's platform upgrade may have restarted it.
+    same deployment_uuid, after readOnlyRootFilesystem has already been disabled on this
+    deployment's cluster (relies on running after test_forced_redeploy_disables_readonly_root,
+    the same implicit within-module ordering deployment-lifecycle.py and auth-sidecar's own
+    executor/DagDeploymentType-switch tests already rely on), and re-asserts no container on the
+    new topology re-enables it. Resolves the houston pod fresh (_houston_api()) rather than
+    reusing one from earlier in the module, in case anything upstream ever restarts it.
     """
     token = deployment["token"]
     before = snapshot_release_revisions(_k8s_apps_v1_client_module, deployment["release_name"])

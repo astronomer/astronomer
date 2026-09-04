@@ -1,11 +1,14 @@
 """Shared assertion for the readonly-root-*-to-* scenarios.
 
 Each of those scenarios creates an Airflow Deployment with one DagDeploymentType, disables
-Houston's default readOnlyRootFilesystem via a live platform helm upgrade (tests/utils/helm.py),
-then switches the deployment to a different DagDeploymentType via upsertDeployment -- the four
-scenarios differ only in which DagDeploymentType they start and end on. This is the one
-assertion all four make in common: after the transition, no container on the deployment's pods
-still enforces readOnlyRootFilesystem.
+Houston's default readOnlyRootFilesystem for the cluster it's on via updateCluster's
+deploymentsConfigOverride (NOT a platform helm upgrade -- see upsert_deployment's and
+update_cluster's docstrings in tests/utils/houston_graphql.py for why a helm upgrade alone never
+reaches an already-registered cluster's deployments), forces the deployment to re-render, then
+switches it to a different DagDeploymentType via upsertDeployment -- the four scenarios differ
+only in which DagDeploymentType they start and end on. This is the one assertion all four make in
+common: after the transition, no container on the deployment's pods still enforces
+readOnlyRootFilesystem.
 """
 
 # A small, public, no-auth fixture repo (astronomer-owned), used by every scenario/test in this
