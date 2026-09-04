@@ -1,29 +1,23 @@
-"""readonly-root-dag-deploy: creates a real Airflow Deployment (CeleryExecutor, dagDeploymentType
-dag_deploy), disables Houston's default readOnlyRootFilesystem for the cluster it's on via
-updateCluster's deploymentsConfigOverride, and forces the already-existing deployment to pick up
-the change with a throwaway upsertDeployment call. Asserts Airflow's own components --
-scheduler/webserver/worker/triggerer and their init containers -- no longer enforce
-readOnlyRootFilesystem afterward.
-
-dag_deploy, not image or git_sync: confirmed empirically (2026-09-04 CI runs) that webserver's
-own main container keeps enforcing readOnlyRootFilesystem under dagDeploymentType image or
-git_sync for reasons not yet traced to houston-api (worth checking airflow-chart next), but is
-clean under dag_deploy specifically. The feature under test is disabling readOnlyRootFilesystem
-in Airflow Deployments generally, not chasing that dagDeploymentType-specific gap -- dag_deploy
-is a real, commonly used mechanism, and proves the core capability without depending on an
-unresolved anomaly. See tests/utils/readonly_root.py's module docstring for the other
-(unconditionally hardcoded, unfixable via this override) exclusions this assertion already
-applies -- pgbouncer/redis/statsd, and the dag-downloader sidecar/dag-server pod this
-dagDeploymentType itself adds.
+"""readonly-root-image-to-dod: creates a real Airflow Deployment (CeleryExecutor, dagDeploymentType
+image), then disables Houston's default readOnlyRootFilesystem for the cluster it's on
+via updateCluster's deploymentsConfigOverride, and forces the already-existing deployment to
+pick up the change with a throwaway upsertDeployment call. Finally switches the same
+deployment's DagDeploymentType Image -> DagOnlyDeployment (dag_deploy) via upsertDeployment and
+re-asserts, to prove the override survives a DagDeploymentType switch too -- not just a forced
+redeploy with the deployment's mechanism left untouched.
 
 Deliberately NOT a platform helm upgrade of astronomer's own houston.config.deployments.*: a
 plain `helm upgrade` only changes the live platform config, which houston-api only ever reads
 into a Cluster's OWN stored config.deployments once, at that cluster's creation
 (populate-default-cluster snapshots it on houston's first-ever startup and never refreshes it) --
-so it's invisible to any cluster (like the one this scenario's deployment already runs on) that
-existed before the upgrade ran. update_cluster's deploymentsConfigOverride is what actually
+so it's invisible to any cluster (like the one this scenario's deployment already runs on)
+that existed before the upgrade ran. update_cluster's deploymentsConfigOverride is what actually
 reaches an already-registered cluster's deployments. See update_cluster's and
 upsert_deployment's docstrings in tests/utils/houston_graphql.py for the full mechanics.
+
+One of four readonly-root-*-to-* scenarios that are identical except for which
+DagDeploymentType they start and end on; the shared assertion lives in
+tests/utils/readonly_root.py.
 """
 
 import pytest
@@ -42,16 +36,25 @@ from tests.utils.houston_graphql import (
     wait_for_release_ready,
 )
 from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_by_label_selector
-from tests.utils.readonly_root import assert_no_readonly_root_containers
+from tests.utils.readonly_root import GIT_SYNC_REPOSITORY_URL, assert_no_readonly_root_containers
 
 NAMESPACE = "astronomer"
-SCENARIO_LABEL = "readonly-root-dag-deploy"
+SCENARIO_LABEL = "readonly-root-image-to-dod"
 ADMIN_EMAIL = f"{SCENARIO_LABEL}-test@astronomer.io"
 ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = SCENARIO_LABEL
 DEPLOYMENT_LABEL = SCENARIO_LABEL
 
-DAG_DEPLOYMENT_TYPE = "dag_deploy"
+# PINF-1049: commander's first-ever JWKS fetch (cache cold) can race Houston's own K8s
+# Ready-gate and get a literal connection refusal, surfacing as this exact HoustonError
+# message from upsertDeployment -- see auth-sidecar's own test file for the full mechanics.
+# @pytest.mark.flaky(only_rerun=[...]) below re-runs the whole `deployment` fixture (including
+# its create_user/create_workspace calls) on this exact message -- not a fix for a bug in this
+# repo.
+JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
+
+FROM_DAG_DEPLOYMENT_TYPE = "image"
+TO_DAG_DEPLOYMENT_TYPE = "dag_deploy"
 
 # Merged into the cluster's config.deployments via update_cluster -- see that function's
 # docstring for why this, and not a platform helm upgrade, is what actually disables
@@ -63,13 +66,19 @@ DISABLE_READONLY_ROOT_OVERRIDE = {"securityContext": {"container": {"readOnlyRoo
 # necessary instead of relying on upgradeDeployments' own automatic hook.
 FORCE_REDEPLOY_ENV_VAR_KEY = "READONLY_ROOT_TEST_FORCE_REDEPLOY"
 
-# PINF-1049: commander's first-ever JWKS fetch (cache cold) can race Houston's own K8s
-# Ready-gate and get a literal connection refusal, surfacing as this exact HoustonError
-# message from upsertDeployment -- see auth-sidecar's own test file for the full mechanics.
-# @pytest.mark.flaky(only_rerun=[...]) below re-runs the whole `deployment` fixture (including
-# its create_user/create_workspace calls) on this exact message; both are made idempotent
-# against exactly that (see their own docstrings) so the retry doesn't fail differently instead.
-JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
+
+def _dag_deployment_kwargs(dag_deployment_type: str) -> dict:
+    """git_sync needs a repository_url; image/dag_deploy need neither.
+
+    No auth_type: the houston-api version this chart pins (v2.0.37) predates authType/HTTPS+PAT
+    entirely (git_sync there is SSH-key or public-HTTPS only), and GIT_SYNC_REPOSITORY_URL is a
+    public repo needing no credentials of any kind -- see upsert_deployment's docstring for what
+    sending authType against this schema actually does (a GraphQL error, not a local validation
+    failure).
+    """
+    if dag_deployment_type == "git_sync":
+        return {"repository_url": GIT_SYNC_REPOSITORY_URL}
+    return {}
 
 
 def _houston_api():
@@ -100,8 +109,8 @@ def _k8s_core_v1_client_module() -> client.CoreV1Api:
 @pytest.fixture(scope="module")
 def deployment(_k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """Bootstraps a fresh admin user and workspace, creates an Airflow Deployment with
-    DAG_DEPLOYMENT_TYPE through Houston's GraphQL API, and waits for it to reach full readiness.
-    Module-scoped: every test in this file shares the one deployment."""
+    FROM_DAG_DEPLOYMENT_TYPE through Houston's GraphQL API, and waits for it to reach full
+    readiness. Module-scoped: every test in this file shares the one deployment."""
     houston_api = _houston_api()
     token = create_user(houston_api, ADMIN_EMAIL, ADMIN_PASSWORD)
     workspace_id = create_workspace(houston_api, token, WORKSPACE_LABEL)
@@ -114,7 +123,8 @@ def deployment(_k8s_apps_v1_client_module, _k8s_core_v1_client_module):
             label=DEPLOYMENT_LABEL,
             workspace_id=workspace_id,
             cluster_id=cluster_id,
-            dag_deployment_type=DAG_DEPLOYMENT_TYPE,
+            dag_deployment_type=FROM_DAG_DEPLOYMENT_TYPE,
+            **_dag_deployment_kwargs(FROM_DAG_DEPLOYMENT_TYPE),
         )
     except HoustonError:
         dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
@@ -169,3 +179,33 @@ def test_forced_redeploy_disables_readonly_root(deployment, _k8s_apps_v1_client_
         _k8s_apps_v1_client_module, _k8s_core_v1_client_module, deployment["release_name"], previous_revisions=before
     )
     assert_no_readonly_root_containers(_k8s_core_v1_client_module, deployment["release_name"])
+
+
+def test_deployment_survives_dag_deployment_type_switch(deployment, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
+    """Switches the same deployment Image -> DagOnlyDeployment (dag_deploy) via upsertDeployment on the
+    same deployment_uuid, after readOnlyRootFilesystem has already been disabled on this
+    deployment's cluster (relies on running after test_forced_redeploy_disables_readonly_root,
+    the same implicit within-module ordering deployment-lifecycle.py and auth-sidecar's own
+    executor/DagDeploymentType-switch tests already rely on), and re-asserts no container on the
+    new topology re-enables it. Resolves the houston pod fresh (_houston_api()) rather than
+    reusing one from earlier in the module, in case anything upstream ever restarts it.
+    """
+    token = deployment["token"]
+    before = snapshot_release_revisions(_k8s_apps_v1_client_module, deployment["release_name"])
+    try:
+        created = upsert_deployment(
+            _houston_api(),
+            token,
+            executor="CeleryExecutor",
+            deployment_uuid=deployment["id"],
+            dag_deployment_type=TO_DAG_DEPLOYMENT_TYPE,
+            **_dag_deployment_kwargs(TO_DAG_DEPLOYMENT_TYPE),
+        )
+    except HoustonError:
+        dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
+        dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
+        raise
+    wait_for_release_ready(
+        _k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"], previous_revisions=before
+    )
+    assert_no_readonly_root_containers(_k8s_core_v1_client_module, created["releaseName"])
