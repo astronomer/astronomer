@@ -241,6 +241,15 @@ def upsert_deployment(
     no fallback fetch -- so it always renders with the hardcoded default, never the deployment's
     actual current config, regardless of what changed.
 
+    environment_variables alone forces most components to re-render, but NOT webserver's own
+    container: confirmed empirically (2026-09-04 CI) that webserver's rendered securityContext
+    only gets recomputed when the same call ALSO includes a dagDeployment.type argument, even
+    when it's just re-asserting the deployment's own current, unchanged type. Pass
+    dag_deployment_type explicitly (with repository_url etc. as needed) on every forced-redeploy
+    call that needs webserver's config to actually refresh -- omitting it, the same way leaving
+    it out on a genuinely unrelated update is normally fine (see the dag_deployment_type
+    paragraph above), silently leaves webserver stale here.
+
     Note this alone is NOT enough to pick up a platform-level `houston.config.deployments.*`
     change made via a plain `helm upgrade` of the platform release: upsertDeployment's resolver
     does call gdc.get(...) fresh on every invocation, but gdc.get()'s Platform -> Cluster ->

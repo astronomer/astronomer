@@ -144,12 +144,15 @@ def test_deployment_reaches_ready(deployment):
 
 def test_forced_redeploy_disables_readonly_root(deployment, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """Disables readOnlyRootFilesystem on the deployment's cluster via update_cluster, then
-    forces the already-existing deployment to pick it up with a throwaway upsertDeployment call
-    -- nothing about the deployment's own executor/dagDeployment changes, only a new environment
-    variable, which is enough to make Commander re-render and re-apply its Helm values. That
-    re-render reads the cluster's now-updated config.deployments (upsertDeployment's resolver
-    calls gdc.get(...) fresh every time) -- see update_cluster's and upsert_deployment's
-    docstrings for why a platform helm upgrade alone would not have been enough here.
+    forces the already-existing deployment to pick it up with an upsertDeployment call carrying
+    a throwaway environment variable. That alone is enough to make Commander re-render most
+    components -- but NOT webserver's own container: confirmed empirically (2026-09-04 CI) that
+    webserver's rendered securityContext only gets recomputed when the mutation call also
+    includes a dagDeployment.type argument, even when it's the deployment's own current,
+    unchanged type -- omitting dagDeployment (as a bare env-var-only update would) leaves
+    webserver's Helm values stale relative to whatever config was in effect at the last call
+    that DID include it. So this re-asserts FROM_DAG_DEPLOYMENT_TYPE explicitly rather than
+    omitting it, to force the full render path for every component, not just most of them.
 
     Snapshots the deployment's workload generations first and passes them to
     wait_for_release_ready: Commander applies the change asynchronously, so without the baseline
@@ -169,7 +172,9 @@ def test_forced_redeploy_disables_readonly_root(deployment, _k8s_apps_v1_client_
             deployment["token"],
             executor="CeleryExecutor",
             deployment_uuid=deployment["id"],
+            dag_deployment_type=FROM_DAG_DEPLOYMENT_TYPE,
             environment_variables=[{"key": FORCE_REDEPLOY_ENV_VAR_KEY, "value": "1"}],
+            **_dag_deployment_kwargs(FROM_DAG_DEPLOYMENT_TYPE),
         )
     except HoustonError:
         dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
