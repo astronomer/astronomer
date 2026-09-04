@@ -1,12 +1,13 @@
 description: >-
   Creates a real Airflow Deployment (CeleryExecutor, dagDeploymentType image), then
-  disables Houston's default readOnlyRootFilesystem via a live platform helm upgrade with
-  upgradeDeployments enabled, confirming the already-existing deployment rolls forward on its
-  own without a per-deployment upsertDeployment. Then switches the same deployment
-  Image -> GitSync via upsertDeployment and re-asserts, to prove the override
-  survives a DagDeploymentType switch too. One of four readonly-root-*-to-* scenarios that are
-  identical except for which DagDeploymentType they start and end on (see
-  tests/utils/readonly_root.py for the shared assertion).
+  disables Houston's default readOnlyRootFilesystem via a live platform helm upgrade and forces
+  the already-existing deployment to pick it up with a throwaway upsertDeployment call
+  (upgradeDeployments is left disabled -- see configs/disable-airflow-readonly-root.yaml for
+  why its own automatic hook wouldn't propagate a config-only change like this one). Then
+  switches the same deployment Image -> GitSync via upsertDeployment and
+  re-asserts, to prove the override survives a DagDeploymentType switch too. One of four
+  readonly-root-*-to-* scenarios that are identical except for which DagDeploymentType they
+  start and end on (see tests/utils/readonly_root.py for the shared assertion).
 topology: unified
 # One deployment plus the platform chart pushes past the default xlarge CI machine's CPU, same
 # as every other scenario that creates a real Airflow Deployment (see auth-sidecar / PINF-1080).

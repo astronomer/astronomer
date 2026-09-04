@@ -140,6 +140,7 @@ def upsert_deployment(
     https_username: str | None = None,
     https_token: str | None = None,
     git_sync_repo_fetch_mode: str | None = None,
+    environment_variables: list[dict] | None = None,
     deployment_uuid: str | None = None,
 ) -> dict:
     """
@@ -155,17 +156,42 @@ def upsert_deployment(
     config untouched. On create it defaults to "image" if not given.
 
     repository_url/auth_type only apply to dag_deployment_type="git_sync" (the DagDeployment
-    fields git-sync-relay's own repositoryUrl/authType).
+    fields git-sync-relay's own repositoryUrl/authType). auth_type (and https_username/
+    https_token) are optional, not required, for git_sync: the DagDeployment input type only
+    grew authType/httpsUsername/httpsToken in later houston-api releases for HTTPS+PAT auth --
+    the houston-api version this chart currently pins (v2.0.37) has no such fields at all
+    (git-sync there is SSH-key or public-HTTPS only, via repositoryUrl/knownHosts/sshKey), and
+    sending authType against that schema fails server-side with a GraphQL "Field \"authType\"
+    is not defined by type \"DagDeployment\"" error rather than anything this helper could
+    validate locally. Omit auth_type entirely when targeting a schema that doesn't have it
+    (e.g. a public repositoryUrl needs no credentials of any kind).
 
-    Validates label/workspace_id/cluster_id (on create) and repository_url/auth_type (for
-    git_sync) locally rather than letting a caller mistake reach Houston -- a missing
-    required field surfaces there as a generic GraphQL/validation error with none of this
-    helper's own context about *why* the field was required.
+    environment_variables is [{"key": ..., "value": ..., "isSecret": bool}, ...] (isSecret
+    optional). On update it's the one reliable way to FORCE Commander to actually re-render
+    and re-apply a deployment's Helm values when nothing about the deployment's own upsert
+    arguments changed -- e.g. after a platform-level houston.config change (like disabling
+    readOnlyRootFilesystem) that this deployment needs to pick up. Deliberately not
+    `upgradeDeployments`'s automatic post-upgrade hook Job for that: its
+    `yarn upgrade-deployments` script publishes its NATS message with no globalDeploymentsConfig
+    at all (see src/scripts/upgrade-deployments/index.js), and the consuming worker
+    (deployment-upserted-for-update) reads globalDeploymentsConfig straight off that message with
+    no fallback fetch -- so securityHardeningConfig's `get(globalDeploymentsConfig,
+    "securityContext.container", DEFAULT_CONTAINER_SECURITY_CONTEXT)` silently falls back to the
+    hardcoded default instead of the platform's actual current config, and the deployment's
+    rendered values never change. upsertDeployment's own resolver, by contrast, freshly fetches
+    globalDeploymentsConfig via `gdc.get(...)` before publishing (upsert-deployment/index.ts),
+    so re-invoking it -- with a throwaway env var if there's nothing else to change -- is what
+    actually reaches the current config.
+
+    Validates label/workspace_id/cluster_id (on create) and repository_url (for git_sync)
+    locally rather than letting a caller mistake reach Houston -- a missing required field
+    surfaces there as a generic GraphQL/validation error with none of this helper's own
+    context about *why* the field was required.
     """
     if not deployment_uuid and not (label and workspace_id and cluster_id):
         raise ValueError("Creating a deployment (no deployment_uuid) requires label, workspace_id, and cluster_id")
-    if dag_deployment_type == "git_sync" and not (repository_url and auth_type):
-        raise ValueError("dag_deployment_type='git_sync' requires both repository_url and auth_type")
+    if dag_deployment_type == "git_sync" and not repository_url:
+        raise ValueError("dag_deployment_type='git_sync' requires repository_url")
 
     variables: dict = {"executor": executor}
     if deployment_uuid:
@@ -191,6 +217,8 @@ def upsert_deployment(
         if git_sync_repo_fetch_mode:
             dag_deployment["gitSyncRepoFetchMode"] = git_sync_repo_fetch_mode
         variables["dagDeployment"] = dag_deployment
+    if environment_variables is not None:
+        variables["environmentVariables"] = environment_variables
     query = """
     mutation UpsertDeployment(
       $label: String
@@ -198,6 +226,7 @@ def upsert_deployment(
       $clusterId: Uuid
       $executor: ExecutorType
       $dagDeployment: DagDeployment
+      $environmentVariables: [InputEnvironmentVariable]
       $deploymentUuid: Uuid
     ) {
       upsertDeployment(
@@ -206,6 +235,7 @@ def upsert_deployment(
         clusterId: $clusterId
         executor: $executor
         dagDeployment: $dagDeployment
+        environmentVariables: $environmentVariables
         deploymentUuid: $deploymentUuid
       ) {
         id
