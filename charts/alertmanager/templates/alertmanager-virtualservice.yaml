@@ -1,0 +1,43 @@
+#################################
+## alertmanager VirtualService ##
+#################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ template "alertmanager.fullname" . }}-virtualservice
+  labels:
+    tier: alertmanager-networking
+    component: alertmanager-virtualservice
+    chart: {{ template "alertmanager.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - {{ template "alertmanager.url" . }}
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - {{ template "alertmanager.globalUrl" . }}
+    {{- end }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ template "alertmanager.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              {{- if .Values.global.authSidecar.enabled }}
+              number: {{ .Values.global.authSidecar.port }}
+              {{- else }}
+              number: {{ .Values.ports.http }}
+              {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,41 @@
+###############################
+## Prometheus VirtualService ##
+###############################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if and .Values.global.baseDomain (or (ne .Values.global.plane.mode "data") .Values.global.plane.domainPrefix) }}
+{{- $emitGlobalHost := and .Values.global.controlPlaneHA.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ template "prometheus.fullname" . }}-virtualservice
+  labels:
+    tier: prometheus-networking
+    component: prometheus-virtualservice
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - {{ template "prometheus.url" . }}
+    {{- if $emitGlobalHost }}
+    - {{ template "prometheus.globalUrl" . }}
+    {{- end }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ template "prometheus.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              {{- if .Values.global.authSidecar.enabled }}
+              number: {{ .Values.global.authSidecar.port }}
+              {{- else }}
+              number: {{ .Values.ports.http }}
+              {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

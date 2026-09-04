@@ -1,0 +1,76 @@
+########################################
+## Astronomer Astro UI VirtualService ##
+########################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ .Release.Name }}-astroui-virtualservice
+  labels:
+    component: astroui-virtualservice
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - app.{{ .Values.global.baseDomain }}
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    {{- end }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ .Release.Name }}-astro-ui.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.ports.astroUIHTTP }}
+---
+######################################
+## Astronomer Common VirtualService ##
+######################################
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ .Release.Name }}-common-virtualservice
+  labels:
+    component: common-virtualservice
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - {{ .Values.global.baseDomain }}
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - {{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    {{- end }}
+  http:
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - match:
+        - authority:
+            exact: {{ .Values.global.controlPlaneHA.globalBaseDomain }}
+      redirect:
+        authority: app.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+        scheme: https
+        redirectCode: 301
+    {{- end }}
+    - redirect:
+        authority: app.{{ .Values.global.baseDomain }}
+        scheme: https
+        redirectCode: 301
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

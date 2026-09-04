@@ -1,0 +1,38 @@
+#######################################
+## Commander Metadata VirtualService ##
+#######################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ .Release.Name }}-commander-metadata-virtualservice
+  labels:
+    component: metadata-virtualservice
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: dataplane
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - {{ include "commander.baseDomain" . }}
+  http:
+    - match:
+        - uri:
+            prefix: /metadata
+      rewrite:
+        uriRegexRewrite:
+          match: '^/metadata.*'
+          rewrite: /metadata
+      route:
+        - destination:
+            host: {{ .Release.Name }}-commander.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.ports.commanderHTTP }}
+{{- end }}
+{{- end }}
+{{- end }}

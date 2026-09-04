@@ -1,0 +1,52 @@
+############################
+## Houston VirtualService ##
+############################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ .Release.Name }}-houston-virtualservice
+  labels:
+    component: houston-virtualservice
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - houston.{{ .Values.global.baseDomain }}
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+    {{- end }}
+  http:
+    - match:
+        - uri:
+            regex: '^/v1/(alerts|metrics).*'
+      fault:
+        abort:
+          httpStatus: 403
+          percentage:
+            value: 100
+      route:
+        - destination:
+            host: {{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.ports.houstonHTTP }}
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.ports.houstonHTTP }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

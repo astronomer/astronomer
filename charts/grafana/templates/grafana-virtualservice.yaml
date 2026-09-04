@@ -1,0 +1,42 @@
+############################
+## Grafana VirtualService ##
+############################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if .Values.global.baseDomain }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ template "grafana.fullname" . }}-virtualservice
+  labels:
+    tier: grafana-networking
+    component: grafana-virtualservice
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - {{ template "grafana.url" . }}
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - {{ template "grafana.globalUrl" . }}
+    {{- end }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ template "grafana.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              {{- if .Values.global.authSidecar.enabled }}
+              number: {{ .Values.global.authSidecar.port }}
+              {{- else }}
+              number: {{ .Values.ports.http }}
+              {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
