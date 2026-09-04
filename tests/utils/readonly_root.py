@@ -15,10 +15,20 @@ readOnlyRootFilesystem.
 # repo that needs a real git_sync deployment -- see deployment-lifecycle and auth-sidecar.
 GIT_SYNC_REPOSITORY_URL = "https://github.com/astronomer/apc-test-dags-public"
 
+# CeleryExecutor's own supporting infrastructure, not Airflow components -- these scenarios are
+# scoped to Airflow components specifically, so pods matching one of these substrings are skipped
+# entirely rather than asserted against. houston-api hardcodes readOnlyRootFilesystem=true for
+# all three unconditionally regardless of deployments.securityContext.container
+# (componentsWithSecurityContextOnly in src/lib/deployments/config/index.js never reads the
+# override for them), so asserting against them would just be a permanent, known failure that
+# tells us nothing about the Airflow-component behavior this scenario actually tests.
+_NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS = ("-redis-", "-statsd-", "-pgbouncer-")
+
 
 def find_readonly_root_containers(core_client, release_name: str) -> list[str]:
-    """Return "pod/container" for every container (including init containers) in the release
-    whose securityContext still enforces readOnlyRootFilesystem.
+    """Return "pod/container" for every Airflow-component container (including init containers)
+    in the release whose securityContext still enforces readOnlyRootFilesystem. Skips pods
+    matching _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS -- see its comment for why.
 
     Checks the container's own securityContext only -- unlike runAsUser/runAsNonRoot,
     readOnlyRootFilesystem has no pod-level fallback to inherit from (there is no
@@ -28,6 +38,8 @@ def find_readonly_root_containers(core_client, release_name: str) -> list[str]:
     pods = core_client.list_pod_for_all_namespaces(label_selector=f"release={release_name}").items
     offenders = []
     for pod in pods:
+        if any(substring in pod.metadata.name for substring in _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS):
+            continue
         containers = list(pod.spec.containers) + list(pod.spec.init_containers or [])
         for container in containers:
             sc = container.security_context

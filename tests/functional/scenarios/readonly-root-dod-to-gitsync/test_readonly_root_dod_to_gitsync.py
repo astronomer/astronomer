@@ -45,6 +45,14 @@ ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = SCENARIO_LABEL
 DEPLOYMENT_LABEL = SCENARIO_LABEL
 
+# PINF-1049: commander's first-ever JWKS fetch (cache cold) can race Houston's own K8s
+# Ready-gate and get a literal connection refusal, surfacing as this exact HoustonError
+# message from upsertDeployment -- see auth-sidecar's own test file for the full mechanics.
+# @pytest.mark.flaky(only_rerun=[...]) below re-runs the whole `deployment` fixture (including
+# its create_user/create_workspace calls) on this exact message -- not a fix for a bug in this
+# repo.
+JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
+
 FROM_DAG_DEPLOYMENT_TYPE = "dag_deploy"
 TO_DAG_DEPLOYMENT_TYPE = "git_sync"
 
@@ -126,6 +134,7 @@ def deployment(_k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     return {"token": token, "id": created["id"], "release_name": created["releaseName"], "cluster_id": cluster_id}
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
 def test_deployment_reaches_ready(deployment):
     """The deployment fixture already waits for readiness -- this test asserts that contract
     explicitly, so a fixture-setup failure surfaces as a named test result rather than only as a
