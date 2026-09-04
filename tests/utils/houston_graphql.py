@@ -90,30 +90,94 @@ def graphql(houston_api, query: str, variables: dict | None = None, token: str |
     return body["data"]
 
 
+_PUBLIC_SIGNUPS_DISABLED_ERROR = "Public sign ups are disabled"
+
+
 def create_user(houston_api, email: str, password: str) -> str:
-    """Create the initial admin user. Only succeeds unauthenticated on a fresh DB -- true
-    for every scenario's CircleCI job, since each one installs into a brand new cluster."""
-    query = """
-    mutation CreateUser($email: String!, $password: String!) {
-      createUser(email: $email, password: $password) {
-        token { value }
-      }
-    }
+    """Create the initial admin user, or log back in as one this same call already created.
+
+    Public unauthenticated signup only ever succeeds ONCE per cluster -- true for every
+    scenario's CircleCI job on a fresh install, but NOT safe to assume across a
+    @pytest.mark.flaky(only_rerun=[...]) retry: pytest-rerunfailures reruns fixture setup, not
+    just the test body, so a retry of the first test that touches a `deployment` fixture
+    genuinely re-invokes create_user -- and by then this same call's own first attempt has
+    already flipped signups off, so a second createUser for the identical email fails with
+    "Public sign ups are disabled", not a benign no-op. Falling back to createToken (a normal
+    login) on exactly that message makes this call idempotent across such a retry: the first
+    attempt's user is still there, we just need a fresh token for it, not a new user.
     """
-    data = graphql(houston_api, query, {"email": email, "password": password})
-    token = data["createUser"]["token"]["value"]
-    assert token, "createUser returned an empty token value"
+    try:
+        data = graphql(
+            houston_api,
+            """
+            mutation CreateUser($email: String!, $password: String!) {
+              createUser(email: $email, password: $password) {
+                token { value }
+              }
+            }
+            """,
+            {"email": email, "password": password},
+        )
+        token = data["createUser"]["token"]["value"]
+    except HoustonError as exc:
+        if _PUBLIC_SIGNUPS_DISABLED_ERROR not in str(exc):
+            raise
+        data = graphql(
+            houston_api,
+            """
+            mutation LoginExistingUser($identity: String!, $password: String!) {
+              createToken(identity: $identity, password: $password) {
+                token { value }
+              }
+            }
+            """,
+            {"identity": email, "password": password},
+        )
+        token = data["createToken"]["token"]["value"]
+    assert token, "create_user returned an empty token value"
     return token
 
 
+_UNIQUE_WORKSPACE_LABEL_ERROR = "There is already another workspace with this label"
+
+
 def create_workspace(houston_api, token: str, label: str) -> str:
-    query = """
-    mutation CreateWorkspace($label: String!) {
-      createWorkspace(label: $label) { id }
-    }
+    """Create a workspace, or look up the one this same call already created.
+
+    Workspace labels must be unique (UniqueWorkspaceLabelError), so this hits the same
+    retry-safety gap as create_user: a @pytest.mark.flaky(only_rerun=[...]) retry re-invokes
+    fixture setup from scratch, and by then this exact label already exists from the first
+    attempt. Falling back to the `workspaces(label: ...)` query on exactly that message looks up
+    the existing workspace's id instead of trying (and failing) to create a second one.
     """
-    data = graphql(houston_api, query, {"label": label}, token=token)
-    return data["createWorkspace"]["id"]
+    try:
+        data = graphql(
+            houston_api,
+            """
+            mutation CreateWorkspace($label: String!) {
+              createWorkspace(label: $label) { id }
+            }
+            """,
+            {"label": label},
+            token=token,
+        )
+        return data["createWorkspace"]["id"]
+    except HoustonError as exc:
+        if _UNIQUE_WORKSPACE_LABEL_ERROR not in str(exc):
+            raise
+        data = graphql(
+            houston_api,
+            """
+            query FindWorkspaceByLabel($label: String) {
+              workspaces(label: $label) { id }
+            }
+            """,
+            {"label": label},
+            token=token,
+        )
+        workspaces = data["workspaces"]
+        assert workspaces, f"UniqueWorkspaceLabelError for {label!r} but workspaces(label=...) found none"
+        return workspaces[0]["id"]
 
 
 def get_cluster_id(houston_api, token: str) -> str:
