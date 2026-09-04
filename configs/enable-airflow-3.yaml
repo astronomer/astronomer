@@ -1,0 +1,10 @@
+# Enable airflow 3 deployments
+---
+astronomer:
+  houston:
+    config:
+      deployments:
+        runtimeManagement:
+          airflowV3:
+            enabled: true
+            # minimumAstroRuntimeVersion: "3.1-2"   # optional floor
