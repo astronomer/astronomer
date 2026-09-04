@@ -239,6 +239,47 @@ jobs:
       - store_test_results:
           path: test-results
 {%- endfor %}
+{% for scenario in scenarios %}
+  scenario-{{ scenario.name }}:
+    machine:
+      image: {{ machine_image_version }}
+      resource_class: {{ scenario.resource_class }}
+    steps:
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ '{{' }} checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: {{ scenario.name }}"
+          command: |
+            uv run bin/run-scenario.py {{ scenario.name }}
+{%- if scenario.kyverno_scan %}
+            uv run bin/install-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/{{ scenario.topology }}"
+{%- endif %}
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/{{ scenario.name }}"
+      - store_test_results:
+          path: test-results
+{%- if scenario.kyverno_scan %}
+      - run:
+          name: "Kyverno report: {{ scenario.name }}"
+          command: |
+            uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/{{ scenario.topology }}"
+{%- endif %}
+{%- endfor %}
 
   check-commander-airflow-version:
     docker:
@@ -278,6 +319,16 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}
+      # Deliberately no `requires:` -- these start at the top of the pipeline, in parallel
+      # with run_pre_commit/test-unit/build-artifact, rather than waiting on them. Nothing
+      # about this mechanism needs a packaged chart artifact or a passing lint/unit run first:
+      # bin/run-scenario.py installs straight from this checkout (GIT_ROOT_DIR), the same way
+      # scenario-unified-* above does. This is deliberately looser than upstream's gating
+      # (build-artifact + a manual approve-scenarios approval) -- fine for this ephemeral
+      # testing branch, but revisit before this lands anywhere that isn't.
+{% for scenario in scenarios %}
+      - scenario-{{ scenario.name }}
+{%- endfor %}
       - approve-stage-cluster-test:
           type: approval
           filters:

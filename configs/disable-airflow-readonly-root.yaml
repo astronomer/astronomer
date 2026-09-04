@@ -1,0 +1,17 @@
+# Disables Houston's default readOnlyRootFilesystem on containers of the Airflow Deployments
+# it creates, and turns on the upgradeDeployments hook so an already-existing deployment picks
+# up the change automatically via the houston-upgrade-deployments-job pre-upgrade hook, rather
+# than needing a per-deployment upsertDeployment call to apply it.
+#
+# Applied via a live `helm upgrade` of the platform release in the readonly-root-*-to-*
+# scenarios (see tests/utils/helm.py), not baked into the initial install -- the upgrade path
+# itself is what's under test.
+astronomer:
+  houston:
+    upgradeDeployments:
+      enabled: true
+    config:
+      deployments:
+        securityContext:
+          container:
+            readOnlyRootFilesystem: false

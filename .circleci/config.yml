@@ -327,6 +327,127 @@ jobs:
       - store_test_results:
           path: test-results
 
+  scenario-readonly-root-dod-to-gitsync:
+    machine:
+      image: ubuntu-2404:2025.09.1
+      resource_class: 2xlarge
+    steps:
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: readonly-root-dod-to-gitsync"
+          command: |
+            uv run bin/run-scenario.py readonly-root-dod-to-gitsync
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/readonly-root-dod-to-gitsync"
+      - store_test_results:
+          path: test-results
+  scenario-readonly-root-gitsync-to-dod:
+    machine:
+      image: ubuntu-2404:2025.09.1
+      resource_class: 2xlarge
+    steps:
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: readonly-root-gitsync-to-dod"
+          command: |
+            uv run bin/run-scenario.py readonly-root-gitsync-to-dod
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/readonly-root-gitsync-to-dod"
+      - store_test_results:
+          path: test-results
+  scenario-readonly-root-image-to-dod:
+    machine:
+      image: ubuntu-2404:2025.09.1
+      resource_class: 2xlarge
+    steps:
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: readonly-root-image-to-dod"
+          command: |
+            uv run bin/run-scenario.py readonly-root-image-to-dod
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/readonly-root-image-to-dod"
+      - store_test_results:
+          path: test-results
+  scenario-readonly-root-image-to-gitsync:
+    machine:
+      image: ubuntu-2404:2025.09.1
+      resource_class: 2xlarge
+    steps:
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: readonly-root-image-to-gitsync"
+          command: |
+            uv run bin/run-scenario.py readonly-root-image-to-gitsync
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/readonly-root-image-to-gitsync"
+      - store_test_results:
+          path: test-results
+
   check-commander-airflow-version:
     docker:
       - image: cimg/base:current-24.04
@@ -377,6 +498,18 @@ workflows:
       - scenario-unified-1-35-1:
           requires:
             - build-artifact
+      # Deliberately no `requires:` -- these start at the top of the pipeline, in parallel
+      # with run_pre_commit/test-unit/build-artifact, rather than waiting on them. Nothing
+      # about this mechanism needs a packaged chart artifact or a passing lint/unit run first:
+      # bin/run-scenario.py installs straight from this checkout (GIT_ROOT_DIR), the same way
+      # scenario-unified-* above does. This is deliberately looser than upstream's gating
+      # (build-artifact + a manual approve-scenarios approval) -- fine for this ephemeral
+      # testing branch, but revisit before this lands anywhere that isn't.
+
+      - scenario-readonly-root-dod-to-gitsync
+      - scenario-readonly-root-gitsync-to-dod
+      - scenario-readonly-root-image-to-dod
+      - scenario-readonly-root-image-to-gitsync
       - approve-stage-cluster-test:
           type: approval
           filters:
