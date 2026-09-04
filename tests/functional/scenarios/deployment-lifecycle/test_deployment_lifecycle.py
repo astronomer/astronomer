@@ -23,7 +23,7 @@ assert the feature-OFF case -- the relay carries no private-CA wiring unless the
 configured -- as a live counterpart to the git-sync-private-ca scenario's positive tests.
 
 Mutation shapes and the createUser-then-createWorkspace bootstrap sequence
-(tests/utils/houston_graphql.py) are ported from software-upgrade-automation's
+(tests/utils/houston_graphql.py) are ported from apc-automation's
 bin/configure-k3d-for-tests.py and bin/create-git-sync-deployment.py (QA's own k3d
 CP/DP test tooling), adapted for the unified topology: no registerCluster call is
 needed here, because houston-api's populate-default-cluster script already creates a
