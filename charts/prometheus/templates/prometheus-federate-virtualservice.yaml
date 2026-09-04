@@ -1,0 +1,33 @@
+########################################
+## Prometheus Federate VirtualService ##
+########################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if eq .Values.global.plane.mode "data" }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ template "prometheus.fullname" . }}-federate-virtualservice
+  labels:
+    tier: prometheus-networking
+    component: prometheus-federate-virtualservice
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - {{ template "prom-proxy.url" . }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ template "prometheus.fullname" . }}-prom-proxy.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.global.authSidecar.port | default 80 }}
+{{- end }}
+{{- end }}
+{{- end }}

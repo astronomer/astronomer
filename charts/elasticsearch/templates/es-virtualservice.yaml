@@ -1,0 +1,37 @@
+##########################################
+## Elasticsearch Logging VirtualService ##
+##########################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if not .Values.global.customLogging.enabled }}
+{{- if eq (include "logging.enabled" .) "true" }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ template "elasticsearch.fullname" . }}-virtualservice
+  labels:
+    tier: logging
+    component: {{ template "elasticsearch.name" . }}-logging-virtualservice
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - {{ template "elasticsearch.ingressurl" . }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      timeout: 300s
+      route:
+        - destination:
+            host: {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.common.ports.http }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

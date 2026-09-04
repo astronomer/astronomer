@@ -1,0 +1,34 @@
+###################################
+## Commander GRPC VirtualService ##
+###################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if eq .Values.global.plane.mode "data" }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ .Release.Name }}-commander-api-virtualservice
+  labels:
+    component: api-virtualservice
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - commander.{{ include "commander.baseDomain" . }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ .Release.Name }}-commander.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.ports.commanderGRPC }}
+{{- end }}
+{{- end }}
+{{- end }}

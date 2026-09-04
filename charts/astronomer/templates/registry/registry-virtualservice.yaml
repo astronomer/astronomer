@@ -1,0 +1,36 @@
+########################################
+## Astronomer Registry VirtualService ##
+########################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if .Values.global.baseDomain }}
+{{- if eq (include "registry.enabled" .) "true" }}
+kind: VirtualService
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+metadata:
+  name: {{ template "registry.fullname" . }}-virtualservice
+  labels:
+    component: {{ template "registry.name" . }}-virtualservice
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  gateways:
+    - {{ .Values.global.istioGateway.gateway }}
+  hosts:
+    - {{ include "registry.ingressURL" . }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ template "registry.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+            port:
+              number: {{ .Values.ports.registryHTTP }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
