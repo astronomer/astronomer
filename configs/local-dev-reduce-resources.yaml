@@ -1,0 +1,30 @@
+prometheus:
+  configMapReloader:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 25Mi
+  federation:
+    auth:
+      resources: {}
+  filesdReloader:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+prometheus-postgresql-exporter:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 0m
+      memory: 0Gi
+    limits:
+      cpu: 1m
+      memory: 1Gi
