@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 if grep -E 'airflowChartVersion: [0-9.]+-rc[0-9]+' charts/astronomer/values.yaml ; then
     echo "Skipping check because airflowChartVersion is an rc"

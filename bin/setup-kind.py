@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Setup KIND cluster and install Astronomer software for testing."""
 
+import argparse
 import os
 import shlex
 import subprocess
@@ -10,34 +11,34 @@ from pathlib import Path
 
 import yaml
 from certs import (
-    astronomer_private_ca_cert_file,
     astronomer_tls_cert_file,
     astronomer_tls_key_file,
 )
+from k3d_setup_shared import _mkcert_caroot, _mkcert_path
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-PREREQUISITES = """You MUST set your environment variable TEST_SCENARIO to one of the following values:
-- unified: Install with the unified application mode.
-- data: Install the with the dataplane application mode.
-- control: Install with the controlplane application mode.
-"""
-
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 HELPER_BIN_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "bin"
 KIND_EXE = str(HELPER_BIN_DIR / "kind")
 KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
 CHART_METADATA = yaml.safe_load((Path(GIT_ROOT_DIR) / "metadata.yaml").read_text())
 KUBECTL_VERSION = os.environ.get("KUBE_VERSION", f"v{CHART_METADATA['test_k8s_versions'][-2]}").removeprefix("v")
-
-if (TEST_SCENARIO := os.getenv("TEST_SCENARIO", "")) not in ["unified", "data", "control"]:
-    print("ERROR: TEST_SCENARIO environment variable is not set!", file=sys.stderr)
-    print(PREREQUISITES, file=sys.stderr)
-    raise SystemExit(1)
 KUBECONFIG_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
 KUBECONFIG_DIR.mkdir(parents=True, exist_ok=True)
-KUBECONFIG_FILE = str(KUBECONFIG_DIR / TEST_SCENARIO)
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--topology",
+        required=True,
+        choices=["unified", "control", "data"],
+        help="Install topology to set up: unified (control+data in one cluster), control, or data.",
+    )
+    return parser.parse_args()
 
 
 def run_command(command: str | list) -> str:
@@ -168,7 +169,7 @@ def create_kind_cluster() -> None:
             f"{KIND_EXE}",
             "create",
             "cluster",
-            f"--name={TEST_SCENARIO}",
+            f"--name={TOPOLOGY}",
             f"--kubeconfig={KUBECONFIG_FILE}",
             f"--config={GIT_ROOT_DIR}/tests/kind/calico-config.yaml",
             f"--image=kindest/node:v{KUBECTL_VERSION}",
@@ -178,7 +179,7 @@ def create_kind_cluster() -> None:
             run_command(create_cluster_cmd)
         except RuntimeError as e:
             if "already exist for a cluster" in str(e):
-                print(f"ABORT: Cluster '{TEST_SCENARIO}' already exists.", file=sys.stderr)
+                print(f"ABORT: Cluster '{TOPOLOGY}' already exists.", file=sys.stderr)
             else:
                 raise RuntimeError(f"Failed to create KIND cluster: {e}") from e
 
@@ -212,7 +213,7 @@ def create_kind_cluster() -> None:
 
     except Exception:
         # Cleanup if cluster creation fails
-        delete_cluster_cmd = [f"{KIND_EXE}", "delete", "cluster", f"--name={TEST_SCENARIO}"]
+        delete_cluster_cmd = [f"{KIND_EXE}", "delete", "cluster", f"--name={TOPOLOGY}"]
         print(f"Cleaning up after failed cluster creation with command: {shlex.join(delete_cluster_cmd)}")
         run_command(delete_cluster_cmd)
         Path(KUBECONFIG_FILE).unlink(missing_ok=True)
@@ -279,16 +280,22 @@ def setup_common_cluster_configs() -> None:
     """
     create_namespace()
     create_astronomer_tls_secret()
-    create_private_ca_secret()
+    create_mkcert_root_ca_secret()
 
 
-def create_private_ca_secret() -> None:
+def create_mkcert_root_ca_secret() -> None:
     """
-    Create the private-ca secret in the KIND cluster using self-signed certificates.
+    Create the mkcert-root-ca secret in the KIND cluster: mkcert's own root CA (the same
+    CA that signs astronomer-tls, via create_astronomer_tls_certificates()'s `mkcert -install`),
+    so the platform trusts its own dev TLS chain -- the identical role the k3d CP/DP topology's
+    `--mkcert-root-ca-secret-name` secret plays via _mkcert_caroot() in k3d_setup_shared.py.
+    Both topologies now share that one helper and one secret name/content; there is no separate
+    KIND-only "private CA" concept.
 
     Raises:
         RuntimeError: If secret creation fails.
     """
+    root_ca = _mkcert_caroot(_mkcert_path())
 
     cmd = [
         KUBECTL_EXE,
@@ -297,14 +304,19 @@ def create_private_ca_secret() -> None:
         "create",
         "secret",
         "generic",
-        "private-ca",
-        f"--from-file={astronomer_private_ca_cert_file}",
+        "mkcert-root-ca",
+        # Every consumer of global.privateCaCerts (custom_ca_volume_mounts / custom_ca_volumes
+        # in charts/astronomer/templates/_helpers.yaml, plus the copies in the alertmanager,
+        # prometheus, and vector subcharts) mounts each secret with `subPath: cert.pem`, per the
+        # contract documented in configs/local-dev.yaml ("Each secret must have one data entry
+        # 'cert.pem'"), so the key= prefix here is required, not optional.
+        f"--from-file=cert.pem={root_ca}",
     ]
     if DEBUG:
         cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(f"Failed to create secret private-ca in namespace astronomer: {result.stderr}")
+        raise RuntimeError(f"Failed to create secret mkcert-root-ca in namespace astronomer: {result.stderr}")
 
 
 def wait_for_pods_ready(timeout: int = 300) -> None:
@@ -371,7 +383,7 @@ def check_kube_system_health(apps_v1: client.AppsV1Api, max_wait_seconds: int = 
                 if deployment.status.ready_replicas != deployment.spec.replicas
             ]
             if not unhealthy_deployments:
-                return True, f"All kube-system deployments in {TEST_SCENARIO} cluster are healthy."
+                return True, f"All kube-system deployments in {TOPOLOGY} cluster are healthy."
             last_error = None
         except Exception as e:  # noqa: BLE001
             last_error = e
@@ -379,17 +391,21 @@ def check_kube_system_health(apps_v1: client.AppsV1Api, max_wait_seconds: int = 
         elapsed = time.monotonic() - start_time
         if elapsed >= max_wait_seconds:
             if last_error:
-                return False, f"Failed to check deployment health in {TEST_SCENARIO} cluster: {last_error}"
+                return False, f"Failed to check deployment health in {TOPOLOGY} cluster: {last_error}"
             return False, f"Unhealthy deployments found after {int(elapsed)}s: {', '.join(unhealthy_deployments)}"
         time.sleep(interval)
 
 
 if __name__ == "__main__":
+    args = parse_args()
+    TOPOLOGY = args.topology
+    KUBECONFIG_FILE = str(KUBECONFIG_DIR / TOPOLOGY)
+
     create_kind_cluster()
     setup_common_cluster_configs()
 
     # Load Docker images into the KIND cluster
-    kind_load_docker_images(TEST_SCENARIO)
+    kind_load_docker_images(TOPOLOGY)
 
     # Check deployment health
     config.load_kube_config(config_file=KUBECONFIG_FILE)
@@ -401,4 +417,4 @@ if __name__ == "__main__":
     else:
         print(message)
 
-    print(f"KIND cluster '{TEST_SCENARIO}' setup completed successfully.")
+    print(f"KIND cluster '{TOPOLOGY}' setup completed successfully.")

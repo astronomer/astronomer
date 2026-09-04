@@ -1,0 +1,68 @@
+# Local MySQL 8.0 Deployment + Service, used by bin/setup-cp-dp-k3d.py when --dp-airflow-db=mysql.
+# Loaded and filled in via str.format() — see _mysql_manifest_yaml() there. Placeholders:
+#   {svc_name}           Kubernetes Service/Deployment name (derived from --release-name)
+#   {namespace}          target namespace
+#   {labels}             "app: <svc_name>" selector/label line
+#   {mysql_image}        image ref (bin/setup-cp-dp-k3d.py MYSQL_IMAGE)
+#   {mysql_root_password} root password (bin/setup-cp-dp-k3d.py MYSQL_ROOT_PASSWORD)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {svc_name}
+  namespace: {namespace}
+  labels:
+    {labels}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {labels}
+  template:
+    metadata:
+      labels:
+        {labels}
+    spec:
+      containers:
+        - name: mysql
+          image: {mysql_image}
+          args:
+            - --default-authentication-plugin=mysql_native_password
+            - --explicit_defaults_for_timestamp=1
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "{mysql_root_password}"
+          ports:
+            - containerPort: 3306
+              name: mysql
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - "127.0.0.1"
+                - -u
+                - root
+                - -p{mysql_root_password}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {svc_name}
+  namespace: {namespace}
+  labels:
+    {labels}
+spec:
+  selector:
+    {labels}
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql

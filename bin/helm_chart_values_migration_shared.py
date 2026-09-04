@@ -514,11 +514,9 @@ HOUSTON_DEPLOYMENT_PATH_MIGRATIONS: list[tuple[str, str | None, str]] = [
         "deploymentLifecycle.deployRollback",
         "object-or-boolean-to-nested",
     ),
-    (
-        "hardDeleteDeployment",
-        "deploymentLifecycle.hardDeleteDeployment.enabled",
-        "boolean-to-enabled",
-    ),
+    # Deprecated (PLX-575): hard delete is now the default and only behaviour,
+    # so the legacy flat flag is removed rather than migrated.
+    ("hardDeleteDeployment", None, "deprecated-unset"),
     (
         "cleanupAirflowDb",
         "deploymentLifecycle.cleanupAirflowDb",
@@ -571,12 +569,15 @@ HOUSTON_DEPLOYMENT_PATH_MIGRATIONS: list[tuple[str, str | None, str]] = [
 # Nested renames under ``deployments`` (old path → new path). Kept in sync with
 # ``DEPLOYMENTS_NESTED_PATH_MIGRATIONS`` in houston-api
 # ``src/lib/deployments-config-path-migration/index.js``.
-HOUSTON_DEPLOYMENT_NESTED_PATH_MIGRATIONS: list[tuple[str, str, str]] = [
+HOUSTON_DEPLOYMENT_NESTED_PATH_MIGRATIONS: list[tuple[str, str | None, str]] = [
     (
         "deploymentLifecycle.deployRollback.enableDagTarballVersionValidation",
         "deploymentLifecycle.deployRollback.dagTarballVersionValidation.enabled",
         "boolean-to-enabled",
     ),
+    # Deprecated (PLX-575): hard delete is now the default and only behaviour,
+    # so the nested flag is removed from stored configs.
+    ("deploymentLifecycle.hardDeleteDeployment", None, "deprecated-unset"),
 ]
 
 HOUSTON_DEPLOYMENT_CHART_ONLY_DELETE_KEYS: Final[frozenset[str]] = frozenset(
@@ -770,6 +771,13 @@ def _apply_houston_deployments_path_migrations(
     for old_dotted, new_dotted, transform in HOUSTON_DEPLOYMENT_NESTED_PATH_MIGRATIONS:
         old_keys = old_dotted.split(".")
         if not _path_exists(deployments, old_keys):
+            continue
+        if transform == "deprecated-unset":
+            _unset_dotted_path(deployments, old_dotted)
+            p = f"{HOUSTON_DEPLOYMENTS_PREFIX}.{old_dotted}"
+            changes.append(MigrationChange(p, "(deleted)", f"Deprecated key removed: {p}"))
+            continue
+        if not new_dotted:
             continue
         new_keys = new_dotted.split(".")
         if _path_exists(deployments, new_keys):

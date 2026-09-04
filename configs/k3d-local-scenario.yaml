@@ -1,0 +1,137 @@
+############################
+## Astronomer configuration
+## Used by bin/setup-cp-dp-k3d.py for --version local — the local-checkout scenario, which
+## installs whatever chart is currently checked out on disk (no version pull) instead of a
+## published version. Currently tracks the same schema as the 2.x chart family — see
+## configs/local-2x.yaml, kept identical to this file below the header on purpose.
+## Deliberately separate from configs/local-dev.yaml, which is also used by the unrelated
+## KinD-based bin/reset-local-dev workflow (see docs/local-development.md) — changes here
+## can't accidentally affect that path.
+## global.postgresql.enabled and tags.postgresql are set per CP/DP by the script itself, not
+## here, since CP needs postgres on and DP needs it off. global.baseDomain, global.tlsSecret,
+## global.plane.{mode,domainPrefix}, and global.privateCaCerts are also supplied per-invocation
+## by the script (bin/setup-cp-dp-k3d.py's _cp_values_yaml/_dp_values_yaml) at higher precedence
+## than this file, so they're intentionally not set here either.
+############################
+
+tags:
+  platform: true
+
+global:
+  helmRepo: "https://internal-helm.astronomer.io"
+  deploymentLifecycle:
+    deployRollback:
+      enabled: true
+  metricsReporting:
+    taskUsageMetrics:
+      enabled: true
+  daemonsetLogging:
+    enabled: true
+  deployMechanisms:
+    dagOnlyDeployment:
+      enabled: true
+  nats:
+    enabled: true
+    replicas: 1
+  networkPolicy:
+    enabled: false
+  defaultDenyNetworkPolicy: false
+
+astronomer:
+  astroUI:
+    replicas: 1
+  houston:
+    replicas: 1
+    worker:
+      replicas: 1
+    config:
+      emailConfirmation:
+        enabled: false
+      publicSignups:
+        enabled: false
+      auth:
+        local:
+          enabled: true
+      deployments:
+        logHelmValues:
+          enabled: true
+        deployMechanisms:
+          dagOnlyDeployment:
+            enabled: true
+          gitSyncDagDeployment:
+            enabled: true
+          configureDagDeployment:
+            enabled: true
+        runtimeManagement:
+          airflowV3:
+            enabled: true
+            minimumAstroRuntimeVersion: "3.1-2"
+          listAllRuntimeVersions:
+            enabled: true
+  commander:
+    replicas: 1
+  registry: {}
+
+nginx:
+  replicas: 1
+  replicasDefaultBackend: 1
+
+nats:
+  cluster:
+    enabled: false
+    replicas: 1
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+
+prometheus:
+  # Chart default (values.yaml prometheus.resources) is 4Gi/8Gi requests/limits — way more than a
+  # single-node local dev setup needs.
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  # Chart default (values.yaml prometheus.configMapReloader.resources) is 25Mi, which OOMKills
+  # under real config-reload load.
+  configMapReloader:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "250Mi"
+      limits:
+        cpu: "100m"
+        memory: "250Mi"
+
+elasticsearch:
+  common:
+    env:
+      NUMBER_OF_MASTERS: "1"
+  master:
+    replicas: 1
+    heapMemory: 128m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 256Mi
+  data:
+    replicas: 1
+    heapMemory: 256m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 512Mi
+  client:
+    replicas: 1
+    heapMemory: 128m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 256Mi
+  images:
+    es:
+      repository: docker.elastic.co/elasticsearch/elasticsearch
+      tag: "8.18.6"

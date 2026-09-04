@@ -1,0 +1,41 @@
+# Disables the platform components that cannot meet PSS-Restricted. The list is
+# one-to-one with PSS_RESTRICTED_EXEMPT in
+# tests/chart_tests/test_default_chart.py (L15-L24) -- the components the render
+# sweep skips because they must run privileged / as root by design.
+#
+# Layer this on a base install alongside the PSA labels:
+#   helm install <release> . \
+#     -f configs/local-dev.yaml \
+#     -f configs/enable-psa.yaml \
+#     -f configs/psa-restricted.yaml
+#
+# enable-psa.yaml labels app-deployed Airflow (and pool) namespaces. The chart
+# does NOT label the platform install namespace, so to test enforcement on
+# PLATFORM pods, label that namespace directly after install:
+#   kubectl label namespace <astronomer-namespace> \
+#     pod-security.kubernetes.io/enforce=restricted \
+#     pod-security.kubernetes.io/enforce-version=latest
+---
+global:
+  # DaemonSet/*-private-ca + DaemonSet/*-containerd-ca-update:
+  # run privileged / as root to install CA certs onto the host.
+  privateCaCertsAddToHost:
+    enabled: false
+    addToContainerd: false
+
+  # DaemonSet/*-vector: must run as root to mount the host log directory.
+  # Default is true and the condition overrides tags.logging, so disable it here.
+  daemonsetLogging:
+    enabled: false
+
+  # Deployment/*-elasticsearch-{client,data,master}: bundled chart ships a
+  # privileged sysctl init container (vm.max_map_count).
+  elasticsearch:
+    enabled: false
+
+  # Host-level exporters (hostNetwork / hostPath). Off by default; pinned off
+  # here so the test doesn't regress if a base overlay enables them.
+  nodeExporter:
+    enabled: false
+  cadvisor:
+    enabled: false

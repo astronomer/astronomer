@@ -1,0 +1,8 @@
+# Used by bin/setup-cp-dp-k3d.py for Data Plane installs when --dp-airflow-db=mysql — the DP runs
+# a local MySQL instance instead (see _deploy_mysql), so its postgres subchart stays off. See
+# configs/postgres-enabled.yaml, used instead for the CP (always) and for DP when
+# --dp-airflow-db=postgres (the default).
+global:
+  postgresqlEnabled: false
+  postgresql:
+    enabled: false
