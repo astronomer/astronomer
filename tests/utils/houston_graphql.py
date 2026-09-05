@@ -242,13 +242,14 @@ def upsert_deployment(
     actual current config, regardless of what changed.
 
     environment_variables alone forces most components to re-render, but NOT webserver's own
-    container: confirmed empirically (2026-09-04 CI) that webserver's rendered securityContext
-    only gets recomputed when the same call ALSO includes a dagDeployment.type argument, even
-    when it's just re-asserting the deployment's own current, unchanged type. Pass
-    dag_deployment_type explicitly (with repository_url etc. as needed) on every forced-redeploy
-    call that needs webserver's config to actually refresh -- omitting it, the same way leaving
-    it out on a genuinely unrelated update is normally fine (see the dag_deployment_type
-    paragraph above), silently leaves webserver stale here.
+    container. Confirmed empirically across two rounds of CI (2026-09-04/05): re-asserting the
+    SAME dag_deployment_type explicitly (rather than omitting it) does NOT fix this either --
+    webserver's rendered securityContext stayed stale in every scenario that tried it. Only a
+    genuine dag_deployment_type CHANGE (an actual switch to a different type than the deployment
+    currently has) has ever been observed to force webserver's full re-render; merely including
+    the argument, same value or not, isn't enough. If a caller needs webserver's config to
+    actually refresh and the deployment isn't already switching type as part of the same call,
+    there is currently no known reliable way to force that via upsertDeployment alone.
 
     Note this alone is NOT enough to pick up a platform-level `houston.config.deployments.*`
     change made via a plain `helm upgrade` of the platform release: upsertDeployment's resolver

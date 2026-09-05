@@ -1,16 +1,21 @@
 description: >-
-  Creates a real Airflow Deployment (CeleryExecutor, dagDeploymentType dag_deploy), then
-  disables Houston's default readOnlyRootFilesystem on the deployment's cluster via
-  updateCluster's deploymentsConfigOverride and forces the already-existing deployment to pick
-  it up with a throwaway upsertDeployment call. Deliberately not a platform helm upgrade of
-  astronomer's own houston.config.deployments.* -- that only changes the live platform config,
-  which houston-api snapshots into a Cluster's own stored config once, at that cluster's
-  creation, and never refreshes -- so it would never reach this scenario's own already-existing
-  cluster (see tests/utils/houston_graphql.py's update_cluster/upsert_deployment docstrings).
-  Then switches the same deployment DagOnlyDeployment (dag_deploy) -> GitSync via upsertDeployment and
-  re-asserts, to prove the override survives a DagDeploymentType switch too. One of four
-  readonly-root-*-to-* scenarios that are identical except for which DagDeploymentType they
-  start and end on (see tests/utils/readonly_root.py for the shared assertion).
+  Creates a real Airflow Deployment (CeleryExecutor, dagDeploymentType dag_deploy), disables
+  Houston's default readOnlyRootFilesystem on the deployment's cluster via updateCluster's
+  deploymentsConfigOverride, then switches the deployment DagOnlyDeployment (dag_deploy) -> GitSync via
+  upsertDeployment -- one call that both makes this already-existing deployment pick up the new
+  config and proves it survives a DagDeploymentType switch. Not a separate throwaway-env-var
+  forced-redeploy step: confirmed empirically that webserver's own container only reliably
+  re-renders on a genuine DagDeploymentType change, not an env-var-only update or even a
+  same-type re-assertion (see tests/utils/houston_graphql.py's upsert_deployment docstring).
+  Deliberately not a platform helm upgrade of astronomer's own houston.config.deployments.*
+  either -- that only changes the live platform config, which houston-api snapshots into a
+  Cluster's own stored config once, at that cluster's creation, and never refreshes -- so it
+  would never reach this scenario's own already-existing cluster (see
+  tests/utils/houston_graphql.py's update_cluster docstring). One of four readonly-root-*-to-*
+  scenarios that are identical except for which DagDeploymentType they start and end on (see
+  tests/utils/readonly_root.py for the shared assertion, and what's scoped out and why --
+  CeleryExecutor infrastructure and Astronomer's own DAG-delivery sidecars, none of which read
+  this override at all per houston-api's own source).
 topology: unified
 # One deployment plus the platform chart pushes past the default xlarge CI machine's CPU, same
 # as every other scenario that creates a real Airflow Deployment (see auth-sidecar / PINF-1080).
