@@ -39,6 +39,6 @@ tests/functional/scenarios/<name>/
 ## Running a scenario locally
 
 ```sh
-uv run bin/run-scenario.py auth-sidecar
-uv run pytest tests/functional/scenarios/auth-sidecar
+uv run bin/run-scenario.py readonly-root-image-to-dod
+uv run pytest tests/functional/scenarios/readonly-root-image-to-dod
 ```

@@ -14,6 +14,7 @@
 /venv/
 __pycache__
 backup
+build_*_step_*_container_*.txt
 certs
 config.yaml
 config.yml
