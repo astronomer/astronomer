@@ -1,0 +1,26 @@
+# Dev config for enabling dag deploy mechanisms.
+---
+astronomer:
+  houston:
+    config:
+      deployments:
+        deployMechanisms:
+          # Enable dag deployment features
+          configureDagDeployment:
+            enabled: true
+
+          # Enable the dag-only dag deployment feature
+          dagOnlyDeployment:
+            enabled: true
+
+          # Enable the git-sync dag deployment feature
+          gitSyncDagDeployment:
+            enabled: true
+
+        helm:
+          gitSyncRelay:
+            metrics:
+              enabled: true
+
+global:
+  helmRepo: https://internal-helm.astronomer.io
