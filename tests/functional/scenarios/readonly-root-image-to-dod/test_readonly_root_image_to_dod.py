@@ -40,6 +40,7 @@ from tests.utils.houston_graphql import (
     create_workspace,
     dump_pod_logs,
     get_cluster_id,
+    get_effective_config,
     snapshot_release_revisions,
     update_cluster,
     upsert_deployment,
@@ -186,5 +187,19 @@ def test_dag_deployment_type_switch_disables_readonly_root(deployment, _k8s_apps
         raise
     wait_for_release_ready(
         _k8s_apps_v1_client_module, _k8s_core_v1_client_module, created["releaseName"], previous_revisions=before
+    )
+    # Cheaper than the live-pod check below, and narrows a failure to one of two very different
+    # causes: if this doesn't show readOnlyRootFilesystem: false, update_cluster/gdc.get() itself
+    # never reached the deployment's merged config -- if it does but the pod-level assertion
+    # below still fails, the config arrived fine and something in Commander/the chart's own
+    # rendering didn't apply it. See get_effective_config's docstring.
+    effective_config = get_effective_config(houston_api, token, deployment["id"])
+    effective_read_only_root = (
+        (effective_config or {}).get("securityContext", {}).get("container", {}).get("readOnlyRootFilesystem")
+    )
+    assert effective_read_only_root is False, (
+        f"Deployment.effectiveConfig never reflects the disabled override (got "
+        f"{effective_read_only_root!r}) -- update_cluster/gdc.get() itself has a problem, not just "
+        f"chart/Commander application. Full effectiveConfig: {effective_config}"
     )
     assert_no_readonly_root_containers(_k8s_core_v1_client_module, created["releaseName"])
