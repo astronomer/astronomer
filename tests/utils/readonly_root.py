@@ -11,6 +11,8 @@ common: after the transition, no container on the deployment's pods still enforc
 readOnlyRootFilesystem.
 """
 
+from kubernetes import client
+
 # A small, public, no-auth fixture repo (astronomer-owned), used by every scenario/test in this
 # repo that needs a real git_sync deployment -- see deployment-lifecycle and auth-sidecar.
 GIT_SYNC_REPOSITORY_URL = "https://github.com/astronomer/apc-test-dags-public"
@@ -54,11 +56,41 @@ def find_readonly_root_containers(core_client, release_name: str) -> list[str]:
             continue
         if any(substring in pod.metadata.name for substring in _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS):
             continue
+        # Job-owned pods (e.g. the cleanup CronJob's own spawned pods) are one-shot/point-in-time
+        # snapshots wait_for_release_ready never tracks (it only watches Deployments/
+        # StatefulSets), so a pod still sitting here from before this test's own config change can
+        # look like a live failure when it's really just stale history. Check the owning
+        # CronJob/Job's own template instead -- see _find_readonly_root_cronjob_containers.
+        if any(owner.kind == "Job" for owner in pod.metadata.owner_references or []):
+            continue
         containers = list(pod.spec.containers) + list(pod.spec.init_containers or [])
         for container in containers:
             sc = container.security_context
             if sc and sc.read_only_root_filesystem:
                 offenders.append(f"{pod.metadata.name}/{container.name}")
+    offenders.extend(_find_readonly_root_cronjob_containers(core_client, release_name))
+    return offenders
+
+
+def _find_readonly_root_cronjob_containers(core_client, release_name: str) -> list[str]:
+    """Check every CronJob's own job template (e.g. the airflow-cleanup-pods CronJob) directly,
+    rather than any pod it happens to have spawned. Helm/Commander updates a CronJob's template
+    immediately on every re-render, the same as a Deployment's -- but the CronJob only creates a
+    NEW pod on its own schedule (every 15 minutes by default here), which is far longer than this
+    test takes to run. A spawned pod still around at assertion time can be a genuinely stale
+    leftover from before this test's own config change, with no way to tell from the pod alone --
+    the template is what's actually current.
+    """
+    batch_client = client.BatchV1Api(core_client.api_client)
+    cronjobs = batch_client.list_cron_job_for_all_namespaces(label_selector=f"release={release_name}").items
+    offenders = []
+    for cronjob in cronjobs:
+        pod_spec = cronjob.spec.job_template.spec.template.spec
+        containers = list(pod_spec.containers) + list(pod_spec.init_containers or [])
+        for container in containers:
+            sc = container.security_context
+            if sc and sc.read_only_root_filesystem:
+                offenders.append(f"{cronjob.metadata.name} (CronJob template)/{container.name}")
     return offenders
 
 
