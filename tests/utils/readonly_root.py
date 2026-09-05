@@ -28,16 +28,30 @@ _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS = ("-redis-", "-statsd-", "-pgbouncer
 def find_readonly_root_containers(core_client, release_name: str) -> list[str]:
     """Return "pod/container" for every Airflow-component container (including init containers)
     in the release whose securityContext still enforces readOnlyRootFilesystem. Skips pods
-    matching _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS -- see its comment for why.
+    matching _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS -- see its comment for why -- and pods
+    already marked for deletion (see below).
 
     Checks the container's own securityContext only -- unlike runAsUser/runAsNonRoot,
     readOnlyRootFilesystem has no pod-level fallback to inherit from (there is no
     pod.spec.security_context.read_only_root_filesystem in the Kubernetes API), so a container
     with no securityContext at all cannot be enforcing it and is correctly not an offender here.
+
+    Skips any pod with metadata.deletion_timestamp set. Confirmed empirically (2026-09-05 CI):
+    wait_for_release_ready correctly waits for a Deployment's status fields (updated_replicas ==
+    ready_replicas == replicas == spec_replicas) to settle on the new rollout, but a pod
+    Kubernetes has already decided to terminate keeps reporting phase=Running/ready=True for the
+    rest of its terminationGracePeriodSeconds -- it isn't removed from the API the instant the
+    new replica becomes ready, only once its grace period elapses. list_pod_for_all_namespaces()
+    can still return that old, on-its-way-out pod in this window even though the Deployment
+    itself has genuinely finished rolling out, which is exactly how a stale (pre-switch) copy of
+    a component showed up as a false failure here -- correctly settled per Kubernetes, but not
+    yet actually gone.
     """
     pods = core_client.list_pod_for_all_namespaces(label_selector=f"release={release_name}").items
     offenders = []
     for pod in pods:
+        if pod.metadata.deletion_timestamp is not None:
+            continue
         if any(substring in pod.metadata.name for substring in _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS):
             continue
         containers = list(pod.spec.containers) + list(pod.spec.init_containers or [])
