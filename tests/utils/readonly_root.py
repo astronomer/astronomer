@@ -9,6 +9,16 @@ switches it to a different DagDeploymentType via upsertDeployment -- the four sc
 only in which DagDeploymentType they start and end on. This is the one assertion all four make in
 common: after the transition, no container on the deployment's pods still enforces
 readOnlyRootFilesystem.
+
+Scoped to containers that actually run an Airflow container as the pod's core process --
+scheduler/webserver/worker/triggerer, and (via the airflow image, just a different subcommand)
+the airflow-cleanup-pods CronJob. redis/pgbouncer/statsd (CeleryExecutor's own infrastructure),
+the git-sync-relay and dag-server pods, and the git-sync/git-sync-init/dag-downloader sidecars
+they add onto otherwise-Airflow pods, are NOT Airflow containers -- none of them run the airflow
+image as their core process, the same reason redis/pgbouncer/statsd were already out of scope.
+PINF-1229 is specifically about readOnlyRootFilesystem on Airflow containers (the
+usr-local-airflow-copier init container, volume, and mounts); these components were never in
+scope for it, so they're excluded here rather than asserted against.
 """
 
 from kubernetes import client
@@ -17,21 +27,24 @@ from kubernetes import client
 # repo that needs a real git_sync deployment -- see deployment-lifecycle and auth-sidecar.
 GIT_SYNC_REPOSITORY_URL = "https://github.com/astronomer/apc-test-dags-public"
 
-# CeleryExecutor's own supporting infrastructure, not Airflow components -- these scenarios are
-# scoped to Airflow components specifically, so pods matching one of these substrings are skipped
-# entirely rather than asserted against. houston-api hardcodes readOnlyRootFilesystem=true for
-# all three unconditionally regardless of deployments.securityContext.container
-# (componentsWithSecurityContextOnly in src/lib/deployments/config/index.js never reads the
-# override for them), so asserting against them would just be a permanent, known failure that
-# tells us nothing about the Airflow-component behavior this scenario actually tests.
-_NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS = ("-redis-", "-statsd-", "-pgbouncer-")
+# Pods that never run an Airflow container as their core process -- skipped outright, the same
+# reasoning as redis/pgbouncer/statsd. git-sync-relay (git_sync) and dag-server (dag_deploy) each
+# run their own dedicated image (ap-git-sync-relay / ap-dag-deploy), not the airflow image.
+_NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS = ("-redis-", "-statsd-", "-pgbouncer-", "-git-sync-relay-", "-dag-server-")
+
+# Sidecar containers Astronomer adds onto an otherwise-Airflow pod (e.g. the scheduler pod also
+# carries a "git-sync" container) -- these aren't Airflow containers themselves, so they're
+# skipped by name without skipping the pod's own Airflow container (e.g. "scheduler") alongside
+# them.
+_NON_AIRFLOW_SIDECAR_CONTAINER_NAMES = ("git-sync", "git-sync-init", "dag-downloader")
 
 
 def find_readonly_root_containers(core_client, release_name: str) -> list[str]:
-    """Return "pod/container" for every Airflow-component container (including init containers)
-    in the release whose securityContext still enforces readOnlyRootFilesystem. Skips pods
-    matching _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS -- see its comment for why -- and pods
-    already marked for deletion (see below).
+    """Return "pod/container" for every Airflow container (including init containers) in the
+    release whose securityContext still enforces readOnlyRootFilesystem. Skips pods matching
+    _NON_AIRFLOW_COMPONENT_POD_NAME_SUBSTRINGS and containers named in
+    _NON_AIRFLOW_SIDECAR_CONTAINER_NAMES -- see their comments for why -- and pods already marked
+    for deletion (see below).
 
     Checks the container's own securityContext only -- unlike runAsUser/runAsNonRoot,
     readOnlyRootFilesystem has no pod-level fallback to inherit from (there is no
@@ -65,6 +78,8 @@ def find_readonly_root_containers(core_client, release_name: str) -> list[str]:
             continue
         containers = list(pod.spec.containers) + list(pod.spec.init_containers or [])
         for container in containers:
+            if container.name in _NON_AIRFLOW_SIDECAR_CONTAINER_NAMES:
+                continue
             sc = container.security_context
             if sc and sc.read_only_root_filesystem:
                 offenders.append(f"{pod.metadata.name}/{container.name}")
