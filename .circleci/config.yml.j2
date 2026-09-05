@@ -319,15 +319,40 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}
-      # Deliberately no `requires:` -- these start at the top of the pipeline, in parallel
-      # with run_pre_commit/test-unit/build-artifact, rather than waiting on them. Nothing
-      # about this mechanism needs a packaged chart artifact or a passing lint/unit run first:
-      # bin/run-scenario.py installs straight from this checkout (GIT_ROOT_DIR), the same way
-      # scenario-unified-* above does. This is deliberately looser than upstream's gating
-      # (build-artifact + a manual approve-scenarios approval) -- fine for this ephemeral
-      # testing branch, but revisit before this lands anywhere that isn't.
+      # Manual gate for the custom functional scenarios on non-release branches.
+      # On master and release-X.Y they run automatically (below); on every other
+      # branch they wait on this approval before running.
+      - approve-scenarios:
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
 {% for scenario in scenarios %}
-      - scenario-{{ scenario.name }}
+      # master + release-X.Y: run automatically.
+      - scenario-{{ scenario.name }}:
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive.
+      - scenario-{{ scenario.name }}:
+          name: scenario-{{ scenario.name }}-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
 {%- endfor %}
       - approve-stage-cluster-test:
           type: approval

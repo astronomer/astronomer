@@ -498,18 +498,109 @@ workflows:
       - scenario-unified-1-35-1:
           requires:
             - build-artifact
-      # Deliberately no `requires:` -- these start at the top of the pipeline, in parallel
-      # with run_pre_commit/test-unit/build-artifact, rather than waiting on them. Nothing
-      # about this mechanism needs a packaged chart artifact or a passing lint/unit run first:
-      # bin/run-scenario.py installs straight from this checkout (GIT_ROOT_DIR), the same way
-      # scenario-unified-* above does. This is deliberately looser than upstream's gating
-      # (build-artifact + a manual approve-scenarios approval) -- fine for this ephemeral
-      # testing branch, but revisit before this lands anywhere that isn't.
+      # Manual gate for the custom functional scenarios on non-release branches.
+      # On master and release-X.Y they run automatically (below); on every other
+      # branch they wait on this approval before running.
+      - approve-scenarios:
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
 
-      - scenario-readonly-root-dod-to-gitsync
-      - scenario-readonly-root-gitsync-to-dod
-      - scenario-readonly-root-image-to-dod
-      - scenario-readonly-root-image-to-gitsync
+      # master + release-X.Y: run automatically.
+      - scenario-readonly-root-dod-to-gitsync:
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive.
+      - scenario-readonly-root-dod-to-gitsync:
+          name: scenario-readonly-root-dod-to-gitsync-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically.
+      - scenario-readonly-root-gitsync-to-dod:
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive.
+      - scenario-readonly-root-gitsync-to-dod:
+          name: scenario-readonly-root-gitsync-to-dod-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically.
+      - scenario-readonly-root-image-to-dod:
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive.
+      - scenario-readonly-root-image-to-dod:
+          name: scenario-readonly-root-image-to-dod-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically.
+      - scenario-readonly-root-image-to-gitsync:
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive.
+      - scenario-readonly-root-image-to-gitsync:
+          name: scenario-readonly-root-image-to-gitsync-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
       - approve-stage-cluster-test:
           type: approval
           filters:
