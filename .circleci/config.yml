@@ -58,12 +58,19 @@ jobs:
   release_bom:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2026-09
+    parameters:
+      version:
+        type: string
+        default: "${CIRCLE_TAG}"
+      extra_args:
+        type: string
+        default: ""
     steps:
       - checkout
       - run:
           name: Run Release BOM Script
           command: |
-            bin/release-bom -x ${CIRCLE_TAG}
+            bin/release-bom -x << parameters.extra_args >> << parameters.version >>
 
   run_pre_commit:
     docker:
