@@ -1,4 +1,5 @@
 import base64
+from urllib.parse import unquote, urlparse
 
 import pytest
 
@@ -127,6 +128,67 @@ class TestHoustonBackendSecret:
         assert len(docs) == 1
         connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
         assert connection.endswith("?schema=my%24schema")
+
+    def test_houston_backend_secret_percent_encodes_credentials(self, kube_version):
+        """Test that credentials are percent-encoded rather than interpolated verbatim.
+
+        A "/", "?", "#" or "@" in a valid password is URI structure once it reaches
+        a connection string. Unencoded, "p/a?s#s" does not merely misparse -- the
+        host:port split lands on the password and the URL is rejected outright.
+        """
+        values = {
+            "astronomer": {
+                "houston": {
+                    "backendSecretConnection": True,
+                    "backendConnection": {
+                        "user": "svc@corp",
+                        "pass": "p/a?s#s",
+                        "host": "pg.example.com",
+                        "port": 5432,
+                        "db": "houston",
+                    },
+                }
+            }
+        }
+        docs = render_chart(kube_version=kube_version, values=values, show_only=[BACKEND_SECRET_FILE])
+
+        assert len(docs) == 1
+        connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
+        assert connection == "postgresql://svc%40corp:p%2Fa%3Fs%23s@pg.example.com:5432/houston?schema=houston%24default"
+
+        # The point of the encoding: it has to parse back to what was configured.
+        parsed = urlparse(connection)
+        assert parsed.hostname == "pg.example.com"
+        assert parsed.port == 5432
+        assert unquote(parsed.username) == "svc@corp"
+        assert unquote(parsed.password) == "p/a?s#s"
+
+    def test_houston_backend_secret_encodes_space_as_percent_20(self, kube_version):
+        """Test that a space in a password becomes %20 and not "+".
+
+        urlquery alone renders a space as "+", which is a literal plus in userinfo
+        rather than a space, so the password would arrive wrong.
+        """
+        values = {
+            "astronomer": {
+                "houston": {
+                    "backendSecretConnection": True,
+                    "backendConnection": {
+                        "user": "houston",
+                        "pass": "pa ss+word",
+                        "host": "pg.example.com",
+                        "port": 5432,
+                        "db": "houston",
+                    },
+                }
+            }
+        }
+        docs = render_chart(kube_version=kube_version, values=values, show_only=[BACKEND_SECRET_FILE])
+
+        assert len(docs) == 1
+        connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
+        assert "pa%20ss%2Bword" in connection
+        assert unquote(urlparse(connection).password) == "pa ss+word"
 
     def test_houston_backend_secret_not_rendered_for_connection_without_opt_in(self, kube_version):
         """Test that backendConnection alone still suppresses the managed secret.

@@ -102,7 +102,7 @@ config:
   queries: |-
     airflow_chart_version:
       query: |
-        SET search_path TO houston$default, public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
+        SET search_path TO "{{ .Values.global.houston.schemaName }}", public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
       master: false
       cache_seconds: 30
       metrics:

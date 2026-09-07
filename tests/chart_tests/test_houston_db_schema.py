@@ -79,6 +79,32 @@ class TestHoustonDbSchema:
         containers = get_containers_by_name(docs[0], include_init_containers=True)
         assert get_env_vars_dict(containers["houston-bootstrapper"]["env"])["SCHEMA_NAME"] == "public"
 
+    @pytest.mark.parametrize("schema_name", [DEFAULT_SCHEMA, "my_custom"])
+    def test_schema_reaches_the_postgres_exporter_queries(self, kube_version, schema_name):
+        """Test that the exporter's search_path follows the configured schema.
+
+        These queries read Houston's tables through search_path, so a stale
+        "houston$default, public" would find nothing on an install using another
+        schema -- the query errors rather than degrading. Only a "public" override
+        would have survived by coincidence.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "prometheusPostgresExporter": {"enabled": True},
+                    "houston": {"schemaName": schema_name},
+                }
+            },
+            show_only=["charts/prometheus-postgres-exporter/templates/configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        queries = docs[0]["data"]["config.yaml"]
+        assert f'SET search_path TO "{schema_name}", public;' in queries
+        # The whole query must survive templating, not just the search_path.
+        assert 'from "Deployment"' in queries
+
     def test_schema_is_consistent_across_the_whole_release(self, kube_version):
         """Test that a full render never mixes schema values.
 
