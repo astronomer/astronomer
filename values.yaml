@@ -15,6 +15,16 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainPrefix: ""    # cluster-id
 
+  # Postgres schema Houston's tables live in. Global because both the astronomer
+  # and prometheus subcharts need it.
+  #
+  # Existing installs must leave this alone: their tables are already in
+  # houston$default, and changing it points Houston at an empty schema.
+  # Set it only on a fresh install, e.g. to "public" when the database does not
+  # permit creating schemas (APC-859).
+  houston:
+    schemaName: "houston$default"
+
   # Shared secret for internal service-to-service authentication (e.g. pilot -> commander gRPC).
   # Auto-generated on install if empty; preserved across upgrades.
   clusterLocalServiceAuth:
