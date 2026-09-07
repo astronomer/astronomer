@@ -91,8 +91,8 @@ def get_containers_by_name(doc: dict, *, include_init_containers=False) -> dict:
     """
 
     pod_template = get_pod_template(doc)
-    containers = pod_template.get("spec", {}).get("containers", [])
-    initContainers = pod_template.get("spec", {}).get("initContainers", [])
+    containers = pod_template.get("spec", {}).get("containers") or []
+    initContainers = pod_template.get("spec", {}).get("initContainers") or []
 
     c_by_name = {c["name"]: c for c in containers}
 
@@ -153,8 +153,8 @@ def get_chart_containers(
         {
             "name": doc.get("metadata", {}).get("name"),
             "kind": doc.get("kind"),
-            "containers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("containers", []),
-            "initContainers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("initContainers", []),
+            "containers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("containers") or [],
+            "initContainers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("initContainers") or [],
         }
         for doc in docs
         if "spec" in doc
