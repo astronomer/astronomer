@@ -22,19 +22,16 @@ parameters:
 jobs:
   sign-released-image:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-          version: docker23
       - cosign/install:
           version: "v2.5.0"
       - run:
           name: Login to docker registry
           command: |
-            echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin docker.io
-            echo "$QUAY_PASSWORD" | docker login --username $QUAY_USERNAME --password-stdin quay.io
+            echo "$DOCKER_PASSWORD" | cosign login docker.io --username $DOCKER_USERNAME --password-stdin
+            echo "$QUAY_PASSWORD" | cosign login quay.io --username $QUAY_USERNAME --password-stdin
       - run:
           name: Set image tag to sign
           command: |
@@ -61,17 +58,24 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
+    parameters:
+      version:
+        type: string
+        default: "${CIRCLE_TAG}"
+      extra_args:
+        type: string
+        default: ""
     steps:
       - checkout
       - run:
           name: Run Release BOM Script
           command: |
-            bin/release-bom -x ${CIRCLE_TAG}
+            bin/release-bom -x << parameters.extra_args >> << parameters.version >>
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2026-08
+      - image: quay.io/astronomer/ci-pre-commit:2026-09
     resource_class: small
     steps:
       - checkout
@@ -96,7 +100,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -132,7 +136,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     parameters:
       qa_release:
         type: boolean
@@ -151,7 +155,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -190,7 +194,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-08
+      - image: quay.io/astronomer/ci-helm-release:2026-09
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -203,7 +207,7 @@ jobs:
 
   scenario-unified-1-31-14:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.31.14
@@ -230,7 +234,7 @@ jobs:
           path: test-results
   scenario-unified-1-32-11:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.32.11
@@ -257,7 +261,7 @@ jobs:
           path: test-results
   scenario-unified-1-33-7:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.33.7
@@ -284,7 +288,7 @@ jobs:
           path: test-results
   scenario-unified-1-34-3:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.34.3
@@ -311,7 +315,7 @@ jobs:
           path: test-results
   scenario-unified-1-35-0:
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.05.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.35.0
