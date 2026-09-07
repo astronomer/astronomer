@@ -9,7 +9,7 @@ DEFAULT_SCHEMA = "houston$default"
 # Every template that has to agree on which Postgres schema Houston's tables live
 # in. The bootstrapper containers read SCHEMA_NAME to create the schema and to
 # write it into the connection secret; the prometheus filesd-reloader queries the
-# Houston tables directly and needs the same value (APC-859).
+# Houston tables directly and needs the same value.
 #
 # houston-cp-refresh-job is covered separately: it renders only in HA mode.
 SCHEMA_TEMPLATES = {
@@ -53,14 +53,14 @@ class TestHoustonDbSchema:
 
     @pytest.mark.parametrize("template", SCHEMA_TEMPLATES)
     def test_schema_honours_override(self, kube_version, template):
-        """Test that global.houston.schemaName overrides the default everywhere.
+        """Test that global.houston.database.schemaName overrides the default everywhere.
 
         The value is global because it spans the astronomer and prometheus
         subcharts, and a partial override would leave prometheus querying a schema
         Houston is not using.
         """
         container, env_var = SCHEMA_TEMPLATES[template]
-        values = {"global": {"houston": {"schemaName": "public"}}}
+        values = {"global": {"houston": {"database": {"schemaName": "public"}}}}
         assert _schema_value(kube_version, template, container, env_var, values) == "public"
 
     def test_schema_reaches_the_ha_only_cp_refresh_job(self, kube_version):
@@ -70,7 +70,7 @@ class TestHoustonDbSchema:
             "global": {
                 "plane": {"mode": "control"},
                 "controlPlaneHA": {"enabled": True, "globalBaseDomain": "astro.example.com"},
-                "houston": {"schemaName": "public"},
+                "houston": {"database": {"schemaName": "public"}},
             }
         }
         docs = render_chart(kube_version=kube_version, values=values, show_only=[template])
@@ -93,7 +93,7 @@ class TestHoustonDbSchema:
             values={
                 "global": {
                     "prometheusPostgresExporter": {"enabled": True},
-                    "houston": {"schemaName": schema_name},
+                    "houston": {"database": {"schemaName": schema_name}},
                 }
             },
             show_only=["charts/prometheus-postgres-exporter/templates/configmap.yaml"],
@@ -111,7 +111,7 @@ class TestHoustonDbSchema:
         The failure this guards against is a new template hardcoding the literal
         again, which would silently point one component at a different schema.
         """
-        docs = render_chart(kube_version=kube_version, values={"global": {"houston": {"schemaName": "public"}}})
+        docs = render_chart(kube_version=kube_version, values={"global": {"houston": {"database": {"schemaName": "public"}}}})
 
         found = set()
         for doc in docs:

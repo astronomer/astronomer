@@ -80,7 +80,7 @@ class TestHoustonBackendSecret:
     def test_houston_backend_secret_builds_connection_from_backend_connection(self, kube_version):
         """Test that backendSecretConnection builds a usable URL from backendConnection.
 
-        Regression test for APC-859. This clause used to be unreachable, because the
+        Regression test: this clause used to be unreachable, because the
         template only rendered when backendConnection was empty, and its printf wrote
         the schema escape into the format string, so "%24default" was read as a
         width-24 %d verb and rendered "%!d(MISSING)".
@@ -96,11 +96,11 @@ class TestHoustonBackendSecret:
         assert connection == "postgresql://houston:s3cr3t@pg.example.com:5432/houston?schema=houston%24default"
 
     def test_houston_backend_secret_honours_custom_schema_name(self, kube_version):
-        """Test that global.houston.schemaName reaches the connection URL."""
+        """Test that global.houston.database.schemaName reaches the connection URL."""
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"houston": {"schemaName": "public"}},
+                "global": {"houston": {"database": {"schemaName": "public"}}},
                 "astronomer": {"houston": BACKEND_CONNECTION_VALUES},
             },
             show_only=[BACKEND_SECRET_FILE],
@@ -119,7 +119,7 @@ class TestHoustonBackendSecret:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"houston": {"schemaName": "my$schema"}},
+                "global": {"houston": {"database": {"schemaName": "my$schema"}}},
                 "astronomer": {"houston": BACKEND_CONNECTION_VALUES},
             },
             show_only=[BACKEND_SECRET_FILE],
@@ -194,7 +194,7 @@ class TestHoustonBackendSecret:
         """Test that backendConnection alone still suppresses the managed secret.
 
         Only backendSecretConnection opts into building the URL. Without it the
-        template stays skipped, as it was before APC-859, so an install relying on
+        template stays skipped, as it was before, so an install relying on
         the bootstrapper to write this secret is unaffected.
         """
         docs = render_chart(
