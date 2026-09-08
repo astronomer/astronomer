@@ -1,0 +1,37 @@
+{{- if .Values.global.istioEnabled }}
+{{- if eq .Values.global.plane.mode "data" }}
+---
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+kind: VirtualService
+metadata:
+  name: {{ template "prometheus.fullname" . }}-federate-virtualservice
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: prometheus-networking
+    component: prometheus-federate-virtualservice
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  hosts:
+  - "prometheus.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}"
+  gateways:
+  - {{ .Values.global.istio.gateway }}
+  http:
+  - match:
+    - uri:
+        prefix: "/federate"
+    route:
+    - destination:
+        host: {{ template "prometheus.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+        port:
+          number: 9090
+    {{- if .Values.global.istio.virtualService.timeout }}
+    timeout: {{ .Values.global.istio.virtualService.timeout }}
+    {{- end }}
+    {{- if .Values.global.istio.virtualService.retries }}
+    retries:
+      {{- toYaml .Values.global.istio.virtualService.retries | nindent 6 }}
+    {{- end }}
+{{- end }}
+{{- end }}

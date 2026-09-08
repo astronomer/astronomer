@@ -1,0 +1,39 @@
+{{- if .Values.global.istioEnabled }}
+{{- if not .Values.global.customLogging.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+---
+apiVersion: {{ template "apiVersion.istio.networking" . }}
+kind: VirtualService
+metadata:
+  name: {{ template "elasticsearch.fullname" . }}-virtualservice
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: elasticsearch-networking
+    component: elasticsearch-virtualservice
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  hosts:
+  - "elasticsearch.{{ .Values.global.baseDomain }}"
+  gateways:
+  - {{ .Values.global.istio.gateway }}
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: {{ .Release.Name }}-elasticsearch-nginx.{{ .Release.Namespace }}.svc.cluster.local
+        port:
+          number: {{ .Values.common.ports.http }}
+    {{- if .Values.global.istio.virtualService.timeout }}
+    timeout: {{ .Values.global.istio.virtualService.timeout }}
+    {{- end }}
+    {{- if .Values.global.istio.virtualService.retries }}
+    retries:
+      {{- toYaml .Values.global.istio.virtualService.retries | nindent 6 }}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
