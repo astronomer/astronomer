@@ -98,3 +98,5 @@ external-secrets:
 postgresql:
   replication:
     enabled: true
+  postgresqlRunPermissions:
+    enabled: false

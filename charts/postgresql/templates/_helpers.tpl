@@ -157,6 +157,22 @@ Also, we can't use a single if because lazy evaluation is not an option
 {{- end -}}
 
 {{/*
+Return whether the init-postgresql-run ownership-fix init container should render.
+
+Hard-disabled whenever global.openshift.enabled is true, regardless of what
+postgresqlRunPermissions.enabled is explicitly set to: this container needs
+capabilities.add [CHOWN, FOWNER], which OpenShift's default restricted SCC does not
+grant, so enabling it there risks the pod failing SCC admission entirely rather than
+just falling back to the original crash-loop bug. Clusters running a custom SCC that
+does permit this can't override the auto-disable via values - the real fix for
+OpenShift is the image-level entrypoint change (see the ap-vendor/postgresql
+companion fix), which needs no k8s-side chown at all. See PINF-347.
+*/}}
+{{- define "postgresql.postgresqlRunPermissions.enabled" -}}
+{{- and .Values.postgresqlRunPermissions.enabled (not .Values.global.openshift.enabled) -}}
+{{- end -}}
+
+{{/*
 Return the proper PostgreSQL metrics image name
 */}}
 {{- define "postgresql.metrics.image" -}}
