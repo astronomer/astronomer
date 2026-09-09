@@ -112,10 +112,23 @@ data:
             .log_type = "system"
           }
 
+      filter_k8s_task_logs:
+        type: filter
+        inputs:
+          - transform_task_logs
+        # Airflow 3 task processes echo their structured task log lines to stdout in
+        # addition to writing them to /usr/local/airflow/logs/**/attempt=N.log. The
+        # airflow_3_task_logs (file) source already ships those lines with full
+        # dag_id/run_id/task_id/attempt metadata parsed from the path, so shipping the
+        # stdout copy here as well double-ingests every task log line into
+        # Elasticsearch. Only pass through component/system logs, which have no
+        # file-based equivalent.
+        condition: '.log_type != "task"'
+
       transform_add_timestamp:
         type: remap
         inputs:
-          - transform_task_logs
+          - filter_k8s_task_logs
         source: |
           .@timestamp = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%3fZ")
           .date_nano = format_timestamp!(now(), format: "%Y-%m-%dT%H:%M:%S.%9fZ")

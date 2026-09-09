@@ -174,3 +174,32 @@ class TestVectorConfigmap:
 
         assert "is_integer(.level)" in source
         assert ".level = to_string!(.level)" in source
+
+    def test_vector_configmap_filters_task_logs_out_of_k8s_logs_pipeline(self, kube_version):
+        """Airflow 3 task processes echo their structured task log lines to stdout in
+        addition to writing them to /usr/local/airflow/logs/**/attempt=N.log. The
+        airflow_3_task_logs (file) pipeline already ships those lines with full
+        dag_id/run_id/task_id/attempt metadata, so the airflow_k8s_logs (stdout)
+        pipeline must drop anything transform_task_logs tagged as log_type "task"
+        before it reaches the shared elasticsearch sink, or every task log line is
+        double-ingested."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        config_yaml = doc["data"]["vector-config.yaml"]
+        config_dict = yaml.safe_load(config_yaml)
+        transforms = config_dict["transforms"]
+
+        assert "filter_k8s_task_logs:" in config_yaml
+        assert transforms["filter_k8s_task_logs"]["type"] == "filter"
+        assert transforms["filter_k8s_task_logs"]["inputs"] == ["transform_task_logs"]
+        assert transforms["filter_k8s_task_logs"]["condition"] == '.log_type != "task"'
+
+        # transform_add_timestamp (and therefore the elasticsearch sink) must only
+        # see the k8s_logs pipeline through the new filter, not directly from
+        # transform_task_logs.
+        assert transforms["transform_add_timestamp"]["inputs"] == ["filter_k8s_task_logs"]
