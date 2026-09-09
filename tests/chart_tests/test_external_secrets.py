@@ -19,6 +19,7 @@ ROLE_TEMPLATE = "charts/external-secrets/templates/role.yaml"
 ROLEBINDING_TEMPLATE = "charts/external-secrets/templates/rolebinding.yaml"
 CLUSTER_SECRET_STORE_TEMPLATE = "charts/external-secrets/templates/cluster-secret-store.yaml"
 SECRETS_BACKEND_CREDENTIALS_TEMPLATE = "charts/external-secrets/templates/secrets-backend-credentials.yaml"
+PDB_TEMPLATE = "charts/external-secrets/templates/poddisruptionbudget.yaml"
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -367,3 +368,44 @@ class TestExternalSecretsDataPlaneMode:
             pod_labels = doc["spec"]["template"]["metadata"]["labels"]
             for key, value in custom_labels.items():
                 assert pod_labels.get(key) == value, f"Label {key}={value} missing from {doc['metadata']['name']}"
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestExternalSecretsPodDisruptionBudget:
+    @pytest.mark.parametrize(
+        "values,expected_docs",
+        [
+            pytest.param(
+                {
+                    **ESO_VALUES,
+                    "external-secrets": {"enabled": True},
+                },
+                0,
+                id="eso-pdb-defaults",
+            ),
+            pytest.param(
+                {
+                    **ESO_VALUES,
+                    "external-secrets": {"enabled": True, "podDisruptionBudget": {"enabled": True}},
+                },
+                1,
+                id="eso-pdb-overrides",
+            ),
+            pytest.param(
+                {
+                    **ESO_VALUES,
+                    "global": {**ESO_VALUES["global"], "podDisruptionBudgets": {"enabled": False}},
+                    "external-secrets": {"enabled": True, "podDisruptionBudget": {"enabled": True}},
+                },
+                0,
+                id="global-pdb-overrides",
+            ),
+        ],
+    )
+    def test_pdb(self, kube_version, values, expected_docs):
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[PDB_TEMPLATE],
+        )
+        assert len(docs) == expected_docs
