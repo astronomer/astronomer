@@ -369,7 +369,10 @@ def test_houston_configmap_loggingsidecar_scopes_stdout_tee_to_airflow2():
 
     # Version split is present.
     assert 'is_af2 = container.args[0:3] == ["airflow", "tasks", "run"]' in als
-    assert 'is_af3 = int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]' in als
+    assert (
+        'is_af3 = int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]'
+        in als
+    )
     assert "if is_af2 or is_af3:" in als
 
     # The tee is only wired in for Airflow 2; Airflow 3 gets a plain terminator.
