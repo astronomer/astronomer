@@ -116,14 +116,13 @@ data:
         type: filter
         inputs:
           - transform_task_logs
-        # Airflow 3 task processes echo their structured task log lines to stdout in
-        # addition to writing them to /usr/local/airflow/logs/**/attempt=N.log. The
-        # airflow_3_task_logs (file) source already ships those lines with full
-        # dag_id/run_id/task_id/attempt metadata parsed from the path, so shipping the
-        # stdout copy here as well double-ingests every task log line into
-        # Elasticsearch. Only pass through component/system logs, which have no
-        # file-based equivalent.
-        condition: '.log_type != "task"'
+        # AF3 tasks write each line to both stdout and attempt=N.log, so the file source
+        # and this one carry the same line to the sink. Drop the stdout copy.
+        condition:
+          type: "vrl"
+          source: |
+            is_task_output = exists(.dag_id) && exists(.task_id) && exists(.run_id)
+            !is_task_output || is_kubernetes_executor_pod
 
       transform_add_timestamp:
         type: remap
@@ -305,7 +304,10 @@ data:
         type: filter
         inputs:
           - handle_error_details
-        condition: '.log_type == "task"'
+        condition:
+          type: "vrl"
+          source: |
+            .log_type == "task" && .release != "unknown"
 
       transform_remove_fields:
         type: remap
