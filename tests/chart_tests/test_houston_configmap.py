@@ -365,24 +365,24 @@ def test_houston_configmap_loggingsidecar_scopes_stdout_tee_to_airflow2():
     )
 
     common_test_cases(docs)
-    metadata = yaml.safe_load(docs[0]["data"]["production.yaml"])["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    als = yaml.safe_load(docs[0]["data"]["production.yaml"])["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
 
     # Version split is present.
-    assert 'is_af2 = container.args[0:3] == ["airflow", "tasks", "run"]' in metadata
+    assert 'is_af2 = container.args[0:3] == ["airflow", "tasks", "run"]' in als
     assert (
         'is_af3 = int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]'
-        in metadata
+        in als
     )
-    assert "if is_af2 or is_af3:" in metadata
+    assert "if is_af2 or is_af3:" in als
 
     # The tee is only wired in for Airflow 2; Airflow 3 gets a plain terminator.
-    assert 'redirect = log_cmd if is_af2 else " ; "' in metadata
-    assert "+ redirect" in metadata
+    assert 'redirect = log_cmd if is_af2 else " ; "' in als
+    assert "+ redirect" in als
     # The old unconditional guard that appended log_cmd for both versions is gone.
-    assert "+ log_cmd" not in metadata
+    assert "+ log_cmd" not in als
 
     # Termination shim still applies to every KubernetesExecutor worker pod.
-    assert 'Path("/var/log/sidecar-log-consumer/finished").touch()' in metadata
+    assert 'Path("/var/log/sidecar-log-consumer/finished").touch()' in als
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrides():

@@ -122,6 +122,8 @@ data:
           type: "vrl"
           source: |
             is_task_output = exists(.dag_id) && exists(.task_id) && exists(.run_id)
+            is_kubernetes_executor_pod = exists(.kubernetes.pod_labels.dag_id)
+
             !is_task_output || is_kubernetes_executor_pod
 
       transform_add_timestamp:
