@@ -176,13 +176,8 @@ class TestVectorConfigmap:
         assert ".level = to_string!(.level)" in source
 
     def test_vector_configmap_filters_task_logs_out_of_k8s_logs_pipeline(self, kube_version):
-        """Airflow 3 task processes echo their structured task log lines to stdout in
-        addition to writing them to /usr/local/airflow/logs/**/attempt=N.log. The
-        airflow_3_task_logs (file) pipeline already ships those lines with full
-        dag_id/run_id/task_id/attempt metadata, so the airflow_k8s_logs (stdout)
-        pipeline must drop anything transform_task_logs tagged as log_type "task"
-        before it reaches the shared elasticsearch sink, or every task log line is
-        double-ingested."""
+        """AF3 tasks write each line to both stdout and attempt=N.log, so the stdout
+        pipeline must drop the duplicate before the shared elasticsearch sink."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/vector/templates/vector-configmap.yaml"],
@@ -197,9 +192,51 @@ class TestVectorConfigmap:
         assert "filter_k8s_task_logs:" in config_yaml
         assert transforms["filter_k8s_task_logs"]["type"] == "filter"
         assert transforms["filter_k8s_task_logs"]["inputs"] == ["transform_task_logs"]
-        assert transforms["filter_k8s_task_logs"]["condition"] == '.log_type != "task"'
-
-        # transform_add_timestamp (and therefore the elasticsearch sink) must only
-        # see the k8s_logs pipeline through the new filter, not directly from
-        # transform_task_logs.
+        assert transforms["filter_k8s_task_logs"]["condition"]["type"] == "vrl"
         assert transforms["transform_add_timestamp"]["inputs"] == ["filter_k8s_task_logs"]
+
+    def test_vector_configmap_k8s_task_log_filter_requires_full_task_identity(self, kube_version):
+        """The log_type tag is set on the mere presence of a dag_id, which scheduler and
+        dag-processor lines also carry. Keying the drop off it loses those from both
+        pipelines, so the filter must require full task identity."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        config_dict = yaml.safe_load(docs[0]["data"]["vector-config.yaml"])
+        source = config_dict["transforms"]["filter_k8s_task_logs"]["condition"]["source"]
+
+        assert "is_task_output = exists(.dag_id) && exists(.task_id) && exists(.run_id)" in source
+        # The loose log_type tag must not be what decides the drop.
+        assert '.log_type != "task"' not in source
+
+    def test_vector_configmap_k8s_task_log_filter_exempts_kubernetes_executor_pods(self, kube_version):
+        """KubernetesExecutor task pods name their logs emptyDir "logs", not
+        "logs-<release>", so their file copy is indexed as <prefix>.unknown.* and never
+        read. The stdout copy is the only readable one and must survive the drop."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        config_dict = yaml.safe_load(docs[0]["data"]["vector-config.yaml"])
+        source = config_dict["transforms"]["filter_k8s_task_logs"]["condition"]["source"]
+
+        assert "is_kubernetes_executor_pod = exists(.kubernetes.pod_labels.dag_id)" in source
+        assert "!is_task_output || is_kubernetes_executor_pod" in source
+
+    def test_vector_configmap_file_pipeline_drops_unresolvable_release(self, kube_version):
+        """extract_release falls back to "unknown" when the path has no "logs-<release>"
+        segment. Those events would be indexed as <prefix>.unknown.* and never read, and
+        the stdout pipeline already carries them with correct pod labels."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        config_dict = yaml.safe_load(docs[0]["data"]["vector-config.yaml"])
+        condition = config_dict["transforms"]["filter_task_logs_only"]["condition"]
+
+        assert condition["type"] == "vrl"
+        assert '.log_type == "task" && .release != "unknown"' in condition["source"]
