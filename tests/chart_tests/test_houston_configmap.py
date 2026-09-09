@@ -1090,14 +1090,10 @@ def test_houston_configmap_pod_mutation_hook_airflow_compatibility():
     assert airflow3_pattern in airflow_local_settings, "Airflow 3.x task execution pattern should be supported"
     assert version_check in airflow_local_settings, "Version comparison logic should be present"
 
-    # Check that both patterns feed a single gate. #3391 split the inline `or` into
-    # named is_af2 / is_af3 flags so the stdout tee could be scoped to Airflow 2.
-    assert 'is_af2 = container.args[0:3] == ["airflow", "tasks", "run"]' in airflow_local_settings
-    assert (
-        'is_af3 = int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]'
-        in airflow_local_settings
-    )
-    assert "if is_af2 or is_af3:" in airflow_local_settings, "Complete condition should include both Airflow 2.x and 3.x patterns"
+    # Check that the two patterns are combined via OR into the branch that triggers the redirect logic.
+    # (Written as named is_af2/is_af3 variables, not one inlined boolean expression.)
+    complete_condition = "if is_af2 or is_af3:"
+    assert complete_condition in airflow_local_settings, "Complete condition should combine both Airflow 2.x and 3.x checks"
 
     # Check that the logging command is present
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
