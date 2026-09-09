@@ -116,15 +116,13 @@ data:
         type: filter
         inputs:
           - transform_task_logs
-        # AF3 tasks write each line to both stdout and attempt=N.log, so the file source
-        # and this one carry the same line to the sink. Drop the stdout copy.
         condition:
           type: "vrl"
           source: |
+            is_ke_task_pod = exists(.kubernetes.pod_labels.dag_id)
             is_task_output = exists(.dag_id) && exists(.task_id) && exists(.run_id)
-            is_kubernetes_executor_pod = exists(.kubernetes.pod_labels.dag_id)
 
-            !is_task_output || is_kubernetes_executor_pod
+            !(is_ke_task_pod && is_task_output)
 
       transform_add_timestamp:
         type: remap
@@ -306,10 +304,7 @@ data:
         type: filter
         inputs:
           - handle_error_details
-        condition:
-          type: "vrl"
-          source: |
-            .log_type == "task" && .release != "unknown"
+        condition: '.log_type == "task"'
 
       transform_remove_fields:
         type: remap
