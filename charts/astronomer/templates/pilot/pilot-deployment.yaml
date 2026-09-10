@@ -69,6 +69,9 @@ spec:
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "volume" "flightdeck-dsn-secret" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
+{{- end }}
       containers:
         - name: pilot
           image: {{ template "commander.image" . }}
@@ -96,7 +99,7 @@ spec:
               readOnly: true
             {{- if $secretsFromFiles }}
             - name: flightdeck-dsn-secret
-              mountPath: /run/secrets
+              mountPath: /etc/astronomer/secrets
               readOnly: true
             {{- end }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
@@ -106,6 +109,8 @@ spec:
             {{- if $secretsFromFiles }}
             - name: COMMANDER_SECRETS_FROM_FILES
               value: "true"
+            - name: COMMANDER_FLIGHTDECK_DSN_FILE
+              value: /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN
             {{- end }}
             # Infrastructure
             - name: PILOT_COMMANDER_ADDR

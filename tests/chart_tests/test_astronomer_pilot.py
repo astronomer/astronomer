@@ -301,7 +301,7 @@ class TestAstronomerPilot:
         mounts = {mount["name"]: mount for mount in pilot["volumeMounts"]}
         assert mounts["flightdeck-dsn-secret"] == {
             "name": "flightdeck-dsn-secret",
-            "mountPath": "/run/secrets",
+            "mountPath": "/etc/astronomer/secrets",
             "readOnly": True,
         }
 

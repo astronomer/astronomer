@@ -65,6 +65,9 @@ spec:
           securityContext:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "navigator-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- end }}
       containers:
         - name: navigator
           image: {{ template "houston.image" . }}
@@ -90,7 +93,7 @@ spec:
               mountPath: /tmp
             {{- if $secretsFromFiles }}
             - name: navigator-secrets
-              mountPath: /run/secrets
+              mountPath: /etc/astronomer/secrets
               readOnly: true
             {{- end }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
@@ -103,10 +106,18 @@ spec:
             {{- if $secretsFromFiles }}
             - name: HOUSTON_SECRETS_FROM_FILES
               value: "true"
+            - name: DATABASE_URL_FILE
+              value: /etc/astronomer/secrets/DATABASE_URL
+            {{- if not (((.Values.houston.config.deployments).database).connection) }}
+            - name: DEPLOYMENTS__DATABASE__CONNECTION_FILE
+              value: /etc/astronomer/secrets/DEPLOYMENTS__DATABASE__CONNECTION
+            {{- end }}
             {{- /* The loader cannot know operator-defined secret env var names at build time, so pass them through. */}}
             {{- $extraSecrets := list }}
             {{- range $i, $config := .Values.navigator.secret }}
             {{- $extraSecrets = append $extraSecrets $config.envName }}
+            - name: {{ $config.envName }}_FILE
+              value: /etc/astronomer/secrets/{{ $config.envName }}
             {{- end }}
             {{- if $extraSecrets }}
             - name: HOUSTON_SECRETS_FROM_FILES_EXTRA

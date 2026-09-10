@@ -2,6 +2,7 @@
 ## Astronomer DP-Link Deployment ##
 ###################################
 {{- if or .Values.dpLink.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control")) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.dpLink)) }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
@@ -65,6 +66,9 @@ spec:
             {{- $required := dict "readOnlyRootFilesystem" true }}
             {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "dp-link-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- end }}
       containers:
         - name: dp-link
           image: {{ template "houston.image" . }}

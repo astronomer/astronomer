@@ -29,7 +29,7 @@ data:
       # Read the Elasticsearch credential from its mounted file once, at startup.
       # setenv.lua runs per request, so it must not do file I/O itself.
       init_by_lua_block {
-        local handle = io.open("/run/secrets/ES_SECRET", "r")
+        local handle = io.open("/etc/astronomer/secrets/ES_SECRET", "r")
         if handle then
           local contents = handle:read("*a")
           handle:close()

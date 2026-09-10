@@ -4,6 +4,7 @@ The feature is cross-cutting: one toggle changes ~16 workloads, so most of these
 tests sweep the whole rendered chart rather than a single template.
 """
 
+import base64
 import re
 
 import pytest
@@ -137,7 +138,7 @@ class TestSecretsFromFilesEnabled:
                 env_vars = get_env_vars_dict(container["env"])
                 assert env_vars["HOUSTON_SECRETS_FROM_FILES"] == "true"
                 mount = next(m for m in container["volumeMounts"] if m["name"] == secret_volume)
-                assert mount["mountPath"] == "/run/secrets"
+                assert mount["mountPath"] == "/etc/astronomer/secrets"
                 assert mount["readOnly"] is True
 
     def test_no_dangling_mounts_or_duplicate_mount_paths(self):
@@ -305,7 +306,7 @@ class TestOperatorDefinedSecrets:
 def test_houston_and_dplink_toggles_are_independent(houston_enabled, dplink_enabled):
     """dp-link shares houston_volumes, so its toggle must not affect houston's mount (or vice versa).
 
-    Getting this wrong yields either two volumes on /run/secrets or a dropped env
+    Getting this wrong yields either two volumes on /etc/astronomer/secrets or a dropped env
     var with no file to replace it.
     """
     docs = render_chart(
@@ -331,7 +332,7 @@ def test_houston_and_dplink_toggles_are_independent(houston_enabled, dplink_enab
                 continue
             on = expected[container["name"]]
             mounts = [m["mountPath"] for m in container.get("volumeMounts") or []]
-            assert mounts.count("/run/secrets") == (1 if on else 0)
+            assert mounts.count("/etc/astronomer/secrets") == (1 if on else 0)
             env_vars = get_env_vars_dict(container["env"])
             assert ("HOUSTON_SECRETS_FROM_FILES" in env_vars) is on
             assert ("DATABASE__CONNECTION" in env_vars) is not on
@@ -580,7 +581,7 @@ PG_STATEFULSETS = [
     ("slave", "charts/postgresql/templates/statefulset-slaves.yaml"),
 ]
 
-PG_PASSWORD_FILE = "/run/secrets/postgresql-password"
+PG_PASSWORD_FILE = "/etc/astronomer/secrets/postgresql-password"
 
 
 def pg_values(enabled=None, **postgresql):
@@ -787,11 +788,11 @@ class TestExternalEsProxySecretsFromFiles:
         assert "ES_SECRET_NAME" not in get_env_vars_dict(esproxy.get("env") or [])
         assert volumes["es-secret"]["secret"]["items"] == [{"key": "elastic", "path": "ES_SECRET"}]
         esproxy_mount = next(m for m in esproxy["volumeMounts"] if m["name"] == "es-secret")
-        assert esproxy_mount["mountPath"] == "/run/secrets"
+        assert esproxy_mount["mountPath"] == "/etc/astronomer/secrets"
         assert esproxy_mount["readOnly"] is True
 
         assert "init_by_lua_block" in configs["nginx.conf"]
-        assert "/run/secrets/ES_SECRET" in configs["nginx.conf"]
+        assert "/etc/astronomer/secrets/ES_SECRET" in configs["nginx.conf"]
         # The `elastic` key holds raw credentials, so the lua must encode them --
         # matching the ES_SECRET_NAME branch, not the pre-encoded ES_SECRET one.
         assert "ngx.encode_base64(ES_SECRET_FROM_FILE)" in configs["setenv.lua"]
@@ -802,11 +803,11 @@ class TestExternalEsProxySecretsFromFiles:
         assert "AWS_ACCESS_KEY_ID" not in aws_env
         assert "AWS_SECRET_ACCESS_KEY" not in aws_env
         args = awsproxy["args"][0]
-        assert 'export AWS_ACCESS_KEY_ID="$(cat /run/secrets/aws_access_key)"' in args
-        assert 'export AWS_SECRET_ACCESS_KEY="$(cat /run/secrets/aws_secret_key)"' in args
+        assert 'export AWS_ACCESS_KEY_ID="$(cat /etc/astronomer/secrets/aws_access_key)"' in args
+        assert 'export AWS_SECRET_ACCESS_KEY="$(cat /etc/astronomer/secrets/aws_secret_key)"' in args
         assert args.strip().endswith("exec aws-es-proxy -listen :9203")
         aws_mount = next(m for m in awsproxy["volumeMounts"] if m["name"] == "awssecret")
-        assert aws_mount["mountPath"] == "/run/secrets"
+        assert aws_mount["mountPath"] == "/etc/astronomer/secrets"
 
     def test_setenv_lua_does_no_file_io_itself(self):
         """setenv.lua runs per request; reading the file there would hit the disk
@@ -837,7 +838,7 @@ class TestExternalEsProxySecretsFromFiles:
         deployment, _configs = esp_parts(docs)
         awsproxy = next(c for c in deployment["spec"]["template"]["spec"]["containers"] if c["name"] == "awsproxy")
         assert awsproxy["args"] == ["aws-es-proxy -listen :9203"]
-        assert "cat /run/secrets" not in awsproxy["args"][0]
+        assert "cat /etc/astronomer/secrets" not in awsproxy["args"][0]
 
     def test_no_dangling_mounts(self):
         deployment, _configs = esp_parts(esp_docs(enabled=True))
@@ -862,3 +863,182 @@ def test_external_es_proxy_toggle_override_precedence(global_enabled, component_
     env_vars = get_env_vars_dict(esproxy.get("env") or [])
     assert ("ES_SECRET_NAME" in env_vars) is not expected
     assert ("init_by_lua_block" in configs["nginx.conf"]) is expected
+
+
+# ── Bootstrapper-managed secrets: sentinel + wait gate ─────────────────────────
+#
+# A `secret` volume is projected before ANY container runs and re-projected
+# asynchronously, with no ordering guarantee against container start. So a pod
+# must never depend on reading a Secret that a container inside that same pod
+# writes. Reading via valueFrom.secretKeyRef never had this problem, because env
+# is resolved per-container after all preceding init containers.
+#
+# Verified on kind (k8s 1.37):
+#   * mounting a secret at /run/secrets makes the container fail to start
+#     outright, because the service-account token mounts under
+#     /var/run/secrets/... and every relevant image symlinks /var/run -> /run.
+#     Hence /etc/astronomer/secrets.
+#   * a RUNNING init container does observe kubelet's in-place refresh: under a
+#     second when a pod-sync event drives it, up to ~60s (the kubelet sync
+#     period) with no event. Hence the gate works and is normally a no-op.
+
+SENTINEL = "__ASTRONOMER_NOT_BOOTSTRAPPED__"
+
+GATED_WORKLOADS = {
+    "release-name-commander",
+    "release-name-pilot",
+    "release-name-houston",
+    "release-name-houston-worker",
+    "release-name-navigator",
+    "release-name-dp-link",
+    "release-name-houston-db-migrations",
+    "release-name-houston-upgrade-deployments",
+}
+
+
+def full_feature_values(enabled=True):
+    return {
+        "global": {"plane": {"mode": "unified"}, "secretsFromFiles": {"enabled": enabled}},
+        "astronomer": {
+            "flightDeck": {"enabled": True},
+            "pilot": {"enabled": True},
+            "navigator": {"enabled": True},
+            "dpLink": {"enabled": True},
+        },
+    }
+
+
+def pod_specs(docs):
+    for doc in docs:
+        kind = doc["kind"]
+        if kind in ("Deployment", "StatefulSet", "Job"):
+            yield doc["metadata"]["name"], doc["spec"]["template"]["spec"]
+        elif kind == "CronJob":
+            yield doc["metadata"]["name"], doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+
+
+class TestNoSecretMountEverDangles:
+    """The bug this class exists to prevent.
+
+    <release>-flightdeck-backend was mounted as a volume but created by no
+    template -- its only writer was an init container inside the very pod that
+    mounted it. kubelet blocks on the missing Secret before running any
+    container, so the pod deadlocked permanently on a fresh install. The manifest
+    is schema-valid, so only a cross-referencing check like this catches it.
+    """
+
+    def test_every_secret_volume_source_is_created_by_the_chart(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        created = {d["metadata"]["name"] for d in docs if d["kind"] == "Secret"}
+
+        # Secrets an operator supplies, or that live outside this chart.
+        external = {"astronomer-bootstrap", "release-name-tls", "astronomer-tls"}
+
+        def secret_sources(volume):
+            if isinstance(volume.get("secret"), dict):
+                yield volume["secret"]["secretName"]
+            for source in (volume.get("projected") or {}).get("sources") or []:
+                if "secret" in source:
+                    yield source["secret"]["name"]
+
+        missing = [
+            f"{name} mounts {secret_name}, which no template creates"
+            for name, spec in pod_specs(docs)
+            for volume in spec.get("volumes") or []
+            for secret_name in secret_sources(volume)
+            if secret_name not in created and secret_name not in external
+        ]
+        assert missing == [], "\n".join(missing)
+
+
+class TestBootstrapperSentinel:
+    def test_sentinel_is_deterministic_across_renders(self):
+        """A random placeholder re-poisons the live Secret on every upgrade and
+        churns the pod checksum, forcing a roll into the placeholder."""
+        values = full_feature_values()
+        first = render_chart(kube_version=newest_supported_kube_version, values=values)
+        second = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        def connections(docs):
+            return {
+                d["metadata"]["name"]: d["data"]["connection"]
+                for d in docs
+                if d["kind"] == "Secret" and (d.get("data") or {}).get("connection")
+            }
+
+        assert connections(first) == connections(second)
+        assert connections(first), "expected the chart to create bootstrapper-managed secrets"
+
+    @pytest.mark.parametrize(
+        "secret_name",
+        ["release-name-houston-backend", "release-name-flightdeck-backend"],
+    )
+    def test_sentinel_secret_is_pre_install_only(self, secret_name):
+        """Hook resources are excluded from the release manifest, so `helm upgrade`
+        cannot patch the bootstrapper's real value back to the placeholder."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        secret = next(d for d in docs if d["kind"] == "Secret" and d["metadata"]["name"] == secret_name)
+
+        annotations = secret["metadata"]["annotations"]
+        assert annotations["helm.sh/hook"] == "pre-install"
+        assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation"
+        assert base64.b64decode(secret["data"]["connection"]).decode() == SENTINEL
+
+
+class TestWaitForSecretGate:
+    def test_gate_present_in_every_workload_that_reads_a_bootstrapped_secret(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        gated = {
+            name for name, spec in pod_specs(docs) if any(c["name"] == "wait-for-secret" for c in spec.get("initContainers") or [])
+        }
+        assert GATED_WORKLOADS <= gated, f"ungated: {GATED_WORKLOADS - gated}"
+
+    def test_gate_runs_after_any_in_pod_bootstrapper(self):
+        """If the gate ran first it would read the sentinel, wait for the
+        bootstrapper that has not started yet, and time out."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        for name, spec in pod_specs(docs):
+            names = [c["name"] for c in spec.get("initContainers") or []]
+            if "wait-for-secret" not in names:
+                continue
+            bootstrappers = [i for i, n in enumerate(names) if "bootstrapper" in n]
+            if bootstrappers:
+                assert names.index("wait-for-secret") > max(bootstrappers), f"{name}: {names}"
+
+    def test_gate_polls_a_file_it_actually_mounts(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        for name, spec in pod_specs(docs):
+            gate = next((c for c in spec.get("initContainers") or [] if c["name"] == "wait-for-secret"), None)
+            if not gate:
+                continue
+            volume_names = {v["name"] for v in spec["volumes"]}
+            mount = gate["volumeMounts"][0]
+            assert mount["name"] in volume_names, f"{name}: gate mounts {mount['name']}"
+            script = gate["command"][-1] if len(gate["command"]) > 2 else gate["args"][0]
+            assert mount["mountPath"] in script, f"{name}: gate polls a path it does not mount"
+            assert SENTINEL in script, f"{name}: gate does not compare against the sentinel"
+
+    def test_no_gate_when_the_feature_is_off(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values(enabled=False))
+        for name, spec in pod_specs(docs):
+            names = [c["name"] for c in spec.get("initContainers") or []]
+            assert "wait-for-secret" not in names, name
+
+
+def test_no_secret_is_mounted_under_run_secrets():
+    """/run/secrets is unusable: the service-account token mounts at
+    /var/run/secrets/kubernetes.io/serviceaccount, every relevant image symlinks
+    /var/run -> /run, and a read-only mount at /run/secrets makes runc unable to
+    create that mountpoint. The container fails to start with a StartError.
+    Reproduced on kind; the rendered manifest is schema-valid, so only this check
+    catches it.
+    """
+    docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+    offenders = []
+    for name, spec in pod_specs(docs):
+        for container in (spec.get("containers") or []) + (spec.get("initContainers") or []):
+            for mount in container.get("volumeMounts") or []:
+                path = mount["mountPath"]
+                if path == "/run/secrets" or path.startswith("/run/secrets/"):
+                    offenders.append(f"{name}/{container['name']} mounts {path}")
+    assert offenders == [], "\n".join(offenders)

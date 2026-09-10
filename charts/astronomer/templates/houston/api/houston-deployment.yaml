@@ -150,6 +150,9 @@ spec:
               mountPath: /tmp
             - name: tmp
               mountPath: /houston/node_modules/.cache
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- end }}
       {{- end }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       containers:
@@ -241,7 +244,7 @@ spec:
               value: "kubernetes/deployment"
             {{- if $secretsFromFiles }}
             {{- /* Only the API consumes this, so it gets its own volume rather
-                   than a source in the shared /run/secrets projected volume. */}}
+                   than a source in the shared /etc/astronomer/secrets projected volume. */}}
             - name: REGISTRY__AUTH_HEADER_FILE
               value: /etc/houston/secrets/registry/token
             {{- else }}

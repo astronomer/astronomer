@@ -82,7 +82,7 @@ spec:
           volumeMounts:
             {{- if and .Values.global.customLogging.secretName (not .Values.global.customLogging.secret) $secretsFromFiles }}
             - name: es-secret
-              mountPath: /run/secrets
+              mountPath: /etc/astronomer/secrets
               readOnly: true
             {{- end }}
             - name: nginx-config-volume
@@ -135,7 +135,7 @@ spec:
                  *_FILE convention, so the values are read from the mounted files
                  here and exported before exec. The container already runs
                  /bin/sh -c, so this stays a chart-only change. */}}
-          args: ["export AWS_ACCESS_KEY_ID=\"$(cat /run/secrets/aws_access_key)\"; export AWS_SECRET_ACCESS_KEY=\"$(cat /run/secrets/aws_secret_key)\"; exec aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
+          args: ["export AWS_ACCESS_KEY_ID=\"$(cat /etc/astronomer/secrets/aws_access_key)\"; export AWS_SECRET_ACCESS_KEY=\"$(cat /etc/astronomer/secrets/aws_secret_key)\"; exec aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           {{- else }}
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           {{- end }}
@@ -154,7 +154,7 @@ spec:
           {{- if and .Values.global.customLogging.awsSecretName $secretsFromFiles }}
           volumeMounts:
             - name: awssecret
-              mountPath: /run/secrets
+              mountPath: /etc/astronomer/secrets
               readOnly: true
           {{- end }}
           env:

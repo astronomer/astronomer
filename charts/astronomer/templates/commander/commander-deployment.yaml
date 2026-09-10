@@ -123,6 +123,9 @@ spec:
             - name: tmp
               mountPath: /tmp
 
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "volume" "commander-secrets" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
+{{- end }}
         - name: flightdeck-db-migrations
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
@@ -139,11 +142,13 @@ spec:
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           env:
           {{- if $secretsFromFiles }}
-            # The loader reads /run/secrets/COMMANDER_FLIGHTDECK_DSN before the
+            # The loader reads /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN before the
             # migrate subcommand runs, so `migrate up` is invoked without --db
             # and falls back to the environment the loader populated.
             - name: COMMANDER_SECRETS_FROM_FILES
               value: "true"
+            - name: COMMANDER_FLIGHTDECK_DSN_FILE
+              value: /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN
           {{- else }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
@@ -164,7 +169,7 @@ spec:
               mountPath: /tmp
             {{- if $secretsFromFiles }}
             - name: commander-secrets
-              mountPath: /run/secrets
+              mountPath: /etc/astronomer/secrets
               readOnly: true
             {{- end }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
@@ -268,6 +273,10 @@ spec:
             {{- if $secretsFromFiles }}
             - name: COMMANDER_SECRETS_FROM_FILES
               value: "true"
+            - name: COMMANDER_FLIGHTDECK_DSN_FILE
+              value: /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN
+            - name: COMMANDER_DATAPLANE_DATABASE_URL_FILE
+              value: /etc/astronomer/secrets/COMMANDER_DATAPLANE_DATABASE_URL
             {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
@@ -277,7 +286,7 @@ spec:
               mountPath: /tmp
             {{- if $secretsFromFiles }}
             - name: commander-secrets
-              mountPath: /run/secrets
+              mountPath: /etc/astronomer/secrets
               readOnly: true
             {{- end }}
             - name: commander-home

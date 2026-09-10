@@ -902,7 +902,7 @@ class TestAstronomerCommander:
         assert "COMMANDER_FLIGHTDECK_DSN" in get_env_vars_dict(migrations["env"])
 
         assert "commander-secrets" not in {volume["name"] for volume in spec["volumes"]}
-        assert "/run/secrets" not in {mount["mountPath"] for mount in c_by_name["commander"]["volumeMounts"]}
+        assert "/etc/astronomer/secrets" not in {mount["mountPath"] for mount in c_by_name["commander"]["volumeMounts"]}
 
     def test_commander_secrets_from_files_enabled(self, kube_version):
         """Test that commander reads its secrets from files when enabled."""
@@ -952,7 +952,7 @@ class TestAstronomerCommander:
             mounts = {mount["name"]: mount for mount in c_by_name[container_name]["volumeMounts"]}
             assert mounts["commander-secrets"] == {
                 "name": "commander-secrets",
-                "mountPath": "/run/secrets",
+                "mountPath": "/etc/astronomer/secrets",
                 "readOnly": True,
             }
 

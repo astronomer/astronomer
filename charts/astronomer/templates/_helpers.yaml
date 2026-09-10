@@ -342,10 +342,19 @@ s3:
 {{- if $secretsFromFiles }}
 - name: HOUSTON_SECRETS_FROM_FILES
   value: "true"
-{{- /* The loader cannot know operator-defined secret env var names at build time, so pass them through. */}}
+- name: DATABASE__CONNECTION_FILE
+  value: /etc/astronomer/secrets/DATABASE__CONNECTION
+- name: DATABASE_URL_FILE
+  value: /etc/astronomer/secrets/DATABASE_URL
+{{- if not (((.Values.houston.config.deployments).database).connection) }}
+- name: DEPLOYMENTS__DATABASE__CONNECTION_FILE
+  value: /etc/astronomer/secrets/DEPLOYMENTS__DATABASE__CONNECTION
+{{- end }}
 {{- $extraSecrets := list }}
 {{- range $i, $config := .Values.dpLink.secret }}
 {{- $extraSecrets = append $extraSecrets $config.envName }}
+- name: {{ $config.envName }}_FILE
+  value: /etc/astronomer/secrets/{{ $config.envName }}
 {{- end }}
 {{- if $extraSecrets }}
 - name: HOUSTON_SECRETS_FROM_FILES_EXTRA
@@ -456,7 +465,7 @@ operator-defined secret list.
 {{- define "dp_link_secret_volume_mounts" }}
 {{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink)) }}
 - name: dp-link-secrets
-  mountPath: /run/secrets
+  mountPath: /etc/astronomer/secrets
   readOnly: true
 {{- end }}
 {{- end }}
@@ -466,10 +475,23 @@ operator-defined secret list.
 {{- if $secretsFromFiles }}
 - name: HOUSTON_SECRETS_FROM_FILES
   value: "true"
+{{- /* Point the loader at the chart-owned path explicitly rather than relying on
+       its built-in default, so the chart is not coupled to the image's default
+       and cannot regress if that default changes. */}}
+- name: DATABASE__CONNECTION_FILE
+  value: /etc/astronomer/secrets/DATABASE__CONNECTION
+- name: DATABASE_URL_FILE
+  value: /etc/astronomer/secrets/DATABASE_URL
+{{- if not (((.Values.houston.config.deployments).database).connection) }}
+- name: DEPLOYMENTS__DATABASE__CONNECTION_FILE
+  value: /etc/astronomer/secrets/DEPLOYMENTS__DATABASE__CONNECTION
+{{- end }}
 {{- /* The loader cannot know operator-defined secret env var names at build time, so pass them through. */}}
 {{- $extraSecrets := list }}
 {{- range $i, $config := .Values.houston.secret }}
 {{- $extraSecrets = append $extraSecrets $config.envName }}
+- name: {{ $config.envName }}_FILE
+  value: /etc/astronomer/secrets/{{ $config.envName }}
 {{- end }}
 {{- if $extraSecrets }}
 - name: HOUSTON_SECRETS_FROM_FILES_EXTRA
@@ -642,7 +664,7 @@ volumes at the same path or leave dp-link with no mount at all.
 {{- define "houston_secret_volume_mounts" }}
 {{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston)) }}
 - name: houston-secrets
-  mountPath: /run/secrets
+  mountPath: /etc/astronomer/secrets
   readOnly: true
 {{- end }}
 {{- end }}

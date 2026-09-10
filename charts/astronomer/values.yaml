@@ -68,7 +68,7 @@ astroUI:
   podAnnotations: {}
 
 houston:
-  # -- Load houston's secrets from files mounted at /run/secrets instead of
+  # -- Load houston's secrets from files mounted at /etc/astronomer/secrets instead of
   # injecting them with valueFrom.secretKeyRef. Applies to the API, worker,
   # helm-hook jobs and every cronjob. Leave unset to inherit
   # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
@@ -530,7 +530,7 @@ houston:
 
 # -- DP-Link configuration for data plane linking
 dpLink:
-  # -- Load dp-link's secrets from files mounted at /run/secrets instead of
+  # -- Load dp-link's secrets from files mounted at /etc/astronomer/secrets instead of
   # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
   # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
   # supports HOUSTON_SECRETS_FROM_FILES.
@@ -679,7 +679,7 @@ commander:
   replicas: 2
   env: []
 
-  # -- Load commander's secrets from files mounted at /run/secrets instead of
+  # -- Load commander's secrets from files mounted at /etc/astronomer/secrets instead of
   # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
   # `global.secretsFromFiles.enabled`. Requires an ap-commander image that
   # supports COMMANDER_SECRETS_FROM_FILES.
@@ -758,7 +758,7 @@ pilot:
   # @default -- 3
   replicas: 3
 
-  # -- Load pilot's secrets from files mounted at /run/secrets instead of
+  # -- Load pilot's secrets from files mounted at /etc/astronomer/secrets instead of
   # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
   # `global.secretsFromFiles.enabled`. Requires an ap-commander image that
   # supports COMMANDER_SECRETS_FROM_FILES.
@@ -868,7 +868,7 @@ pilot:
   cbProbeMaxInflight: 1
 
 navigator:
-  # -- Load navigator's secrets from files mounted at /run/secrets instead of
+  # -- Load navigator's secrets from files mounted at /etc/astronomer/secrets instead of
   # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
   # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
   # supports HOUSTON_SECRETS_FROM_FILES.
