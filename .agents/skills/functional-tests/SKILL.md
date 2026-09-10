@@ -158,6 +158,7 @@ from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_running_containers
 
 container_ignore_list = ["kube-state", "houston", "astro-ui"]
 
+
 def test_container_user_is_not_root():
     containers = get_pod_running_containers(kubeconfig=KUBECONFIG_UNIFIED, namespace="astronomer")
     for container in containers.values():
@@ -190,10 +191,9 @@ def test_ensure_feature_disabled(k8s_core_v1_client):
 ```python
 import json
 
+
 def test_houston_config(houston_api):
-    data = houston_api.check_output(
-        "echo \"config = require('config'); console.log(JSON.stringify(config))\" | node -"
-    )
+    data = houston_api.check_output("echo \"config = require('config'); console.log(JSON.stringify(config))\" | node -")
     config = json.loads(data)
     assert "url" not in config["nats"]
     assert len(config["nats"]["servers"]) > 0
@@ -208,9 +208,7 @@ Use `@pytest.mark.flaky` for tests that depend on eventually-consistent cluster 
 ```python
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_houston_can_reach_prometheus(houston_api):
-    assert houston_api.check_output(
-        "wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets"
-    )
+    assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 ```
 
 - `reruns`: max retry attempts on failure

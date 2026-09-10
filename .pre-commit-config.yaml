@@ -1,6 +1,6 @@
 ---
 exclude: '(venv|\.vscode|tests/k8s_schema|tests/chart_tests/test_data)' # regex
-auto_update:
+update:
   cooldown_days: 7
 repos:
   - repo: local
@@ -53,7 +53,7 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.16.0"
+    rev: "v0.16.5"
     hooks:
       - id: ruff-check
         args:
@@ -89,7 +89,7 @@ repos:
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: v0.11.0.1-1
     hooks:
       - id: shellcheck
   - repo: https://github.com/astronomer/pre-commit-hooks
