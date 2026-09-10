@@ -422,9 +422,6 @@ custom_service_account_names = {
     "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-airflow-db-cronjob.yaml": {
-        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
-    },
     "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deploy-revisions-cronjob.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },

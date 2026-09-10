@@ -124,10 +124,14 @@ def test_secretstore_rule(kube_version):
     docs = render_chart(kube_version=kube_version, show_only=[ROLE_FILE])
     assert absent(docs[0])
 
-    docs = render_chart(kube_version=kube_version, values={"global": {"dataPlaneFailover": {"enabled": True}}}, show_only=[ROLE_FILE])
+    docs = render_chart(
+        kube_version=kube_version, values={"global": {"dataPlaneFailover": {"enabled": True}}}, show_only=[ROLE_FILE]
+    )
     assert present(docs[0])
 
-    docs = render_chart(kube_version=kube_version, values={"global": {"dataPlaneFailover": {"enabled": False}}}, show_only=[ROLE_FILE])
+    docs = render_chart(
+        kube_version=kube_version, values={"global": {"dataPlaneFailover": {"enabled": False}}}, show_only=[ROLE_FILE]
+    )
     assert absent(docs[0])
 ```
 
@@ -157,6 +161,7 @@ that template's doc in the existing `show_only` list over writing a new `render_
 
 ```python
 from tests.utils import get_all_features
+
 
 def test_with_all_features():
     docs = render_chart(values=get_all_features())

@@ -3,7 +3,14 @@ import re
 import pytest
 
 from tests import k8s_version_too_new, k8s_version_too_old
-from tests.utils import get_all_features, get_containers_by_name, get_pod_template, new_docs_by_kind, pod_managers
+from tests.utils import (
+    get_all_features,
+    get_containers_by_name,
+    get_env_vars_dict,
+    get_pod_template,
+    new_docs_by_kind,
+    pod_managers,
+)
 from tests.utils.chart import render_chart
 
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
@@ -297,3 +304,59 @@ class TestDuplicateEnvironment:
                 assert not self.check_env_vars_are_unique(container), (
                     f"[plane={plane_mode}] {doc['kind']}/{doc['metadata']['name']}/{name} has duplicate env vars"
                 )
+
+
+class TestSSLModeEnvironment:
+    # container names that read a different SSL-mode key by design (see global.ssl.grafana.sslmode)
+    SSLMODE_EXEMPT_CONTAINERS = {"bootstrapper"}  # grafana's db-bootstrapper container
+
+    @staticmethod
+    def _ssl_containers(docs):
+        for doc in docs:
+            if doc["kind"] not in pod_managers:
+                continue
+            doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+            for name, container in get_containers_by_name(doc, include_init_containers=True).items():
+                env = get_env_vars_dict(container.get("env") or [])
+                yield doc_id, name, env
+
+    @pytest.mark.parametrize(
+        "ssl,expected_mode",
+        [
+            (None, None),
+            ({"enabled": False, "mode": "require"}, None),
+            ({"enabled": True, "mode": ""}, None),
+            ({"enabled": True, "mode": "require"}, "require"),
+            ({"enabled": True, "mode": "verify-full"}, "verify-full"),
+            ({"enabled": True, "mode": "disable"}, "disable"),
+        ],
+        ids=["default", "disabled", "enabled-empty-mode", "enabled-require", "enabled-verify-full", "enabled-disable"],
+    )
+    def test_sslmode_follows_global_ssl_mode(self, ssl, expected_mode):
+        """
+        Every container's SSLMODE must equal global.ssl.mode, and be absent when SSL is off.
+        """
+        values = get_all_features()
+        if ssl is not None:
+            # preserve grafana's separate sslmode key so it keeps rendering its own value
+            values.setdefault("global", {})["ssl"] = {**ssl, "grafana": {"sslmode": "require"}}
+
+        docs = render_chart(values=values)
+
+        offenders = {}
+        for doc_id, name, env in self._ssl_containers(docs):
+            if name in self.SSLMODE_EXEMPT_CONTAINERS:
+                continue
+            if "SSLMODE" not in env:
+                continue
+            if env["SSLMODE"] != expected_mode:
+                offenders[f"{doc_id}/{name}"] = env["SSLMODE"]
+
+        if expected_mode is None:
+            assert not offenders, "SSL disabled but these containers still render SSLMODE:\n" + "\n".join(
+                f"  {key}: {value!r}" for key, value in sorted(offenders.items())
+            )
+        else:
+            assert not offenders, f"these containers render an SSLMODE other than global.ssl.mode={expected_mode!r}:\n" + "\n".join(
+                f"  {key}: {value!r}" for key, value in sorted(offenders.items())
+            )

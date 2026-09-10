@@ -174,3 +174,70 @@ class TestVectorConfigmap:
 
         assert "is_integer(.level)" in source
         assert ".level = to_string!(.level)" in source
+
+    def test_vector_configmap_filters_task_logs_out_of_k8s_logs_pipeline(self, kube_version):
+        """AF3 tasks write each line to both stdout and attempt=N.log, so the stdout
+        pipeline must drop the duplicate before the shared elasticsearch sink."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        config_yaml = doc["data"]["vector-config.yaml"]
+        config_dict = yaml.safe_load(config_yaml)
+        transforms = config_dict["transforms"]
+
+        assert "filter_k8s_task_logs:" in config_yaml
+        assert transforms["filter_k8s_task_logs"]["type"] == "filter"
+        assert transforms["filter_k8s_task_logs"]["inputs"] == ["transform_task_logs"]
+        assert transforms["filter_k8s_task_logs"]["condition"]["type"] == "vrl"
+        assert transforms["transform_add_timestamp"]["inputs"] == ["filter_k8s_task_logs"]
+
+    def test_vector_configmap_k8s_task_log_filter_drops_only_ke_task_pod_output(self, kube_version):
+        """The duplicate is the KubernetesExecutor task pod's stdout copy, whose file
+        copy resolves a release and carries a log_id. Both halves of the condition are
+        required: without is_ke_task_pod the drop also takes Celery worker stdout, and
+        without is_task_output it takes the KE pod's non-task lines."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        config_dict = yaml.safe_load(docs[0]["data"]["vector-config.yaml"])
+        source = config_dict["transforms"]["filter_k8s_task_logs"]["condition"]["source"]
+
+        assert "is_ke_task_pod = exists(.kubernetes.pod_labels.dag_id)" in source
+        assert "is_task_output = exists(.dag_id) && exists(.task_id) && exists(.run_id)" in source
+        assert "!(is_ke_task_pod && is_task_output)" in source
+
+    def test_vector_configmap_k8s_task_log_filter_keys_on_pod_label_not_payload(self, kube_version):
+        """Scheduler, dag-processor and triggerer lines about a task instance carry
+        dag_id/task_id/run_id in their payload, and their file-sourced equivalent is
+        dropped as dag_parse. Only the pod label distinguishes a KE task pod, so the
+        drop must not be decided by the payload field or the log_type tag alone."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        config_dict = yaml.safe_load(docs[0]["data"]["vector-config.yaml"])
+        source = config_dict["transforms"]["filter_k8s_task_logs"]["condition"]["source"]
+
+        assert ".kubernetes.pod_labels.dag_id" in source
+        assert '.log_type != "task"' not in source
+
+    def test_vector_configmap_file_pipeline_ships_all_task_logs(self, kube_version):
+        """The file pipeline is authoritative for task logs and must not filter on a
+        resolved release: extract_release returns "unknown" for every logs-named volume,
+        which on operator-managed deployments includes the Celery worker."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        config_dict = yaml.safe_load(docs[0]["data"]["vector-config.yaml"])
+        condition = config_dict["transforms"]["filter_task_logs_only"]["condition"]
+
+        assert condition == '.log_type == "task"'
