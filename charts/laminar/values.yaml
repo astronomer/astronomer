@@ -120,9 +120,6 @@ hypervisor:
       value: "480"
     - name: LAMINAR_APPLY_CUSTOM_DDL
       value: "true"
-    # explicitly true: Harmony uses server-side apply
-    - name: LAMINAR_HYPERVISOR__CONFIGMAP_METRICS_ENABLED
-      value: "true"
     # explicitly empty: Harmony uses server-side apply
     - name: LAMINAR_HYPERVISOR__DISABLED_METRICS_CSV
       value: ""

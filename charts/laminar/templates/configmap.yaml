@@ -14,6 +14,8 @@ data:
   laminar.env: |
     enable_healers: False
     enable_health_incidents: False
+    configmap_metrics_enabled: False
+    configmap_metrics_use_informer: False
 {{ .Values.envConfigMap.content | indent 4 }}
 {{- end }}
 {{- end }}
