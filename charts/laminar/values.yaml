@@ -128,8 +128,6 @@ hypervisor:
       value: ""
     - name: LAMINAR_HYPERVISOR__DRY_RUN_HEALERS_CSV
       value: "CatatonicWorkerTerminator"
-    - name: LAMINAR_HYPERVISOR__ENABLE_HEALERS
-      value: "True"
   livenessProbe:
     httpGet:
       port: 8000

@@ -12,6 +12,8 @@ metadata:
     {{- include "laminar.labels" (list $ "laminar") | nindent 4 }}
 data:
   laminar.env: |
+    enable_healers: False
+    enable_health_incidents: False
 {{ .Values.envConfigMap.content | indent 4 }}
 {{- end }}
 {{- end }}
