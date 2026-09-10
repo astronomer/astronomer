@@ -92,8 +92,8 @@ Call with (list $ $componentValues).
 - name: LAMINAR_DATABASE_URL
   valueFrom:
     secretKeyRef:
-      name: {{ $.Values.database.secretName }}
-      key: {{ $.Values.database.secretKey }}
+      name: {{ template "laminar.backend.secret" $ }}
+      key: connection
 {{- with $component.env }}
 {{ toYaml . }}
 {{- end }}
@@ -121,3 +121,24 @@ laminar.env volume.
     name: {{ .Values.envConfigMap.name }}
 {{- end }}
 {{- end -}}
+
+
+{{ define "laminar.bootstrapperServiceAccountName" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled (not .Values.backendSecretName) (not .Values.backendConnection) -}}
+{{- default (printf "%s-laminar-bootstrapper" .Release.Name ) .Values.serviceAccount.name }}
+{{- else -}}
+{{ default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "dbBootstrapper.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}
+{{- else -}}
+{{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "laminar.backend.secret" -}}
+{{ default (printf "%s-laminar-backend" .Release.Name) .Values.backendSecretName }}
+{{- end }}

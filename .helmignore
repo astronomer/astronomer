@@ -51,7 +51,6 @@
 __pycache__
 configs
 graph.json
-laminar
 prof
 test-results
 venv*

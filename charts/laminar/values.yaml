@@ -10,6 +10,10 @@ images:
     repository: core.harbor.astro-qa.link/astrocloud/laminar
     tag: latest
     pullPolicy: IfNotPresent
+  dbBootstrapper:
+    repository: quay.io/astronomer/ap-db-bootstrapper
+    tag: 2.0.23
+    pullPolicy: IfNotPresent
 
 priorityClassName: ~
 
@@ -31,11 +35,9 @@ podSecurityContext:
 # When create=true, a Secret is templated from connectionString.
 # When create=false, an existing Secret named `secretName` is referenced.
 # ---------------------------------------------------------------------------
-database:
-  create: false
-  secretName: astronomer-bootstrap
-  secretKey: connection
-  connectionString: ""
+databaseBootstrapper:
+  backendSecretName: ~
+  backendConnection: ~
 
 # ---------------------------------------------------------------------------
 # laminar.env config file mounted at /laminar.env (subPath laminar.env).

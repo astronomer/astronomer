@@ -1,0 +1,74 @@
+#######################################
+## Laminar DB Bootstrapper Hook Job  ##
+#######################################
+{{- if eq (include "laminar.enabled" .) "true" }}
+{{- if and (not .Values.databaseBootstrapper.backendSecretName) (not .Values.databaseBootstrapper.backendConnection) }}
+apiVersion: {{ include "apiVersion.batch" . }}
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-laminar-bootstrapper
+  labels:
+    tier: laminar
+    component: laminar-bootstrapper
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  {{- if .Values.global.argoCD.annotation.enabled }}
+    argocd.argoproj.io/sync-wave: "0"
+  {{- end }}
+spec:
+  template:
+    metadata:
+      labels:
+        tier: laminar
+        component: laminar-bootstrapper
+        release: {{ .Release.Name }}
+        app: laminar-bootstrapper
+        version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      {{- if .Values.global.istio.enabled }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+      {{- end }}
+    spec:
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      restartPolicy: Never
+      serviceAccountName: {{ template "laminar.bootstrapperServiceAccountName" . }}
+      {{- include "laminar.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: laminar-bootstrapper
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+          resources: {{- toYaml .Values.apiServer.resources | nindent 12 }}
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: DB_NAME
+              value: {{ .Release.Name }}-laminar
+            - name: SECRET_NAME
+              value: {{ template "laminar.backend.secret" . }}
+            {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
+            - name: SSLMODE
+              value: {{ .Values.global.ssl.mode }}
+            {{- end }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+{{- end }}
+{{- end }}
