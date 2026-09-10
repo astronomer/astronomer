@@ -14,6 +14,8 @@ astronomer:
         memory: 128Mi
   navigator:
     enabled: true
+  mcpServer:
+    enabled: true
   houston:
     logging:
       loggingSidecar:

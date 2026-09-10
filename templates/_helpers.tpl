@@ -36,6 +36,18 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ include "global.authBas
 {{- end }}
 {{- end }}
 
+{{/*
+APC-1767 / APC-1744: auth-url for the MCP server's own ingress, a sibling of
+houston.internalauthurl above rather than a reuse of it — the MCP gate targets
+a new Houston endpoint, /v1/authorization/agent, not /v1/authorization. The
+MCP server is control-plane/unified only (see mcpServer.enabled in
+charts/astronomer/templates/_helpers.yaml), so unlike internalauthurl this has
+no data-plane branch.
+*/}}
+{{ define "houston.mcpAgentAuthUrl" -}}
+nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization/agent
+{{- end }}
+
 
 {{/*
 DEPRECATED: containerd.configToml is retained as an escape hatch for operators who need

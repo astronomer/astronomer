@@ -963,6 +963,85 @@ Returns the string "true" or "false" — compare with eq.
 {{- and .Values.registry.enabled (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) -}}
 {{- end }}
 
+{{/*
+APC-1767: MCP server component helpers, following registry.name/fullname/enabled/
+serviceAccountName/image above as the closest existing pattern for a component with its
+own image, Deployment, Service and Ingress.
+*/}}
+
+{{/*
+Expand the name of the mcp-server component.
+*/}}
+{{- define "mcpServer.name" -}}
+{{- default "mcp-server" .Values.mcpServer.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "mcpServer.fullname" -}}
+{{- if .Values.mcpServer.fullnameOverride }}
+{{- .Values.mcpServer.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default "mcp-server" .Values.mcpServer.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Whether the MCP server should be rendered.
+Master switch mcpServer.enabled (default false) AND control-plane/unified only — it is a
+control-plane component (APC-1767 design doc), with no data-plane role at all, unlike
+registry.enabled's data/unified gating above.
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "mcpServer.enabled" -}}
+{{- and .Values.mcpServer.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) -}}
+{{- end }}
+
+{{ define "mcpServer.serviceAccountName" -}}
+{{- if and .Values.mcpServer.serviceAccount.create .Values.global.rbac.enabled -}}
+{{ default (printf "%s-mcp-server" .Release.Name) .Values.mcpServer.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.mcpServer.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "mcpServer.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-mcp-server:{{ .Values.images.mcpServer.tag }}
+{{- else -}}
+{{ .Values.images.mcpServer.repository }}:{{ .Values.images.mcpServer.tag }}
+{{- end }}
+{{- end }}
+
+{{/*
+Joins mcpServer.enabledGroups (a list) into the CSV the server's
+MCP_ENABLED_GROUPS env var expects (internal/config in apc-mcp-server). GroupCore
+is always on server-side regardless of this list, so it is deliberately not
+added here — see that repo's CLAUDE.md.
+*/}}
+{{- define "mcpServer.enabledGroups" -}}
+{{- join "," .Values.mcpServer.enabledGroups -}}
+{{- end }}
+
+{{/* Hostname, following grafana.url's convention (charts/grafana/templates/_helpers.yaml)
+of a hardcoded component prefix on global.baseDomain, not the fullname template. */}}
+{{ define "mcpServer.url" -}}
+mcp-server.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{/* Global customer-facing host, templated from controlPlaneHA.globalBaseDomain (CP HA only). */}}
+{{ define "mcpServer.globalUrl" -}}
+mcp-server.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- end }}
+
 
 {{/*
 Whether flightdeck resources should render. The store backs the CP↔DP version-guard CAS

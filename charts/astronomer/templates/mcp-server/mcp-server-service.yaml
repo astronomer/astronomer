@@ -1,0 +1,28 @@
+###########################
+## MCP Server Service    ##
+###########################
+{{- if eq (include "mcpServer.enabled" .) "true" }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "mcpServer.fullname" . }}
+  labels:
+    component: {{ template "mcpServer.name" . }}
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  type: ClusterIP
+  selector:
+    component: {{ template "mcpServer.name" . }}
+    tier: astronomer
+    release: {{ .Release.Name }}
+  ports:
+    - name: mcp-server-http
+      protocol: TCP
+      port: {{ .Values.ports.mcpServerHTTP }}
+      targetPort: {{ .Values.ports.mcpServerHTTP }}
+      appProtocol: http
+{{- end }}
