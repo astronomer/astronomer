@@ -12,10 +12,10 @@ metadata:
     {{- include "laminar.labels" (list $ "laminar") | nindent 4 }}
 data:
   laminar.env: |
-    enable_healers: False
-    enable_health_incidents: False
-    configmap_metrics_enabled: False
-    configmap_metrics_use_informer: False
+    harmony_enable_healers: False
+    harmony_enable_health_incidents: False
+    harmony_configmap_metrics_enabled: False
+    harmony_configmap_metrics_use_informer: False
 {{ .Values.envConfigMap.content | indent 4 }}
 {{- end }}
 {{- end }}

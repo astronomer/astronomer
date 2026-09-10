@@ -1,0 +1,22 @@
+################################
+## Laminar Hypervisor Service ##
+################################
+{{- if eq (include "laminar.enabled" .) "true" }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "laminar.fullname" (list $ "hypervisor") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
+    app.kubernetes.io/name: hypervisor
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "laminar.selectorLabels" (list $ "hypervisor") | nindent 4 }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.hypervisor.port }}
+      targetPort: http
+{{- end }}
