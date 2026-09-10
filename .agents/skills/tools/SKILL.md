@@ -43,9 +43,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--forgejo-namespace", required=True, help="...")
     return parser.parse_args()
 
+
 def main() -> None:
-    args = parse_args()          # aborts here on a bare run or --help, before any kubectl
-    ...                          # cluster mutations only happen after this line
+    args = parse_args()  # aborts here on a bare run or --help, before any kubectl
+    ...  # cluster mutations only happen after this line
 ```
 
 Now `--help` and a bare run both abort before touching the cluster, and any real run has to name its target namespaces on purpose.
