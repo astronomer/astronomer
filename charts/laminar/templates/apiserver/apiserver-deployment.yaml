@@ -46,6 +46,8 @@ spec:
             - name: http
               containerPort: {{ .Values.apiServer.port }}
           env:
+            - name: LAMINAR_API_URL
+              value: http://0.0.0.0:8000/laminar
             {{- include "laminar.env" (list $ .Values.apiServer) | nindent 12 }}
           {{- with .Values.apiServer.livenessProbe }}
           livenessProbe: {{- toYaml . | nindent 12 }}

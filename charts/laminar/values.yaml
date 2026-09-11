@@ -86,11 +86,7 @@ apiServer:
     limits:
       cpu: "1"
       memory: "1Gi"
-  env:
-    - name: LAMINAR_API_URL
-      value: http://0.0.0.0:8000/laminar
-    - name: LAMINAR_SCALING__DRY_RUN_STRATEGY
-      value: NEVER
+  env: []
   livenessProbe:
     httpGet:
       port: 8000
