@@ -104,6 +104,54 @@ automatically.
 **Action required**: Verify that the value carried over correctly after
 migration. The underlying Kubernetes Secret is unchanged.
 
+### PGBouncer client authentication carries over (scram-sha-256)
+
+This is not a values change — the migration script rewrites nothing here. It is
+documented because the SCRAM CPU cost travels into 2.x with the values, and the
+script prints an advisory to that effect.
+
+The Airflow Helm chart sets PGBouncer `auth_type = scram-sha-256`. That has been
+the upstream default since Airflow chart 1.12.0, and Astronomer inherited it in
+platform 0.37.4 when the bundled chart moved from `1.11.1-astro` to
+`1.15.5-astro`.
+
+Helm remains the default deployment mode on 2.x
+(`deployments.mode.helm.enabled: true`, with `deployments.mode.operator.enabled`
+driven by `global.airflowOperator.enabled`, which defaults to `false`). An
+existing deployment cannot be converted from Helm mode to operator mode, so every
+deployment that survives an upgrade stays Helm-rendered and
+`astronomer.houston.config.deployments.helm.airflow.pgbouncer.*` — `auth_type`
+and `extraIni` included — stays fully effective.
+
+**Impact**: With `scram-sha-256` and a plain-text password in the PGBouncer auth
+file, the proxy derives a SCRAM secret (PBKDF2, 4096 iterations) on **every
+client login**, and PGBouncer is single-threaded. Deployments with high connection
+churn — large DAG fan-outs, or many task pods starting at the same scheduled
+time — can saturate the PGBouncer CPU. Both PGBouncer probes are `tcpSocket`
+checks, so saturation produces no log output: only probe failures, container
+restarts during peak runs, and idle server connections accumulating on the
+database side.
+
+Upgrading a deployment re-renders and restarts its PGBouncer, which is when this
+surfaces.
+
+**Action required**:
+
+- Upgrade deployments outside their scheduled batch windows, and watch PGBouncer
+  CPU and container restarts through the first peak run.
+- Size PGBouncer for the login rate at peak, not the average. The default request
+  is `200m`.
+- If you need to remove the per-login PBKDF2 cost, set
+  `astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type: md5`
+  in your values file. This still works on 2.x for Helm-mode deployments. Note the
+  security trade-off: `md5` is weaker, though the credential is already plain text
+  in a Secret mounted on both sides of a namespace-restricted connection.
+
+**Exception**: deployments *created* in operator mode (2.1+, opt-in, new
+deployments only) don't use these values.
+`addPgBouncerComponentToSpec` in houston-api maps no `auth_type` onto the Airflow
+CR, and the operator uses `md5`.
+
 ### NATS JetStream enabled by default
 
 In 0.37.x, `global.nats.jetStream.enabled` defaults to `false`. In 2.x, it
@@ -437,6 +485,15 @@ global:
 ```
 
 This overrides the script's update to `6543`.
+
+### Does the PGBouncer `auth_type` override still work on 2.x?
+
+Yes, for Helm-mode deployments — which is every deployment that survives an
+upgrade, since Helm is the default mode and existing deployments can't be
+converted to operator mode. `astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type`
+and `extraIni` both still apply, and the migration script leaves them alone. Only
+deployments created in operator mode (2.1+) ignore them. See
+[PGBouncer client authentication carries over](#pgbouncer-client-authentication-carries-over-scram-sha-256).
 
 ### How does this differ from the 1.x-to-2.x migration?
 
