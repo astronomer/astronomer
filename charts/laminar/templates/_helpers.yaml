@@ -106,23 +106,19 @@ Call with (list $ $componentValues).
 laminar.env volumeMount (mounted read-only at /laminar.env).
 */}}
 {{- define "laminar.envVolumeMount" -}}
-{{- if .Values.envConfigMap.enabled -}}
 - name: laminar-env
   mountPath: /laminar.env
   subPath: laminar.env
   readOnly: true
-{{- end }}
 {{- end -}}
 
 {{/*
 laminar.env volume.
 */}}
 {{- define "laminar.envVolume" -}}
-{{- if .Values.envConfigMap.enabled -}}
 - name: laminar-env
   configMap:
     name: {{ .Values.envConfigMap.name }}
-{{- end }}
 {{- end -}}
 
 

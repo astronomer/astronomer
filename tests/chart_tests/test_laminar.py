@@ -1,34 +1,23 @@
 from pathlib import Path
 
+import jmespath
 import pytest
 
 from tests import git_root_dir, supported_k8s_versions
 from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
-LAMINAR_TEMPLATES = sorted(
-    str(x.relative_to(git_root_dir))
-    for x in Path(f"{git_root_dir}/charts/laminar/templates/").glob("**/*.yaml")
-    if not x.name.startswith("_")
-)
 
-LAMINAR_API_SERVER_TEMPLATES = sorted(
-    str(x.relative_to(git_root_dir))
-    for x in Path(f"{git_root_dir}/charts/laminar/templates/apiserver").glob("**/*.yaml")
-    if not x.name.startswith("_")
-)
+def _templates(subdir=""):
+    root = Path(f"{git_root_dir}/charts/laminar/templates/{subdir}")
+    return sorted(str(x.relative_to(git_root_dir)) for x in root.glob("**/*.yaml") if not x.name.startswith("_"))
 
-LAMINAR_HYPEVISOR_TEMPLATES = sorted(
-    str(x.relative_to(git_root_dir))
-    for x in Path(f"{git_root_dir}/charts/laminar/templates/hypervisor").glob("**/*.yaml")
-    if not x.name.startswith("_")
-)
 
-LAMINAR_HELM_HOOKS_TEMPLATES = sorted(
-    str(x.relative_to(git_root_dir))
-    for x in Path(f"{git_root_dir}/charts/laminar/templates/helm-hooks").glob("**/*.yaml")
-    if not x.name.startswith("_")
-)
+LAMINAR_TEMPLATES = _templates()
+LAMINAR_API_SERVER_TEMPLATES = _templates("apiserver")
+LAMINAR_HYPEVISOR_TEMPLATES = _templates("hypervisor")
+LAMINAR_HELM_HOOKS_TEMPLATES = _templates("helm-hooks")
+LAMINAR_ENV_CONFIGMAP_TEMPLATE = "charts/laminar/templates/configmap.yaml"
 
 
 @pytest.mark.parametrize(
@@ -65,9 +54,9 @@ class TestLaminar:
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
-            show_only=LAMINAR_HYPEVISOR_TEMPLATES,
+            show_only=[*LAMINAR_HYPEVISOR_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
         )
-        assert len(docs) == 10
+        assert len(docs) == 11
         hypervisor_deployment = docs[0]
         assert hypervisor_deployment["apiVersion"] == "apps/v1"
         assert hypervisor_deployment["metadata"]["name"] == "release-name-hypervisor"
@@ -105,6 +94,21 @@ class TestLaminar:
                 "targetPort": "http",
             },
         ]
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
+            docs[0],
+        )
+        expected_hypervisor_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/laminar.env",
+                    "name": "laminar-env",
+                    "subPath": "laminar.env",
+                    "readOnly": True,
+                }
+            ]
+        ]
+        assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
 
     @pytest.mark.parametrize("plane_mode", ["unified", "data"])
     def test_laminar_database_hook_job_defaults(self, kube_version, plane_mode):

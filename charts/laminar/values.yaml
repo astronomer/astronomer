@@ -50,8 +50,6 @@ databaseBootstrapper:
 # Set enabled=false to skip the mount entirely.
 # ---------------------------------------------------------------------------
 envConfigMap:
-  enabled: true
-  create: true
   name: laminar-env
   content: ~
 
