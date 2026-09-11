@@ -17,6 +17,11 @@ data:
     laminar_configmap_metrics_enabled: False
     laminar_configmap_metrics_use_informer: False
     laminar_dry_run_strategy: NEVER
-{{ .Values.envConfigMap.content | indent 4 }}
+    laminar_hypervisor_queued_task_second_threshold: 480
+    laminar_scaling_dry_run_strategy: NEVER
+    laminar_apply_custom_ddl: True
+    laminar_hypervisor_disabled_metrics_csv: ""
+    laminar_hypervisor_dry_run_healers_csv: "CatatonicWorkerTerminator"
+{{ .Values.envConfigMap.content | default "" | indent 4 }}
 {{- end }}
 {{- end }}

@@ -2,7 +2,7 @@
 ## Laminar DB Bootstrapper RoleBinding ##
 #########################################
 {{- if eq (include "laminar.enabled" .) "true" }}
-{{- if and .Values.global.rbac.enabled (not .Values.databaseBootstrapper.backendSecretName) (not .Values.databaseBootstrapper.backendConnection) }}
+{{- if and .Values.global.rbac.enabled (not .Values.databaseBootstrapper.backendSecretName) }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:

@@ -2,7 +2,7 @@
 ## Laminar DB Bootstrapper Hook Job  ##
 #######################################
 {{- if eq (include "laminar.enabled" .) "true" }}
-{{- if and (not .Values.databaseBootstrapper.backendSecretName) (not .Values.databaseBootstrapper.backendConnection) }}
+{{- if (not .Values.databaseBootstrapper.backendSecretName) }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:

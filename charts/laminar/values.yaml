@@ -32,7 +32,6 @@ podSecurityContext:
 
 databaseBootstrapper:
   backendSecretName: ~
-  backendConnection: ~
   # -- Service account configuration
   serviceAccount:
     # -- Specifies whether a service account should be created
@@ -54,7 +53,7 @@ envConfigMap:
   enabled: true
   create: true
   name: laminar-env
-  content: ""
+  content: ~
 
 serviceAccount:
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -112,18 +111,7 @@ hypervisor:
     limits:
       cpu: "1"
       memory: "1Gi"
-  env:
-    - name: LAMINAR_SCALING__DRY_RUN_STRATEGY
-      value: NEVER
-    - name: LAMINAR_HYPERVISOR__QUEUED_TASK_SECOND_THRESHOLD
-      value: "480"
-    - name: LAMINAR_APPLY_CUSTOM_DDL
-      value: "true"
-    # explicitly empty: Harmony uses server-side apply
-    - name: LAMINAR_HYPERVISOR__DISABLED_METRICS_CSV
-      value: ""
-    - name: LAMINAR_HYPERVISOR__DRY_RUN_HEALERS_CSV
-      value: "CatatonicWorkerTerminator"
+  env: []
   livenessProbe:
     httpGet:
       port: 8000

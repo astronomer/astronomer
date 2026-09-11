@@ -12,11 +12,12 @@ metadata:
     {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 rules:
   - apiGroups: ["airflow.apache.org"]
-    resources: ["airflows"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["airflow.apache.org"]
     resources:
       - airflows/status
+    verbs: ["get"]
+  - apiGroups: ["airflow.apache.org"]
+    resources:
+      - airflows
       - schedulers
       - statsds
       - triggerers
@@ -26,7 +27,7 @@ rules:
       - dagprocessors
       - eventschedulers
       - apiservers
-    verbs: ["get"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["airflow.apache.org"]
     resources:
       - schedulers/scale
@@ -38,7 +39,7 @@ rules:
       - dagprocessors/scale
       - eventschedulers/scale
       - apiservers/scale
-    verbs: ["*"]
+    verbs: ["get", "list", "watch", "patch"]
   - apiGroups: ["apps"]
     resources: ["deployments", "deployments/status", "deployments/scale"]
     verbs: ["get", "list", "watch", "patch"]
