@@ -191,7 +191,7 @@ spec:
                   name: astronomer-bootstrap
                   key: connection
             - name: DATABASE_SCHEMA_NAME
-              value: "houston$default"
+              value: {{ .Values.global.houston.database.schemaName | quote }}
             - name: CLUSTER_TABLE_NAME
               value: Cluster
             - name: DEPLOYMENT_TABLE_NAME
