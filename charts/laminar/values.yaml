@@ -30,11 +30,6 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
-# ---------------------------------------------------------------------------
-# Database connection (LAMINAR_DATABASE_URL).
-# When create=true, a Secret is templated from connectionString.
-# When create=false, an existing Secret named `secretName` is referenced.
-# ---------------------------------------------------------------------------
 databaseBootstrapper:
   backendSecretName: ~
   backendConnection: ~

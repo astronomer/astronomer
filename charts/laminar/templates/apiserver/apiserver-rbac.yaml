@@ -7,7 +7,7 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: laminar-apiserver-airflows
+  name: {{ .Release.Name }}-laminar-apiserver-airflows
   labels:
     {{- include "laminar.labels" (list $ "apiserver") | nindent 4 }}
 rules:
@@ -24,13 +24,13 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: laminar-apiserver-airflows
+  name: {{ .Release.Name }}-laminar-apiserver-airflows
   labels:
     {{- include "laminar.labels" (list $ "apiserver") | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: laminar-apiserver-airflows
+  name: {{ .Release.Name }}-laminar-apiserver-airflows
 subjects:
   - kind: ServiceAccount
     name: {{ include "laminar.serviceAccountName" (list $ "api-server") }}
@@ -39,7 +39,7 @@ subjects:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: laminar-apiserver-token-review
+  name: {{ .Release.Name }}-laminar-apiserver-token-review
   labels:
     {{- include "laminar.labels" (list $ "apiserver") | nindent 4 }}
 roleRef:
