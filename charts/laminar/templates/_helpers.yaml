@@ -124,10 +124,10 @@ laminar.env volume.
 
 
 {{ define "laminar.bootstrapperServiceAccountName" -}}
-{{- if and .Values.serviceAccount.create .Values.global.rbac.enabled (not .Values.backendSecretName) (not .Values.backendConnection) -}}
-{{- default (printf "%s-laminar-bootstrapper" .Release.Name ) .Values.serviceAccount.name }}
+{{- if and .Values.databaseBootstrapper.serviceAccount.create .Values.global.rbac.enabled (not .Values.databaseBootstrapper.backendSecretName) (not .Values.databaseBootstrapper.backendConnection) -}}
+{{- default (printf "%s-laminar-bootstrapper" .Release.Name ) .Values.databaseBootstrapper.serviceAccount.name }}
 {{- else -}}
-{{ default "default" .Values.serviceAccount.name }}
+{{ default "default" .Values.databaseBootstrapper.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
