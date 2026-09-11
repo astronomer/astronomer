@@ -7,7 +7,7 @@ tolerations: []
 
 images:
   laminar:
-    repository: core.harbor.astro-qa.link/astrocloud/laminar
+    repository: core.harbor.astro-qa.link/astrocloud/ap-laminar
     tag: latest
     pullPolicy: IfNotPresent
   dbBootstrapper:

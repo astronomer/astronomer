@@ -87,12 +87,7 @@ class TestLaminar:
         }
         assert hypervisor_service["spec"]["type"] == "ClusterIP"
         assert hypervisor_service["spec"]["ports"] == [
-            {
-                "name": "http",
-                "protocol": "TCP",
-                "port": 8000,
-                "targetPort": "http",
-            },
+            {"name": "http", "protocol": "TCP", "port": 8000, "targetPort": "http", "appProtocol": "http"},
         ]
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",

@@ -19,4 +19,5 @@ spec:
       protocol: TCP
       port: {{ .Values.apiServer.port }}
       targetPort: http
+      appProtocol: http
 {{- end }}
