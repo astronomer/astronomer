@@ -67,7 +67,7 @@ class TestLaminar:
             values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
             show_only=LAMINAR_HYPEVISOR_TEMPLATES,
         )
-        assert len(docs) == 9
+        assert len(docs) == 10
         hypervisor_deployment = docs[0]
         assert hypervisor_deployment["apiVersion"] == "apps/v1"
         assert hypervisor_deployment["metadata"]["name"] == "release-name-hypervisor"
@@ -85,7 +85,7 @@ class TestLaminar:
             "requests": {"cpu": "200m", "memory": "256Mi"},
             "limits": {"cpu": "1", "memory": "1Gi"},
         }
-        hypervisor_service = docs[3]
+        hypervisor_service = docs[4]
         assert hypervisor_service["kind"] == "Service"
         assert hypervisor_service["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_service["metadata"]["labels"] == {
