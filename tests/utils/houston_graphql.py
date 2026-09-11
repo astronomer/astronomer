@@ -140,6 +140,7 @@ def upsert_deployment(
     https_username: str | None = None,
     https_token: str | None = None,
     git_sync_repo_fetch_mode: str | None = None,
+    git_sync_repo_share_mode: str | None = None,
     deployment_uuid: str | None = None,
 ) -> dict:
     """
@@ -190,6 +191,12 @@ def upsert_deployment(
         # no external webhook needs to be delivered for the relay to clone and become ready.
         if git_sync_repo_fetch_mode:
             dag_deployment["gitSyncRepoFetchMode"] = git_sync_repo_fetch_mode
+        # git-sync repo-share mode: "git_daemon" (default) or "shared_volume". shared_volume
+        # populates a PVC (git-repo-contents) via a pre-install/pre-upgrade Helm hook Job instead
+        # of each Airflow component running its own git-sync sidecar against a per-pod git-daemon
+        # connection (PINF-1115/1190).
+        if git_sync_repo_share_mode:
+            dag_deployment["gitSyncRepoShareMode"] = git_sync_repo_share_mode
         variables["dagDeployment"] = dag_deployment
     query = """
     mutation UpsertDeployment(
