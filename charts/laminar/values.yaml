@@ -118,8 +118,6 @@ hypervisor:
       cpu: "1"
       memory: "1Gi"
   env:
-    - name: LAMINAR_API_URL
-      value: http://0.0.0.0:8000/laminar
     - name: LAMINAR_SCALING__DRY_RUN_STRATEGY
       value: NEVER
     - name: LAMINAR_HYPERVISOR__QUEUED_TASK_SECOND_THRESHOLD

@@ -85,6 +85,8 @@ Call with (list $ $componentValues).
 {{- define "laminar.env" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
+- name: LAMINAR_API_URL
+  value: http://0.0.0.0:8000/laminar
 - name: LAMINAR_KUBE_NAMESPACE
   valueFrom:
     fieldRef:
