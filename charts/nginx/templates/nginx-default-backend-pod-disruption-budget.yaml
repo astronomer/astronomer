@@ -1,6 +1,7 @@
 #########################################################
 ## Astronomer Nginx Default Backend Pod Disruption Budget
 #########################################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if and .Values.defaultBackend.enabled .Values.global.podDisruptionBudgets.enabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
@@ -17,4 +18,5 @@ spec:
       tier: {{ template "nginx.name" . }}
       component: default-backend
       release: {{ .Release.Name }}
+{{- end }}
 {{- end }}

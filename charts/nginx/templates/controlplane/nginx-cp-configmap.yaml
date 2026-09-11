@@ -1,6 +1,7 @@
 ###################################
 ## NGINX Control Plane ConfigMap ##
 ###################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
@@ -35,4 +36,5 @@ data:
     "$request_length", "responseSize": "$upstream_response_length", "userAgent": "$http_user_agent",
     "remoteIp": "$remote_addr", "referer": "$http_referer", "latency": "$upstream_response_time
     s", "protocol":"$server_protocol"}}'
+{{- end }}
 {{- end }}

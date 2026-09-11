@@ -1,6 +1,7 @@
 ##################################
 ## NGINX Data Plane Config Role ##
 ##################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if .Values.global.rbac.enabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Role
@@ -68,5 +69,6 @@ rules:
     verbs:
       - create
       - patch
+{{- end }}
 {{- end }}
 {{- end }}

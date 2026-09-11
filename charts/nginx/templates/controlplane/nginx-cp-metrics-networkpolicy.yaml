@@ -1,6 +1,7 @@
 ###############################################################
 ## Nginx Control Plane controller metrics pods NetworkPolicy ##
 ###############################################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if .Values.global.networkPolicy.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
@@ -32,5 +33,6 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.ports.metrics }}
+{{- end }}
 {{- end }}
 {{- end }}

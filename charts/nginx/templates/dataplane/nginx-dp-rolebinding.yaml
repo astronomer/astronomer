@@ -1,6 +1,7 @@
 #####################################################
 ## NGINX Data Plane RoleBinding/ClusterRoleBinding ##
 #####################################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if eq .Values.global.plane.mode "data" }}
 {{- if .Values.global.rbac.enabled }}
 kind: ClusterRoleBinding
@@ -20,5 +21,6 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "nginx.serviceAccountName" . }}-dp
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
 {{- end }}
