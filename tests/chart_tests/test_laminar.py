@@ -3,11 +3,30 @@ from pathlib import Path
 import pytest
 
 from tests import git_root_dir, supported_k8s_versions
+from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
 LAMINAR_TEMPLATES = sorted(
     str(x.relative_to(git_root_dir))
     for x in Path(f"{git_root_dir}/charts/laminar/templates/").glob("**/*.yaml")
+    if not x.name.startswith("_")
+)
+
+LAMINAR_API_SERVER_TEMPLATES = sorted(
+    str(x.relative_to(git_root_dir))
+    for x in Path(f"{git_root_dir}/charts/laminar/templates/apiserver").glob("**/*.yaml")
+    if not x.name.startswith("_")
+)
+
+LAMINAR_HYPEVISOR_TEMPLATES = sorted(
+    str(x.relative_to(git_root_dir))
+    for x in Path(f"{git_root_dir}/charts/laminar/templates/hypervisor").glob("**/*.yaml")
+    if not x.name.startswith("_")
+)
+
+LAMINAR_HELM_HOOKS_TEMPLATES = sorted(
+    str(x.relative_to(git_root_dir))
+    for x in Path(f"{git_root_dir}/charts/laminar/templates/helm-hooks").glob("**/*.yaml")
     if not x.name.startswith("_")
 )
 
@@ -24,7 +43,7 @@ class TestLaminar:
         laminar_docs = [
             doc for doc in docs if str(doc.get("metadata", {}).get("labels", {}).get("chart", "")).startswith("laminar-")
         ]
-        assert laminar_docs == []
+        assert not laminar_docs
 
     @pytest.mark.parametrize("plane_mode", ["control", "unified"])
     def test_laminar_gated_by_plane_mode(self, kube_version, plane_mode):
@@ -39,3 +58,50 @@ class TestLaminar:
             assert len(docs) == 0
         else:
             assert len(docs) > 0
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_hypervisor_defaults_when_enabled(self, kube_version, plane_mode):
+        """Test that laminar renders only when the plane is data or unified."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            show_only=LAMINAR_HYPEVISOR_TEMPLATES,
+        )
+        assert len(docs) == 9
+        hypervisor_deployment = docs[0]
+        assert hypervisor_deployment["apiVersion"] == "apps/v1"
+        assert hypervisor_deployment["metadata"]["name"] == "release-name-hypervisor"
+        assert hypervisor_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-hypervisor"
+        c_by_name = get_containers_by_name(hypervisor_deployment, include_init_containers=True)
+        assert len(c_by_name) == 1
+        assert c_by_name["hypervisor"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 65534,
+        }
+        assert c_by_name["hypervisor"]["resources"] == {
+            "requests": {"cpu": "200m", "memory": "256Mi"},
+            "limits": {"cpu": "1", "memory": "1Gi"},
+        }
+        hypervisor_service = docs[3]
+        assert hypervisor_service["kind"] == "Service"
+        assert hypervisor_service["metadata"]["name"] == "release-name-hypervisor"
+        assert hypervisor_service["metadata"]["labels"] == {
+            "app.kubernetes.io/component": "hypervisor",
+            "chart": "laminar-0.12.0",
+            "release": "release-name",
+            "heritage": "Helm",
+            "plane": plane_mode,
+            "app.kubernetes.io/name": "hypervisor",
+        }
+        assert hypervisor_service["spec"]["type"] == "ClusterIP"
+        assert hypervisor_service["spec"]["ports"] == [
+            {
+                "name": "http",
+                "protocol": "TCP",
+                "port": 8000,
+                "targetPort": "http",
+            },
+        ]

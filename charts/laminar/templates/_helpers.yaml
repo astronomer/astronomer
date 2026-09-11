@@ -59,8 +59,8 @@ Common metadata labels for a component. Call with (list $ "<component>").
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 app.kubernetes.io/component: {{ $component }}
-chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
 release: {{ $.Release.Name }}
+chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
 heritage: {{ $.Release.Service }}
 plane: {{ $.Values.global.plane.mode }}
 {{- end -}}
