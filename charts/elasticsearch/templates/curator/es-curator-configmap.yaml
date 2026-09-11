@@ -3,6 +3,7 @@
 #######################
 {{- if .Values.curator.enabled }}
 {{- if eq (include "logging.enabled" .) "true" }}
+{{- include "curator.age.validate" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -33,11 +34,19 @@ data:
           ignore_empty_list: True
           disable_action: False
         filters:
+        # `unit` must not be finer than the finest component of `timestring`, or curator
+        # deletes the index it is still writing to. See PINF-578 and the granularity rule
+        # documented on curator.age in the elasticsearch chart values.yaml.
+        {{- if .Values.curator.age.unit }}
+        # unit set explicitly via curator.age.unit
+        {{- else }}
+        # unit derived from timestring granularity (curator.age.unit is unset)
+        {{- end }}
         - filtertype: age
           source: name
           direction: older
           timestring: {{ template "curator.indexPattern" . }}
-          unit: {{ .Values.curator.age.unit }}
+          unit: {{ include "curator.age.unit" . }}
           unit_count: {{ .Values.curator.age.unit_count }}
           field:
           stats_result:
