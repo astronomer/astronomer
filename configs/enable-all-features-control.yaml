@@ -5,6 +5,8 @@ astronomer:
     enabled: true
   navigator:
     enabled: true
+  mcpServer:
+    enabled: true
   houston:
     cleanupAirflowDb:
       enabled: true

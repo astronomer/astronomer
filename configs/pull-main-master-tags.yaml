@@ -30,6 +30,13 @@ astronomer:
       pullPolicy: IfNotPresent
       repository: quay.io/astronomer/ap-houston-api
       tag: main
+    # APC-1767: manual entry -- this file is hand-maintained, not generated, so a new
+    # component's floating dev tag needs adding here explicitly. apc-mcp-server's default
+    # branch is main (confirmed via that repo's git remotes), matching astroUI/houston above.
+    mcpServer:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-mcp-server
+      tag: main
     registry:
       pullPolicy: IfNotPresent
       repository: quay.io/astronomer/ap-registry

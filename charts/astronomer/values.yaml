@@ -38,6 +38,16 @@ images:
     repository: quay.io/astronomer/ap-vector
     tag: "0.56.0-3"
     pullPolicy: IfNotPresent
+  # APC-1767: the apc-mcp-server repo's own image. Unlike navigator/dp-link (which run
+  # inside houston's image, see images.houston above), the MCP server is a separate binary
+  # from its own repo and needs its own entry here — picked up automatically by
+  # astronomer-bom-generator, bin/show-docker-images.py and bin/sign-images.py, all of
+  # which read every key under this images: map generically. Tag is a placeholder until
+  # that repo publishes its first real image.
+  mcpServer:
+    repository: quay.io/astronomer/ap-mcp-server
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -999,6 +1009,72 @@ navigator:
   # @default -- 604800
   flightCleanupTtl: 604800
 
+# APC-1767: the Otto/APC MCP server (apc-mcp-server repo). Control-plane / unified only —
+# see mcpServer.enabled in charts/astronomer/templates/_helpers.yaml.
+mcpServer:
+  # -- Enable the MCP server deployment (control plane or unified mode only)
+  # @default -- false
+  enabled: false
+
+  # -- Number of MCP server replicas. The server is stateless (no session affinity, no
+  # shared cache) by design, so this is safely > 1.
+  # @default -- 2
+  replicas: 2
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Service account configuration
+  serviceAccount:
+    # -- Specifies whether a service account should be created
+    create: true
+    # -- Annotations to add to the service account
+    annotations: {}
+    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+    name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
+
+  # -- Tool groups to enable, beyond the always-on core group (internal/toolreg.Group in
+  # apc-mcp-server). Joined into the MCP_ENABLED_GROUPS env var — see mcpServer.enabledGroups
+  # helper. Disabling a group here removes its tools from the catalog entirely, not just from
+  # what's visible to a given caller.
+  # @default -- ["platform_read", "platform_write"]
+  enabledGroups:
+    - platform_read
+    - platform_write
+
+  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  env: []
+
+  # For example
+  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
+  # and then set:
+  #
+  # secret:
+  # - envName: "SOME_ENV_VAR"
+  #   secretName: "my-secret"
+  #   secretKey: "connection"
+  secret: []
+
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # -- Custom liveness probe configuration (overrides default: httpGet /healthz)
+  livenessProbe: {}
+
+  # -- Custom readiness probe configuration (overrides default: httpGet /readyz)
+  readinessProbe: {}
+
+  # -- Custom startup probe configuration (overrides default: httpGet /readyz)
+  startupProbe: {}
+
 registry:
   enabled: true
   # flag to bypass secure (tls) authentication to astronomer registry
@@ -1112,3 +1188,5 @@ ports:
   registryScrape: 5001
   commanderSidecarHTTP: 8080
   commanderSidecarGRPC: 9090
+  # Matches apc-mcp-server's LISTEN_ADDR default (cmd/apc-mcp-server/main.go).
+  mcpServerHTTP: 8080

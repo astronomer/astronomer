@@ -1,0 +1,84 @@
+##########################
+## MCP Server Ingress   ##
+##########################
+{{- if eq (include "mcpServer.enabled" .) "true" }}
+{{- if .Values.global.baseDomain }}
+{{- if .Values.global.authSidecar.enabled }}
+{{/*
+APC-1768: BYO-ingress (auth-sidecar) mode is explicitly out of scope for v1 of the MCP
+server. Every other ingress in this chart falls back to global.extraAnnotations only in
+this mode (see grafana-ingress.yaml), which is safe for them because there IS a platform
+nginx auth_request gate configured some other way, or the component tolerates being
+reachable ungated. Neither is true here: the MCP server holds no auth of its own by design
+(design doc, Security section) — an ingress with no auth-url annotation would expose every
+platform-write tool with zero authentication. So this fails the render outright instead of
+silently producing that ingress.
+
+This "fail" only executes inside the already-true mcpServer.enabled branch above, and
+mcpServer.enabled defaults to false (see charts/astronomer/values.yaml) — so a BYO-ingress
+install that has not opted into the MCP server renders exactly as it did before this file
+existed. Flipping mcpServer.enabled on under authSidecar.enabled is the only way to hit this,
+and that combination has no supported answer yet (APC-1768), so failing loudly here is the
+correct behavior, not a bug to work around.
+*/}}
+{{- fail "mcpServer.enabled is not supported with global.authSidecar.enabled (BYO-ingress mode) in this release — see APC-1768. Disable mcpServer or the auth sidecar." }}
+{{- else }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ template "mcpServer.fullname" . }}-ingress
+  labels:
+    tier: astronomer
+    component: {{ template "mcpServer.name" . }}-ingress
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- if .Values.global.extraAnnotations }}
+    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    {{- include "houston.mcpAgentAuthUrl" . | indent 4 }}
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "global.authBaseDomain" . }}/login
+    # X-Astro-Identity is the identity header the shared MCP test harness's fake gate sets
+    # on a successful check (internal/mcptest/gate.go, apc-mcp-server repo) — confirm this
+    # against /v1/authorization/agent's actual response headers once APC-1744 lands; it may
+    # need more than one header forwarded.
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Astro-Identity
+spec:
+  {{- if .Values.global.tlsSecret }}
+  tls:
+    - secretName: {{ .Values.global.tlsSecret }}
+      hosts:
+        - {{ template "mcpServer.url" . }}
+        {{- if .Values.global.controlPlaneHA.enabled }}
+        - {{ template "mcpServer.globalUrl" . }}
+        {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ template "mcpServer.url" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "mcpServer.fullname" . }}
+                port:
+                  name: mcp-server-http
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - host: {{ template "mcpServer.globalUrl" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "mcpServer.fullname" . }}
+                port:
+                  name: mcp-server-http
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
