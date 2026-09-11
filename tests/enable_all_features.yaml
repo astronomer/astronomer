@@ -69,6 +69,8 @@ global:
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true
+  workerQueues:
+    enabled: true
   logging:
     loggingSidecar:
       enabled: true

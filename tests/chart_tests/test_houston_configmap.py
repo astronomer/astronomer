@@ -277,6 +277,36 @@ def test_houston_configmap_with_config_syncer_disabled():
     assert "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
 
 
+def test_houston_configmap_worker_queues_disabled_by_default():
+    """Worker queues currently ships off by default."""
+    docs = render_chart(
+        values={},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    worker_queues = prod_yaml["deployments"]["workerQueues"]
+    assert worker_queues["enabled"] is False
+    assert worker_queues["maxPerDeployment"] == 10
+
+
+def test_houston_configmap_worker_queues_enabled():
+    """Validate worker queues can be enabled and the cap overridden."""
+    docs = render_chart(
+        values={"global": {"workerQueues": {"enabled": True, "maxPerDeployment": 5}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    worker_queues = prod_yaml["deployments"]["workerQueues"]
+    assert worker_queues["enabled"] is True
+    assert worker_queues["maxPerDeployment"] == 5
+
+
 def test_houston_configmap_with_vector_index_prefix_defaults():
     """Validate the houston configmap and its embedded data with configSyncer
     disabled."""
