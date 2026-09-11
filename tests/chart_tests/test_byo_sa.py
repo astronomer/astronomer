@@ -371,6 +371,8 @@ def test_default_serviceaccount_names(template_name):
             "enabled": True,
             "globalBaseDomain": "example.com",
         }
+    if "charts/laminar/" in template_name:
+        default_serviceaccount_names_overrides["global"]["laminar"] = {"enabled": True}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
     docs = render_chart(show_only=template_name, values=values)
