@@ -19,8 +19,7 @@ Call with (list $ "<component>"), e.g. (list $ "api-server").
 {{- end -}}
 
 {{/*
-ServiceAccount name for a component. Mirrors prometheus.serviceAccountName.
-Call with (list $ "<component>").
+ServiceAccount name for a component. Call with (list $ "<component>").
 */}}
 {{- define "laminar.serviceAccountName" -}}
 {{- $ := index . 0 -}}
@@ -85,6 +84,8 @@ Call with (list $ $componentValues).
 {{- define "laminar.env" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
+- name: LAMINAR_ENVIRONMENT
+  value: apc
 - name: LAMINAR_API_URL
   value: http://0.0.0.0:8000/laminar
 - name: LAMINAR_KUBE_NAMESPACE
