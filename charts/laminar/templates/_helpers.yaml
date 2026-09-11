@@ -25,7 +25,7 @@ ServiceAccount name for a component. Call with (list $ "<component>").
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 {{- if and $.Values.serviceAccount.create $.Values.global.rbac.enabled -}}
-{{- include "laminar.fullname" (list $ $component) -}}
+{{- default (include "laminar.fullname" (list $ $component)) $.Values.serviceAccount.name -}}
 {{- else -}}
 default
 {{- end -}}

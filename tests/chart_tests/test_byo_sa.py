@@ -518,6 +518,18 @@ custom_service_account_names = {
     "charts/kube-state/templates/kube-state-deployment.yaml": {
         "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
+    "charts/laminar/templates/apiserver/apiserver-deployment.yaml": {
+        "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
+        "laminar": {"serviceAccount": {"create": True, "name": "prothean"}},
+    },
+    "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml": {
+        "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
+        "laminar": {"serviceAccount": {"create": True, "name": "prothean"}},
+    },
+    "charts/laminar/templates/helm-hooks/laminar-bootstrapper-job.yaml": {
+        "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
+        "laminar": {"databaseBootstrapper": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    },
 }
 
 # Pod manager templates whose service account name is fixed (not a configurable
