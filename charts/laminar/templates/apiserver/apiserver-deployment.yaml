@@ -57,6 +57,9 @@ spec:
           {{- with .Values.apiServer.readinessProbe }}
           readinessProbe: {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with .Values.apiServer.startupProbe }}
+          startupProbe: {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumeMounts:
             {{- include "laminar.envVolumeMount" . | nindent 12 }}
       volumes:

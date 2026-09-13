@@ -93,6 +93,12 @@ apiServer:
     initialDelaySeconds: 5
     periodSeconds: 10
     failureThreshold: 3
+  startupProbe:
+    httpGet:
+      port: 8000
+      path: /laminar/healthz
+    periodSeconds: 10
+    failureThreshold: 30
 
 # ---------------------------------------------------------------------------
 # hypervisor component
@@ -124,3 +130,9 @@ hypervisor:
     initialDelaySeconds: 5
     periodSeconds: 10
     failureThreshold: 3
+  startupProbe:
+    httpGet:
+      port: 8000
+      path: /laminar/healthz
+    periodSeconds: 10
+    failureThreshold: 30

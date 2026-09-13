@@ -57,6 +57,21 @@ spec:
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.apiServer.resources | nindent 12 }}
+          {{- if .Values.databaseBootstrapper.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.databaseBootstrapper.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.databaseBootstrapper.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.databaseBootstrapper.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.databaseBootstrapper.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.databaseBootstrapper.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            exec:
+              command: ["true"]
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:
