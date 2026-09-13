@@ -192,6 +192,7 @@ class TestServiceAccounts:
                 "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
                 "airflowOperator": {"enabled": True},
+                "laminar": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": False}},
@@ -206,6 +207,7 @@ class TestServiceAccounts:
             "alertmanager": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
+            "laminar": {"serviceAccount": {"create": False}, "databaseBootstrapper": {"serviceAccount": {"create": False}}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
             "prometheus-node-exporter": {"serviceAccount": {"create": False}},
             "pgbouncer": {"serviceAccount": {"create": False}},
@@ -244,6 +246,7 @@ class TestServiceAccounts:
                 "nodeExporter": {"enabled": True},
                 "pgbouncer": {"enabled": True},
                 "airflowOperator": {"enabled": True},
+                "laminar": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -275,6 +278,7 @@ class TestServiceAccounts:
                 "serviceAccount": {"create": True, "annotations": annotations},
                 "webhook": {"serviceAccount": {"create": True, "annotations": annotations}},
             },
+            "laminar": {"serviceAccount": {"create": False}, "databaseBootstrapper": {"serviceAccount": {"create": False}}},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -367,6 +371,8 @@ def test_default_serviceaccount_names(template_name):
             "enabled": True,
             "globalBaseDomain": "example.com",
         }
+    if "charts/laminar/" in template_name:
+        default_serviceaccount_names_overrides["global"]["laminar"] = {"enabled": True}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
     docs = render_chart(show_only=template_name, values=values)
@@ -513,6 +519,18 @@ custom_service_account_names = {
     },
     "charts/kube-state/templates/kube-state-deployment.yaml": {
         "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/laminar/templates/apiserver/apiserver-deployment.yaml": {
+        "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
+        "laminar": {"serviceAccount": {"create": True, "name": "prothean"}},
+    },
+    "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml": {
+        "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
+        "laminar": {"serviceAccount": {"create": True, "name": "prothean"}},
+    },
+    "charts/laminar/templates/helm-hooks/laminar-bootstrapper-job.yaml": {
+        "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
+        "laminar": {"databaseBootstrapper": {"serviceAccount": {"create": True, "name": "prothean"}}},
     },
 }
 
