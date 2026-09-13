@@ -34,9 +34,14 @@ spec:
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
         {{- include "global.podLabels" . | nindent 8 }}
-      {{- if .Values.global.istio.enabled }}
+      {{- if or .Values.global.istio.enabled .Values.global.podAnnotations }}
       annotations:
+        {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
+        {{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
       {{- end }}
     spec:
       securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}

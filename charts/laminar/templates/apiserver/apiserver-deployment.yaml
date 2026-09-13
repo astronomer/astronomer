@@ -20,6 +20,10 @@ spec:
       labels:
         {{- include "laminar.selectorLabels" (list $ "apiserver") | nindent 8 }}
         {{- include "global.podLabels" . | nindent 8 }}
+      {{- if .Values.global.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+      {{- end }}
     spec:
       restartPolicy: Always
       serviceAccountName: {{ include "laminar.serviceAccountName" (list $ "api-server") }}
