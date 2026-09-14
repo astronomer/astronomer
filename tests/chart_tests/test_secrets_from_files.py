@@ -1170,3 +1170,67 @@ class TestSecretFilePermissions:
             if dict(loader_secret_volumes(spec))
         }
         assert groups == {65532}
+
+
+# The four wait-for-db init containers include `houston_environment`, so they
+# inherit HOUSTON_SECRETS_FROM_FILES and the <VAR>_FILE paths, but they
+# deliberately get no secret mount: they run a shell-only entrypoint (nc and wget
+# waits) that reads none of those vars, so the Node loader never executes there.
+#
+# That was merely redundant while the loader logged an unreadable file and carried
+# on. Now that it fails closed, a container in this state *would* crash-loop the
+# pod if it ever ran Node. None of these can today -- verified: houston-api's
+# bin/entrypoint is pure shell and never invokes node. This test exists so the set
+# cannot grow silently, because the next container added in this shape might not
+# be shell-only, and that is a decision rather than an accident.
+CONTAINERS_EXEMPT_FROM_FILE_PATH_MOUNTS = {
+    ("release-name-houston", "wait-for-db"),
+    ("release-name-houston-worker", "wait-for-db"),
+    ("release-name-houston-db-migrations", "wait-for-db"),
+    ("release-name-houston-upgrade-deployments", "wait-for-db"),
+}
+
+SHELL_ENTRYPOINT = "/houston/bin/entrypoint"
+
+
+def test_every_file_env_var_points_inside_a_mount_or_is_a_known_shell_container():
+    """A `<VAR>_FILE` path with no mount behind it is now fatal, not ignored.
+
+    The loader fails closed on a file it was told to read but cannot, so a
+    container that advertises a path it never mounts is a crash loop waiting for
+    someone to change its command. The exemptions are all shell-only containers
+    that never run the loader, and this asserts that -- if one stops being
+    shell-only, it has to be dealt with here.
+    """
+    docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+    unsatisfied = {}
+    for name, spec in houston_family_pod_specs(docs):
+        for container in all_containers(spec):
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            file_paths = {k: v for k, v in env_vars.items() if k.endswith("_FILE") and v}
+            if not file_paths:
+                continue
+
+            mount_paths = [m["mountPath"].rstrip("/") for m in container.get("volumeMounts") or []]
+            missing = sorted(
+                var for var, path in file_paths.items() if not any(path == m or path.startswith(m + "/") for m in mount_paths)
+            )
+            if missing:
+                unsatisfied[(name, container["name"])] = (missing, container.get("command") or [])
+
+    unexpected = [
+        f"{workload}/{container} sets {missing} but mounts no volume containing those paths"
+        for (workload, container), (missing, _cmd) in unsatisfied.items()
+        if (workload, container) not in CONTAINERS_EXEMPT_FROM_FILE_PATH_MOUNTS
+    ]
+    assert unexpected == [], "\n".join(unexpected)
+
+    # The exemption only holds because these containers never run the loader.
+    for key in CONTAINERS_EXEMPT_FROM_FILE_PATH_MOUNTS:
+        assert key in unsatisfied, f"{key} no longer sets an unmounted _FILE path; drop it from the exemption set"
+        _missing, command = unsatisfied[key]
+        assert command and command[0] == SHELL_ENTRYPOINT, (
+            f"{key} is exempt only because it runs the shell entrypoint, but its command is {command}. "
+            "If it now runs Node, the loader will fail closed on those unmounted paths."
+        )
