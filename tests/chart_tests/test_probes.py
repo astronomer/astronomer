@@ -100,6 +100,12 @@ class TestDefaultProbes:
                 "port": 8081,
             }
         },
+        "api-server_apiserver": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+        },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {
             "failureThreshold": 5,
@@ -146,6 +152,12 @@ class TestDefaultProbes:
             "timeoutSeconds": 3,
             "periodSeconds": 30,
             "failureThreshold": 5,
+        },
+        "hypervisor_hypervisor": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
         },
         "kube-state_kube-state": {"httpGet": {"path": "/healthz", "port": 8080}, "initialDelaySeconds": 5, "timeoutSeconds": 5},
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
@@ -224,6 +236,12 @@ class TestDefaultProbes:
                 "port": 8081,
             }
         },
+        "api-server_apiserver": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+        },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {"httpGet": {"path": "/healthz", "port": 8880}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "elasticsearch-client_es-client": {
@@ -264,6 +282,12 @@ class TestDefaultProbes:
             "timeoutSeconds": 3,
             "periodSeconds": 10,
             "failureThreshold": 5,
+        },
+        "hypervisor_hypervisor": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
         },
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 6543}},
