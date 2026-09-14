@@ -46,6 +46,12 @@ dependencies:
     tags:
       - monitoring
 
+  # APC Laminar
+  - name: laminar
+    condition: global.laminar.enabled
+    tags:
+      - laminar
+
   # Logging stack
   - name: elasticsearch
     condition: global.elasticsearch.enabled

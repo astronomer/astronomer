@@ -171,6 +171,16 @@ gcp_cloud_logging:
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
 {{- end }}
 
+{{/*
+Percent-encode a value for a URI userinfo or path component. urlquery targets
+query strings, where a space is "+", but in userinfo a "+" is a literal plus, so
+spaces have to be %20. A real "+" is already %2B by then and the replace leaves
+it alone.
+*/}}
+{{ define "houston.uriComponent" -}}
+{{ urlquery . | replace "+" "%20" }}
+{{- end }}
+
 {{ define "houston.airflowBackendSecret" -}}
 {{ default (printf "%s" (include "houston.backendSecret" .)) .Values.houston.airflowBackendSecretName }}
 {{- end }}

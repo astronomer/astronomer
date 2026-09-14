@@ -15,6 +15,19 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainPrefix: ""    # cluster-id
 
+  # Houston's database. Global rather than under the astronomer subchart because
+  # the prometheus and prometheus-postgres-exporter subcharts read these too,
+  # and Helm does not share one subchart's values with another.
+  houston:
+    database:
+      # The Postgres schema Houston's tables live in.
+      #
+      # Existing installs must leave this alone: their tables are already in
+      # houston$default, and changing it points Houston at an empty schema.
+      # Set it only on a fresh install, e.g. to "public" when the database does
+      # not permit creating schemas.
+      schemaName: "houston$default"
+
   # Shared secret for internal service-to-service authentication (e.g. pilot -> commander gRPC).
   # Auto-generated on install if empty; preserved across upgrades.
   clusterLocalServiceAuth:
@@ -93,7 +106,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.22
+      tag: 2.0.23
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
@@ -210,7 +223,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.31.4
+    tag: 1.31.5
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -302,6 +315,9 @@ global:
   prometheusPostgresExporter:
     enabled: false
   nodeExporter:
+    enabled: false
+
+  laminar:
     enabled: false
   cadvisor:
     enabled: false
@@ -423,21 +439,21 @@ global:
         tag: 8.8.2-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-25
+        tag: 1.24.1-26
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.1-7
+        tag: 0.12.1-8
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.8.24
+        tag: 2026.9.7
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.8.24
+        tag: 2026.9.7
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.8.24
+        tag: 2026.9.7
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.6.0
