@@ -40,14 +40,7 @@ global:
   cadvisor:
     enabled: false
 
-# StatefulSet/release-name-postgresql (+ -slaves): init-postgresql-run needs
-# capabilities.add [CHOWN, FOWNER] and runAsUser: 0 by default (PINF-347 -- fixes
-# a real crash-on-upgrade-from-pre-Chainguard-image bug, so it can't default off).
-# Restricted forbids both, so disable it here the same way global.openshift.enabled
-# already hard-disables it: the image's own entrypoint handles /var/run/postgresql
-# without a k8s-side chown, which is exactly what lets OpenShift's restricted-v2 SCC
-# run this same image today. See the "postgresql.postgresqlRunPermissions.enabled"
-# helper in charts/postgresql/templates/_helpers.tpl.
+# Skip elevated privilege operations in postgres
 postgresql:
   postgresqlRunPermissions:
     enabled: false
