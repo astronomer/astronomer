@@ -53,6 +53,7 @@ spec:
       {{- include "houston.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.houston) | nindent 6 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -367,6 +368,7 @@ spec:
         {{- if $secretsFromFiles }}
         - name: houston-registry-auth-secret
           secret:
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
             secretName: {{ template "registry.authHeaderSecret" . }}
             items:
               - key: token

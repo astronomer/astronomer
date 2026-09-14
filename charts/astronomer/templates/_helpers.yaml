@@ -437,6 +437,7 @@ operator-defined secret list.
 {{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink)) }}
 - name: dp-link-secrets
   projected:
+    {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 4 }}
     sources:
       - secret:
           name: {{ template "houston.backendSecret" . }}
@@ -682,6 +683,7 @@ container, so it gets its own volume there rather than being mounted into all
 {{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston)) }}
 - name: houston-secrets
   projected:
+    {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 4 }}
     sources:
       - secret:
           name: {{ template "houston.backendSecret" . }}

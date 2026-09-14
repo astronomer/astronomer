@@ -45,6 +45,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "dpLink.serviceAccountName" . }}
+      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.dpLink) | nindent 6 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier

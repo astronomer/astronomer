@@ -47,6 +47,9 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "pilot.serviceAccountName" . }}
+      {{- if $flightDeckEnabled }}
+      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.pilot) | nindent 6 }}
+      {{- end }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
@@ -172,6 +175,7 @@ spec:
         {{- if $secretsFromFiles }}
         - name: flightdeck-dsn-secret
           secret:
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
             secretName: {{ .Release.Name }}-flightdeck-backend
             items:
               - key: connection

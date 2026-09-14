@@ -46,6 +46,7 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.houston) | nindent 6 }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}

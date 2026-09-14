@@ -52,6 +52,7 @@ spec:
       {{- include "houston.worker.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.houston) | nindent 6 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
 

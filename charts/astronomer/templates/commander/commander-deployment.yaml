@@ -58,6 +58,7 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
+      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.commander) | nindent 6 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- include "commander.hostAliases" . | nindent 6 }}
@@ -371,6 +372,7 @@ spec:
         # directory, so they are combined with a projected volume.
         - name: commander-secrets
           projected:
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
             sources:
               {{- if $flightDeckEnabled }}
               - secret:

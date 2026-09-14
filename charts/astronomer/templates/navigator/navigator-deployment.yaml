@@ -44,6 +44,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "navigator.serviceAccountName" . }}
+      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.navigator) | nindent 6 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -202,6 +203,7 @@ spec:
         {{- if $secretsFromFiles }}
         - name: navigator-secrets
           projected:
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
             sources:
               - secret:
                   name: {{ template "houston.backendSecret" . }}
