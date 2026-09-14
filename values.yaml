@@ -29,6 +29,12 @@ global:
     # -- Load secrets from mounted files instead of environment variables
     # @default -- false
     enabled: false
+    # -- Supplementary group applied to pods that read secrets from files, so a
+    # 0440 root-owned secret file is readable by the non-root process and by no
+    # one else. Must match a group the component's image runs in. Ignored on
+    # OpenShift, which allocates its own fsGroup per namespace.
+    # @default -- 1000
+    fsGroup: 1000
 
   # Labels to add to every pod
   podLabels: {}

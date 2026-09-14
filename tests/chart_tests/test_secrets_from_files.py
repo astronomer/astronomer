@@ -22,6 +22,23 @@ HOUSTON_SECRET_ENV_VARS = {
     "REGISTRY__AUTH_HEADER",
 }
 
+# Volumes that carry a secret a component reads from a file. Scoped to the two
+# Astronomer-authored loaders (houston-api and commander) deliberately: the
+# postgresql, vector and external-es-proxy groups mount their own secrets under
+# separate toggles and run as other UIDs, so tightening their modes needs its own
+# fsGroup verification per image. They are still on 0644.
+LOADER_SECRET_VOLUMES = {
+    "commander-secrets",
+    "flightdeck-dsn-secret",
+    "houston-secrets",
+    "houston-registry-auth-secret",
+    "navigator-secrets",
+    "dp-link-secrets",
+}
+
+SECRET_FILE_MODE = 0o440
+
+
 # Every cronjob in the houston family, so the sweeps cover them.
 ALL_CRONJOBS = {
     "houston": {
@@ -195,6 +212,7 @@ class TestHoustonSecretsFromFiles:
         assert volumes["houston-registry-auth-secret"]["secret"] == {
             "secretName": "release-name-registry-auth-key",
             "items": [{"key": "token", "path": "token"}],
+            "defaultMode": SECRET_FILE_MODE,
         }
 
         houston = get_containers_by_name(docs[0])["houston"]
@@ -1042,3 +1060,113 @@ def test_no_secret_is_mounted_under_run_secrets():
                 if path == "/run/secrets" or path.startswith("/run/secrets/"):
                     offenders.append(f"{name}/{container['name']} mounts {path}")
     assert offenders == [], "\n".join(offenders)
+
+
+def loader_secret_volumes(spec):
+    """Yield (volume_name, volume_source) for each loader secret volume in a pod."""
+    for volume in spec.get("volumes") or []:
+        if volume["name"] in LOADER_SECRET_VOLUMES:
+            yield volume["name"], volume.get("projected") or volume.get("secret")
+
+
+class TestSecretFilePermissions:
+    """A mounted secret must be readable by the process and by nobody else.
+
+    Kubernetes defaults secret volume files to 0644, which leaves the secret
+    readable by every UID in the container -- most of what moving it out of the
+    environment was meant to prevent. Tightening the mode alone is not enough
+    though: the files are owned by root and these pods run as non-root, so
+    without a matching fsGroup a 0440 file is unreadable, the loader treats it as
+    "no secret configured", and the process silently falls back to an
+    environment variable the chart has already removed. Mode and fsGroup only
+    make sense as a pair, which is what these tests check.
+    """
+
+    def test_every_loader_secret_volume_is_mode_0440(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+        seen = 0
+        for name, spec in houston_family_pod_specs(docs):
+            for volume_name, source in loader_secret_volumes(spec):
+                seen += 1
+                assert source.get("defaultMode") == SECRET_FILE_MODE, (
+                    f"{name}/{volume_name} has defaultMode {source.get('defaultMode')}, expected {SECRET_FILE_MODE} (0440)"
+                )
+        assert seen >= 15, f"expected the whole houston family, only checked {seen} volumes"
+
+    def test_no_loader_secret_is_readable_by_other(self):
+        """The bit that actually leaks the secret to unrelated UIDs."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+        offenders = [
+            f"{name}/{volume_name} is mode {oct(source['defaultMode'])}"
+            for name, spec in houston_family_pod_specs(docs)
+            for volume_name, source in loader_secret_volumes(spec)
+            if source.get("defaultMode", 0o644) & 0o004
+        ]
+        assert offenders == [], "\n".join(offenders)
+
+    def test_every_pod_mounting_a_secret_has_a_matching_fsgroup(self):
+        """The regression guard for the gap this change found.
+
+        The eight workloads carrying the wait-for-secret gate are not the same
+        set as the workloads that mount a secret volume -- the ten houston
+        cronjobs mount one too. Tightening the mode without giving those pods an
+        fsGroup left them unable to read their own secrets, and nothing in the
+        rendered manifest looks wrong. Assert against who mounts the volume, not
+        against a hand-maintained list.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+        checked = 0
+        for name, spec in houston_family_pod_specs(docs):
+            volumes = dict(loader_secret_volumes(spec))
+            if not volumes:
+                continue
+            checked += 1
+
+            fs_group = (spec.get("securityContext") or {}).get("fsGroup")
+            assert fs_group is not None, f"{name} mounts {sorted(volumes)} but sets no fsGroup"
+
+            # Group read is what the fsGroup buys; without it the mode is unreadable.
+            for volume_name, source in volumes.items():
+                assert source["defaultMode"] & 0o040, (
+                    f"{name}/{volume_name} is mode {oct(source['defaultMode'])}, which the fsGroup cannot read"
+                )
+        assert checked >= 15, f"expected the whole houston family, only checked {checked}"
+
+    def test_no_fsgroup_is_added_when_the_feature_is_off(self):
+        """The default path must stay byte-identical."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=FULL_VALUES)
+
+        for name, spec in houston_family_pod_specs(docs):
+            assert (spec.get("securityContext") or {}).get("fsGroup") is None, f"{name} gained an fsGroup with the feature disabled"
+
+    def test_fsgroup_is_omitted_on_openshift(self):
+        """OpenShift allocates an fsGroup per namespace through its SCC. A
+        hardcoded one is rejected or overridden, and the allocated one already
+        matches the process, so the mode still works."""
+        values = with_secrets_from_files()
+        values["global"]["openshift"] = {"enabled": True}
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        mounting = 0
+        for name, spec in houston_family_pod_specs(docs):
+            if not dict(loader_secret_volumes(spec)):
+                continue
+            mounting += 1
+            assert (spec.get("securityContext") or {}).get("fsGroup") is None, f"{name} hardcodes an fsGroup on OpenShift"
+        assert mounting >= 15, f"only checked {mounting} workloads"
+
+    def test_fsgroup_is_configurable(self):
+        """Images that run as another group need to be able to change it."""
+        values = with_secrets_from_files()
+        values["global"]["secretsFromFiles"]["fsGroup"] = 65532
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        groups = {
+            (spec.get("securityContext") or {}).get("fsGroup")
+            for _name, spec in houston_family_pod_specs(docs)
+            if dict(loader_secret_volumes(spec))
+        }
+        assert groups == {65532}

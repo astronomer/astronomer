@@ -296,6 +296,8 @@ class TestAstronomerPilot:
         assert volumes["flightdeck-dsn-secret"]["secret"] == {
             "secretName": "release-name-flightdeck-backend",
             "items": [{"key": "connection", "path": "COMMANDER_FLIGHTDECK_DSN"}],
+            # 0440: readable through the pod's fsGroup, and by nobody else.
+            "defaultMode": 0o440,
         }
 
         mounts = {mount["name"]: mount for mount in pilot["volumeMounts"]}

@@ -164,3 +164,62 @@ Usage:
       mountPath: {{ dir .path }}
       readOnly: true
 {{- end }}
+
+{{/*
+`defaultMode` for every volume carrying a secret that a component reads from a
+file.
+
+0440 rather than Kubernetes' 0644 default: a world-readable file leaves the
+secret open to every UID in the container, which gives back much of what moving
+it out of the environment was meant to buy.
+
+Not 0400 either. Kubernetes owns secret volume files as root:root, and these
+pods run as non-root, so the process can only reach the file through its
+fsGroup. Group read is load-bearing here -- 0400 makes the secret unreadable and
+the loaders skip a file they cannot read, silently falling back to the
+environment. Pair this with astronomer.secretsFromFiles.podSecurityContext,
+which supplies the matching fsGroup.
+
+Emitted as a bare octal literal on purpose: both Helm's and Kubernetes' YAML
+parsers read it as YAML 1.1, where a leading zero means octal, matching the
+`defaultMode: 0755` already used elsewhere in this chart.
+
+Usage, at the same indentation as `sources:` or `secretName:`:
+  {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
+*/}}
+{{- define "astronomer.secretsFromFiles.defaultMode" -}}
+defaultMode: 0440
+{{- end }}
+
+{{/*
+Pod-level securityContext for a workload that reads its secrets from mounted
+files.
+
+The fsGroup is what makes astronomer.secretsFromFiles.defaultMode work: kubelet
+chowns an ownership-managed volume to this group, so a 0440 file is readable by
+the process and by nobody else. Without it the file stays root:root and the
+process -- running as non-root -- cannot open it at all.
+
+Omitted on OpenShift, which allocates an fsGroup per namespace through its
+SecurityContextConstraints; a hardcoded value there is either rejected or
+overridden, and the allocated one already matches the process.
+
+Resolves the component's toggle itself and renders nothing when it is off, so
+every workload that mounts a secret volume can include it unconditionally. That
+matters because the set of such workloads is large and easy to under-count: the
+houston family alone has 15, ten of them cronjobs. A pod that mounts a 0440
+secret without an fsGroup cannot read it, and the loader treats an unreadable
+file as "no secret configured" and falls back to an environment variable the
+chart has already removed.
+
+Usage:
+  {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.houston) | nindent 6 }}
+*/}}
+{{- define "astronomer.secretsFromFiles.podSecurityContext" -}}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" .ctx "component" .component)) -}}
+{{- if not ((.ctx.Values.global.openshift).enabled) -}}
+securityContext:
+  fsGroup: {{ ((.ctx.Values.global).secretsFromFiles).fsGroup | default 1000 }}
+{{- end -}}
+{{- end -}}
+{{- end }}
