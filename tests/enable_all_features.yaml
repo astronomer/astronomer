@@ -14,10 +14,7 @@ astronomer:
         memory: 128Mi
   navigator:
     enabled: true
-  # mcpServer is deliberately NOT enabled here: this fixture also sets global.authSidecar.enabled
-  # (below), and mcpServer.enabled + authSidecar.enabled is an unsupported combination that fails
-  # the render outright (APC-1768, mcp-server-ingress.yaml). mcpServer has its own dedicated
-  # coverage in tests/chart_tests/test_mcp_server.py instead.
+  # mcpServer omitted: conflicts with authSidecar below (APC-1768). Covered in test_mcp_server.py.
   houston:
     logging:
       loggingSidecar:
