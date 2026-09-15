@@ -105,6 +105,20 @@ class TestLaminar:
         ]
         assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
 
+        env_lines = docs[10]["data"]["laminar.env"].strip().splitlines()
+        env_vars = dict(line.split("=", 1) for line in env_lines)
+        assert env_vars == {
+            "laminar_scaling__dry_run_strategy": "NEVER",
+            "laminar_apply_custom_ddl": "True",
+            "laminar_hypervisor__enable_healers": "False",
+            "laminar_hypervisor__enable_health_incidents": "False",
+            "laminar_hypervisor__configmap_metrics_enabled": "False",
+            "laminar_hypervisor__configmap_metrics_use_informer": "False",
+            "laminar_hypervisor__queued_task_second_threshold": "480",
+            "laminar_hypervisor__disabled_metrics_csv": '""',
+            "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
+        }
+
     @pytest.mark.parametrize("plane_mode", ["unified", "data"])
     def test_laminar_database_hook_job_defaults(self, kube_version, plane_mode):
         """Test that laminar renders only when the plane is data or unified."""
