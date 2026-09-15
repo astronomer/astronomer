@@ -1,3 +1,5 @@
+from subprocess import CalledProcessError
+
 import pytest
 import yaml
 
@@ -618,6 +620,9 @@ class TestElasticSearch:
         assert len(docs) == 1
         LS = yaml.safe_load(docs[0]["data"]["action_file.yml"])
         assert indexPattern == LS["actions"][1]["filters"][0]["timestring"]
+        # A monthly timestring must be matched by a monthly unit, otherwise curator
+        # deletes the current month's index on every run. See PINF-578.
+        assert LS["actions"][1]["filters"][0]["unit"] == "months"
 
     def test_elasticsearch_curator_with_indexPatterns_defaults(self, kube_version):
         """Test ElasticSearch Curator IndexPattern with defaults"""
@@ -630,6 +635,101 @@ class TestElasticSearch:
         assert len(docs) == 1
         LS = yaml.safe_load(docs[0]["data"]["action_file.yml"])
         assert indexPattern == LS["actions"][1]["filters"][0]["timestring"]
+        # The daily default must keep resolving to the day-count retention it has always had.
+        assert LS["actions"][1]["filters"][0]["unit"] == "days"
+        assert LS["actions"][1]["filters"][0]["unit_count"] == 10
+
+    @pytest.mark.parametrize(
+        "indexPattern,expected_unit",
+        [
+            ("%Y.%m.%d", "days"),
+            ("%Y.%m.%d.%H", "hours"),
+            ("%Y.%m", "months"),
+            ("%Y", "years"),
+        ],
+    )
+    def test_elasticsearch_curator_age_unit_derived_from_indexPattern(self, kube_version, indexPattern, expected_unit):
+        """Curator's age unit is derived from the loggingSidecar indexPattern granularity.
+
+        The two halves of curator's age filter have to agree: a timestring coarser than
+        the retention unit makes curator expire the index it is still writing to.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"logging": {"loggingSidecar": {"enabled": True, "indexPattern": indexPattern}}}},
+            show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        age_filter = yaml.safe_load(docs[0]["data"]["action_file.yml"])["actions"][1]["filters"][0]
+        assert age_filter["timestring"] == indexPattern
+        assert age_filter["unit"] == expected_unit
+
+    def test_elasticsearch_curator_age_unit_derived_from_timestring_fallback(self, kube_version):
+        """With the sidecar disabled, the unit is derived from curator.age.timestring."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"curator": {"age": {"timestring": "%Y.%m"}}}},
+            show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        age_filter = yaml.safe_load(docs[0]["data"]["action_file.yml"])["actions"][1]["filters"][0]
+        assert age_filter["timestring"] == "%Y.%m"
+        assert age_filter["unit"] == "months"
+
+    def test_elasticsearch_curator_age_unit_explicit_is_preserved(self, kube_version):
+        """An explicitly set unit wins over the derived one, as long as it is not finer."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"logging": {"loggingSidecar": {"enabled": True, "indexPattern": "%Y.%m"}}},
+                "elasticsearch": {"curator": {"age": {"unit": "years", "unit_count": 2}}},
+            },
+            show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        age_filter = yaml.safe_load(docs[0]["data"]["action_file.yml"])["actions"][1]["filters"][0]
+        assert age_filter["unit"] == "years"
+        assert age_filter["unit_count"] == 2
+
+    def test_elasticsearch_curator_age_unit_finer_than_timestring_fails(self, kube_version):
+        """A day-count retention on a monthly index pattern is rejected at template time.
+
+        This is the PINF-578 combination: curator would delete the live current-month
+        index on every run from the 11th onward, silently destroying log history.
+        """
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values={
+                    "global": {"logging": {"loggingSidecar": {"enabled": True, "indexPattern": "%Y.%m"}}},
+                    "elasticsearch": {"curator": {"age": {"unit": "days"}}},
+                },
+            )
+        stderr = excinfo.value.stderr.decode("utf-8")
+        assert "makes curator delete the index it is still writing to" in stderr
+
+    def test_elasticsearch_curator_age_unit_invalid_fails(self, kube_version):
+        """A unit curator does not understand is rejected rather than rendered."""
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values={"elasticsearch": {"curator": {"age": {"unit": "fortnights"}}}},
+            )
+        assert "which curator does not accept" in excinfo.value.stderr.decode("utf-8")
+
+    def test_elasticsearch_curator_age_unit_coarser_than_timestring_is_allowed(self, kube_version):
+        """A coarser unit than the index granularity is safe and stays untouched."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"curator": {"age": {"unit": "weeks", "unit_count": 3}}}},
+            show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
+        )
+        assert len(docs) == 1
+        age_filter = yaml.safe_load(docs[0]["data"]["action_file.yml"])["actions"][1]["filters"][0]
+        assert age_filter["timestring"] == "%Y.%m.%d"
+        assert age_filter["unit"] == "weeks"
 
     def test_elasticsearch_curator_config_defaults(self, kube_version):
         """Test ElasticSearch Curator IndexPattern with defaults"""
