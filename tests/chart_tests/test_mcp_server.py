@@ -219,9 +219,7 @@ class TestMcpServerNetworkPolicy:
         assert docs[0]["kind"] == "NetworkPolicy"
         ingress_from = docs[0]["spec"]["ingress"][0]["from"]
         assert {
-            "podSelector": {
-                "matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}
-            }
+            "podSelector": {"matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}}
         } in ingress_from
         assert docs[0]["spec"]["ingress"][0]["ports"][0]["port"] == 8080
 
