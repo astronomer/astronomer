@@ -28,11 +28,8 @@ spec:
   - Ingress
   ingress:
   - from:
-    # BYO-ingress (global.authSidecar.enabled) is unsupported with the MCP server in this
-    # release (APC-1768) -- mcp-server-ingress.yaml fails the render outright in that
-    # combination, so the only reachable peer here is the in-cluster nginx controller.
-    # mcpServer is control/unified only (mcpServer.enabled), so this is always cp-ingress-controller;
-    # the ternary is kept for consistency with the other NetworkPolicy templates in this chart.
+    # BYO-ingress is unsupported with the MCP server (see mcp-server-ingress.yaml), so the
+    # only reachable peer here is the in-cluster nginx controller.
     - podSelector:
         matchLabels:
           tier: nginx

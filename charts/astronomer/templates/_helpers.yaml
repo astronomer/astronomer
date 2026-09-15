@@ -974,12 +974,6 @@ Returns the string "true" or "false" — compare with eq.
 {{- end }}
 
 {{/*
-APC-1767: MCP server component helpers, following registry.name/fullname/enabled/
-serviceAccountName/image above as the closest existing pattern for a component with its
-own image, Deployment, Service and Ingress.
-*/}}
-
-{{/*
 Expand the name of the mcp-server component.
 */}}
 {{- define "mcpServer.name" -}}
@@ -1005,10 +999,7 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
-Whether the MCP server should be rendered.
-Master switch mcpServer.enabled (default false) AND control-plane/unified only — it is a
-control-plane component (APC-1767 design doc), with no data-plane role at all, unlike
-registry.enabled's data/unified gating above.
+Whether the MCP server should be rendered: mcpServer.enabled AND control/unified plane only.
 Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "mcpServer.enabled" -}}
@@ -1032,10 +1023,7 @@ Returns the string "true" or "false" — compare with eq.
 {{- end }}
 
 {{/*
-Joins mcpServer.enabledGroups (a list) into the CSV the server's
-MCP_ENABLED_GROUPS env var expects (internal/config in apc-mcp-server). GroupCore
-is always on server-side regardless of this list, so it is deliberately not
-added here — see that repo's CLAUDE.md.
+Joins mcpServer.enabledGroups into the CSV the MCP_ENABLED_GROUPS env var expects.
 */}}
 {{- define "mcpServer.enabledGroups" -}}
 {{- join "," .Values.mcpServer.enabledGroups -}}

@@ -5,21 +5,9 @@
 {{- if .Values.global.baseDomain }}
 {{- if .Values.global.authSidecar.enabled }}
 {{/*
-APC-1768: BYO-ingress (auth-sidecar) mode is explicitly out of scope for v1 of the MCP
-server. Every other ingress in this chart falls back to global.extraAnnotations only in
-this mode (see grafana-ingress.yaml), which is safe for them because there IS a platform
-nginx auth_request gate configured some other way, or the component tolerates being
-reachable ungated. Neither is true here: the MCP server holds no auth of its own by design
-(design doc, Security section) — an ingress with no auth-url annotation would expose every
-platform-write tool with zero authentication. So this fails the render outright instead of
-silently producing that ingress.
-
-This "fail" only executes inside the already-true mcpServer.enabled branch above, and
-mcpServer.enabled defaults to false (see charts/astronomer/values.yaml) — so a BYO-ingress
-install that has not opted into the MCP server renders exactly as it did before this file
-existed. Flipping mcpServer.enabled on under authSidecar.enabled is the only way to hit this,
-and that combination has no supported answer yet (APC-1768), so failing loudly here is the
-correct behavior, not a bug to work around.
+BYO-ingress mode is unsupported here: the MCP server has no auth of its own, so an ingress
+with no auth-url annotation would expose every platform-write tool unauthenticated. Fail
+closed instead of silently rendering that.
 */}}
 {{- fail "mcpServer.enabled is not supported with global.authSidecar.enabled (BYO-ingress mode) in this release. Disable mcpServer or the auth sidecar." }}
 {{- else }}

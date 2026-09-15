@@ -5,8 +5,7 @@ astronomer:
     enabled: true
   navigator:
     enabled: true
-  # mcpServer omitted: this file also sets global.authSidecar.enabled, and the two conflict
-  # (APC-1768) -- enabling both makes the whole chart fail to render, not just this component.
+  # mcpServer omitted: conflicts with authSidecar, set below.
   houston:
     cleanupAirflowDb:
       enabled: true

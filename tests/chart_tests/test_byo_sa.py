@@ -374,8 +374,7 @@ def test_default_serviceaccount_names(template_name):
     if "charts/laminar/" in template_name:
         default_serviceaccount_names_overrides["global"]["laminar"] = {"enabled": True}
     if "mcp-server" in template_name:
-        # mcpServer is deliberately left disabled in get_all_features() (it's incompatible with
-        # the authSidecar there -- see APC-1768), so turn it on here and turn authSidecar back off.
+        # mcpServer conflicts with authSidecar, which get_all_features() enables.
         default_serviceaccount_names_overrides["astronomer"] = {"mcpServer": {"enabled": True}}
         default_serviceaccount_names_overrides["global"]["authSidecar"] = {"enabled": False}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
@@ -416,8 +415,6 @@ custom_service_account_names = {
         "astronomer": {"navigator": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/mcp-server/mcp-server-deployment.yaml": {
-        # mcpServer is left disabled in get_all_features() (incompatible with its authSidecar --
-        # see APC-1768), so it's turned on here and authSidecar is turned back off.
         "astronomer": {"mcpServer": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}},
         "global": {"authSidecar": {"enabled": False}},
     },

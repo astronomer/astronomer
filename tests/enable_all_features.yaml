@@ -14,7 +14,7 @@ astronomer:
         memory: 128Mi
   navigator:
     enabled: true
-  # mcpServer omitted: conflicts with authSidecar below (APC-1768). Covered in test_mcp_server.py.
+  # mcpServer omitted: conflicts with authSidecar below.
   houston:
     logging:
       loggingSidecar:

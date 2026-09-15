@@ -1,9 +1,5 @@
-"""Tests for the MCP server component (APC-1767): Deployment, Service, NetworkPolicy,
-Ingress, and the BYO-ingress fail-closed guard (APC-1768).
-
-Modeled directly on test_astronomer_navigator.py (render_chart/show_only pattern) and
-test_auth_flow_global_base_domain.py (the pytest.raises(CalledProcessError) pattern for a
-render that must fail).
+"""Tests for the MCP server component: Deployment, Service, NetworkPolicy, Ingress, and the
+BYO-ingress fail-closed guard.
 """
 
 from subprocess import CalledProcessError
@@ -284,8 +280,8 @@ class TestMcpServerIngress:
         assert hosts == [f"mcp-server.{BASE_DOMAIN}", f"mcp-server.{GLOBAL_BASE_DOMAIN}"]
 
     def test_ingress_fails_closed_under_byo_ingress(self, kube_version):
-        """APC-1768: mcpServer.enabled + global.authSidecar.enabled must fail the render
-        rather than silently produce an ingress with no auth-url annotation."""
+        """mcpServer.enabled + global.authSidecar.enabled must fail the render rather than
+        silently produce an ingress with no auth-url annotation."""
         with pytest.raises(CalledProcessError) as excinfo:
             render_chart(kube_version=kube_version, values=self._values(auth_sidecar=True), show_only=[INGRESS])
         assert "not supported with global.authSidecar.enabled" in excinfo.value.stderr.decode("utf-8")
