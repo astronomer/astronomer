@@ -48,28 +48,24 @@ jobs:
             echo "$DOCKER_PASSWORD" | cosign login docker.io --username $DOCKER_USERNAME --password-stdin
             echo "$QUAY_PASSWORD" | cosign login quay.io --username $QUAY_USERNAME --password-stdin
       - run:
-          name: Set image tag to sign
-          command: |
-            set -xe
-            # Only sign tagged releases or specific QA releases
-            # For regular release job
-            if [ -n "$NEXT_TAG" ]; then
-              echo "export IMAGE_TAG=$NEXT_TAG" >> $BASH_ENV
-            # For custom QA release job
-            elif [ -n "$IMG_TAG" ]; then
-              echo "export IMAGE_TAG=$IMG_TAG" >> $BASH_ENV
-            else
-              echo "No specific release tag found, skipping image signing"
-              exit 0
-            fi
-      - run:
           name: Install Python dependencies
           command: pip install requests
       - run:
           name: Sign Docker images with cosign
           command: |
-            # Execute the signing script with version from environment
-            python bin/sign-images.py --version "${IMAGE_TAG}"
+            set -xe
+            # This job runs only from release-bom-workflow, which is tag-triggered, so
+            # CIRCLE_TAG is always set. Fail loudly rather than silently skipping if it
+            # is not: the previous "exit 0" guard ended only this step, so the job went
+            # on to run sign-images.py with an empty --version and died there instead.
+            if [ -z "$CIRCLE_TAG" ]; then
+              echo "CIRCLE_TAG is not set; sign-released-image only runs on tag builds" >&2
+              exit 1
+            fi
+            # sign-images.py reads the published BOM at
+            # updates.astronomer.io/astronomer-software/releases/astronomer-<version>.json,
+            # which is keyed by chart version, so drop the tag's leading "v".
+            python bin/sign-images.py --version "${CIRCLE_TAG#v}"
 
   release_bom:
     docker:
@@ -465,18 +461,6 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
-      - sign-released-image:
-          name: sign-release-image
-          context:
-            - quay.io
-            - docker.io
-            - software-cosign-keys
-          requires:
-            - release-to-public
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
 
   release-bom-workflow:
     jobs:
@@ -489,6 +473,20 @@ workflows:
           context:
             - github-repo
             - gcp-astronomer-prod
+      # Signing consumes the BOM that release_bom publishes, so it must run after it.
+      - sign-released-image:
+          name: sign-release-image
+          requires:
+            - release_bom
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
+            branches:
+              ignore: /.*/
+          context:
+            - quay.io
+            - docker.io
+            - software-cosign-keys
 
   qa-build-and-release-helm-chart:
     when: << pipeline.parameters.qa-release >>
