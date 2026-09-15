@@ -417,24 +417,24 @@ global:
         tag: 0.30.0-6
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.8.2-1
+        tag: 8.10.1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-26
+        tag: 1.24.1-27
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.1-8
+        tag: 0.12.1-9
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.9.7
+        tag: 2026.9.14
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.9.7
+        tag: 2026.9.14
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.9.7
+        tag: 2026.9.14
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.6.0
@@ -443,7 +443,7 @@ global:
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.21
+      tag: 0.1.22
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
