@@ -55,6 +55,7 @@ class TestAstronomerCommander:
                 "customLogging": {"enabled": False},
                 "externalSecretManager": {"isClusterSecretStore": True},
                 "openshift": {"enabled": False},
+                "laminar": {"enabled": False},
             }
         else:
             assert metadata_file_contents == {
@@ -64,6 +65,7 @@ class TestAstronomerCommander:
                 "customLogging": {"enabled": False},
                 "externalSecretManager": {"isClusterSecretStore": True},
                 "openshift": {"enabled": False},
+                "laminar": {"enabled": False},
             }
 
     @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
@@ -96,6 +98,7 @@ class TestAstronomerCommander:
             "registry": {"version": "99.88.77"},
             "externalSecretManager": {"isClusterSecretStore": True},
             "openshift": {"enabled": False},
+            "laminar": {"enabled": False},
         }
 
     def test_commander_metadata_extra_annotations(self, kube_version):
@@ -1065,3 +1068,52 @@ class TestAstronomerCommander:
         assert jwks_entries[0]["value"] == "https://houston.example.com", (
             "data plane under CP-HA must fetch JWKS from the global hostname (globalBaseDomain), not the per-CP baseDomain"
         )
+
+    @pytest.mark.parametrize(
+        "plane_mode,laminar_enabled,expected_result,should_render",
+        [
+            (
+                "data",
+                True,
+                True,
+                True,
+            ),
+            (
+                "unified",
+                True,
+                True,
+                True,
+            ),
+            (
+                "control",
+                True,
+                False,
+                False,
+            ),
+        ],
+    )
+    def test_commander_metadata_laminar_overrides(self, kube_version, plane_mode, laminar_enabled, expected_result, should_render):
+        """Test that global.laminar are passed through to commander metadata.yaml."""
+        values = {
+            "global": {
+                "laminar": {
+                    "enabled": laminar_enabled,
+                },
+                "plane": {
+                    "mode": plane_mode,
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        if not should_render:
+            assert len(docs) == 0
+            return
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert metadata_file_contents["laminar"] == {"enabled": expected_result}
