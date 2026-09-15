@@ -1,11 +1,7 @@
-"""Tests for the MCP server component (APC-1767): Deployment, Service, Ingress, and the
-BYO-ingress fail-closed guard (APC-1768).
+"""Tests for the MCP server component (APC-1767): Deployment, Service, NetworkPolicy,
+Ingress, and the BYO-ingress fail-closed guard (APC-1768).
 
-UNVERIFIED: written without helm or a Go toolchain available in the authoring environment
-(see internal/houston/client.go's doc comment in apc-mcp-server for the broader context).
-These tests have not actually been run against `helm template` here — review and run
-locally (`make test-unit` in this repo) before merging. Modeled directly on
-test_astronomer_navigator.py (render_chart/show_only pattern) and
+Modeled directly on test_astronomer_navigator.py (render_chart/show_only pattern) and
 test_auth_flow_global_base_domain.py (the pytest.raises(CalledProcessError) pattern for a
 render that must fail).
 """
@@ -22,6 +18,7 @@ DEPLOYMENT = "charts/astronomer/templates/mcp-server/mcp-server-deployment.yaml"
 SERVICE = "charts/astronomer/templates/mcp-server/mcp-server-service.yaml"
 INGRESS = "charts/astronomer/templates/mcp-server/mcp-server-ingress.yaml"
 SERVICEACCOUNT = "charts/astronomer/templates/mcp-server/mcp-server-serviceaccount.yaml"
+NETWORKPOLICY = "charts/astronomer/templates/mcp-server/mcp-server-networkpolicy.yaml"
 
 BASE_DOMAIN = "example.com"
 GLOBAL_BASE_DOMAIN = "astro.example.com"
@@ -199,6 +196,51 @@ class TestMcpServerServiceAccount:
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "control"}}},
             show_only=[SERVICEACCOUNT],
+        )
+        assert len(docs) == 0
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestMcpServerNetworkPolicy:
+    """The default-deny-ingress policy (global.defaultDenyNetworkPolicy) blocks all ingress
+    to every pod unless a component ships its own allow-rule -- see registry-networkpolicy.yaml
+    for the sibling pattern this is modeled on."""
+
+    def test_networkpolicy_renders_when_enabled(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}, "networkPolicy": {"enabled": True}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[NETWORKPOLICY],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "NetworkPolicy"
+        ingress_from = docs[0]["spec"]["ingress"][0]["from"]
+        assert {
+            "podSelector": {
+                "matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}
+            }
+        } in ingress_from
+        assert docs[0]["spec"]["ingress"][0]["ports"][0]["port"] == 8080
+
+    def test_networkpolicy_absent_when_mcp_server_disabled(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}, "networkPolicy": {"enabled": True}}},
+            show_only=[NETWORKPOLICY],
+        )
+        assert len(docs) == 0
+
+    def test_networkpolicy_absent_when_global_flag_disabled(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}, "networkPolicy": {"enabled": False}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[NETWORKPOLICY],
         )
         assert len(docs) == 0
 

@@ -39,7 +39,7 @@ metadata:
     {{- if .Values.global.extraAnnotations }}
     {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    {{- include "houston.mcpAgentAuthUrl" . | indent 4 }}
+    {{- include "houston.mcpAgentAuthUrl" . | nindent 4 }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "global.authBaseDomain" . }}/login
     # X-Astro-Identity is the identity header the shared MCP test harness's fake gate sets
     # on a successful check (internal/mcptest/gate.go, apc-mcp-server repo) — confirm this

@@ -1,0 +1,45 @@
+################################
+## MCP Server NetworkPolicy
+################################
+{{- if .Values.global.networkPolicy.enabled }}
+{{- if eq (include "mcpServer.enabled" .) "true" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-mcp-server-policy
+  labels:
+    tier: astronomer
+    component: mcp-server-policy
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: astronomer
+      component: {{ template "mcpServer.name" . }}
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    # BYO-ingress (global.authSidecar.enabled) is unsupported with the MCP server in this
+    # release (APC-1768) -- mcp-server-ingress.yaml fails the render outright in that
+    # combination, so the only reachable peer here is the in-cluster nginx controller.
+    # mcpServer is control/unified only (mcpServer.enabled), so this is always cp-ingress-controller;
+    # the ternary is kept for consistency with the other NetworkPolicy templates in this chart.
+    - podSelector:
+        matchLabels:
+          tier: nginx
+          component: {{ ternary "dp-ingress-controller" "cp-ingress-controller" (eq .Values.global.plane.mode "data")}}
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.mcpServerHTTP }}
+{{- end }}
+{{- end }}
