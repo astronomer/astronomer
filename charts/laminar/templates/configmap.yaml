@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.envConfigMap.name }}
+  name: {{ .Release.Name }}-{{ .Values.envConfigMap.name }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "laminar.labels" (list $ "laminar") | nindent 4 }}
