@@ -1234,3 +1234,52 @@ def test_every_file_env_var_points_inside_a_mount_or_is_a_known_shell_container(
             f"{key} is exempt only because it runs the shell entrypoint, but its command is {command}. "
             "If it now runs Node, the loader will fail closed on those unmounted paths."
         )
+
+
+def test_no_secret_feeding_a_loader_renders_empty():
+    """An empty secret is no longer merely useless, it is a silent unset.
+
+    The loaders skip a file that trims to nothing and warn, rather than blanking
+    whatever the environment held. That is the right call for a rotation window,
+    but it means a Secret the chart renders empty produces a warning on every
+    install and a secret that is never set -- with the pod starting anyway. The
+    Grafana group is already blocked on exactly this shape, where a bootstrap
+    Secret defaults to `connection: ""`.
+
+    So check the inputs rather than trusting them: every (Secret, key) pair that a
+    loader volume projects must carry a non-empty value. postgresql is enabled here
+    because that is what creates `astronomer-bootstrap`, the one input the
+    astronomer chart does not render itself.
+    """
+    values = with_secrets_from_files()
+    values["global"]["postgresql"] = {"enabled": True}
+    docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+    secrets = {d["metadata"]["name"]: d for d in docs if d["kind"] == "Secret"}
+
+    projected = set()
+    for _name, spec in houston_family_pod_specs(docs):
+        for volume_name, source in loader_secret_volumes(spec):
+            del volume_name
+            sources = [source] if "secretName" in source else [s["secret"] for s in source["sources"]]
+            for src in sources:
+                secret_name = src.get("secretName") or src.get("name")
+                for item in src.get("items") or []:
+                    projected.add((secret_name, item["key"]))
+
+    assert projected, "expected the loader volumes to project at least one secret key"
+
+    problems = []
+    for secret_name, key in sorted(projected):
+        doc = secrets.get(secret_name)
+        if doc is None:
+            problems.append(f"{secret_name}/{key}: no template creates this Secret")
+            continue
+        raw = (doc.get("data") or {}).get(key)
+        if raw is None:
+            problems.append(f"{secret_name}/{key}: the Secret has no such key")
+            continue
+        if base64.b64decode(raw).decode(errors="replace").strip() == "":
+            problems.append(f"{secret_name}/{key}: renders empty, so the loader will warn and leave it unset")
+
+    assert problems == [], "\n".join(problems)
