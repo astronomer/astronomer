@@ -288,7 +288,7 @@ class TestMcpServerIngress:
         rather than silently produce an ingress with no auth-url annotation."""
         with pytest.raises(CalledProcessError) as excinfo:
             render_chart(kube_version=kube_version, values=self._values(auth_sidecar=True), show_only=[INGRESS])
-        assert "APC-1768" in excinfo.value.stderr.decode("utf-8")
+        assert "not supported with global.authSidecar.enabled" in excinfo.value.stderr.decode("utf-8")
 
     def test_byo_ingress_without_mcp_server_is_unaffected(self, kube_version):
         """The guard above must only fire when mcpServer is explicitly enabled -- an existing

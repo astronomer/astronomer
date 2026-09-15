@@ -21,7 +21,7 @@ existed. Flipping mcpServer.enabled on under authSidecar.enabled is the only way
 and that combination has no supported answer yet (APC-1768), so failing loudly here is the
 correct behavior, not a bug to work around.
 */}}
-{{- fail "mcpServer.enabled is not supported with global.authSidecar.enabled (BYO-ingress mode) in this release — see APC-1768. Disable mcpServer or the auth sidecar." }}
+{{- fail "mcpServer.enabled is not supported with global.authSidecar.enabled (BYO-ingress mode) in this release. Disable mcpServer or the auth sidecar." }}
 {{- else }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
