@@ -18,7 +18,7 @@ data:
     laminar_hypervisor__configmap_metrics_enabled=False
     laminar_hypervisor__configmap_metrics_use_informer=False
     laminar_hypervisor__queued_task_second_threshold=480
-    laminar_hypervisor__disabled_metrics_csv=
+    laminar_hypervisor__disabled_metrics_csv=""
     laminar_hypervisor__dry_run_healers_csv=CatatonicWorkerTerminator
 {{ .Values.envConfigMap.content | default "" | indent 4 }}
 {{- end }}
