@@ -1,3 +1,7 @@
+laminar:
+  securityContext:
+    dummy_key: dummy_value
+    readOnlyRootFilesystem: false
 airflow-operator:
   securityContext:
     dummy_key: dummy_value

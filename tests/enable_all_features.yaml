@@ -71,6 +71,8 @@ global:
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true
+  laminar:
+    enabled: true
   logging:
     loggingSidecar:
       enabled: true

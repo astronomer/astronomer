@@ -39,3 +39,9 @@ global:
     enabled: false
   cadvisor:
     enabled: false
+
+# Turning off the init-postgresql-run permissions init container keeps
+# the postgres pod PSS-Restricted-compliant on a fresh install.
+postgresql:
+  postgresqlRunPermissions:
+    enabled: false
