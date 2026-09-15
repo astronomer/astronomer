@@ -118,7 +118,7 @@ laminar.env volume.
 {{- define "laminar.envVolume" -}}
 - name: laminar-env
   configMap:
-    name: {{ .Values.envConfigMap.name }}
+    name: {{ .Release.Name }}-{{ .Values.envConfigMap.name }}
 {{- end -}}
 
 
