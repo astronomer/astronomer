@@ -1,6 +1,7 @@
 ##########################################
 ## NGINX Control Plane Role/ClusterRole ##
 ##########################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- if .Values.global.rbac.enabled }}
 kind: ClusterRole
@@ -97,5 +98,6 @@ rules:
       - update
       - patch
       - delete
+{{- end }}
 {{- end }}
 {{- end }}

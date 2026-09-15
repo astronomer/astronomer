@@ -1,6 +1,7 @@
 #######################################
 ## NGINX Data Plane Role/ClusterRole ##
 #######################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if eq .Values.global.plane.mode "data" }}
 {{- if .Values.global.rbac.enabled }}
 kind: ClusterRole
@@ -96,5 +97,6 @@ rules:
       - update
       - patch
       - delete
+{{- end }}
 {{- end }}
 {{- end }}

@@ -1,6 +1,7 @@
 ###############################
 ## NGINX Config Role Binding ##
 ###############################
+{{- if include "nginx.deployBundledController" . }}
 {{- if .Values.global.rbac.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: RoleBinding
@@ -21,5 +22,6 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "nginx.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
 {{- end }}

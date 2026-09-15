@@ -1,0 +1,9 @@
+description: >-
+  SWAT-59: validates the bring-your-own ingress controller scenario. Sets global.ingressClassName
+  to a non-default value, which must suppress the bundled nginx controller, IngressClass resource,
+  and the legacy kubernetes.io/ingress.class annotation while all Ingress resources point at the
+  configured class. Houston pods must still reach Ready, proving the platform installs cleanly
+  without its own controller.
+topology: unified
+values:
+  - configs/scenario-custom-ingressclass.yaml

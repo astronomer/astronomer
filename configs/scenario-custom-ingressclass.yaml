@@ -1,0 +1,6 @@
+global:
+  # Set ingressClassName to a custom value simulating a bring-your-own ingress
+  # controller. This suppresses the bundled nginx controller and IngressClass
+  # resource creation. The platform pods still start (Houston doesn't need
+  # ingress to be ready), proving the chart installs cleanly without its own controller.
+  ingressClassName: custom-nginx
