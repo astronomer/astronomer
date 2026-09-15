@@ -373,6 +373,10 @@ def test_default_serviceaccount_names(template_name):
         }
     if "charts/laminar/" in template_name:
         default_serviceaccount_names_overrides["global"]["laminar"] = {"enabled": True}
+    if "mcp-server" in template_name:
+        # mcpServer conflicts with authSidecar, which get_all_features() enables.
+        default_serviceaccount_names_overrides["astronomer"] = {"mcpServer": {"enabled": True}}
+        default_serviceaccount_names_overrides["global"]["authSidecar"] = {"enabled": False}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
     docs = render_chart(show_only=template_name, values=values)
@@ -409,6 +413,10 @@ custom_service_account_names = {
     },
     "charts/astronomer/templates/navigator/navigator-deployment.yaml": {
         "astronomer": {"navigator": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/mcp-server/mcp-server-deployment.yaml": {
+        "astronomer": {"mcpServer": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}},
+        "global": {"authSidecar": {"enabled": False}},
     },
     "charts/astronomer/templates/pilot/pilot-deployment.yaml": {
         "astronomer": {"pilot": {"enabled": True, "serviceAccount": {"create": True, "name": "prothean"}}}

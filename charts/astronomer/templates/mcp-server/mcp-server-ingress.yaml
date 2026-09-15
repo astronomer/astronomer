@@ -1,0 +1,72 @@
+##########################
+## MCP Server Ingress   ##
+##########################
+{{- if eq (include "mcpServer.enabled" .) "true" }}
+{{- if .Values.global.baseDomain }}
+{{- if .Values.global.authSidecar.enabled }}
+{{/*
+BYO-ingress mode is unsupported here: the MCP server has no auth of its own, so an ingress
+with no auth-url annotation would expose every platform-write tool unauthenticated. Fail
+closed instead of silently rendering that.
+*/}}
+{{- fail "mcpServer.enabled is not supported with global.authSidecar.enabled (BYO-ingress mode) in this release. Disable mcpServer or the auth sidecar." }}
+{{- else }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ template "mcpServer.fullname" . }}-ingress
+  labels:
+    tier: astronomer
+    component: {{ template "mcpServer.name" . }}-ingress
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- if .Values.global.extraAnnotations }}
+    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    {{- include "houston.mcpAgentAuthUrl" . | nindent 4 }}
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "global.authBaseDomain" . }}/login
+    # X-Astro-Identity is the identity header the shared MCP test harness's fake gate sets
+    # on a successful check (internal/mcptest/gate.go, apc-mcp-server repo) — confirm this
+    # against /v1/authorization/agent's actual response headers once APC-1744 lands; it may
+    # need more than one header forwarded.
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Astro-Identity
+spec:
+  {{- if .Values.global.tlsSecret }}
+  tls:
+    - secretName: {{ .Values.global.tlsSecret }}
+      hosts:
+        - {{ template "mcpServer.url" . }}
+        {{- if .Values.global.controlPlaneHA.enabled }}
+        - {{ template "mcpServer.globalUrl" . }}
+        {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ template "mcpServer.url" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "mcpServer.fullname" . }}
+                port:
+                  name: mcp-server-http
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - host: {{ template "mcpServer.globalUrl" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "mcpServer.fullname" . }}
+                port:
+                  name: mcp-server-http
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

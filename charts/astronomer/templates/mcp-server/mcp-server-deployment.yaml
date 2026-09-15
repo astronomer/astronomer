@@ -1,0 +1,118 @@
+############################
+## MCP Server Deployment ##
+############################
+{{- if eq (include "mcpServer.enabled" .) "true" }}
+kind: Deployment
+apiVersion: {{ template "apiVersion.Deployment" . }}
+metadata:
+  name: {{ template "mcpServer.fullname" . }}
+  labels:
+    component: {{ template "mcpServer.name" . }}
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  replicas: {{ .Values.mcpServer.replicas }}
+  selector:
+    matchLabels:
+      tier: astronomer
+      component: {{ template "mcpServer.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: {{ template "mcpServer.name" . }}
+        release: {{ .Release.Name }}
+        app: mcp-server
+        version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.mcpServer.podAnnotations }}
+        {{- toYaml .Values.mcpServer.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      restartPolicy: Always
+      serviceAccountName: {{ template "mcpServer.serviceAccountName" . }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      {{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      containers:
+        - name: mcp-server
+          image: {{ template "mcpServer.image" . }}
+          imagePullPolicy: {{ .Values.images.mcpServer.pullPolicy }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+          resources: {{- toYaml .Values.mcpServer.resources | nindent 12 }}
+          ports:
+            - name: mcp-server-http
+              containerPort: {{ .Values.ports.mcpServerHTTP }}
+          {{- if .Values.mcpServer.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.mcpServer.livenessProbe) . | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.mcpServerHTTP }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          {{- if .Values.mcpServer.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.mcpServer.readinessProbe) . | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.ports.mcpServerHTTP }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          {{- if .Values.mcpServer.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.mcpServer.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.ports.mcpServerHTTP }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
+          env:
+            - name: LISTEN_ADDR
+              value: ":{{ .Values.ports.mcpServerHTTP }}"
+
+            # Houston is this server's sole upstream (internal.houston package,
+            # apc-mcp-server repo) — every call still acts as the caller, this
+            # is only where the call lands. In-cluster URL always, regardless
+            # of plane mode: the MCP server itself only ever renders on
+            # control/unified (see mcpServer.enabled), so it never needs the
+            # public-hostname branch houston.internalauthurl carries for the
+            # data-plane case.
+            - name: HOUSTON_API_URL
+              value: "http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1"
+
+            # Chart toggle for the tool groups the catalog exposes (internal/config,
+            # internal/toolreg.Group in apc-mcp-server) — a CSV of group names.
+            - name: MCP_ENABLED_GROUPS
+              value: {{ include "mcpServer.enabledGroups" . | quote }}
+
+            {{- range $i, $config := .Values.mcpServer.env }}
+            - name: {{ $config.name }}
+              value: {{ $config.value | quote }}
+            {{- end }}
+
+            {{- range $i, $config := .Values.mcpServer.secret }}
+            - name: {{ $config.envName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $config.secretName }}
+                  key: {{ default "value" $config.secretKey }}
+            {{- end }}
+{{- end }}

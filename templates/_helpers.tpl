@@ -36,6 +36,14 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ include "global.authBas
 {{- end }}
 {{- end }}
 
+{{/*
+auth-url for the MCP server's own ingress, targeting Houston's /v1/authorization/agent
+endpoint rather than /v1/authorization.
+*/}}
+{{ define "houston.mcpAgentAuthUrl" -}}
+nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization/agent
+{{- end }}
+
 
 {{/*
 DEPRECATED: containerd.configToml is retained as an escape hatch for operators who need

@@ -30,6 +30,10 @@ astronomer:
       pullPolicy: IfNotPresent
       repository: quay.io/astronomer/ap-houston-api
       tag: main
+    mcpServer:
+      pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-mcp-server
+      tag: main
     registry:
       pullPolicy: IfNotPresent
       repository: quay.io/astronomer/ap-registry

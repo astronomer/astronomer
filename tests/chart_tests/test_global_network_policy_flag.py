@@ -17,6 +17,7 @@ show_only = [
     "charts/astronomer/templates/houston/worker/houston-worker-networkpolicy.yaml",
     "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
     "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
+    "charts/astronomer/templates/mcp-server/mcp-server-networkpolicy.yaml",
     "charts/nginx/templates/controlplane/nginx-cp-metrics-networkpolicy.yaml",
     "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
     "charts/nginx/templates/dataplane/nginx-dp-metrics-networkpolicy.yaml",
