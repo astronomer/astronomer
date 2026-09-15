@@ -73,6 +73,12 @@ class TestMcpServerDeployment:
         assert "ap-mcp-server" in container["image"]
         assert container["securityContext"]["readOnlyRootFilesystem"] is True
 
+        # mcp-server is excluded from tests/enable_all_features.yaml (it conflicts with
+        # authSidecar there), so the repo-wide guards in test_container_resources.py and
+        # test_probes.py::TestStartupProbes never see this container. Assert directly here.
+        assert "resources" in container
+        assert container.get("startupProbe") not in (None, {})
+
     def test_deployment_env_vars(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
