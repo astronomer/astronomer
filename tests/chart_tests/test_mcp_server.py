@@ -292,6 +292,22 @@ class TestMcpServerIngress:
             render_chart(kube_version=kube_version, values=self._values(auth_sidecar=True), show_only=[INGRESS])
         assert "not supported with global.authSidecar.enabled" in excinfo.value.stderr.decode("utf-8")
 
+    def test_ingress_fails_closed_under_byo_ingress_without_base_domain(self, kube_version):
+        """The guard must fire independent of global.baseDomain. It used to live nested inside
+        the ingress template's own `if .Values.global.baseDomain` gate, so this exact
+        combination (no baseDomain) rendered successfully with no error -- silently skipping
+        validation instead of failing closed. Moved to a dedicated top-level template
+        (validate-mcp-server-auth-sidecar.yaml) that isn't gated on baseDomain."""
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                values={
+                    "global": {"plane": {"mode": "control"}, "authSidecar": {"enabled": True}},
+                    "astronomer": {"mcpServer": {"enabled": True}},
+                },
+            )
+        assert "not supported with global.authSidecar.enabled" in excinfo.value.stderr.decode("utf-8")
+
     def test_byo_ingress_without_mcp_server_is_unaffected(self, kube_version):
         """The guard above must only fire when mcpServer is explicitly enabled -- an existing
         BYO-ingress install that has not opted into the MCP server must render exactly as it
