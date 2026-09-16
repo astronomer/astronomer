@@ -73,7 +73,7 @@ SIDECAR_CONFIG_SECRET_KEY = "vector-config.yaml"
 
 # A minimal, self-contained Vector config.
 CUSTOM_VECTOR_CONFIG = """\
-data_dir: /var/lib/vector
+data_dir: "${SIDECAR_LOGS}"
 sources:
   file_logs:
     type: file
