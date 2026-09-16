@@ -1,0 +1,37 @@
+global:
+  logging:
+    loggingSidecar:
+      enabled: true
+
+      name: sidecar-log-consumer
+
+      # customConfig: true makes Houston mount the injected sidecar's config from a
+      # Secret named "sidecar-config" (fixed name) in each deployment's namespace,
+      # instead of the default per-release ConfigMap
+      customConfig: true
+
+      resources:
+        requests:
+          memory: "160Mi"
+          cpu: "60m"
+        limits:
+          memory: "320Mi"
+          cpu: "250m"
+
+astronomer:
+  houston:
+    logging:
+      loggingSidecar:
+        enabled: true
+
+        resources:
+          requests:
+            memory: "160Mi"
+            cpu: "60m"
+          limits:
+            memory: "320Mi"
+            cpu: "250m"
+
+        elasticsearch:
+          enabled: true
+          endpoint: "https://astronomer-elasticsearch.astronomer.svc.cluster.local:9200"
