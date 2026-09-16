@@ -69,15 +69,17 @@ DEPLOYMENT_SIDECAR_CONTAINER_NAME = "sidecar-log-consumer"
 # through this volume.
 SIDECAR_CONFIG_SECRET_NAME = "sidecar-config"
 SIDECAR_CONFIG_VOLUME_NAME = "config-volume"
+SIDECAR_CONFIG_SECRET_KEY = "vector-config.yaml"
 
 # A minimal, self-contained Vector config.
-CUSTOM_VECTOR_CONFIG = f"""\
+CUSTOM_VECTOR_CONFIG = """\
 data_dir: /var/lib/vector
 sources:
   file_logs:
     type: file
     include:
-      - /var/log/{DEPLOYMENT_SIDECAR_CONTAINER_NAME}/*.log
+      - "${SIDECAR_LOGS}/*.log"
+    read_from: beginning
 sinks:
   console:
     type: console
@@ -137,7 +139,7 @@ def _create_sidecar_config_secret(core_client, namespace: str) -> None:
     this the injected pods can't mount config-volume and never reach Running."""
     secret = client.V1Secret(
         metadata=client.V1ObjectMeta(name=SIDECAR_CONFIG_SECRET_NAME, namespace=namespace),
-        string_data={"vector.yaml": CUSTOM_VECTOR_CONFIG},
+        string_data={SIDECAR_CONFIG_SECRET_KEY: CUSTOM_VECTOR_CONFIG},
     )
     try:
         core_client.create_namespaced_secret(namespace, secret)
