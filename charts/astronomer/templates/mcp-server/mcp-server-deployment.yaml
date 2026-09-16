@@ -96,12 +96,20 @@ spec:
             # public-hostname branch houston.internalauthurl carries for the
             # data-plane case.
             - name: HOUSTON_API_URL
-              value: "http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1"
+              value: "http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}/v1"
 
             # Chart toggle for the tool groups the catalog exposes (internal/config,
             # internal/toolreg.Group in apc-mcp-server) — a CSV of group names.
             - name: MCP_ENABLED_GROUPS
               value: {{ include "mcpServer.enabledGroups" . | quote }}
+
+            # Per-tool deny-list (internal/config.DisabledTools in apc-mcp-server) — outranks
+            # everything, including the always-on core group. Always emitted, even empty: an
+            # empty string parses to an empty set, and making this conditional would leave a
+            # previous value in place on pods that don't restart across a helm upgrade that
+            # clears the list.
+            - name: MCP_DISABLED_TOOLS
+              value: {{ include "mcpServer.disabledTools" . | quote }}
 
             {{- range $i, $config := .Values.mcpServer.env }}
             - name: {{ $config.name }}
