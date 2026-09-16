@@ -35,6 +35,7 @@ from tests.utils.houston_graphql import (
     create_workspace,
     dump_pod_logs,
     get_cluster_id,
+    get_workspace_id_by_label,
     snapshot_release_revisions,
     upsert_deployment,
     wait_for_release_ready,
@@ -145,6 +146,17 @@ def _wait_for_release_namespace(apps_client, release_name: str, timeout: int = 1
         time.sleep(3)
 
 
+def _create_workspace(houston_api, token: str, label: str) -> str:
+    try:
+        return create_workspace(houston_api, token, label)
+    except HoustonError as exc:
+        if "already another workspace with this label" not in str(exc):
+            raise
+        workspace_id = get_workspace_id_by_label(houston_api, token, label)
+        assert workspace_id, f"createWorkspace said {label!r} exists, but workspaces(label:) returned none"
+        return workspace_id
+
+
 def _create_sidecar_config_secret(core_client, namespace: str) -> None:
     """Create (or replace) the fixed-name 'sidecar-config' Secret the injected sidecar
     mounts under customConfig: true. Houston references but never creates it, so without
@@ -165,7 +177,7 @@ def _create_sidecar_config_secret(core_client, namespace: str) -> None:
 def deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """Creates a real dag_deploy Airflow Deployment through Houston"""
     token = _admin_token
-    workspace_id = create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
+    workspace_id = _create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
     cluster_id = get_cluster_id(_houston_api_module, token)
     try:
         created = upsert_deployment(
