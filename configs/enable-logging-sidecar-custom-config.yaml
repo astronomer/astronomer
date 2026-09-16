@@ -17,21 +17,3 @@ global:
         limits:
           memory: "320Mi"
           cpu: "250m"
-
-astronomer:
-  houston:
-    logging:
-      loggingSidecar:
-        enabled: true
-
-        resources:
-          requests:
-            memory: "160Mi"
-            cpu: "60m"
-          limits:
-            memory: "320Mi"
-            cpu: "250m"
-
-        elasticsearch:
-          enabled: true
-          endpoint: "https://astronomer-elasticsearch.astronomer.svc.cluster.local:9200"

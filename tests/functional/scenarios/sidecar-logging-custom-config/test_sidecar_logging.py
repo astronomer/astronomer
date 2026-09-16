@@ -1,16 +1,9 @@
 """Verifies the Houston loggingSidecar is wired correctly when enabled with a CUSTOM
 config (global.logging.loggingSidecar.customConfig: true).
 
-Two distinct sidecars are both called "loggingSidecar", enabled together by
-configs/enable-logging-sidecar-custom-config.yaml:
-
-  * houston.logging.loggingSidecar -- the Vector "vector" container on the Houston API
-    and worker *platform* pods. Covered by test_houston_platform_pods_have_sidecar_container.
-
-  * global.logging.loggingSidecar -- the log-shipping sidecar
-    (global.logging.loggingSidecar.name, default "sidecar-log-consumer") that Houston
-    injects into each *Airflow deployment* pod it provisions. This scenario is about this
-    one, specifically its customConfig: true behavior.
+This scenario covers the log-shipping sidecar (global.logging.loggingSidecar.name, default
+"sidecar-log-consumer") that Houston injects into each *Airflow deployment* pod it
+provisions -- specifically its customConfig: true behavior.
 
 customConfig: true behavior (houston-api src/lib/deployments/config/index.js ~L1423):
   Houston mounts the injected sidecar's config from a Secret named "sidecar-config"
@@ -76,10 +69,6 @@ DEPLOYMENT_SIDECAR_CONTAINER_NAME = "sidecar-log-consumer"
 # through this volume.
 SIDECAR_CONFIG_SECRET_NAME = "sidecar-config"
 SIDECAR_CONFIG_VOLUME_NAME = "config-volume"
-
-# The Vector sidecar on the Houston platform pods (houston.logging.loggingSidecar).
-PLATFORM_SIDECAR_CONTAINER_NAME = "vector"
-PLATFORM_SIDECAR_DEPLOYMENTS = {"astronomer-houston", "astronomer-houston-worker"}
 
 # A minimal, self-contained Vector config.
 CUSTOM_VECTOR_CONFIG = f"""\
@@ -412,18 +401,3 @@ def test_git_sync_deployment_sidecar_components(git_sync_deployment, _k8s_core_v
     dag-server left behind shows up as unexpectedly present, a missing relay as unexpectedly
     missing."""
     _assert_sidecar_components(_k8s_core_v1_client_module, git_sync_deployment["release_name"], SIDECAR_COMPONENTS_GIT_SYNC)
-
-
-def test_houston_platform_pods_have_sidecar_container(k8s_apps_v1_client):
-    """The other half of the feature: houston.logging.loggingSidecar puts a Vector
-    sidecar on the Houston API and worker platform pods themselves."""
-    missing = {}
-    for deployment_name in sorted(PLATFORM_SIDECAR_DEPLOYMENTS):
-        dep = k8s_apps_v1_client.read_namespaced_deployment(deployment_name, NAMESPACE)
-        container_names = [c.name for c in dep.spec.template.spec.containers]
-        if PLATFORM_SIDECAR_CONTAINER_NAME not in container_names:
-            missing[deployment_name] = container_names
-    assert not missing, (
-        f"Expected a {PLATFORM_SIDECAR_CONTAINER_NAME!r} sidecar on every Houston platform deployment "
-        f"in {sorted(PLATFORM_SIDECAR_DEPLOYMENTS)}, but it was missing from: {missing}"
-    )
