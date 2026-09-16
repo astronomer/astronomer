@@ -47,19 +47,31 @@ ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = "sidecar-logging"
 DEPLOYMENT_LABEL = "sidecar-logging"
 
+JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
+
 # A public, no-auth fixture repo
 GIT_SYNC_REPOSITORY_URL = "https://github.com/astronomer/apc-test-dags-public"
 
-# The EXACT set of pod `component` labels expected to carry the injected logging sidecar
-STANDARD_SIDECAR_COMPONENTS = {"scheduler", "worker", "triggerer", "dag-processor", "api-server"}
+STANDARD_SIDECAR_COMPONENTS_AF2 = {"scheduler", "worker", "triggerer", "webserver"}
+STANDARD_SIDECAR_COMPONENTS_AF3 = {"scheduler", "worker", "triggerer", "api-server", "dag-processor"}
 
-# The two DagDeployment-specific consumers, each present only in its own type
+# The two DagDeployment-specific consumers, each present only in its own type.
 DAG_SERVER_COMPONENT = "dag-server"
 GIT_SYNC_RELAY_COMPONENT = "git-sync-relay"
 
-# Expected sidecar-bearing components per DagDeployment stage (see the two fixtures).
-SIDECAR_COMPONENTS_DAG_DEPLOY = STANDARD_SIDECAR_COMPONENTS | {DAG_SERVER_COMPONENT}
-SIDECAR_COMPONENTS_GIT_SYNC = STANDARD_SIDECAR_COMPONENTS | {GIT_SYNC_RELAY_COMPONENT}
+
+def _expected_standard_components(airflow_version: str) -> set:
+    """The standard sidecar-bearing components for the deployment's Airflow major version.
+    Falls back to AF3 for an unparsable/empty version (the current default runtime line)."""
+    major = (airflow_version or "").split(".", 1)[0]
+    return STANDARD_SIDECAR_COMPONENTS_AF2 if major == "2" else STANDARD_SIDECAR_COMPONENTS_AF3
+
+
+def _expected_sidecar_components(airflow_version: str, dag_deployment_component: str) -> set:
+    """The full expected sidecar-bearing set: the version's standard components plus the
+    DagDeployment-specific consumer for this stage (dag-server or git-sync-relay)."""
+    return _expected_standard_components(airflow_version) | {dag_deployment_component}
+
 
 # The log-shipping sidecar Houston injects into each Airflow deployment pod. Must match
 # global.logging.loggingSidecar.name in configs/enable-logging-sidecar-custom-config.yaml.
@@ -175,7 +187,13 @@ def deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k
     _create_sidecar_config_secret(_k8s_core_v1_client_module, namespace)
 
     wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, release_name)
-    return {"token": token, "id": created["id"], "release_name": release_name, "namespace": namespace}
+    return {
+        "token": token,
+        "id": created["id"],
+        "release_name": release_name,
+        "namespace": namespace,
+        "airflow_version": created.get("runtimeAirflowVersion"),
+    }
 
 
 @pytest.fixture(scope="module")
@@ -205,6 +223,7 @@ def git_sync_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_mod
         "id": created["id"],
         "release_name": created["releaseName"],
         "namespace": deployment["namespace"],
+        "airflow_version": created.get("runtimeAirflowVersion") or deployment.get("airflow_version"),
     }
 
 
@@ -293,19 +312,22 @@ def _assert_component_has_sidecar_and_secret(core_client, release_name: str, com
     )
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
 def test_deployment_reaches_ready(deployment):
     assert deployment["release_name"]
 
 
 def test_all_deployment_pods_have_sidecar_container(deployment, _k8s_core_v1_client_module):
-    """The EXACT set of components carrying the injected sidecar equals the pinned
-    dag_deploy set -- no more, no less.
+    """The EXACT set of components carrying the injected sidecar equals the expected
+    dag_deploy set for this deployment's Airflow version -- no more, no less.
 
-    Pinned as a canary rather than "at least one" (see SIDECAR_COMPONENTS_DAG_DEPLOY): the
-    sidecar is injected only into specific log-producing components, so this fails both when
-    an expected component silently loses the sidecar AND when an unexpected component
-    (pgbouncer, statsd, flower, a new component from a runtime bump) gains one."""
-    _assert_sidecar_components(_k8s_core_v1_client_module, deployment["release_name"], SIDECAR_COMPONENTS_DAG_DEPLOY)
+    Asserted as a canary rather than "at least one": the sidecar is injected only into
+    specific log-producing components, so this fails both when an expected component silently
+    loses the sidecar AND when an unexpected component (pgbouncer, statsd, flower) gains one.
+    The expected standard set adapts to AF2 (webserver) vs AF3 (api-server + dag-processor)
+    from the deployment's runtimeAirflowVersion, plus dag-server for the dag_deploy stage."""
+    expected = _expected_sidecar_components(deployment["airflow_version"], DAG_SERVER_COMPONENT)
+    _assert_sidecar_components(_k8s_core_v1_client_module, deployment["release_name"], expected)
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
@@ -380,6 +402,9 @@ def test_dag_server_pod_has_sidecar_and_secret(deployment, _k8s_core_v1_client_m
     _assert_component_has_sidecar_and_secret(_k8s_core_v1_client_module, deployment["release_name"], DAG_SERVER_COMPONENT)
 
 
+# First test to trigger the `git_sync_deployment` fixture -- carries the JWKS-race retry for
+# the git_sync-switch upsertDeployment in that fixture setup, same as test_deployment_reaches_ready.
+@pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
 def test_git_sync_relay_pod_has_sidecar_and_secret(git_sync_deployment, _k8s_core_v1_client_module):
     """The git-sync-relay pod (present only after switching to the git_sync DagDeployment
     type) carries the injected logging sidecar and mounts the customConfig Secret.
@@ -395,11 +420,12 @@ def test_git_sync_relay_pod_has_sidecar_and_secret(git_sync_deployment, _k8s_cor
 
 def test_git_sync_deployment_sidecar_components(git_sync_deployment, _k8s_core_v1_client_module):
     """The EXACT set of sidecar-bearing components after the git_sync switch equals the
-    pinned git_sync set -- the canary counterpart to test_all_deployment_pods_have_sidecar_container
-    for the git_sync stage.
+    expected git_sync set for this deployment's Airflow version -- the canary counterpart to
+    test_all_deployment_pods_have_sidecar_container for the git_sync stage.
 
     Differs from the dag_deploy set by exactly one member: git-sync-relay replaces
     dag-server. So this also catches an incomplete dag_deploy->git_sync transition -- a
     dag-server left behind shows up as unexpectedly present, a missing relay as unexpectedly
     missing."""
-    _assert_sidecar_components(_k8s_core_v1_client_module, git_sync_deployment["release_name"], SIDECAR_COMPONENTS_GIT_SYNC)
+    expected = _expected_sidecar_components(git_sync_deployment["airflow_version"], GIT_SYNC_RELAY_COMPONENT)
+    _assert_sidecar_components(_k8s_core_v1_client_module, git_sync_deployment["release_name"], expected)

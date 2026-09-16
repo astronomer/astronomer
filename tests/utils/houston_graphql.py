@@ -210,6 +210,7 @@ def upsert_deployment(
       ) {
         id
         releaseName
+        runtimeAirflowVersion
       }
     }
     """
