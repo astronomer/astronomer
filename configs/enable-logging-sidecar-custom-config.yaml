@@ -6,7 +6,7 @@ global:
       name: sidecar-log-consumer
 
       # customConfig: true makes Houston mount the injected sidecar's config from a
-      # Secret named "sidecar-config" (fixed name) in each deployment's namespace,
+      # Secret named "sidecar-config" in each deployment's namespace,
       # instead of the default per-release ConfigMap
       customConfig: true
 

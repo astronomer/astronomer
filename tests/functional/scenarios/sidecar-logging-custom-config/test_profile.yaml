@@ -2,7 +2,7 @@ description: >-
   Verifies the Houston loggingSidecar is wired correctly when enabled with a CUSTOM config
   (global.logging.loggingSidecar.customConfig: true). In that mode Houston injects the
   log-shipping sidecar into each Airflow deployment pod and mounts its config from a Secret named
-  "sidecar-config" (fixed name) in the deployment's namespace, instead of the default per-release
+  "sidecar-config" in the deployment's namespace, instead of the default per-release
   ConfigMap "<releaseName>-sidecar-config". The scenario creates a real Airflow Deployment through
   Houston (as dag_deploy, then switched to git_sync), provisions that Secret (Houston references but
   does not create it), and asserts every injected pod -- including the DagDeployment-specific
