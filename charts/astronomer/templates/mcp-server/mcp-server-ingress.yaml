@@ -1,16 +1,12 @@
 ##########################
 ## MCP Server Ingress   ##
 ##########################
+{{- /* BYO-ingress (auth sidecar) is validated in validate-mcp-server-auth-sidecar.yaml,
+independent of baseDomain -- see that file for why it isn't nested in the gate below. */}}
+{{- if eq (include "global.ingress.enabled" .) "true" }}
 {{- if eq (include "mcpServer.enabled" .) "true" }}
 {{- if .Values.global.baseDomain }}
-{{- if .Values.global.authSidecar.enabled }}
-{{/*
-BYO-ingress mode is unsupported here: the MCP server has no auth of its own, so an ingress
-with no auth-url annotation would expose every platform-write tool unauthenticated. Fail
-closed instead of silently rendering that.
-*/}}
-{{- fail "mcpServer.enabled is not supported with global.authSidecar.enabled (BYO-ingress mode) in this release. Disable mcpServer or the auth sidecar." }}
-{{- else }}
+{{- if not .Values.global.authSidecar.enabled }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -67,6 +63,7 @@ spec:
                 port:
                   name: mcp-server-http
     {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -72,6 +72,13 @@ spec:
           tier: astronomer
           component: commander
           release: {{ .Release.Name }}
+    {{- if eq (include "mcpServer.enabled" .) "true" }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: {{ template "mcpServer.name" . }}
+          release: {{ .Release.Name }}
+    {{- end }}
     {{- if .Values.global.customLogging.enabled }}
     - podSelector:
         matchLabels:
