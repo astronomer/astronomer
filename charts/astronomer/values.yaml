@@ -1032,9 +1032,10 @@ mcpServer:
   # MCP_ENABLED_GROUPS env var — see mcpServer.enabledGroups helper. Disabling a group here
   # removes its tools from the catalog entirely, not just from what's visible to a given caller.
   #
-  # This is a REPLACEMENT list, not additive to the always-on core group: naming one opt-in
-  # group here means every other group the install should expose must be named too, or it's
-  # silently disabled. Setting enabledGroups: [platform_disruptive] loses reads and writes.
+  # This is a REPLACEMENT list: naming one opt-in group here means every other group the
+  # install should expose must be named too, or it's silently disabled. Setting
+  # enabledGroups: [platform_disruptive] loses reads and writes. The core group is always
+  # enabled regardless of this list and does not need naming.
   #
   # The five groups: core (always on, not listed here), platform_read, platform_write,
   # platform_disruptive (contract changes — executor/runtime/DAG-mechanism — off by default),
