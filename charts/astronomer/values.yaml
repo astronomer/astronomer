@@ -1028,14 +1028,31 @@ mcpServer:
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
 
-  # -- Tool groups to enable, beyond the always-on core group (internal/toolreg.Group in
-  # apc-mcp-server). Joined into the MCP_ENABLED_GROUPS env var — see mcpServer.enabledGroups
-  # helper. Disabling a group here removes its tools from the catalog entirely, not just from
-  # what's visible to a given caller.
+  # -- Tool groups to enable (internal/toolreg.Group in apc-mcp-server). Joined into the
+  # MCP_ENABLED_GROUPS env var — see mcpServer.enabledGroups helper. Disabling a group here
+  # removes its tools from the catalog entirely, not just from what's visible to a given caller.
+  #
+  # This is a REPLACEMENT list: naming one opt-in group here means every other group the
+  # install should expose must be named too, or it's silently disabled. Setting
+  # enabledGroups: [platform_disruptive] loses reads and writes. The core group is always
+  # enabled regardless of this list and does not need naming.
+  #
+  # The five groups: core (always on, not listed here), platform_read, platform_write,
+  # platform_disruptive (contract changes — executor/runtime/DAG-mechanism — off by default),
+  # platform_destroy (deletion, off by default). platform_disruptive and platform_destroy are
+  # deliberately absent from the default below so a customer can opt into agent-driven runtime
+  # upgrades without also opting into agent-driven deletion.
   # @default -- ["platform_read", "platform_write"]
   enabledGroups:
     - platform_read
     - platform_write
+
+  # -- Tool names to disable outright (internal/config.DisabledTools in apc-mcp-server). Joined
+  # into the MCP_DISABLED_TOOLS env var. This is the per-tool kill switch: it overrides
+  # everything, including the always-on core group and enabledGroups above, since naming a tool
+  # is deliberate in a way that omitting a group from enabledGroups is not.
+  # @default -- []
+  disabledTools: []
 
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []

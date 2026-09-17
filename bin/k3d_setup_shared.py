@@ -232,9 +232,10 @@ def _run(
 
 
 def _which(exe: str) -> str | None:
-    proc = _run(["/usr/bin/env", "bash", "-lc", f"command -v {shlex.quote(exe)}"], check=False)
-    path = (proc.stdout or "").strip()
-    return path or None
+    # Resolve against the PATH this process inherited (works regardless of the
+    # user's login shell being bash or zsh). Shelling out to `bash -lc` missed
+    # tools whose PATH is only set in ~/.zshrc.
+    return shutil.which(exe)
 
 
 def _require_executable(exe: str, *, hint: str) -> None:
