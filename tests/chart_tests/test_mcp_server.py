@@ -15,6 +15,7 @@ SERVICE = "charts/astronomer/templates/mcp-server/mcp-server-service.yaml"
 INGRESS = "charts/astronomer/templates/mcp-server/mcp-server-ingress.yaml"
 SERVICEACCOUNT = "charts/astronomer/templates/mcp-server/mcp-server-serviceaccount.yaml"
 NETWORKPOLICY = "charts/astronomer/templates/mcp-server/mcp-server-networkpolicy.yaml"
+HOUSTON_NETWORKPOLICY = "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml"
 
 BASE_DOMAIN = "example.com"
 GLOBAL_BASE_DOMAIN = "astro.example.com"
@@ -143,6 +144,54 @@ class TestMcpServerDeployment:
         assert env_vars["MY_CUSTOM_VAR"] == "custom-value"
         assert env_vars["MY_SECRET_VAR"] == {"secretKeyRef": {"name": "my-secret", "key": "my-key"}}
 
+    def test_deployment_houston_url_honours_configured_port(self, kube_version):
+        """HOUSTON_API_URL must interpolate ports.houstonHTTP, not hardcode 8871. A
+        default-value assertion cannot tell the two apart, so this renders a non-default
+        port: it fails if the template goes back to the literal."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}, "ports": {"houstonHTTP": 9999}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
+        assert env_vars["HOUSTON_API_URL"] == "http://release-name-houston.default.svc.cluster.local:9999/v1"
+
+    def test_deployment_disabled_tools(self, kube_version):
+        """MCP_DISABLED_TOOLS is the per-tool kill switch, and it must be emitted even when
+        the list is empty: a conditional env var would leave a stale value on pods that
+        don't restart across an upgrade that clears the list."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True, "disabledTools": ["delete_deployment", "deploy_image"]}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
+        assert env_vars["MCP_DISABLED_TOOLS"] == "delete_deployment,deploy_image"
+
+    def test_deployment_disabled_tools_emitted_when_empty(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
+        assert env_vars["MCP_DISABLED_TOOLS"] == ""
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestMcpServerService:
@@ -201,6 +250,21 @@ class TestMcpServerServiceAccount:
         )
         assert len(docs) == 0
 
+    def test_serviceaccount_absent_when_rbac_disabled(self, kube_version):
+        """With global.rbac.enabled=false, mcpServer.serviceAccountName falls through to
+        "default", so rendering the ServiceAccount would try to create one literally named
+        `default` -- which already exists in every namespace, failing the install. Gate on
+        both flags, as navigator-serviceaccount.yaml does."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}, "rbac": {"enabled": False}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICEACCOUNT],
+        )
+        assert len(docs) == 0
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestMcpServerNetworkPolicy:
@@ -244,6 +308,39 @@ class TestMcpServerNetworkPolicy:
         )
         assert len(docs) == 0
 
+    def test_houston_networkpolicy_allows_mcp_server(self, kube_version):
+        """Houston's policy is an explicit peer allow-list on its HTTP port. Without an
+        mcp-server peer, the server's HOUSTON_API_URL calls are dropped by CNI while probes
+        stay green and the nginx auth gate keeps working -- every tool call just times out."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}, "networkPolicy": {"enabled": True}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[HOUSTON_NETWORKPOLICY],
+        )
+        assert len(docs) == 1
+        peers = docs[0]["spec"]["ingress"][0]["from"]
+        assert {
+            "podSelector": {"matchLabels": {"tier": "astronomer", "component": "mcp-server", "release": "release-name"}}
+        } in peers
+
+    def test_houston_networkpolicy_unchanged_when_mcp_server_disabled(self, kube_version):
+        """The peer is gated, so an install that hasn't opted in sees no change at all."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}, "networkPolicy": {"enabled": True}}},
+            show_only=[HOUSTON_NETWORKPOLICY],
+        )
+        assert len(docs) == 1
+        components = [
+            peer["podSelector"]["matchLabels"].get("component")
+            for peer in docs[0]["spec"]["ingress"][0]["from"]
+            if "podSelector" in peer and "matchLabels" in peer["podSelector"]
+        ]
+        assert "mcp-server" not in components
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestMcpServerIngress:
@@ -274,6 +371,26 @@ class TestMcpServerIngress:
     def test_ingress_absent_when_disabled(self, kube_version):
         docs = render_chart(kube_version=kube_version, values=self._values(enabled=False), show_only=[INGRESS])
         assert len(docs) == 0
+
+    def test_ingress_absent_when_global_ingress_disabled(self, kube_version):
+        """global.ingress.enabled=false must suppress this ingress like every sibling
+        (astro-ui, houston, registry all gate on it). Without the gate this was the only
+        Ingress left in the whole platform when an operator turned the flag off."""
+        values = self._values()
+        values["global"]["ingress"] = {"enabled": False}
+        docs = render_chart(kube_version=kube_version, values=values, show_only=[INGRESS])
+        assert len(docs) == 0
+
+    def test_ingress_auth_url_honours_configured_port(self, kube_version):
+        """The auth-url annotation must interpolate ports.houstonHTTP rather than hardcode
+        8871; rendered with a non-default port so the assertion can actually fail."""
+        values = self._values()
+        values["astronomer"]["ports"] = {"houstonHTTP": 9999}
+        docs = render_chart(kube_version=kube_version, values=values, show_only=[INGRESS])
+        assert len(docs) == 1
+        assert docs[0]["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"] == (
+            "http://release-name-houston.default.svc.cluster.local:9999/v1/authorization/agent"
+        )
 
     def test_ingress_absent_on_data_plane(self, kube_version):
         docs = render_chart(kube_version=kube_version, values=self._values(plane_mode="data"), show_only=[INGRESS])
