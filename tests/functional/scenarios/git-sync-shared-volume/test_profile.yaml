@@ -1,0 +1,18 @@
+description: >-
+  PINF-1115/1190: validates the git-sync repoShareMode=shared_volume fix end to end -- the
+  pre-install/pre-upgrade init hook Job (airflow-chart#592) populates the git-repo-contents
+  PVC via git-sync-relay's git-sync-once entrypoint (PINF-1188) before any Airflow component
+  mounts it, closing the "stale file handle" race. Pins ap-git-sync-relay:0.5.0 and this
+  airflow-chart branch's build (configs/pin-git-sync-shared-volume-test-images.yaml) so the
+  fix under test actually runs, not whatever ships as the default.
+topology: unified
+# Two Airflow Deployments (a fresh shared_volume create, plus a second, LocalExecutor
+# deployment used for the install-then-upgrade-into-shared_volume transition) plus the
+# platform chart; sized to 2xlarge to stay clear of the FailedScheduling ceiling seen on
+# xlarge (see auth-sidecar / PINF-1080), with the airflow resource-reduce overlay for the
+# same reason.
+resource_class: 2xlarge
+values:
+  - configs/scenario-airflow-reduce-resources.yaml
+  - configs/pin-git-sync-shared-volume-test-images.yaml
+  - configs/git-sync-shared-volume-static-storage.yaml
