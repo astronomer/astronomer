@@ -1,6 +1,7 @@
 ###########################################################
 ## Astronomer Control Plane  Nginx Pod Disruption Budget ##
 ###########################################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if .Values.global.podDisruptionBudgets.enabled }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
@@ -18,5 +19,6 @@ spec:
       tier: {{ template "nginx.name" . }}
       component: cp-ingress-controller
       release: {{ .Release.Name }}
+{{- end }}
 {{- end }}
 {{- end }}

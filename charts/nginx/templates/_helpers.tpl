@@ -48,10 +48,25 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{ define "nginx.ingress.class" -}}
-{{- if .Values.ingressClass -}}
-{{- .Values.ingressClass -}}
+{{- if .Values.global.ingressClassName -}}
+{{- .Values.global.ingressClassName -}}
 {{- else }}
-{{- template "nginx.fullname" . -}}
+{{- printf "%s-nginx" .Release.Name -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether the bundled nginx controller should be deployed. Skipped when
+global.ingressClassName is set to a non-default value (i.e. the operator is
+bringing their own controller). The default is <release>-nginx.
+*/}}
+{{- define "nginx.deployBundledController" -}}
+{{- if .Values.global.ingressClassName -}}
+  {{- if eq .Values.global.ingressClassName (printf "%s-nginx" .Release.Name) -}}
+    true
+  {{- end -}}
+{{- else -}}
+  true
 {{- end -}}
 {{- end -}}
 

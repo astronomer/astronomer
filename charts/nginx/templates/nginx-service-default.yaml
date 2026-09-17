@@ -1,6 +1,7 @@
 ###################################
 ## NGINX Default backend service ##
 ###################################
+{{- if include "nginx.deployBundledController" . }}
 {{- if .Values.defaultBackend.enabled }}
 kind: Service
 apiVersion: v1
@@ -23,4 +24,5 @@ spec:
       targetPort: {{ .Values.ports.defaultBackendHTTP }}
       protocol: TCP
       name: default-backend
-{{ end }}
+{{- end }}
+{{- end }}

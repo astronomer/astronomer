@@ -493,3 +493,166 @@ def test_nginx_backend_overrides():
     )
 
     assert len(docs) == 0
+
+
+CP_INGRESSCLASS = "charts/nginx/templates/controlplane/nginx-cp-ingressclass.yaml"
+DP_INGRESSCLASS = "charts/nginx/templates/dataplane/nginx-dp-ingressclass.yaml"
+
+
+@pytest.mark.parametrize(
+    ("plane_mode", "ingressclass_file"),
+    [
+        ("control", CP_INGRESSCLASS),
+        ("unified", CP_INGRESSCLASS),
+        ("data", DP_INGRESSCLASS),
+    ],
+)
+class TestNginxIngressClass:
+    def test_default_ingressclass_rendered(self, plane_mode, ingressclass_file):
+        """The default IngressClass is created when no class override is set."""
+        docs = render_chart(
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=[ingressclass_file],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "IngressClass"
+        assert doc["metadata"]["name"] == "release-name-nginx"
+        assert doc["spec"]["controller"] == "k8s.io/ingress-nginx-release-name"
+
+    def test_ingressclassname_override_skips_default(self, plane_mode, ingressclass_file):
+        """global.ingressClassName means the operator owns the class; skip the default IngressClass."""
+        docs = render_chart(
+            values={"global": {"plane": {"mode": plane_mode}, "ingressClassName": "custom-class"}},
+            show_only=[ingressclass_file],
+        )
+        assert len(docs) == 0
+
+    def test_ingress_class_annotation_skips_default(self, plane_mode, ingressclass_file):
+        """A class supplied via the kubernetes.io/ingress.class annotation also skips the default IngressClass."""
+        docs = render_chart(
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                    "extraAnnotations": {"kubernetes.io/ingress.class": "annotation-class"},
+                }
+            },
+            show_only=[ingressclass_file],
+        )
+        assert len(docs) == 0
+
+    def test_unrelated_annotation_still_renders_default(self, plane_mode, ingressclass_file):
+        """extraAnnotations without a class key does not suppress the default IngressClass."""
+        docs = render_chart(
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                    "extraAnnotations": {"route.openshift.io/termination": "passthrough"},
+                }
+            },
+            show_only=[ingressclass_file],
+        )
+        assert len(docs) == 1
+        assert docs[0]["metadata"]["name"] == "release-name-nginx"
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified", "data"])
+class TestNginxIngressClassWholeChart:
+    """Whole-chart assertions that no IngressClass object is created when a class override is present."""
+
+    @staticmethod
+    def _ingressclasses(docs):
+        return [d for d in docs if d.get("kind") == "IngressClass"]
+
+    def test_default_creates_ingressclass(self, plane_mode):
+        """By default the chart creates exactly the one default IngressClass."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}}})
+        ingressclasses = self._ingressclasses(docs)
+        assert len(ingressclasses) == 1
+        assert ingressclasses[0]["metadata"]["name"] == "release-name-nginx"
+
+    def test_no_ingressclass_when_ingressClassName_set(self, plane_mode):
+        """No IngressClass object anywhere when global.ingressClassName is provided."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}, "ingressClassName": "custom-class"}})
+        assert self._ingressclasses(docs) == []
+
+    def test_no_ingressclass_when_annotation_set(self, plane_mode):
+        """No IngressClass object anywhere when the class is provided via the ingress.class annotation."""
+        docs = render_chart(
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                    "extraAnnotations": {"kubernetes.io/ingress.class": "annotation-class"},
+                }
+            }
+        )
+        assert self._ingressclasses(docs) == []
+
+
+NGINX_CONTROLLER_KINDS = {
+    "Deployment",
+    "Service",
+    "ConfigMap",
+    "ServiceAccount",
+    "ClusterRole",
+    "ClusterRoleBinding",
+    "Role",
+    "RoleBinding",
+    "PodDisruptionBudget",
+    "NetworkPolicy",
+}
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified", "data"])
+class TestDeployBundledController:
+    """Validates the nginx.deployBundledController helper gates the entire nginx stack."""
+
+    @staticmethod
+    def _nginx_resources(docs):
+        return [
+            d
+            for d in docs
+            if "nginx" in d["metadata"].get("name", "")
+            and d.get("kind") in NGINX_CONTROLLER_KINDS
+            and not d["metadata"].get("labels", {}).get("chart", "").startswith("elasticsearch")
+        ]
+
+    def test_default_renders_bundled_controller(self, plane_mode):
+        """Without ingressClassName, the bundled nginx controller resources are rendered."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}}})
+        nginx_resources = self._nginx_resources(docs)
+        assert len(nginx_resources) > 0, f"Expected bundled nginx resources in {plane_mode} mode"
+
+    def test_custom_ingressclassname_skips_bundled_controller(self, plane_mode):
+        """A non-default ingressClassName means the operator owns the controller; skip all nginx resources."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}, "ingressClassName": "custom-class"}})
+        nginx_resources = self._nginx_resources(docs)
+        assert nginx_resources == [], (
+            f"Expected no bundled nginx resources when ingressClassName='custom-class' in {plane_mode} mode, "
+            f"got: {[d['metadata']['name'] for d in nginx_resources]}"
+        )
+
+    def test_default_ingressclassname_keeps_bundled_controller(self, plane_mode):
+        """ingressClassName matching the default (<release>-nginx) still deploys the bundled controller."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}, "ingressClassName": "release-name-nginx"}})
+        nginx_resources = self._nginx_resources(docs)
+        assert len(nginx_resources) > 0, (
+            f"Expected bundled nginx resources when ingressClassName matches default in {plane_mode} mode"
+        )
+
+    def test_custom_ingressclassname_skips_default_backend(self, plane_mode):
+        """The default backend is also skipped when the bundled controller is not deployed."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}, "ingressClassName": "custom-class"}})
+        default_backends = [d for d in docs if "default-backend" in d["metadata"].get("name", "")]
+        assert default_backends == [], (
+            f"Expected no default-backend resources when ingressClassName='custom-class', "
+            f"got: {[d['metadata']['name'] for d in default_backends]}"
+        )
+
+    def test_custom_ingressclassname_still_renders_ingresses(self, plane_mode):
+        """Ingress resources themselves are still rendered (they point at the external controller)."""
+        docs = render_chart(values={"global": {"plane": {"mode": plane_mode}, "ingressClassName": "custom-class"}})
+        ingresses = [d for d in docs if d.get("kind") == "Ingress"]
+        assert len(ingresses) > 0, "Ingress resources should still be rendered with a custom ingressClassName"
+        for ingress in ingresses:
+            assert ingress["spec"]["ingressClassName"] == "custom-class"
