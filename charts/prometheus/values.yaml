@@ -88,6 +88,14 @@ configMapReloader:
     #   memory: 25Mi
 
 filesdReloader:
+  # -- Load this sidecar's DATABASE_URL from a mounted file instead of injecting
+  # it with valueFrom.secretKeyRef. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`. Requires an ap-kuiper-reloader image that
+  # supports KUIPER_SECRETS_FROM_FILES.
+  # @default -- inherits global.secretsFromFiles.enabled
+  secretsFromFiles:
+    enabled: ~
+
   livenessProbe: {}
   readinessProbe: {}
   resources: {}

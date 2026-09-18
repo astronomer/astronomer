@@ -6,6 +6,7 @@
 {{- $planeCPMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
 {{- $prometheusSecurityContext := (include "prometheus.securityContext" . | fromYaml) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.filesdReloader)) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -162,11 +163,21 @@ spec:
           readinessProbe: {{ tpl (toYaml .Values.filesdReloader.readinessProbe) . | nindent 12 }}
           {{- end }}
           env:
+            {{- if $secretsFromFiles }}
+            - name: KUIPER_SECRETS_FROM_FILES
+              value: "true"
+            {{- /* Point the loader at the chart-owned path explicitly rather than
+                   relying on the image's built-in default, so the chart is not
+                   coupled to that default and cannot regress if it changes. */}}
+            - name: DATABASE_URL_FILE
+              value: /etc/astronomer/secrets/DATABASE_URL
+            {{- else }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
+            {{- end }}
             - name: DATABASE_SCHEMA_NAME
               value: "houston$default"
             - name: CLUSTER_TABLE_NAME
@@ -187,6 +198,11 @@ spec:
           volumeMounts:
           - mountPath: /prometheusreloader/airflow
             name: filesd
+          {{- if $secretsFromFiles }}
+          - name: filesd-reloader-secrets
+            mountPath: /etc/astronomer/secrets
+            readOnly: true
+          {{- end }}
         - name: prometheus
           image: {{ include "prometheus.image" . }}
           {{- /* The federation bearer token is read from a file, not the environment:
@@ -297,6 +313,25 @@ spec:
                 path: alerts.yaml
         - name: filesd
           emptyDir: {}
+        {{- if $secretsFromFiles }}
+        {{- /* No wait-for-secret gate here, unlike the houston and commander
+               workloads: astronomer-bootstrap is created with a real connection
+               string up front rather than a sentinel the bootstrapper replaces,
+               so there is no pre-bootstrap value for a file consumer to latch.
+
+               No fsGroup is added either. This pod already sets one
+               (podSecurityContext.fsGroup, 65534), which is what makes 0440
+               readable; the shared secretsFromFiles.podSecurityContext helper
+               would override it with its own default and break the pod's other
+               volumes. */}}
+        - name: filesd-reloader-secrets
+          secret:
+            secretName: astronomer-bootstrap
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
+            items:
+              - key: connection
+                path: DATABASE_URL
+        {{- end }}
         - name: etc-ssl-certs
           emptyDir: {}
         {{- include "custom_ca_volumes" . | nindent 8 }}

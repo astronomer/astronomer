@@ -1283,3 +1283,139 @@ def test_no_secret_feeding_a_loader_renders_empty():
             problems.append(f"{secret_name}/{key}: renders empty, so the loader will warn and leave it unset")
 
     assert problems == [], "\n".join(problems)
+
+
+FILESD_RELOADER_TEMPLATE = "charts/prometheus/templates/prometheus-statefulset.yaml"
+FILESD_RELOADER_SECRET_VOLUME = "filesd-reloader-secrets"
+
+
+def filesd_reloader(enabled=None, component_enabled=None):
+    """Render the prometheus StatefulSet and return (pod spec, sidecar container)."""
+    values = {"global": {"plane": {"mode": "unified"}}}
+    if enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": enabled}
+    if component_enabled is not None:
+        values["prometheus"] = {"filesdReloader": {"secretsFromFiles": {"enabled": component_enabled}}}
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=[FILESD_RELOADER_TEMPLATE],
+    )
+    spec = docs[0]["spec"]["template"]["spec"]
+    container = next(c for c in spec["containers"] if c["name"] == "filesd-reloader")
+
+    return spec, container
+
+
+class TestFilesdReloaderSecretsFromFiles:
+    """The kuiper-reloader sidecar reads DATABASE_URL from astronomer-bootstrap."""
+
+    def test_defaults_keep_the_env_var(self):
+        spec, container = filesd_reloader()
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert "DATABASE_URL" in env_vars
+        assert "KUIPER_SECRETS_FROM_FILES" not in env_vars
+        assert "DATABASE_URL_FILE" not in env_vars
+
+        assert FILESD_RELOADER_SECRET_VOLUME not in {v["name"] for v in spec["volumes"]}
+
+    def test_enabled_replaces_the_env_var_with_a_file(self):
+        spec, container = filesd_reloader(enabled=True)
+
+        env_vars = get_env_vars_dict(container["env"])
+        # The plaintext secret must be gone from the pod spec entirely.
+        assert "DATABASE_URL" not in env_vars
+        assert env_vars["KUIPER_SECRETS_FROM_FILES"] == "true"
+        # The chart owns the path rather than relying on the image's default.
+        assert env_vars["DATABASE_URL_FILE"] == "/etc/astronomer/secrets/DATABASE_URL"
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FILESD_RELOADER_SECRET_VOLUME)
+        assert volume["secret"]["secretName"] == "astronomer-bootstrap"
+        # The file is named after the env var it replaces, which is what lets the
+        # loader find it at the default path too.
+        assert volume["secret"]["items"] == [{"key": "connection", "path": "DATABASE_URL"}]
+
+        mount = next(m for m in container["volumeMounts"] if m["name"] == FILESD_RELOADER_SECRET_VOLUME)
+        assert mount["mountPath"] == "/etc/astronomer/secrets"
+        assert mount["readOnly"] is True
+
+    def test_the_secret_file_is_mode_0440(self):
+        spec, _container = filesd_reloader(enabled=True)
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FILESD_RELOADER_SECRET_VOLUME)
+        assert volume["secret"]["defaultMode"] == SECRET_FILE_MODE
+
+    def test_the_pods_own_fsgroup_can_read_that_mode(self):
+        """This pod is the reason the shared podSecurityContext helper is not used here.
+
+        prometheus already sets its own fsGroup (65534) for its other volumes, and
+        the kuiper-reloader image runs as uid 1000. fsGroup is added to every
+        container's supplementary groups, so a root:65534 file at 0440 is readable
+        by that process. Applying the shared helper would override the pod's fsGroup
+        with a different default and break the volumes prometheus already depends on.
+        """
+        spec, _container = filesd_reloader(enabled=True)
+
+        fs_group = spec["securityContext"]["fsGroup"]
+        assert fs_group is not None, "0440 is unreadable without an fsGroup"
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FILESD_RELOADER_SECRET_VOLUME)
+        assert volume["secret"]["defaultMode"] & 0o040, "the fsGroup must be able to read the file"
+
+        # Pin the value, so a change to prometheus's fsGroup has to be a decision.
+        assert fs_group == 65534
+
+    def test_no_wait_for_secret_gate(self):
+        """astronomer-bootstrap holds a real connection string from the start.
+
+        It is not one of the sentinel-managed Secrets an in-pod bootstrapper
+        rewrites, so there is no pre-bootstrap placeholder for a file consumer to
+        latch and the gate would only add startup latency.
+        """
+        spec, _container = filesd_reloader(enabled=True)
+
+        init_names = [c["name"] for c in spec.get("initContainers") or []]
+        assert "wait-for-secret" not in init_names
+
+    def test_no_dangling_mount(self):
+        spec, container = filesd_reloader(enabled=True)
+
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for mount in container["volumeMounts"]:
+            assert mount["name"] in volume_names
+
+        paths = [m["mountPath"] for m in container["volumeMounts"]]
+        assert len(paths) == len(set(paths))
+
+    def test_prometheus_container_is_untouched(self):
+        """Only the sidecar reads this secret; it must not leak into prometheus."""
+        spec, _sidecar = filesd_reloader(enabled=True)
+
+        prometheus = next(c for c in spec["containers"] if c["name"] == "prometheus")
+        mounts = {m["name"] for m in prometheus.get("volumeMounts") or []}
+        assert FILESD_RELOADER_SECRET_VOLUME not in mounts
+
+        env_vars = get_env_vars_dict(prometheus.get("env") or [])
+        assert "KUIPER_SECRETS_FROM_FILES" not in env_vars
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (False, None, False),
+        (True, None, True),
+        (False, True, True),
+        (True, False, False),
+        (None, True, True),
+        (None, None, False),
+    ],
+)
+def test_filesd_reloader_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """The component toggle wins when set; otherwise the global one applies."""
+    _spec, container = filesd_reloader(enabled=global_enabled, component_enabled=component_enabled)
+
+    env_vars = get_env_vars_dict(container["env"])
+    assert ("KUIPER_SECRETS_FROM_FILES" in env_vars) is expected
+    assert ("DATABASE_URL" in env_vars) is not expected
