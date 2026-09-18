@@ -125,14 +125,6 @@ laminar.env volume.
 {{- end -}}
 
 
-{{ define "laminar.bootstrapperServiceAccountName" -}}
-{{- if and .Values.databaseBootstrapper.serviceAccount.create .Values.global.rbac.enabled (not .Values.databaseBootstrapper.backendSecretName) -}}
-{{- default (printf "%s-laminar-bootstrapper" .Release.Name ) .Values.databaseBootstrapper.serviceAccount.name }}
-{{- else -}}
-{{ default "default" .Values.databaseBootstrapper.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
 {{ define "dbBootstrapper.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}
@@ -180,6 +172,13 @@ idempotent, which is the same contract houston's copy already has.
       value: "true"
 {{- end }}
 
+{{/*
+The secret holding laminar's database connection, under a "connection" key.
+
+The same value names the secret and decides whether the chart creates it, so that a supplied
+secret is the one laminar reads. Two separate values cannot be kept in agreement by the customer:
+naming one without the other leaves laminar waiting on a secret nothing creates.
+*/}}
 {{ define "laminar.backend.secret" -}}
-{{ default (printf "%s-laminar-backend" .Release.Name) .Values.backendSecretName }}
+{{ default (printf "%s-laminar-backend" .Release.Name) .Values.databaseBootstrapper.backendSecretName }}
 {{- end }}

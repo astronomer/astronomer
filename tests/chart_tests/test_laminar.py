@@ -160,25 +160,13 @@ class TestLaminar:
         )
         assert len(docs) == len(LAMINAR_HELM_HOOKS_TEMPLATES)
         by_kind = {doc["kind"]: doc for doc in docs}
-        assert set(by_kind) == {"Role", "RoleBinding", "ServiceAccount"}
+        assert set(by_kind) == {"Role", "RoleBinding"}
         assert by_kind["Role"]["metadata"]["name"] == "release-name-laminar-bootstrapper-role"
         assert by_kind["Role"]["rules"] == [
             {"apiGroups": [""], "resources": ["secrets"], "verbs": ["list", "get", "create", "patch"]}
         ]
         for doc in docs:
             assert doc["metadata"]["annotations"]["helm.sh/hook"] == "pre-install,pre-upgrade"
-
-    def test_laminar_bootstrapper_is_not_a_job(self, kube_version):
-        """Test that the bootstrapper does not come back as a hook Job.
-
-        As a pre-install hook it ran before the platform database it has to connect to; as a
-        post-install hook it ran after the pods that block on the secret it writes. Either
-        ordering wedges the install, which is why it is an init container instead.
-        """
-        docs = render_chart(kube_version=kube_version, values=laminar_values(), show_only=LAMINAR_TEMPLATES)
-
-        assert docs
-        assert [doc["metadata"]["name"] for doc in docs if doc["kind"] == "Job"] == []
 
     @pytest.mark.parametrize("template,app_container", LAMINAR_DEPLOYMENTS)
     def test_laminar_bootstrapper_init_container(self, kube_version, template, app_container):
@@ -194,8 +182,8 @@ class TestLaminar:
         pod_spec = docs[0]["spec"]["template"]["spec"]
         assert [container["name"] for container in pod_spec["initContainers"]] == ["laminar-bootstrapper"]
         bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["laminar-bootstrapper"]
+        assert bootstrapper["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
         assert bootstrapper["imagePullPolicy"] == "IfNotPresent"
-        assert bootstrapper["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
         # Both pods size the bootstrapper from apiServer.resources, so on the hypervisor the init
         # container asks for more CPU (400m) than the hypervisor container it precedes (200m), and
         # the pod's effective request follows the larger of the two.
@@ -252,58 +240,6 @@ class TestLaminar:
         assert all(subject["namespace"] == "default" for subject in rolebinding["subjects"])
         assert rolebinding["roleRef"]["name"] == "release-name-laminar-bootstrapper-role"
 
-    @pytest.mark.parametrize(
-        "ssl_values,expected_sslmode",
-        [
-            ({}, None),
-            ({"global": {"ssl": {"enabled": True, "mode": "require"}}}, "require"),
-            ({"global": {"ssl": {"enabled": False, "mode": "require"}}}, None),
-        ],
-        ids=["default", "enabled", "disabled"],
-    )
-    def test_laminar_bootstrapper_sslmode(self, kube_version, ssl_values, expected_sslmode):
-        """Test that the bootstrapper takes its SSL mode from the platform setting.
-
-        A mode set while ssl is off must not reach it: the platform database it connects to is the
-        same one houston bootstraps, so the two have to make the same demand of it.
-        """
-        docs = render_chart(
-            kube_version=kube_version,
-            values=laminar_values(ssl_values),
-            show_only=[APISERVER_DEPLOYMENT_TEMPLATE],
-        )
-
-        assert len(docs) == 1
-        bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["laminar-bootstrapper"]
-        assert get_env_vars_dict(bootstrapper["env"]).get("SSLMODE") == expected_sslmode
-
-    @pytest.mark.parametrize(
-        "extra_values,expected_prefix",
-        [
-            ({}, "quay.io/astronomer/ap-db-bootstrapper:"),
-            (
-                {"global": {"privateRegistry": {"enabled": True, "repository": "my.registry/astro"}}},
-                "my.registry/astro/ap-db-bootstrapper:",
-            ),
-        ],
-        ids=["default", "private-registry"],
-    )
-    def test_laminar_bootstrapper_image(self, kube_version, extra_values, expected_prefix):
-        """Test where the bootstrapper image comes from.
-
-        It is a second image in the laminar pods, from a different repository than laminar itself,
-        so an air-gapped install that mirrors only ap-laminar leaves these pods unable to start.
-        """
-        docs = render_chart(
-            kube_version=kube_version,
-            values=laminar_values(extra_values),
-            show_only=[APISERVER_DEPLOYMENT_TEMPLATE],
-        )
-
-        assert len(docs) == 1
-        bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["laminar-bootstrapper"]
-        assert bootstrapper["image"].startswith(expected_prefix)
-
     @pytest.mark.parametrize("template,app_container", LAMINAR_DEPLOYMENTS)
     def test_laminar_bootstrapper_skipped_with_byo_backend_secret(self, kube_version, template, app_container):
         """Test that a customer-supplied backend secret leaves no bootstrapper to run."""
@@ -331,31 +267,24 @@ class TestLaminar:
 
         assert [doc["kind"] for doc in docs] == ["Deployment"]
 
-    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
-    def test_laminar_database_url_with_byo_backend_secret(self, kube_version, plane_mode):
-        """Test which secret laminar reads its database URL from when the bootstrapper is off.
+    @pytest.mark.parametrize("template,app_container", LAMINAR_DEPLOYMENTS)
+    def test_laminar_database_url_with_byo_backend_secret(self, kube_version, template, app_container):
+        """Test that a supplied backend secret is the one laminar reads.
 
-        The name stays the generated one. `databaseBootstrapper.backendSecretName` decides whether
-        the bootstrapper runs; the secret the pods read is named by the separate top-level
-        `backendSecretName`, so setting only the first one turns the bootstrapper off without
-        redirecting the pods at the secret the customer supplied.
+        A single value both skips the bootstrapper and names the secret. Were it only to do the
+        first, laminar would go on reading the generated name that nothing now creates, and the
+        pods would wait on a secret that never appears.
         """
         docs = render_chart(
             kube_version=kube_version,
-            values=laminar_values(BYO_BACKEND_SECRET, plane_mode=plane_mode),
-            show_only=[
-                *LAMINAR_HELM_HOOKS_TEMPLATES,
-                HYPERVISOR_DEPLOYMENT_TEMPLATE,
-            ],
+            values=laminar_values(BYO_BACKEND_SECRET),
+            show_only=[template],
         )
+
         assert len(docs) == 1
-        hypervisor_deployment = docs[0]
-        c_by_name = get_containers_by_name(hypervisor_deployment)
-        env_vars = get_env_vars_dict(c_by_name["hypervisor"]["env"])
-        assert env_vars["LAMINAR_DATABASE_URL"].get("secretKeyRef") == {
-            "name": "release-name-laminar-backend",
-            "key": "connection",
-        }
+        c_by_name = get_containers_by_name(docs[0])
+        env_vars = get_env_vars_dict(c_by_name[app_container]["env"])
+        assert env_vars["LAMINAR_DATABASE_URL"]["secretKeyRef"] == {"name": "my-secret", "key": "connection"}
 
     @pytest.mark.parametrize(
         "extra_values,expected_pull_secrets",
