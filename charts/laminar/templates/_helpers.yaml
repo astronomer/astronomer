@@ -49,6 +49,9 @@ Image pull secrets.
 {{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{- toYaml .Values.imagePullSecrets | nindent 2 }}
 {{- end -}}
 {{- end -}}
 

@@ -168,3 +168,99 @@ class TestLaminar:
             "name": "release-name-laminar-backend",
             "key": "connection",
         }
+
+    @pytest.mark.parametrize(
+        "extra_values,expected_pull_secrets",
+        [
+            ({}, None),
+            (
+                {"laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]}},
+                [{"name": "quay-pull-secret"}],
+            ),
+            (
+                {
+                    "global": {
+                        "privateRegistry": {
+                            "enabled": True,
+                            "repository": "my.registry/astro",
+                            "secretName": "private-registry-secret",
+                        }
+                    },
+                    "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
+                },
+                [{"name": "private-registry-secret"}],
+            ),
+        ],
+        ids=["unset", "explicit", "private-registry-wins"],
+    )
+    def test_laminar_image_pull_secrets(self, kube_version, extra_values, expected_pull_secrets):
+        """Test that every laminar pod gets the pull secret, and that privateRegistry takes precedence.
+
+        All three templates are rendered together because the pull secret comes from a shared
+        helper: testing one would prove the helper works while leaving a template free to forget
+        to call it.
+
+        The precedence case sets both sources at once. That combination is the one that silently
+        pulls the wrong image if it ever inverts, because privateRegistry also rewrites the
+        repository, so the secret and the image have to agree on which source won.
+        """
+        values = {"global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}}}
+        for key, value in extra_values.items():
+            values.setdefault(key, {}).update(value)
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/laminar/templates/apiserver/apiserver-deployment.yaml",
+                "charts/laminar/templates/helm-hooks/laminar-bootstrapper-job.yaml",
+                "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 3
+        for doc in docs:
+            pod_spec = doc["spec"]["template"]["spec"]
+            assert pod_spec.get("imagePullSecrets") == expected_pull_secrets, (
+                f"unexpected imagePullSecrets on {doc['kind']}/{doc['metadata']['name']}"
+            )
+
+    @pytest.mark.parametrize(
+        "extra_values,expected_image",
+        [
+            (
+                {"laminar": {"images": {"laminar": {"repository": "quay.io/astronomer/laminar", "tag": "1.0.0-rc1"}}}},
+                "quay.io/astronomer/laminar:1.0.0-rc1",
+            ),
+            (
+                {
+                    "global": {"privateRegistry": {"enabled": True, "repository": "my.registry/astro"}},
+                    "laminar": {"images": {"laminar": {"repository": "quay.io/astronomer/laminar", "tag": "1.0.0-rc1"}}},
+                },
+                "my.registry/astro/ap-laminar:1.0.0-rc1",
+            ),
+        ],
+        ids=["explicit-repository", "private-registry-wins"],
+    )
+    def test_laminar_image_repository(self, kube_version, extra_values, expected_image):
+        """Test which source names the laminar image.
+
+        The two differ in more than the registry. privateRegistry appends a fixed `ap-laminar`,
+        so it cannot express a repository that is not named that way, which is why an explicit
+        repository exists at all. Pinning both spellings keeps that distinction from being
+        refactored away.
+        """
+        values = {"global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}}}
+        for key, value in extra_values.items():
+            values.setdefault(key, {}).update(value)
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/laminar/templates/apiserver/apiserver-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["apiserver"]["image"] == expected_image
+

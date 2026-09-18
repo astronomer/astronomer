@@ -28,6 +28,8 @@ helpers) lives in bin/k3d_setup_shared.py, alongside bin/setup-037x-k3d.py.
 from __future__ import annotations
 
 import argparse
+import base64
+import getpass
 import json
 import os
 import shlex
@@ -112,6 +114,222 @@ def _install_service_monitor_crd(context: str) -> None:
     )
 
 
+# KEDA. The platform does not ship it and customers install it themselves, so this is a test
+# fixture standing in for the customer, not a platform component. It is opt in for that reason,
+# and because a cluster without it is a case worth being able to reproduce: the control plane is
+# supposed to withhold worker count ranges where KEDA is absent, and that path needs testing as
+# much as the present one.
+#
+# The default namespace and service account names matter beyond tidiness. Laminar authorises the
+# scaling caller by name, so installing KEDA somewhere else locally means the scaling request is
+# refused for a reason that looks nothing like a namespace problem.
+KEDA_VERSION = "v2.20.2"
+KEDA_NAMESPACE = "keda"
+KEDA_MANIFEST_URL = f"https://github.com/kedacore/keda/releases/download/{KEDA_VERSION}/keda-{KEDA_VERSION.lstrip('v')}.yaml"
+# Our own field manager for the node pin, kept distinct from the `kubectl` manager that owns the
+# rest of KEDA. See _pin_keda_to_control_plane.
+KEDA_PIN_FIELD_MANAGER = "astronomer-k3d-setup"
+
+
+# Pulling images from quay instead of the chart defaults.
+#
+# This is NOT needed to install laminar. The chart's default laminar image lives on a Harbor
+# that serves anonymous pulls, so `--with-laminar` on its own needs no credentials.
+#
+# It exists for the case where you want an image the defaults do not point at: a released
+# laminar build, or an airflow-operator development build. Those live on quay and are private,
+# hence a robot account.
+#
+# The lever is global.privateRegistry, because that is the only route the charts offer to an
+# imagePullSecret. It rewrites the repository for every ap-* image, which sounds drastic and is
+# not: they all already default to quay.io/astronomer, so it is a no-op for everything except
+# laminar. The third-party subcharts (bitnami postgres) use their own registry settings and are
+# untouched.
+QUAY_SERVER = "quay.io"
+QUAY_PULL_SECRET_NAME = "quay-pull-secret"
+
+# The laminar image the local setup installs. The chart's own default points at a QA Harbor and
+# is anonymously pullable; this is the release candidate, which is not, hence the pull secret.
+#
+# Note the repository is `laminar`, not `ap-laminar`. That rules out global.privateRegistry as
+# the lever: its image helper hardcodes the ap- prefix. So the repository is set directly on the
+# subchart and the credential is supplied through laminar.imagePullSecrets.
+LAMINAR_IMAGE_REPOSITORY = "quay.io/astronomer/laminar"
+LAMINAR_IMAGE_TAG = "1.0.0-rc1"
+
+
+def _quay_credentials(*, interactive: bool = False) -> tuple[str, str] | None:
+    """Resolve quay credentials: environment, then an existing docker login, then ask.
+
+    Env first so CI can be explicit. The docker config next, so a developer who has already run
+    `docker login quay.io` needs no configuration at all. Prompting is the last resort and only
+    when the run is interactive, because a non-interactive run that blocks on stdin looks like a
+    hang rather than a missing credential.
+
+    The password is read with getpass, so it is not echoed and does not reach shell history. It
+    is never written to disk: it goes straight into a Secret.
+
+    Returns None rather than raising: the caller decides whether the run needs credentials.
+    """
+    username, password = os.environ.get("QUAY_USERNAME"), os.environ.get("QUAY_PASSWORD")
+    if username and password:
+        _debug("Using quay credentials from QUAY_USERNAME/QUAY_PASSWORD")
+        return username, password
+
+    config_path = Path.home() / ".docker" / "config.json"
+    if not config_path.is_file():
+        return None
+
+    try:
+        auths = json.loads(config_path.read_text()).get("auths", {})
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    for host in (QUAY_SERVER, f"https://{QUAY_SERVER}", f"https://{QUAY_SERVER}/v1/"):
+        encoded = auths.get(host, {}).get("auth")
+        if not encoded:
+            continue
+        try:
+            decoded = base64.b64decode(encoded).decode()
+        except (ValueError, UnicodeDecodeError):
+            continue
+        if ":" in decoded:
+            _debug(f"Using quay credentials from {config_path} ({host})")
+            return decoded.split(":", 1)
+
+    return _ask_for_quay_credentials() if interactive else None
+
+
+def _ask_for_quay_credentials() -> tuple[str, str] | None:
+    """Prompt for quay credentials. Returns None if either is left blank."""
+    _print(f"\nThe laminar image ({LAMINAR_IMAGE_REPOSITORY}) needs {QUAY_SERVER} credentials.")
+    _print("A robot account works. Leave blank to abort.")
+    try:
+        username = input(f"  {QUAY_SERVER} username: ").strip()
+        password = getpass.getpass(f"  {QUAY_SERVER} password or token: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        _print("")
+        return None
+
+    return (username, password) if username and password else None
+
+
+def _ensure_quay_pull_secret(*, context: str, namespace: str, username: str, password: str) -> None:
+    """Create or replace the quay pull secret in `namespace`. Idempotent.
+
+    Piped through `kubectl apply` so a re-run updates a rotated token rather than failing on
+    AlreadyExists. The password reaches kubectl as an argument to a dry-run render and is never
+    written to a values file, which would leave it on disk for the rest of the run.
+    """
+    _print(f"Creating quay pull secret '{QUAY_PULL_SECRET_NAME}' in {namespace} ({context})")
+    rendered = _run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            namespace,
+            "create",
+            "secret",
+            "docker-registry",
+            QUAY_PULL_SECRET_NAME,
+            f"--docker-server={QUAY_SERVER}",
+            f"--docker-username={username}",
+            f"--docker-password={password}",
+            "--dry-run=client",
+            "-o",
+            "yaml",
+        ],
+        check=True,
+    )
+    _run(["kubectl", "--context", context, "-n", namespace, "apply", "-f", "-"], stdin=rendered.stdout, capture=False)
+
+
+def _install_keda(context: str) -> None:
+    """Install KEDA into the cluster behind `context`. Idempotent.
+
+    Server-side apply rather than the plain apply cert-manager uses: KEDA's CRDs are large
+    enough that a client-side apply can exceed the last-applied-configuration annotation
+    limit, which fails on the second run rather than the first.
+
+    --force-conflicts because this is a throwaway development cluster and the alternative is
+    worse. Any cluster built by an earlier version of this script has its nodeSelector owned by
+    a `kubectl patch`, which blocks every later apply until someone reclaims it by hand. Nothing
+    else here is meant to be hand-edited, so taking ownership back is the right default; on a
+    cluster this script built cleanly there is no conflict to force.
+    """
+    _print(f"Installing KEDA {KEDA_VERSION} into {context}")
+    _run(
+        ["kubectl", "--context", context, "apply", "--server-side", "--force-conflicts", "-f", KEDA_MANIFEST_URL],
+        capture=False,
+    )
+
+
+def _pin_keda_to_control_plane(context: str) -> None:
+    """Pin KEDA's pods to the k3s control-plane node.
+
+    Same reasoning as cert-manager above, and it applies to two of KEDA's three deployments for
+    two different reasons: keda-admission serves an admission webhook, and keda-metrics-apiserver
+    backs an aggregated API. The kube-apiserver calls both directly, and in k3d it cannot reach a
+    pod on an agent node across the Flannel VXLAN overlay.
+
+    A single-node cluster, which is the default here, lands everything on the control-plane node
+    anyway. This only earns its keep once --agents is used.
+
+    A server-side apply rather than `kubectl patch`, and the difference is not cosmetic. A merge
+    patch is an Update operation, so it claims the whole nodeSelector map atomically, including
+    KEDA's own kubernetes.io/os key. The next `kubectl apply --server-side` of KEDA's manifest
+    then conflicts over that key and the install fails on its SECOND run, having worked on the
+    first. An apply claims only the keys it sets, so KEDA keeps its key and we keep ours, which
+    is what makes re-running the setup idempotent.
+    """
+    for deployment in _keda_deployments(context):
+        pin = {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": deployment, "namespace": KEDA_NAMESPACE},
+            "spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/control-plane": "true"}}}},
+        }
+        _run(
+            ["kubectl", "--context", context, "-n", KEDA_NAMESPACE, "apply", "--server-side",
+             f"--field-manager={KEDA_PIN_FIELD_MANAGER}", "-f", "-"],
+            stdin=json.dumps(pin),
+            check=False,  # tolerate a deployment this KEDA version does not ship
+            capture=False,
+        )
+
+
+def _keda_deployments(context: str) -> list[str]:
+    """Names of the deployments KEDA actually created.
+
+    Read from the cluster rather than hardcoded. The names have differed between KEDA versions
+    and are easy to get wrong from memory, and a wrong one does not fail loudly: `kubectl wait`
+    blocks for the full timeout on a deployment that does not exist and then reports a timeout,
+    which reads as "KEDA is broken" rather than "that name is wrong".
+    """
+    proc = _run(
+        ["kubectl", "--context", context, "-n", KEDA_NAMESPACE, "get", "deployments",
+         "-o", "jsonpath={.items[*].metadata.name}"],
+        check=False,
+    )
+
+    return proc.stdout.split() if proc.returncode == 0 else []
+
+
+def _wait_for_keda(context: str, timeout_s: int = 180) -> None:
+    """Wait for every deployment KEDA created to become available."""
+    deployments = _keda_deployments(context)
+    if not deployments:
+        raise RuntimeError(f"KEDA was applied to {context} but created no deployments in the {KEDA_NAMESPACE} namespace")
+
+    _print(f"Waiting for KEDA to be ready ({context}): {', '.join(deployments)}")
+    _run(
+        ["kubectl", "--context", context, "-n", KEDA_NAMESPACE, "wait", "--for=condition=available",
+         f"--timeout={timeout_s}s", "deployment", "--all"],
+        capture=False,
+    )
+
+
 # Friendly `--version` aliases (shown in the interactive picker and accepted on the CLI).
 #
 # Numbered aliases resolve to a published chart version on HELM_REPO_URL, including
@@ -166,6 +384,9 @@ class Settings:
     helm_debug: bool
     dp_airflow_db: str
     enable_operator: bool
+    with_keda: bool = False
+    with_laminar: bool = False
+    laminar_tag: str = LAMINAR_IMAGE_TAG
     chart_version: str | None = None
     chart_is_prerelease: bool = False
     agents: int = 0
@@ -419,6 +640,24 @@ def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     """Generate DP Helm values. Postgres on/off is decided by main() via configs/postgres-*.yaml
     depending on --dp-airflow-db — each DP runs its own database rather than sharing the CP's."""
     global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
+    # Laminar renders on a data plane when global.laminar.enabled is on. privateRegistry rides
+    # along because it is the only route the subchart offers to an imagePullSecret, and it is
+    # harmless for the other images: they already resolve to this same registry.
+    global_laminar_block = "  laminar:\n    enabled: true\n" if settings.with_laminar else ""
+    laminar_subchart_block = (
+        f"""\
+laminar:
+  imagePullSecrets:
+    - name: {QUAY_PULL_SECRET_NAME}
+  images:
+    laminar:
+      repository: {LAMINAR_IMAGE_REPOSITORY}
+      tag: {settings.laminar_tag}
+
+"""
+        if settings.with_laminar
+        else ""
+    )
     # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
     # that flag is on; we emit it only in that case for clarity.
@@ -472,11 +711,11 @@ global:
     enabled: true
   prometheus:
     enabled: true
-{global_operator_block}
+{global_operator_block}{global_laminar_block}
 tags:
   platform: true
 
-{operator_subchart_block}"""
+{operator_subchart_block}{laminar_subchart_block}"""
 
 
 CP_POSTGRES_NODEPORT = 5432
@@ -601,7 +840,14 @@ def _helm_upgrade_install(
             str(values_file),
             "--timeout",
             timeout,
-            "--wait",
+            # No --wait, deliberately. With it, helm blocks on resources becoming ready BEFORE
+            # it runs post-install hooks, so any component whose pods wait on something a
+            # post-install hook creates deadlocks rather than failing. Laminar is exactly that:
+            # its Deployments mount a secret its own bootstrapper hook writes.
+            #
+            # The cost is that this returns before the platform is serving. Hooks are still
+            # waited on, and a post-install job that starts before the database is accepting
+            # connections retries under the Job's own backoffLimit.
         ]
     )
     if chart_version:
@@ -1331,6 +1577,31 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--with-laminar",
+        action="store_true",
+        default=None,
+        help=(
+            "Install Laminar on the data plane clusters. Needs no credentials: the chart's "
+            "default laminar image is served anonymously."
+        ),
+    )
+    parser.add_argument(
+        "--laminar-tag",
+        default=os.environ.get("LAMINAR_TAG", LAMINAR_IMAGE_TAG),
+        help=f"Override the laminar image tag. Default {LAMINAR_IMAGE_TAG}.",
+    )
+    parser.add_argument(
+        "--with-keda",
+        action="store_true",
+        default=None,
+        help=(
+            f"Install KEDA {KEDA_VERSION} into the data plane clusters, in the '{KEDA_NAMESPACE}' namespace. "
+            "Off by default: the platform does not ship KEDA and customers install it themselves, so this "
+            "stands in for the customer rather than being part of the platform. Needed to exercise worker "
+            "autoscaling locally; leave it off to reproduce a cluster that cannot autoscale."
+        ),
+    )
+    parser.add_argument(
         "--skip-service-monitor-crd",
         action="store_true",
         help=(
@@ -1446,6 +1717,7 @@ def main() -> int:  # noqa: C901
         raise RuntimeError("Could not locate repo root (missing .git).")
 
     _require_executable("helm", hint="Install helm and ensure it is in PATH.")
+
     try:
         resolved_chart_version, chart_is_prerelease = _resolve_version(args)
     except Delegate037:
@@ -1457,6 +1729,37 @@ def main() -> int:  # noqa: C901
     enable_operator = args.enable_operator
     if enable_operator is None:
         enable_operator = _prompt_yes_no("Enable Airflow operator mode?", default=True, interactive=args.interactive)
+
+    # Both default to off when not interactive, so an existing non-interactive invocation is
+    # unchanged. Worker autoscaling needs both; a cluster with neither is the case that proves
+    # the control plane withholds the feature, so neither is assumed.
+    with_keda = args.with_keda
+    if with_keda is None:
+        with_keda = _prompt_yes_no(
+            "Install KEDA on the data planes? (needed for worker autoscaling)",
+            default=False,
+            interactive=args.interactive,
+        )
+
+    with_laminar = args.with_laminar
+    if with_laminar is None:
+        with_laminar = _prompt_yes_no(
+            "Install Laminar on the data planes? (needed for worker autoscaling and hibernation)",
+            default=False,
+            interactive=args.interactive,
+        )
+
+    # Resolved as soon as the laminar answer is known and before any cluster is created: the
+    # alternative is discovering it after two clusters and a cert-manager install, when the
+    # laminar pods sit in ImagePullBackOff and nothing says why.
+    quay_credentials = _quay_credentials(interactive=args.interactive) if with_laminar else None
+    if with_laminar and quay_credentials is None:
+        _print(
+            f"\n❌ Installing laminar needs {QUAY_SERVER} credentials for {LAMINAR_IMAGE_REPOSITORY}.\n"
+            "   Set QUAY_USERNAME and QUAY_PASSWORD, or run `docker login quay.io`,\n"
+            "   or re-run with --interactive to be prompted."
+        )
+        return 1
 
     cp_mode = args.cp_mode
     if cp_mode is None:
@@ -1516,6 +1819,9 @@ def main() -> int:  # noqa: C901
         helm_debug=bool(args.helm_debug),
         dp_airflow_db=dp_airflow_db,
         enable_operator=enable_operator,
+        with_keda=with_keda,
+        with_laminar=with_laminar,
+        laminar_tag=args.laminar_tag,
         chart_version=resolved_chart_version,
         chart_is_prerelease=chart_is_prerelease,
         agents=args.num_compute_nodes,
@@ -1794,6 +2100,27 @@ def main() -> int:  # noqa: C901
                         ms.done(h, detail=f"prometheus-operator {PROMETHEUS_OPERATOR_VERSION}")
                     else:
                         ms.skip(f"Install ServiceMonitor CRD on {dp.cluster_name}", reason="--skip-service-monitor-crd set")
+
+                if settings.with_keda:
+                    h = ms.start(f"Install KEDA on {dp.cluster_name}")
+                    _install_keda(dp_ctx)
+                    _pin_keda_to_control_plane(dp_ctx)
+                    _wait_for_keda(dp_ctx)
+                    ms.done(h, detail=f"version={KEDA_VERSION} namespace={KEDA_NAMESPACE}")
+                else:
+                    ms.skip(f"Install KEDA on {dp.cluster_name}", reason="not requested")
+
+                # Before the release, so the pods that reference it never start without it.
+                if settings.with_laminar:
+                    h = ms.start(f"Create quay pull secret on {dp.cluster_name} (laminar image)")
+                    assert quay_credentials is not None  # noqa: S101 — guaranteed by the check in main()
+                    _ensure_quay_pull_secret(
+                        context=dp_ctx,
+                        namespace=settings.namespace,
+                        username=quay_credentials[0],
+                        password=quay_credentials[1],
+                    )
+                    ms.done(h, detail=f"secret={QUAY_PULL_SECRET_NAME}")
 
                 # Each DP runs its own database — postgres subchart on, unless --dp-airflow-db=mysql
                 # (mysql is deployed as a plain k8s manifest above instead; see _deploy_mysql).
