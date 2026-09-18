@@ -146,7 +146,7 @@ KEDA_PIN_FIELD_MANAGER = "astronomer-k3d-setup"
 # laminar. The third-party subcharts (bitnami postgres) use their own registry settings and are
 # untouched.
 QUAY_SERVER = "quay.io"
-QUAY_PULL_SECRET_NAME = "quay-pull-secret"
+QUAY_PULL_SECRET_NAME = "quay-pull-secret"  # noqa: S105 -- k8s Secret name, not a credential
 
 # The laminar image the local setup installs. The chart's own default points at a QA Harbor and
 # is anonymously pullable; this is the release candidate, which is not, hence the pull secret.
@@ -291,8 +291,18 @@ def _pin_keda_to_control_plane(context: str) -> None:
             "spec": {"template": {"spec": {"nodeSelector": {"node-role.kubernetes.io/control-plane": "true"}}}},
         }
         _run(
-            ["kubectl", "--context", context, "-n", KEDA_NAMESPACE, "apply", "--server-side",
-             f"--field-manager={KEDA_PIN_FIELD_MANAGER}", "-f", "-"],
+            [
+                "kubectl",
+                "--context",
+                context,
+                "-n",
+                KEDA_NAMESPACE,
+                "apply",
+                "--server-side",
+                f"--field-manager={KEDA_PIN_FIELD_MANAGER}",
+                "-f",
+                "-",
+            ],
             stdin=json.dumps(pin),
             check=False,  # tolerate a deployment this KEDA version does not ship
             capture=False,
@@ -308,8 +318,7 @@ def _keda_deployments(context: str) -> list[str]:
     which reads as "KEDA is broken" rather than "that name is wrong".
     """
     proc = _run(
-        ["kubectl", "--context", context, "-n", KEDA_NAMESPACE, "get", "deployments",
-         "-o", "jsonpath={.items[*].metadata.name}"],
+        ["kubectl", "--context", context, "-n", KEDA_NAMESPACE, "get", "deployments", "-o", "jsonpath={.items[*].metadata.name}"],
         check=False,
     )
 
@@ -324,8 +333,18 @@ def _wait_for_keda(context: str, timeout_s: int = 180) -> None:
 
     _print(f"Waiting for KEDA to be ready ({context}): {', '.join(deployments)}")
     _run(
-        ["kubectl", "--context", context, "-n", KEDA_NAMESPACE, "wait", "--for=condition=available",
-         f"--timeout={timeout_s}s", "deployment", "--all"],
+        [
+            "kubectl",
+            "--context",
+            context,
+            "-n",
+            KEDA_NAMESPACE,
+            "wait",
+            "--for=condition=available",
+            f"--timeout={timeout_s}s",
+            "deployment",
+            "--all",
+        ],
         capture=False,
     )
 

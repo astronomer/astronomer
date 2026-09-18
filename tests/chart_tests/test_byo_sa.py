@@ -536,10 +536,6 @@ custom_service_account_names = {
         "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
         "laminar": {"serviceAccount": {"create": True, "name": "prothean"}},
     },
-    "charts/laminar/templates/helm-hooks/laminar-bootstrapper-job.yaml": {
-        "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
-        "laminar": {"databaseBootstrapper": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    },
 }
 
 # Pod manager templates whose service account name is fixed (not a configurable
