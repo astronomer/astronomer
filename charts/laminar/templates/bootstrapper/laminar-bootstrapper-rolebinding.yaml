@@ -1,6 +1,6 @@
-#########################################
-## Laminar DB Bootstrapper RoleBinding ##
-#########################################
+######################################
+## Laminar Bootstrapper RoleBinding ##
+######################################
 {{- if eq (include "laminar.enabled" .) "true" }}
 {{- if and .Values.global.rbac.enabled (not .Values.databaseBootstrapper.backendSecretName) }}
 kind: RoleBinding
@@ -14,10 +14,8 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-  annotations:
-    "helm.sh/hook": "pre-install,pre-upgrade"
-    "helm.sh/hook-weight": "-2"
   {{- if .Values.global.argoCD.annotation.enabled }}
+  annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 roleRef:

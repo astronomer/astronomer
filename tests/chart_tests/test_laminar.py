@@ -12,18 +12,19 @@ from tests.utils.chart import render_chart
 
 def _templates(subdir=""):
     root = Path(f"{git_root_dir}/charts/laminar/templates/{subdir}")
-    return sorted(str(x.relative_to(git_root_dir)) for x in root.glob("**/*.yaml") if not x.name.startswith("_"))
+    found = sorted(str(x.relative_to(git_root_dir)) for x in root.glob("**/*.yaml") if not x.name.startswith("_"))
+    assert found, f"no templates under {root}"
+    return found
 
 
 LAMINAR_TEMPLATES = _templates()
-LAMINAR_API_SERVER_TEMPLATES = _templates("apiserver")
 LAMINAR_HYPEVISOR_TEMPLATES = _templates("hypervisor")
-LAMINAR_HELM_HOOKS_TEMPLATES = _templates("helm-hooks")
+LAMINAR_BOOTSTRAPPER_TEMPLATES = _templates("bootstrapper")
 LAMINAR_ENV_CONFIGMAP_TEMPLATE = "charts/laminar/templates/configmap.yaml"
 
 APISERVER_DEPLOYMENT_TEMPLATE = "charts/laminar/templates/apiserver/apiserver-deployment.yaml"
 HYPERVISOR_DEPLOYMENT_TEMPLATE = "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml"
-BOOTSTRAPPER_ROLEBINDING_TEMPLATE = "charts/laminar/templates/helm-hooks/laminar-bootstrapper-rolebinding.yaml"
+BOOTSTRAPPER_ROLEBINDING_TEMPLATE = "charts/laminar/templates/bootstrapper/laminar-bootstrapper-rolebinding.yaml"
 
 # The two pods laminar runs. Anything shared between them is parametrized over the pair rather
 # than checked on one of them: each deployment template includes the shared pieces itself, so a
@@ -147,26 +148,23 @@ class TestLaminar:
 
     @pytest.mark.parametrize("plane_mode", ["unified", "data"])
     def test_laminar_bootstrapper_rbac_objects(self, kube_version, plane_mode):
-        """Test that the bootstrapper's RBAC is installed ahead of the pods that use it.
+        """Test the RBAC that lets the bootstrapper write the backend secret.
 
-        The bootstrapper itself lives in the component pods, but the Role and RoleBinding that let
-        it write the backend secret have to exist before those pods start, so they remain
-        pre-install hooks.
+        Helm installs a Role and a RoleBinding ahead of a Deployment, and an init container that
+        starts before them simply retries, so these need no hook ordering of their own.
         """
         docs = render_chart(
             kube_version=kube_version,
             values=laminar_values(plane_mode=plane_mode),
-            show_only=LAMINAR_HELM_HOOKS_TEMPLATES,
+            show_only=LAMINAR_BOOTSTRAPPER_TEMPLATES,
         )
-        assert len(docs) == len(LAMINAR_HELM_HOOKS_TEMPLATES)
+        assert len(docs) == len(LAMINAR_BOOTSTRAPPER_TEMPLATES)
         by_kind = {doc["kind"]: doc for doc in docs}
         assert set(by_kind) == {"Role", "RoleBinding"}
         assert by_kind["Role"]["metadata"]["name"] == "release-name-laminar-bootstrapper-role"
         assert by_kind["Role"]["rules"] == [
             {"apiGroups": [""], "resources": ["secrets"], "verbs": ["list", "get", "create", "patch"]}
         ]
-        for doc in docs:
-            assert doc["metadata"]["annotations"]["helm.sh/hook"] == "pre-install,pre-upgrade"
 
     @pytest.mark.parametrize("template,app_container", LAMINAR_DEPLOYMENTS)
     def test_laminar_bootstrapper_init_container(self, kube_version, template, app_container):
@@ -256,13 +254,13 @@ class TestLaminar:
         """Test that nothing is granted secret write in the namespace when nothing bootstraps.
 
         The hypervisor deployment is in show_only only to give helm a document to return: with the
-        hook templates alone rendering empty, helm fails the whole command rather than returning
+        RBAC templates alone rendering empty, helm fails the whole command rather than returning
         nothing.
         """
         docs = render_chart(
             kube_version=kube_version,
             values=laminar_values(BYO_BACKEND_SECRET),
-            show_only=[*LAMINAR_HELM_HOOKS_TEMPLATES, HYPERVISOR_DEPLOYMENT_TEMPLATE],
+            show_only=[*LAMINAR_BOOTSTRAPPER_TEMPLATES, HYPERVISOR_DEPLOYMENT_TEMPLATE],
         )
 
         assert [doc["kind"] for doc in docs] == ["Deployment"]
