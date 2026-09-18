@@ -806,6 +806,106 @@ kubectl --context k3d-cp01 run test-curl --rm -it --restart=Never --image=curlim
 
 ---
 
+## Optional: Worker Autoscaling (KEDA and Laminar)
+
+Worker autoscaling needs two components the default setup does not install: KEDA, which does the
+scaling, and Laminar's api-server, which serves the number KEDA scales on. Both are opt in.
+
+KEDA is deliberately separate from the platform. Astronomer does not ship it and customers install
+it themselves, so installing it here stands in for what a customer does. A cluster **without** KEDA
+is a case worth being able to reproduce: the control plane is supposed to refuse a worker count
+range where KEDA is absent, and that path needs testing as much as the working one. Leave the flag
+off to get that cluster.
+
+`--interactive` asks for both, alongside the existing questions about operator mode and
+topology, so there is nothing to remember:
+
+```bash
+python3 bin/setup-cp-dp-k3d.py --interactive
+```
+
+Pass them explicitly to skip the questions, which is also what a non-interactive run needs.
+Unset means off either way, so existing invocations are unchanged:
+
+```bash
+python3 bin/setup-cp-dp-k3d.py --interactive --with-keda --with-laminar
+```
+
+KEDA needs no credentials. Laminar does, because the image the setup installs
+(`quay.io/astronomer/laminar`) is a private repository.
+
+### Credentials for the Laminar image
+
+Resolved in this order, and only when Laminar was actually selected:
+
+1. `QUAY_USERNAME` and `QUAY_PASSWORD` from the environment.
+2. An existing `quay.io` entry in `~/.docker/config.json`, so if you have already run
+   `docker login quay.io` there is nothing to configure.
+3. A prompt, when running with `--interactive`. The password is read without echoing and does
+   not reach your shell history.
+
+```bash
+# Non-interactive, or to skip the prompt
+export QUAY_USERNAME='astronomer+your_robot_account'
+export QUAY_PASSWORD='<robot token>'
+```
+
+Whichever way it arrives, the credential becomes a `dockerconfigjson` secret in the platform
+namespace and is never written into a Helm values file. Do not put it in one: the generated
+values are written to disk for the duration of the run.
+
+Credentials are resolved before any cluster is created, so a missing one fails in seconds
+rather than after a full install with the laminar pods stuck in `ImagePullBackOff`.
+
+Use `--laminar-tag` to install a different build.
+
+### A note on the image name
+
+The chart's own default laminar image is a QA Harbor build that pulls anonymously. The setup
+installs the quay release candidate instead, and that needs one thing the chart could not
+express until recently.
+
+`global.privateRegistry` is the usual way to attach a pull secret, but its image helper hardcodes
+the repository as `<registry>/ap-laminar`, and the release candidate is published as
+`astronomer/laminar` with no `ap-` prefix. So the repository is set directly on the subchart and
+the credential is supplied through `laminar.imagePullSecrets`, which mirrors how
+`charts/airflow-operator` has always handled `manager.imagePullSecrets`.
+
+`global.privateRegistry` still wins where it is set, so nothing changes for an install that uses it.
+
+### Confirming it worked
+
+KEDA, on the data plane context:
+
+```bash
+kubectl --context k3d-dp01 -n keda get deploy
+kubectl --context k3d-dp01 get crd scaledobjects.keda.sh
+```
+
+Both KEDA deployments should be `Available`, and the CRD should exist. The CRD is the part that
+matters to the control plane: Commander reports KEDA's presence by asking the cluster whether it
+serves `scaledobjects.keda.sh`, and Houston offers worker autoscaling on that answer alone.
+
+Check what Commander is actually reporting:
+
+```bash
+curl -sk https://commander.dp01.localtest.me/metadata | python3 -m json.tool | grep -A2 '"keda"'
+```
+
+Laminar:
+
+```bash
+kubectl --context k3d-dp01 -n astronomer get deploy -l component=laminar-apiserver
+kubectl --context k3d-dp01 -n astronomer get pods -l component=laminar-apiserver
+```
+
+If the pods are in `ImagePullBackOff` and you passed `--images-from-quay`, check the pull secret
+and that the robot account can see the tag you asked for:
+
+```bash
+kubectl --context k3d-dp01 -n astronomer get secret quay-pull-secret
+```
+
 ## Troubleshooting
 
 ### OrbStack restart breaks CP/DP networking (k3d)

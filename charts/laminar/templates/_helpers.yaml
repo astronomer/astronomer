@@ -49,6 +49,9 @@ Image pull secrets.
 {{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{- toYaml .Values.imagePullSecrets | nindent 2 }}
 {{- end -}}
 {{- end -}}
 
@@ -122,14 +125,6 @@ laminar.env volume.
 {{- end -}}
 
 
-{{ define "laminar.bootstrapperServiceAccountName" -}}
-{{- if and .Values.databaseBootstrapper.serviceAccount.create .Values.global.rbac.enabled (not .Values.databaseBootstrapper.backendSecretName) -}}
-{{- default (printf "%s-laminar-bootstrapper" .Release.Name ) .Values.databaseBootstrapper.serviceAccount.name }}
-{{- else -}}
-{{ default "default" .Values.databaseBootstrapper.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
 {{ define "dbBootstrapper.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}
@@ -138,6 +133,52 @@ laminar.env volume.
 {{- end }}
 {{- end }}
 
+{{/*
+Database bootstrapper, as an init container on each laminar component.
+
+An init container rather than a helm hook, for the reason houston-deployment.yaml uses the same
+shape: this creates the database and writes the <release>-laminar-backend secret that laminar's
+own containers read, and a hook cannot be ordered to do that. Run pre-install it precedes the
+platform database it needs to connect to; run post-install the containers waiting on its secret
+are already blocking the install.
+
+As an init container the ordering is a property of the pod rather than of the release, so it
+holds on a first install and an upgrade alike. It runs on every pod start, so it has to stay
+idempotent, which is the same contract houston's copy already has.
+*/}}
+{{- define "laminar.bootstrapperInitContainer" -}}
+- name: laminar-bootstrapper
+  image: {{ template "dbBootstrapper.image" . }}
+  imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+  securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 4 }}
+  resources: {{- toYaml .Values.apiServer.resources | nindent 4 }}
+  env:
+    - name: BOOTSTRAP_DB
+      valueFrom:
+        secretKeyRef:
+          name: astronomer-bootstrap
+          key: connection
+    - name: DB_NAME
+      value: {{ .Release.Name }}-laminar
+    - name: SECRET_NAME
+      value: {{ template "laminar.backend.secret" . }}
+    {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
+    - name: SSLMODE
+      value: {{ .Values.global.ssl.mode }}
+    {{- end }}
+    - name: NAMESPACE
+      value: {{ .Release.Namespace }}
+    - name: IN_CLUSTER
+      value: "true"
+{{- end }}
+
+{{/*
+The secret holding laminar's database connection, under a "connection" key.
+
+The same value names the secret and decides whether the chart creates it, so that a supplied
+secret is the one laminar reads. Two separate values cannot be kept in agreement by the customer:
+naming one without the other leaves laminar waiting on a secret nothing creates.
+*/}}
 {{ define "laminar.backend.secret" -}}
-{{ default (printf "%s-laminar-backend" .Release.Name) .Values.backendSecretName }}
+{{ default (printf "%s-laminar-backend" .Release.Name) .Values.databaseBootstrapper.backendSecretName }}
 {{- end }}

@@ -18,19 +18,6 @@ laminar:
       exec:
         command:
         - /bin/true
-  databaseBootstrapper:
-    startupProbe:
-      exec:
-        command:
-        - /bin/true
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true
   hypervisor:
     startupProbe:
       exec:
