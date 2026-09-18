@@ -116,6 +116,18 @@ def create_workspace(houston_api, token: str, label: str) -> str:
     return data["createWorkspace"]["id"]
 
 
+def get_workspace_id_by_label(houston_api, token: str, label: str) -> str | None:
+    """Return the id of the workspace with this exact label, or None if none matches."""
+    query = """
+    query WorkspacesByLabel($label: String) {
+      workspaces(label: $label) { id label }
+    }
+    """
+    data = graphql(houston_api, query, {"label": label}, token=token)
+    matches = [w for w in (data.get("workspaces") or []) if w.get("label") == label]
+    return matches[0]["id"] if matches else None
+
+
 def get_cluster_id(houston_api, token: str) -> str:
     """Look up the default Cluster houston-api's populate-default-cluster script creates
     on startup in unified mode. No registerCluster call is needed for this topology."""
@@ -140,6 +152,7 @@ def upsert_deployment(
     https_username: str | None = None,
     https_token: str | None = None,
     git_sync_repo_fetch_mode: str | None = None,
+    git_sync_repo_share_mode: str | None = None,
     deployment_uuid: str | None = None,
 ) -> dict:
     """
@@ -190,6 +203,12 @@ def upsert_deployment(
         # no external webhook needs to be delivered for the relay to clone and become ready.
         if git_sync_repo_fetch_mode:
             dag_deployment["gitSyncRepoFetchMode"] = git_sync_repo_fetch_mode
+        # git-sync repo-share mode: "git_daemon" (default) or "shared_volume". shared_volume
+        # populates a PVC (git-repo-contents) via a pre-install/pre-upgrade Helm hook Job instead
+        # of each Airflow component running its own git-sync sidecar against a per-pod git-daemon
+        # connection (PINF-1115/1190).
+        if git_sync_repo_share_mode:
+            dag_deployment["gitSyncRepoShareMode"] = git_sync_repo_share_mode
         variables["dagDeployment"] = dag_deployment
     query = """
     mutation UpsertDeployment(
@@ -210,6 +229,7 @@ def upsert_deployment(
       ) {
         id
         releaseName
+        runtimeAirflowVersion
       }
     }
     """

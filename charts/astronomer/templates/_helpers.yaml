@@ -1029,6 +1029,23 @@ Joins mcpServer.enabledGroups into the CSV the MCP_ENABLED_GROUPS env var expect
 {{- join "," .Values.mcpServer.enabledGroups -}}
 {{- end }}
 
+{{/*
+Joins mcpServer.disabledTools into the CSV the MCP_DISABLED_TOOLS env var expects.
+*/}}
+{{- define "mcpServer.disabledTools" -}}
+{{- join "," .Values.mcpServer.disabledTools -}}
+{{- end }}
+
+{{/*
+auth-url for the MCP server's own ingress, targeting Houston's /v1/authorization/agent
+endpoint rather than /v1/authorization. Lives here, not the repo-root _helpers.tpl, because
+its only caller (mcp-server-ingress.yaml) is in this subchart and needs .Values.ports -- the
+repo-root template has no access to that and would otherwise render an unnoticed ":<nil>".
+*/}}
+{{- define "houston.mcpAgentAuthUrl" -}}
+nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}/v1/authorization/agent
+{{- end }}
+
 {{/* Hostname, following grafana.url's convention (charts/grafana/templates/_helpers.yaml)
 of a hardcoded component prefix on global.baseDomain, not the fullname template. */}}
 {{ define "mcpServer.url" -}}

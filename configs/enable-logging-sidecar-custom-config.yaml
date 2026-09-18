@@ -1,0 +1,19 @@
+global:
+  logging:
+    loggingSidecar:
+      enabled: true
+
+      name: sidecar-log-consumer
+
+      # customConfig: true makes Houston mount the injected sidecar's config from a
+      # Secret named "sidecar-config" in each deployment's namespace,
+      # instead of the default per-release ConfigMap
+      customConfig: true
+
+      resources:
+        requests:
+          memory: "160Mi"
+          cpu: "60m"
+        limits:
+          memory: "320Mi"
+          cpu: "250m"
