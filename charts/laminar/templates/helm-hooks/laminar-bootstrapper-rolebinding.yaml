@@ -25,8 +25,14 @@ roleRef:
   kind: Role
   name: {{ .Release.Name }}-laminar-bootstrapper-role
 subjects:
+  # The bootstrapper runs as an init container inside each component's pod, so the permission to
+  # write the backend secret belongs to those service accounts. Each keeps its own runtime role;
+  # this only adds the secret write.
   - kind: ServiceAccount
-    name: {{ template "laminar.bootstrapperServiceAccountName" . }}
+    name: {{ include "laminar.serviceAccountName" (list $ "api-server") }}
+    namespace: {{ .Release.Namespace }}
+  - kind: ServiceAccount
+    name: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
     namespace: {{ .Release.Namespace }}
 {{- end }}
 {{- end }}

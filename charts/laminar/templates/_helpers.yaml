@@ -141,6 +141,45 @@ laminar.env volume.
 {{- end }}
 {{- end }}
 
+{{/*
+Database bootstrapper, as an init container on each laminar component.
+
+An init container rather than a helm hook, for the reason houston-deployment.yaml uses the same
+shape: this creates the database and writes the <release>-laminar-backend secret that laminar's
+own containers read, and a hook cannot be ordered to do that. Run pre-install it precedes the
+platform database it needs to connect to; run post-install the containers waiting on its secret
+are already blocking the install.
+
+As an init container the ordering is a property of the pod rather than of the release, so it
+holds on a first install and an upgrade alike. It runs on every pod start, so it has to stay
+idempotent, which is the same contract houston's copy already has.
+*/}}
+{{- define "laminar.bootstrapperInitContainer" -}}
+- name: laminar-bootstrapper
+  image: {{ template "dbBootstrapper.image" . }}
+  imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+  securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 4 }}
+  resources: {{- toYaml .Values.apiServer.resources | nindent 4 }}
+  env:
+    - name: BOOTSTRAP_DB
+      valueFrom:
+        secretKeyRef:
+          name: astronomer-bootstrap
+          key: connection
+    - name: DB_NAME
+      value: {{ .Release.Name }}-laminar
+    - name: SECRET_NAME
+      value: {{ template "laminar.backend.secret" . }}
+    {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
+    - name: SSLMODE
+      value: {{ .Values.global.ssl.mode }}
+    {{- end }}
+    - name: NAMESPACE
+      value: {{ .Release.Namespace }}
+    - name: IN_CLUSTER
+      value: "true"
+{{- end }}
+
 {{ define "laminar.backend.secret" -}}
 {{ default (printf "%s-laminar-backend" .Release.Name) .Values.backendSecretName }}
 {{- end }}

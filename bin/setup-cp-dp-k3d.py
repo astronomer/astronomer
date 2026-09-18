@@ -840,14 +840,16 @@ def _helm_upgrade_install(
             str(values_file),
             "--timeout",
             timeout,
-            # No --wait, deliberately. With it, helm blocks on resources becoming ready BEFORE
-            # it runs post-install hooks, so any component whose pods wait on something a
-            # post-install hook creates deadlocks rather than failing. Laminar is exactly that:
-            # its Deployments mount a secret its own bootstrapper hook writes.
+            # No --wait. This returns as soon as the manifests are accepted, so the setup
+            # finishes faster at the cost of the script no longer telling you that the platform
+            # actually came up: `_verify_local_networking` runs against something still
+            # starting, and its per-host markers will look bad on a fresh run even when the
+            # install is fine.
             #
-            # The cost is that this returns before the platform is serving. Hooks are still
-            # waited on, and a post-install job that starts before the database is accepting
-            # connections retries under the Job's own backoffLimit.
+            # This is a speed choice, not a correctness one. It was originally a workaround for
+            # laminar's database bootstrapper deadlocking against --wait, and that reason is
+            # gone: the bootstrapper is an init container now, not a helm hook. Restoring
+            # --wait is safe whenever the readiness signal is worth the wall-clock.
         ]
     )
     if chart_version:

@@ -39,6 +39,10 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       {{- include "laminar.imagePullSecrets" . | nindent 6 }}
+      {{- if not .Values.databaseBootstrapper.backendSecretName }}
+      initContainers:
+        {{- include "laminar.bootstrapperInitContainer" . | nindent 8 }}
+      {{- end }}
       containers:
         - name: hypervisor
           image: {{ include "laminar.image" . }}
