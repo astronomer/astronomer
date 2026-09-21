@@ -136,7 +136,7 @@ data:
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
-            regex: "^{{ .Release.Name }}-nginx"
+            regex: "^{{ .Release.Name }}-[cd]p-nginx"
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
             action: keep
             regex: true
