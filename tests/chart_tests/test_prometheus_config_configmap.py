@@ -392,3 +392,22 @@ class TestPrometheusConfigConfigmap:
         assert len(federated) == 1
         assert federated[0]["scrape_interval"] == "30s"
         assert federated[0]["scrape_timeout"] == "5s"
+
+    @pytest.mark.parametrize(
+        ("mode", "scrape_targets", "expected_count"),
+        [
+            ("control", "nats_server", 1),
+            ("unified", "nats_server", 1),
+            ("data", "nats_server", 0),
+        ],
+    )
+    def test_prometheus_nats_scrape_config(self, kube_version, mode, scrape_targets, expected_count):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"plane": {"mode": mode}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        nats_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == scrape_targets]
+        assert len(nats_scrape_config) == expected_count
