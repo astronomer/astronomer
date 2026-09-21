@@ -417,3 +417,29 @@ class TestPrometheusConfigConfigmap:
         # per-deployment Airflow metrics the UI renders.
         assert "airflow-operator" in alternatives, alternatives
         assert "airflow" in alternatives, alternatives
+
+    def test_prometheus_laminar_scrape_config(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"laminar": {"enabled": True}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        laminar_hypervisor_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-hypervisor"]
+        laminar_api_server_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-api-server"]
+        assert len(laminar_hypervisor_scrape_config) == 1
+        assert len(laminar_api_server_scrape_config) == 1
+
+    def test_prometheus_laminar_scrape_config_disabled(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"laminar": {"enabled": False}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        laminar_hypervisor_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-hypervisor"]
+        laminar_api_server_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-api-server"]
+        assert not laminar_hypervisor_scrape_config
+        assert not laminar_api_server_scrape_config
