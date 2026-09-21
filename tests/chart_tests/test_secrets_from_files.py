@@ -914,9 +914,9 @@ GATED_WORKLOADS = {
 }
 
 
-def full_feature_values(enabled=True):
+def full_feature_values(enabled=True, plane="unified"):
     return {
-        "global": {"plane": {"mode": "unified"}, "secretsFromFiles": {"enabled": enabled}},
+        "global": {"plane": {"mode": plane}, "secretsFromFiles": {"enabled": enabled}},
         "astronomer": {
             "flightDeck": {"enabled": True},
             "pilot": {"enabled": True},
@@ -924,6 +924,27 @@ def full_feature_values(enabled=True):
             "dpLink": {"enabled": True},
         },
     }
+
+
+# The sweeps below run per plane because some workloads exist in only one of them.
+# prometheus-federation-auth is data-plane only, so a unified-mode-only sweep never
+# rendered it and could not have caught a dangling mount or a bad mount path there.
+SWEPT_PLANES = ["unified", "control", "data"]
+
+# (plane, workload, secret) triples that dangle today, for reasons predating this
+# feature. Listed rather than folded into `external` so they stay visible: each is
+# a latent deadlock, not an operator-supplied Secret.
+#
+# registry mounts houston.jwtCertificateSecret unconditionally (unless
+# registry.enableInsecureAuth, default False), but
+# houston-jwt-certificate-secret.yaml is gated to the control and unified planes.
+# So a data-plane install renders a registry StatefulSet whose Secret nothing
+# creates, and kubelet blocks on it before running any container. Surfaced by
+# parametrizing this sweep over planes; unrelated to secrets-from-files, and needs
+# an owner decision (gate the mount, sync the Secret, or document a manual step).
+KNOWN_DANGLING = {
+    ("data", "release-name-registry", "release-name-houston-jwt-signing-certificate"),
+}
 
 
 def pod_specs(docs):
@@ -945,8 +966,9 @@ class TestNoSecretMountEverDangles:
     is schema-valid, so only a cross-referencing check like this catches it.
     """
 
-    def test_every_secret_volume_source_is_created_by_the_chart(self):
-        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+    @pytest.mark.parametrize("plane", SWEPT_PLANES)
+    def test_every_secret_volume_source_is_created_by_the_chart(self, plane):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values(plane=plane))
         created = {d["metadata"]["name"] for d in docs if d["kind"] == "Secret"}
 
         # Secrets an operator supplies, or that live outside this chart.
@@ -964,9 +986,27 @@ class TestNoSecretMountEverDangles:
             for name, spec in pod_specs(docs)
             for volume in spec.get("volumes") or []
             for secret_name in secret_sources(volume)
-            if secret_name not in created and secret_name not in external
+            if secret_name not in created and secret_name not in external and (plane, name, secret_name) not in KNOWN_DANGLING
         ]
         assert missing == [], "\n".join(missing)
+
+    def test_the_known_dangling_mount_still_dangles(self):
+        """Fails once the registry/data-plane bug below is fixed, so the
+        exception cannot outlive it. Delete both this test and the entry.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values(plane="data"))
+        created = {d["metadata"]["name"] for d in docs if d["kind"] == "Secret"}
+
+        for plane, workload, secret_name in KNOWN_DANGLING:
+            assert plane == "data"
+            mounted = any(
+                (v.get("secret") or {}).get("secretName") == secret_name
+                for name, spec in pod_specs(docs)
+                if name == workload
+                for v in spec.get("volumes") or []
+            )
+            assert mounted, f"{workload} no longer mounts {secret_name} -- drop this exception"
+            assert secret_name not in created, f"{secret_name} is now created in the data plane -- drop this exception"
 
 
 class TestBootstrapperSentinel:
@@ -1043,7 +1083,8 @@ class TestWaitForSecretGate:
             assert "wait-for-secret" not in names, name
 
 
-def test_no_secret_is_mounted_under_run_secrets():
+@pytest.mark.parametrize("plane", SWEPT_PLANES)
+def test_no_secret_is_mounted_under_run_secrets(plane):
     """/run/secrets is unusable: the service-account token mounts at
     /var/run/secrets/kubernetes.io/serviceaccount, every relevant image symlinks
     /var/run -> /run, and a read-only mount at /run/secrets makes runc unable to
@@ -1051,7 +1092,7 @@ def test_no_secret_is_mounted_under_run_secrets():
     Reproduced on kind; the rendered manifest is schema-valid, so only this check
     catches it.
     """
-    docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+    docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values(plane=plane))
     offenders = []
     for name, spec in pod_specs(docs):
         for container in (spec.get("containers") or []) + (spec.get("initContainers") or []):
@@ -1419,3 +1460,190 @@ def test_filesd_reloader_toggle_override_precedence(global_enabled, component_en
     env_vars = get_env_vars_dict(container["env"])
     assert ("KUIPER_SECRETS_FROM_FILES" in env_vars) is expected
     assert ("DATABASE_URL" in env_vars) is not expected
+
+
+FEDERATION_AUTH_DEPLOYMENT = "charts/prometheus/templates/prometheus-federation-auth-deployment.yaml"
+FEDERATION_AUTH_CONFIGMAP = "charts/prometheus/templates/prometheus-federation-auth-configmap.yaml"
+FEDERATION_AUTH_SECRET_VOLUME = "federation-auth-secrets"
+FEDERATION_AUTH_TOKEN_FILE = "/etc/astronomer/secrets/REGISTRY_AUTH_TOKEN"
+
+
+def federation_auth(enabled=None, component_enabled=None):
+    """Render the data-plane federation-auth Deployment and its nginx ConfigMap.
+
+    Returns (pod spec, container, nginx.conf). This workload exists only in the
+    data plane, which is why it needs its own renderer rather than reusing the
+    unified-mode helpers above.
+    """
+    values = {"global": {"plane": {"mode": "data"}}}
+    if enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": enabled}
+    if component_enabled is not None:
+        values["prometheus"] = {"federation": {"auth": {"secretsFromFiles": {"enabled": component_enabled}}}}
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=[FEDERATION_AUTH_DEPLOYMENT, FEDERATION_AUTH_CONFIGMAP],
+    )
+    deployment = next(d for d in docs if d["kind"] == "Deployment")
+    configmap = next(d for d in docs if d["kind"] == "ConfigMap")
+    spec = deployment["spec"]["template"]["spec"]
+    container = next(c for c in spec["containers"] if c["name"] == "federation-auth")
+
+    return spec, container, configmap["data"]["nginx.conf"]
+
+
+class TestFederationAuthSecretsFromFiles:
+    """The data-plane federation-auth proxy validates a bearer token against
+    registry.authHeaderSecret. The lua that reads it ships in this chart's
+    ConfigMap, so switching to a file needs no ap-openresty rebuild.
+    """
+
+    def test_defaults_keep_the_env_var(self):
+        spec, container, nginx_conf = federation_auth()
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert env_vars["REGISTRY_AUTH_TOKEN"]["secretKeyRef"]["key"] == "token"
+        assert "REGISTRY_AUTH_TOKEN_FILE" not in env_vars
+
+        assert "env REGISTRY_AUTH_TOKEN;" in nginx_conf
+        assert 'os.getenv("REGISTRY_AUTH_TOKEN")' in nginx_conf
+        assert "init_by_lua_block" not in nginx_conf
+
+        assert FEDERATION_AUTH_SECRET_VOLUME not in {v["name"] for v in spec["volumes"]}
+
+    def test_enabled_replaces_the_env_var_with_a_file(self):
+        spec, container, _nginx_conf = federation_auth(enabled=True)
+
+        env_vars = get_env_vars_dict(container["env"])
+        # The plaintext token must be gone from the pod spec entirely.
+        assert "REGISTRY_AUTH_TOKEN" not in env_vars
+        # The chart owns the path rather than relying on the lua's default.
+        assert env_vars["REGISTRY_AUTH_TOKEN_FILE"] == FEDERATION_AUTH_TOKEN_FILE
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FEDERATION_AUTH_SECRET_VOLUME)
+        assert volume["secret"]["secretName"] == "release-name-registry-auth-key"
+        # The file is named after the env var it replaces, so the lua's default
+        # path finds it even if the _FILE var were ever dropped.
+        assert volume["secret"]["items"] == [{"key": "token", "path": "REGISTRY_AUTH_TOKEN"}]
+
+        mount = next(m for m in container["volumeMounts"] if m["name"] == FEDERATION_AUTH_SECRET_VOLUME)
+        assert mount["mountPath"] == "/etc/astronomer/secrets"
+        assert mount["readOnly"] is True
+
+    def test_env_key_is_never_empty(self):
+        """REGISTRY_AUTH_TOKEN was this container's only env var. Dropping it
+        without putting something back renders `env: null`, which fails schema
+        validation -- the same trap the prometheus statefulset hit when
+        FEDERATION_AUTH_TOKEN was deleted.
+        """
+        for kwargs in ({}, {"enabled": True}):
+            _spec, container, _conf = federation_auth(**kwargs)
+            assert container["env"], f"env is empty for {kwargs}"
+
+    def test_enabled_reads_the_token_once_at_startup(self):
+        """Reading per request would put a filesystem hit on every federated
+        scrape, so the token is read in init_by_lua_block and cached in the
+        shared dict that was already declared but unused.
+        """
+        _spec, _container, nginx_conf = federation_auth(enabled=True)
+
+        assert "init_by_lua_block" in nginx_conf
+        assert "lua_shared_dict federation_auth_cache" in nginx_conf
+        assert 'ngx.shared.federation_auth_cache:set("registry_auth_token"' in nginx_conf
+        assert 'ngx.shared.federation_auth_cache:get("registry_auth_token")' in nginx_conf
+
+        # The env-var read must be gone, or a stale env value could win.
+        assert 'os.getenv("REGISTRY_AUTH_TOKEN")' not in nginx_conf
+        assert "env REGISTRY_AUTH_TOKEN;" not in nginx_conf
+        assert "env REGISTRY_AUTH_TOKEN_FILE;" in nginx_conf
+
+    def test_enabled_fails_closed_on_a_bad_token_file(self):
+        """Verified against openresty/openresty:alpine: with the file missing,
+        empty or whitespace-only, nginx refuses to start and logs the path. The
+        alternative is coming up and answering every scrape with a misleading
+        403.
+        """
+        _spec, _container, nginx_conf = federation_auth(enabled=True)
+
+        init_block = nginx_conf.split("init_by_lua_block")[1].split("\n        }")[0]
+        assert init_block.count("error(") == 3, "expected open, unreadable and empty to all fail closed"
+        # The message has to name the path, or an operator cannot act on it.
+        assert "path" in init_block
+
+    def test_enabled_trims_the_trailing_newline(self):
+        """A Secret mount adds a newline; an untrimmed token never matches."""
+        _spec, _container, nginx_conf = federation_auth(enabled=True)
+
+        init_block = nginx_conf.split("init_by_lua_block")[1]
+        assert 'gsub("%s+$", "")' in init_block
+
+    def test_the_configmap_checksum_still_rolls_the_pod(self):
+        """Reading once at startup is only safe because a Secret change rolls the
+        pod. Both checksums must survive, or a rotated token would be served
+        stale until the next unrelated restart.
+        """
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values={"global": {"plane": {"mode": "data"}, "secretsFromFiles": {"enabled": True}}},
+            show_only=[FEDERATION_AUTH_DEPLOYMENT],
+        )
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert "checksum/prom-auth-config" in annotations
+        assert "checksum/registry-auth-secret" in annotations
+
+    def test_no_dangling_mount(self):
+        spec, container, _conf = federation_auth(enabled=True)
+
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for mount in container["volumeMounts"]:
+            assert mount["name"] in volume_names
+
+        paths = [m["mountPath"] for m in container["volumeMounts"]]
+        assert len(paths) == len(set(paths))
+
+    def test_secret_file_mode_is_left_at_the_image_default(self):
+        """Deliberately not 0440. This pod sets no fsGroup and ap-openresty does
+        not run as root, so 0440 on a root-owned file would leave the token
+        unreadable and every federated scrape would 403. Same deferred decision
+        as the external-es-proxy group, which mounts secrets from this same
+        image. Tightening this means verifying the image UID and adding an
+        fsGroup, per LOADER_SECRET_VOLUMES above.
+        """
+        spec, _container, _conf = federation_auth(enabled=True)
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FEDERATION_AUTH_SECRET_VOLUME)
+        assert "defaultMode" not in volume["secret"]
+        assert "fsGroup" not in (spec.get("securityContext") or {})
+
+    def test_no_wait_for_secret_gate(self):
+        """registry.authHeaderSecret is rendered by the chart from the houston JWT
+        certificate, not written by an in-pod bootstrapper, so there is no
+        sentinel for a file consumer to latch.
+        """
+        spec, _container, _conf = federation_auth(enabled=True)
+
+        init_names = [c["name"] for c in spec.get("initContainers") or []]
+        assert "wait-for-secret" not in init_names
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (False, None, False),
+        (True, None, True),
+        (False, True, True),
+        (True, False, False),
+        (None, True, True),
+        (None, None, False),
+    ],
+)
+def test_federation_auth_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """The component toggle wins when set; otherwise the global one applies."""
+    _spec, container, nginx_conf = federation_auth(enabled=global_enabled, component_enabled=component_enabled)
+
+    env_vars = get_env_vars_dict(container["env"])
+    assert ("REGISTRY_AUTH_TOKEN_FILE" in env_vars) is expected
+    assert ("REGISTRY_AUTH_TOKEN" in env_vars) is not expected
+    assert ("init_by_lua_block" in nginx_conf) is expected
