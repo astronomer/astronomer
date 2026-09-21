@@ -89,7 +89,7 @@ class TestPrometheusConfigConfigmap:
         # These assertions only work because we know that namespaces do not show up in our configured regexes.
         assert "bar-ns" not in all_scrape_config_regexes
         assert any("foo-name-houston" in str(regex) for regex in all_scrape_config_regexes)
-        assert any("foo-name-nginx" in str(regex) for regex in all_scrape_config_regexes)
+        assert any("foo-name-cp-nginx" in str(regex) for regex in all_scrape_config_regexes)
         assert any("foo-name-postgresql-exporter" in str(regex) for regex in all_scrape_config_regexes)
 
     def test_prometheus_config_configmap_external_labels(self, kube_version):
