@@ -61,10 +61,11 @@ Common metadata labels for a component. Call with (list $ "<component>").
 {{- define "laminar.labels" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
-app.kubernetes.io/component: {{ $component }}
+component: {{ $component }}
 release: {{ $.Release.Name }}
 chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
 heritage: {{ $.Release.Service }}
+tier: laminar
 plane: {{ $.Values.global.plane.mode }}
 {{- end -}}
 
@@ -75,8 +76,9 @@ Kept identical to the original Kustomize manifests so Services/ServiceMonitors m
 {{- define "laminar.selectorLabels" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
-app.kubernetes.io/name: laminar
-app.kubernetes.io/component: {{ $component }}
+component: {{ $component }}
+release: {{ $.Release.Name }}
+tier: laminar
 {{- end -}}
 
 {{/*
