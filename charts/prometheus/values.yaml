@@ -195,6 +195,13 @@ federation:
     enabled: true
     replicas: 2
     resources: {}
+    # -- Read REGISTRY_AUTH_TOKEN from a mounted file instead of injecting it
+    # into the environment with valueFrom.secretKeyRef. Leave unset to inherit
+    # `global.secretsFromFiles.enabled`. The nginx.conf lua that reads the token
+    # ships in this chart's ConfigMap, so this needs no ap-openresty rebuild.
+    # @default -- inherits global.secretsFromFiles.enabled
+    secretsFromFiles:
+      enabled: ~
   ingress:
     annotations: {}
   livenessProbe: {}
