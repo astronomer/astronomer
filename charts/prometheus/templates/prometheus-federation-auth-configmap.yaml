@@ -2,6 +2,7 @@
 ## Prometheus Federation Auth Configmap ##
 ##########################################
 {{- if eq .Values.global.plane.mode "data" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.federation.auth)) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -19,10 +20,49 @@ data:
     events {
         worker_connections 1024;
     }
+{{- if $secretsFromFiles }}
+    env REGISTRY_AUTH_TOKEN_FILE;
+{{- else }}
     env REGISTRY_AUTH_TOKEN;
+{{- end }}
     http {
         lua_package_path "/usr/local/openresty/lualib/?.lua;;";
         lua_shared_dict federation_auth_cache 10m;
+{{- if $secretsFromFiles }}
+
+        # Read the token from its mounted file once at startup and cache it in the
+        # shared dict the /auth handler reads. Reading per request would add a
+        # filesystem hit to every federated scrape.
+        #
+        # Erroring here is deliberate: nginx refuses to start rather than coming up
+        # and rejecting every request with a misleading 403. That matches the
+        # fail-closed rule the houston-api and commander loaders follow -- an absent
+        # secret is configuration, an unreadable or empty one is breakage.
+        #
+        # Reading once cannot serve a stale token: the deployment's
+        # checksum/registry-auth-secret annotation rolls the pod when the Secret
+        # changes, so a rotation arrives as a restart.
+        init_by_lua_block {
+            local path = os.getenv("REGISTRY_AUTH_TOKEN_FILE")
+                         or "/etc/astronomer/secrets/REGISTRY_AUTH_TOKEN"
+            local handle, open_err = io.open(path, "r")
+            if not handle then
+                error("federation auth: cannot open token file " .. path ..
+                      ": " .. tostring(open_err))
+            end
+            local contents = handle:read("*a")
+            handle:close()
+            if not contents then
+                error("federation auth: token file is unreadable: " .. path)
+            end
+            -- Strip the trailing newline a Secret mount adds.
+            local token = contents:gsub("%s+$", "")
+            if token == "" then
+                error("federation auth: token file is empty: " .. path)
+            end
+            ngx.shared.federation_auth_cache:set("registry_auth_token", token)
+        }
+{{- end }}
 
         # Upstream to Prometheus service
         upstream prometheus_backend {
@@ -71,7 +111,12 @@ data:
                 internal;
                 content_by_lua_block {
                     local auth_header = ngx.var.http_authorization
+{{- if $secretsFromFiles }}
+                    local registry_auth_token =
+                        ngx.shared.federation_auth_cache:get("registry_auth_token")
+{{- else }}
                     local registry_auth_token = os.getenv("REGISTRY_AUTH_TOKEN")
+{{- end }}
 
                     if not auth_header then
                         ngx.log(ngx.WARN, "Federation auth: Missing Authorization header")

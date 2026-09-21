@@ -3,6 +3,7 @@
 ###########################################
 {{- if eq .Values.global.plane.mode "data" }}
 {{- $prometheusSecurityContext := (include "prometheus.securityContext" . | fromYaml) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.federation.auth)) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -58,11 +59,20 @@ spec:
         - containerPort: {{ .Values.global.authSidecar.port }}
           name: http
         env:
+        {{- if $secretsFromFiles }}
+        {{- /* The chart owns the path rather than leaving it to the default baked
+               into the lua, so chart and image versions stay decoupled. Keeping an
+               entry in both branches also avoids rendering `env: null`, which this
+               container hit when it was down to a single var. */}}
+        - name: REGISTRY_AUTH_TOKEN_FILE
+          value: /etc/astronomer/secrets/REGISTRY_AUTH_TOKEN
+        {{- else }}
         - name: REGISTRY_AUTH_TOKEN
           valueFrom:
             secretKeyRef:
               name: {{ template "registry.authHeaderSecret" . }}
               key: token
+        {{- end }}
         volumeMounts:
         - name: config
           mountPath: /etc/nginx/nginx.conf
@@ -71,6 +81,11 @@ spec:
           mountPath: /var/run/openresty
         - name: tmp
           mountPath: /tmp
+        {{- if $secretsFromFiles }}
+        - name: federation-auth-secrets
+          mountPath: /etc/astronomer/secrets
+          readOnly: true
+        {{- end }}
         {{- if .Values.federation.readinessProbe }}
         readinessProbe: {{- tpl (toYaml .Values.federation.readinessProbe) . | nindent 10 }}
         {{- end }}
@@ -86,4 +101,17 @@ spec:
         emptyDir: {}
       - name: var-run
         emptyDir: {}
+      {{- if $secretsFromFiles }}
+      {{- /* No defaultMode, so the file keeps the 0644 default. This pod has no
+             fsGroup, and ap-openresty does not run as root, so 0440 on a
+             root-owned file would leave the token unreadable and every federated
+             scrape would 403. Same deferred decision as the external-es-proxy
+             group, which mounts secrets from this same image. */}}
+      - name: federation-auth-secrets
+        secret:
+          secretName: {{ template "registry.authHeaderSecret" . }}
+          items:
+          - key: token
+            path: REGISTRY_AUTH_TOKEN
+      {{- end }}
 {{- end }}
