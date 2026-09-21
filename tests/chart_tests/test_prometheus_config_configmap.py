@@ -87,7 +87,7 @@ class TestPrometheusConfigConfigmap:
         # These assertions only work because we know that namespaces do not show up in our configured regexes.
         assert "bar-ns" not in all_scrape_config_regexes
         assert any("foo-name-houston" in str(regex) for regex in all_scrape_config_regexes)
-        assert any("foo-name-nginx" in str(regex) for regex in all_scrape_config_regexes)
+        assert any("foo-name-[cd]p-nginx" in str(regex) for regex in all_scrape_config_regexes)
         assert any("foo-name-postgresql-exporter" in str(regex) for regex in all_scrape_config_regexes)
 
     def test_prometheus_config_configmap_external_labels(self, kube_version):
@@ -351,3 +351,22 @@ class TestPrometheusConfigConfigmap:
         assert len(airflow_operator_scrape_config) == 0
         airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
         assert len(airflow_scrape_config) == 1
+
+    @pytest.mark.parametrize(
+        ("mode", "scrape_targets", "expected_count"),
+        [
+            ("control", "nginx", 1),
+            ("unified", "nginx", 1),
+            ("data", "nginx", 1),
+        ],
+    )
+    def test_prometheus_nginx_scrape_config(self, kube_version, mode, scrape_targets, expected_count):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"plane": {"mode": mode}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        nginx_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == scrape_targets]
+        assert len(nginx_scrape_config) == expected_count
