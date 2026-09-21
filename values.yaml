@@ -688,10 +688,10 @@ prometheus:
     resources:
       limits:
         cpu: 100m
-        memory: 25Mi
+        memory: 128Mi
       requests:
         cpu: 100m
-        memory: 25Mi
+        memory: 128Mi
 
   filesdReloader:
     resources:
