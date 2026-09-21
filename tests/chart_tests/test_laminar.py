@@ -105,10 +105,11 @@ class TestLaminar:
         assert hypervisor_service["kind"] == "Service"
         assert hypervisor_service["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_service["metadata"]["labels"] == {
-            "app.kubernetes.io/component": "hypervisor",
-            "chart": "laminar-0.12.0",
+            "component": "hypervisor",
             "release": "release-name",
+            "chart": "laminar-0.12.0",
             "heritage": "Helm",
+            "tier": "laminar",
             "plane": plane_mode,
             "app.kubernetes.io/name": "hypervisor",
         }
