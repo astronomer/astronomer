@@ -1647,3 +1647,183 @@ def test_federation_auth_toggle_override_precedence(global_enabled, component_en
     assert ("REGISTRY_AUTH_TOKEN_FILE" in env_vars) is expected
     assert ("REGISTRY_AUTH_TOKEN" in env_vars) is not expected
     assert ("init_by_lua_block" in nginx_conf) is expected
+
+
+PG_EXPORTER_TEMPLATE = "charts/prometheus-postgres-exporter/templates/deployment.yaml"
+PG_EXPORTER_SECRET_VOLUME = "data-source-pass"
+PG_EXPORTER_PASS_FILE = "/etc/astronomer/secrets/data_source_password"
+
+
+def pg_exporter(enabled=None, component_enabled=None, datasource=None, show_secret=False):
+    """Render the standalone postgres-exporter Deployment.
+
+    datasource=None keeps the chart default, which is the connectionSecret
+    (DATA_SOURCE_NAME) form. Pass a dict to switch to the split
+    URI/USER/PASS form.
+    """
+    exporter = {}
+    if component_enabled is not None:
+        exporter["secretsFromFiles"] = {"enabled": component_enabled}
+    if datasource is not None:
+        exporter["config"] = {"datasource": {"connectionSecret": None, "host": "pg.example.com", "user": "exporter", **datasource}}
+
+    values = {"global": {"prometheusPostgresExporter": {"enabled": True}}}
+    if enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": enabled}
+    if exporter:
+        values["prometheus-postgres-exporter"] = exporter
+
+    show_only = [PG_EXPORTER_TEMPLATE]
+    if show_secret:
+        show_only.append("charts/prometheus-postgres-exporter/templates/secret.yaml")
+
+    docs = render_chart(kube_version=newest_supported_kube_version, values=values, show_only=show_only)
+    deployment = next(d for d in docs if d["kind"] == "Deployment")
+    spec = deployment["spec"]["template"]["spec"]
+    container = next(c for c in spec["containers"] if c["name"] == "prometheus-postgres-exporter")
+    secrets = {d["metadata"]["name"] for d in docs if d["kind"] == "Secret"}
+
+    return spec, container, secrets
+
+
+# A password source is required for the split form; either of these reaches it.
+EXTERNAL_PASSWORD = {"passwordSecret": {"name": "my-pg-secret", "key": "my-password-key"}}
+INLINE_PASSWORD = {"password": "s3cr3t"}
+
+
+class TestPostgresExporterSecretsFromFiles:
+    """postgres_exporter can read the password from a file, but only in the split
+    DATA_SOURCE_URI/_USER/_PASS form. Verified against the ap-postgres-exporter
+    0.19.1-2 binary: it ships DATA_SOURCE_URI_FILE, _USER_FILE and _PASS_FILE, and
+    no _NAME_FILE.
+    """
+
+    def test_the_default_connection_secret_path_is_unaffected(self):
+        """The known gap, asserted rather than left implicit.
+
+        connectionSecret is the chart default, and that path uses
+        DATA_SOURCE_NAME, for which no _FILE variant exists. So enabling the
+        feature does not remove this component's plaintext secret from the pod
+        spec -- an operator flipping the global toggle needs to know that. Closing
+        it means splitting astronomer-bootstrap's connection string into
+        URI/user/password keys, which is the db-bootstrapper group's problem.
+        """
+        _spec, container, _secrets = pg_exporter(enabled=True)
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert env_vars["DATA_SOURCE_NAME"]["secretKeyRef"] == {
+            "name": "astronomer-bootstrap",
+            "key": "connection",
+        }
+        assert "DATA_SOURCE_PASS_FILE" not in env_vars
+
+    def test_default_path_renders_identically_with_the_flag_on(self):
+        off = pg_exporter(enabled=False)
+        on = pg_exporter(enabled=True)
+        assert off[0] == on[0], "the flag must be a no-op on the connectionSecret path"
+
+    @pytest.mark.parametrize("datasource", [EXTERNAL_PASSWORD, INLINE_PASSWORD], ids=["passwordSecret", "inline-password"])
+    def test_split_form_defaults_keep_the_env_var(self, datasource):
+        _spec, container, _secrets = pg_exporter(enabled=False, datasource=datasource)
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert "secretKeyRef" in env_vars["DATA_SOURCE_PASS"]
+        assert "DATA_SOURCE_PASS_FILE" not in env_vars
+
+    def test_split_form_enabled_reads_an_external_secret_from_a_file(self):
+        spec, container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert "DATA_SOURCE_PASS" not in env_vars
+        assert env_vars["DATA_SOURCE_PASS_FILE"] == PG_EXPORTER_PASS_FILE
+        # The other two stay env vars: neither is a secret.
+        assert "DATA_SOURCE_URI" in env_vars
+        assert env_vars["DATA_SOURCE_USER"] == "exporter"
+
+        volume = next(v for v in spec["volumes"] if v["name"] == PG_EXPORTER_SECRET_VOLUME)
+        assert volume["secret"]["secretName"] == "my-pg-secret"
+        # The operator's key name is remapped to the filename the env var points at.
+        assert volume["secret"]["items"] == [{"key": "my-password-key", "path": "data_source_password"}]
+
+        mount = next(m for m in container["volumeMounts"] if m["name"] == PG_EXPORTER_SECRET_VOLUME)
+        assert mount["mountPath"] == "/etc/astronomer/secrets"
+        assert mount["readOnly"] is True
+
+    def test_split_form_enabled_mounts_the_chart_created_secret(self):
+        """With an inline password the chart creates the Secret itself, so the
+        mount must name that one -- and it has to actually exist.
+        """
+        spec, container, secrets = pg_exporter(enabled=True, datasource=INLINE_PASSWORD, show_secret=True)
+
+        volume = next(v for v in spec["volumes"] if v["name"] == PG_EXPORTER_SECRET_VOLUME)
+        secret_name = volume["secret"]["secretName"]
+        assert volume["secret"]["items"] == [{"key": "data_source_password", "path": "data_source_password"}]
+        assert secret_name in secrets, f"{secret_name} is mounted but not created"
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert env_vars["DATA_SOURCE_PASS_FILE"] == PG_EXPORTER_PASS_FILE
+
+    def test_no_mount_without_a_password_source(self):
+        """Neither passwordSecret nor password set: the Secret the existing
+        secretKeyRef names is never created. Mounting it would upgrade a
+        container-start failure into an unschedulable pod, so this stays on the
+        env-var path.
+        """
+        spec, container, _secrets = pg_exporter(enabled=True, datasource={})
+
+        assert PG_EXPORTER_SECRET_VOLUME not in {v["name"] for v in spec["volumes"]}
+        env_vars = get_env_vars_dict(container["env"])
+        assert "secretKeyRef" in env_vars["DATA_SOURCE_PASS"]
+
+    def test_no_dangling_mount(self):
+        spec, container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for mount in container["volumeMounts"]:
+            assert mount["name"] in volume_names
+
+        paths = [m["mountPath"] for m in container["volumeMounts"]]
+        assert len(paths) == len(set(paths))
+
+    def test_secret_file_mode_is_left_at_the_image_default(self):
+        """Not 0440: the container is runAsNonRoot with no runAsUser and this pod
+        sets no fsGroup, so 0440 on a root-owned file would be unreadable. Same
+        deferred decision as external-es-proxy and federation-auth.
+        """
+        spec, _container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+
+        volume = next(v for v in spec["volumes"] if v["name"] == PG_EXPORTER_SECRET_VOLUME)
+        assert "defaultMode" not in volume["secret"]
+        assert not (spec.get("securityContext") or {}).get("fsGroup")
+
+    def test_the_mount_path_is_never_under_run_secrets(self):
+        _spec, container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+
+        for mount in container["volumeMounts"]:
+            assert not mount["mountPath"].startswith("/run/secrets")
+        env_vars = get_env_vars_dict(container["env"])
+        assert not env_vars["DATA_SOURCE_PASS_FILE"].startswith("/run/secrets")
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (False, None, False),
+        (True, None, True),
+        (False, True, True),
+        (True, False, False),
+        (None, True, True),
+        (None, None, False),
+    ],
+)
+def test_postgres_exporter_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """The component toggle wins when set; otherwise the global one applies."""
+    _spec, container, _secrets = pg_exporter(
+        enabled=global_enabled,
+        component_enabled=component_enabled,
+        datasource=EXTERNAL_PASSWORD,
+    )
+
+    env_vars = get_env_vars_dict(container["env"])
+    assert ("DATA_SOURCE_PASS_FILE" in env_vars) is expected
+    assert ("DATA_SOURCE_PASS" in env_vars) is not expected

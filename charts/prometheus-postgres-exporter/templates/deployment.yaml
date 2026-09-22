@@ -5,6 +5,20 @@
 {{- if and .Values.config.datasource.connectionSecret (or .Values.config.datasource.passwordSecret .Values.config.datasource.password) -}}
 {{ fail (printf "ERROR: when .Values.config.datasource.connectionSecret is specified, .Values.config.datasource.passwordSecret and .Values.config.datasource.password must not be defined") }}
 {{- end -}}
+{{- /* Load the password from a file rather than the environment.
+
+       Deliberately narrow. It requires the split DATA_SOURCE_URI/_USER/_PASS form
+       *and* a password source to mount, because:
+         - the default connectionSecret path uses DATA_SOURCE_NAME, and
+           postgres_exporter has no DATA_SOURCE_NAME_FILE (verified against the
+           0.19.1-2 binary), so a full DSN can only arrive as an env var;
+         - with neither passwordSecret nor password set, the Secret the existing
+           secretKeyRef names is never created, so mounting it as a volume would
+           turn a container-start failure into a pod that cannot schedule at all.
+       Enabling the toggle on the default configuration is therefore a no-op, which
+       the values comment and a chart test both state. */}}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values)) }}
+{{- $passwordFromFile := and $secretsFromFiles (not .Values.config.datasource.connectionSecret) (or .Values.config.datasource.passwordSecret .Values.config.datasource.password) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -82,6 +96,10 @@ spec:
             value: {{ template "prometheus-postgres-exporter.data_source_uri" . }}
           - name: DATA_SOURCE_USER
             value: {{ .Values.config.datasource.user }}
+          {{- if $passwordFromFile }}
+          - name: DATA_SOURCE_PASS_FILE
+            value: /etc/astronomer/secrets/data_source_password
+          {{- else }}
           - name: DATA_SOURCE_PASS
             valueFrom:
               secretKeyRef:
@@ -91,6 +109,7 @@ spec:
           {{- else }}
                 name: {{ template "prometheus-postgres-exporter.fullname" . }}
                 key: data_source_password
+          {{- end }}
           {{- end }}
           {{- end }}
           image: {{ include "prometheus-postgres-exporter.image" . }}
@@ -122,6 +141,11 @@ spec:
             - name: queries
               mountPath: /etc/config.yaml
               subPath: config.yaml
+            {{- if $passwordFromFile }}
+            - name: data-source-pass
+              mountPath: /etc/astronomer/secrets
+              readOnly: true
+            {{- end }}
 {{- with .Values.extraContainers }}
 {{ tpl . $ | indent 8 }}
 {{- end }}
@@ -144,6 +168,26 @@ spec:
           defaultMode: 420
           name: {{ template "prometheus-postgres-exporter.fullname" . }}
         name: queries
+      {{- if $passwordFromFile }}
+      {{- /* No defaultMode, so the file keeps the 0644 default. The container runs
+             runAsNonRoot with no runAsUser, and this pod sets no fsGroup, so 0440 on
+             a root-owned file would leave the password unreadable. Same deferred
+             decision as the external-es-proxy and federation-auth groups: tightening
+             it means pinning the image UID and adding an fsGroup. */}}
+      - name: data-source-pass
+        secret:
+          {{- if .Values.config.datasource.passwordSecret }}
+          secretName: {{ .Values.config.datasource.passwordSecret.name }}
+          items:
+          - key: {{ .Values.config.datasource.passwordSecret.key }}
+            path: data_source_password
+          {{- else }}
+          secretName: {{ template "prometheus-postgres-exporter.fullname" . }}
+          items:
+          - key: data_source_password
+            path: data_source_password
+          {{- end }}
+      {{- end }}
 {{- with .Values.extraVolumes }}
 {{ tpl . $ | indent 6 }}
 {{- end }}

@@ -61,6 +61,22 @@ securityContext:
   # The securityContext this Pod should use. See https://kubernetes.io/docs/concepts/policy/security-context/ for more.
   # runAsUser: 65534
 
+# -- Read the datasource password from a mounted file (`DATA_SOURCE_PASS_FILE`)
+# instead of injecting it with valueFrom.secretKeyRef. Leave unset to inherit
+# `global.secretsFromFiles.enabled`.
+#
+# This only affects the split `DATA_SOURCE_URI`/`_USER`/`_PASS` form, which
+# requires `config.datasource.passwordSecret` or `config.datasource.password`.
+# It does NOT affect the default `config.datasource.connectionSecret` path:
+# postgres_exporter has no `DATA_SOURCE_NAME_FILE` (verified against the
+# ap-postgres-exporter 0.19.1-2 binary, which ships `_URI_FILE`, `_USER_FILE`
+# and `_PASS_FILE` but no `_NAME_FILE`), so a full DSN can only arrive as an env
+# var. Since `connectionSecret` is the default, enabling this changes nothing
+# unless the datasource is also switched to the split form.
+# @default -- inherits global.secretsFromFiles.enabled
+secretsFromFiles:
+  enabled: ~
+
 config:
   datasource:
     connectionSecret:
