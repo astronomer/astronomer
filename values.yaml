@@ -15,6 +15,19 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainPrefix: ""    # cluster-id
 
+  # Houston's database. Global rather than under the astronomer subchart because
+  # the prometheus and prometheus-postgres-exporter subcharts read these too,
+  # and Helm does not share one subchart's values with another.
+  houston:
+    database:
+      # The Postgres schema Houston's tables live in.
+      #
+      # Existing installs must leave this alone: their tables are already in
+      # houston$default, and changing it points Houston at an empty schema.
+      # Set it only on a fresh install, e.g. to "public" when the database does
+      # not permit creating schemas.
+      schemaName: "houston$default"
+
   # Shared secret for internal service-to-service authentication (e.g. pilot -> commander gRPC).
   # Auto-generated on install if empty; preserved across upgrades.
   clusterLocalServiceAuth:
@@ -93,7 +106,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.22
+      tag: 2.0.24
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
@@ -117,6 +130,9 @@ global:
   # Feature flags
   rbac:
     enabled: true
+
+  laminar:
+    enabled: false
 
   # Custom roles: define your own roles from a catalog of granular permissions
   # instead of assigning only the built-in roles. Covers Workspace and Deployment
@@ -184,7 +200,7 @@ global:
     dagOnlyDeployment:
       enabled: false
       repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.9.13
+      tag: 0.10.1
       securityContexts:
         pod:
           fsGroup: 50000
@@ -210,7 +226,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.31.4
+    tag: 1.31.5
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -417,36 +433,36 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.30.0-5
+        tag: 0.31.0
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.8.2-1
+        tag: 8.10.1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-25
+        tag: 1.24.1-27
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.1-7
+        tag: 0.12.1-9
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.8.24
+        tag: 2026.9.14
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.8.24
+        tag: 2026.9.14
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.8.24
+        tag: 2026.9.14
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.5.2
+        tag: 0.6.0
     metrics:
       enabled: false
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.21
+      tag: 0.1.22
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
@@ -691,10 +707,10 @@ prometheus:
     resources:
       limits:
         cpu: 100m
-        memory: 25Mi
+        memory: 128Mi
       requests:
         cpu: 100m
-        memory: 25Mi
+        memory: 128Mi
 
   filesdReloader:
     resources:

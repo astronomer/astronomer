@@ -1,0 +1,186 @@
+{{/* vim: set filetype=mustache: */}}
+
+{{/*
+Whether the laminar (Laminar) components should be rendered.
+Laminar runs on the data plane, so only in data / unified mode.
+*/}}
+{{- define "laminar.enabled" -}}
+{{- or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+{{- end -}}
+
+{{/*
+Fully qualified component name: <release>-<component>.
+Call with (list $ "<component>"), e.g. (list $ "api-server").
+*/}}
+{{- define "laminar.fullname" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+{{- printf "%s-%s" $.Release.Name $component | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+ServiceAccount name for a component. Call with (list $ "<component>").
+*/}}
+{{- define "laminar.serviceAccountName" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+{{- if and $.Values.serviceAccount.create $.Values.global.rbac.enabled -}}
+{{- default (include "laminar.fullname" (list $ $component)) $.Values.serviceAccount.name -}}
+{{- else -}}
+default
+{{- end -}}
+{{- end -}}
+
+{{/*
+Laminar container image.
+*/}}
+{{- define "laminar.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-laminar:{{ .Values.images.laminar.tag }}
+{{- else -}}
+{{ .Values.images.laminar.repository }}:{{ .Values.images.laminar.tag }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Image pull secrets.
+*/}}
+{{- define "laminar.imagePullSecrets" -}}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{- toYaml .Values.imagePullSecrets | nindent 2 }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Common metadata labels for a component. Call with (list $ "<component>").
+*/}}
+{{- define "laminar.labels" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+component: {{ $component }}
+release: {{ $.Release.Name }}
+chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+heritage: {{ $.Release.Service }}
+tier: laminar
+plane: {{ $.Values.global.plane.mode }}
+{{- end -}}
+
+{{/*
+Pod selector / match labels for a component. Call with (list $ "<component>").
+Kept identical to the original Kustomize manifests so Services/ServiceMonitors match.
+*/}}
+{{- define "laminar.selectorLabels" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+component: {{ $component }}
+release: {{ $.Release.Name }}
+tier: laminar
+{{- end -}}
+
+{{/*
+The env block shared by both deployments: injects LAMINAR_DATABASE_URL from the
+database secret, then appends the component's own env list.
+Call with (list $ $componentValues).
+*/}}
+{{- define "laminar.env" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+- name: LAMINAR_ENVIRONMENT
+  value: apc
+- name: LAMINAR_API_URL
+  value: http://0.0.0.0:8000/laminar
+- name: LAMINAR_KUBE_NAMESPACE
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.namespace
+- name: LAMINAR_DATABASE_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "laminar.backend.secret" $ }}
+      key: connection
+{{- with $component.env }}
+{{ toYaml . }}
+{{- end }}
+{{- end -}}
+
+{{/*
+laminar.env volumeMount (mounted read-only at /laminar.env).
+*/}}
+{{- define "laminar.envVolumeMount" -}}
+- name: laminar-env
+  mountPath: /laminar.env
+  subPath: laminar.env
+  readOnly: true
+{{- end -}}
+
+{{/*
+laminar.env volume.
+*/}}
+{{- define "laminar.envVolume" -}}
+- name: laminar-env
+  configMap:
+    name: {{ .Release.Name }}-{{ .Values.envConfigMap.name }}
+{{- end -}}
+
+
+{{ define "dbBootstrapper.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}
+{{- else -}}
+{{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
+{{- end }}
+{{- end }}
+
+{{/*
+Database bootstrapper, as an init container on each laminar component.
+
+An init container rather than a helm hook, for the reason houston-deployment.yaml uses the same
+shape: this creates the database and writes the <release>-laminar-backend secret that laminar's
+own containers read, and a hook cannot be ordered to do that. Run pre-install it precedes the
+platform database it needs to connect to; run post-install the containers waiting on its secret
+are already blocking the install.
+
+As an init container the ordering is a property of the pod rather than of the release, so it
+holds on a first install and an upgrade alike. It runs on every pod start, so it has to stay
+idempotent, which is the same contract houston's copy already has.
+*/}}
+{{- define "laminar.bootstrapperInitContainer" -}}
+- name: laminar-bootstrapper
+  image: {{ template "dbBootstrapper.image" . }}
+  imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+  securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 4 }}
+  resources: {{- toYaml .Values.apiServer.resources | nindent 4 }}
+  env:
+    - name: BOOTSTRAP_DB
+      valueFrom:
+        secretKeyRef:
+          name: astronomer-bootstrap
+          key: connection
+    - name: DB_NAME
+      value: {{ .Release.Name }}-laminar
+    - name: SECRET_NAME
+      value: {{ template "laminar.backend.secret" . }}
+    {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
+    - name: SSLMODE
+      value: {{ .Values.global.ssl.mode }}
+    {{- end }}
+    - name: NAMESPACE
+      value: {{ .Release.Namespace }}
+    - name: IN_CLUSTER
+      value: "true"
+{{- end }}
+
+{{/*
+The secret holding laminar's database connection, under a "connection" key.
+
+The same value names the secret and decides whether the chart creates it, so that a supplied
+secret is the one laminar reads. Two separate values cannot be kept in agreement by the customer:
+naming one without the other leaves laminar waiting on a secret nothing creates.
+*/}}
+{{ define "laminar.backend.secret" -}}
+{{ default (printf "%s-laminar-backend" .Release.Name) .Values.databaseBootstrapper.backendSecretName }}
+{{- end }}

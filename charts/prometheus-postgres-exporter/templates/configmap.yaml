@@ -12,4 +12,9 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   config.yaml: |
-{{ printf .Values.config.queries | indent 4 }}
+  {{- /*
+    tpl rather than a plain copy so the queries can reach global values -- the
+    Houston schema in particular, since these queries read Houston's tables and
+    have to look in whichever schema it is using.
+  */}}
+{{ tpl .Values.config.queries . | indent 4 }}

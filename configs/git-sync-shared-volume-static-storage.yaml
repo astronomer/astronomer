@@ -1,0 +1,17 @@
+# Points shared_volume mode's git-repo-contents PVC at a storageClassName that deliberately
+# does NOT correspond to any real StorageClass object. This scenario's kind cluster is
+# single-node with no ReadWriteMany-capable dynamic provisioner (its default StorageClass is
+# backed by a local-path-style provisioner that only supports ReadWriteOnce/ReadWriteOncePod --
+# shared_volume mode's PVC requires ReadWriteMany, see airflow-chart's
+# gitSyncRelay.volumeSync.storageClassName comment). The test itself statically pre-binds a
+# hostPath PersistentVolume with this same storageClassName before the PVC is created (see
+# _create_static_shared_volume_pv in test_git_sync_shared_volume.py) -- static PV/PVC binding
+# only requires matching accessModes/capacity/storageClassName, not a real StorageClass
+# resource, so no StorageClass object needs to exist for this to bind.
+astronomer:
+  houston:
+    config:
+      deployments:
+        deployMechanisms:
+          gitSyncRelay:
+            storageClassName: git-sync-shared-volume-test-static

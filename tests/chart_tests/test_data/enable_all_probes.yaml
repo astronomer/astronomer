@@ -4,6 +4,34 @@
 # In order to test every available probe, this should also enable every available feature.
 ########################################################################################################
 
+laminar:
+  apiServer:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  hypervisor:
+    startupProbe:
+      exec:
+        command:
+        - /bin/true
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+
 airflow-operator:
   startupProbe:
     exec:

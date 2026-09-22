@@ -24,49 +24,49 @@ jobs:
       - image: quay.io/astronomer/ci-helm-release:2026-09
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-          version: docker28
       - cosign/install:
           version: "v2.5.0"
       - run:
           name: Login to docker registry
           command: |
-            echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin docker.io
-            echo "$QUAY_PASSWORD" | docker login --username $QUAY_USERNAME --password-stdin quay.io
-      - run:
-          name: Set image tag to sign
-          command: |
-            set -xe
-            # Only sign tagged releases or specific QA releases
-            # For regular release job
-            if [ -n "$NEXT_TAG" ]; then
-              echo "export IMAGE_TAG=$NEXT_TAG" >> $BASH_ENV
-            # For custom QA release job
-            elif [ -n "$IMG_TAG" ]; then
-              echo "export IMAGE_TAG=$IMG_TAG" >> $BASH_ENV
-            else
-              echo "No specific release tag found, skipping image signing"
-              exit 0
-            fi
+            echo "$DOCKER_PASSWORD" | cosign login docker.io --username $DOCKER_USERNAME --password-stdin
+            echo "$QUAY_PASSWORD" | cosign login quay.io --username $QUAY_USERNAME --password-stdin
       - run:
           name: Install Python dependencies
           command: pip install requests
       - run:
           name: Sign Docker images with cosign
           command: |
-            # Execute the signing script with version from environment
-            python bin/sign-images.py --version "${IMAGE_TAG}"
+            set -xe
+            # This job runs only from release-bom-workflow, which is tag-triggered, so
+            # CIRCLE_TAG is always set. Fail loudly rather than silently skipping if it
+            # is not: the previous "exit 0" guard ended only this step, so the job went
+            # on to run sign-images.py with an empty --version and died there instead.
+            if [ -z "$CIRCLE_TAG" ]; then
+              echo "CIRCLE_TAG is not set; sign-released-image only runs on tag builds" >&2
+              exit 1
+            fi
+            # sign-images.py reads the published BOM at
+            # updates.astronomer.io/astronomer-software/releases/astronomer-<version>.json,
+            # which is keyed by chart version, so drop the tag's leading "v".
+            python bin/sign-images.py --version "${CIRCLE_TAG#v}"
 
   release_bom:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2026-09
+    parameters:
+      version:
+        type: string
+        default: "${CIRCLE_TAG}"
+      extra_args:
+        type: string
+        default: ""
     steps:
       - checkout
       - run:
           name: Run Release BOM Script
           command: |
-            bin/release-bom -x ${CIRCLE_TAG}
+            bin/release-bom -x << parameters.extra_args >> << parameters.version >>
 
   run_pre_commit:
     docker:
@@ -445,6 +445,70 @@ jobs:
             uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/git-sync-private-ca"
       - store_test_results:
           path: test-results
+  scenario-git-sync-shared-volume:
+    machine:
+      image: ubuntu-2404:2026.05.1
+      resource_class: 2xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: git-sync-shared-volume"
+          command: |
+            uv run bin/run-scenario.py git-sync-shared-volume
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/git-sync-shared-volume"
+      - store_test_results:
+          path: test-results
+  scenario-sidecar-logging-custom-config:
+    machine:
+      image: ubuntu-2404:2026.05.1
+      resource_class: 2xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: sidecar-logging-custom-config"
+          command: |
+            uv run bin/run-scenario.py sidecar-logging-custom-config
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/sidecar-logging-custom-config"
+      - store_test_results:
+          path: test-results
 
   check-commander-airflow-version:
     docker:
@@ -584,6 +648,54 @@ workflows:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically, and gate release-to-internal.
+      - scenario-git-sync-shared-volume:
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
+      # can require it on release branches.
+      - scenario-git-sync-shared-volume:
+          name: scenario-git-sync-shared-volume-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically, and gate release-to-internal.
+      - scenario-sidecar-logging-custom-config:
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: gated behind the manual approve-scenarios approval. This
+      # instance MUST have a distinct name from the auto instance above -- CircleCI
+      # rejects two jobs sharing a name in one workflow even when their branch filters
+      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
+      # can require it on release branches.
+      - scenario-sidecar-logging-custom-config:
+          name: scenario-sidecar-logging-custom-config-approved
+          requires:
+            - build-artifact
+            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
       - approve-stage-cluster-test:
           type: approval
           filters:
@@ -640,6 +752,8 @@ workflows:
             - scenario-auth-sidecar
             - scenario-deployment-lifecycle
             - scenario-git-sync-private-ca
+            - scenario-git-sync-shared-volume
+            - scenario-sidecar-logging-custom-config
       - approve-public-release:
           type: approval
           requires:
@@ -661,18 +775,6 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
-      - sign-released-image:
-          name: sign-release-image
-          context:
-            - quay.io
-            - docker.io
-            - software-cosign-keys
-          requires:
-            - release-to-public
-          filters:
-            branches:
-              only:
-                - '/^release-\d+\.\d+$/'
 
   release-bom-workflow:
     jobs:
@@ -685,6 +787,20 @@ workflows:
           context:
             - github-repo
             - gcp-astronomer-prod
+      # Signing consumes the BOM that release_bom publishes, so it must run after it.
+      - sign-released-image:
+          name: sign-release-image
+          requires:
+            - release_bom
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
+            branches:
+              ignore: /.*/
+          context:
+            - quay.io
+            - docker.io
+            - software-cosign-keys
 
   qa-build-and-release-helm-chart:
     when: << pipeline.parameters.qa-release >>

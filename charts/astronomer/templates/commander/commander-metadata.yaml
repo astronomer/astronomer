@@ -31,4 +31,6 @@ data:
       isClusterSecretStore: {{ ternary "false" "true" .Values.global.namespaceManagement.namespacePools.enabled }}
     openshift:
       enabled: {{ ternary "true" "false" .Values.global.openshift.enabled }}
+    laminar:
+      enabled: {{ ternary "true" "false" .Values.global.laminar.enabled }}
 {{- end }}

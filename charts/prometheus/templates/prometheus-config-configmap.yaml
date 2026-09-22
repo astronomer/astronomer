@@ -2,6 +2,7 @@
 ## Prometheus Config ConfigMap ##
 #################################
 {{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
+{{- $dataplanes := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -78,7 +79,7 @@ data:
         scrape_timeout: {{ .Values.config.scrape_configs.federated_dataplanes.scrape_timeout }}
         params:
           'match[]':
-            - '{job=~".*-kube-state$|airflow|airflow-operator|kubernetes-nodes-cadvisor|node-exporter"}'
+            - '{job=~".*-kube-state$|airflow|airflow-operator|kubernetes-nodes-cadvisor|node-exporter|laminar-hypervisor|laminar-api-server"}'
             - '{__name__=~"git_sync.*"}'
         file_sd_configs:
           - files:
@@ -135,7 +136,7 @@ data:
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
-            regex: "^{{ .Release.Name }}-nginx"
+            regex: "^{{ .Release.Name }}-[cd]p-nginx"
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
             action: keep
             regex: true
@@ -519,6 +520,65 @@ data:
           - source_labels: [__meta_kubernetes_endpoint_ready]
             action: keep
             regex: "^true"
+
+      - job_name: nats_server
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-nats"
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+
+      {{- end }}
+
+      {{- if and $dataplanes .Values.global.laminar.enabled}}
+      - job_name: laminar-hypervisor
+        metrics_path: /laminar/metrics
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        # Prefix all houston metrics with 'hypervisor_'
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            target_label: __name__
+            replacement: "hypervisor_${1}"
+        # Select only ready endpoints for collecting houston metrics
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-hypervisor"
+          - source_labels: [__meta_kubernetes_endpoint_ready]
+            action: keep
+            regex: "^true"
+
+      - job_name: laminar-api-server
+        metrics_path: /laminar/metrics
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-api-server"
+          - source_labels: [__meta_kubernetes_endpoint_ready]
+            action: keep
+            regex: "^true"
+
       {{- end }}
 
 
