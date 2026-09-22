@@ -90,7 +90,9 @@ Call with (list $ $componentValues).
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 - name: LAMINAR_JWT_ISSUER
-  value: https://houston.{{ include "houston.controlPlaneBaseDomain" $ }}/v1
+  value: https://houston.{{ include "houston.controlPlaneBaseDomain" $ }}/v2
+- name: LAMINAR_JWT_AUDIENCE
+  value: laminar:api
 - name: LAMINAR_ENVIRONMENT
   value: apc
 - name: LAMINAR_API_URL
