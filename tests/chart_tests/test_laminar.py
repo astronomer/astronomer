@@ -101,6 +101,10 @@ class TestLaminar:
             "requests": {"cpu": "200m", "memory": "256Mi"},
             "limits": {"cpu": "1", "memory": "1Gi"},
         }
+        hypervisor_container_env = get_env_vars_dict(c_by_name["hypervisor"]["env"])
+        assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
+        assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+
         hypervisor_service = docs[4]
         assert hypervisor_service["kind"] == "Service"
         assert hypervisor_service["metadata"]["name"] == "release-name-hypervisor"
