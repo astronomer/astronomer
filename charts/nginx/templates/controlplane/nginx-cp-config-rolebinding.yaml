@@ -2,7 +2,7 @@
 ## NGINX Config Role Binding ##
 ###############################
 {{- if .Values.global.rbac.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:

@@ -70,7 +70,7 @@ data:
         static_configs:
           - targets: ["localhost:9090"]
       {{- end }}
-      {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+      {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
       - job_name: 'federated-dataplanes'
         honor_labels: true
         metrics_path: '/federate'
@@ -499,7 +499,7 @@ data:
 
       {{- end }}
 
-      {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+      {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
       - job_name: houston-api
         metrics_path: /v1/metrics
         kubernetes_sd_configs:

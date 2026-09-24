@@ -987,7 +987,7 @@ Whether the MCP server should be rendered: mcpServer.enabled AND control/unified
 Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "mcpServer.enabled" -}}
-{{- and .Values.mcpServer.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) -}}
+{{- and .Values.mcpServer.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") -}}
 {{- end }}
 
 {{ define "mcpServer.serviceAccountName" -}}
