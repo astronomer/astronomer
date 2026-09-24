@@ -223,7 +223,7 @@ per-CP fallback below is reached only when HA is disabled. Only meaningful on da
 Common Helper template for control or unified mode
 */ -}}
 {{- define "astronomer.controlPlaneEnabled" -}}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") -}}
 true
 {{- end -}}
 {{- end -}}
