@@ -29,7 +29,7 @@ auth-flow URL regardless of annotation key.
 {{- end -}}
 
 {{ define "houston.internalauthurl" -}}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
 {{- else }}
 nginx.ingress.kubernetes.io/auth-url: https://houston.{{ include "global.authBaseDomain" . }}/v1/authorization
@@ -216,5 +216,14 @@ per-CP fallback below is reached only when HA is disabled. Only meaningful on da
 {{- .Values.global.controlPlaneHA.globalBaseDomain -}}
 {{- else -}}
 {{- .Values.global.baseDomain -}}
+{{- end -}}
+{{- end -}}
+
+{{- /*
+Common Helper template for control or unified mode
+*/ -}}
+{{- define "astronomer.controlPlaneEnabled" -}}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+true
 {{- end -}}
 {{- end -}}
