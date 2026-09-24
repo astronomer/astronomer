@@ -1,7 +1,7 @@
 ####################
 ## Houston Worker ##
 ####################
-{{- if and .Values.houston.worker.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
+{{- if and .Values.houston.worker.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
 kind: Deployment
 apiVersion: apps/v1

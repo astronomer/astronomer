@@ -3,7 +3,7 @@
 ############################
 {{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 {{- $planeMode := and (eq .Values.global.plane.mode "unified")  ( not $useClusterRoles ) }}
-{{- $planeCPMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $planeCPMode := eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
 kind: StatefulSet
 apiVersion: apps/v1
