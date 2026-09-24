@@ -84,3 +84,14 @@ imagePullSecrets:
     {{ default "default" .Values.defaultBackend.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "nginx.extaArgs" -}}
+{{- range $key, $value := .Values.extraArgs }}
+{{- /* Accept keys without values or with false as value */}}
+{{- if eq ($value | quote | len) 2 }}
+- --{{ $key }}
+{{- else }}
+- --{{ $key }}={{ $value }}
+{{- end }}
+{{- end }}
+{{- end }}
