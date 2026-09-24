@@ -364,9 +364,34 @@ class TestMcpServerIngress:
         assert annotations["nginx.ingress.kubernetes.io/auth-url"] == (
             "http://release-name-houston.default.svc.cluster.local:8871/v1/authorization/agent"
         )
-        assert "nginx.ingress.kubernetes.io/auth-signin" in annotations
-        assert "nginx.ingress.kubernetes.io/auth-response-headers" in annotations
+        # No auth-signin: MCP clients are machine callers, never a browser, and the
+        # 302-to-login auth-signin produces on a 401 breaks every one of them.
+        assert "nginx.ingress.kubernetes.io/auth-signin" not in annotations
+        assert annotations["nginx.ingress.kubernetes.io/auth-response-headers"] == (
+            "X-APC-Identity, X-APC-Identity-Id, X-APC-Identity-Type"
+        )
         assert docs[0]["spec"]["rules"][0]["host"] == f"mcp-server.{BASE_DOMAIN}"
+
+    def test_ingress_auth_cache_annotations_default_on(self, kube_version):
+        docs = render_chart(kube_version=kube_version, values=self._values(), show_only=[INGRESS])
+        annotations = docs[0]["metadata"]["annotations"]
+        assert annotations["nginx.ingress.kubernetes.io/auth-cache-key"] == "$http_authorization"
+        assert annotations["nginx.ingress.kubernetes.io/auth-cache-duration"] == "200 5m, 401 403 1m"
+
+    def test_ingress_auth_cache_disabled(self, kube_version):
+        values = self._values()
+        values["astronomer"]["mcpServer"]["authCache"] = {"enabled": False}
+        docs = render_chart(kube_version=kube_version, values=values, show_only=[INGRESS])
+        annotations = docs[0]["metadata"]["annotations"]
+        assert "nginx.ingress.kubernetes.io/auth-cache-key" not in annotations
+        assert "nginx.ingress.kubernetes.io/auth-cache-duration" not in annotations
+
+    def test_ingress_auth_cache_custom_ttls(self, kube_version):
+        values = self._values()
+        values["astronomer"]["mcpServer"]["authCache"] = {"enabled": True, "validSuccess": "10m", "validFailure": "30s"}
+        docs = render_chart(kube_version=kube_version, values=values, show_only=[INGRESS])
+        annotations = docs[0]["metadata"]["annotations"]
+        assert annotations["nginx.ingress.kubernetes.io/auth-cache-duration"] == "200 10m, 401 403 30s"
 
     def test_ingress_absent_when_disabled(self, kube_version):
         docs = render_chart(kube_version=kube_version, values=self._values(enabled=False), show_only=[INGRESS])

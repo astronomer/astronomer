@@ -1057,6 +1057,20 @@ mcpServer:
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
 
+  # -- Cache the nginx auth_request subrequest to Houston, so a burst of calls from the
+  # same caller doesn't re-authenticate on every single one. A latency/load knob, not a
+  # security knob: every downstream tool call still re-authorizes against live Houston.
+  authCache:
+    # @default -- true
+    enabled: true
+    # -- How long a successful auth check is cached.
+    # @default -- 5m
+    validSuccess: "5m"
+    # -- How long a denied/failed auth check is cached — short, so a fixed credential
+    # (e.g. a just-rotated service-account key) stops failing quickly.
+    # @default -- 1m
+    validFailure: "1m"
+
   # For example
   #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
   # and then set:

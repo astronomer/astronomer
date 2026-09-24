@@ -24,11 +24,17 @@ metadata:
     {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     {{- include "houston.mcpAgentAuthUrl" . | nindent 4 }}
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "global.authBaseDomain" . }}/login
-    # X-APC-Identity is the identity header the shared MCP test harness's fake gate sets
-    # on a successful check (internal/mcptest/gate.go, apc-mcp-server repo), matching
-    # houston-api's /v1/authorization/agent response header (APC-1744).
-    nginx.ingress.kubernetes.io/auth-response-headers: X-APC-Identity
+    # No auth-signin: MCP clients (VS Code, Cursor, Otto) are machine callers, never a
+    # browser. auth-signin's 302-to-login on a 401 breaks all of them; omitting the
+    # annotation is the only way ingress-nginx passes a plain 401 straight through.
+    #
+    # The three headers match houston-api's /v1/authorization/agent response
+    # (src/routes/v1/authorization/agent/handler.js, APC-1744).
+    nginx.ingress.kubernetes.io/auth-response-headers: X-APC-Identity, X-APC-Identity-Id, X-APC-Identity-Type
+    {{- if .Values.mcpServer.authCache.enabled }}
+    nginx.ingress.kubernetes.io/auth-cache-key: "$http_authorization"
+    nginx.ingress.kubernetes.io/auth-cache-duration: "200 {{ .Values.mcpServer.authCache.validSuccess }}, 401 403 {{ .Values.mcpServer.authCache.validFailure }}"
+    {{- end }}
 spec:
   {{- if .Values.global.tlsSecret }}
   tls:
