@@ -1117,3 +1117,80 @@ class TestAstronomerCommander:
         assert len(docs) == 1
         metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
         assert metadata_file_contents["laminar"] == {"enabled": expected_result}
+
+    def test_commander_laminar_hypervisor_auth_enabled(self, kube_version):
+        """When laminar is enabled, commander gets the hypervisor-auth env, the private-key
+        mount, and the signing-key volume (Laminar Auth Integration ADR, Option 4)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "laminar": {"enabled": True}},
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        commander = get_containers_by_name(doc)["commander"]
+        env_vars = get_env_vars_dict(commander["env"])
+
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_SIGNING_KEY_PATH"] == "/etc/astronomer/commander-signing-key/tls.key"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER"] == "local"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "astronomer-ee"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"] == "http://release-name-hypervisor.default.svc.cluster.local:8000"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "30"
+
+        # Private key mounted read-only for signing.
+        volume_mounts = {mount["name"]: mount for mount in commander["volumeMounts"]}
+        assert volume_mounts["commander-signing-key"]["mountPath"] == "/etc/astronomer/commander-signing-key"
+        assert volume_mounts["commander-signing-key"]["readOnly"] is True
+
+        volumes = {vol["name"]: vol for vol in doc["spec"]["template"]["spec"]["volumes"]}
+        assert volumes["commander-signing-key"]["secret"]["secretName"] == "release-name-commander-signing-key"
+
+    def test_commander_laminar_hypervisor_auth_values_overridable(self, kube_version):
+        """The hypervisor JWT contract, port, and poll interval are configurable."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "laminar": {"enabled": True}},
+                "astronomer": {
+                    "commander": {
+                        "laminar": {
+                            "hypervisor": {
+                                "jwtIssuer": "custom-issuer",
+                                "jwtAudience": "custom-aud",
+                                "port": 9000,
+                                "pollIntervalSecs": 45,
+                            }
+                        }
+                    }
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["commander"]["env"])
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER"] == "custom-issuer"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "custom-aud"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"] == "http://release-name-hypervisor.default.svc.cluster.local:9000"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "45"
+
+    def test_commander_laminar_hypervisor_auth_absent_when_laminar_disabled(self, kube_version):
+        """With laminar disabled, none of the hypervisor-auth env, mount, or volume render."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "laminar": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        commander = get_containers_by_name(doc)["commander"]
+        env_vars = get_env_vars_dict(commander["env"])
+
+        assert not any(name.startswith("COMMANDER_LAMINAR_HYPERVISOR_") for name in env_vars)
+        assert "commander-signing-key" not in {mount["name"] for mount in commander["volumeMounts"]}
+        assert "commander-signing-key" not in {vol["name"] for vol in doc["spec"]["template"]["spec"]["volumes"]}

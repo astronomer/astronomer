@@ -107,6 +107,9 @@ hypervisor:
   progressDeadlineSeconds: 1200
   minReadySeconds: 5
   port: 8000
+  jwtIssuer: local
+  jwtAudience: astronomer-ee
+  jwksSecretName: ""
   resources:
     requests:
       cpu: "200m"
