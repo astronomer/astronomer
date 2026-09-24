@@ -2,7 +2,7 @@
 ## Astronomer Ingress ##
 ########################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
-{{- if not (.Values.global.istioGateway | default dict).enabled }}
+{{- if not ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if and .Values.global.baseDomain ( not .Values.global.perHostIngress.enabled ) }}
 {{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- /* The global customer-facing host is served from the control plane only (customer UIs live on

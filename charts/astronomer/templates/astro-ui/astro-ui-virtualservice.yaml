@@ -2,7 +2,7 @@
 ## Astronomer Astro UI VirtualService ##
 ########################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
-{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: VirtualService
@@ -18,7 +18,7 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 spec:
   gateways:
-    - {{ .Values.global.istioGateway.gateway }}
+    - {{ .Values.global.istio.gateway.name }}
   hosts:
     - app.{{ .Values.global.baseDomain }}
     {{- if .Values.global.controlPlaneHA.enabled }}
@@ -50,7 +50,7 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 spec:
   gateways:
-    - {{ .Values.global.istioGateway.gateway }}
+    - {{ .Values.global.istio.gateway.name }}
   hosts:
     - {{ .Values.global.baseDomain }}
     {{- if .Values.global.controlPlaneHA.enabled }}

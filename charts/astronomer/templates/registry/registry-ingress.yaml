@@ -2,7 +2,7 @@
 ## Astronomer Registry Ingress ##
 #################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
-{{- if not (.Values.global.istioGateway | default dict).enabled }}
+{{- if not ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if and .Values.global.baseDomain .Values.global.perHostIngress.enabled }}
 {{- if eq (include "registry.enabled" .) "true" }}
 kind: Ingress
