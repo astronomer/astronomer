@@ -95,6 +95,7 @@ spec:
             - --http-port={{ .Values.ports.http }}
             - --https-port={{ .Values.ports.https }}
             - --enable-metrics=true
+            {{- include "nginx.extaArgs" . | nindent 12 }}
           ports:
             - name: http
               containerPort: {{ .Values.ports.http }}
