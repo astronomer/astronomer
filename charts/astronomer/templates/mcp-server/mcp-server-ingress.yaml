@@ -25,10 +25,8 @@ metadata:
     {{- end }}
     {{- include "houston.mcpAgentAuthUrl" . | nindent 4 }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ include "global.authBaseDomain" . }}/login
-    # X-APC-Identity is the identity header the shared MCP test harness's fake gate sets
-    # on a successful check (internal/mcptest/gate.go, apc-mcp-server repo), matching
-    # houston-api's /v1/authorization/agent response header (APC-1744) — it may need more
-    # than one header forwarded once APC-1733's per-caller predicate consumes it.
+    # Matches houston-api's /v1/authorization/agent response header (APC-1744)
+    # and apc-mcp-server's fake gate (internal/mcptest/gate.go).
     nginx.ingress.kubernetes.io/auth-response-headers: X-APC-Identity
 spec:
   {{- if .Values.global.tlsSecret }}
