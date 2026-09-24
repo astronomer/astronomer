@@ -494,3 +494,24 @@ def test_nginx_backend_overrides():
     )
 
     assert len(docs) == 0
+
+
+def test_nginx_extraArgs():
+    """Test nginx ingress deployment with extra args."""
+    docs = render_chart(
+        values={
+            "nginx": {
+                "extraArgs": {
+                    "enable-ssl-passthrough": "true",
+                }
+            }
+        },
+        show_only=[
+            "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+            "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
+        ],
+    )
+    topologyAwareRouting = "--enable-ssl-passthrough=true"
+    for doc in docs:
+        c_by_name = get_containers_by_name(doc)
+        assert topologyAwareRouting in c_by_name["nginx"]["args"]
