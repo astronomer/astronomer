@@ -1,7 +1,7 @@
 ###########################################
 ## Grafana Dashboard Provisioner ConfigMap ##
 ###########################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -27,7 +27,7 @@ data:
 #######################
 ## Grafana ConfigMap ##
 #######################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -53,7 +53,7 @@ data:
 #################################
 ## Grafana Dashboards ConfigMap
 #################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- $grafanadashboards := fromYaml (include "grafana.dashboards" .) }}
 {{- if $grafanadashboards }}
 {{ $files := .Files }}
