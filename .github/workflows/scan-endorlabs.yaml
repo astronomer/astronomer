@@ -58,12 +58,39 @@ jobs:
       max-parallel: 1
       matrix: ${{ fromJSON(needs.build-matrix.outputs.matrix) }}
     steps:
+      # astronomer/astronomer is a public repo, and GitHub Actions will not resolve a
+      # `uses: owner/repo/path@ref` reference into a private/internal repo's action from a
+      # public repo's workflow, no matter what access is granted — that restriction is
+      # unconditional, unlike for private/internal repos referencing each other (which is
+      # how astro-agent's own copy of this workflow gets away with referencing
+      # astronomer/actions directly). So we mint a scoped token via Octo STS (trust policy:
+      # astronomer/.github's .github/chainguard/astronomer-image-scan.sts.yaml), check out
+      # astronomer/actions with it, and reference the composite action by local path instead
+      # of the remote owner/repo@ref syntax that public repos can't use here.
+      #
+      # This has to be the public octo-sts/action directly, not astronomer/actions' own
+      # octo-sts-token wrapper — that wrapper lives in the same private repo we're trying to
+      # reach, so it would hit the identical resolution wall.
+      - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
+        id: octo-sts
+        with:
+          scope: astronomer
+          identity: astronomer-image-scan
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: astronomer/actions
+          ref: main
+          token: ${{ steps.octo-sts.outputs.token }}
+          path: .astronomer-actions
+          persist-credentials: false
+
       # Every catalog image is public on quay.io, so no registry login is needed before
       # `docker pull` — unlike astro-agent's version of this workflow, which scans
       # private ACR/CP-prod images.
       - name: Endor Labs scan
         id: scan
-        uses: astronomer/actions/.github/actions/endorlabs-image-scan@main
+        uses: ./.astronomer-actions/.github/actions/endorlabs-image-scan
         with:
           image: ${{ matrix.ref }}
 
