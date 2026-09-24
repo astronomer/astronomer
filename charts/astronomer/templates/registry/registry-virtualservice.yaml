@@ -2,7 +2,7 @@
 ## Astronomer Registry VirtualService ##
 ########################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
-{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if .Values.global.baseDomain }}
 {{- if eq (include "registry.enabled" .) "true" }}
 kind: VirtualService
@@ -18,7 +18,7 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 spec:
   gateways:
-    - {{ .Values.global.istioGateway.gateway }}
+    - {{ .Values.global.istio.gateway.name }}
   hosts:
     - {{ include "registry.ingressURL" . }}
   http:

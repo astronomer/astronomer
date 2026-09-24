@@ -2,7 +2,7 @@
 ## Commander Metadata Ingress ##
 ################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
-{{- if not (.Values.global.istioGateway | default dict).enabled }}
+{{- if not ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}

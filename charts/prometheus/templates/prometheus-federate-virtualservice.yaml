@@ -2,7 +2,7 @@
 ## Prometheus Federate VirtualService ##
 ########################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
-{{- if (.Values.global.istioGateway | default dict).enabled }}
+{{- if ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: VirtualService
 apiVersion: {{ template "apiVersion.istio.networking" . }}
@@ -16,7 +16,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   gateways:
-    - {{ .Values.global.istioGateway.gateway }}
+    - {{ .Values.global.istio.gateway.name }}
   hosts:
     - {{ template "prom-proxy.url" . }}
   http:
