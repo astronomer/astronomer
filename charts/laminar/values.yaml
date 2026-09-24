@@ -19,7 +19,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.24
+    tag: 2.0.26
     pullPolicy: IfNotPresent
 
 priorityClassName: ~
