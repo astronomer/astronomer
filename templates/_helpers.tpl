@@ -202,3 +202,19 @@ Returns the string "true" or "false" — compare with eq.
 true
 {{- end -}}
 {{- end }}
+
+{{- /*
+CP-HA: the control-plane base domain a data plane targets for control-plane services (Houston).
+Under Control Plane HA this is the GLOBAL base domain so DP->CP requests health-route to whichever
+control plane is active as pinning to a single CP's per-CP baseDomain breaks DP->CP calls after a
+CP/region failover (if the pinned CP is the one that is down).
+When HA is enabled, globalBaseDomain is REQUIRED on every plane, so the HA branch always resolves. The
+per-CP fallback below is reached only when HA is disabled. Only meaningful on data planes.
+*/ -}}
+{{- define "houston.controlPlaneBaseDomain" -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- else -}}
+{{- .Values.global.baseDomain -}}
+{{- end -}}
+{{- end -}}
