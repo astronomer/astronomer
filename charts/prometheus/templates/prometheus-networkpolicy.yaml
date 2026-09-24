@@ -22,7 +22,7 @@ spec:
   - Ingress
   ingress:
   - from:
-    {{- if or (eq .Values.global.plane.mode "unified") (eq .Values.global.plane.mode "control") }}
+    {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
     - podSelector:
         matchLabels:
           tier: astronomer
