@@ -28,9 +28,12 @@ metadata:
     # browser. auth-signin's 302-to-login on a 401 breaks all of them; omitting the
     # annotation is the only way ingress-nginx passes a plain 401 straight through.
     #
-    # The three headers match houston-api's /v1/authorization/agent response
-    # (src/routes/v1/authorization/agent/handler.js, APC-1744).
-    nginx.ingress.kubernetes.io/auth-response-headers: X-APC-Identity, X-APC-Identity-Id, X-APC-Identity-Type
+    # No auth-response-headers either: apc-mcp-server derives caller identity from the
+    # raw Authorization bearer token itself and re-authorizes every call against Houston,
+    # so nothing here reads a forwarded identity header (confirmed: no reference anywhere
+    # in apc-mcp-server outside its own test-double gate). The future per-caller predicate
+    # will do its own Houston capability lookup rather than consume one either. Flagged in
+    # review on PR #3569.
     {{- if .Values.mcpServer.authCache.enabled }}
     nginx.ingress.kubernetes.io/auth-cache-key: "$http_authorization"
     nginx.ingress.kubernetes.io/auth-cache-duration: "200 {{ .Values.mcpServer.authCache.validSuccess }}, 401 403 {{ .Values.mcpServer.authCache.validFailure }}"

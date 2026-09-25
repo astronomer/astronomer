@@ -367,9 +367,9 @@ class TestMcpServerIngress:
         # No auth-signin: MCP clients are machine callers, never a browser, and the
         # 302-to-login auth-signin produces on a 401 breaks every one of them.
         assert "nginx.ingress.kubernetes.io/auth-signin" not in annotations
-        assert annotations["nginx.ingress.kubernetes.io/auth-response-headers"] == (
-            "X-APC-Identity, X-APC-Identity-Id, X-APC-Identity-Type"
-        )
+        # No auth-response-headers either: apc-mcp-server derives identity from the
+        # bearer token itself, so nothing reads a forwarded identity header.
+        assert "nginx.ingress.kubernetes.io/auth-response-headers" not in annotations
         assert docs[0]["spec"]["rules"][0]["host"] == f"mcp-server.{BASE_DOMAIN}"
 
     def test_ingress_auth_cache_annotations_default_on(self, kube_version):
