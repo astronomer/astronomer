@@ -122,6 +122,46 @@ __ASTRONOMER_NOT_BOOTSTRAPPED__
 {{- end }}
 
 {{/*
+The `connection` value for a Secret that the chart creates as a placeholder and an
+in-pod bootstrapper init container later rewrites.
+
+Two constraints pull against each other:
+
+  - `helm upgrade` must not patch the bootstrapped value back to the placeholder.
+  - The Secret must stay in the release manifest.
+
+A `pre-install`-only hook satisfies the first and breaks the second: hook resources
+are absent from the release manifest, so upgrading from a release where this Secret
+WAS in the manifest makes Helm delete it. With secrets-from-files on, every consumer
+then wedges on the missing volume before the bootstrapper that would recreate it can
+run -- the same deadlock this placeholder exists to prevent, reached by a different
+route. `helm.sh/resource-policy: keep` does not rescue it either: Helm reads that
+annotation off the LIVE object, and the older release created that object without it.
+
+So the Secret stays in the manifest and preserves whatever is already in the cluster.
+A fresh install finds nothing and renders the sentinel; every later render finds the
+bootstrapped value and renders it back byte-identical, so Helm patches nothing and the
+consumers' checksum annotations do not churn.
+
+`lookup` returns empty during `helm template` and client-side dry runs, which is why
+tests see the sentinel. It is also why ArgoCD, which renders without cluster access,
+re-applies the sentinel on every sync -- a limitation the hook form shared, tracked
+separately.
+
+Usage: {{ include "astronomer.bootstrapSecretConnection" (dict "ctx" $ "name" $secretName) }}
+*/}}
+{{- define "astronomer.bootstrapSecretConnection" -}}
+{{- $existing := lookup "v1" "Secret" .ctx.Release.Namespace .name -}}
+{{- $live := get (get ($existing | default dict) "data" | default dict) "connection" | default "" -}}
+{{- if $live -}}
+{{- /* Already base64 -- Secret .data is encoded, so pass it through untouched. */ -}}
+{{- $live | quote -}}
+{{- else -}}
+{{- include "astronomer.secretSentinel" .ctx | b64enc | quote -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 An init container that blocks until a bootstrapper-managed secret file holds a
 real value rather than the sentinel.
 

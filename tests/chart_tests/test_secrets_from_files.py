@@ -1031,15 +1031,31 @@ class TestBootstrapperSentinel:
         "secret_name",
         ["release-name-houston-backend", "release-name-flightdeck-backend"],
     )
-    def test_sentinel_secret_is_pre_install_only(self, secret_name):
-        """Hook resources are excluded from the release manifest, so `helm upgrade`
-        cannot patch the bootstrapper's real value back to the placeholder."""
+    def test_sentinel_secret_stays_in_the_release_manifest(self, secret_name):
+        """These must NOT be `pre-install` hooks, which is what they were first
+        written as.
+
+        A hook keeps `helm upgrade` from patching the bootstrapped value back to the
+        placeholder, but hook resources are absent from the release manifest -- so
+        upgrading from any release that HAD this Secret in its manifest makes Helm
+        delete it, and with this feature on every consumer then wedges on the missing
+        volume before the bootstrapper that would recreate it can run. That is the
+        same deadlock the placeholder exists to prevent, reached by upgrade rather
+        than install.
+
+        `helm.sh/resource-policy: keep` would not rescue it: Helm reads that
+        annotation off the LIVE object, which the older release created without it.
+        The value is instead preserved by `astronomer.bootstrapSecretConnection`,
+        which re-renders whatever is already in the cluster.
+        """
         docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
         secret = next(d for d in docs if d["kind"] == "Secret" and d["metadata"]["name"] == secret_name)
 
-        annotations = secret["metadata"]["annotations"]
-        assert annotations["helm.sh/hook"] == "pre-install"
-        assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation"
+        annotations = secret["metadata"].get("annotations") or {}
+        assert "helm.sh/hook" not in annotations, (
+            "a hook resource is excluded from the release manifest and gets deleted on upgrade"
+        )
+        # lookup returns nothing without a cluster, so a fresh render is the sentinel.
         assert base64.b64decode(secret["data"]["connection"]).decode() == SENTINEL
 
 
