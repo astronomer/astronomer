@@ -5,7 +5,7 @@ Whether the laminar (Laminar) components should be rendered.
 Laminar runs on the data plane, so only in data / unified mode.
 */}}
 {{- define "laminar.enabled" -}}
-{{- or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+{{- eq (include "astronomer.dataPlaneEnabled" .) "true" -}}
 {{- end -}}
 
 {{/*

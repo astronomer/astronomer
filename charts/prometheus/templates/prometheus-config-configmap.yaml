@@ -2,7 +2,7 @@
 ## Prometheus Config ConfigMap ##
 #################################
 {{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
-{{- $dataplanes := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $dataplanes := eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -27,7 +27,7 @@ data:
         {{- if .Values.external_labels }}
         {{- toYaml .Values.external_labels | nindent 8 }}
         {{- end }}
-        {{- if and .Values.federation.externalLabels (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) }}
+        {{- if and .Values.federation.externalLabels $dataplanes }}
         {{- toYaml .Values.federation.externalLabels | nindent 8 }}
         {{- end }}
 
@@ -70,7 +70,7 @@ data:
         static_configs:
           - targets: ["localhost:9090"]
       {{- end }}
-      {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+      {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
       - job_name: 'federated-dataplanes'
         honor_labels: true
         metrics_path: '/federate'
@@ -499,7 +499,7 @@ data:
 
       {{- end }}
 
-      {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+      {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
       - job_name: houston-api
         metrics_path: /v1/metrics
         kubernetes_sd_configs:

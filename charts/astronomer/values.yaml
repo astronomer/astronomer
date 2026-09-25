@@ -19,7 +19,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.1-17
+    tag: 3.1.1-18
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
@@ -32,11 +32,11 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.24
+    tag: 2.0.26
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.56.0-3"
+    tag: "0.58.0"
     pullPolicy: IfNotPresent
   # Unlike navigator/dp-link, the MCP server is a separate binary with its own image.
   mcpServer:
