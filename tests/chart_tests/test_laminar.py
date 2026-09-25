@@ -434,3 +434,56 @@ class TestLaminar:
         )
 
         assert not [doc for doc in docs if doc["kind"] == "NetworkPolicy"]
+
+    def test_env_configmap_omits_the_keda_identity_by_default(self, kube_version):
+        """Test that nothing about KEDA is configured until worker autoscaling is turned on."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(),
+            show_only=[LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+
+        assert "keda" not in docs[0]["data"]["laminar.env"]
+
+    def test_env_configmap_names_the_identity_the_platform_creates(self, kube_version):
+        """Test that the account the scaling endpoint trusts is the one the platform created.
+
+        Three settings have to agree on one namespace, and each disagreement looks like the
+        others: the identity is created in one, the network policy admits another, and this
+        decides which subject is answered.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values({"global": {"keda": {"enabled": True}}}),
+            show_only=[LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        env = docs[0]["data"]["laminar.env"]
+
+        assert "laminar_scaling__keda_namespace=keda" in env
+        assert "laminar_scaling__keda_service_account=metrics-api-worker-trigger" in env
+
+    def test_env_configmap_trusts_where_the_identity_lives_not_where_keda_runs(self, kube_version):
+        """Test that the trusted namespace follows clusterObjectNamespace, not namespace.
+
+        The token KEDA presents is minted for the account the platform created, which sits in the
+        namespace KEDA resolves cluster-scoped objects in. Trusting the namespace KEDA runs in
+        instead refuses every request on a split install.
+        """
+        split_namespaces = {
+            "global": {
+                "keda": {
+                    "enabled": True,
+                    "namespace": "keda-system",
+                    "clusterObjectNamespace": "keda-cluster",
+                }
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(split_namespaces),
+            show_only=[LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        env = docs[0]["data"]["laminar.env"]
+
+        assert "laminar_scaling__keda_namespace=keda-cluster" in env
+        assert "keda-system" not in env
