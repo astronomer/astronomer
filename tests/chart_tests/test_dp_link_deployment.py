@@ -15,7 +15,7 @@ class TestDpLinkDeployment:
     def test_dp_link_deployment_defaults(self, kube_version):
         """Test the default configuration of the DP-Link deployment.
 
-        dp-link only ever renders in control mode, so it must be requested explicitly here.
+        dp-link renders in control/unified mode, so the mode is requested explicitly here.
         """
         docs = render_chart(
             kube_version=kube_version,
@@ -114,9 +114,10 @@ class TestDpLinkDeployment:
         assert dp_link_container["readinessProbe"]["httpGet"]["path"] == "/ready"
         assert dp_link_container["readinessProbe"]["initialDelaySeconds"] == 10
 
-    @pytest.mark.parametrize("plane_mode,docs_len", [("control", 1), ("data", 0), ("unified", 0)])
-    def test_dp_link_deployment_control_mode(self, kube_version, plane_mode, docs_len):
-        """Test that dp-link is deployed only in control mode, never in data or unified mode."""
+    @pytest.mark.parametrize("plane_mode,docs_len", [("control", 1), ("data", 0), ("unified", 1)])
+    def test_dp_link_deployment_control_plane_modes(self, kube_version, plane_mode, docs_len):
+        """dp-link is a control-plane component: it renders in control and unified mode
+        (both control-plane-enabled), never in data mode."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": plane_mode}}},
@@ -127,19 +128,33 @@ class TestDpLinkDeployment:
         if docs_len != 0:
             assert docs[0]["spec"]["template"]["metadata"]["labels"]["plane"] == plane_mode
 
-    def test_dp_link_deployment_enabled_has_no_effect_outside_control_mode(self, kube_version):
-        """dp-link never renders outside control mode, even if explicitly enabled -- unified/data plane
-        installs have no cross-cluster claim/lease to manage."""
+    def test_dp_link_deployment_not_rendered_in_data_mode(self, kube_version):
+        """dp-link never renders in data mode, even if explicitly enabled -- a data plane
+        has no cross-cluster claim/lease to manage."""
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "unified"}},
+                "global": {"plane": {"mode": "data"}},
                 "astronomer": {"dpLink": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
 
         assert len(docs) == 0
+
+    def test_dp_link_deployment_renders_when_laminar_enabled(self, kube_version):
+        """dp-link renders when laminar is enabled even if dpLink.enabled is false --
+        it transports hibernation status for the laminar integration."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}, "laminar": {"enabled": True}},
+                "astronomer": {"dpLink": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
 
     def test_dp_link_deployment_disabled(self, kube_version):
         """Test that dp-link is not deployed when disabled in control mode."""
