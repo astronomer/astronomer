@@ -227,3 +227,42 @@ Common Helper template for control or unified mode
 true
 {{- end -}}
 {{- end -}}
+
+{{- /*
+The namespace KEDA resolves cluster-scoped TriggerAuthentication objects in: its
+KEDA_CLUSTER_OBJECT_NAMESPACE, which defaults to the namespace KEDA runs in.
+*/ -}}
+{{- define "keda.clusterObjectNamespace" -}}
+{{- default .Values.global.keda.namespace .Values.global.keda.clusterObjectNamespace -}}
+{{- end -}}
+
+{{- /*
+Name of the scaling identity and the cluster-scoped authentication object naming it.
+A deployment's scaling trigger references this name, so it is fixed rather than templated.
+*/ -}}
+{{- define "keda.scalingIdentityName" -}}
+metrics-api-worker-trigger
+{{- end -}}
+
+{{- /*
+Whether the worker autoscaling identity should be rendered. KEDA scales Airflow workers,
+which only run on a data plane.
+Returns the string "true" or "false" — compare with eq.
+*/ -}}
+{{- define "keda.workerScalingEnabled" -}}
+{{- and .Values.global.keda.enabled (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) -}}
+{{- end -}}
+
+{{- /*
+Labels for the objects the platform creates in the KEDA namespace. The astronomer.io
+prefixed label names the platform release that owns them, for anyone reading a namespace
+the platform does not otherwise write to.
+*/ -}}
+{{- define "keda.scalingIdentityLabels" -}}
+tier: astronomer
+component: worker-autoscaling
+release: {{ .Release.Name }}
+chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+heritage: {{ .Release.Service }}
+astronomer.io/platform-release: {{ .Release.Name }}
+{{- end -}}

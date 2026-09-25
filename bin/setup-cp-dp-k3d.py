@@ -123,7 +123,11 @@ def _install_service_monitor_crd(context: str) -> None:
 # The default namespace and service account names matter beyond tidiness. Laminar authorises the
 # scaling caller by name, so installing KEDA somewhere else locally means the scaling request is
 # refused for a reason that looks nothing like a namespace problem.
-KEDA_VERSION = "v2.20.2"
+#
+# Pinned to the oldest version we tell customers works, not the newest available, so the floor we
+# publish is the one actually exercised. 2.17.0 is where a bound service account token became a
+# TriggerAuthentication source; below it the scaling caller has no way to prove who it is.
+KEDA_VERSION = "v2.17.0"
 KEDA_NAMESPACE = "keda"
 KEDA_MANIFEST_URL = f"https://github.com/kedacore/keda/releases/download/{KEDA_VERSION}/keda-{KEDA_VERSION.lstrip('v')}.yaml"
 # Our own field manager for the node pin, kept distinct from the `kubectl` manager that owns the
@@ -663,6 +667,9 @@ def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     # along because it is the only route the subchart offers to an imagePullSecret, and it is
     # harmless for the other images: they already resolve to this same registry.
     global_laminar_block = "  laminar:\n    enabled: true\n" if settings.with_laminar else ""
+    # Worker autoscaling writes its scaling identity into the KEDA namespace, so it is only
+    # switched on where this script installed KEDA. Its CRDs are applied before this release.
+    global_keda_block = f"  keda:\n    enabled: true\n    namespace: {KEDA_NAMESPACE}\n" if settings.with_keda else ""
     laminar_subchart_block = (
         f"""\
 laminar:
@@ -730,7 +737,7 @@ global:
     enabled: true
   prometheus:
     enabled: true
-{global_operator_block}{global_laminar_block}
+{global_operator_block}{global_laminar_block}{global_keda_block}
 tags:
   platform: true
 

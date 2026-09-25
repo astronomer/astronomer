@@ -134,6 +134,20 @@ global:
   laminar:
     enabled: false
 
+  # Worker autoscaling. You install and run KEDA 2.17 or later yourself; turn this on
+  # to have the platform create the identity KEDA presents when it asks how many
+  # workers a queue needs. Doing so writes a service account, a role and a role
+  # binding into the namespace below, plus one cluster-scoped authentication object.
+  keda:
+    enabled: false
+    # The namespace KEDA is installed in.
+    namespace: keda
+    # Only needed when KEDA is configured to resolve cluster-scoped objects somewhere
+    # other than its own namespace. Defaults to `namespace`.
+    clusterObjectNamespace: ~
+    # The service account KEDA runs as.
+    operatorServiceAccountName: keda-operator
+
   # Custom roles: define your own roles from a catalog of granular permissions
   # instead of assigning only the built-in roles. Covers Workspace and Deployment
   # access, including access to the Airflow UI and API.
