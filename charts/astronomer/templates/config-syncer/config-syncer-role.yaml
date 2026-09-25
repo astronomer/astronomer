@@ -6,7 +6,7 @@
 # 2. Create a Cluster Role if namespacePools is disabled
 # 3. Create roles for each namespaces in the namespacePool (+ astronomer namespace) if enabled.
 {{- if and .Values.configSyncer.enabled .Values.global.rbac.enabled .Values.configSyncer.serviceAccount.create }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 {{- $namespacepoolsRBACresources:= and .Values.global.namespaceManagement.namespacePools.createRbac .Values.global.namespaceManagement.namespacePools.enabled }}
 {{- $useClusterRoles := and .Values.global.rbac.enabled (not .Values.global.namespaceManagement.namespacePools.enabled)}}
 {{- $shouldCreateResources := and .Values.global.rbac.enabled (or (and .Values.global.clusterRoles (not .Values.global.namespaceManagement.namespacePools.enabled )) $namespacepoolsRBACresources) }}
