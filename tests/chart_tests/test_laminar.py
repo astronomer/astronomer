@@ -102,8 +102,14 @@ class TestLaminar:
             "limits": {"cpu": "1", "memory": "1Gi"},
         }
         hypervisor_container_env = get_env_vars_dict(c_by_name["hypervisor"]["env"])
-        assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
-        assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+        assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "local"
+        assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "astronomer-ee"
+        jwks_ref = c_by_name["hypervisor"]["env"]
+        laminar_jwks = next(e for e in jwks_ref if e["name"] == "LAMINAR_JWKS")
+        assert laminar_jwks["valueFrom"]["secretKeyRef"] == {
+            "name": "release-name-commander-signing-cert",
+            "key": "tls.crt",
+        }
 
         hypervisor_service = docs[4]
         assert hypervisor_service["kind"] == "Service"
@@ -150,6 +156,22 @@ class TestLaminar:
             "laminar_hypervisor__disabled_metrics_csv": '""',
             "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
         }
+
+    def test_laminar_apiserver_keeps_houston_auth(self, kube_version):
+        """The shared laminar.env helper drives both deployments, so guard that the
+        commander/local-issuer override applies to the hypervisor ONLY
+        the api-server stays on the Houston user-facing JWT
+        and gains no local-issuer LAMINAR_JWKS override."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(),
+            show_only=[APISERVER_DEPLOYMENT_TEMPLATE],
+        )
+        assert len(docs) == 1
+        env = get_env_vars_dict(get_containers_by_name(docs[0])["apiserver"]["env"])
+        assert env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
+        assert env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+        assert "LAMINAR_JWKS" not in env
 
     @pytest.mark.parametrize("plane_mode", ["unified", "data"])
     def test_laminar_bootstrapper_rbac_objects(self, kube_version, plane_mode):

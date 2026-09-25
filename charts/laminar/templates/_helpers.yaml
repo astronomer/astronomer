@@ -89,10 +89,22 @@ Call with (list $ $componentValues).
 {{- define "laminar.env" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
+{{- if $component.jwtIssuer }}
+- name: LAMINAR_JWT_ISSUER
+  value: {{ $component.jwtIssuer | quote }}
+- name: LAMINAR_JWT_AUDIENCE
+  value: {{ $component.jwtAudience | quote }}
+- name: LAMINAR_JWKS
+  valueFrom:
+    secretKeyRef:
+      name: {{ $component.jwksSecretName | default (printf "%s-commander-signing-cert" $.Release.Name) }}
+      key: tls.crt
+{{- else }}
 - name: LAMINAR_JWT_ISSUER
   value: https://houston.{{ include "houston.controlPlaneBaseDomain" $ }}/v2
 - name: LAMINAR_JWT_AUDIENCE
   value: laminar:api
+{{- end }}
 - name: LAMINAR_ENVIRONMENT
   value: apc
 - name: LAMINAR_API_URL
