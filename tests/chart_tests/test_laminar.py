@@ -25,6 +25,7 @@ LAMINAR_ENV_CONFIGMAP_TEMPLATE = "charts/laminar/templates/configmap.yaml"
 APISERVER_DEPLOYMENT_TEMPLATE = "charts/laminar/templates/apiserver/apiserver-deployment.yaml"
 HYPERVISOR_DEPLOYMENT_TEMPLATE = "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml"
 BOOTSTRAPPER_ROLEBINDING_TEMPLATE = "charts/laminar/templates/bootstrapper/laminar-bootstrapper-rolebinding.yaml"
+APISERVER_NETWORKPOLICY_TEMPLATE = "charts/laminar/templates/apiserver/apiserver-networkpolicy.yaml"
 
 # The two pods laminar runs. Anything shared between them is parametrized over the pair rather
 # than checked on one of them: each deployment template includes the shared pieces itself, so a
@@ -370,3 +371,66 @@ class TestLaminar:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["apiserver"]["image"] == expected_image
+
+    def test_apiserver_networkpolicy_refuses_keda_by_default(self, kube_version):
+        """Test that the api-server accepts only its two existing callers until autoscaling is on."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(),
+            show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
+        )
+
+        from_entries = docs[0]["spec"]["ingress"][0]["from"]
+        assert [entry for entry in from_entries if "namespaceSelector" in entry] == []
+        assert len(from_entries) == 2
+
+    def test_apiserver_networkpolicy_admits_the_keda_namespace(self, kube_version):
+        """Test that KEDA reaches the api-server on its serving port once autoscaling is on.
+
+        Without this rule the polls are dropped at the network layer, KEDA gives up, and every
+        queue holds at its minimum worker count. A queue with a minimum of zero then runs nothing,
+        which looks like a configured Deployment that has stopped responding to load.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values({"global": {"keda": {"enabled": True}}}),
+            show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
+        )
+
+        ingress = docs[0]["spec"]["ingress"][0]
+        assert {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "keda"}}} in ingress["from"]
+        # The two callers that could already reach it are untouched.
+        assert len([entry for entry in ingress["from"] if "podSelector" in entry]) == 2
+        assert ingress["ports"] == [{"protocol": "TCP", "port": 8000}]
+
+    def test_apiserver_networkpolicy_admits_where_keda_runs_not_where_its_objects_live(self, kube_version):
+        """Test that the rule follows global.keda.namespace, not global.keda.clusterObjectNamespace.
+
+        The two differ when KEDA resolves cluster-scoped objects outside its own namespace. A
+        network policy matches the namespace of the pod sending the traffic, which is where KEDA
+        runs. Selecting the other one produces an install whose identity is correct and whose
+        polls are still dropped.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(
+                {"global": {"keda": {"enabled": True, "namespace": "keda-system", "clusterObjectNamespace": "keda-cluster"}}}
+            ),
+            show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
+        )
+
+        namespaces = [
+            entry["namespaceSelector"]["matchLabels"]["kubernetes.io/metadata.name"]
+            for entry in docs[0]["spec"]["ingress"][0]["from"]
+            if "namespaceSelector" in entry
+        ]
+        assert namespaces == ["keda-system"]
+
+    def test_apiserver_networkpolicy_absent_when_network_policies_are_off(self, kube_version):
+        """Test that turning autoscaling on does not resurrect the policy where the customer disabled them."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values({"global": {"networkPolicy": {"enabled": False}, "keda": {"enabled": True}}}),
+        )
+
+        assert not [doc for doc in docs if doc["kind"] == "NetworkPolicy"]
