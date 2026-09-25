@@ -1625,8 +1625,9 @@ def parse_args() -> argparse.Namespace:
         help=(
             f"Install KEDA {KEDA_VERSION} into the data plane clusters, in the '{KEDA_NAMESPACE}' namespace. "
             "Off by default: the platform does not ship KEDA and customers install it themselves, so this "
-            "stands in for the customer rather than being part of the platform. Needed to exercise worker "
-            "autoscaling locally; leave it off to reproduce a cluster that cannot autoscale."
+            "stands in for the customer rather than being part of the platform. Also turns on "
+            "global.keda.enabled, so the platform creates the scaling identity in that namespace. Needed to "
+            "exercise worker autoscaling locally; leave it off to reproduce a cluster that cannot autoscale."
         ),
     )
     parser.add_argument(

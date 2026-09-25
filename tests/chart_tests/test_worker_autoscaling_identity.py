@@ -121,10 +121,7 @@ class TestWorkerAutoscalingIdentity:
         docs = render_chart(kube_version=kube_version, values=keda_values())
 
         subjects = [
-            subject
-            for doc in docs
-            if doc["kind"] in ("RoleBinding", "ClusterRoleBinding")
-            for subject in doc.get("subjects") or []
+            subject for doc in docs if doc["kind"] in ("RoleBinding", "ClusterRoleBinding") for subject in doc.get("subjects") or []
         ]
         assert not [subject for subject in subjects if subject.get("name") == IDENTITY]
 
