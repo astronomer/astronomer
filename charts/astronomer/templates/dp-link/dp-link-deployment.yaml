@@ -1,8 +1,8 @@
 ###################################
 ## Astronomer DP-Link Deployment ##
 ###################################
-{{- if eq .Values.global.plane.mode "control" }}
-{{- if or .Values.dpLink.enabled .Values.global.dataPlaneFailover.enabled }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
+{{- if or .Values.dpLink.enabled .Values.global.dataPlaneFailover.enabled .Values.global.laminar.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
