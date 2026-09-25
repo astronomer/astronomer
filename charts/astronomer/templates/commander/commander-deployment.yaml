@@ -274,8 +274,16 @@ spec:
             {{- if $secretsFromFiles }}
             - name: COMMANDER_SECRETS_FROM_FILES
               value: "true"
+            {{- /* Gated on $flightDeckEnabled to match the projected volume below,
+                   which only carries the flightdeck DSN when FlightDeck is on. The
+                   loader fails closed on a <VAR>_FILE it cannot read, so advertising
+                   this path unconditionally crash-looped commander on a default
+                   install with the feature enabled. Mirrors the secretKeyRef branch,
+                   which was always gated this way, and pilot-deployment.yaml. */}}
+            {{- if $flightDeckEnabled }}
             - name: COMMANDER_FLIGHTDECK_DSN_FILE
               value: /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN
+            {{- end }}
             - name: COMMANDER_DATAPLANE_DATABASE_URL_FILE
               value: /etc/astronomer/secrets/COMMANDER_DATAPLANE_DATABASE_URL
             {{- end }}

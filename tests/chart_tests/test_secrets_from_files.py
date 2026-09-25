@@ -1276,6 +1276,61 @@ def test_every_file_env_var_points_inside_a_mount_or_is_a_known_shell_container(
             "If it now runs Node, the loader will fail closed on those unmounted paths."
         )
 
+    _assert_file_env_vars_have_a_projected_file(docs)
+
+
+def _secret_volume_filenames(volume):
+    """Every filename a secret/projected volume actually places in its mount dir."""
+    sources = [volume["secret"]] if isinstance(volume.get("secret"), dict) else []
+    sources += [s["secret"] for s in (volume.get("projected") or {}).get("sources") or [] if "secret" in s]
+    names = set()
+    for source in sources:
+        items = source.get("items")
+        if items is None:
+            # Whole-Secret mount: every key becomes a file, and the key names are
+            # not knowable from the manifest. Treat as "anything could be here".
+            return None
+        names.update(item["path"] for item in items)
+    return names
+
+
+def _assert_file_env_vars_have_a_projected_file(docs):
+    """A <VAR>_FILE inside a mounted directory is not enough -- the volume has to
+    actually put a FILE at that path.
+
+    This is the gap that let commander ship broken: its `_FILE` env var was emitted
+    under the feature toggle alone, while the projected volume only carried the
+    flightdeck DSN when FlightDeck was enabled. The path was inside
+    /etc/astronomer/secrets, so a directory-level check passed, but the file was not
+    there on a default install and the fail-closed loader crash-looped the pod.
+    """
+    dangling = []
+    for name, spec in pod_specs(docs):
+        volumes = {v["name"]: v for v in spec.get("volumes") or []}
+        for container in all_containers(spec):
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            for var, path in env_vars.items():
+                if not var.endswith("_FILE") or not isinstance(path, str) or not path:
+                    continue
+                for mount in container.get("volumeMounts") or []:
+                    mount_path = mount["mountPath"].rstrip("/")
+                    if not (path == mount_path or path.startswith(mount_path + "/")):
+                        continue
+                    volume = volumes.get(mount["name"])
+                    if volume is None:
+                        continue
+                    filenames = _secret_volume_filenames(volume)
+                    if filenames is None:
+                        break  # whole-Secret mount, cannot be checked statically
+                    relative = path[len(mount_path) :].lstrip("/")
+                    if relative and relative not in filenames:
+                        dangling.append(
+                            f"{name}/{container['name']}: {var}={path} but volume {mount['name']} projects {sorted(filenames)}"
+                        )
+                    break
+
+    assert dangling == [], "\n".join(dangling)
+
 
 def test_no_secret_feeding_a_loader_renders_empty():
     """An empty secret is no longer merely useless, it is a silent unset.
@@ -1827,3 +1882,66 @@ def test_postgres_exporter_toggle_override_precedence(global_enabled, component_
     env_vars = get_env_vars_dict(container["env"])
     assert ("DATA_SOURCE_PASS_FILE" in env_vars) is expected
     assert ("DATA_SOURCE_PASS" in env_vars) is not expected
+
+
+COMMANDER_TEMPLATE = "charts/astronomer/templates/commander/commander-deployment.yaml"
+
+
+@pytest.mark.parametrize(
+    "extra_values,flightdeck_expected",
+    [
+        ({}, False),
+        ({"astronomer": {"flightDeck": {"enabled": True}}}, True),
+        ({"global": {"plane": {"mode": "data"}, "dataPlaneFailover": {"enabled": True}}}, True),
+    ],
+    ids=["flightdeck-off-default", "flightdeck-on", "dataplane-failover"],
+)
+def test_commander_only_advertises_the_flightdeck_dsn_file_when_flightdeck_is_on(extra_values, flightdeck_expected):
+    """Regression: commander crash-looped on a DEFAULT install with the feature on.
+
+    The `COMMANDER_FLIGHTDECK_DSN_FILE` env var was emitted under the feature toggle
+    alone, while the projected volume only carries the flightdeck DSN when FlightDeck
+    is enabled -- default off. The loader fails closed on a `<VAR>_FILE` it cannot
+    read, so commander exited non-zero and never started. The `secretKeyRef` branch
+    was always gated correctly; only the file branch was not.
+
+    The pre-existing sweep missed it twice over: it checked the path was inside a
+    mounted *directory* rather than that the volume projects a *file* there, and it
+    only walked the houston family, which excludes commander.
+    """
+    values = {"global": {"secretsFromFiles": {"enabled": True}}}
+    for key, value in extra_values.items():
+        values[key] = {**values.get(key, {}), **value}
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=[COMMANDER_TEMPLATE],
+    )
+    spec = docs[0]["spec"]["template"]["spec"]
+
+    projected = {
+        item["path"]
+        for volume in spec["volumes"]
+        if volume["name"] == "commander-secrets"
+        for source in volume["projected"]["sources"]
+        for item in source["secret"]["items"]
+    }
+    assert ("COMMANDER_FLIGHTDECK_DSN" in projected) is flightdeck_expected
+    # The dataplane DSN comes from astronomer-bootstrap and is always present.
+    assert "COMMANDER_DATAPLANE_DATABASE_URL" in projected
+
+    # Only containers that actually consume the flightdeck DSN may advertise it, and
+    # whether any does at all has to track the projected volume.
+    advertisers = [
+        container["name"]
+        for container in all_containers(spec)
+        if "COMMANDER_FLIGHTDECK_DSN_FILE" in get_env_vars_dict(container.get("env") or [])
+    ]
+    assert bool(advertisers) is flightdeck_expected, f"flightdeck DSN file advertised by {advertisers}"
+
+    # And no container may advertise any secrets path without a file behind it.
+    for container in all_containers(spec):
+        for var, path in get_env_vars_dict(container.get("env") or []).items():
+            if var.endswith("_FILE") and isinstance(path, str) and path.startswith("/etc/astronomer/secrets/"):
+                assert path.rsplit("/", 1)[-1] in projected, f"{container['name']}: {var}={path} has no file behind it"
