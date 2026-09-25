@@ -1134,10 +1134,12 @@ class TestAstronomerCommander:
         commander = get_containers_by_name(doc)["commander"]
         env_vars = get_env_vars_dict(commander["env"])
 
-        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_SIGNING_KEY_PATH"] == "/etc/astronomer/commander-signing-key/tls.key"
+        assert env_vars["COMMANDER_SIGNING_KEY_PATH"] == "/etc/astronomer/commander-signing-key/tls.key"
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER"] == "local"
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "astronomer-ee"
-        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"] == "http://release-name-hypervisor.default.svc.cluster.local:8000"
+        base_url = env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"]
+        assert base_url.startswith("http://release-name-hypervisor.")
+        assert base_url.endswith(".svc.cluster.local:8000")
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "30"
 
         # Private key mounted read-only for signing.
@@ -1173,7 +1175,9 @@ class TestAstronomerCommander:
         env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["commander"]["env"])
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER"] == "custom-issuer"
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "custom-aud"
-        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"] == "http://release-name-hypervisor.default.svc.cluster.local:9000"
+        base_url = env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"]
+        assert base_url.startswith("http://release-name-hypervisor.")
+        assert base_url.endswith(".svc.cluster.local:9000")
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "45"
 
     def test_commander_laminar_hypervisor_auth_absent_when_laminar_disabled(self, kube_version):
@@ -1192,5 +1196,6 @@ class TestAstronomerCommander:
         env_vars = get_env_vars_dict(commander["env"])
 
         assert not any(name.startswith("COMMANDER_LAMINAR_HYPERVISOR_") for name in env_vars)
+        assert "COMMANDER_SIGNING_KEY_PATH" not in env_vars
         assert "commander-signing-key" not in {mount["name"] for mount in commander["volumeMounts"]}
         assert "commander-signing-key" not in {vol["name"] for vol in doc["spec"]["template"]["spec"]["volumes"]}

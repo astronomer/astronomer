@@ -249,7 +249,7 @@ spec:
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: {{ if .Values.global.rbac.enabled }}"true"{{ else }}"false"{{ end }}
             {{- if .Values.global.laminar.enabled }}
-            - name: COMMANDER_LAMINAR_HYPERVISOR_SIGNING_KEY_PATH
+            - name: COMMANDER_SIGNING_KEY_PATH
               value: /etc/astronomer/commander-signing-key/tls.key
             - name: COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER
               value: {{ .Values.commander.laminar.hypervisor.jwtIssuer | quote }}
