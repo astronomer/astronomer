@@ -215,10 +215,10 @@ it out of the environment was meant to buy.
 
 Not 0400 either. Kubernetes owns secret volume files as root:root, and these
 pods run as non-root, so the process can only reach the file through its
-fsGroup. Group read is load-bearing here -- 0400 makes the secret unreadable and
-the loaders skip a file they cannot read, silently falling back to the
-environment. Pair this with astronomer.secretsFromFiles.podSecurityContext,
-which supplies the matching fsGroup.
+fsGroup. Group read is load-bearing here -- 0400 makes the secret unreadable, and
+the loaders fail closed on a file they were told to read but cannot: the
+container exits instead of starting without its secret. Pair this with
+astronomer.secretsFromFiles.podSecurityContext, which supplies the matching fsGroup.
 
 Emitted as a bare octal literal on purpose: both Helm's and Kubernetes' YAML
 parsers read it as YAML 1.1, where a leading zero means octal, matching the
@@ -248,9 +248,9 @@ Resolves the component's toggle itself and renders nothing when it is off, so
 every workload that mounts a secret volume can include it unconditionally. That
 matters because the set of such workloads is large and easy to under-count: the
 houston family alone has 15, ten of them cronjobs. A pod that mounts a 0440
-secret without an fsGroup cannot read it, and the loader treats an unreadable
-file as "no secret configured" and falls back to an environment variable the
-chart has already removed.
+secret without an fsGroup cannot read it, and the loaders fail closed on an
+unreadable file, so a missing fsGroup is a container that never starts rather
+than one quietly running on an environment variable the chart already removed.
 
 Usage:
   {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.houston) | nindent 6 }}
