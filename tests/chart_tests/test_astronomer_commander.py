@@ -1139,7 +1139,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "astronomer-ee"
         base_url = env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"]
         assert base_url.startswith("http://release-name-hypervisor.")
-        assert base_url.endswith(".svc.cluster.local:8000")
+        assert base_url.endswith(".svc.cluster.local.:8000")
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "30"
 
         # Private key mounted read-only for signing.
@@ -1177,7 +1177,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "custom-aud"
         base_url = env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"]
         assert base_url.startswith("http://release-name-hypervisor.")
-        assert base_url.endswith(".svc.cluster.local:9000")
+        assert base_url.endswith(".svc.cluster.local.:9000")
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "45"
 
     def test_commander_laminar_hypervisor_auth_absent_when_laminar_disabled(self, kube_version):

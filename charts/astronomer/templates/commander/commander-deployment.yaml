@@ -256,7 +256,7 @@ spec:
             - name: COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE
               value: {{ .Values.commander.laminar.hypervisor.jwtAudience | quote }}
             - name: COMMANDER_LAMINAR_HYPERVISOR_BASE_URL
-              value: {{ printf "http://%s-hypervisor.%s.svc.cluster.local:%v" .Release.Name .Release.Namespace .Values.commander.laminar.hypervisor.port | quote }}
+              value: {{ printf "http://%s-hypervisor.%s.svc.cluster.local.:%v" .Release.Name .Release.Namespace .Values.commander.laminar.hypervisor.port | quote }}
             - name: COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS
               value: {{ .Values.commander.laminar.hypervisor.pollIntervalSecs | quote }}
             {{- end }}
