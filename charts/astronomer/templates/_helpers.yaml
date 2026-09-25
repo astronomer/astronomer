@@ -352,7 +352,7 @@ it alone.
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 - name: COMMANDER_CONTROL_PLANE_HA_ENABLED
@@ -954,7 +954,7 @@ Master switch registry.enabled (default true) AND the registry plane modes (data
 Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "registry.enabled" -}}
-{{- and .Values.registry.enabled (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) -}}
+{{- and .Values.registry.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
 {{- end }}
 
 {{/*
