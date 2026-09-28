@@ -53,23 +53,7 @@ jobs:
       - run:
           name: Sign Docker images with cosign
           command: |
-            set -xe
-            VERSION="<< parameters.version >>"
-            if [ -z "$VERSION" ]; then
-              # This is the tag-triggered release path (release-bom-workflow), so
-              # CIRCLE_TAG is always set. Fail loudly rather than silently skipping if
-              # it is not: the previous "exit 0" guard ended only this step, so the job
-              # went on to run sign-images.py with an empty --version and died there instead.
-              if [ -z "$CIRCLE_TAG" ]; then
-                echo "CIRCLE_TAG is not set and no version parameter was given; sign-released-image only runs on tag builds or with an explicit version" >&2
-                exit 1
-              fi
-              # sign-images.py reads the published BOM at
-              # updates.astronomer.io/astronomer-software/releases/astronomer-<version>.json,
-              # which is keyed by chart version, so drop the tag's leading "v".
-              VERSION="${CIRCLE_TAG#v}"
-            fi
-            python bin/sign-images.py --version "$VERSION"
+            python bin/sign-images.py --version "<< parameters.version >>"
 
   release_bom:
     docker:

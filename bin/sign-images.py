@@ -107,17 +107,21 @@ def main():
 
         version = args.version
         if not version:
-            version = os.environ.get("IMAGE_TAG")
-            if not version:
-                # If tag starts with 'v', remove it
-                if os.environ.get("NEXT_TAG") and os.environ.get("NEXT_TAG").startswith("v"):
-                    version = os.environ.get("NEXT_TAG")[1:]
-                else:
-                    version = os.environ.get("NEXT_TAG") or os.environ.get("IMG_TAG")
-
-        if not version:
-            print("Error: No version specified. Use --version or set IMAGE_TAG/NEXT_TAG/IMG_TAG environment variable.")
-            sys.exit(1)
+            # No explicit --version means this is the tag-triggered release-bom-workflow
+            # path (the other CircleCI caller, sign-released-image-workflow, always passes
+            # an explicit version). Fail loudly rather than silently continuing with an
+            # empty version: a previous "exit 0" guard here let the job continue and die
+            # less clearly further down instead.
+            circle_tag = os.environ.get("CIRCLE_TAG")
+            if not circle_tag:
+                print(
+                    "Error: No version specified. Use --version, or set CIRCLE_TAG (set automatically on CircleCI tag-triggered builds)."
+                )
+                sys.exit(1)
+            # sign-images.py reads the published BOM at
+            # updates.astronomer.io/astronomer-software/releases/astronomer-<version>.json,
+            # which is keyed by chart version, so drop the tag's leading "v".
+            version = circle_tag.removeprefix("v")
 
         print(f"Signing images for version: {version}")
 
