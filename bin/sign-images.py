@@ -142,9 +142,10 @@ def main():
             except (FileNotFoundError, json.JSONDecodeError):
                 print(f"Error: Could not find or parse local file {json_file}")
                 sys.exit(1)
-        print("Signing Astronomer images...")
-        for image_data in data["astronomer"]["images"].values():
-            sign_image(image_data["repository"], image_data["tag"], image_data["sha256"], private_key_path, password)
+        for chart in ("astronomer", "airflow"):
+            print(f"Signing {chart} images...")
+            for image_data in data[chart]["images"].values():
+                sign_image(image_data["repository"], image_data["tag"], image_data["sha256"], private_key_path, password)
 
         print("All images have been processed.")
 
