@@ -10,46 +10,37 @@ executors:
 
 orbs:
   slack: circleci/slack@4.10.1
-  cosign: cpanato/cosign-orb@2.0.0
 
 parameters:
   qa-release:
     type: boolean
     default: false
     description: "This will trigger QA release workflow."
+  sign-version:
+    type: string
+    default: ""
+    description: "Chart version to sign via sign-released-image-workflow, triggered manually via the CircleCI Trigger Pipeline feature. Leave blank otherwise."
 
 jobs:
   sign-released-image:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2026-09
+    parameters:
+      version:
+        type: string
+        default: ""
+        description: "Chart version to sign. Blank means derive it from CIRCLE_TAG (the tag-triggered release path)."
     steps:
       - checkout
-      - cosign/install:
-          version: "v2.5.0"
       - run:
           name: Login to docker registry
           command: |
             echo "$DOCKER_PASSWORD" | cosign login docker.io --username $DOCKER_USERNAME --password-stdin
             echo "$QUAY_PASSWORD" | cosign login quay.io --username $QUAY_USERNAME --password-stdin
       - run:
-          name: Install Python dependencies
-          command: pip install requests
-      - run:
           name: Sign Docker images with cosign
           command: |
-            set -xe
-            # This job runs only from release-bom-workflow, which is tag-triggered, so
-            # CIRCLE_TAG is always set. Fail loudly rather than silently skipping if it
-            # is not: the previous "exit 0" guard ended only this step, so the job went
-            # on to run sign-images.py with an empty --version and died there instead.
-            if [ -z "$CIRCLE_TAG" ]; then
-              echo "CIRCLE_TAG is not set; sign-released-image only runs on tag builds" >&2
-              exit 1
-            fi
-            # sign-images.py reads the published BOM at
-            # updates.astronomer.io/astronomer-software/releases/astronomer-<version>.json,
-            # which is keyed by chart version, so drop the tag's leading "v".
-            python bin/sign-images.py --version "${CIRCLE_TAG#v}"
+            python bin/sign-images.py --version "<< parameters.version >>"
 
   release_bom:
     docker:
@@ -797,6 +788,18 @@ workflows:
               only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
             branches:
               ignore: /.*/
+          context:
+            - quay.io
+            - docker.io
+            - software-cosign-keys
+
+  # Manual re-run path for a specific version: trigger via CircleCI's "Trigger Pipeline"
+  # feature with the sign-version pipeline parameter set, independent of CIRCLE_TAG.
+  sign-released-image-workflow:
+    when: << pipeline.parameters.sign-version >>
+    jobs:
+      - sign-released-image:
+          version: << pipeline.parameters.sign-version >>
           context:
             - quay.io
             - docker.io
