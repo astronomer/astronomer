@@ -64,6 +64,7 @@ service:
 {{- if .Values.kedaEnabled }}
 - --keda
 {{- end -}}
+{{- include "operator.extraArgs" . }}
 {{- end }}
 
 {{ define "manager.containers" -}}
@@ -174,3 +175,14 @@ imagePullSecrets:
 {{- toYaml .Values.manager.imagePullSecrets | nindent 2 }}
 {{- end -}}
 {{- end -}}
+
+{{- define "operator.extraArgs" -}}
+{{- range $key, $value := .Values.extraArgs }}
+{{- /* Accept keys without values or with false as value */}}
+{{- if eq ($value | quote | len) 2 }}
+- --{{ $key }}
+{{- else }}
+- --{{ $key }}={{ $value }}
+{{- end }}
+{{- end }}
+{{- end }}
