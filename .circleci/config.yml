@@ -517,7 +517,11 @@ workflows:
 
   build-and-release-helm-chart:
     when:
-      not: << pipeline.parameters.qa-release >>
+      and:
+        - not: << pipeline.parameters.qa-release >>
+        # A sign-version trigger (see sign-released-image-workflow below) should run only
+        # the signing step, not the entire build-and-test workflow too.
+        - not: << pipeline.parameters.sign-version >>
     jobs:
       - run_pre_commit
       - test-unit
