@@ -43,6 +43,15 @@ class TestIngress:
             ]
             assert "houston-http" in [port[0] for port in jmespath.search("spec.rules[*].http.paths[*].backend.servicePort", doc)]
 
+    def test_main_ingress_intercepts_404(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
+        )
+        assert len(docs) == 1
+        annotations = jmespath.search("metadata.annotations", docs[0])
+        assert annotations["nginx.ingress.kubernetes.io/custom-http-errors"] == "404"
+
     def test_protect_houston_internal_urls(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
@@ -101,3 +110,33 @@ class TestIngress:
 
         assert len(docs) == 1
         assert "tls" not in docs[0]["spec"]
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+class TestAirflowProxyIngress:
+    template = "charts/astronomer/templates/houston/airflow-proxy-ingress.yaml"
+
+    def test_does_not_intercept_404(self, kube_version):
+        """The Airflow proxy is a JSON API; nginx must not replace its 404 bodies
+        with the branded default-backend page, so custom-http-errors must be absent."""
+        docs = render_chart(kube_version=kube_version, show_only=[self.template])
+        assert len(docs) == 1
+        annotations = jmespath.search("metadata.annotations", docs[0])
+        assert "nginx.ingress.kubernetes.io/custom-http-errors" not in annotations
+
+    def test_regex_path_routes_to_houston(self, kube_version):
+        docs = render_chart(kube_version=kube_version, show_only=[self.template])
+        assert len(docs) == 1
+        doc = docs[0]
+        annotations = jmespath.search("metadata.annotations", doc)
+        assert annotations["nginx.ingress.kubernetes.io/use-regex"] == "true"
+
+        paths = jmespath.search("spec.rules[*].http.paths[]", doc)
+        assert paths
+        for path in paths:
+            assert path["path"] == "^/v1/deployments/[^/]+/airflow/"
+            assert path["pathType"] == "ImplementationSpecific"
+            assert path["backend"]["service"]["name"] == "release-name-houston"
