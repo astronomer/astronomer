@@ -266,3 +266,12 @@ chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
 heritage: {{ .Release.Service }}
 astronomer.io/platform-release: {{ .Release.Name }}
 {{- end -}}
+
+{{- /*
+Common Helper template for data or unified mode
+*/ -}}
+{{- define "astronomer.dataPlaneEnabled" -}}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+true
+{{- end -}}
+{{- end -}}

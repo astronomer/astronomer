@@ -2,7 +2,7 @@
 ## Prometheus Config ConfigMap ##
 #################################
 {{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
-{{- $dataplanes := or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $dataplanes := eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -27,7 +27,7 @@ data:
         {{- if .Values.external_labels }}
         {{- toYaml .Values.external_labels | nindent 8 }}
         {{- end }}
-        {{- if and .Values.federation.externalLabels (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) }}
+        {{- if and .Values.federation.externalLabels $dataplanes }}
         {{- toYaml .Values.federation.externalLabels | nindent 8 }}
         {{- end }}
 
