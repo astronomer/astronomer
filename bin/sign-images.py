@@ -6,6 +6,7 @@ Script to sign all container images in the Astronomer release JSON using cosign.
 import argparse
 import base64
 import getpass
+import hashlib
 import json
 import os
 import subprocess
@@ -104,6 +105,25 @@ def main():
         password = os.environ.get("COSIGN_PASSWORD")
         if not password:
             password = getpass.getpass("Enter password for cosign key: ")
+
+        # Derive the public key straight from the private key actually being used to sign
+        # (rather than just echoing the separately-stored COSIGN_PUBLIC_KEY secret), so CI
+        # history shows proof of which key signed a given release, and any future mismatch
+        # between the two secrets or key rotation is visible in the logs. Public key, so
+        # safe to log.
+        derive_env = os.environ.copy()
+        derive_env["COSIGN_PASSWORD"] = password
+        derived_public_key = subprocess.run(
+            ["cosign", "public-key", "--key", private_key_path],
+            env=derive_env,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        print(
+            f"Public key for the private key used in this signing run (sha256 fingerprint: {hashlib.sha256(derived_public_key.encode()).hexdigest()}):"
+        )
+        print(derived_public_key)
 
         version = args.version
         if not version:
