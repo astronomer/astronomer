@@ -140,3 +140,15 @@ class TestAirflowProxyIngress:
             assert path["path"] == "^/v1/deployments/[^/]+/airflow/"
             assert path["pathType"] == "ImplementationSpecific"
             assert path["backend"]["service"]["name"] == "release-name-houston"
+
+    def test_use_regex_present_with_auth_sidecar(self, kube_version):
+        """The path is a regex, so use-regex must render regardless of auth mode;
+        an auth-sidecar install would otherwise route the literal caret path."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[self.template],
+            values={"global": {"authSidecar": {"enabled": True}}},
+        )
+        assert len(docs) == 1
+        annotations = jmespath.search("metadata.annotations", docs[0])
+        assert annotations["nginx.ingress.kubernetes.io/use-regex"] == "true"
