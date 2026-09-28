@@ -481,3 +481,78 @@ class TestPrometheusConfigConfigmap:
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         nginx_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == scrape_targets]
         assert len(nginx_scrape_config) == expected_count
+
+    def get_cadvisor_job(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={"global": {"cadvisor": {"enabled": True}}},
+        )[0]
+        config = yaml.safe_load(doc["data"]["config"])
+        cadvisor_jobs = jmespath.search("scrape_configs[?job_name == 'kubernetes-nodes-cadvisor']", config)
+        assert len(cadvisor_jobs) == 1
+        return cadvisor_jobs[0]
+
+    def test_prometheus_cadvisor_deployment_relabel_resolves_worker_queue_pods(self, kube_version):
+        """Worker Deployments are named `<release>-worker-<queue>`, one segment longer than
+        other components' `<release>-<component>`, so a worker pod name is
+        `<release>-worker-<queue>-<rs>-<pod>`. The `deployment` relabel must still resolve to
+        `<release>` for these pods, for non-worker components, and for a release name that
+        itself contains dashes. Regression guard for APC-1887 (WQ-25)."""
+        cadvisor_job = self.get_cadvisor_job(kube_version)
+        deployment_relabels = jmespath.search(
+            "metric_relabel_configs[?target_label == 'deployment' && source_labels == ['pod_name']]",
+            cadvisor_job,
+        )
+        assert len(deployment_relabels) == 1
+        assert deployment_relabels[0]["replacement"] == "$1$2"
+
+        pattern = re.compile(f"^(?:{deployment_relabels[0]['regex']})$")
+
+        def resolve_deployment(pod_name):
+            match = pattern.match(pod_name)
+            assert match, f"pod_name {pod_name!r} did not match the deployment relabel regex"
+            return "".join(group or "" for group in match.groups())
+
+        assert resolve_deployment("myrelease-worker-default-7c9987ddf-ks7cv") == "myrelease"
+        assert resolve_deployment("myrelease-worker-wq01-575dcd8686-vtfw2") == "myrelease"
+        assert resolve_deployment("my-release-worker-default-7c9987ddf-ks7cv") == "my-release"
+        assert resolve_deployment("myrelease-scheduler-675678c989-2cpqt") == "myrelease"
+        assert resolve_deployment("myrelease-pgbouncer-5c9cfdbd5c-jlffk") == "myrelease"
+
+    def test_prometheus_cadvisor_container_network_relabel_resolves_worker_queue_pods(self, kube_version):
+        """The container_network_* relabels carry the same `<release>-<component>-<rs>-<pod>`
+        positional assumption as the deployment relabel above, and must be fixed the same way
+        for worker pods. Regression guard for APC-1887 (WQ-25)."""
+        cadvisor_job = self.get_cadvisor_job(kube_version)
+        network_relabels = jmespath.search(
+            "metric_relabel_configs[?source_labels == ['__name__', 'container_name', 'pod_name']]",
+            cadvisor_job,
+        )
+        assert len(network_relabels) == 3
+        by_target = {relabel["target_label"]: relabel for relabel in network_relabels}
+        assert set(by_target) == {"deployment", "component_name", "component_instance"}
+
+        # all three relabels share the same regex; only the replacement differs
+        regex = by_target["deployment"]["regex"]
+        assert by_target["component_name"]["regex"] == regex
+        assert by_target["component_instance"]["regex"] == regex
+        pattern = re.compile(f"^(?:{regex})$")
+
+        def resolve(pod_name, replacement):
+            value = f"container_network_receive_bytes_total;POD;{pod_name}"
+            match = pattern.match(value)
+            assert match, f"{value!r} did not match the container_network relabel regex"
+            result = replacement
+            for index, group in enumerate(match.groups(), start=1):
+                result = result.replace(f"${index}", group or "")
+            return result
+
+        for pod_name, expected_deployment, expected_component in [
+            ("myrelease-worker-default-7c9987ddf-ks7cv", "myrelease", "worker"),
+            ("myrelease-worker-wq01-575dcd8686-vtfw2", "myrelease", "worker"),
+            ("my-release-worker-default-7c9987ddf-ks7cv", "my-release", "worker"),
+            ("myrelease-scheduler-675678c989-2cpqt", "myrelease", "scheduler"),
+        ]:
+            assert resolve(pod_name, by_target["deployment"]["replacement"]) == expected_deployment
+            assert resolve(pod_name, by_target["component_name"]["replacement"]) == expected_component
