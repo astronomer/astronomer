@@ -893,3 +893,12 @@ kube-state:
 external-secrets:
   # Enable external-secrets to install ESO CRDs needed for dataPlaneFailover
   enabled: false
+
+#################################
+## Airflow Operator configuration
+#################################
+airflow-operator:
+  # Have the operator watch your scaling objects, so a change or deletion made outside the
+  # platform is corrected. Requires KEDA. Separate from global.keda.enabled above, which
+  # creates the identity KEDA presents.
+  kedaEnabled: false
