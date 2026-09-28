@@ -28,7 +28,7 @@ Example client config (shape varies by client — this is the VS Code `mcp.json`
 }
 ```
 
-A revoked or expired key stops working on the next call, bounded by the auth gate's cache TTL (`mcpServer.authCache.validFailure` in `charts/astronomer/values.yaml`, 1 minute by default) — not instantly, since the gate caches a successful check for a short window rather than re-authenticating Houston on every single call.
+A revoked or expired key keeps working until its cached success entry expires, bounded by `mcpServer.authCache.validSuccess` in `charts/astronomer/values.yaml` (5 minutes by default) — not instantly, since the gate caches a successful check rather than re-authenticating Houston on every single call. Only once that check fails does the gate cache the denial, and only then for the shorter `validFailure` window (1 minute by default).
 
 ## Not yet supported
 
