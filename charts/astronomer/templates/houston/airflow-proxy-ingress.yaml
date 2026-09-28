@@ -47,7 +47,7 @@ spec:
   - host: houston.{{ .Values.global.baseDomain }}
     http:
       paths:
-        - path: ^/v1/deployments/[^/]+/airflow/
+        - path: /v1/deployments/[^/]+/airflow/
           pathType: ImplementationSpecific
           backend:
             service:
@@ -58,7 +58,7 @@ spec:
   - host: houston.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
     http:
       paths:
-        - path: ^/v1/deployments/[^/]+/airflow/
+        - path: /v1/deployments/[^/]+/airflow/
           pathType: ImplementationSpecific
           backend:
             service:
