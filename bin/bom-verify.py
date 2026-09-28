@@ -2,6 +2,7 @@
 # /// script
 # requires-python = ">=3.14"
 # dependencies = [
+#   "pyyaml",
 #   "requests",
 #   "rich",
 #   "typer",
@@ -14,16 +15,24 @@
 import json
 import shutil
 import subprocess
+from enum import StrEnum
 from pathlib import Path
 
 import requests
 import typer
+import yaml
 from rich.console import Console
 from rich.table import Table
 
 app = typer.Typer(add_completion=False)
 
 BOM_URL_TEMPLATE = "https://updates.astronomer.io/astronomer-software/releases/astronomer-{version}.json"
+
+
+class OutputFormat(StrEnum):
+    table = "table"
+    json = "json"
+    yaml = "yaml"
 
 
 def load_bom(bom: str) -> dict:
@@ -49,12 +58,12 @@ def collect_images(data: dict) -> list[dict]:
     return images
 
 
-def get_architectures(repository: str, sha256: str) -> str:
-    """Return a comma-separated list of architectures this image digest was built for."""
+def get_architectures(repository: str, sha256: str) -> list[str]:
+    """Return the architectures this image digest was built for."""
     ref = f"{repository}@sha256:{sha256}"
     docker = shutil.which("docker")
     if not docker:
-        return "docker not installed"
+        return ["docker not installed"]
     try:
         result = subprocess.run(
             [docker, "manifest", "inspect", "-v", ref],
@@ -64,7 +73,7 @@ def get_architectures(repository: str, sha256: str) -> str:
         )
     except subprocess.CalledProcessError as e:
         detail = e.stderr.strip().splitlines()[-1] if e.stderr else "inspect failed"
-        return f"error: {detail}"
+        return [f"error: {detail}"]
 
     parsed = json.loads(result.stdout)
     entries = parsed if isinstance(parsed, list) else [parsed]
@@ -76,7 +85,7 @@ def get_architectures(repository: str, sha256: str) -> str:
             continue
         variant = platform.get("variant")
         platforms.add(f"{arch}/{variant}" if variant else arch)
-    return ", ".join(sorted(platforms)) or "unknown"
+    return sorted(platforms) or ["unknown"]
 
 
 def check_signed(repository: str, sha256: str, public_key: str | None) -> str:
@@ -119,6 +128,7 @@ def main(
     bom: str = typer.Argument(
         ..., help="Path to a BOM JSON file, or a chart version (e.g. 2.1.1) to fetch from updates.astronomer.io."
     ),
+    output: OutputFormat = typer.Option(OutputFormat.table, "-o", "--output", help="Output format."),
     public_key: str = typer.Option(
         None,
         "--public-key",
@@ -133,30 +143,49 @@ def main(
     if not include_airflow:
         images = [image for image in images if image["chart"] != "airflow"]
 
+    rows = []
+    for image in images:
+        signed = check_signed(image["repository"], image["sha256"], public_key)
+        rows.append(
+            {
+                "chart": image["chart"],
+                "image": image["repository"],
+                "version": image["tag"],
+                "sha256": image["sha256"],
+                "architectures": get_architectures(image["repository"], image["sha256"]),
+                "signed": signed,
+            }
+        )
+
+    if output is OutputFormat.json:
+        typer.echo(json.dumps(rows, indent=2))
+        return
+    if output is OutputFormat.yaml:
+        typer.echo(yaml.dump(rows, sort_keys=False))
+        return
+
     table = Table(title=f"BOM image signing status: {bom}")
     for header in ("Chart", "Image", "Version", "SHA256", "Architectures", "Signed"):
         table.add_column(header)
 
     signed_count = 0
-    console = Console()
-    for image in images:
-        signed = check_signed(image["repository"], image["sha256"], public_key)
-        if signed.startswith("yes"):
+    for row in rows:
+        if row["signed"].startswith("yes"):
             signed_count += 1
-        architectures = get_architectures(image["repository"], image["sha256"])
-        style = "green" if signed.startswith("yes") else ("red" if signed == "no" else "yellow")
+        style = "green" if row["signed"].startswith("yes") else ("red" if row["signed"] == "no" else "yellow")
         table.add_row(
-            image["chart"],
-            image["repository"],
-            image["tag"],
-            image["sha256"],
-            architectures,
-            signed,
+            row["chart"],
+            row["image"],
+            row["version"],
+            row["sha256"],
+            ", ".join(row["architectures"]),
+            row["signed"],
             style=style,
         )
 
+    console = Console()
     console.print(table)
-    console.print(f"\n{signed_count}/{len(images)} images signed")
+    console.print(f"\n{signed_count}/{len(rows)} images signed")
 
 
 if __name__ == "__main__":
