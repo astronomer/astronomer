@@ -2,6 +2,7 @@
 # /// script
 # requires-python = ">=3.14"
 # dependencies = [
+#   "diskcache",
 #   "pyyaml",
 #   "requests",
 #   "rich",
@@ -21,12 +22,15 @@ from pathlib import Path
 import requests
 import typer
 import yaml
+from diskcache import Cache
 from rich.console import Console
 from rich.table import Table
 
 app = typer.Typer(add_completion=False)
 
 BOM_URL_TEMPLATE = "https://updates.astronomer.io/astronomer-software/releases/astronomer-{version}.json"
+DEFAULT_CACHE_DIR = Path.home() / ".cache" / "bom-verify"
+CACHE_EXPIRE_SECONDS = 24 * 60 * 60
 
 
 class OutputFormat(StrEnum):
@@ -137,22 +141,33 @@ def main(
         "a signature artifact exists, not whether it's cryptographically valid.",
     ),
     include_airflow: bool = typer.Option(True, help="Also check images listed under the airflow chart's own BOM section."),
+    cache_dir: Path = typer.Option(DEFAULT_CACHE_DIR, "--cache-dir", help="Directory for the on-disk registry-lookup cache."),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Bypass the on-disk cache and query the registry fresh for every image."
+    ),
 ):
     data = load_bom(bom)
     images = collect_images(data)
     if not include_airflow:
         images = [image for image in images if image["chart"] != "airflow"]
 
+    get_architectures_cached = get_architectures
+    check_signed_cached = check_signed
+    if not no_cache:
+        cache = Cache(str(cache_dir))
+        get_architectures_cached = cache.memoize(expire=CACHE_EXPIRE_SECONDS, tag="architectures")(get_architectures)
+        check_signed_cached = cache.memoize(expire=CACHE_EXPIRE_SECONDS, tag="signed")(check_signed)
+
     rows = []
     for image in images:
-        signed = check_signed(image["repository"], image["sha256"], public_key)
+        signed = check_signed_cached(image["repository"], image["sha256"], public_key)
         rows.append(
             {
                 "chart": image["chart"],
                 "image": image["repository"],
                 "version": image["tag"],
                 "sha256": image["sha256"],
-                "architectures": get_architectures(image["repository"], image["sha256"]),
+                "architectures": get_architectures_cached(image["repository"], image["sha256"]),
                 "signed": signed,
             }
         )
