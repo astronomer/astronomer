@@ -461,9 +461,12 @@ data:
           - regex: "^name"
             action: labeldrop
 
+          # Worker deployments are named `<release>-worker-<queue>`, one segment longer than
+          # other components' `<release>-<component>`, so the `-worker-` infix is matched
+          # explicitly rather than assuming a fixed number of trailing pod-name segments.
           - source_labels: [pod_name]
-            regex: "(^[-a-z0-9-]*)-[^-]*-[^-]*-[^-]*?"
-            replacement: "$1"
+            regex: "(.*)-worker-[^-]+-[^-]+-[^-]+|(.*)-[^-]+-[^-]+-[^-]+"
+            replacement: "$1$2"
             target_label: deployment
 
           - source_labels: [container_name]
@@ -476,17 +479,20 @@ data:
             replacement: "$1"
             target_label: component_instance
 
+          # Same `-worker-` infix issue as the deployment relabel above, applied to the
+          # pod-name parsing used for container_network_* metrics (whose container_name is
+          # the pause container, not the component, so component_name is re-derived here too).
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
-            replacement: "$1"
+            regex: "container_network_.*;(?:(.*)-(worker)-[^-]+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
+            replacement: "$1$4"
             target_label: deployment
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
-            replacement: "$2"
+            regex: "container_network_.*;(?:(.*)-(worker)-[^-]+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
+            replacement: "$2$5"
             target_label: component_name
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
-            replacement: "$3"
+            regex: "container_network_.*;(?:(.*)-(worker)-[^-]+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
+            replacement: "$3$6"
             target_label: component_instance
           - source_labels: [__name__, pod_name]
             regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
