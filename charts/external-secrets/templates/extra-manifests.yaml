@@ -2,7 +2,7 @@
 ###################################
 # external-secrets extra objects ##
 ###################################
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if (include "external-secrets.enabled" .) }}
 {{- range .Values.extraObjects }}
 ---
 ##############################################

@@ -1,14 +1,14 @@
 ###################################
 ## Astronomer Registry ConfigMap ##
 ###################################
-{{ if and .Values.global.baseDomain }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{ if .Values.global.baseDomain }}
+{{- if eq (include "registry.enabled" .) "true" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-registry
+  name: {{ template "registry.fullname" . }}
   labels:
-    component: registry
+    component: {{ template "registry.name" . }}
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -56,7 +56,7 @@ data:
     {{- if not .Values.registry.enableInsecureAuth }}
     auth:
       token:
-        realm: "https://houston.{{ .Values.global.baseDomain }}/v1/registry/authorization"
+        realm: "https://houston.{{ include "houston.controlPlaneBaseDomain" . }}/v1/registry/authorization"
         service: {{ .Values.registry.auth.service | quote }}
         issuer: {{ .Values.registry.auth.issuer | quote }}
         rootcertbundle: /etc/docker/ssl/tls.crt

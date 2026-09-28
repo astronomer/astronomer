@@ -61,6 +61,15 @@ class TestPrometheusNodeExporterDaemonset:
             "requests": {"cpu": "10m", "memory": "128Mi"},
         }
 
+        # PINF-971: node-exporter is a DaemonSet and needs to run on every
+        # node, including control-plane/master, so it tolerates that taint by
+        # default. This default is a plain, fully-overridable values.yaml
+        # entry (see test_node_exporter_nodepool_config_overrides) — same
+        # pattern as nodeSelector/affinity on this same DaemonSet.
+        assert doc["spec"]["template"]["spec"]["tolerations"] == [
+            {"effect": "NoSchedule", "operator": "Exists"},
+        ]
+
     def test_prometheus_node_exporter_daemonset_custom_resources(self, kube_version):
         doc = render_chart(
             kube_version=kube_version,
@@ -85,8 +94,11 @@ class TestPrometheusNodeExporterDaemonset:
             "requests": {"cpu": "666m", "memory": "888Mi"},
         }
         assert c_by_name["node-exporter"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
 
     def test_prometheus_node_exporter_daemonset_with_security_context_overrides(self, kube_version):
@@ -109,8 +121,10 @@ class TestPrometheusNodeExporterDaemonset:
         assert c_by_name["node-exporter"]
         assert c_by_name["node-exporter"]["securityContext"] == {
             "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 65534,
         }
 
     def test_node_exporter_priorityclass_defaults(self, kube_version):

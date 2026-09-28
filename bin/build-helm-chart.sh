@@ -7,11 +7,13 @@ set -x
 set -e
 
 QA_FEATURE_RELEASE=${1:-false}
+OUTPUT_DIR="${2:-.}"
 TEMPDIR="${TEMPDIR:-/tmp/astro-temp}"
 GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 
 bin/repo-state-report.py
 
+mkdir -p "${OUTPUT_DIR}"
 rm -rf "${TEMPDIR}/astronomer" || true
 mkdir -p "${TEMPDIR}"
 cp -R "${GIT_ROOT_DIR}/" "${TEMPDIR}/astronomer/"
@@ -29,4 +31,4 @@ elif [[ "${CIRCLE_BRANCH}" =~ release-[0-9]+\.[0-9]+ ]] && [[ "${QA_FEATURE_RELE
   sed -i='' "s#^description: .*#description: $(date "+%FT%T%z") ${CIRCLE_BRANCH} ${CIRCLE_BUILD_URL} https://github.com/astronomer/astronomer/commits/${CIRCLE_SHA1}#" "${TEMPDIR}/astronomer/Chart.yaml"
 fi
 
-helm package "${TEMPDIR}/astronomer"
+helm package "${TEMPDIR}/astronomer" -d "${OUTPUT_DIR}"

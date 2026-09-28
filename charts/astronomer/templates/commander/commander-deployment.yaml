@@ -1,9 +1,9 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.commander)) }}
-{{- $flightDeckEnabled := or .Values.flightDeck.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) }}
+{{- $flightDeckEnabled := eq "true" (include "flightdeck.enabled" . | trim) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -58,7 +58,7 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
-      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.commander) | nindent 6 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.commander) | fromYaml)) | nindent 8 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- include "commander.hostAliases" . | nindent 6 }}
@@ -80,17 +80,13 @@ spec:
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
           resources: {{ toYaml .Values.commander.resources | nindent 12 }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
 
-      {{- if $flightDeckEnabled }}
+      {{- if (include "flightdeck.enabled" .) }}
         - name: flightdeck-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           env:
             - name: LOCAL_CLUSTER_ID
@@ -137,9 +133,7 @@ spec:
            - "--db"
            - "$(COMMANDER_FLIGHTDECK_DSN)"
           {{- end }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           env:
           {{- if $secretsFromFiles }}
@@ -181,9 +175,7 @@ spec:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           {{- if .Values.commander.command }}
           command:
@@ -220,6 +212,17 @@ spec:
               path: /healthz
               port: {{ .Values.ports.commanderHTTP }}
             initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- end }}
+          {{- if .Values.commander.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.commander.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.commanderHTTP }}
+              scheme: HTTP
+            failureThreshold: 30
             periodSeconds: 10
           {{- end }}
           env:
@@ -267,6 +270,18 @@ spec:
               value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: {{ if .Values.global.rbac.enabled }}"true"{{ else }}"false"{{ end }}
+            {{- if .Values.global.laminar.enabled }}
+            - name: COMMANDER_SIGNING_KEY_PATH
+              value: /etc/astronomer/commander-signing-key/tls.key
+            - name: COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER
+              value: {{ .Values.commander.laminar.hypervisor.jwtIssuer | quote }}
+            - name: COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE
+              value: {{ .Values.commander.laminar.hypervisor.jwtAudience | quote }}
+            - name: COMMANDER_LAMINAR_HYPERVISOR_BASE_URL
+              value: {{ printf "http://%s-hypervisor.%s.svc.cluster.local.:%v" .Release.Name .Release.Namespace .Values.commander.laminar.hypervisor.port | quote }}
+            - name: COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS
+              value: {{ .Values.commander.laminar.hypervisor.pollIntervalSecs | quote }}
+            {{- end }}
             {{- if .Values.global.privateCaCerts }}
             - name: UPDATE_CA_CERTS
               value: "true"
@@ -288,6 +303,7 @@ spec:
               value: /etc/astronomer/secrets/COMMANDER_DATAPLANE_DATABASE_URL
             {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
+            {{- include "commander_env" . | nindent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
@@ -304,9 +320,14 @@ spec:
             - mountPath: /app/metadata.yaml
               name: metadata
               subPath: metadata.yaml
-            - name: internal-service-auth
-              mountPath: /etc/astronomer/internal-service-auth
+            - name: cluster-local-service-auth
+              mountPath: /etc/astronomer/cluster-local-service-auth
               readOnly: true
+            {{- if .Values.global.laminar.enabled }}
+            - name: commander-signing-key
+              mountPath: /etc/astronomer/commander-signing-key
+              readOnly: true
+            {{- end }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           {{- if .Values.commander.volumeMounts }}
           {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
@@ -348,6 +369,16 @@ spec:
               port: {{ .Values.ports.commanderSidecarHTTP }}
             initialDelaySeconds: 5
             periodSeconds: 5
+          {{- if .Values.commander.authProxy.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.commander.authProxy.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            httpGet:
+              path: /nginx-health
+              port: {{ .Values.ports.commanderSidecarHTTP }}
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
         {{- end }}
 
       volumes:
@@ -371,9 +402,14 @@ spec:
         - configMap:
             name: {{ .Release.Name }}-commander-metadata
           name: metadata
-        - name: internal-service-auth
+        - name: cluster-local-service-auth
           secret:
-            secretName: {{ .Release.Name }}-internal-service-auth
+            secretName: {{ .Release.Name }}-cluster-local-service-auth
+        {{- if .Values.global.laminar.enabled }}
+        - name: commander-signing-key
+          secret:
+            secretName: {{ .Release.Name }}-commander-signing-key
+        {{- end }}
         {{- if $secretsFromFiles }}
         # Commander reads its secrets from files named after the environment
         # variables they replace. Two different Secrets have to land in the same

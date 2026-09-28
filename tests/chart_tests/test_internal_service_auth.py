@@ -11,7 +11,7 @@ from tests.utils.chart import render_chart
     "kube_version",
     supported_k8s_versions,
 )
-class TestInternalServiceAuthSecret:
+class TestClusterLocalServiceAuthSecret:
     show_only = ["charts/astronomer/templates/secrets/cluster-local-service-auth-secret.yaml"]
 
     @pytest.mark.parametrize(
@@ -34,7 +34,7 @@ class TestInternalServiceAuthSecret:
             doc = docs[0]
             assert doc["kind"] == "Secret"
             assert doc["apiVersion"] == "v1"
-            assert doc["metadata"]["name"] == "release-name-internal-service-auth"
+            assert doc["metadata"]["name"] == "release-name-cluster-local-service-auth"
             assert doc["type"] == "Opaque"
             assert "token" in doc["data"]
 
@@ -42,7 +42,7 @@ class TestInternalServiceAuthSecret:
             assert len(token_raw) > 0
 
             labels = doc["metadata"]["labels"]
-            assert labels["component"] == "internal-service-auth"
+            assert labels["component"] == "cluster-local-service-auth"
             assert labels["tier"] == "astronomer"
             assert labels["release"] == "release-name"
             assert labels["plane"] == plane_mode
@@ -62,7 +62,7 @@ class TestInternalServiceAuthSecret:
             values={
                 "global": {
                     "plane": {"mode": "unified"},
-                    "internalServiceAuth": {"token": token},
+                    "clusterLocalServiceAuth": {"token": token},
                 },
             },
             show_only=self.show_only,
@@ -79,11 +79,11 @@ class TestInternalServiceAuthSecret:
     "kube_version",
     supported_k8s_versions,
 )
-class TestInternalServiceAuthCommanderMount:
+class TestClusterLocalServiceAuthCommanderMount:
     show_only = ["charts/astronomer/templates/commander/commander-deployment.yaml"]
 
     @pytest.mark.parametrize("plane_mode", ["data", "unified"])
-    def test_commander_has_internal_service_auth_volume_and_mount(self, kube_version, plane_mode):
+    def test_commander_has_cluster_local_service_auth_volume_and_mount(self, kube_version, plane_mode):
         """Commander deployment should have the secret volume mounted read-only at the expected path."""
         docs = render_chart(
             kube_version=kube_version,
@@ -94,24 +94,24 @@ class TestInternalServiceAuthCommanderMount:
         spec = docs[0]["spec"]["template"]["spec"]
 
         volumes = {v["name"]: v for v in spec["volumes"]}
-        assert "internal-service-auth" in volumes
-        assert volumes["internal-service-auth"]["secret"]["secretName"] == "release-name-internal-service-auth"
+        assert "cluster-local-service-auth" in volumes
+        assert volumes["cluster-local-service-auth"]["secret"]["secretName"] == "release-name-cluster-local-service-auth"
 
         c_by_name = get_containers_by_name(docs[0])
         vm_by_name = {m["name"]: m for m in c_by_name["commander"]["volumeMounts"]}
-        assert "internal-service-auth" in vm_by_name
-        assert vm_by_name["internal-service-auth"]["mountPath"] == "/etc/astronomer/internal-service-auth"
-        assert vm_by_name["internal-service-auth"]["readOnly"] is True
+        assert "cluster-local-service-auth" in vm_by_name
+        assert vm_by_name["cluster-local-service-auth"]["mountPath"] == "/etc/astronomer/cluster-local-service-auth"
+        assert vm_by_name["cluster-local-service-auth"]["readOnly"] is True
 
 
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
 )
-class TestInternalServiceAuthPilotMount:
+class TestClusterLocalServiceAuthPilotMount:
     show_only = ["charts/astronomer/templates/pilot/pilot-deployment.yaml"]
 
-    def test_pilot_has_internal_service_auth_volume_and_mount(self, kube_version):
+    def test_pilot_has_cluster_local_service_auth_volume_and_mount(self, kube_version):
         """Pilot deployment should have the secret volume mounted read-only at the expected path."""
         docs = render_chart(
             kube_version=kube_version,
@@ -125,11 +125,11 @@ class TestInternalServiceAuthPilotMount:
         spec = docs[0]["spec"]["template"]["spec"]
 
         volumes = {v["name"]: v for v in spec["volumes"]}
-        assert "internal-service-auth" in volumes
-        assert volumes["internal-service-auth"]["secret"]["secretName"] == "release-name-internal-service-auth"
+        assert "cluster-local-service-auth" in volumes
+        assert volumes["cluster-local-service-auth"]["secret"]["secretName"] == "release-name-cluster-local-service-auth"
 
         c_by_name = get_containers_by_name(docs[0])
         vm_by_name = {m["name"]: m for m in c_by_name["pilot"]["volumeMounts"]}
-        assert "internal-service-auth" in vm_by_name
-        assert vm_by_name["internal-service-auth"]["mountPath"] == "/etc/astronomer/internal-service-auth"
-        assert vm_by_name["internal-service-auth"]["readOnly"] is True
+        assert "cluster-local-service-auth" in vm_by_name
+        assert vm_by_name["cluster-local-service-auth"]["mountPath"] == "/etc/astronomer/cluster-local-service-auth"
+        assert vm_by_name["cluster-local-service-auth"]["readOnly"] is True

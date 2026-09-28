@@ -35,7 +35,13 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
         spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]
         assert spec["metadata"]["labels"]["component"] == "houston-cleanup"
         assert docs[0]["spec"]["schedule"] == "11 23 * * *"
-        assert spec["spec"]["containers"][0]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert spec["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_astronomer_cleanup_deploy_revisons_cron_custom_schedule(self, kube_version):
         docs = render_chart(

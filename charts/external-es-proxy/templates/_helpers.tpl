@@ -126,5 +126,9 @@ proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogg
 {{- end }}
 
 {{- define "es-proxy.url" -}}
+{{- if .Values.global.plane.domainPrefix -}}
 elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+elasticsearch.{{ .Values.global.baseDomain }}
+{{- end -}}
 {{- end -}}

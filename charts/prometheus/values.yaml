@@ -15,36 +15,54 @@ podLabels: {}
 # such that only one is replaced at a time.
 replicas: 1
 
+# Session affinity for the aggregate Prometheus Service. Left unset by default
+# so the rendered Service carries no spec.sessionAffinity / sessionAffinityConfig
+# fields, which some clusters forbid (e.g. Gatekeeper's deny-ingress-sticky-sessions).
+# Set to "ClientIP" to pin clients to a single Prometheus pod, which is only
+# meaningful when replicas > 1 (active/passive query consistency).
+#
+# UPGRADE NOTE: Versions prior to 2.1.0 hardcoded sessionAffinity: ClientIP on
+# this Service. As of 2.1.0 it is unset by default to satisfy clusters that
+# forbid sticky sessions. This is a no-op at the default replicas: 1, but HA
+# deployments running replicas > 1 should set sessionAffinity: "ClientIP" here.
+# Otherwise the aggregate Service round-robins across pods, and since Prometheus
+# replicas are active/passive (each scrapes independently and may hold different
+# data/gaps), the default consumers that query this Service -- Grafana datasource
+# and Houston -- can see inconsistent results across requests.
+sessionAffinity: ""
+
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 3.10.0
+    tag: 3.14.0-3
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.15.0-3
+    tag: 0.15.0-9
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.19
+    tag: 0.3.5
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.29.2
+    tag: 1.31.1-3
     pullPolicy: IfNotPresent
 
 
-resources: {}
-#  limits:
-#   cpu: 100m
-#   memory: 128Mi
-#  requests:
-#   cpu: 100m
-#   memory: 128Mi
+resources:
+  limits:
+    cpu: 500m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 1Gi
 
 podAnnotations: {}
 
 serviceAccount:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
   # Specifies whether a service account should be created
   create: true
   # Annotations to add to the service account
@@ -69,23 +87,36 @@ readinessProbe: {}
   # periodSeconds: 5
   # failureThreshold: 3
   # timeoutSeconds: 1
+startupProbe: {}
+  # httpGet:
+  #   path: /-/healthy
+  #   port: {{ .Values.ports.http }}
+  # failureThreshold: 30
+  # periodSeconds: 10
 
 podSecurityContext:
   fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
   runAsUser: 65534
 configMapReloader:
   livenessProbe: {}
   readinessProbe: {}
-  resources: {}
-    # limits:
-    #   cpu: 100m
-    #   memory: 25Mi
-    # requests:
-    #   cpu: 100m
-    #   memory: 25Mi
+  startupProbe: {}
+  resources:
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 32Mi
 
 filesdReloader:
   # -- Load this sidecar's DATABASE_URL from a mounted file instead of injecting
@@ -98,14 +129,22 @@ filesdReloader:
 
   livenessProbe: {}
   readinessProbe: {}
-  resources: {}
-    # limits:
-    #   cpu: 100m
-    #   memory: 25Mi
-    # requests:
-    #   cpu: 100m
-    #   memory: 25Mi
+  startupProbe: {}
+  resources:
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 32Mi
   extraEnv: []
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    runAsNonRoot: true
+    runAsUser: 65534
 
 # Which directory prometheus data should be stored
 dataDir: "/prometheus"
@@ -194,7 +233,13 @@ federation:
   auth:
     enabled: true
     replicas: 2
-    resources: {}
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
     # -- Read REGISTRY_AUTH_TOKEN from a mounted file instead of injecting it
     # into the environment with valueFrom.secretKeyRef. Leave unset to inherit
     # `global.secretsFromFiles.enabled`. The nginx.conf lua that reads the token
@@ -206,6 +251,7 @@ federation:
     annotations: {}
   livenessProbe: {}
   readinessProbe: {}
+  startupProbe: {}
 
 extraFlags:
 - "--enable-feature=auto-config-reload"
@@ -217,13 +263,14 @@ extraFlags:
 # Convert dashes to underscores for golang compatibility.
 config:
   # Enables kubelet and cAdvisor scrape jobs for pod-level metrics
-  cadvisor:
-    enabled: false
   enableSelfScrape: false
   scrape_configs:
     kubernetes_apiservers:
       tls_config:
         insecure_skip_verify: false
+    federated_dataplanes:
+      scrape_interval: 15s
+      scrape_timeout: 10s
 
 rbac:
   role:

@@ -14,7 +14,14 @@ astronomer:
         memory: 128Mi
   navigator:
     enabled: true
+  # mcpServer omitted: conflicts with authSidecar below.
   houston:
+    logging:
+      loggingSidecar:
+        enabled: true
+        elasticsearch:
+          enabled: true
+          endpoint: "https://es.example.com:9200"
     cleanupAirflowDb:
       enabled: true
     cleanupClusterAudits:
@@ -34,12 +41,17 @@ astronomer:
 global:
   airflowOperator:
     enabled: true
+  authSidecar:
+    enabled: true
   baseDomain: foo.com
   customLogging:
     awsSecretName: dummy
     enabled: true
-  authSidecar:
+  customRBAC:
     enabled: true
+  dataPlaneFailover:
+    enabled: true
+    externalSecretManagerName: dummy-esm-name
   networkPolicy:
     enabled: true
   rbac:
@@ -53,9 +65,13 @@ global:
   deploymentLifecycle:
     deployRollback:
       enabled: true
+      dagTarballVersionValidation:
+        enabled: true
   deployMechanisms:
     dagOnlyDeployment:
       enabled: true
+  laminar:
+    enabled: true
   logging:
     loggingSidecar:
       enabled: true
@@ -85,3 +101,5 @@ external-secrets:
 postgresql:
   replication:
     enabled: true
+  postgresqlRunPermissions:
+    enabled: false

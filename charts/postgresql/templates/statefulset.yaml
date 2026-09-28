@@ -64,21 +64,57 @@ spec:
       {{- if .Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
-      {{- if .Values.securityContext.enabled }}
       securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      {{- if and .Values.securityContext.enabled (not .Values.global.openshift.enabled) }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
+      initContainers:
+      {{- if eq (include "postgresql.postgresqlRunPermissions.enabled" .) "true" }}
+      - name: init-postgresql-run
+        image: {{ template "postgresql.image" . }}
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+        command:
+          - sh
+          - -c
+          - |
+            mkdir -p /var/run/postgresql
+            chown {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} /var/run/postgresql
+            chmod 0700 /var/run/postgresql
+        securityContext:
+          runAsUser: {{ .Values.postgresqlRunPermissions.securityContext.runAsUser }}
+          runAsNonRoot: {{ ne (.Values.postgresqlRunPermissions.securityContext.runAsUser | int) 0 }}
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - CHOWN
+              - FOWNER
+        volumeMounts:
+        - name: postgresql-run
+          mountPath: /var/run/postgresql
+      {{- end }}
       containers:
       - name: {{ template "postgresql.fullname" . }}
         image: {{ template "postgresql.image" . }}
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         resources: {{- toYaml .Values.resources | nindent 10 }}
         securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
           readOnlyRootFilesystem: true
         {{- if .Values.securityContext.enabled }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+          {{- if not .Values.global.openshift.enabled }}
           runAsUser: {{ .Values.securityContext.runAsUser }}
+          {{- end }}
         {{- end }}
         env:
         - name: POSTGRESQL_PORT_NUMBER
@@ -147,6 +183,24 @@ spec:
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
+        {{- if .Values.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c
+           {{- if (include "postgresql.database" .) }}
+            - exec pg_isready -U {{ include "postgresql.username" . | quote }} -d {{ (include "postgresql.database" .) | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+           {{- else }}
+            - exec pg_isready -U {{ include "postgresql.username" . | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+           {{- end }}
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+        {{- end }}
         {{- if .Values.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 10 }}
         {{- else }}
@@ -185,6 +239,8 @@ spec:
         volumeMounts:
         - mountPath: /tmp
           name: tmp
+        - mountPath: /var/run/postgresql
+          name: postgresql-run
         {{- if or (.Files.Glob "files/docker-entrypoint-initdb.d/*.{sh,sql,sql.gz}") .Values.initdbScriptsConfigMap .Values.initdbScripts }}
         - name: custom-init-scripts
           mountPath: /docker-entrypoint-initdb.d/
@@ -211,8 +267,9 @@ spec:
         image: {{ template "postgresql.metrics.image" . }}
         imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
         securityContext:
+          allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-        {{- if .Values.metrics.securityContext.enabled }}
+        {{- if and .Values.metrics.securityContext.enabled (not .Values.global.openshift.enabled) }}
           runAsUser: {{ .Values.metrics.securityContext.runAsUser }}
         {{- end }}
         env:
@@ -244,6 +301,16 @@ spec:
           failureThreshold: 6
           successThreshold: 1
         {{- end }}
+        {{- if .Values.metrics.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.metrics.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          httpGet:
+            path: /
+            port: metrics
+          failureThreshold: 30
+          periodSeconds: 10
+        {{- end }}
         {{- if .Values.metrics.readinessProbe }}
         readinessProbe:
           httpGet:
@@ -272,7 +339,7 @@ spec:
       - emptyDir: {}
         name: tmp
       - emptyDir: {}
-        name: pg-conf
+        name: postgresql-run
       {{- if or (.Files.Glob "files/postgresql.conf") (.Files.Glob "files/pg_hba.conf") .Values.postgresqlConfiguration .Values.pgHbaConfiguration .Values.configurationConfigMap}}
       - name: postgresql-config
         configMap:

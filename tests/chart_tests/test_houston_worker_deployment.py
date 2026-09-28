@@ -61,7 +61,7 @@ class TestHoustonWorkerDeployment:
         assert doc["kind"] == "Deployment"
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
-        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
+        env_vars = get_env_vars_dict(c_by_name["houston-worker"]["env"])
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
@@ -85,7 +85,7 @@ class TestHoustonWorkerDeployment:
         assert len(docs) == 1
         doc = docs[0]
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = c_by_name["houston"]["env"]
+        houston_container_env = c_by_name["houston-worker"]["env"]
 
         dispatcher_enabled_env = next(
             (x for x in houston_container_env if x["name"] == "DISPATCHER_ENABLED"),
@@ -115,7 +115,7 @@ class TestHoustonWorkerDeployment:
         assert len(docs) == 1
         doc = docs[0]
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
+        houston_container_env = get_env_vars_dict(c_by_name["houston-worker"]["env"])
 
         # Verify all dispatcher environment variables are present with correct default values
         assert houston_container_env["DISPATCHER_ENABLED"] == "true"
@@ -173,7 +173,7 @@ class TestHoustonWorkerDeployment:
         assert len(docs) == 1
         doc = docs[0]
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        houston_container_env = get_env_vars_dict(c_by_name["houston"]["env"])
+        houston_container_env = get_env_vars_dict(c_by_name["houston-worker"]["env"])
 
         # Verify all dispatcher custom values
         assert houston_container_env["DISPATCHER_ENABLED"] == "true"
@@ -214,3 +214,64 @@ class TestHoustonWorkerDeployment:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["spec"]["replicas"] == CUSTOM_REPLICAS
+
+    def test_houston_worker_deployment_has_backend_secret_checksum_annotation(self, kube_version):
+        """Test that the worker pod template includes a checksum annotation for the houston backend secret.
+
+        This ensures the worker deployment rolling-updates when the backend secret template
+        changes (e.g. on helm upgrade), mirroring the same annotation already present on the
+        API deployment.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert "checksum/houston-backend-secret" in annotations
+        # Must be a non-empty sha256 hex string (64 chars)
+        checksum = annotations["checksum/houston-backend-secret"]
+        assert len(checksum) == 64
+        assert all(c in "0123456789abcdef" for c in checksum)
+
+    def test_houston_worker_backend_secret_checksum_matches_api_deployment(self, kube_version):
+        """Test that the worker and API deployments share the same backend secret checksum.
+
+        Both deployments reference the same secret template, so their checksums must be identical.
+        A mismatch would indicate that the worker and API are not restarted consistently.
+        A deterministic backendConnection is supplied so randAlphaNum is not called (each
+        include of the backend-secret template would otherwise re-evaluate randAlphaNum,
+        producing different random values per include call).
+        """
+        deterministic_values = {
+            "astronomer": {
+                "houston": {
+                    "backendSecretConnection": True,
+                    "backendConnection": {
+                        "user": "houston",
+                        "pass": "s3cr3t",
+                        "host": "pg.example.com",
+                        "port": 5432,
+                        "db": "houston",
+                    },
+                }
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=deterministic_values,
+            show_only=[
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+            ],
+        )
+
+        by_name = {d["metadata"]["name"]: d for d in docs}
+        worker = by_name["release-name-houston-worker"]
+        api = by_name["release-name-houston"]
+
+        worker_checksum = worker["spec"]["template"]["metadata"]["annotations"]["checksum/houston-backend-secret"]
+        api_checksum = api["spec"]["template"]["metadata"]["annotations"]["checksum/houston-backend-secret"]
+
+        assert worker_checksum == api_checksum

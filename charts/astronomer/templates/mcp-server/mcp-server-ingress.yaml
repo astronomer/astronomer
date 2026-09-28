@@ -1,0 +1,77 @@
+##########################
+## MCP Server Ingress   ##
+##########################
+{{- /* BYO-ingress (auth sidecar) is validated in validate-mcp-server-auth-sidecar.yaml,
+independent of baseDomain -- see that file for why it isn't nested in the gate below. */}}
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if eq (include "mcpServer.enabled" .) "true" }}
+{{- if .Values.global.baseDomain }}
+{{- if not .Values.global.authSidecar.enabled }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ template "mcpServer.fullname" . }}-ingress
+  labels:
+    tier: astronomer
+    component: {{ template "mcpServer.name" . }}-ingress
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- if .Values.global.extraAnnotations }}
+    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    {{- include "houston.mcpAgentAuthUrl" . | nindent 4 }}
+    # No auth-signin: MCP clients (VS Code, Cursor, Otto) are machine callers, never a
+    # browser. auth-signin's 302-to-login on a 401 breaks all of them; omitting the
+    # annotation is the only way ingress-nginx passes a plain 401 straight through.
+    #
+    # No auth-response-headers either: apc-mcp-server derives caller identity from the
+    # raw Authorization bearer token itself and re-authorizes every call against Houston,
+    # so nothing here reads a forwarded identity header (confirmed: no reference anywhere
+    # in apc-mcp-server outside its own test-double gate). The future per-caller predicate
+    # will do its own Houston capability lookup rather than consume one either. Flagged in
+    # review on PR #3569.
+    {{- if .Values.mcpServer.authCache.enabled }}
+    nginx.ingress.kubernetes.io/auth-cache-key: "$http_authorization"
+    nginx.ingress.kubernetes.io/auth-cache-duration: "200 {{ .Values.mcpServer.authCache.validSuccess }}, 401 403 {{ .Values.mcpServer.authCache.validFailure }}"
+    {{- end }}
+spec:
+  {{- if .Values.global.tlsSecret }}
+  tls:
+    - secretName: {{ .Values.global.tlsSecret }}
+      hosts:
+        - {{ template "mcpServer.url" . }}
+        {{- if .Values.global.controlPlaneHA.enabled }}
+        - {{ template "mcpServer.globalUrl" . }}
+        {{- end }}
+  {{- end }}
+  rules:
+    - host: {{ template "mcpServer.url" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "mcpServer.fullname" . }}
+                port:
+                  name: mcp-server-http
+    {{- if .Values.global.controlPlaneHA.enabled }}
+    - host: {{ template "mcpServer.globalUrl" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "mcpServer.fullname" . }}
+                port:
+                  name: mcp-server-http
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

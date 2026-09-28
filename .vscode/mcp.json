@@ -1,0 +1,21 @@
+{
+  "inputs": [],
+  "servers": {
+    "Linear": {
+      "args": [
+        "https://mcp.linear.app/mcp",
+        "mcp-remote"
+      ],
+      "command": "npx",
+      "type": "stdio"
+    },
+    "Notion": {
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp"
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    }
+  }
+}

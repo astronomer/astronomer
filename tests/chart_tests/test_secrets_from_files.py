@@ -130,8 +130,10 @@ class TestSecretsFromFilesEnabled:
     def test_every_workload_opts_in_and_mounts_its_secrets(self):
         docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
 
+        # API, worker, two helm hooks, nine cronjobs, navigator and dp-link. The
+        # CP-HA-only houston-cp-refresh hook is covered by its own test below.
         workloads = list(houston_family_pod_specs(docs))
-        assert len(workloads) >= 16, f"expected the whole houston family, only rendered {len(workloads)}"
+        assert len(workloads) >= 15, f"expected the whole houston family, only rendered {len(workloads)}"
 
         for name, spec in workloads:
             volumes = {v["name"]: v for v in spec.get("volumes") or []}
@@ -244,7 +246,7 @@ class TestHoustonSecretsFromFiles:
             show_only=self.show_only,
         )
         containers = get_containers_by_name(docs[0], include_init_containers=True)
-        assert "DATABASE_URL" not in get_env_vars_dict(containers["wait-for-db"]["env"])
+        assert "DATABASE_URL" not in get_env_vars_dict(containers["houston-wait-for-db"]["env"])
 
     def test_deployments_connection_not_projected_when_set_inline(self, kube_version):
         """Don't mount a file for a secret the chart isn't using."""
@@ -392,7 +394,39 @@ def test_houston_toggle_override_precedence(global_enabled, component_enabled, e
 # ap-vector:0.53.0 image: the ES sink's Basic auth header decoded byte-for-byte
 # to the mounted file contents.
 
-VECTOR_SECRET_ENVS = {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "ES_USERNAME", "ES_PASSWORD"}
+# The chart allows exactly one sink per sidecar (houston.logging.loggingSidecar.validate),
+# so every case below runs once per credential-using sink rather than with both on.
+VECTOR_SINKS = {
+    "cloudwatch": {
+        "values": {"cloudwatch": {"enabled": True, "useIRSA": False, "region": "us-east-1"}},
+        "envs": {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"},
+        "items": [
+            {"key": "aws_access_key_id", "path": "aws_access_key_id"},
+            {"key": "aws_secret_access_key", "path": "aws_secret_access_key"},
+        ],
+        "env_auth": {"access_key_id": "${AWS_ACCESS_KEY_ID}"},
+        "file_auth": {
+            "access_key_id": "SECRET[cloudwatch.aws_access_key_id]",
+            "secret_access_key": "SECRET[cloudwatch.aws_secret_access_key]",
+        },
+    },
+    "elasticsearch": {
+        "values": {"elasticsearch": {"enabled": True, "endpoint": "https://es.example.com:9200"}},
+        "envs": {"ES_USERNAME", "ES_PASSWORD"},
+        "items": [
+            {"key": "username", "path": "username"},
+            {"key": "password", "path": "password"},
+        ],
+        "env_auth": {"password": "${ES_PASSWORD}"},
+        "file_auth": {
+            "strategy": "basic",
+            "user": "SECRET[elasticsearch.username]",
+            "password": "SECRET[elasticsearch.password]",
+        },
+    },
+}
+
+VECTOR_SECRET_ENVS = set().union(*(sink["envs"] for sink in VECTOR_SINKS.values()))
 
 VECTOR_TEMPLATES = [
     (
@@ -408,20 +442,20 @@ VECTOR_TEMPLATES = [
 ]
 
 
-def vector_values(enabled=None, **sidecar):
-    """Both credential-using sinks on, with an optional secretsFromFiles setting."""
-    sidecar_values = {
-        "enabled": True,
-        "cloudwatch": {"enabled": True, "useIRSA": False, "region": "us-east-1"},
-        "elasticsearch": {"enabled": True, "endpoint": "https://es.example.com:9200"},
-        **sidecar,
-    }
+def sidecar_values(sidecar, enabled=None):
+    """Chart values for an enabled audit sidecar, with an optional secretsFromFiles setting."""
+    sidecar = {"enabled": True, **sidecar}
     if enabled is not None:
-        sidecar_values["secretsFromFiles"] = {"enabled": enabled}
+        sidecar["secretsFromFiles"] = {"enabled": enabled}
     return {
         "global": {"plane": {"mode": "unified"}},
-        "astronomer": {"houston": {"logging": {"loggingSidecar": sidecar_values}}},
+        "astronomer": {"houston": {"logging": {"loggingSidecar": sidecar}}},
     }
+
+
+def vector_values(sink, enabled=None):
+    """One credential-using sink on, with an optional secretsFromFiles setting."""
+    return sidecar_values(VECTOR_SINKS[sink]["values"], enabled)
 
 
 def vector_config(docs):
@@ -430,67 +464,51 @@ def vector_config(docs):
     return yaml.safe_load(configmap["data"]["vector.yaml"])
 
 
+@pytest.mark.parametrize("sink", list(VECTOR_SINKS))
 @pytest.mark.parametrize("label,deployment,configmap", VECTOR_TEMPLATES, ids=[t[0] for t in VECTOR_TEMPLATES])
 class TestVectorSidecarSecretsFromFiles:
-    def test_defaults_keep_env_vars(self, label, deployment, configmap):
+    def test_defaults_keep_env_vars(self, label, deployment, configmap, sink):
         docs = render_chart(
             kube_version=newest_supported_kube_version,
-            values=vector_values(),
+            values=vector_values(sink),
             show_only=[deployment, configmap],
         )
         vector = get_containers_by_name(next(d for d in docs if d["kind"] == "Deployment"))["vector"]
         env_vars = get_env_vars_dict(vector["env"])
-        assert VECTOR_SECRET_ENVS <= set(env_vars)
+        assert VECTOR_SINKS[sink]["envs"] <= set(env_vars)
 
         config = vector_config(docs)
         assert "secret" not in config
-        assert config["sinks"]["cloudwatch"]["auth"]["access_key_id"] == "${AWS_ACCESS_KEY_ID}"
-        assert config["sinks"]["elasticsearch"]["auth"]["password"] == "${ES_PASSWORD}"
+        assert VECTOR_SINKS[sink]["env_auth"].items() <= config["sinks"][sink]["auth"].items()
 
-    def test_enabled_replaces_env_with_secret_placeholders(self, label, deployment, configmap):
+    def test_enabled_replaces_env_with_secret_placeholders(self, label, deployment, configmap, sink):
         docs = render_chart(
             kube_version=newest_supported_kube_version,
-            values=vector_values(enabled=True),
+            values=vector_values(sink, enabled=True),
             show_only=[deployment, configmap],
         )
         doc = next(d for d in docs if d["kind"] == "Deployment")
         spec = doc["spec"]["template"]["spec"]
         vector = get_containers_by_name(doc)["vector"]
+        volume = f"vector-{sink}-secret"
 
         # No credential ever reaches the pod spec.
         assert not VECTOR_SECRET_ENVS & set(get_env_vars_dict(vector["env"]))
 
         volumes = {v["name"]: v for v in spec["volumes"]}
-        assert volumes["vector-cloudwatch-secret"]["secret"]["items"] == [
-            {"key": "aws_access_key_id", "path": "aws_access_key_id"},
-            {"key": "aws_secret_access_key", "path": "aws_secret_access_key"},
-        ]
-        assert volumes["vector-elasticsearch-secret"]["secret"]["items"] == [
-            {"key": "username", "path": "username"},
-            {"key": "password", "path": "password"},
-        ]
+        assert volumes[volume]["secret"]["items"] == VECTOR_SINKS[sink]["items"]
 
         mounts = {m["name"]: m for m in vector["volumeMounts"]}
-        assert mounts["vector-cloudwatch-secret"]["mountPath"] == "/etc/vector/secrets/cloudwatch"
-        assert mounts["vector-elasticsearch-secret"]["mountPath"] == "/etc/vector/secrets/elasticsearch"
-        assert all(mounts[n]["readOnly"] for n in ("vector-cloudwatch-secret", "vector-elasticsearch-secret"))
+        assert mounts[volume]["mountPath"] == f"/etc/vector/secrets/{sink}"
+        assert mounts[volume]["readOnly"]
 
         config = vector_config(docs)
-        assert config["sinks"]["cloudwatch"]["auth"] == {
-            "access_key_id": "SECRET[cloudwatch.aws_access_key_id]",
-            "secret_access_key": "SECRET[cloudwatch.aws_secret_access_key]",
-        }
-        assert config["sinks"]["elasticsearch"]["auth"] == {
-            "strategy": "basic",
-            "user": "SECRET[elasticsearch.username]",
-            "password": "SECRET[elasticsearch.password]",
-        }
+        assert config["sinks"][sink]["auth"] == VECTOR_SINKS[sink]["file_auth"]
 
-        # Each backend's directory must match the mountPath it reads from.
-        assert config["secret"]["cloudwatch"]["path"] == mounts["vector-cloudwatch-secret"]["mountPath"]
-        assert config["secret"]["elasticsearch"]["path"] == mounts["vector-elasticsearch-secret"]["mountPath"]
+        # The backend's directory must match the mountPath it reads from.
+        assert config["secret"][sink]["path"] == mounts[volume]["mountPath"]
 
-    def test_backend_names_are_word_characters_only(self, label, deployment, configmap):
+    def test_backend_names_are_word_characters_only(self, label, deployment, configmap, sink):
         """Vector's placeholder regex is SECRET\\[([[:word:]]+)\\....\\].
 
         A hyphen in a backend name does not match, so the placeholder is left in
@@ -499,13 +517,13 @@ class TestVectorSidecarSecretsFromFiles:
         """
         docs = render_chart(
             kube_version=newest_supported_kube_version,
-            values=vector_values(enabled=True),
+            values=vector_values(sink, enabled=True),
             show_only=[deployment, configmap],
         )
         for backend in vector_config(docs)["secret"]:
             assert re.fullmatch(r"\w+", backend), f"backend {backend!r} will not be substituted"
 
-    def test_every_backend_removes_trailing_whitespace(self, label, deployment, configmap):
+    def test_every_backend_removes_trailing_whitespace(self, label, deployment, configmap, sink):
         """Without this, the newline a Secret mount adds becomes a trailing space.
 
         The value sits in a double-quoted YAML scalar, so the newline is folded to
@@ -513,61 +531,53 @@ class TestVectorSidecarSecretsFromFiles:
         """
         docs = render_chart(
             kube_version=newest_supported_kube_version,
-            values=vector_values(enabled=True),
+            values=vector_values(sink, enabled=True),
             show_only=[deployment, configmap],
         )
         for name, backend in vector_config(docs)["secret"].items():
             assert backend["type"] == "directory"
             assert backend["remove_trailing_whitespace"] is True, f"{name} would keep the trailing newline"
 
-    def test_config_change_rolls_the_pod(self, label, deployment, configmap):
+    def test_config_change_rolls_the_pod(self, label, deployment, configmap, sink):
         docs = render_chart(
             kube_version=newest_supported_kube_version,
-            values=vector_values(enabled=True),
+            values=vector_values(sink, enabled=True),
             show_only=[deployment],
         )
         annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
         assert "checksum/vector-config" in annotations
 
-    @pytest.mark.parametrize(
-        "sidecar_override,expected_backends",
-        [
-            ({"cloudwatch": {"enabled": True, "useIRSA": True, "region": "us-east-1"}}, ["elasticsearch"]),
-            ({"elasticsearch": {"enabled": True, "endpoint": "https://es:9200", "auth": {"strategy": "none"}}}, ["cloudwatch"]),
-            (
-                {
-                    "cloudwatch": {"enabled": False},
-                    "elasticsearch": {"enabled": False},
-                    "gcpCloudLogging": {"enabled": True, "projectId": "p"},
-                },
-                None,
-            ),
-        ],
-        ids=["cloudwatch_uses_irsa", "es_auth_not_basic", "only_gcp"],
-    )
-    def test_only_mounts_credentials_a_sink_actually_needs(self, label, deployment, configmap, sidecar_override, expected_backends):
-        docs = render_chart(
-            kube_version=newest_supported_kube_version,
-            values=vector_values(enabled=True, **sidecar_override),
-            show_only=[deployment, configmap],
-        )
-        config = vector_config(docs)
-        spec = next(d for d in docs if d["kind"] == "Deployment")["spec"]["template"]["spec"]
-        volumes = {v["name"] for v in spec["volumes"]}
 
-        if expected_backends is None:
-            assert "secret" not in config
-            assert not {"vector-cloudwatch-secret", "vector-elasticsearch-secret"} & volumes
-        else:
-            assert sorted(config["secret"]) == sorted(expected_backends)
-            for backend in ("cloudwatch", "elasticsearch"):
-                volume = f"vector-{backend}-secret"
-                assert (volume in volumes) is (backend in expected_backends)
+@pytest.mark.parametrize("label,deployment,configmap", VECTOR_TEMPLATES, ids=[t[0] for t in VECTOR_TEMPLATES])
+@pytest.mark.parametrize(
+    "sidecar",
+    [
+        {"cloudwatch": {"enabled": True, "useIRSA": True, "region": "us-east-1"}},
+        {"elasticsearch": {"enabled": True, "endpoint": "https://es:9200", "auth": {"strategy": "none"}}},
+        {
+            "gcpCloudLogging": {
+                "enabled": True,
+                "projectId": "p",
+                "resource": {"location": "us-east4", "clusterName": "c"},
+            }
+        },
+    ],
+    ids=["cloudwatch_uses_irsa", "es_auth_not_basic", "only_gcp"],
+)
+def test_no_credentials_mounted_for_a_sink_that_needs_none(label, deployment, configmap, sidecar):
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=sidecar_values(sidecar, enabled=True),
+        show_only=[deployment, configmap],
+    )
+    spec = next(d for d in docs if d["kind"] == "Deployment")["spec"]["template"]["spec"]
+    assert "secret" not in vector_config(docs)
+    assert not {"vector-cloudwatch-secret", "vector-elasticsearch-secret"} & {v["name"] for v in spec["volumes"]}
 
 
 def test_vector_toggle_is_independent_of_houston_toggle():
     """The sidecar uses Vector's native mechanism, not the houston loader."""
-    values = vector_values(enabled=False)
+    values = vector_values("cloudwatch", enabled=False)
     values["astronomer"]["houston"]["secretsFromFiles"] = {"enabled": True}
     docs = render_chart(
         kube_version=newest_supported_kube_version,
@@ -582,7 +592,7 @@ def test_vector_toggle_is_independent_of_houston_toggle():
 
     # houston moved to files, vector did not.
     assert get_env_vars_dict(containers["houston"]["env"])["HOUSTON_SECRETS_FROM_FILES"] == "true"
-    assert VECTOR_SECRET_ENVS <= set(get_env_vars_dict(containers["vector"]["env"]))
+    assert VECTOR_SINKS["cloudwatch"]["envs"] <= set(get_env_vars_dict(containers["vector"]["env"]))
     assert "secret" not in vector_config(docs)
 
 
@@ -1241,7 +1251,7 @@ class TestSecretFilePermissions:
 # cannot grow silently, because the next container added in this shape might not
 # be shell-only, and that is a decision rather than an accident.
 CONTAINERS_EXEMPT_FROM_FILE_PATH_MOUNTS = {
-    ("release-name-houston", "wait-for-db"),
+    ("release-name-houston", "houston-wait-for-db"),
     ("release-name-houston-worker", "wait-for-db"),
     ("release-name-houston-db-migrations", "wait-for-db"),
     ("release-name-houston-upgrade-deployments", "wait-for-db"),
@@ -1293,6 +1303,50 @@ def test_every_file_env_var_points_inside_a_mount_or_is_a_known_shell_container(
         )
 
     _assert_file_env_vars_have_a_projected_file(docs)
+
+
+def test_cp_refresh_hook_mounts_what_it_advertises():
+    """houston-cp-refresh only renders with controlPlaneHA on, so the sweep above never sees it.
+
+    It includes houston_environment, so with the feature on it inherits the gate flag and
+    every <VAR>_FILE path. Its main container runs `yarn refresh-cp-chart-version`, which
+    imports the loader, and the loader fails closed on a path it cannot read -- so without
+    the mount this post-upgrade hook fails, and with it the whole helm upgrade.
+    """
+    values = with_secrets_from_files()
+    values["global"] = {
+        **values["global"],
+        "plane": {"mode": "control"},
+        "controlPlaneHA": {
+            "enabled": True,
+            "globalBaseDomain": "astro.example.com",
+            "cpId": "00000000-0000-0000-0000-000000000001",
+        },
+    }
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/astronomer/templates/houston/helm-hooks/houston-cp-refresh-job.yaml"],
+    )
+    assert len(docs) == 1
+    spec = docs[0]["spec"]["template"]["spec"]
+    containers = get_containers_by_name(docs[0], include_init_containers=True)
+
+    main = containers["refresh-cp-chart-version-job"]
+    assert get_env_vars_dict(main["env"])["HOUSTON_SECRETS_FROM_FILES"] == "true"
+    mounts = [m["mountPath"].rstrip("/") for m in main["volumeMounts"]]
+    for var, path in get_env_vars_dict(main["env"]).items():
+        if var.endswith("_FILE") and path:
+            assert any(path == m or path.startswith(m + "/") for m in mounts), f"{var}={path} has no mount behind it"
+    assert "houston-secrets" in {v["name"] for v in spec["volumes"]}
+
+    # 0440 needs an fsGroup, and the file-mode consumer must wait out the sentinel.
+    assert spec["securityContext"]["fsGroup"] == 1000
+    init_names = [c["name"] for c in spec["initContainers"]]
+    assert init_names.index("wait-for-secret") > init_names.index("houston-bootstrapper")
+
+    # Its wait-for-db also advertises unmounted paths; that is only safe while it stays shell-only.
+    assert containers["wait-for-db"]["command"][0] == SHELL_ENTRYPOINT
 
 
 def _secret_volume_filenames(volume):

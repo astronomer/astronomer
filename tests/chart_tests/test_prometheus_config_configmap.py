@@ -1,3 +1,5 @@
+import re
+
 import jmespath
 import pytest
 import yaml
@@ -87,7 +89,7 @@ class TestPrometheusConfigConfigmap:
         # These assertions only work because we know that namespaces do not show up in our configured regexes.
         assert "bar-ns" not in all_scrape_config_regexes
         assert any("foo-name-houston" in str(regex) for regex in all_scrape_config_regexes)
-        assert any("foo-name-nginx" in str(regex) for regex in all_scrape_config_regexes)
+        assert any("foo-name-[cd]p-nginx" in str(regex) for regex in all_scrape_config_regexes)
         assert any("foo-name-postgresql-exporter" in str(regex) for regex in all_scrape_config_regexes)
 
     def test_prometheus_config_configmap_external_labels(self, kube_version):
@@ -352,3 +354,130 @@ class TestPrometheusConfigConfigmap:
         assert len(airflow_operator_scrape_config) == 0
         airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
         assert len(airflow_scrape_config) == 1
+
+    def test_federated_dataplanes_default_scrape_settings(self, kube_version):
+        """Test that federated-dataplanes uses default scrape_interval and scrape_timeout."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        federated = [s for s in scrape_configs if s["job_name"] == "federated-dataplanes"]
+
+        assert len(federated) == 1
+        assert federated[0]["scrape_interval"] == "15s"
+        assert federated[0]["scrape_timeout"] == "10s"
+
+    def test_federated_dataplanes_custom_scrape_settings(self, kube_version):
+        """Test that federated-dataplanes scrape_interval and scrape_timeout are configurable."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={
+                "prometheus": {
+                    "config": {
+                        "scrape_configs": {
+                            "federated_dataplanes": {
+                                "scrape_interval": "30s",
+                                "scrape_timeout": "5s",
+                            },
+                        },
+                    },
+                },
+            },
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        federated = [s for s in scrape_configs if s["job_name"] == "federated-dataplanes"]
+
+        assert len(federated) == 1
+        assert federated[0]["scrape_interval"] == "30s"
+        assert federated[0]["scrape_timeout"] == "5s"
+
+    def test_federated_dataplanes_match_includes_operator_job(self, kube_version):
+        """Operator-mode deployments scrape under job 'airflow-operator' on the data plane, while
+        legacy Helm deployments use job 'airflow'. The federation selector is an anchored
+        alternation, so 'airflow' matches only the legacy job — the operator job must be listed
+        explicitly or its per-deployment metrics never federate to the control-plane Prometheus the
+        Houston metrics UI queries. Regression guard for PLX-504 (operator-inheritance metrics)."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        federated = [s for s in scrape_configs if s["job_name"] == "federated-dataplanes"]
+        assert len(federated) == 1
+
+        match_selectors = federated[0]["params"]["match[]"]
+        job_regex = re.search(r'job=~"([^"]+)"', match_selectors[0]).group(1)
+        alternatives = job_regex.split("|")
+        # Both the operator-mode job and the legacy Helm job must be federated, since both carry
+        # per-deployment Airflow metrics the UI renders.
+        assert "airflow-operator" in alternatives, alternatives
+        assert "airflow" in alternatives, alternatives
+
+    def test_prometheus_laminar_scrape_config(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"laminar": {"enabled": True}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        laminar_hypervisor_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-hypervisor"]
+        laminar_api_server_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-api-server"]
+        assert len(laminar_hypervisor_scrape_config) == 1
+        assert len(laminar_api_server_scrape_config) == 1
+
+    def test_prometheus_laminar_scrape_config_disabled(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"laminar": {"enabled": False}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        laminar_hypervisor_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-hypervisor"]
+        laminar_api_server_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-api-server"]
+        assert not laminar_hypervisor_scrape_config
+        assert not laminar_api_server_scrape_config
+
+    @pytest.mark.parametrize(
+        ("mode", "scrape_targets", "expected_count"),
+        [
+            ("control", "nats_server", 1),
+            ("unified", "nats_server", 1),
+            ("data", "nats_server", 0),
+        ],
+    )
+    def test_prometheus_nats_scrape_config(self, kube_version, mode, scrape_targets, expected_count):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"plane": {"mode": mode}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        nats_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == scrape_targets]
+        assert len(nats_scrape_config) == expected_count
+
+    @pytest.mark.parametrize(
+        ("mode", "scrape_targets", "expected_count"),
+        [
+            ("control", "nginx", 1),
+            ("unified", "nginx", 1),
+            ("data", "nginx", 1),
+        ],
+    )
+    def test_prometheus_nginx_scrape_config(self, kube_version, mode, scrape_targets, expected_count):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"plane": {"mode": mode}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        nginx_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == scrape_targets]
+        assert len(nginx_scrape_config) == expected_count

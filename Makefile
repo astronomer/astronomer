@@ -17,22 +17,19 @@ venv: .venv  ## Setup venv required for testing
 	uv sync
 
 .PHONY: test-functional-control
-test-functional-control: export TEST_SCENARIO=control
 test-functional-control: venv ## Run functional tests on the control installation scenario
-	bin/reset-local-dev
-	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+	bin/reset-local-dev --topology=control
+	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/control
 
 .PHONY: test-functional-data
-test-functional-data: export TEST_SCENARIO=data
 test-functional-data: venv ## Run functional tests on the data installation scenario
-	bin/reset-local-dev
-	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+	bin/reset-local-dev --topology=data
+	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/data
 
 .PHONY: test-functional-unified
-test-functional-unified: export TEST_SCENARIO=unified
 test-functional-unified: venv ## Run functional tests on the unified installation scenario
-	bin/reset-local-dev
-	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
+	bin/reset-local-dev --topology=unified
+	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/unified
 
 # unittest-charts is deprecated
 .PHONY: unittest-charts

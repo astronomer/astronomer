@@ -1,6 +1,7 @@
 #############################
 ## Elasticsearch ConfigMap ##
 #############################
+{{- if eq (include "logging.enabled" .) "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -61,3 +62,4 @@ data:
     # We force the index pattern at the NGINX layer, and this prevents anybody
     # from overriding it.
     # rest.action.multi.allow_explicit_index: false
+{{- end }}

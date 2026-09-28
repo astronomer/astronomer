@@ -1,0 +1,39 @@
+---
+###########################################
+## external-secrets leader election Role ##
+###########################################
+{{- if and (include "external-secrets.enabled" .) .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "external-secrets.fullname" . }}-leaderelection
+  namespace: {{ template "external-secrets.namespace" . }}
+  labels:
+    {{- include "external-secrets.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+    - ""
+    resources:
+    - "configmaps"
+    resourceNames:
+    - "external-secrets-controller"
+    verbs:
+    - "get"
+    - "update"
+    - "patch"
+  - apiGroups:
+    - ""
+    resources:
+    - "configmaps"
+    verbs:
+    - "create"
+  - apiGroups:
+    - "coordination.k8s.io"
+    resources:
+    - "leases"
+    verbs:
+    - "get"
+    - "create"
+    - "update"
+    - "patch"
+{{- end }}

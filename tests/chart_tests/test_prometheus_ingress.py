@@ -44,3 +44,21 @@ class TestIngress:
             assert "prometheus-data" in [
                 port[0] for port in jmespath.search("spec.rules[*].http.paths[*].backend.servicePort", doc)
             ]
+
+    @pytest.mark.parametrize(
+        ("mode", "domain_prefix", "expected_count"),
+        [
+            ("control", "", 1),
+            ("unified", "", 1),
+            ("data", "dp01", 1),
+            ("data", "", 0),  # data plane without a domainPrefix: no prometheus ingress
+        ],
+    )
+    def test_prometheus_ingress_data_plane_domain_prefix_gate(self, kube_version, mode, domain_prefix, expected_count):
+        """Prometheus ingress is skipped in data mode unless a domainPrefix is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/prometheus/templates/ingress.yaml"],
+            values={"global": {"plane": {"mode": mode, "domainPrefix": domain_prefix}}},
+        )
+        assert len(docs) == expected_count

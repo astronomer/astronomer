@@ -26,7 +26,13 @@ class TestPGBouncerDeployment:
 
         c_by_name = get_containers_by_name(deployment)
         assert len(c_by_name) == 1
-        assert c_by_name["pgbouncer"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert c_by_name["pgbouncer"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
         assert c_by_name["pgbouncer"]["resources"] == {
             "limits": {"cpu": "250m", "memory": "256Mi"},
             "requests": {"cpu": "250m", "memory": "256Mi"},
@@ -53,8 +59,11 @@ class TestPGBouncerDeployment:
         c_by_name = get_containers_by_name(docs[0])
         assert len(c_by_name) == 1
         assert c_by_name["pgbouncer"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
+            "runAsUser": 1000,
             "snoopy": "dog",
             "woodstock": "bird",
         }
@@ -334,3 +343,19 @@ class TestPGBouncerNetworkPolicy:
             doc for doc in docs if doc["kind"] == "NetworkPolicy" and doc["metadata"]["name"] == "release-name-pgbouncer-policy"
         ]
         assert len(pgbouncer_policies) == 0
+
+    def test_pgbouncer_pdb_overrides(self, kube_version):
+        """Test that the pgbouncer PodDisruptionBudget Not created when disabled globally with  global.podDisruptionBudget set to false."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "pgbouncer": {"enabled": True},
+                    "podDisruptionBudgets": {
+                        "enabled": False,
+                    },
+                }
+            },
+            show_only=["charts/pgbouncer/templates/pgbouncer-poddisruptionbudget.yaml"],
+        )
+        assert len(docs) == 0

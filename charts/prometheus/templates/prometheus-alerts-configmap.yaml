@@ -34,7 +34,7 @@ data:
         {{- end }}
         {{- if .Values.defaultAlerts.airflow.enabled }}
         - alert: AirflowDeploymentUnhealthy
-          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|api-server|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
+          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|api-server|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)", container!~"houston-.*"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)", container!~"houston-.*"}) < 0
           for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
           labels:
             tier: airflow
@@ -202,30 +202,30 @@ data:
 
       - name: k8s-recording.rules
         rules:
-        {{- if .Values.config.cadvisor.enabled }}
+        {{- if .Values.global.cadvisor.enabled }}
         - expr: |
             sum(rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])) by (namespace)
           record: namespace:container_cpu_usage_seconds_total:sum_rate
         - expr: |
             sum by (cluster, namespace, pod, container) (
               rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])
-            ) * on (cluster, namespace, pod) group_left(node) max by(cluster, namespace, pod, node) (kube_pod_info)
+            ) * on (cluster, namespace, pod) group_left(node) max by(cluster, namespace, pod, node) (kube_pod_info{node!=""})
           record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
         - expr: |
             container_memory_working_set_bytes{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
+            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info{node!=""})
           record: node_namespace_pod_container:container_memory_working_set_bytes
         - expr: |
             container_memory_rss{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
+            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info{node!=""})
           record: node_namespace_pod_container:container_memory_rss
         - expr: |
             container_memory_cache{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
+            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info{node!=""})
           record: node_namespace_pod_container:container_memory_cache
         - expr: |
             container_memory_swap{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
+            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info{node!=""})
           record: node_namespace_pod_container:container_memory_swap
         - expr: |
             sum(container_memory_usage_bytes{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}) by (namespace)
@@ -619,7 +619,7 @@ data:
             runbook_url:
             summary: '{{`{{ $labels.pod }}`}} Pod is CrashLooping'
           expr: |
-            rate(kube_pod_container_status_restarts_total{container=~"astro-ui|commander|grafana|houston|prometheus|registry|sqlproxy"}[15m]) * 60 * 5 > 0
+            rate(kube_pod_container_status_restarts_total{container=~"astro-ui|commander|grafana|houston|houston-worker|prometheus|registry|sqlproxy"}[15m]) * 60 * 5 > 0
           for: 15m
           labels:
             severity: critical

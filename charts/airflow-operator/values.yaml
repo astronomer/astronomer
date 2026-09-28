@@ -1,40 +1,82 @@
 images:
   manager:
     repository: quay.io/astronomer/airflow-operator-controller
-    tag: 1.5.2
+    tag: 1.6.1
     pullPolicy: IfNotPresent
-
+# Whether the chart should create the Airflow Operator CRDs. Set to false if the CRDs are managed
+# out-of-band (e.g. installed separately by a cluster admin or via GitOps).
 crd:
-  create: false
-certManager:
-  enabled: false
+  create: true
 
+certManager:
+  # When true, cert-manager provisions the webhook server's TLS
+  # certificate. Set to false only if you supply your own certificates via
+  # webhooks.useCustomTlsCerts (then customCertsSecretName and caBundle are
+  # required).
+  enabled: true
+
+
+# Restrict the Airflow Operator to only send network requests to Kubernetes API, and read available astro-runtime versions from a local file instead of retrieving it dynamically online.
 airgapped: false
+
+# The distribution the Operator is running in, surfaced to the manager as the AIRFLOW_OPERATOR_ENVIRONMENT
+# env var. Valid values: "standalone", "apc", "astro", "local".
+environment: apc
 
 runtimeVersions:
   configMapName: ""
   versionsJson: ""
 
+# When true, the operator will accept Airflow CRs that reference deprecated
+# astro-runtime versions (sets the ALLOW_DEPRECATED_RUNTIME_VERSIONS env var).
+allowDeprecatedRuntimeVersions: true
+
 securityContext:
-  runAsNonRoot: true
   allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 65532
+
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 terminationGracePeriodSeconds: 10
 webhooks:
 
   # Enables the webhook service for mutating and validating configurations.
   enabled: true
+  # Set to true to use your own TLS certificates for the webhooks instead of
+  # cert-manager-provisioned ones. When true, both customCertsSecretName and
+  # caBundle below are required — the chart fails to render otherwise. Requires
+  # certManager.enabled=false is acceptable, but at least one of certManager or
+  # useCustomTlsCerts must be enabled.
   useCustomTlsCerts: false
-  certSecretName: "webhook-server-cert"
-  customCertsSecretName: "webhooks-tls-certs"
-  # for each of the following properties, the full certificate/key/CABundle should be provided in the following way:
+  # Name of a pre-created Secret (in the release namespace) that holds the
+  # webhook server's TLS certificate and key (tls.crt / tls.key). Required when
+  # useCustomTlsCerts is true.
+  customCertsSecretName: ""
+  # PEM-encoded CA bundle used to validate the webhook server certificate.
+  # Injected into the webhook configurations' clientConfig when
+  # useCustomTlsCerts is true. Provide the full certificate as follows:
   # caBundle: |
   #  -----BEGIN CERTIFICATE-----
   #  .......................
   #  -----END CERTIFICATE-----
   caBundle: ""
-  tlsCert: ""
-  tlsKey: ""
+
+serviceAccount:
+  create: true
+  # Override the name of the controller-manager ServiceAccount.
+  # Leave empty to use the default "aocm".
+  name: ""
+  # Whether the ServiceAccount's API token is automatically mounted into the pod.
+  automountServiceAccountToken: true
+  # Extra annotations to add to the ServiceAccount (e.g. for cloud IAM role binding).
+  annotations: {}
+
 manager:
   replicas: 1
   metrics:
@@ -47,23 +89,28 @@ manager:
       cpu: 500m
       memory: 250Mi
   env: []
-
-serviceAccount:
-  create: true
-  annotations: {}
-  name: ""
-livenessProbe: {}
-  # httpGet:
-  #     path: /healthz
-  #     port: .Values.port.managerPort
-  # initialDelaySeconds: 15
-  # periodSeconds: 20
-readinessProbe: {}
-  # httpGet:
-  #     path: /readyz
-  #     port: .Values.port.managerPort
-  # initialDelaySeconds: 5
-  # periodSeconds: 10
+  livenessProbe: {}
+    # httpGet:
+    #     path: /healthz
+    #     port: .Values.port.managerPort
+    # initialDelaySeconds: 15
+    # periodSeconds: 20
+  readinessProbe: {}
+    # httpGet:
+    #     path: /readyz
+    #     port: .Values.port.managerPort
+    # initialDelaySeconds: 5
+    # periodSeconds: 10
+  startupProbe: {}
+    # httpGet:
+    #     path: /healthz
+    #     port: .Values.port.managerPort
+    # failureThreshold: 30
+    # periodSeconds: 10
+  nodeSelector: {}
+  # affinity: node/pod (anti-)affinity rules, e.g. spread replicas across nodes.
+  affinity: {}
+  tolerations: []
 
 ports:
   managerPort: 8081
@@ -73,7 +120,4 @@ ports:
   webhookServicePort: 443
 
 podAnnotations: {}
-
-nodeSelector: {}
-affinity: {}
-tolerations: []
+extraArgs: {}

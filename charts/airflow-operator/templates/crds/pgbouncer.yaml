@@ -1,8 +1,10 @@
-{{ if .Values.crd.create }}
+{{- if (include "operator.enabled" .) }}
+{{- if .Values.crd.create }}
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    helm.sh/resource-policy: keep
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
   name: pgbouncers.airflow.apache.org
 spec:
@@ -193,6 +195,7 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+                x-kubernetes-map-type: atomic
               pgbouncerImage:
                 type: string
               pgbouncerImagePullPolicy:
@@ -202,8 +205,20 @@ spec:
                   type: string
                 type: object
               podTemplateSpec:
+                properties:
+                  spec:
+                    properties:
+                      nodeSelector:
+                        additionalProperties:
+                          type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              preStopTerminationSleepDuration:
+                type: integer
               replicas:
                 default: 1
                 format: int32
@@ -249,6 +264,9 @@ spec:
                       x-kubernetes-int-or-string: true
                     type: object
                 type: object
+              restrictedProfileEnabled:
+                default: false
+                type: boolean
               resultBackendPoolSize:
                 default: 5
                 format: int32
@@ -318,7 +336,6 @@ spec:
                 - verify-full
                 type: string
               terminationGracePeriodSeconds:
-                default: 120
                 format: int64
                 type: integer
               tolerations:
@@ -387,4 +404,5 @@ spec:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
       status: {}
+{{- end }}
 {{- end }}

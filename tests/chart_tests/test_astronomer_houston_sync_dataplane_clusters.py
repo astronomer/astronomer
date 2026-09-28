@@ -41,7 +41,13 @@ class TestAstronomerHoustonSyncDataplaneClustersCronJobs:
         assert spec["metadata"]["labels"]["component"] == "houston-sync-dataplane-clusters"
         assert spec["metadata"]["labels"]["app"] == "houston-sync-dataplane-clusters"
         assert doc["spec"]["schedule"] == "0 * * * *"
-        assert spec["spec"]["containers"][0]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+        assert spec["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
         # Verify container args
         c_by_name = get_containers_by_name(doc)

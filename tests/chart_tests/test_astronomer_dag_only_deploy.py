@@ -89,8 +89,14 @@ class TestDagOnlyDeploy:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["deployMechanisms"]["dagOnlyDeployment"]["enabled"] is True
         assert prod["deployments"]["dagDeploy"]["enabled"] is True
-        assert "server" not in prod["deployments"]["dagDeploy"]
-        assert "client" not in prod["deployments"]["dagDeploy"]
+        # global.deployMechanisms.dagOnlyDeployment.resources now has a real default
+        # (PINF-969), so the server/client blocks it gates render by default too.
+        expected_resources = {
+            "limits": {"cpu": "200m", "memory": "384Mi"},
+            "requests": {"cpu": "200m", "memory": "384Mi"},
+        }
+        assert prod["deployments"]["dagDeploy"]["server"] == {"resources": expected_resources}
+        assert prod["deployments"]["dagDeploy"]["client"] == {"resources": expected_resources}
 
     def test_dagonlydeploy_config_enabled_with_private_registry(self, kube_version):
         """Test dagonlydeploy with private registry."""
@@ -271,8 +277,24 @@ class TestDagOnlyDeploy:
                 }
             },
             "securityContexts": {"pod": {"fsGroup": 50000}},
-            "server": {"readinessProbe": readiness_probe, "livenessProbe": liveness_probe},
-            "client": {"readinessProbe": readiness_probe, "livenessProbe": liveness_probe},
+            # global.deployMechanisms.dagOnlyDeployment.resources now has a real
+            # default (PINF-969), applied to both server and client.
+            "server": {
+                "readinessProbe": readiness_probe,
+                "livenessProbe": liveness_probe,
+                "resources": {
+                    "limits": {"cpu": "200m", "memory": "384Mi"},
+                    "requests": {"cpu": "200m", "memory": "384Mi"},
+                },
+            },
+            "client": {
+                "readinessProbe": readiness_probe,
+                "livenessProbe": liveness_probe,
+                "resources": {
+                    "limits": {"cpu": "200m", "memory": "384Mi"},
+                    "requests": {"cpu": "200m", "memory": "384Mi"},
+                },
+            },
         }
 
     def test_houston_configmap_with_dagonlydeployment_scheduling(self, kube_version, global_platform_node_pool_config):
@@ -311,9 +333,23 @@ class TestDagOnlyDeploy:
                 }
             },
             "securityContexts": {"pod": {"fsGroup": 50000}},
+            # global.deployMechanisms.dagOnlyDeployment.resources now has a real
+            # default (PINF-969) — it renders "server" here (matching the values
+            # already asserted) but also makes "client" render on its own, since
+            # the template gates "client" on this same shared resources value.
             "server": {
                 "nodeSelector": global_platform_node_pool_config["nodeSelector"],
                 "affinity": global_platform_node_pool_config["affinity"],
                 "tolerations": global_platform_node_pool_config["tolerations"],
+                "resources": {
+                    "limits": {"cpu": "200m", "memory": "384Mi"},
+                    "requests": {"cpu": "200m", "memory": "384Mi"},
+                },
+            },
+            "client": {
+                "resources": {
+                    "limits": {"cpu": "200m", "memory": "384Mi"},
+                    "requests": {"cpu": "200m", "memory": "384Mi"},
+                },
             },
         }

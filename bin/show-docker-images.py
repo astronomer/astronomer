@@ -22,7 +22,9 @@ HELM_RUNS = [
 
 def get_containers_from_spec(spec):
     """Return a list of images used in a kubernetes pod spec."""
-    return [container["image"] for container in spec.get("containers", []) + spec.get("initContainers", [])]
+    containers = spec.get("containers") or []
+    init_containers = spec.get("initContainers") or []
+    return [container["image"] for container in containers + init_containers]
 
 
 def print_results(items):
@@ -71,7 +73,7 @@ def job_template_spec_parser(doc, args):
 def get_images_from_values_yaml():
     """Load values.yaml and all the images defined in it."""
     GIT_ROOT = next(
-        iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+        iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]),
         None,
     )
     with open(GIT_ROOT / "values.yaml") as f:
@@ -96,6 +98,9 @@ def get_images_from_values_yaml():
     images.append(
         f"{values['global']['privateCaCertsAddToHost']['certCopier']['repository']}:{values['global']['privateCaCertsAddToHost']['certCopier']['tag']}"
     )
+    images.append(
+        f"{values['global']['certgenerator']['images']['repository']}:{values['global']['certgenerator']['images']['tag']}"
+    )
 
     return images
 
@@ -109,7 +114,7 @@ def get_images_from_houston_configmap(doc, args):
     auth_sidecar_tag = deployments["authSideCar"]["tag"]
     if auth_sidecar_repository and auth_sidecar_tag:
         images.append(f"{auth_sidecar_repository}:{auth_sidecar_tag}")
-    if logging_sidecar_image := deployments.get("logging", {}).get("loggingSidecar", {}).get("image"):
+    if logging_sidecar_image := (deployments.get("logging") or {}).get("loggingSidecar", {}).get("image"):
         images.append(logging_sidecar_image)
     dag_server_repository = deployments.get("dagDeploy", {}).get("images", {}).get("dagServer", {}).get("repository")
     dag_server_tag = deployments.get("dagDeploy", {}).get("images", {}).get("dagServer", {}).get("tag")
@@ -130,7 +135,7 @@ def get_images_from_houston_configmap(doc, args):
 def helm_template(args, label, files):
     """Run helm template for the given value files and return the parsed yaml."""
     GIT_ROOT = next(
-        iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+        iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]),
         None,
     )
 

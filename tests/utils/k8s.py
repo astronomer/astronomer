@@ -48,3 +48,28 @@ def get_pod_by_label_selector(namespace, label_selector, kubeconfig) -> str:
     pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
     assert len(pods) > 0, f"Expected to find at least one pod with labels '{label_selector}'"
     return pods[0].metadata.name
+
+
+def find_psa_rejection_events(k8s_core_v1_client) -> list[str]:
+    """Return one line per Pod Security Admission rejection found anywhere in the cluster.
+
+    A pod PSA rejects is never created -- it never becomes an unhealthy Pod object, only
+    a "FailedCreate" Warning Event on whatever tried to create it (a ReplicaSet for a
+    Deployment, or the object itself for a bare Job/Helm hook, which has no intermediate
+    controller). Readiness checks that only look at Deployment/StatefulSet
+    readyReplicas -- e.g. wait_for_release_ready -- can't see this for anything that
+    isn't itself a Deployment or StatefulSet: a one-shot Job (createUserJob,
+    migrateDatabaseJob) or a Helm hook could be silently rejected by a PSS-Restricted
+    namespace without ever blocking, or even appearing in, a release's own readiness.
+
+    Cluster-wide rather than scoped to specific namespaces: each functional-test scenario
+    gets its own dedicated kind cluster for the CircleCI job, so there's no other
+    scenario's events to accidentally pick up, and this avoids having to know in advance
+    every namespace a scenario touches (including one Commander only creates at runtime).
+    """
+    events = k8s_core_v1_client.list_event_for_all_namespaces().items
+    return [
+        f"{event.type} {event.reason}: {event.involved_object.namespace}/{event.involved_object.name}: {event.message}"
+        for event in events
+        if event.reason == "FailedCreate" and "violates PodSecurity" in (event.message or "")
+    ]

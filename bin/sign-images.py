@@ -6,6 +6,7 @@ Script to sign all container images in the Astronomer release JSON using cosign.
 import argparse
 import base64
 import getpass
+import hashlib
 import json
 import os
 import subprocess
@@ -105,19 +106,42 @@ def main():
         if not password:
             password = getpass.getpass("Enter password for cosign key: ")
 
+        # Derive the public key straight from the private key actually being used to sign
+        # (rather than just echoing the separately-stored COSIGN_PUBLIC_KEY secret), so CI
+        # history shows proof of which key signed a given release, and any future mismatch
+        # between the two secrets or key rotation is visible in the logs. Public key, so
+        # safe to log.
+        derive_env = os.environ.copy()
+        derive_env["COSIGN_PASSWORD"] = password
+        derived_public_key = subprocess.run(
+            ["cosign", "public-key", "--key", private_key_path],
+            env=derive_env,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        print(
+            f"Public key for the private key used in this signing run (sha256 fingerprint: {hashlib.sha256(derived_public_key.encode()).hexdigest()}):"
+        )
+        print(derived_public_key)
+
         version = args.version
         if not version:
-            version = os.environ.get("IMAGE_TAG")
-            if not version:
-                # If tag starts with 'v', remove it
-                if os.environ.get("NEXT_TAG") and os.environ.get("NEXT_TAG").startswith("v"):
-                    version = os.environ.get("NEXT_TAG")[1:]
-                else:
-                    version = os.environ.get("NEXT_TAG") or os.environ.get("IMG_TAG")
-
-        if not version:
-            print("Error: No version specified. Use --version or set IMAGE_TAG/NEXT_TAG/IMG_TAG environment variable.")
-            sys.exit(1)
+            # No explicit --version means this is the tag-triggered release-bom-workflow
+            # path (the other CircleCI caller, sign-released-image-workflow, always passes
+            # an explicit version). Fail loudly rather than silently continuing with an
+            # empty version: a previous "exit 0" guard here let the job continue and die
+            # less clearly further down instead.
+            circle_tag = os.environ.get("CIRCLE_TAG")
+            if not circle_tag:
+                print(
+                    "Error: No version specified. Use --version, or set CIRCLE_TAG (set automatically on CircleCI tag-triggered builds)."
+                )
+                sys.exit(1)
+            # sign-images.py reads the published BOM at
+            # updates.astronomer.io/astronomer-software/releases/astronomer-<version>.json,
+            # which is keyed by chart version, so drop the tag's leading "v".
+            version = circle_tag.removeprefix("v")
 
         print(f"Signing images for version: {version}")
 
@@ -138,9 +162,10 @@ def main():
             except (FileNotFoundError, json.JSONDecodeError):
                 print(f"Error: Could not find or parse local file {json_file}")
                 sys.exit(1)
-        print("Signing Astronomer images...")
-        for image_data in data["astronomer"]["images"].values():
-            sign_image(image_data["repository"], image_data["tag"], image_data["sha256"], private_key_path, password)
+        for chart in ("astronomer", "airflow"):
+            print(f"Signing {chart} images...")
+            for image_data in data[chart]["images"].values():
+                sign_image(image_data["repository"], image_data["tag"], image_data["sha256"], private_key_path, password)
 
         print("All images have been processed.")
 

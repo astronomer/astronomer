@@ -16,13 +16,21 @@
 {{- end }}
 {{- end }}
 
-{{ define "commander.metadata.namespaceLabels" }}
+{{- define "commander.metadata.namespaceLabels" -}}
 {{- if .Values.global.rbac.enabled -}}
-{{ .Values.global.namespaceLabels | toYaml | nindent 6 -}}
+{{ .Values.global.namespaceLabels | toYaml }}
 {{- else -}}
 {}
-{{- end }}
-{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "commander.metadata.extraAnnotations" -}}
+{{- if not (empty .Values.global.extraAnnotations) -}}
+{{ .Values.global.extraAnnotations | toYaml }}
+{{- else -}}
+{}
+{{- end -}}
+{{- end -}}
 
 {{ define "commander.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
@@ -64,11 +72,19 @@
 {{- end }}
 {{- end }}
 
+{{ define "certgenerator.repository" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-certgenerator
+{{- else -}}
+{{ .Values.global.certgenerator.images.repository }}
+{{- end }}
+{{- end }}
+
 {{ define "houston.logging.loggingSidecar.image" -}}
 {{- $images := .Values.images | default dict -}}
 {{- $vector := $images.vector | default dict -}}
 {{- $repo := default "quay.io/astronomer/ap-vector" $vector.repository -}}
-{{- $tag := default "0.52.0" $vector.tag -}}
+{{- $tag := default "0.54.0" $vector.tag -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-vector:{{ $tag }}
 {{- else -}}
@@ -78,12 +94,51 @@
 
 {{- define "houston.logging.loggingSidecar.validate" -}}
 {{- if .Values.houston.logging.loggingSidecar.enabled -}}
-{{- $hasBuiltInSink := or .Values.houston.logging.loggingSidecar.cloudwatch.enabled .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled .Values.houston.logging.loggingSidecar.elasticsearch.enabled -}}
-{{- $hasExtraSinks := ne (trim (.Values.houston.logging.loggingSidecar.extraSinks | default "")) "" -}}
-{{- if not (or $hasBuiltInSink $hasExtraSinks) -}}
-{{- fail "houston.logging.loggingSidecar.enabled requires at least one sink: enable cloudwatch, gcpCloudLogging, elasticsearch, or set extraSinks" -}}
+{{- $enabledSinkCount := add (ternary 1 0 .Values.houston.logging.loggingSidecar.cloudwatch.enabled) (ternary 1 0 .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled) (ternary 1 0 .Values.houston.logging.loggingSidecar.elasticsearch.enabled) -}}
+{{- if eq $enabledSinkCount 0 -}}
+{{- fail "houston.logging.loggingSidecar.enabled requires at least one supported sink: enable cloudwatch, gcpCloudLogging, or elasticsearch" -}}
+{{- end -}}
+{{- if gt $enabledSinkCount 1 -}}
+{{- fail "houston.logging.loggingSidecar supports exactly one sink at a time: choose cloudwatch, gcpCloudLogging, or elasticsearch" -}}
+{{- end -}}
+{{- if .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.projectId must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.projectId | default "" | trim) -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.location must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.location | default "" | trim) -}}
+{{- required "houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName must be set when gcpCloudLogging.enabled is true" (.Values.houston.logging.loggingSidecar.gcpCloudLogging.resource.clusterName | default "" | trim) -}}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "houston.logging.loggingSidecar.gcpCloudLogging.sink" -}}
+{{- $root := .root -}}
+{{- $gcp := $root.Values.houston.logging.loggingSidecar.gcpCloudLogging -}}
+gcp_cloud_logging:
+  type: gcp_stackdriver_logs
+  inputs:
+    - normalize_levels
+  project_id: {{ $gcp.projectId | default "" | trim | quote }}
+  log_id: {{ $gcp.logId | quote }}
+  severity_key: {{ $gcp.severityKey | quote }}
+{{- if not $gcp.useWorkloadIdentity }}
+  credentials_path: "/etc/gcp-credentials/{{ $gcp.credentialsSecretKey }}"
+{{- end }}
+  resource:
+    type: {{ $gcp.resource.type | quote }}
+    project_id: {{ $gcp.projectId | default "" | trim | quote }}
+    location: {{ $gcp.resource.location | default "" | trim | quote }}
+    namespace_name: "{{ "{{" }} kubernetes.pod_namespace {{ "}}" }}"
+    pod_name: "{{ "{{" }} kubernetes.pod_name {{ "}}" }}"
+    container_name: {{ .containerName | quote }}
+    cluster_name: {{ $gcp.resource.clusterName | default "" | trim | quote }}
+  labels:
+    component: {{ .componentName | quote }}
+  batch:
+    max_events: 100
+    timeout_secs: 5
+  buffer:
+    type: memory
+    max_events: 10000
+    when_full: block
 {{- end -}}
 
 {{ define "registry.docker.config" -}}
@@ -114,6 +169,16 @@
 
 {{ define "houston.backendSecret" -}}
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
+{{- end }}
+
+{{/*
+Percent-encode a value for a URI userinfo or path component. urlquery targets
+query strings, where a space is "+", but in userinfo a "+" is a literal plus, so
+spaces have to be %20. A real "+" is already %2B by then and the replace leaves
+it alone.
+*/}}
+{{ define "houston.uriComponent" -}}
+{{ urlquery . | replace "+" "%20" }}
 {{- end }}
 
 {{ define "houston.airflowBackendSecret" -}}
@@ -169,7 +234,7 @@
 {{- end }}
 
 {{ define "flightdeck.bootstrapperServiceAccountName" -}}
-{{- if and .Values.flightdeck.serviceAccount.create .Values.global.rbacEnabled (not .Values.flightdeck.backendSecretName) (not .Values.flightdeck.backendConnection) }}
+{{- if and .Values.flightdeck.serviceAccount.create .Values.global.rbac.enabled (not .Values.flightdeck.backendSecretName) (not .Values.flightdeck.backendConnection) }}
 {{- default (printf "%s-flightdeck-bootstrapper" .Release.Name ) .Values.flightdeck.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.flightdeck.serviceAccount.name }}
@@ -185,10 +250,10 @@
 {{- end }}
 
 {{ define "commander.jwksServiceAccountName" -}}
-{{- if and .Values.commander.serviceAccount.create .Values.global.rbac.enabled -}}
-{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.serviceAccount.name }}
+{{- if and .Values.commander.jwksHook.serviceAccount.create .Values.global.rbac.enabled -}}
+{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.jwksHook.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.commander.serviceAccount.name }}
+    {{ default "default" .Values.commander.jwksHook.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
@@ -209,7 +274,7 @@
 {{- end }}
 
 {{ define "dpLink.serviceAccountName" -}}
-{{- if and .Values.dpLink.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.dpLink.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-dp-link" .Release.Name ) .Values.dpLink.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.dpLink.serviceAccount.name }}
@@ -217,7 +282,7 @@
 {{- end }}
 
 {{ define "navigator.serviceAccountName" -}}
-{{- if and .Values.navigator.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.navigator.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-navigator" .Release.Name ) .Values.navigator.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.navigator.serviceAccount.name }}
@@ -225,7 +290,7 @@
 {{- end }}
 
 {{ define "pilot.serviceAccountName" -}}
-{{- if and .Values.pilot.serviceAccount.create .Values.global.rbacEnabled -}}
+{{- if and .Values.pilot.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-pilot" .Release.Name ) .Values.pilot.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.pilot.serviceAccount.name }}
@@ -276,20 +341,29 @@
   value: {{ .Values.global.plane.mode | quote }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
   value: "{{ include "houston.authServiceURL" . }}"
+{{- end }}
+
+{{ define "common_shared_env" -}}
 - name: COMMANDER_NAMESPACE_POOLS_ENABLED
   value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
-{{- if .Values.global.namespaceManagement.namespacePools.enabled  }}
+{{ end }}
+
+{{ define "commander_env" -}}
+{{- include "common_shared_env" . -}}
+{{ if .Values.global.namespaceManagement.namespacePools.enabled -}}
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
+- name: COMMANDER_CONTROL_PLANE_HA_ENABLED
+  value: {{ ternary "true" "false" .Values.global.controlPlaneHA.enabled | quote }}
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 {{- if .Values.global.dataPlaneFailover.enabled }}
 - name: COMMANDER_EXTERNAL_SECRET_MANAGER_SECRET_NAME
-  value: {{ .Values.global.dataPlaneFailover.externalSecretManagerSecretName | quote }}
+  value: {{ .Values.global.dataPlaneFailover.externalSecretManagerName | quote }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -334,6 +408,21 @@ s3:
   rootdirectory: {{ .Values.registry.s3.rootdirectory }}
   regionendpoint: {{ .Values.registry.s3.regionendpoint }}
 {{- end }}
+
+{{- /*
+  CP_ID env var, sourced from the cp-identity Secret. Single source of truth for the
+  secret ref, shared by houston, dp-link and navigator. Guard call sites with
+  `if .Values.global.controlPlaneHA.enabled` — in HA mode it is mounted on every
+  control-plane pod that runs a state-mutating/reconciliation loop so it can resolve
+  its region's active state (Region-gating).
+*/}}
+{{- define "houston.cpIdEnv" -}}
+- name: CP_ID
+  valueFrom:
+    secretKeyRef:
+      name: cp-identity
+      key: cp_id
+{{- end -}}
 
 {{- define "dp_link_environment" }}
 {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink)) }}
@@ -415,7 +504,7 @@ s3:
 - name: COMMANDER__PORT
   value: {{ .Values.ports.commanderGRPC | quote }}
 - name: REGISTRY__HOST
-  value: {{ .Release.Name }}-registry
+  value: {{ template "registry.fullname" . }}
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
 - name: COMMANDER_WAIT_ENABLED
@@ -426,6 +515,9 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+{{- if .Values.global.controlPlaneHA.enabled }}
+{{- include "houston.cpIdEnv" . | nindent 0 }}
+{{- end }}
 {{- end }}
 
 
@@ -516,6 +608,9 @@ operator-defined secret list.
 {{- end }}
 - name: NODE_ENV
   value: "production"
+{{- if .Values.global.controlPlaneHA.enabled }}
+{{- include "houston.cpIdEnv" . | nindent 0 }}
+{{- end }}
 {{- if not $secretsFromFiles }}
 - name: DATABASE__CONNECTION
   valueFrom:
@@ -555,7 +650,7 @@ operator-defined secret list.
 - name: COMMANDER__PORT
   value: {{ .Values.ports.commanderGRPC | quote }}
 - name: REGISTRY__HOST
-  value: {{ .Release.Name }}-registry
+  value: {{ template "registry.fullname" . }}
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
 - name: NATS__SERVERS
@@ -618,6 +713,8 @@ operator-defined secret list.
 - name: CB_PROBE_MAX_INFLIGHT
   value: {{ .Values.houston.worker.dispatcher.circuitBreaker.probeMaxInflight | quote }}
 {{- end }}
+- name: HELM__RELEASE_VERSION
+  value: {{ .Chart.Version | quote }}
 {{- end }}
 {{- end }}
 
@@ -822,13 +919,14 @@ fluentd
 {{ define "jetstreamTLS" }}
 {{- $secretName := printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 {{- if .Values.global.nats.jetStream.tls }}
-tlsEnabled: true
 tls:
+  enabled: true
   caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/ca.crt
   certFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.crt
   keyFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}/tls.key
 {{- else -}}
-tlsEnabled: false
+tls:
+  enabled: false
 {{- end }}
 {{- end }}
 
@@ -844,33 +942,26 @@ tlsEnabled: false
 {{- end -}}
 {{- end }}
 
-{{- define "configSyncer.securityContext" -}}
-{{- $required := dict "readOnlyRootFilesystem" true }}
-{{- if .Values.configSyncer.securityContext }}
-{{- merge $required .Values.configSyncer.securityContext | toYaml }}
-{{- else }}
-{{- merge $required .Values.securityContext | toYaml }}
-{{- end }}
-{{- end }}
-
 {{- define "houston.eventsUrl" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
-https://houston.{{ .Values.global.baseDomain }}/v1/registry/events
+https://houston.{{ include "houston.controlPlaneBaseDomain" . }}/v1/registry/events
 {{- else -}}
 http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events
 {{- end }}
 {{- end -}}
 
 {{- define "commander.dataplaneURL" -}}
-{{- if (eq .Values.global.plane.mode "data") -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else if eq .Values.global.plane.mode "data" -}}
+http://{{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
 {{- else -}}
 {{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
 {{- end }}
 {{- end -}}
 
 {{- define "commander.baseDomain" -}}
-{{- if (eq .Values.global.plane.mode "data") -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 {{ .Values.global.baseDomain }}
@@ -878,16 +969,16 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- end -}}
 
 {{- define "esproxy.url" -}}
-{{- if eq .Values.global.plane.mode "data" -}}
-es-proxy.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
-{{- else if eq .Values.global.plane.mode "unified" -}}
-{{ .Release.Name }}-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
-{{- end -}}
+{{ .Release.Name }}-external-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
 {{- end -}}
 
 {{- define "elasticsearch.url" -}}
 {{- if eq .Values.global.plane.mode "data" -}}
+{{- if .Values.global.plane.domainPrefix -}}
 elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+elasticsearch.{{ .Values.global.baseDomain }}
+{{- end -}}
 {{- else if eq .Values.global.plane.mode "unified" -}}
 {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local.:9200
 {{- end -}}
@@ -908,14 +999,14 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 
 {{- define "houston.authServiceURL" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
-https://houston.{{ .Values.global.baseDomain }}
+https://houston.{{ include "houston.controlPlaneBaseDomain" . }}
 {{- else -}}
-http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}:{{ .Values.ports.houstonHTTP }}
+http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}
 {{- end }}
 {{- end -}}
 
 {{- define "registry.ingressURL" -}}
-{{- if (eq .Values.global.plane.mode "data") -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 registry.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
 registry.{{ .Values.global.baseDomain }}
@@ -944,16 +1035,16 @@ hostAliases:
 {{- end -}}
 
 {{/*
-Auto-generate a shared internal-service-auth token on install,
+Auto-generate a shared cluster-local-service-auth token on install,
 preserve across upgrades via lookup, or use a user-supplied value.
 Uses randBytes 32 (base64-encoded 32 random bytes) to match the
 entropy of a Fernet key.
 */}}
-{{- define "astronomer.internalServiceToken" -}}
-  {{- if and .Values.global.internalServiceAuth .Values.global.internalServiceAuth.token -}}
-    {{- .Values.global.internalServiceAuth.token -}}
+{{- define "astronomer.clusterLocalServiceToken" -}}
+  {{- if and .Values.global.clusterLocalServiceAuth .Values.global.clusterLocalServiceAuth.token -}}
+    {{- .Values.global.clusterLocalServiceAuth.token -}}
   {{- else -}}
-    {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-internal-service-auth" .Release.Name) -}}
+    {{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-cluster-local-service-auth" .Release.Name) -}}
     {{- if and $existing $existing.data.token -}}
       {{- $existing.data.token | b64dec -}}
     {{- else -}}
@@ -966,8 +1057,15 @@ entropy of a Fernet key.
 {{- required "houston.logging.loggingSidecar.elasticsearch.endpoint must be set when houston.logging.loggingSidecar.elasticsearch.enabled is true" .Values.houston.logging.loggingSidecar.elasticsearch.endpoint }}
 {{- end }}
 
+{{/*
+loggingSidecar uses ONLY its own securityContext as the base (not the chart-wide
+.Values.securityContext), so it deliberately does not use platform.containerSecurityContext,
+whose override-on-chart-base merge would layer extra fields (capabilities, runAsUser) onto the
+sidecar. It does mirror the platform helper's RORFS-forcing and runAsUser omission (OpenShift or
+the "auto" sentinel).
+*/}}
 {{- define "houston.logging.loggingSidecar.securityContext" -}}
-{{- if or (eq ( toString ( .Values.houston.logging.loggingSidecar.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- if or (eq ( toString ( .Values.houston.logging.loggingSidecar.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
 {{- $required := dict "readOnlyRootFilesystem" true }}
 {{- merge $required (omit .Values.houston.logging.loggingSidecar.securityContext "runAsUser") | toYaml }}
 {{- else }}
@@ -975,3 +1073,161 @@ entropy of a Fernet key.
 {{- merge $required .Values.houston.logging.loggingSidecar.securityContext | toYaml }}
 {{- end -}}
 {{- end }}
+
+{{/*
+Return registry podSecurityContext, omitting fsGroup,runAsGroup and runAsUser fields on OpenShift Based Installation.
+Uses .Values.registry.podSecurityContext as its own base (not the chart-wide .Values.podSecurityContext),
+so it deliberately does not use platform.podSecurityContext, whose merge would layer the chart base underneath.
+*/}}
+{{- define "astronomer.registry.podSecurityContext" -}}
+{{- if .Values.global.openshift.enabled }}
+{{- omit .Values.registry.podSecurityContext "fsGroup" "runAsGroup" "runAsUser" | toYaml }}
+{{- else }}
+{{- toYaml .Values.registry.podSecurityContext }}
+{{- end -}}
+{{- end }}
+
+
+{{/*
+Expand the name of the registry component.
+*/}}
+{{- define "registry.name" -}}
+{{- default "registry" .Values.registry.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "registry.fullname" -}}
+{{- if .Values.registry.fullnameOverride }}
+{{- .Values.registry.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default "registry" .Values.registry.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Whether the registry should be rendered.
+Master switch registry.enabled (default true) AND the registry plane modes (data/unified).
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "registry.enabled" -}}
+{{- and .Values.registry.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
+{{- end }}
+
+{{/*
+Expand the name of the mcp-server component.
+*/}}
+{{- define "mcpServer.name" -}}
+{{- default "mcp-server" .Values.mcpServer.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "mcpServer.fullname" -}}
+{{- if .Values.mcpServer.fullnameOverride }}
+{{- .Values.mcpServer.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default "mcp-server" .Values.mcpServer.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Whether the MCP server should be rendered: mcpServer.enabled AND control/unified plane only.
+Returns the string "true" or "false" — compare with eq.
+*/}}
+{{- define "mcpServer.enabled" -}}
+{{- and .Values.mcpServer.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") -}}
+{{- end }}
+
+{{ define "mcpServer.serviceAccountName" -}}
+{{- if and .Values.mcpServer.serviceAccount.create .Values.global.rbac.enabled -}}
+{{ default (printf "%s-mcp-server" .Release.Name) .Values.mcpServer.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.mcpServer.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "mcpServer.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-mcp-server:{{ .Values.images.mcpServer.tag }}
+{{- else -}}
+{{ .Values.images.mcpServer.repository }}:{{ .Values.images.mcpServer.tag }}
+{{- end }}
+{{- end }}
+
+{{/*
+Joins mcpServer.enabledGroups into the CSV the MCP_ENABLED_GROUPS env var expects.
+*/}}
+{{- define "mcpServer.enabledGroups" -}}
+{{- join "," .Values.mcpServer.enabledGroups -}}
+{{- end }}
+
+{{/*
+Joins mcpServer.disabledTools into the CSV the MCP_DISABLED_TOOLS env var expects.
+*/}}
+{{- define "mcpServer.disabledTools" -}}
+{{- join "," .Values.mcpServer.disabledTools -}}
+{{- end }}
+
+{{/*
+auth-url for the MCP server's own ingress, targeting Houston's /v1/authorization/agent
+endpoint rather than /v1/authorization. Lives here, not the repo-root _helpers.tpl, because
+its only caller (mcp-server-ingress.yaml) is in this subchart and needs .Values.ports -- the
+repo-root template has no access to that and would otherwise render an unnoticed ":<nil>".
+*/}}
+{{- define "houston.mcpAgentAuthUrl" -}}
+nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}/v1/authorization/agent
+{{- end }}
+
+{{/* Hostname, following grafana.url's convention (charts/grafana/templates/_helpers.yaml)
+of a hardcoded component prefix on global.baseDomain, not the fullname template. */}}
+{{ define "mcpServer.url" -}}
+mcp-server.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{/* Global customer-facing host, templated from controlPlaneHA.globalBaseDomain (CP HA only). */}}
+{{ define "mcpServer.globalUrl" -}}
+mcp-server.{{ .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- end }}
+
+
+{{/*
+Whether flightdeck resources should render. The store backs the CP↔DP version-guard CAS
+(multi-CP message reordering, needed under controlPlaneHA) and DR-failover flight processing.
+It renders when flightDeck.enabled is set explicitly, OR on a data plane when either
+dataPlaneFailover or controlPlaneHA is enabled.
+
+NOTE: flightdeck is conceptually data-plane-only, but flightDeck.enabled here is intentionally
+mode-agnostic (renders in unified too) to preserve the long-standing tested path. Restricting
+it to data mode — and aligning pilot's DSN gate with this helper — is tracked as a follow-up
+(see PINF-1093 sub-issue); do not tighten it here without that coordinated change.
+*/}}
+{{- define "flightdeck.enabled" -}}
+{{- if or .Values.flightDeck.enabled (and (or .Values.global.dataPlaneFailover.enabled .Values.global.controlPlaneHA.enabled) (eq .Values.global.plane.mode "data")) }}
+true
+{{- end -}}
+{{- end -}}
+
+{{- define "getCommanderGRPCport" -}}
+{{- if .Values.global.authSidecar.enabled -}}
+{{- .Values.ports.commanderSidecarGRPC -}}
+{{- else -}}
+{{- .Values.ports.commanderGRPC -}}
+{{- end -}}
+{{- end -}}

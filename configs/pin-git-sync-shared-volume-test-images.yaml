@@ -1,0 +1,16 @@
+# Pins the specific git-sync-relay image and airflow-chart build the
+# git-sync-shared-volume scenario (PINF-1115/1190) needs, so the fix actually under test
+# runs instead of whatever airflowChartVersion/gitSyncRelay tag ships as the default.
+# Update these when a newer build supersedes them, and drop this overlay once both land
+# in the default airflowChartVersion/gitSyncRelay tag pins.
+astronomer:
+  # astronomer/airflow-chart#592 (danielhoherd/feat/add-init-hook-gitsync), the
+  # pre-install/pre-upgrade init hook Job for shared_volume mode.
+  airflowChartVersion: 1.18.8-build44928
+global:
+  gitSyncRelay:
+    images:
+      gitSync:
+        # astronomer/git-sync-relay#71 (merged), includes the git-sync-once one-shot
+        # entrypoint (PINF-1188) the init hook Job invokes.
+        tag: "0.5.0"

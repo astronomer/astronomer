@@ -6,7 +6,8 @@ from pathlib import Path, PosixPath
 
 import yaml
 
-git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+# Use .exists(), not .is_dir(): in a linked git worktree `.git` is a file, not a directory.
+git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 
 
 def validate_test_file(file: PosixPath) -> None:

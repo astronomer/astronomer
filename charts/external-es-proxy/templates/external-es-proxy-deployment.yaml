@@ -1,7 +1,7 @@
 ####################################
 ## Elasticsearch Proxy Deployment ##
 ####################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.global.customLogging)) }}
 apiVersion: apps/v1
 kind: Deployment
@@ -54,9 +54,7 @@ spec:
 {{- include "external-es-proxy.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           image: {{ template "esproxy.image" . }}
           imagePullPolicy: {{ .Values.images.esproxy.pullPolicy }}
           {{- if .Values.livenessProbe }}
@@ -64,6 +62,15 @@ spec:
           {{- end }}
           {{- if .Values.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.service.securehttp }}
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           env:
 {{- if .Values.global.customLogging.extraEnv }}
@@ -139,15 +146,22 @@ spec:
           {{- else }}
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           {{- end }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
           {{- if .Values.awsproxy.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.awsproxy.livenessProbe) . | nindent 12 }}
           {{- end }}
           {{- if .Values.awsproxy.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.awsproxy.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.awsproxy.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.awsproxy.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            tcpSocket:
+              port: {{ .Values.service.awsproxy }}
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

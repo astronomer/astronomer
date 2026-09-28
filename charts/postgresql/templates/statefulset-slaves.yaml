@@ -57,13 +57,41 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
       securityContext:
-        readOnlyRootFilesystem: true
-      {{- if .Values.securityContext.enabled }}
+        seccompProfile:
+          type: RuntimeDefault
+      {{- if and .Values.securityContext.enabled (not .Values.global.openshift.enabled) }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
-      {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       initContainers:
+      {{- if eq (include "postgresql.postgresqlRunPermissions.enabled" .) "true" }}
+      - name: init-postgresql-run
+        image: {{ template "postgresql.image" . }}
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+        command:
+          - sh
+          - -c
+          - |
+            mkdir -p /var/run/postgresql
+            chown {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} /var/run/postgresql
+            chmod 0700 /var/run/postgresql
+        securityContext:
+          runAsUser: {{ .Values.postgresqlRunPermissions.securityContext.runAsUser }}
+          runAsNonRoot: {{ ne (.Values.postgresqlRunPermissions.securityContext.runAsUser | int) 0 }}
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - CHOWN
+              - FOWNER
+        volumeMounts:
+        - name: postgresql-run
+          mountPath: /var/run/postgresql
+      {{- end }}
+      {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       - name: init-chmod-data
         image: {{ template "postgresql.volumePermissions.image" . }}
         imagePullPolicy: "{{ .Values.volumePermissions.image.pullPolicy }}"
@@ -91,9 +119,15 @@ spec:
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         resources: {{- toYaml .Values.resources | nindent 10 }}
         securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
           readOnlyRootFilesystem: true
         {{- if .Values.securityContext.enabled }}
+          {{- if not .Values.global.openshift.enabled }}
           runAsUser: {{ .Values.securityContext.runAsUser }}
+          {{- end }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
         {{- end }}
         env:
@@ -142,6 +176,24 @@ spec:
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
+        {{- if .Values.startupProbe }}
+        startupProbe: {{ tpl (toYaml .Values.startupProbe) . | nindent 10 }}
+        {{- else }}
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c
+           {{- if (include "postgresql.database" .) }}
+            - exec pg_isready -U {{ include "postgresql.username" . | quote }} -d {{ (include "postgresql.database" .) | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+           {{- else }}
+            - exec pg_isready -U {{ include "postgresql.username" . | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+           {{- end }}
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+        {{- end }}
         {{- if .Values.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 10 }}
         {{- else }}
@@ -183,6 +235,8 @@ spec:
           mountPath: /etc/astronomer/secrets
           readOnly: true
         {{- end }}
+        - name: postgresql-run
+          mountPath: /var/run/postgresql
         {{- if .Values.persistence.enabled }}
         - name: data
           mountPath: {{ .Values.persistence.mountPath }}
@@ -192,6 +246,8 @@ spec:
         {{- toYaml .Values.slave.extraVolumeMounts | nindent 8 }}
         {{- end }}
       volumes:
+      - name: postgresql-run
+        emptyDir: {}
       {{- if $secretsFromFiles }}
       - name: postgresql-password
         secret:

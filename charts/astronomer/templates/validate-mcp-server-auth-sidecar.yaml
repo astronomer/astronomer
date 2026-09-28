@@ -1,0 +1,17 @@
+{{- /*
+MCP server + BYO-ingress (auth sidecar) validation.
+
+The MCP server has no auth of its own: an ingress with no auth-url annotation would expose
+every platform-write tool unauthenticated. BYO-ingress mode (global.authSidecar.enabled) is
+unsupported here, so this fails closed rather than silently rendering that.
+
+This guard is intentionally NOT nested inside the ingress template's own
+`if .Values.global.baseDomain` gate: that would only fire when baseDomain is also set, so the
+same misconfiguration with no baseDomain would render everything else (Deployment, Service,
+NetworkPolicy, ServiceAccount) with no ingress and no error at all. A dedicated top-level
+template keyed only on the values it concerns renders and fails on every install regardless of
+baseDomain, matching validate-controlplane-ha.yaml's pattern.
+*/ -}}
+{{- if and (eq (include "mcpServer.enabled" .) "true") .Values.global.authSidecar.enabled }}
+{{- fail "mcpServer.enabled is not supported with global.authSidecar.enabled (BYO-ingress mode) in this release. Disable mcpServer or the auth sidecar." }}
+{{- end }}

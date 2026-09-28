@@ -2,10 +2,19 @@
 ## NGINX Data Plane ConfigMap ##
 ################################
 {{- if eq .Values.global.plane.mode "data" }}
-{{- $cspPolicyEnabled :=  .Values.cspPolicy.cdnEnabled }}
-{{- $connectsrc :=  eq $cspPolicyEnabled true | ternary .Values.cspPolicy.connectsrc "" }}
-{{- $fontsrc := eq $cspPolicyEnabled true| ternary .Values.cspPolicy.fontsrc "" }}
+{{- $cspPolicyEnabled := .Values.cspPolicy.enabled }}
+{{- $connectsrc := eq $cspPolicyEnabled true | ternary .Values.cspPolicy.connectsrc "" }}
+{{- $fontsrc := eq $cspPolicyEnabled true | ternary .Values.cspPolicy.fontsrc "" }}
 {{- $scriptsrc := eq $cspPolicyEnabled true | ternary .Values.cspPolicy.scriptsrc "" }}
+{{- /* CP-HA: with controlPlaneHA enabled, Allow *.<globalBaseDomain> in each
+       CSP source list so same-origin assets (CSS/JS/fonts/XHR/workers)
+       served on the global host are not blocked. */}}
+{{- $globalHost := "" }}
+{{- $globalWss := "" }}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain }}
+{{-   $globalHost = printf "*.%s" .Values.global.controlPlaneHA.globalBaseDomain }}
+{{-   $globalWss = printf "wss://*.%s" .Values.global.controlPlaneHA.globalBaseDomain }}
+{{- end }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -19,14 +28,14 @@ metadata:
 data:
   # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
   Content-Security-Policy: >-
-    default-src 'self' *.{{ .Values.global.baseDomain }} ;
-    connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} {{ $connectsrc }} ;
-    font-src *.{{ .Values.global.baseDomain }} cdn.astronomer.io {{ $fontsrc }} data: ;
+    default-src 'self' *.{{ .Values.global.baseDomain }} {{ $globalHost }} ;
+    connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} {{ $globalHost }} {{ $globalWss }} {{ $connectsrc }} ;
+    font-src *.{{ .Values.global.baseDomain }} {{ $globalHost }} cdn.astronomer.io {{ $fontsrc }} data: ;
     frame-src 'self' ;
     img-src 'self' data: * ;
-    script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.astronomer.io {{ $scriptsrc }} ;
-    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} {{ $scriptsrc }} ;
-    worker-src blob: *.{{ .Values.global.baseDomain }} ;
+    script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} {{ $globalHost }} cdn.astronomer.io {{ $scriptsrc }} ;
+    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} {{ $globalHost }} {{ $scriptsrc }} ;
+    worker-src blob: *.{{ .Values.global.baseDomain }} {{ $globalHost }} ;
   Referrer-Policy: "same-origin"
   X-Frame-Options: "deny"
   X-XSS-Protection: "1; mode=block"

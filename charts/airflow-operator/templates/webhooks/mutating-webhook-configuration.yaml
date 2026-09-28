@@ -1,12 +1,15 @@
-#####################################################
-## Airflow Operator WebHook Mutating Configuration ##
-#####################################################
+{{- if (include "operator.enabled" .) }}
 {{ if .Values.webhooks.enabled }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Release.Name }}-airflow-operator-serving-cert
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
   name: {{ .Release.Name }}-airflow-operator-mutating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -26,4 +29,5 @@ webhooks:
     resources:
     - airflows
   sideEffects: None
+{{- end }}
 {{- end }}

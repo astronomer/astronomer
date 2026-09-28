@@ -1,7 +1,7 @@
 ###########################################################################
 # Vector NetworkPolicy
 ###########################################################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 {{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

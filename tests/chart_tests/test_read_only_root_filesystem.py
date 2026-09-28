@@ -77,7 +77,7 @@ class TestHoustonPodManagers:
         pod_template = get_pod_template(pod_manager_doc, include_init_containers=True)
         assert {"emptyDir": {}, "name": "etc-ssl-certs"} in pod_template["spec"]["volumes"]
         assert {"emptyDir": {}, "name": "tmp"} in pod_template["spec"]["volumes"]
-        for container in pod_template["spec"]["containers"] + pod_template["spec"]["initContainers"]:
+        for container in (pod_template["spec"]["containers"] or []) + (pod_template["spec"]["initContainers"] or []):
             assert container["securityContext"].get("readOnlyRootFilesystem"), (
                 f"{pod_name}/{container['name']} missing readOnlyRootFilesystem"
             )
@@ -86,7 +86,8 @@ class TestHoustonPodManagers:
                     assert container["volumeMounts"] == [{"name": "etc-ssl-certs", "mountPath": "/etc/ssl/certs_copy"}], (
                         f"{pod_name}/{container['name']} etc-ssl-certs-copier mounts are wrong"
                     )
-                case "wait-for-db":
+                # both names are intentional:  the api pod's init container is renamed, the worker pod's is not.
+                case "wait-for-db" | "houston-wait-for-db":
                     assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in container["volumeMounts"], (
                         f"{pod_name}/{container['name']} missing mount: /etc/ssl/certs"
                     )
@@ -95,6 +96,12 @@ class TestHoustonPodManagers:
                     )
                     assert {"mountPath": "/houston/node_modules/.cache", "name": "tmp"} not in container["volumeMounts"], (
                         f"{pod_name}/{container['name']} unnecessary mount: /houston/node_modules/.cache"
+                    )
+                case "vector":
+                    # Not a Houston Node.js process - no node_modules cache or Houston TLS
+                    # trust store to write, just the generic RORFS scratch space.
+                    assert {"mountPath": "/tmp", "name": "tmp"} in container["volumeMounts"], (
+                        f"{pod_name}/{container['name']} missing mount: /tmp"
                     )
                 case _:
                     assert {"mountPath": "/tmp", "name": "tmp"} in container["volumeMounts"], (

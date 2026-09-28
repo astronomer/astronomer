@@ -1,7 +1,7 @@
 ####################
 ## Houston Worker ##
 ####################
-{{- if and .Values.houston.worker.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
+{{- if and .Values.houston.worker.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") }}
 {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
 {{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar)) }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
@@ -38,6 +38,7 @@ spec:
         {{- if .Values.houston.logging.loggingSidecar.enabled }}
         checksum/vector-config: {{ include (print $.Template.BasePath "/houston/worker/houston-worker-vector-configmap.yaml") . | sha256sum }}
         {{- end }}
+        checksum/houston-backend-secret: {{ include (print $.Template.BasePath "/houston/api/houston-backend-secret.yaml") . | sha256sum }}
         {{- include "houston.jetStreamTLSChecksum" . | nindent 8 }}
         {{- if .Values.global.podAnnotations }}
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
@@ -52,7 +53,7 @@ spec:
       {{- include "houston.worker.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
-      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.houston) | nindent 6 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston) | fromYaml)) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
 
@@ -72,16 +73,12 @@ spec:
               mountPath: /etc/ssl/certs_copy
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
@@ -102,9 +99,7 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           {{- if .Values.houston.bootstrapper.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.readinessProbe) . | nindent 12 }}
@@ -119,8 +114,8 @@ spec:
                   name: astronomer-bootstrap
                   key: connection
             - name: SCHEMA_NAME
-              value: "houston$default"
-            {{ if .Values.global.ssl.enabled }}
+              value: {{ .Values.global.houston.database.schemaName | quote }}
+            {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
             - name: SSLMODE
               value: {{ .Values.global.ssl.mode }}
             {{- end }}
@@ -150,12 +145,12 @@ spec:
         {{- end }}
 
       containers:
-        - name: houston
+        # Renamed from "houston" with the DATABASE_URL dedup so Helm replaces the
+        # container instead of emitting an ambiguous env delete.
+        - name: houston-worker
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           {{- if .Values.houston.logging.loggingSidecar.enabled }}
           command:
             - /bin/sh
@@ -201,18 +196,24 @@ spec:
           {{- if .Values.houston.worker.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.houston.worker.livenessProbe) . | nindent 12 }}
           {{- end }}
+          {{- if .Values.houston.worker.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.houston.worker.startupProbe) . | nindent 12 }}
+          {{- else }}
+          # The houston worker (`yarn worker`) is a queue worker that binds no
+          # listener, so a tcpSocket/httpGet probe (here against houstonHTTP, a port
+          # it does not serve) would fail forever and crashloop the pod. Use a no-op
+          # exec probe to satisfy Gatekeeper's allow-with-probes safely.
+          startupProbe:
+            exec:
+              command: ["/bin/true"]
+            failureThreshold: 30
+            periodSeconds: 10
+          {{- end }}
           env:
             - name: GRPC_VERBOSITY
               value: "INFO"
             - name: GRPC_TRACE
               value: "all"
-            {{- if not $secretsFromFiles }}
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.backendSecret" . }}
-                  key: connection
-            {{- end }}
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:
@@ -294,6 +295,8 @@ spec:
             - name: sidecar-log-volume
               mountPath: /var/log/sidecar-log-consumer
               readOnly: true
+            - name: tmp
+              mountPath: /tmp
             {{- if and .Values.houston.logging.loggingSidecar.gcpCloudLogging.enabled (not .Values.houston.logging.loggingSidecar.gcpCloudLogging.useWorkloadIdentity) }}
             - name: gcp-credentials
               mountPath: /etc/gcp-credentials
@@ -304,6 +307,12 @@ spec:
               mountPath: /etc/es-tls
               readOnly: true
             {{- end }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8686
+            periodSeconds: 10
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /health

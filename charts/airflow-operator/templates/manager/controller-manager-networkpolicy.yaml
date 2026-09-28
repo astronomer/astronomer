@@ -1,0 +1,44 @@
+################################
+## Airflow Operator NetworkPolicy
+################################
+{{- if (include "operator.enabled" .) }}
+{{- if .Values.global.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-airflow-operator-policy
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    component: airflow-operator-policy
+    release: {{ .Release.Name }}
+    chart: {{ template "operator.chart" . }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  {{ if .Values.global.argoCD.annotation.enabled }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: operator
+      component: controller-manager
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: {{ .Values.ports.webhookServiceTargetPort }}
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: prometheus
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.managerUpstreamPort }}
+{{- end }}
+{{- end }}

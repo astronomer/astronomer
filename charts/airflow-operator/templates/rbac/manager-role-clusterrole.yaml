@@ -1,8 +1,12 @@
-{{ if and .Values.global.airflowOperator.enabled }}
+###################################
+## Operator Manager ClusterRole  ##
+###################################
+{{- if (include "operator.enabled" .) }}
+{{- if .Values.global.rbac.enabled  }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: airflow-operator-manager-role
+  name: {{ .Release.Name }}-airflow-operator-manager-role
   labels:
     tier: operator
     release: {{ .Release.Name }}
@@ -30,6 +34,14 @@ rules:
 - apiGroups:
   - ''
   resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ''
+  resources:
   - pods/exec
   verbs:
   - create
@@ -45,15 +57,14 @@ rules:
   resources:
   - airflows
   - airflows/status
-  - allocators
   - apiservers
   - dagprocessors
+  - eventschedulers
   - fernetsecrets
   - pgbouncers
   - postgres
   - rbacs
   - redis
-  - runners
   - schedulers
   - statsds
   - triggerers
@@ -71,14 +82,13 @@ rules:
   - airflow.apache.org
   resources:
   - airflows/finalizers
-  - allocators/finalizers
   - apiservers/finalizers
   - dagprocessors/finalizers
+  - eventschedulers/finalizers
   - pgbouncers/finalizers
   - postgres/finalizers
   - rbacs/finalizers
   - redis/finalizers
-  - runners/finalizers
   - schedulers/finalizers
   - statsds/finalizers
   - triggerers/finalizers
@@ -89,14 +99,13 @@ rules:
 - apiGroups:
   - airflow.apache.org
   resources:
-  - allocators/status
   - apiservers/status
   - dagprocessors/status
+  - eventschedulers/status
   - pgbouncers/status
   - postgres/status
   - rbacs/status
   - redis/status
-  - runners/status
   - schedulers/status
   - statsds/status
   - triggerers/status
@@ -121,6 +130,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - batch
   resources:
   - jobs
@@ -136,6 +157,18 @@ rules:
   - keda.sh
   resources:
   - scaledobjects
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
   verbs:
   - create
   - delete
@@ -196,5 +229,6 @@ rules:
   - patch
   - update
   - watch
- {{ end -}}
- {{ end -}}
+{{ end -}}
+{{- end }}
+{{- end }}

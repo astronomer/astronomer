@@ -1,7 +1,7 @@
 ##################################
 ## Astronomer Houston ConfigMap ##
 ##################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -19,7 +19,7 @@ metadata:
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
 data:
-  {{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
+  {{- if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
   astro_runtime_releases.json: |
     {{ .Values.houston.runtimeReleasesConfig | toJson }}
   # These are system-specified config overrides.
@@ -51,6 +51,9 @@ data:
           enabled: true
           clientId: ~
 
+      ldap:
+        enabled: false
+
       github:
         enabled: true
 
@@ -64,10 +67,26 @@ data:
 
     helm:
       baseDomain: {{ .Values.global.baseDomain }}
+      {{- if .Values.global.controlPlaneHA.enabled }}
+      controlPlaneHA:
+        enabled: {{ .Values.global.controlPlaneHA.enabled }}
+      globalBaseDomain: {{ .Values.global.controlPlaneHA.globalBaseDomain }}
+      {{- with .Values.global.controlPlaneHA.cookieDomain }}
+      cookieDomain: {{ . }}
+      {{- end }}
+      {{- with .Values.global.controlPlaneHA.cookieName }}
+      cookieName: {{ . }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.global.dataPlaneFailover.enabled }}
+      dataPlaneFailover:
+        enabled: {{ .Values.global.dataPlaneFailover.enabled }}
+      {{- end }}
+      {{- if .Values.registry.auth.secretName }}
       registryAuthSecret: {{ .Values.registry.auth.secretName }}
+      {{- end }}
       releaseName: {{ .Release.Name }}
       releaseNamespace: {{ .Release.Namespace }}
-      releaseVersion: {{ .Chart.Version }}
       {{- if .Values.global.tlsSecret }}
       tlsSecretName: {{ .Values.global.tlsSecret }}
       {{- end }}
@@ -85,13 +104,11 @@ data:
           platform-release: {{ .Release.Name }}
         namespaceFreeFormEntry:
           enabled: {{ .Values.global.namespaceManagement.namespaceFreeFormEntry.enabled }}
-        {{ if .Values.global.namespaceManagement.namespacePools.enabled }}
+        {{- if .Values.global.namespaceManagement.namespacePools.enabled }}
         preCreatedNamespaces:
         {{- range $i, $namespaceName := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
           - name: {{ $namespaceName }}
         {{- end }}
-        hardDeleteDeployment:
-          enabled: true
         manualNamespaceNames:
           enabled: true
         {{- end }}
@@ -104,34 +121,27 @@ data:
         dagOnlyDeployment:
           enabled: {{ .Values.global.deployMechanisms.dagOnlyDeployment.enabled }}
 
+      {{- $grafanaLinkEnabled := true }}
+      {{- if and (hasKey .Values.global "grafana") (kindIs "map" .Values.global.grafana) (hasKey .Values.global.grafana "enabled") }}
+      {{- $grafanaLinkEnabled = .Values.global.grafana.enabled }}
+      {{- end }}
       metricsReporting:
         taskUsageMetrics:
           enabled: {{ .Values.global.metricsReporting.taskUsageMetrics.enabled }}
           reportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
         grafana:
-          enabled: true
+          enabled: {{ $grafanaLinkEnabled }}
 
       deploymentLifecycle:
         deployRollback:
           enabled: {{ .Values.global.deploymentLifecycle.deployRollback.enabled }}
           deployRevisionReportNumberOfDays: {{ .Values.houston.cleanupDeployRevisions.olderThan}}
+          dagTarballVersionValidation:
+            enabled: {{ .Values.global.deploymentLifecycle.deployRollback.dagTarballVersionValidation.enabled }}
         cleanupAirflowDb:
           enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
 
       logging:
-        enabled: true
-        provider: {{ default "fluentd" .Values.global.logging.provider | quote }}
-        elasticsearch:
-          enabled: true
-        {{- if .Values.global.customLogging.enabled }}
-          connection:
-            host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
-            port: 9200
-        {{- else }}
-          connection:
-            host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
-            port: 9200
-        {{- end }}
         {{- if .Values.global.logging.loggingSidecar.enabled }}
         loggingSidecar:
           enabled: true
@@ -196,7 +206,7 @@ data:
             repository: {{ (splitList ":" $dagOnlyDeployment ) | first }}
             tag: {{ (splitList ":" $dagOnlyDeployment ) | last }}
         {{- if .Values.global.deployMechanisms.dagOnlyDeployment.securityContexts }}
-        securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
+        securityContexts: {{- template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
         {{- if or
           .Values.global.deployMechanisms.dagOnlyDeployment.resources
@@ -245,7 +255,7 @@ data:
         {{- if .Values.global.deployMechanisms.dagOnlyDeployment.persistence }}
         persistence: {{- .Values.global.deployMechanisms.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
         {{- end }}
-        {{ if .Values.global.deployMechanisms.dagOnlyDeployment.serviceAccount }}
+        {{- if .Values.global.deployMechanisms.dagOnlyDeployment.serviceAccount }}
         serviceAccount: {{- .Values.global.deployMechanisms.dagOnlyDeployment.serviceAccount | toYaml | nindent 10 }}
         {{- end }}
       {{- end }}
@@ -267,6 +277,12 @@ data:
         networkNSLabels: true
       {{- end }}
 
+        astronomer:
+          images:
+            certgenerator:
+              repository: "{{ include "certgenerator.repository" . }}"
+              tag: "{{ .Values.global.certgenerator.images.tag }}"
+
         gitSyncRelay:
           metrics:
             enabled: {{ .Values.global.gitSyncRelay.metrics.enabled }}
@@ -277,6 +293,18 @@ data:
             gitSync:
               repository: {{ .Values.global.gitSyncRelay.images.gitSync.repository }}
               tag: {{ .Values.global.gitSyncRelay.images.gitSync.tag }}
+          {{- if .Values.global.openshift.enabled }}
+          # We have to set this to null to override the default security context that is not compatible with OpenShift. The individual containers have their own security contexts that are compatible with OpenShift.
+          securityContext: null
+          gitDaemon:
+            securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+          gitSync:
+            securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+          {{- end }}
 
 
         airflow:
@@ -302,28 +330,28 @@ data:
           networkPolicies:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
-          {{ end }}
+          {{- end }}
           {{- if .Values.global.openshift.enabled }}
           dags:
               gitSync:
                 securityContexts:
                   container:
                     runAsNonRoot: true
-          {{ end }}
+          {{- end }}
           # Enable FlowerUI flag by default
           flower:
             enabled: true
-            {{ if .Values.global.openshift.enabled }}
+            {{- if .Values.global.openshift.enabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
           apiServer:
-            {{ if .Values.global.openshift.enabled }}
+            {{- if .Values.global.openshift.enabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
             resources:
               limits:
                 # XXX: There is an alert configured to trigger when ephemeral storage reaches
@@ -333,11 +361,11 @@ data:
               requests:
                 ephemeral-storage: "1Gi"
           webserver:
-            {{ if .Values.global.openshift.enabled }}
+            {{- if .Values.global.openshift.enabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
             resources:
               limits:
                 # XXX: There is an alert configured to trigger when ephemeral storage reaches
@@ -358,11 +386,11 @@ data:
 
           # Worker configuration (applies to Celery and Kubernetes task pods).
           workers:
-            {{ if .Values.global.openshift.enabled }}
+            {{- if .Values.global.openshift.enabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
             resources:
               limits:
                 ephemeral-storage: "2Gi"
@@ -474,7 +502,7 @@ data:
                       container.args = container.command + container.args
                   container.command = ["tini", "--", "/entrypoint"]
                   pod.spec.containers[0] = container
-      {{ if .Values.global.logging.loggingSidecar.enabled }}
+      {{- if .Values.global.logging.loggingSidecar.enabled }}
                   # For sidecar logging we override the default entrypoint to redirect logs to
                   # files that are consumed by the sidecar container. The command ends by creating
                   # the file /var/log/sidecar-log-consumer/finished, which signals the sidecar log
@@ -505,18 +533,26 @@ data:
                       ' | python3 - """
                   )
                   log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "
-                  if container.args[0:3] == ["airflow", "tasks", "run"] or (int(version.split('.')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]):
+                  is_af2 = container.args[0:3] == ["airflow", "tasks", "run"]
+                  is_af3 = int(version.split('.')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]
+                  if is_af2 or is_af3:
                       container.command = ["tini", "--"]
                       new_args = ["bash", "-c"]
+                      # Airflow 3 writes structured task logs to /usr/local/airflow/logs/**/*.log,
+                      # which the sidecar already ships to Elasticsearch. Teeing stdout to out.log
+                      # would ingest every task log line a second time. Airflow 2 still needs the tee
+                      # because out.log is its only path to Elasticsearch after the broad log path was
+                      # version-gated out of the Airflow 2 sidecar config.
+                      redirect = log_cmd if is_af2 else " ; "
                       command_str = (
                           cmd_init
                           + " /entrypoint "
                           + shlex.join([str(arg) for arg in container.args])
-                          + log_cmd
+                          + redirect
                       )
                       new_args.append(command_str)
                       container.args = new_args
-      {{ end }}
+      {{- end }}
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
@@ -536,13 +572,13 @@ data:
           redis:
             # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
-            {{ if .Values.global.openshift.enabled }}
+            {{- if .Values.global.openshift.enabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end }}
+            {{- end }}
 
-          {{ if .Values.global.openshift.enabled }}
+          {{- if .Values.global.openshift.enabled }}
           # Statsd settings
           statsd:
             securityContexts:
@@ -567,16 +603,16 @@ data:
               pod:
                 runAsNonRoot: true
 
-          {{ end }}
+          {{- end }}
 
           # Pgbouncer settings
           pgbouncer:
-            {{ if .Values.global.openshift.enabled }}
+            {{- if .Values.global.openshift.enabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
             command: ["pgbouncer", "/etc/pgbouncer/pgbouncer.ini"]
-            {{ end }}
+            {{- end }}
             podDisruptionBudget:
               enabled: false
 
@@ -602,7 +638,7 @@ data:
           # to cleanup evicted/failed/succeeded pods.
           cleanup:
             enabled: true
-            {{/*
+            {{- /*
             Generate a deterministic random-ish decimal digit from the .Release.Name, which is used to generate
             the minute field of the cron schedule. This is effectively a splay seeded by the release name.
             This is used to spread the load of this job away from high-use minutes 0,15,30,45.
@@ -658,7 +694,18 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
-    updateRuntimeCheckEnabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
+    updateRuntimeCheck:
+      enabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
+    strictSchemaCheck:
+      enabled: {{ .Values.houston.strictSchemaCheck.enabled }}
+
+    operator:
+      adoption:
+        # Adoption requires operator mode to be enabled; only both together enable it.
+        enabled: {{ and .Values.global.airflowOperator.enabled .Values.global.airflowOperator.adoption.enabled }}
+
+    customRBAC:
+      enabled: {{ .Values.global.customRBAC.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |

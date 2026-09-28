@@ -1,8 +1,9 @@
 import ast
 
+import pytest
 import yaml
 
-from tests.utils.chart import render_chart
+from tests.utils.chart import find_key_paths, render_chart
 
 
 def common_test_cases(docs):
@@ -53,14 +54,10 @@ def test_houston_configmap_defaults():
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
 
     assert not prod["deployments"].get("authSideCar")
-    assert not prod["deployments"]["logging"].get("loggingSidecar")
 
     # Verify new unified feature flags
-    assert prod["deployments"]["logging"]["enabled"] is True
-    assert prod["deployments"]["logging"]["provider"] == "fluentd"
-    assert prod["deployments"]["logging"]["elasticsearch"]["enabled"] is True
-    assert prod["deployments"]["logging"]["elasticsearch"]["connection"]["port"] == 9200
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
+    assert prod["strictSchemaCheck"]["enabled"] is True
 
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
     git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
@@ -79,6 +76,53 @@ def test_houston_configmap_defaults():
     assert git_sync_images["gitDaemon"]["repository"] == "quay.io/astronomer/ap-git-daemon"
     assert git_sync_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync-relay"
     assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+    # certgenerator belongs in astronomer.images, not airflow.images (PR-3284)
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["repository"] == "quay.io/astronomer/ap-certgenerator"
+    assert certgen["tag"]
+    assert "certgenerator" not in af_images
+
+
+def test_houston_configmap_ldap_disabled_by_default():
+    """auth.ldap.enabled should be False in the baseline production.yaml, parallel to auth.local."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["auth"]["ldap"]["enabled"] is False
+    # Sibling auth providers must remain untouched.
+    assert prod["auth"]["local"]["enabled"] is False
+    assert prod["auth"]["openidConnect"]["auth0"]["enabled"] is False
+    assert prod["auth"]["github"]["enabled"] is True
+
+
+def test_houston_configmap_ldap_customer_override():
+    """Customer-supplied auth.ldap.* under houston.config must reach local-production.yaml."""
+    ldap_config = {
+        "enabled": True,
+        "host": "ldap.example.com",
+        "tls": {"mode": "starttls", "verifyServerCert": True},
+        "bindDn": "cn=admin,dc=example,dc=com",
+        "searchBase": "ou=people,dc=example,dc=com",
+        "groups": {
+            "enabled": True,
+            "reconcileTeams": True,
+            "manageSystemPermissions": {
+                "enabled": True,
+                "systemAdmin": ["cn=admins,ou=groups,dc=example,dc=com"],
+            },
+        },
+    }
+    docs = render_chart(
+        values={"astronomer": {"houston": {"config": {"auth": {"ldap": ldap_config}}}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    local_prod = yaml.safe_load(docs[0]["data"]["local-production.yaml"])
+    assert local_prod["auth"]["ldap"] == ldap_config
 
 
 def test_houston_configmap_has_hook_annotations():
@@ -231,7 +275,6 @@ def test_houston_configmap_with_config_syncer_disabled():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert "extraVolumeMounts" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
     assert "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
-    assert not prod_yaml["deployments"]["logging"].get("loggingSidecar")
 
 
 def test_houston_configmap_with_vector_index_prefix_defaults():
@@ -290,8 +333,56 @@ def test_houston_configmap_with_loggingsidecar_enabled():
         "name": "sidecar-log-consumer",
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
+        # global.logging.loggingSidecar.resources now has a real default (PINF-969)
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
+
+
+def test_houston_configmap_loggingsidecar_scopes_stdout_tee_to_airflow2():
+    """The pod_mutation_hook must only tee worker stdout to out.log for Airflow 2.
+
+    Airflow 3 writes structured task logs to /usr/local/airflow/logs/**/*.log which
+    the sidecar already ships, so applying the out.log tee to Airflow 3 workers
+    double-ingests every task log line into Elasticsearch. The wrapper (including the
+    finished-file termination shim) must still be applied to both versions."""
+    docs = render_chart(
+        values={
+            "global": {
+                "logging": {
+                    "loggingSidecar": {
+                        "enabled": True,
+                        "repository": "quay.io/astronomer/ap-vector",
+                        "tag": "0.22.3",
+                    },
+                },
+            },
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    als = yaml.safe_load(docs[0]["data"]["production.yaml"])["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+
+    # Version split is present.
+    assert 'is_af2 = container.args[0:3] == ["airflow", "tasks", "run"]' in als
+    assert (
+        'is_af3 = int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]'
+        in als
+    )
+    assert "if is_af2 or is_af3:" in als
+
+    # The tee is only wired in for Airflow 2; Airflow 3 gets a plain terminator.
+    assert 'redirect = log_cmd if is_af2 else " ; "' in als
+    assert "+ redirect" in als
+    # The old unconditional guard that appended log_cmd for both versions is gone.
+    assert "+ log_cmd" not in als
+
+    # Termination shim still applies to every KubernetesExecutor worker pod.
+    assert 'Path("/var/log/sidecar-log-consumer/finished").touch()' in als
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrides():
@@ -325,6 +416,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
         "image": image,
         "customConfig": False,
         "indexNamePrefix": "test-index-name-prefix-999",
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert image in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -359,6 +454,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -397,6 +496,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
         "image": image_name,
         "customConfig": False,
         "indexPattern": indexPattern,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
 
@@ -432,6 +535,10 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": True,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
 
@@ -496,6 +603,11 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
                 "valueFrom": {"secretKeyRef": {"name": "elastic-creds", "key": "ESPASS"}},
             },
         ],
+        # global.logging.loggingSidecar.resources now has a real default (PINF-969)
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
@@ -579,6 +691,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
         "image": "quay.io/astronomer/ap-vector:unittest-tag",
         "customConfig": False,
         "securityContext": securityContext,
+        "resources": {
+            "requests": {"cpu": "100m", "memory": "384Mi"},
+            "limits": {"cpu": "100m", "memory": "384Mi"},
+        },
     }
 
     assert "vector" in prod_yaml["deployments"]["logging"]["loggingSidecar"]["image"]
@@ -600,7 +716,7 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateRuntimeCheckEnabled"] is True
+    assert prod["updateRuntimeCheck"]["enabled"] is True
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
@@ -619,7 +735,45 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateRuntimeCheckEnabled"] is False
+    assert prod["updateRuntimeCheck"]["enabled"] is False
+
+
+def test_houston_configmap_strict_schema_check_enabled():
+    """Validate the houston configmap renders strictSchemaCheck.enabled: true."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "strictSchemaCheck": {"enabled": True},
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["strictSchemaCheck"]["enabled"] is True
+
+
+def test_houston_configmap_strict_schema_check_disabled():
+    """Validate the houston configmap renders strictSchemaCheck.enabled: false when disabled in values."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "strictSchemaCheck": {"enabled": False},
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["strictSchemaCheck"]["enabled"] is False
 
 
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
@@ -935,9 +1089,10 @@ def test_houston_configmap_pod_mutation_hook_airflow_compatibility():
     assert airflow3_pattern in airflow_local_settings, "Airflow 3.x task execution pattern should be supported"
     assert version_check in airflow_local_settings, "Version comparison logic should be present"
 
-    # Check that the complete condition includes both patterns
-    complete_condition = 'if container.args[0:3] == ["airflow", "tasks", "run"] or (int(version.split(\'.\')[0]) >= 3 and container.args[0:3] == ["python", "-m", "airflow.sdk.execution_time.execute_workload"]):'
-    assert complete_condition in airflow_local_settings, "Complete condition should include both Airflow 2.x and 3.x patterns"
+    # Check that the two patterns are combined via OR into the branch that triggers the redirect logic.
+    # (Written as named is_af2/is_af3 variables, not one inlined boolean expression.)
+    complete_condition = "if is_af2 or is_af3:"
+    assert complete_condition in airflow_local_settings, "Complete condition should combine both Airflow 2.x and 3.x checks"
 
     # Check that the logging command is present
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -953,7 +1108,7 @@ def test_houston_configmap_features_elasticsearch_defaults():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    es = prod["deployments"]["logging"]["elasticsearch"]
+    es = prod["deployments"]["helm"]["airflow"]["elasticsearch"]
     assert es["enabled"] is True
     assert es["connection"]["host"].endswith("-elasticsearch-nginx.default")
     assert es["connection"]["port"] == 9200
@@ -966,14 +1121,14 @@ def test_houston_configmap_features_elasticsearch_custom_logging():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    es = prod["deployments"]["logging"]["elasticsearch"]
+    es = prod["deployments"]["helm"]["airflow"]["elasticsearch"]
     assert es["enabled"] is True
     assert es["connection"]["host"].endswith("-external-es-proxy.default")
     assert es["connection"]["port"] == 9200
 
 
 def test_houston_configmap_features_grafana_defaults():
-    """Validate that metricsReporting.grafana.enabled is always true."""
+    """Validate that metricsReporting.grafana.enabled defaults to true."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -981,12 +1136,140 @@ def test_houston_configmap_features_grafana_defaults():
     assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is True
 
 
-def test_houston_configmap_features_logging_defaults():
-    """Validate that logging is emitted with defaults."""
+def test_houston_configmap_features_grafana_disabled():
+    """Validate that metricsReporting.grafana.enabled follows global.grafana.enabled."""
+    docs = render_chart(
+        values={"global": {"grafana": {"enabled": False}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    assert prod["deployments"]["metricsReporting"]["grafana"]["enabled"] is False
+
+
+def test_houston_configmap_no_flat_enabled_flags_under_deployments():
+    """Guard the uniform flag pattern (PLX-254): no flat *Enabled keys may
+    appear directly under deployments in the rendered production.yaml.
+    New feature flags must be nested as <feature>.enabled."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    log = prod["deployments"]["logging"]
-    assert log["enabled"] is True
-    assert log["provider"] == "fluentd"
+    deployments = prod["deployments"]
+
+    violations = [key for key, value in deployments.items() if key.endswith("Enabled") and isinstance(value, bool)]
+    assert violations == [], (
+        f"Flat *Enabled keys found under deployments: {violations}. "
+        "Wrap each in a named object: deployments.<feature>.enabled: true"
+    )
+
+
+def test_houston_configmap_no_vector_enabled_key():
+    """Guard PLX-287: global.vectorEnabled must not reappear in the rendered
+    ConfigMap. The sidecar logging toggle lives at loggingSidecar.enabled."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert find_key_paths(prod, "vectorEnabled") == [], (
+        "Legacy vectorEnabled key reappeared in rendered ConfigMap. Use loggingSidecar.enabled instead."
+    )
+
+
+def test_houston_configmap_certgenerator_in_astronomer_images():
+    """certgenerator image must appear under astronomer.images in the houston configmap (PR-3284).
+
+    certgenerator is an Astronomer platform component, so Houston should resolve
+    its image from the astronomer.images block, not the airflow.images block.
+    """
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["repository"] == "quay.io/astronomer/ap-certgenerator"
+    af_images = prod["deployments"]["helm"]["airflow"]["images"]
+    assert "certgenerator" not in af_images, "certgenerator must not appear under airflow.images; it belongs in astronomer.images"
+
+
+def test_houston_configmap_certgenerator_custom_tag():
+    """Custom global.certgenerator.images.tag is reflected in astronomer.images.certgenerator."""
+    docs = render_chart(
+        values={"global": {"certgenerator": {"images": {"tag": "custom-999"}}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    certgen = prod["deployments"]["helm"]["astronomer"]["images"]["certgenerator"]
+    assert certgen["tag"] == "custom-999"
+    # Must remain absent from airflow images even when a custom tag is set
+    assert "certgenerator" not in prod["deployments"]["helm"]["airflow"]["images"]
+
+
+@pytest.mark.parametrize(
+    "values,expected",
+    [
+        # Adoption requires operator mode; both flags must be true. airflowOperator.enabled
+        # defaults to false, so adoption is off unless operator mode is turned on.
+        ({}, False),
+        ({"global": {"airflowOperator": {"enabled": True}}}, True),
+        ({"global": {"airflowOperator": {"enabled": True, "adoption": {"enabled": True}}}}, True),
+        ({"global": {"airflowOperator": {"enabled": True, "adoption": {"enabled": False}}}}, False),
+        ({"global": {"airflowOperator": {"enabled": False, "adoption": {"enabled": True}}}}, False),
+    ],
+    ids=[
+        "default-operator-off",
+        "operator-on-adoption-default",
+        "both-on",
+        "operator-on-adoption-off",
+        "operator-off-adoption-on",
+    ],
+)
+def test_houston_configmap_operator_adoption(values, expected):
+    """production.yaml adoption is the AND of global.airflowOperator.enabled and
+    global.airflowOperator.adoption.enabled — both must be true (PLX-500)."""
+    docs = render_chart(
+        values=values,
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["operator"]["adoption"]["enabled"] is expected
+
+
+def test_houston_configmap_operator_mode_reflects_operator_enabled():
+    """global.airflowOperator.enabled drives deployments.mode.operator.enabled, and gates
+    adoption regardless of the adoption flag."""
+    docs = render_chart(
+        values={
+            "global": {
+                "airflowOperator": {"enabled": True, "adoption": {"enabled": False}},
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["deployments"]["mode"]["operator"]["enabled"] is True
+    assert prod["operator"]["adoption"]["enabled"] is False
+
+
+@pytest.mark.parametrize(
+    "values,expected",
+    [
+        ({}, False),
+        ({"global": {"customRBAC": {"enabled": True}}}, True),
+        ({"global": {"customRBAC": {"enabled": False}}}, False),
+    ],
+    ids=["default-off", "on", "off"],
+)
+def test_houston_configmap_custom_rbac(values, expected):
+    """global.customRBAC.enabled drives whether Houston mints granular permissions and
+    exposes the role builder. Commander reads the same chart value to install the Airflow 2
+    security manager that enforces them, so the two halves cannot be configured apart."""
+    docs = render_chart(
+        values=values,
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+    assert prod["customRBAC"]["enabled"] is expected

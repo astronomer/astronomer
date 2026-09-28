@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.17.27
+airflowChartVersion: 1.18.11
 
 nodeSelector: {}
 affinity: {}
@@ -15,49 +15,69 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 2.0.2
+    tag: 2.2.1
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.0.0-7
+    tag: 3.1.1-18
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 2.0.3
+    tag: 2.2.0
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 2.0.1
+    tag: 2.1.12
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 1.1.2
+    tag: 2.0.26
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.53.0"
+    tag: "0.58.0"
+    pullPolicy: IfNotPresent
+  # Unlike navigator/dp-link, the MCP server is a separate binary with its own image.
+  mcpServer:
+    repository: quay.io/astronomer/ap-mcp-server
+    tag: "1.0.0"
     pullPolicy: IfNotPresent
 
-
 securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
+  runAsUser: 1000
+
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
 
 astroUI:
+  # ap-astro-ui runs as UID 101; override the chart-wide runAsUser default for this pod.
+  securityContext:
+    runAsUser: 101
   replicas: 2
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   readinessProbe: {}
   livenessProbe: {}
+  startupProbe: {}
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: false
     # Annotations to add to the service account
@@ -95,6 +115,7 @@ houston:
     # initialDelaySeconds: 30
     # periodSeconds: 10
     # failureThreshold: 10
+  startupProbe: {}
 
   # Houston can regenerate its certificate authority on each 'helm upgrade'
   # or leave it alone. If this is set to 'true', then all users are logged
@@ -104,8 +125,7 @@ houston:
   regenerateCaEachUpgrade: false
   # Houston datastore
   backendSecretName: ~
-  backendConnection:
-    {}
+  backendConnection: {}
     # user: ~
     # pass: ~
     # host: ~
@@ -114,8 +134,7 @@ houston:
 
   # Airflow backends
   airflowBackendSecretName: ~
-  airflowBackendConnection:
-    {}
+  airflowBackendConnection: {}
     # user: ~
     # pass: ~
     # host: ~
@@ -127,7 +146,20 @@ houston:
   jwtSigningKeySecretName: ~
   jwtSigningCertificateSecretName: ~
 
+  # Houston JWT (JWKS) signing keypair generation. Default true generates a
+  # self-signed keypair at install for single-CP mode. In HA mode
+  # (global.controlPlaneHA.enabled: true), this flag is overridden and generation
+  # is SKIPPED — Secrets must be pre-provisioned in the release namespace.
+  # Exception: set global.controlPlaneHA.bootstrapJwks: true on the FIRST CP
+  # install of a fresh HA cluster to generate the shared material once; copy the
+  # resulting Secrets to subsequent CPs before installing them.
+  jwks:
+    generation:
+      enabled: true
+
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -151,13 +183,13 @@ houston:
   #   secretKey: "connection"
   secret: []
 
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
@@ -173,6 +205,7 @@ houston:
     replicas: 2
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
     hostAliases: []
 
     # Dispatcher configuration for houston-worker
@@ -228,9 +261,11 @@ houston:
     # Vector sidecar for audit log shipping from Houston API and worker.
     # When enabled, a Vector sidecar container is added to both Houston API
     # and Houston Worker pods, along with a log wrapper script that redirects
-    # stdout/stderr to files which Vector reads and ships to the configured sink(s).
-    # CloudWatch, GCP Cloud Logging, Elasticsearch, and extra sinks can be enabled
-    # together when desired.
+    # stdout/stderr to files which Vector reads and ships to the configured sink.
+    # Choose exactly one supported sink for Houston audit logging:
+    # - CloudWatch on EKS
+    # - GCP Cloud Logging on GKE
+    # - External Elasticsearch from EKS or GKE
     loggingSidecar:
       enabled: false
 
@@ -246,6 +281,10 @@ houston:
       securityContext:
         runAsNonRoot: true
         allowPrivilegeEscalation: false
+        runAsUser: 65532
+        capabilities:
+          drop:
+            - ALL
 
       resources:
         requests:
@@ -255,29 +294,35 @@ houston:
           memory: "256Mi"
           cpu: "200m"
 
-      # AWS CloudWatch Logs configuration
+      # AWS CloudWatch Logs configuration for Houston audit logging on EKS.
       cloudwatch:
         enabled: false
         region: ""
         logGroupName: "/astronomer/houston/audit"
-        # Use IRSA (IAM Roles for Service Accounts) for authentication.
+        # Use IRSA (IAM Roles for Service Accounts) for authentication on EKS.
         # When true, no access keys are needed; the service account must be
         # annotated with eks.amazonaws.com/role-arn via houston.serviceAccount.annotations.
         useIRSA: true
         # Secret containing aws_access_key_id and aws_secret_access_key keys.
-        # Only used when useIRSA is false.
+        # Use this fallback when IRSA is unavailable for the EKS deployment.
         secretName: "houston-cloudwatch-creds"
 
-      # GCP Cloud Logging (formerly Stackdriver) configuration
+      # GCP Cloud Logging configuration for Houston audit logging on GKE.
       gcpCloudLogging:
         enabled: false
         # GCP project ID to which logs are published (required).
         projectId: ""
-        # Custom log ID that identifies this log stream in Cloud Logging.
+        # Custom log ID that identifies this Houston audit stream in Cloud Logging.
         logId: "houston-audit"
         # Monitored resource type. "k8s_container" is the standard for GKE pods.
         resource:
           type: "k8s_container"
+          # Required for k8s_container resources. This should be the GKE
+          # cluster location, for example "us-east4" or "us-east4-b".
+          location: ""
+          # Required for k8s_container resources. This should match the GKE
+          # cluster name as it appears in Cloud Logging.
+          clusterName: ""
         # Map the "level" field in log entries to GCP severity levels.
         severityKey: "level"
         # Use GKE Workload Identity for authentication (recommended).
@@ -286,11 +331,11 @@ houston:
         # houston.serviceAccount.annotations.
         useWorkloadIdentity: true
         # Name of the K8s Secret containing a GCP service account JSON key file.
-        # Only used when useWorkloadIdentity is false.
+        # Use this fallback when Workload Identity is unavailable for the GKE deployment.
         credentialsSecretName: "houston-gcp-logging-creds"
         credentialsSecretKey: "key.json"
 
-      # Elasticsearch configuration
+      # Elasticsearch configuration for Houston audit logging to an external cluster.
       elasticsearch:
         enabled: false
         # External endpoint URL for the Elasticsearch cluster.
@@ -307,11 +352,6 @@ houston:
           enabled: false
           caSecretName: ""
 
-      # Additional Vector sinks to append under the `sinks:` section.
-      # Provide as a YAML snippet with sink keys at the same indentation level
-      # as other sinks (e.g., `my_sink:`). Supports templating via `tpl`.
-      extraSinks: ""
-
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
   # This runs as a Job after helm upgrades.
@@ -321,6 +361,8 @@ houston:
 
     # Only run on deployments marked as canary
     canary: false
+
+    startupProbe: {}
 
   # Cleanup deployments that have been soft-deleted in Houston
   # This runs as a CronJob
@@ -342,48 +384,26 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
-  # Cleanup airflow db data
-  # This runs as a CronJob
+  # Airflow db cleanup (PLX-930): no longer a built-in CronJob. `enabled` still
+  # gates the cleanupAirflowDb API/Config Governance feature flag
+  # (deployments.deploymentLifecycle.cleanupAirflowDb.enabled) -- call the
+  # cleanupAirflowDb GraphQL query directly (pass perClusterConfig: true for
+  # the same per-cluster behavior the old CronJob had) on whatever schedule
+  # you need. See houston-api's cleanupAirflowDb resolver for the full set of
+  # per-call arguments (olderThan, dryRun, dropArchives, provider,
+  # bucketName, providerEnvSecretName, tables, etc.) that used to be
+  # fixed Helm values here.
   cleanupAirflowDb:
-    # Enable cleanup CronJob
+    # Enable the cleanupAirflowDb API feature flag
     enabled: false
-
-    # Default run is at 5:23 every morning https://crontab.guru/#23_5_*_*_*
-    schedule: "23 5 * * *"
-
-    # Cleanup deployments older than this many days
-    olderThan: 365
-
-    # Output path of archived data csv export
-    outputPath: "/tmp"
-
-    # Delete archived tables
-    dropArchives: true
-
-    # Print out the deployments that should be cleaned up and skip actual cleanup
-    dryRun: false
-
-    # Name of file storage provider, supported providers - aws/azure/gcp/local
-    provider: local
-
-    # Name of the provider bucket name / local file path
-    bucketName: "/tmp"
-
-    # Airflow provider connection id to connect to provider bucket, read more - https://airflow.apache.org/docs/apache-airflow/stable/howto/connection.html
-    providerEnvSecretName: ""
-
-    # Run cleanup on specific table or list of tables in a comma separated format
-    tables: ""
-
-    readinessProbe: {}
-    livenessProbe: {}
 
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:
     # Run at 23:40 every night
-    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
+    schedule: "40 23 * * *" # https://crontab.guru/#40_23_*_*_*
 
     # Cleanup deployments older than this many days
     olderThan: 90
@@ -404,13 +424,14 @@ houston:
     enabled: true
 
     # Run at 23:11 every night
-    schedule: "11 23 * * *"  # https://crontab.guru/#11_23_*_*_*
+    schedule: "11 23 * * *" # https://crontab.guru/#11_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # Cleanup cluster audits in Houston
   # This runs as a CronJob
@@ -419,12 +440,13 @@ houston:
     enabled: true
 
     # Run at 23:49 every night
-    schedule: "49 23 * * *"  # https://crontab.guru/#49_23_*_*_*
+    schedule: "49 23 * * *" # https://crontab.guru/#49_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
@@ -440,6 +462,7 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   # Check for Astronomer Runtime Updates
   # This runs as a CronJob
@@ -455,6 +478,11 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
+
+  # When true, Houston rejects deployment config overrides that fail JSON-schema validation.
+  strictSchemaCheck:
+    enabled: true
 
   # Populate daily task usage data
   # This runs as a CronJob
@@ -487,6 +515,7 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
   runtimeReleasesConfigMapName: ~
   runtimeReleasesConfig:
@@ -515,6 +544,12 @@ houston:
   dbMigration:
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
+
+  refreshCpChartVersion:
+    readinessProbe: {}
+    livenessProbe: {}
+    startupProbe: {}
 
   bootstrapper:
     readinessProbe: {}
@@ -527,6 +562,7 @@ houston:
   taskUsageMetrics:
     readinessProbe: {}
     livenessProbe: {}
+    startupProbe: {}
 
 # -- DP-Link configuration for data plane linking
 dpLink:
@@ -554,8 +590,8 @@ dpLink:
   #   secretKey: "connection"
   secret: []
 
-  # -- Enable DP-Link deployment
-  # @default -- true
+  # -- Enable DP-Link deployment. Only applicable when global.plane.mode is "control" --
+  # dp-link never renders in "data" or "unified" mode regardless of this value.
   enabled: true
 
   # -- Service account configuration
@@ -566,6 +602,8 @@ dpLink:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Number of DP-Link replicas
   # @default -- 3
@@ -629,11 +667,11 @@ dpLink:
   # -- Readiness probe configuration
   readinessProbe: {}
 
+  # -- Startup probe configuration
+  startupProbe: {}
+
   # -- Arguments to pass to the container
   args: ~
-
-  # -- Additional environment variables
-  env: []
 
   # -- Volume mounts
   volumeMounts: ~
@@ -646,8 +684,16 @@ configSyncer:
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
   securityContext: {}
-  resources: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -657,6 +703,7 @@ configSyncer:
     name: ""
   readinessProbe: {}
   livenessProbe: {}
+  startupProbe: {}
 
 flightDeck:
   # -- Enable the flightDeck feature
@@ -674,7 +721,6 @@ flightDeck:
     livenessProbe: {}
     readinessProbe: {}
 
-
 commander:
   replicas: 2
   env: []
@@ -689,8 +735,7 @@ commander:
 
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources:
-    {}
+  resources: {}
     # limits:
     #  cpu: 100m
     #  memory: 128Mi
@@ -711,6 +756,10 @@ commander:
     #   port: {{ .Values.ports.commanderHTTP }}
     # initialDelaySeconds: 10
     # periodSeconds: 10
+  startupProbe: {}
+  # Auth sidecar (nginx) probe overrides
+  authProxy:
+    startupProbe: {}
   podAnnotations: {}
 
   # Add custom annotation for commander ingress
@@ -724,6 +773,8 @@ commander:
   upgradeTimeout: 600
 
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -737,6 +788,9 @@ commander:
   # Add extra containers to your commander deployment.
   extraContainers: []
 
+  # Add extra volumesMounts to your commander deployment.
+  extraVolumeMounts: []
+
   # Add extra volumes to your commander deployment.
   extraVolumes: []
 
@@ -748,6 +802,37 @@ commander:
     retryAttempts: 2
     retryDelay: 10
     extraEnv: []
+    # -- Service account configuration
+    serviceAccount:
+      # -- Specifies whether a service account should be created
+      create: true
+      # -- Annotations to add to the service account
+      annotations: {}
+      # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+      name: ""
+      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+      automountServiceAccountToken: true
+
+  # -- Commander's own signing keypair, used to issue JWTs to dataplane services.
+  signingKey:
+    # -- Regenerate the keypair on every upgrade. Default false keeps a stable key
+    # (pre-install only) so a consumer's trusted public key is not rotated out from
+    # under it on upgrades.
+    regenerateKeyEachUpgrade: false
+
+  # -- Config for the JWTs commander mints for laminar components.
+  laminar:
+    # -- Hypervisor JWT contract. jwtIssuer / jwtAudience must match the
+    # hypervisor's LAMINAR_JWT_ISSUER / _AUDIENCE (set in the laminar sub-chart).
+    # Hypervisor-only — the laminar api-server uses the Houston user-facing JWT,
+    # not this token.
+    hypervisor:
+      jwtIssuer: local
+      jwtAudience: astronomer-ee
+      port: 8000
+      # -- Interval in seconds between hibernation-status polls of the laminar hypervisor.
+      pollIntervalSecs: 30
+
 
 pilot:
   # -- Enable Pilot deployment (data plane only)
@@ -774,24 +859,29 @@ pilot:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Pod annotations
   podAnnotations: {}
 
   # -- Resource requests and limits
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 250m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
 
   # -- Liveness probe configuration
   livenessProbe: {}
 
   # -- Readiness probe configuration
   readinessProbe: {}
+
+  # -- Startup probe configuration
+  startupProbe: {}
 
   # -- Extra environment variables
   env: []
@@ -831,8 +921,8 @@ pilot:
   maxAttemptsPerLease: 3
 
   # -- Maximum retry attempts per flight
-  # @default -- 25
-  maxAttemptsPerFlight: 25
+  # @default -- 5
+  maxAttemptsPerFlight: 15
 
   # -- Retry base interval in milliseconds
   # @default -- 250
@@ -895,6 +985,8 @@ navigator:
     annotations: {}
     # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
     name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
@@ -924,13 +1016,8 @@ navigator:
   # -- Custom readiness probe configuration (overrides default)
   readinessProbe: {}
 
-  # -- Extra environment variables
-  env: []
-
-  # Component Flag
-  # -- Enable Navigator feature flag passed to the application
-  # @default -- false
-  enabled: false
+  # -- Custom startup probe configuration (overrides default)
+  startupProbe: {}
 
   # Failover request reconcile loop knobs
   # -- Interval in seconds between failover request reconciler runs
@@ -988,17 +1075,113 @@ navigator:
   # @default -- 604800
   flightCleanupTtl: 604800
 
+mcpServer:
+  # -- Enable the MCP server deployment (control plane or unified mode only)
+  # @default -- false
+  enabled: false
+
+  # -- Number of MCP server replicas. The server is stateless (no session affinity, no
+  # shared cache) by design, so this is safely > 1.
+  # @default -- 2
+  replicas: 2
+
+  # -- Pod annotations
+  podAnnotations: {}
+
+  # -- Service account configuration
+  serviceAccount:
+    # -- Specifies whether a service account should be created
+    create: true
+    # -- Annotations to add to the service account
+    annotations: {}
+    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
+    name: ""
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
+
+  # -- Tool groups to enable (internal/toolreg.Group in apc-mcp-server). Joined into the
+  # MCP_ENABLED_GROUPS env var — see mcpServer.enabledGroups helper. Disabling a group here
+  # removes its tools from the catalog entirely, not just from what's visible to a given caller.
+  #
+  # This is a REPLACEMENT list: naming one opt-in group here means every other group the
+  # install should expose must be named too, or it's silently disabled. Setting
+  # enabledGroups: [platform_disruptive] loses reads and writes. The core group is always
+  # enabled regardless of this list and does not need naming.
+  #
+  # The five groups: core (always on, not listed here), platform_read, platform_write,
+  # platform_disruptive (contract changes — executor/runtime/DAG-mechanism — off by default),
+  # platform_destroy (deletion, off by default). platform_disruptive and platform_destroy are
+  # deliberately absent from the default below so a customer can opt into agent-driven runtime
+  # upgrades without also opting into agent-driven deletion.
+  # @default -- ["platform_read", "platform_write"]
+  enabledGroups:
+    - platform_read
+    - platform_write
+
+  # -- Tool names to disable outright (internal/config.DisabledTools in apc-mcp-server). Joined
+  # into the MCP_DISABLED_TOOLS env var. This is the per-tool kill switch: it overrides
+  # everything, including the always-on core group and enabledGroups above, since naming a tool
+  # is deliberate in a way that omitting a group from enabledGroups is not.
+  # @default -- []
+  disabledTools: []
+
+  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  env: []
+
+  # -- Cache the nginx auth_request subrequest to Houston, so a burst of calls from the
+  # same caller doesn't re-authenticate on every single one. A latency/load knob, not a
+  # security knob: every downstream tool call still re-authorizes against live Houston.
+  authCache:
+    # @default -- true
+    enabled: true
+    # -- How long a successful auth check is cached.
+    # @default -- 5m
+    validSuccess: "5m"
+    # -- How long a denied/failed auth check is cached — short, so a fixed credential
+    # (e.g. a just-rotated service-account key) stops failing quickly.
+    # @default -- 1m
+    validFailure: "1m"
+
+  # For example
+  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
+  # and then set:
+  #
+  # secret:
+  # - envName: "SOME_ENV_VAR"
+  #   secretName: "my-secret"
+  #   secretKey: "connection"
+  secret: []
+
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # -- Custom liveness probe configuration (overrides default: httpGet /healthz)
+  livenessProbe: {}
+
+  # -- Custom readiness probe configuration (overrides default: httpGet /readyz)
+  readinessProbe: {}
+
+  # -- Custom startup probe configuration (overrides default: httpGet /readyz)
+  startupProbe: {}
+
 registry:
+  enabled: true
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False
   replicas: 1
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 
   livenessProbe: {}
     # httpGet:
@@ -1015,14 +1198,19 @@ registry:
     # initialDelaySeconds: 10
     # periodSeconds: 10
     # timeoutSeconds: 5
+  startupProbe: {}
 
   podSecurityContext:
     fsGroup: 1000
     runAsGroup: 1000
     runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
   extraEnv: []
 
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: false
     # Annotations to add to the service account
@@ -1095,3 +1283,5 @@ ports:
   registryScrape: 5001
   commanderSidecarHTTP: 8080
   commanderSidecarGRPC: 9090
+  # Matches apc-mcp-server's LISTEN_ADDR default (cmd/apc-mcp-server/main.go).
+  mcpServerHTTP: 8080

@@ -5,6 +5,7 @@ astronomer:
     enabled: true
   navigator:
     enabled: true
+  # mcpServer omitted: conflicts with authSidecar, set below.
   houston:
     cleanupAirflowDb:
       enabled: true
@@ -47,7 +48,8 @@ global:
     addToContainerd: true
     enabled: true
   prometheusPostgresExporterEnabled: true
-  rbacEnabled: true
+  rbac:
+    enabled: true
   taskUsageMetricsEnabled: true
 nats:
   nats:

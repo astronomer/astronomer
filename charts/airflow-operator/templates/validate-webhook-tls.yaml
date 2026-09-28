@@ -1,0 +1,20 @@
+{{- /*
+Airflow Operator webhook TLS value validation.
+
+The webhook server needs a TLS certificate from exactly one source: either
+cert-manager provisions it (certManager.enabled) or the operator supplies its
+own (webhooks.useCustomTlsCerts).
+*/ -}}
+{{- if (include "operator.enabled" .) }}
+{{- if and (not .Values.certManager.enabled) (not .Values.webhooks.useCustomTlsCerts) }}
+{{- fail "airflow-operator: the webhook needs a TLS certificate source — set certManager.enabled=true (default) or webhooks.useCustomTlsCerts=true; they cannot both be disabled" }}
+{{- end }}
+{{- if .Values.webhooks.useCustomTlsCerts }}
+{{- if not .Values.webhooks.customCertsSecretName }}
+{{- fail "airflow-operator: webhooks.customCertsSecretName is required when webhooks.useCustomTlsCerts is true" }}
+{{- end }}
+{{- if not .Values.webhooks.caBundle }}
+{{- fail "airflow-operator: webhooks.caBundle is required when webhooks.useCustomTlsCerts is true" }}
+{{- end }}
+{{- end }}
+{{- end }}

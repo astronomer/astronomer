@@ -2,8 +2,13 @@
 ###############################
 ## external-secrets operator ##
 ###############################
-{{- if eq .Values.global.plane.mode "data" }}
+{{- if (include "external-secrets.enabled" .) }}
 {{- include "external-secrets.reconciler-sanity-test" . }}
+{{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}
+{{- $useClusterRoles := and .Values.global.rbac.enabled .Values.global.clusterRoles (not $useRoles )}}
+{{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
+{{- $namespaces = append $namespaces .Release.Namespace }}
+{{- $namespaceList := join "," $namespaces }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,9 +40,6 @@ spec:
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
       {{- end }}
       labels:
-        tier: dp-failover
-        component: {{ template "external-secrets.name" . }}
-        release: {{ .Release.Name }}
         {{- include "external-secrets.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
@@ -52,7 +54,7 @@ spec:
         {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "external-secrets.serviceAccountName" . }}
-      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
       {{- if (semverCompare ">= 1.33-0" .Capabilities.KubeVersion.Version) }}
       {{- if kindIs "bool" .Values.hostUsers }}
       hostUsers: {{ .Values.hostUsers }}
@@ -80,7 +82,11 @@ spec:
           {{- if .Values.scopedNamespace }}
           - --namespace={{ .Values.scopedNamespace }}
           {{- end }}
-          {{- if and .Values.scopedNamespace .Values.scopedRBAC }}
+          {{- if or $useRoles .Values.watchNamespaces }}
+          - --watch-namespaces={{ $namespaceList }}
+          - --enable-secrets-caching=true
+          {{- end }}
+           {{- if or (and .Values.scopedNamespace .Values.scopedRBAC) .Values.watchNamespaces (not $useClusterRoles) }}
           - --enable-cluster-store-reconciler=false
           - --enable-cluster-external-secret-reconciler=false
           - --enable-cluster-push-secret-reconciler=false

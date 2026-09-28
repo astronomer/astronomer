@@ -1,6 +1,7 @@
 ########################################
 ## Prometheus Federate Ingress ##
 ########################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -16,10 +17,10 @@ metadata:
     {{- if .Values.global.authSidecar.enabled }}
     {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
     {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     {{- end }}
@@ -44,4 +45,5 @@ spec:
                 name: {{ template "prometheus.fullname" . }}-prom-proxy
                 port:
                   name: http
+{{- end }}
 {{- end }}

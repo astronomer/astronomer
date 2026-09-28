@@ -92,12 +92,23 @@ class TestIngress:
         assert all(doc["kind"] == "Ingress" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
 
+    def test_global_disabled_overrides(self, kube_version):
+        """global.ingress.enabled=false disables Ingress templates rendered by default from the platform."""
+        # perHostIngress enabled so the most ingresses would otherwise render (see
+        # test_single_ingress_per_host, which counts 8 with the gate on).
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"ingress": {"enabled": False}, "perHostIngress": {"enabled": True}}},
+        )
+        ingresses = [doc for doc in docs if doc["kind"].lower() == "Ingress".lower()]
+        assert not ingresses
+
     def test_prometheus_federate_ingress(self, kube_version):
         """Test prometheus federate ingress configuration"""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/prometheus/templates/ingress.yaml", "charts/prometheus/templates/prometheus-federate-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data", "domainPrefix": "dp01"}}},
         )
 
         assert len(docs) == 2
@@ -169,6 +180,36 @@ class TestIngress:
         assert "example.com" in tls_hosts
         assert "app.example.com" in tls_hosts
 
+    def test_public_registry_ingress_not_rendered_when_registry_disabled_in_data(self, kube_version):
+        """disables registry when flag is disabled when on data mode."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}},
+                "astronomer": {"registry": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 0
+
+    def test_public_registry_ingress_renders_in_control_when_registry_disabled(self, kube_version):
+        """disables registry when flag is disabled when on control mode.."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"registry": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        hosts = [rule["host"] for rule in docs[0]["spec"]["rules"]]
+        assert "registry.example.com" not in hosts
+        assert "example.com" in hosts
+        assert "app.example.com" in hosts
+
     @pytest.mark.parametrize(
         ("mode", "expected_astro_ui", "expected_registry", "expected_rule_count", "expected_hosts"),
         [
@@ -210,3 +251,134 @@ class TestIngress:
         if expected_astro_ui:
             assert "nginx.ingress.kubernetes.io/configuration-snippet" in annotations
             assert "app.example.com" in annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+
+    def test_astro_ui_ingress_with_tls_secret(self, kube_version):
+        """Test that astro-ui per-host ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "my-tls-secret",
+                    "perHostIngress": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml"],
+        )
+
+        assert len(docs) == 2
+
+        astroui_ingress = docs[0]
+        tls = astroui_ingress["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert "app.example.com" in tls[0]["hosts"]
+
+        common_ingress = docs[1]
+        tls = common_ingress["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert "example.com" in tls[0]["hosts"]
+
+    def test_astro_ui_ingress_without_tls_secret(self, kube_version):
+        """Test that astro-ui per-host ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "",
+                    "perHostIngress": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml"],
+        )
+
+        assert len(docs) == 2
+        assert "tls" not in docs[0]["spec"]
+        assert "tls" not in docs[1]["spec"]
+
+    def test_registry_ingress_with_tls_secret(self, kube_version):
+        """Test that registry per-host ingress includes tls with hosts when tlsSecret is set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "my-tls-secret",
+                    "perHostIngress": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/registry/registry-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        tls = docs[0]["spec"]["tls"]
+        assert len(tls) == 1
+        assert tls[0]["secretName"] == "my-tls-secret"
+        assert "hosts" in tls[0]
+        assert "registry.example.com" in tls[0]["hosts"]
+
+    def test_registry_ingress_without_tls_secret(self, kube_version):
+        """Test that registry per-host ingress does not include tls when tlsSecret is empty."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "tlsSecret": "",
+                    "perHostIngress": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/registry/registry-ingress.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert "tls" not in docs[0]["spec"]
+
+    def test_registry_name_per_host_ingress_overrides(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"perHostIngress": {"enabled": True}},
+                "astronomer": {"registry": {"fullnameOverride": "custom-registry"}},
+            },
+            show_only=[
+                "charts/astronomer/templates/registry/registry-ingress.yaml",
+                "charts/astronomer/templates/ingress.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        expected_rules_v1 = json.loads(
+            """
+                [{"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                {"service":{"name":"custom-registry","port":{"name":"registry-http"}}}}]}}]
+                """
+        )
+        assert docs[0]["spec"]["rules"] == expected_rules_v1
+
+    def test_registry_name_common_ingress_overrides(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"registry": {"fullnameOverride": "custom-registry"}},
+            },
+            show_only=[
+                "charts/astronomer/templates/registry/registry-ingress.yaml",
+                "charts/astronomer/templates/ingress.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        expected_rules_v1 = json.loads(
+            """
+                    [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                    {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+                    {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                    {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+                    {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+                    {"service":{"name":"custom-registry","port":{"name":"registry-http"}}}}]}}]
+                    """
+        )
+        assert docs[0]["spec"]["rules"] == expected_rules_v1

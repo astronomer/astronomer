@@ -64,6 +64,12 @@ class TestAstronomerPilot:
         # Command is 'commander pilot'
         assert pilot["command"] == ["commander", "pilot"]
 
+        # Has a real default resources block, not an empty one
+        assert pilot["resources"] == {
+            "limits": {"cpu": "250m", "memory": "512Mi"},
+            "requests": {"cpu": "100m", "memory": "256Mi"},
+        }
+
     def test_pilot_deployment_env_vars_defaults(self, kube_version):
         """Test that pilot deployment exposes all expected env vars with defaults."""
         docs = render_chart(
@@ -92,7 +98,7 @@ class TestAstronomerPilot:
 
         # Retry knobs
         assert env_vars["PILOT_MAX_ATTEMPTS_PER_LEASE"] == "3"
-        assert env_vars["PILOT_MAX_ATTEMPTS_PER_FLIGHT"] == "25"
+        assert env_vars["PILOT_MAX_ATTEMPTS_PER_FLIGHT"] == "15"
         assert env_vars["PILOT_RETRY_BASE_INTERVAL_MS"] == "250"
         assert env_vars["PILOT_RETRY_MAX_INTERVAL_MS"] == "5000"
         assert env_vars["PILOT_RETRY_COOLOFF_SECONDS"] == "30"
@@ -214,7 +220,7 @@ class TestAstronomerPilot:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "rbacEnabled": True,
+                    "rbac": {"enabled": True},
                 },
                 "astronomer": {"pilot": {"enabled": True}},
             },
@@ -232,7 +238,7 @@ class TestAstronomerPilot:
             values={
                 "global": {
                     "plane": {"mode": "data"},
-                    "rbacEnabled": False,
+                    "rbac": {"enabled": False},
                 },
                 "astronomer": {"pilot": {"enabled": True}},
             },
@@ -345,3 +351,45 @@ class TestAstronomerPilot:
             "name": "release-name-flightdeck-backend",
             "key": "connection",
         }
+
+    def test_pilot_namespace_pools_config_disabled(self, kube_version):
+        """Test that commander manual namespace config feature is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"pilot": {"enabled": True}},
+                "global": {
+                    "namespaceManagement": {
+                        "namespacePools": {
+                            "enabled": False,
+                        }
+                    }
+                },
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        commander_env = get_env_vars_dict(c_by_name["pilot"]["env"])
+        assert commander_env.get("COMMANDER_NAMESPACE_POOLS_ENABLED") == "false"
+
+    def test_pilot_namespace_pools_config_enabled(self, kube_version):
+        """Test that commander manual namespace config feature is enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"pilot": {"enabled": True}},
+                "global": {
+                    "namespaceManagement": {
+                        "namespacePools": {
+                            "enabled": True,
+                        }
+                    }
+                },
+            },
+            show_only=self.show_only,
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        commander_env = get_env_vars_dict(c_by_name["pilot"]["env"])
+        assert commander_env.get("COMMANDER_NAMESPACE_POOLS_ENABLED") == "true"

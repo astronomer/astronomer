@@ -2,7 +2,7 @@
 ## Registry NetworkPolicy
 ################################
 {{- if .Values.global.networkPolicy.enabled }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "registry.enabled" .) "true" }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -22,7 +22,7 @@ spec:
   podSelector:
     matchLabels:
       tier: astronomer
-      component: registry
+      component: {{ template "registry.name" . }}
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
@@ -57,6 +57,11 @@ spec:
     - podSelector:
         matchLabels:
           tier: astronomer
+          component: houston-cp-refresh
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
           component: houston
           release: {{ .Release.Name }}
     - podSelector:
@@ -79,11 +84,6 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-populate-hourly-ta-metrics
-    - podSelector:
-        matchLabels:
-          tier: astronomer
-          release: {{ .Release.Name }}
-          component: houston-cleanup-airflow-db
     - podSelector:
         matchLabels:
           tier: astronomer

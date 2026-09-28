@@ -3,11 +3,36 @@ import re
 import pytest
 
 from tests import k8s_version_too_new, k8s_version_too_old
-from tests.utils import get_all_features, get_containers_by_name
+from tests.utils import (
+    get_all_features,
+    get_containers_by_name,
+    get_env_vars_dict,
+    get_pod_template,
+    new_docs_by_kind,
+    pod_managers,
+)
 from tests.utils.chart import render_chart
 
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
-pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
+# Job/CronJob are pod managers too (they own a container-bearing pod template, same as
+# Deployment/StatefulSet/DaemonSet) -- see tests.utils.pod_managers, imported above. This narrower
+# subset is only for test_selector_matches_pod_template_labels: Job and CronJob don't have a
+# spec.selector field, so they're excluded from that one selector/label-matching test specifically.
+selector_kinds = ["Deployment", "StatefulSet", "DaemonSet"]
+
+# Pods that cannot meet PSS-Restricted, exempt from test_pss_restricted_security_context (PINF-713).
+# Each entry is justified below. In a real cluster these workloads are handled with PSS namespace
+# exemptions rather than the Restricted policy, because they require privileged or root access by design.
+PSS_RESTRICTED_EXEMPT = {
+    # Privileged / host-mutating infrastructure — must run privileged or as root by design.
+    "DaemonSet/release-name-containerd-ca-update": "privileged: installs CA into the host containerd config",
+    "DaemonSet/release-name-private-ca": "runs as root to install private CA certs onto the host",
+    "DaemonSet/release-name-vector": "must run as root: mounts the host log directory to collect node/pod logs",
+    # Bundled third-party charts: privileged init containers or vendored securityContext we do not control.
+    "Deployment/release-name-elasticsearch-client": "bundled chart: privileged sysctl init container (vm.max_map_count)",
+    "StatefulSet/release-name-elasticsearch-data": "bundled chart: privileged sysctl init container (vm.max_map_count)",
+    "StatefulSet/release-name-elasticsearch-master": "bundled chart: privileged sysctl init container (vm.max_map_count)",
+}
 
 
 class TestK8sVersionConstraints:
@@ -61,8 +86,20 @@ class TestAllPodSpecContainers:
     chart_values = get_all_features()
 
     default_docs = render_chart(values=chart_values)
+    selector_pod_manager_docs = [doc for doc in default_docs if doc["kind"] in selector_kinds]
     pod_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_managers]
     annotated = [x for x in default_docs if x["metadata"].get("annotations")]
+
+    # global.plane.mode defaults to "unified", under which dp-link never renders: unlike every
+    # other plane-gated template (which renders for "control" OR "unified"), dp-link is the one
+    # component gated on "control" alone, by design (it links a genuinely separate data plane back
+    # to the control plane, which is meaningless in a single unified install). Render once more with
+    # plane.mode=control and fold in any pod/job managers that don't already appear in the default
+    # sweep, so dp-link gets the same coverage as everything else without re-testing components twice.
+    control_mode_values = get_all_features()
+    control_mode_values["global"]["plane"] = {"mode": "control"}
+    control_mode_docs = render_chart(values=control_mode_values)
+    pod_manager_docs += new_docs_by_kind(default_docs, control_mode_docs, pod_managers)
 
     @pytest.mark.parametrize(
         "doc",
@@ -73,6 +110,29 @@ class TestAllPodSpecContainers:
         """Test that our annotation keys are valid."""
         annotation_results = [bool(annotation_validator.match(a)) for a in doc["metadata"]["annotations"]]
         assert all(annotation_results), f"One of the annotation keys in {doc['kind']} {doc['metadata']['name']} is invalid."
+
+    @pytest.mark.parametrize(
+        "doc",
+        selector_pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in selector_pod_manager_docs],
+    )
+    def test_selector_matches_pod_template_labels(self, doc):
+        """Test that spec.selector.matchLabels is a subset of spec.template.metadata.labels.
+
+        Kubernetes requires that the selector matches the pod template labels, otherwise
+        the Deployment/StatefulSet/DaemonSet will be rejected by the API server.
+        """
+        match_labels = doc["spec"]["selector"]["matchLabels"]
+        template_labels = get_pod_template(doc)["metadata"]["labels"]
+        for key, value in match_labels.items():
+            assert key in template_labels, (
+                f"{doc['kind']}/{doc['metadata']['name']}: selector.matchLabels key '{key}' "
+                f"is missing from spec.template.metadata.labels"
+            )
+            assert template_labels[key] == value, (
+                f"{doc['kind']}/{doc['metadata']['name']}: selector.matchLabels['{key}']={value!r} "
+                f"does not match template label value {template_labels[key]!r}"
+            )
 
     @pytest.mark.parametrize(
         "doc",
@@ -135,16 +195,91 @@ class TestAllPodSpecContainers:
                 f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
             )
 
+    @pytest.mark.parametrize(
+        "doc",
+        pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
+    )
+    def test_pss_restricted_security_context(self, doc):
+        """Every platform pod must render the full PSS-Restricted container securityContext (PINF-713).
 
-@pytest.mark.skip("See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this.")
+        Required per container: allowPrivilegeEscalation=False, capabilities.drop includes "ALL",
+        runAsNonRoot=True, and an explicit non-zero runAsUser. seccompProfile.type=RuntimeDefault is
+        accepted at either the pod or the container level, which is how PSS-Restricted is evaluated.
+
+        Pods listed in PSS_RESTRICTED_EXEMPT are skipped with a documented reason; they require
+        privileged/root access by design or are bundled third-party charts we do not control.
+        """
+        doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+        if doc_id in PSS_RESTRICTED_EXEMPT:
+            pytest.skip(f"PSS-exempt: {PSS_RESTRICTED_EXEMPT[doc_id]}")
+        pod_security_context = get_pod_template(doc).get("spec", {}).get("securityContext") or {}
+        pod_seccomp = pod_security_context.get("seccompProfile", {}).get("type")
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+        for name, container in c_by_name.items():
+            container_id = f"{doc_id}/{name}"
+            sc = container.get("securityContext") or {}
+
+            assert sc.get("allowPrivilegeEscalation") is False, f"{container_id} must set allowPrivilegeEscalation: false"
+            assert "ALL" in (sc.get("capabilities") or {}).get("drop", []), f"{container_id} must drop ALL capabilities"
+            assert sc.get("runAsNonRoot") is True, f"{container_id} must set runAsNonRoot: true"
+
+            run_as_user = sc.get("runAsUser")
+            assert run_as_user not in (None, 0), f"{container_id} must set an explicit non-zero runAsUser (got {run_as_user!r})"
+
+            container_seccomp = (sc.get("seccompProfile") or {}).get("type")
+            assert "RuntimeDefault" in (pod_seccomp, container_seccomp), (
+                f"{container_id} must set seccompProfile.type: RuntimeDefault at the pod or container level"
+            )
+
+    # Only prometheus-node-exporter needs to run on every node (including tainted/control-plane
+    # ones) for accurate host metrics -- everything else should have no default tolerations.
+    # (PINF-986/PINF-971: DENYlistTolerations)
+    TOLERATION_EXEMPT = {"DaemonSet/release-name-prometheus-node-exporter"}
+
+    def test_no_unexpected_default_tolerations(self):
+        """Render the whole chart and assert only the documented exception has a default toleration."""
+        offenders = {}
+        for doc in self.pod_manager_docs:
+            doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+            if doc_id in self.TOLERATION_EXEMPT:
+                continue
+            tolerations = get_pod_template(doc).get("spec", {}).get("tolerations")
+            if tolerations:
+                offenders[doc_id] = tolerations
+
+        assert not offenders, "Pods with an unexpected default toleration (doc: tolerations):\n" + "\n".join(
+            f"  {key}: {value}" for key, value in sorted(offenders.items())
+        )
+
+    # mountPropagation isn't a securityContext field; a separate PSA/Kyverno-adjacent control
+    # (Restricted forbids the two unsafe values). Not currently a PSA control itself, but a real
+    # customer ask (PINF-986: MountPropagation).
+    UNSAFE_MOUNT_PROPAGATION = {"HostToContainer", "Bidirectional"}
+
+    def test_no_containers_use_unsafe_mount_propagation(self):
+        """Render the whole chart and assert no volumeMount sets an unsafe mountPropagation."""
+        offenders = {}
+        for doc in self.pod_manager_docs:
+            doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+            for name, container in get_containers_by_name(doc, include_init_containers=True).items():
+                for mount in container.get("volumeMounts") or []:
+                    if mount.get("mountPropagation") in self.UNSAFE_MOUNT_PROPAGATION:
+                        offenders[f"{doc_id}/{name}/{mount['name']}"] = mount["mountPropagation"]
+
+        assert not offenders, "volumeMounts with an unsafe mountPropagation (mount: value):\n" + "\n".join(
+            f"  {key}: {value}" for key, value in sorted(offenders.items())
+        )
+
+
 class TestDuplicateEnvironment:
     """Parametrize all the docs that have container specs and test them for
-    duplicate env vars."""
+    duplicate env vars.
 
-    values = get_all_features()
-
-    docs = render_chart(values=values)
-    trimmed_docs = [x for x in docs if x["kind"] in [*pod_managers, "CronJob"]]
+    This test can be deleted once we move to Helm 4, which treats duplicate env
+    vars as a blocking error and therefore enforces this on its own.
+    """
 
     @staticmethod
     def check_env_vars_are_unique(container):
@@ -152,23 +287,76 @@ class TestDuplicateEnvironment:
         c_env_names = [x["name"] for x in container.get("env") or []]
         return [x for x in set(c_env_names) if c_env_names.count(x) > 1]
 
+    @pytest.mark.parametrize("plane_mode", ["unified", "control", "data"])
+    def test_env_vars_have_no_duplicates(self, plane_mode):
+        """Test that there are no duplicate env vars.
+
+        enable_all_features.yaml sets no plane mode, so rendering once would only cover
+        "unified" -- templates gated to control-only or data-only would go unchecked.
+        """
+        values = get_all_features()
+        values.setdefault("global", {}).setdefault("plane", {})["mode"] = plane_mode
+
+        for doc in render_chart(values=values):
+            if doc["kind"] not in [*selector_kinds, "CronJob"]:
+                continue
+            for name, container in get_containers_by_name(doc, include_init_containers=True).items():
+                assert not self.check_env_vars_are_unique(container), (
+                    f"[plane={plane_mode}] {doc['kind']}/{doc['metadata']['name']}/{name} has duplicate env vars"
+                )
+
+
+class TestSSLModeEnvironment:
+    # container names that read a different SSL-mode key by design (see global.ssl.grafana.sslmode)
+    SSLMODE_EXEMPT_CONTAINERS = {"bootstrapper"}  # grafana's db-bootstrapper container
+
+    @staticmethod
+    def _ssl_containers(docs):
+        for doc in docs:
+            if doc["kind"] not in pod_managers:
+                continue
+            doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+            for name, container in get_containers_by_name(doc, include_init_containers=True).items():
+                env = get_env_vars_dict(container.get("env") or [])
+                yield doc_id, name, env
+
     @pytest.mark.parametrize(
-        "doc",
-        trimmed_docs,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in trimmed_docs],
+        "ssl,expected_mode",
+        [
+            (None, None),
+            ({"enabled": False, "mode": "require"}, None),
+            ({"enabled": True, "mode": ""}, None),
+            ({"enabled": True, "mode": "require"}, "require"),
+            ({"enabled": True, "mode": "verify-full"}, "verify-full"),
+            ({"enabled": True, "mode": "disable"}, "disable"),
+        ],
+        ids=["default", "disabled", "enabled-empty-mode", "enabled-require", "enabled-verify-full", "enabled-disable"],
     )
-    def test_env_vars_have_no_duplicates(self, doc):
-        """Test that there are no duplicate env vars."""
-        if doc["kind"] in pod_managers:
-            for container in doc["spec"]["template"]["spec"].get("containers") or []:
-                assert not self.check_env_vars_are_unique(container), "container has duplicate env vars"
+    def test_sslmode_follows_global_ssl_mode(self, ssl, expected_mode):
+        """
+        Every container's SSLMODE must equal global.ssl.mode, and be absent when SSL is off.
+        """
+        values = get_all_features()
+        if ssl is not None:
+            # preserve grafana's separate sslmode key so it keeps rendering its own value
+            values.setdefault("global", {})["ssl"] = {**ssl, "grafana": {"sslmode": "require"}}
 
-            for container in doc["spec"]["template"]["spec"].get("initContainers") or []:
-                assert not self.check_env_vars_are_unique(container), "initContainer has duplicate env vars"
+        docs = render_chart(values=values)
 
-        elif doc["kind"] == "CronJob":
-            for container in doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers") or []:
-                assert not self.check_env_vars_are_unique(container), "container has duplicate env vars"
+        offenders = {}
+        for doc_id, name, env in self._ssl_containers(docs):
+            if name in self.SSLMODE_EXEMPT_CONTAINERS:
+                continue
+            if "SSLMODE" not in env:
+                continue
+            if env["SSLMODE"] != expected_mode:
+                offenders[f"{doc_id}/{name}"] = env["SSLMODE"]
 
-            for container in doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("initContainers") or []:
-                assert not self.check_env_vars_are_unique(container), "initContainer has duplicate env vars"
+        if expected_mode is None:
+            assert not offenders, "SSL disabled but these containers still render SSLMODE:\n" + "\n".join(
+                f"  {key}: {value!r}" for key, value in sorted(offenders.items())
+            )
+        else:
+            assert not offenders, f"these containers render an SSLMODE other than global.ssl.mode={expected_mode!r}:\n" + "\n".join(
+                f"  {key}: {value!r}" for key, value in sorted(offenders.items())
+            )

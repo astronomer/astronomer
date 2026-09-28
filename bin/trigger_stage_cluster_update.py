@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""
+This script is used to run feature_stack_release workflow from terraform-aws-astronomer.
+"""
+
+import argparse
+import http.client
+import json
+import os
+import re
+import time
+from pathlib import Path
+
+CHECK_PIPELINE_STATUES_TIMER_MIN = 5
+GITHUB_ORG = "astronomer"
+CIRCLECI_URL = "circleci.com"
+REPO = "terraform-aws-astronomer"
+REPO_BRANCH = "master"
+
+parent_directory = Path(__file__).parent.parent
+circleci_directory = parent_directory / ".circleci"
+
+
+def run_workflow(circleci_token: str, parameters: dict | None = None):
+    circle_ci_conn = http.client.HTTPSConnection(CIRCLECI_URL, timeout=15)
+    api_endpoint = f"/api/v2/project/github/{GITHUB_ORG}/{REPO}/pipeline"
+
+    headers = {"content-type": "application/json", "Circle-Token": circleci_token}
+
+    payload = {"branch": REPO_BRANCH}
+
+    if parameters is not None:
+        payload["parameters"] = parameters
+
+    circle_ci_conn.request(method="POST", url=api_endpoint, body=json.dumps(payload), headers=headers)
+    resp = circle_ci_conn.getresponse().read().decode("utf-8")
+    circle_ci_conn.close()
+    return resp
+
+
+def get_job_state(circleci_token: str, pipeline_id: str):
+    circle_ci_conn = http.client.HTTPSConnection(CIRCLECI_URL, timeout=15)
+    api_endpoint = f"/api/v2/pipeline/{pipeline_id}/workflow"
+
+    headers = {"content-type": "application/json", "Circle-Token": circleci_token}
+
+    circle_ci_conn.request(method="GET", url=api_endpoint, headers=headers)
+    resp = circle_ci_conn.getresponse().read().decode("utf-8")
+    circle_ci_conn.close()
+    return resp
+
+
+def wait_for_pipeline_completion(circleci_token: str, pipeline_id: str, wait_time_min: int = 120, check_interval_sec: int = 60):
+    elapsed_time = 0
+    while elapsed_time < wait_time_min * 60:
+        job_state_resp = get_job_state(circleci_token=circleci_token, pipeline_id=pipeline_id)
+        pipeline_state = json.loads(job_state_resp)["items"][0]["status"]
+
+        if pipeline_state == "success":
+            print("INFO: Pipeline completed successfully.")
+            return pipeline_state
+
+        if pipeline_state not in ["pending", "running"]:
+            raise RuntimeError(f"ERROR: Pipeline failed with status: {pipeline_state}")
+
+        print(
+            f"INFO: Pipeline status is '{pipeline_state}'. Waited {elapsed_time // 60}m{elapsed_time % 60}s so far, checking again in {check_interval_sec}s.",
+            flush=True,
+        )
+
+        time.sleep(check_interval_sec)
+        elapsed_time += check_interval_sec
+
+    raise TimeoutError(f"Pipeline did not complete within {wait_time_min} minutes.")
+
+
+def main(circleci_token: str, astro_path: str, branch: str, split_software_automation_tests: bool = False):
+    # Getting Astronomer Helm Chart - FileName
+    file_list = os.listdir(astro_path)
+
+    astro_version = None
+    for file_name in file_list:
+        x = re.search("astronomer-.*.tgz", file_name)
+        if x is not None and astro_version is None:
+            print(f"INFO: Found file {file_name}")
+            astro_version = file_name
+
+    if astro_version is None:
+        print(f"INFO: Skipping calling workflow as no valid version. Below files are found at path: {astro_path}.")
+        print(json.dumps(file_list))
+        raise SystemExit(0)
+
+    astro_version = astro_version.removeprefix("astronomer-")
+    astro_version = astro_version.removesuffix(".tgz")
+
+    parameters = {
+        "astro_version": astro_version,
+        "workflow_gen": True,
+        "workflow_name": "feature_stack",
+        "workflow_extra_params_json": json.dumps({"release": branch}),
+        "split_software_automation_tests": split_software_automation_tests,
+    }
+
+    print("INFO: Printing parameters")
+    print(json.dumps(parameters, indent=1))
+
+    # Run Workflow
+    run_workflow_resp = run_workflow(circleci_token=circleci_token, parameters=parameters)
+
+    pipeline_id = json.loads(run_workflow_resp)["id"]
+    pipeline_number = json.loads(run_workflow_resp)["number"]
+
+    # Printing Info
+    print(f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}")
+
+    time.sleep(10)
+    wait_for_pipeline_completion(circleci_token=circleci_token, pipeline_id=pipeline_id)
+
+
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser()
+
+    # Required positional argument
+    arg_parser.add_argument(
+        "--circleci_token",
+        type=str,
+        required=True,
+        help="CircleCI API token used to trigger the terraform-aws-astronomer pipeline.",
+    )
+    arg_parser.add_argument(
+        "--astro_path", type=str, required=True, help="Path to the directory containing the built astronomer-*.tgz chart artifact."
+    )
+    arg_parser.add_argument(
+        "--branch",
+        type=str,
+        required=True,
+        help="Branch name to pass as the `release` used to look up the stage cluster in terraform-aws-astronomer's ci_config.yml.",
+    )
+    arg_parser.add_argument(
+        "--split_software_automation_tests",
+        action="store_true",
+        help="If set, run the p0 and p1/p2 software automation suites as separate sequential jobs instead of the combined one.",
+    )
+
+    args = arg_parser.parse_args()
+
+    main(
+        astro_path=args.astro_path,
+        circleci_token=args.circleci_token,
+        branch=args.branch,
+        split_software_automation_tests=args.split_software_automation_tests,
+    )

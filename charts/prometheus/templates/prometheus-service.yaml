@@ -52,7 +52,9 @@ metadata:
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
 spec:
-  sessionAffinity: ClientIP
+{{- with .Values.sessionAffinity }}
+  sessionAffinity: {{ . }}
+{{- end }}
   type: ClusterIP
   selector:
     tier: monitoring

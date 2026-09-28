@@ -68,15 +68,6 @@ imagePullSecrets:
 {{ default (printf "%s-jetStream-tls-certificate" .Release.Name)}}
 {{- end }}
 
-{{- define "nats.securityContext" -}}
-{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshift.enabled ) }}
-{{- omit .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
-{{- else }}
-{{- .Values.securityContext | toYaml | nindent 10 }}
-{{- end -}}
-{{- end }}
-
-
 {{ define "nats.serviceAccountName" -}}
 {{- if and .Values.nats.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s" (include "nats.name" . )) .Values.nats.serviceAccount.name }}

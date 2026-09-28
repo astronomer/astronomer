@@ -7,6 +7,10 @@ from tests.utils.chart import render_chart
 
 include_kind_list = ["Deployment", "DaemonSet", "StatefulSet", "ReplicaSet", "CronJob", "Job"]
 
+# external-secrets is a hard fork of the upstream chart and does not define a
+# startupProbe on its operator container; exclude it from the cross-cutting guard.
+startup_probe_excluded_components = {"external-secrets"}
+
 customize_all_probes = yaml.safe_load(
     ((git_root_dir) / "tests" / "chart_tests" / "test_data" / "enable_all_probes.yaml").read_text()
 )
@@ -18,13 +22,43 @@ class TestCustomProbes:
 
     @pytest.mark.parametrize("doc", filtered_docs)
     def test_template_probes_with_custom_values(self, doc):
-        """Ensure all containers have the ability to customize liveness probes."""
+        """Ensure all containers have the ability to customize liveness, readiness, and startup probes."""
 
         for container in doc.values():
             assert "livenessProbe" in container
             assert "readinessProbe" in container
+            assert "startupProbe" in container
             assert container["livenessProbe"] != {}
             assert container["readinessProbe"] != {}
+            assert container["startupProbe"] != {}
+
+
+class TestStartupProbes:
+    """Cross-cutting guard for the Gatekeeper ``allow-with-probes`` constraint (PINF-691).
+
+    Clusters enforcing that constraint reject any container that does not define a
+    startupProbe, so this must be 100% coverage: every long-running container the
+    admission controller sees, across every pod-manager kind, must define a non-empty
+    startupProbe. We render with ``get_all_features()`` (maximal chart surface area)
+    rather than custom probe overrides, because the constraint evaluates the rendered
+    manifest as installed. Init containers are excluded -- Kubernetes forbids
+    startupProbe on non-sidecar init containers.
+    """
+
+    docs = render_chart(values=get_all_features())
+    containers = {
+        f"{doc['kind']}_{doc['metadata']['name']}_{name}": container
+        for doc in docs
+        if doc["kind"] in include_kind_list
+        and doc.get("metadata", {}).get("labels", {}).get("component") not in startup_probe_excluded_components
+        for name, container in get_containers_by_name(doc).items()
+    }
+
+    @pytest.mark.parametrize("container", containers.values(), ids=list(containers.keys()))
+    def test_every_container_has_startup_probe(self, container):
+        """Every container must define a non-empty startupProbe (Gatekeeper allow-with-probes)."""
+        assert "startupProbe" in container, "container is missing a startupProbe"
+        assert container["startupProbe"] != {}, "startupProbe must not be empty"
 
 
 class TestDefaultProbes:
@@ -66,6 +100,12 @@ class TestDefaultProbes:
                 "port": 8081,
             }
         },
+        "api-server_apiserver": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+        },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {
             "failureThreshold": 5,
@@ -86,18 +126,38 @@ class TestDefaultProbes:
             "initialDelaySeconds": 30,
             "timeoutSeconds": 10,
         },
-        "elasticsearch-master_es-master": {"tcpSocket": {"port": 9300}},
+        "elasticsearch-master_es-master": {"tcpSocket": {"port": 9300}, "initialDelaySeconds": 30},
         "grafana_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
         },
         "grafana_grafana": {"httpGet": {"path": "/api/health", "port": 3000}, "initialDelaySeconds": 10, "periodSeconds": 10},
+        "houston-worker_vector": {
+            "httpGet": {"path": "/health", "port": 8686},
+            "initialDelaySeconds": 15,
+            "timeoutSeconds": 3,
+            "periodSeconds": 30,
+            "failureThreshold": 5,
+        },
         "houston_houston": {
             "httpGet": {"path": "/v1/healthz", "port": 8871},
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
             "failureThreshold": 10,
+        },
+        "houston_vector": {
+            "httpGet": {"path": "/health", "port": 8686},
+            "initialDelaySeconds": 15,
+            "timeoutSeconds": 3,
+            "periodSeconds": 30,
+            "failureThreshold": 5,
+        },
+        "hypervisor_hypervisor": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
         },
         "kube-state_kube-state": {"httpGet": {"path": "/healthz", "port": 8080}, "initialDelaySeconds": 5, "timeoutSeconds": 5},
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
@@ -176,6 +236,12 @@ class TestDefaultProbes:
                 "port": 8081,
             }
         },
+        "api-server_apiserver": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+        },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {"httpGet": {"path": "/healthz", "port": 8880}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "elasticsearch-client_es-client": {
@@ -189,7 +255,7 @@ class TestDefaultProbes:
         },
         "elasticsearch-master_es-master": {
             "httpGet": {"path": "/_cluster/health?local=true", "port": 9200},
-            "initialDelaySeconds": 5,
+            "initialDelaySeconds": 30,
         },
         "grafana_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
@@ -197,11 +263,31 @@ class TestDefaultProbes:
             "periodSeconds": 10,
         },
         "grafana_grafana": {"httpGet": {"path": "/api/health", "port": 3000}, "initialDelaySeconds": 10, "periodSeconds": 10},
+        "houston-worker_vector": {
+            "httpGet": {"path": "/health", "port": 8686},
+            "initialDelaySeconds": 5,
+            "timeoutSeconds": 3,
+            "periodSeconds": 10,
+            "failureThreshold": 5,
+        },
         "houston_houston": {
             "httpGet": {"path": "/v1/healthz", "port": 8871},
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
             "failureThreshold": 10,
+        },
+        "houston_vector": {
+            "httpGet": {"path": "/health", "port": 8686},
+            "initialDelaySeconds": 5,
+            "timeoutSeconds": 3,
+            "periodSeconds": 10,
+            "failureThreshold": 5,
+        },
+        "hypervisor_hypervisor": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
         },
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 6543}},

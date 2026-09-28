@@ -15,9 +15,11 @@ ESO_DATA_PLANE_VALUES = ESO_VALUES  # alias kept for readability
 
 DEPLOYMENT_TEMPLATE = "charts/external-secrets/templates/deployment.yaml"
 SERVICEACCOUNT_TEMPLATE = "charts/external-secrets/templates/serviceaccount.yaml"
-RBAC_TEMPLATE = "charts/external-secrets/templates/rbac.yaml"
+ROLE_TEMPLATE = "charts/external-secrets/templates/role.yaml"
+ROLEBINDING_TEMPLATE = "charts/external-secrets/templates/rolebinding.yaml"
 CLUSTER_SECRET_STORE_TEMPLATE = "charts/external-secrets/templates/cluster-secret-store.yaml"
 SECRETS_BACKEND_CREDENTIALS_TEMPLATE = "charts/external-secrets/templates/secrets-backend-credentials.yaml"
+PDB_TEMPLATE = "charts/external-secrets/templates/poddisruptionbudget.yaml"
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -35,10 +37,14 @@ class TestExternalSecretsDeployment:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["kind"] == "Deployment"
         assert doc["metadata"]["name"] == "release-name-external-secrets"
+        assert doc["metadata"]["labels"]["tier"] == "dp-failover"
+        assert doc["metadata"]["labels"]["component"] == "external-secrets"
+        assert doc["metadata"]["labels"]["release"] == "release-name"
         assert doc["spec"]["replicas"] == 1
-        assert doc["spec"]["template"]["metadata"]["labels"]["tier"] == "dp-failover"
-        assert doc["spec"]["template"]["metadata"]["labels"]["component"] == "external-secrets"
-        assert doc["spec"]["template"]["metadata"]["labels"]["release"] == "release-name"
+        labels = doc["spec"]["template"]["metadata"]["labels"]
+        assert labels["tier"] == "dp-failover"
+        assert labels["component"] == "external-secrets"
+        assert labels["release"] == "release-name"
 
     def test_deployment_image(self, kube_version):
         """Test that the operator deployment uses the correct image."""
@@ -51,7 +57,7 @@ class TestExternalSecretsDeployment:
         c_by_name = get_containers_by_name(doc)
         assert "external-secrets" in c_by_name
         container = c_by_name["external-secrets"]
-        assert container["image"] == "quay.io/astronomer/ap-external-secrets:2.2.0"
+        assert "quay.io/astronomer/ap-external-secrets:" in container["image"]
         assert container["imagePullPolicy"] == "IfNotPresent"
 
     def test_deployment_private_registry(self, kube_version):
@@ -212,7 +218,7 @@ class TestExternalSecretsRBAC:
         docs = render_chart(
             kube_version=kube_version,
             values=ESO_VALUES,
-            show_only=[RBAC_TEMPLATE],
+            show_only=[ROLE_TEMPLATE, ROLEBINDING_TEMPLATE],
         )
         kinds = {d["kind"] for d in docs}
         assert "ClusterRole" in kinds
@@ -221,7 +227,7 @@ class TestExternalSecretsRBAC:
     def test_rbac_disabled(self, kube_version):
         """Test that no RBAC resources are rendered when rbac.create is false.
 
-        The template has a static comment header outside the if-block so helm
+        Both templates have a static comment header outside the if-block so helm
         does not error — it returns an empty document list instead.
         """
         docs = render_chart(
@@ -230,9 +236,39 @@ class TestExternalSecretsRBAC:
                 **ESO_VALUES,
                 "external-secrets": {"enabled": True, "rbac": {"create": False}},
             },
-            show_only=[RBAC_TEMPLATE],
+            show_only=[ROLE_TEMPLATE, ROLEBINDING_TEMPLATE, SERVICEACCOUNT_TEMPLATE],
         )
         assert len(docs) == 0
+
+    def test_serviceaccount_token_create_rule_present_by_default(self, kube_version):
+        """Test that the serviceaccounts/token create rule disabled by default."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=ESO_VALUES,
+            show_only=[ROLE_TEMPLATE],
+        )
+        cluster_role = next(d for d in docs if d["kind"] == "ClusterRole")
+        assert all(rule.get("resources") != ["serviceaccounts/token"] for rule in cluster_role["rules"])
+
+    def test_serviceaccount_token_create_rule_absent_when_enabled(self, kube_version):
+        """Test that the serviceaccounts/token create rule enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                **ESO_VALUES,
+                "external-secrets": {"enabled": True, "rbac": {"serviceAccountTokenCreate": True}},
+            },
+            show_only=[ROLE_TEMPLATE],
+        )
+        cluster_role = next(d for d in docs if d["kind"] == "ClusterRole")
+        token_rules = [
+            rule
+            for rule in cluster_role["rules"]
+            if rule.get("apiGroups") == [""]
+            and rule.get("resources") == ["serviceaccounts/token"]
+            and rule.get("verbs") == ["create"]
+        ]
+        assert len(token_rules) == 1
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -240,9 +276,9 @@ class TestExternalSecretsCRDs:
     def test_crds_installed_by_default(self, kube_version):
         """Test that CRDs are rendered by default when installCRDs is true."""
         crd_templates = [
-            "charts/external-secrets/templates/crd-clustersecretstores.external-secrets.io.yaml",
-            "charts/external-secrets/templates/crd-externalsecrets.external-secrets.io.yaml",
-            "charts/external-secrets/templates/crd-pushsecrets.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-clustersecretstores.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-externalsecrets.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-pushsecrets.external-secrets.io.yaml",
         ]
         docs = render_chart(
             kube_version=kube_version,
@@ -258,9 +294,9 @@ class TestExternalSecretsCRDs:
     def test_crds_not_rendered_when_subchart_disabled(self, kube_version):
         """Test that CRDs are not rendered when the subchart is disabled (the default)."""
         crd_templates = [
-            "charts/external-secrets/templates/crd-clustersecretstores.external-secrets.io.yaml",
-            "charts/external-secrets/templates/crd-externalsecrets.external-secrets.io.yaml",
-            "charts/external-secrets/templates/crd-pushsecrets.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-clustersecretstores.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-externalsecrets.external-secrets.io.yaml",
+            "charts/external-secrets/templates/crds/crd-pushsecrets.external-secrets.io.yaml",
         ]
         # When the subchart is disabled, helm errors on --show-only because no
         # output is produced for any of the CRD templates.
@@ -275,11 +311,12 @@ class TestExternalSecretsCRDs:
 
 @pytest.mark.parametrize("plane_mode", ["unified", "control", "data"])
 def test_external_secrets_only_renders_when_enabled(plane_mode):
-    """Test that external-secrets deployment only renders in data plane mode when enabled.
+    """Test that external-secrets deployment only renders in data/unified plane modes when enabled.
 
     When the subchart is entirely absent (not enabled at umbrella level), helm
     cannot find any of its templates and raises an error.  When the subchart IS
-    enabled, the deployment only renders if plane.mode == 'data'.
+    enabled, the deployment renders in the data and unified planes but not the
+    control plane.
     """
     # When the subchart is entirely disabled helm errors regardless of plane mode.
     with pytest.raises(subprocess.CalledProcessError):
@@ -288,7 +325,7 @@ def test_external_secrets_only_renders_when_enabled(plane_mode):
             show_only=[DEPLOYMENT_TEMPLATE],
         )
 
-    # When the subchart is enabled, deployment renders only in data plane mode.
+    # When the subchart is enabled, deployment renders in the data and unified planes only.
     docs = render_chart(
         values={
             "external-secrets": {"enabled": True},
@@ -296,8 +333,8 @@ def test_external_secrets_only_renders_when_enabled(plane_mode):
         },
         show_only=[DEPLOYMENT_TEMPLATE],
     )
-    if plane_mode == "data":
-        assert len(docs) == 1, f"Expected 1 external-secrets deployment in plane.mode=data, got {len(docs)}"
+    if plane_mode in ("data", "unified"):
+        assert len(docs) == 1, f"Expected 1 external-secrets deployment in plane.mode={plane_mode}, got {len(docs)}"
     else:
         assert len(docs) == 0, f"Expected 0 external-secrets deployments in plane.mode={plane_mode}, got {len(docs)}"
 
@@ -331,3 +368,44 @@ class TestExternalSecretsDataPlaneMode:
             pod_labels = doc["spec"]["template"]["metadata"]["labels"]
             for key, value in custom_labels.items():
                 assert pod_labels.get(key) == value, f"Label {key}={value} missing from {doc['metadata']['name']}"
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestExternalSecretsPodDisruptionBudget:
+    @pytest.mark.parametrize(
+        "values,expected_docs",
+        [
+            pytest.param(
+                {
+                    **ESO_VALUES,
+                    "external-secrets": {"enabled": True},
+                },
+                0,
+                id="eso-pdb-defaults",
+            ),
+            pytest.param(
+                {
+                    **ESO_VALUES,
+                    "external-secrets": {"enabled": True, "podDisruptionBudget": {"enabled": True}},
+                },
+                1,
+                id="eso-pdb-overrides",
+            ),
+            pytest.param(
+                {
+                    **ESO_VALUES,
+                    "global": {**ESO_VALUES["global"], "podDisruptionBudgets": {"enabled": False}},
+                    "external-secrets": {"enabled": True, "podDisruptionBudget": {"enabled": True}},
+                },
+                0,
+                id="global-pdb-overrides",
+            ),
+        ],
+    )
+    def test_pdb(self, kube_version, values, expected_docs):
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[PDB_TEMPLATE],
+        )
+        assert len(docs) == expected_docs

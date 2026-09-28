@@ -51,6 +51,14 @@ helm.sh/chart: {{ include "external-secrets.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+tier: dp-failover
+component: {{ template "external-secrets.name" . }}
+app: {{ template "external-secrets.name" . }}
+version: {{ .Chart.Version }}
+release: {{ .Release.Name }}
+chart: {{ template "external-secrets.chart" . }}
+heritage: {{ .Release.Service }}
+plane: {{ .Values.global.plane.mode }}
 {{- with .Values.commonLabels }}
 {{ toYaml . }}
 {{- end }}
@@ -64,11 +72,17 @@ app.kubernetes.io/name: {{ include "external-secrets.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{- define "external-secrets.rbacEnabled" -}}
+{{- if and .Values.rbac.create .Values.serviceAccount.create -}}
+true
+{{- end -}}
+{{- end -}}
+
 {{/*
 Create the name of the service account to use
 */}}
 {{- define "external-secrets.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
+{{- if (include "external-secrets.rbacEnabled" . ) }}
 {{- default (include "external-secrets.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
@@ -107,12 +121,14 @@ Renders a complete tree, even values that contains template.
 {{- end -}}
 
 {{/*
-Return true if the OpenShift is the detected platform
+Return true if OpenShift is the target platform, either because the operator
+explicitly set the repo-wide global.openshift.enabled flag (the convention used
+by every other chart) or because the OpenShift API is detected at install time.
 Usage:
 {{- include "external-secrets.isOpenShift" . -}}
 */}}
 {{- define "external-secrets.isOpenShift" -}}
-{{- if .Capabilities.APIVersions.Has "security.openshift.io/v1" -}}
+{{- if or .Values.global.openshift.enabled (.Capabilities.APIVersions.Has "security.openshift.io/v1") -}}
 {{- true -}}
 {{- end -}}
 {{- end -}}
@@ -142,7 +158,7 @@ Create the name of the pod disruption budget to use
 */}}
 {{- define "external-secrets.pdbName" -}}
 {{- .Values.podDisruptionBudget.nameOverride | default (printf "%s-pdb" (include "external-secrets.fullname" .)) }}
-{{- end }}
+{{- end -}}
 
 {{/*
 Fail the install if a cluster scoped reconciler is enabled while its namespace scoped counterpart is disabled
@@ -150,5 +166,25 @@ Fail the install if a cluster scoped reconciler is enabled while its namespace s
 {{- define "external-secrets.reconciler-sanity-test" -}}
 {{- if and (not .Values.processPushSecret) .Values.processClusterPushSecret -}}
   {{- fail "You have disabled processing of PushSecrets but not ClusterPushSecrets. This is an invalid configuration. ClusterPushSecret processing depends on processing of PushSecrets. Please either enable processing of PushSecrets, or disable processing of ClusterPushSecrets." }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether external-secrets resources should render: the plane mode must be data or unified.
+*/}}
+{{- define "external-secrets.enabled" -}}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether to grant the OpenShift-only finalizer permissions: either the repo-wide
+global.openshift.enabled flag is set, or the chart-local openshiftFinalizers
+override is explicitly enabled.
+*/}}
+{{- define "external-secrets.openshiftFinalizers" -}}
+{{- if or .Values.global.openshift.enabled .Values.openshiftFinalizers -}}
+true
 {{- end -}}
 {{- end -}}

@@ -1,0 +1,36 @@
+######################################
+## Laminar Bootstrapper RoleBinding ##
+######################################
+{{- if eq (include "laminar.enabled" .) "true" }}
+{{- if and .Values.global.rbac.enabled (not .Values.databaseBootstrapper.backendSecretName) }}
+kind: RoleBinding
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ .Release.Name }}-laminar-bootstrapper-rolebinding
+  labels:
+    tier: laminar
+    component: laminar-bootstrapper
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  {{- if .Values.global.argoCD.annotation.enabled }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-laminar-bootstrapper-role
+subjects:
+  # The bootstrapper runs as an init container inside each component's pod, so the permission to
+  # write the backend secret belongs to those service accounts. Each keeps its own runtime role;
+  # this only adds the secret write.
+  - kind: ServiceAccount
+    name: {{ include "laminar.serviceAccountName" (list $ "api-server") }}
+    namespace: {{ .Release.Namespace }}
+  - kind: ServiceAccount
+    name: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}

@@ -30,7 +30,10 @@ class TestAstronomerCommander:
             "global": {
                 "rbac": {"enabled": rbac_enabled},
                 "namespaceLabels": namespace_labels,
-            }
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -45,9 +48,104 @@ class TestAstronomerCommander:
 
         metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
         if namespace_labels and rbac_enabled:
-            assert metadata_file_contents == {"namespaceLabels": namespace_labels}
+            assert metadata_file_contents == {
+                "namespaceLabels": namespace_labels,
+                "extraAnnotations": {},
+                "registry": {"version": "99.88.77"},
+                "customLogging": {"enabled": False},
+                "externalSecretManager": {"isClusterSecretStore": True},
+                "openshift": {"enabled": False},
+                "laminar": {"enabled": False},
+            }
         else:
-            assert metadata_file_contents == {"namespaceLabels": {}}
+            assert metadata_file_contents == {
+                "namespaceLabels": {},
+                "extraAnnotations": {},
+                "registry": {"version": "99.88.77"},
+                "customLogging": {"enabled": False},
+                "externalSecretManager": {"isClusterSecretStore": True},
+                "openshift": {"enabled": False},
+                "laminar": {"enabled": False},
+            }
+
+    @pytest.mark.parametrize("enabled", [True, False], ids=["custom_logging_enabled", "custom_logging_disabled"])
+    def test_commander_metadata_custom_logging(self, kube_version, enabled):
+        """Test that helm renders custom logging in metadata.yaml template for astronomer/commander."""
+        values = {
+            "global": {
+                "customLogging": {"enabled": enabled},
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+
+        metadata_file_contents = yaml.safe_load(doc["data"]["metadata.yaml"])
+        assert metadata_file_contents == {
+            "namespaceLabels": {},
+            "extraAnnotations": {},
+            "customLogging": {"enabled": enabled},
+            "registry": {"version": "99.88.77"},
+            "externalSecretManager": {"isClusterSecretStore": True},
+            "openshift": {"enabled": False},
+            "laminar": {"enabled": False},
+        }
+
+    def test_commander_metadata_extra_annotations(self, kube_version):
+        """Test that global.extraAnnotations are passed through to commander metadata.yaml."""
+        extra_annotations = {
+            "kubernetes.io/ingress.class": "default",
+            "route.openshift.io/termination": "passthrough",
+        }
+        values = {
+            "global": {
+                "extraAnnotations": extra_annotations,
+            },
+            "astronomer": {
+                "images": {"registry": {"tag": "99.88.77"}},
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert metadata_file_contents["extraAnnotations"] == extra_annotations
+
+    def test_commander_metadata_shared_elasticsearch_overrides(self, kube_version):
+        """Test that global.sharedElasticsearch are passed through to commander metadata.yaml."""
+        values = {
+            "global": {
+                "sharedElasticsearch": {
+                    "enabled": True,
+                },
+                "plane": {
+                    "mode": "data",
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert metadata_file_contents["elasticsearch"] == {"sharedElasticsearchEnabled": True}
 
     def test_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for astronomer/commander."""
@@ -163,7 +261,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_ELASTICSEARCH_ENABLED"] == "true"
         assert env_vars["COMMANDER_ELASTICSEARCH_LOG_LEVEL"] == "info"
         assert env_vars["COMMANDER_ELASTICSEARCH_NODE"] == "http://release-name-elasticsearch.default.svc.cluster.local.:9200"
-        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default:8871"
+        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "http://release-name-houston.default.svc.cluster.local:8871"
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "true"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
@@ -188,10 +286,10 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
     def test_commander_rbac_cluster_role_enabled(self, kube_version):
-        """Test that if rbacEnabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
+        """Test that if rbac.enabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and
         ClusterRoleBinding resources."""
 
-        # First rbacEnabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        # First rbac.enabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -231,7 +329,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["subjects"] == expected_subjects
 
     def test_commander_rbac_cluster_roles_enabled_rbac_disabled(self, kube_version):
-        """Test that if rbacEnabled set to true, but clusterRoles and
+        """Test that if rbac.enabled set to true, but clusterRoles and
         namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
@@ -250,7 +348,7 @@ class TestAstronomerCommander:
         assert len(docs) == 0
 
     def test_commander_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
+        """Test that if rbac.enabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -269,7 +367,7 @@ class TestAstronomerCommander:
 
     def test_commander_rbac_cluster_role_disabled(self, kube_version):
         """Test that if clusterRoles and namespacePools are disabled but
-        rbacEnabled is enabled, helm does not render RBAC resources."""
+        rbac.enabled is true, helm does not render RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -516,8 +614,6 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["external-secrets.io", "generators.external-secrets.io"],
             "resources": [
-                "clusterexternalsecrets",
-                "clusterpushsecrets",
                 "clustersecretstores",
                 "externalsecrets",
                 "pushsecrets",
@@ -542,8 +638,6 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["external-secrets.io", "generators.external-secrets.io"],
             "resources": [
-                "clusterexternalsecrets",
-                "clusterpushsecrets",
                 "clustersecretstores",
                 "externalsecrets",
                 "pushsecrets",
@@ -565,7 +659,7 @@ class TestAstronomerCommander:
             (
                 "unified",
                 True,
-                "http://release-name-es-proxy.default.svc.cluster.local:9201",
+                "http://release-name-external-es-proxy.default.svc.cluster.local:9201",
             ),
             (
                 "unified",
@@ -728,11 +822,16 @@ class TestAstronomerCommander:
         assert spec["hostAliases"] == hostAliasSpec
 
     @pytest.mark.parametrize(
-        "plane,init_containers_count,containers_count",
-        [("data", 3, 1), ("control", 0, 0), ("unified", 3, 1)],
+        "plane,commander_renders,flightdeck_provisioned",
+        [("data", True, True), ("control", False, False), ("unified", True, True)],
     )
-    def test_flightdeck_enabled(self, kube_version, plane, init_containers_count, containers_count):
-        """Test that flightdeck works when enabled with various configs."""
+    def test_flightdeck_enabled(self, kube_version, plane, commander_renders, flightdeck_provisioned):
+        """flightDeck.enabled provisions the flightdeck store on data and unified planes (PINF-1093).
+
+        flightDeck.enabled is mode-agnostic (see the flightdeck.enabled helper); control planes
+        render no commander at all. CP-HA/failover-driven provisioning is data-only and is covered
+        in test_control_plane_ha_flightdeck.py / test_dr_failover.py.
+        """
 
         docs = render_chart(
             kube_version=kube_version,
@@ -744,35 +843,74 @@ class TestAstronomerCommander:
                     "flightDeck": {"enabled": True},
                 },
             },
-            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+            show_only=[
+                "charts/astronomer/templates/commander/commander-deployment.yaml",
+                "charts/astronomer/templates/commander/commander-flightdeck-role.yaml",
+                "charts/astronomer/templates/commander/commander-flightdeck-rolebinding.yaml",
+            ],
         )
 
-        if plane in ["data", "unified"]:
-            assert len(docs) == 1
-        else:
+        if not commander_renders:
             assert len(docs) == 0
             return
 
-        if len(docs) > 0:
-            assert docs[0]["kind"] == "Deployment"
-            assert docs[0]["metadata"]["name"] == "release-name-commander"
-            init_containers = docs[0]["spec"]["template"]["spec"]["initContainers"]
-            assert len(init_containers) == init_containers_count
-            containers = docs[0]["spec"]["template"]["spec"]["containers"]
-            assert len(containers) == containers_count
+        # Only the commander Deployment renders here (namespaced RBAC needs clusterRoles=false).
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "Deployment"
+        assert docs[0]["metadata"]["name"] == "release-name-commander"
 
-            commander_env_vars = get_env_vars_dict(containers[0]["env"])
+        init_names = [c["name"] for c in docs[0]["spec"]["template"]["spec"]["initContainers"]]
+        containers = docs[0]["spec"]["template"]["spec"]["containers"]
+        commander_env_vars = get_env_vars_dict(containers[0]["env"])
 
-            assert commander_env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
-                "name": "release-name-cluster-local-data",
-                "key": "local_cluster_id",
-            }
+        if flightdeck_provisioned:
+            assert "flightdeck-bootstrapper" in init_names
+            assert "flightdeck-db-migrations" in init_names
             assert commander_env_vars["COMMANDER_FLIGHTDECK_DSN"].get("secretKeyRef") == {
                 "name": "release-name-flightdeck-backend",
                 "key": "connection",
             }
+        else:
+            assert "flightdeck-bootstrapper" not in init_names
+            assert "flightdeck-db-migrations" not in init_names
+            assert "COMMANDER_FLIGHTDECK_DSN" not in commander_env_vars
 
-            assert commander_env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
+        assert commander_env_vars["LOCAL_CLUSTER_ID"].get("configMapKeyRef") == {
+            "name": "release-name-cluster-local-data",
+            "key": "local_cluster_id",
+        }
+        assert commander_env_vars.get("COMMANDER_DATAPLANE_FAILOVER_ENABLED", "false") == "false"
+
+    @pytest.mark.parametrize(
+        "plane,doc_count",
+        # data/unified: commander Deployment + flightdeck Role + RoleBinding = 3.
+        # control: no commander Deployment, but flightDeck.enabled is mode-agnostic in the
+        # flightdeck.enabled helper, so the Role + RoleBinding still render (2) — orphaned but
+        # harmless. Tightening that is part of the data-only cleanup follow-up (PINF-1093 sub-issue).
+        [("data", 3), ("control", 2), ("unified", 3)],
+    )
+    def test_flightdeck_enabled_with_no_cluster_role(self, kube_version, plane, doc_count):
+        """flightdeck RBAC (Role + RoleBinding) renders whenever flightDeck.enabled and clusterRoles=false;
+        the commander Deployment additionally renders on data/unified planes.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": plane},
+                    "clusterRoles": False,
+                },
+                "astronomer": {
+                    "flightDeck": {"enabled": True},
+                },
+            },
+            show_only=[
+                "charts/astronomer/templates/commander/commander-deployment.yaml",
+                "charts/astronomer/templates/commander/commander-flightdeck-role.yaml",
+                "charts/astronomer/templates/commander/commander-flightdeck-rolebinding.yaml",
+            ],
+        )
+        assert len(docs) == doc_count
 
     @pytest.mark.parametrize(
         "plane_mode,should_render",
@@ -1002,3 +1140,190 @@ class TestAstronomerCommander:
         env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["commander"]["env"])
         assert (env_vars.get("COMMANDER_SECRETS_FROM_FILES") == "true") is expected
         assert ("COMMANDER_FLIGHTDECK_DSN" in env_vars) is not expected
+
+    @pytest.mark.parametrize(
+        "plane_mode,expected_jwks_endpoint",
+        [
+            ("data", "https://houston.example.com"),
+            ("unified", "http://release-name-houston.default.svc.cluster.local:8871"),
+        ],
+        ids=["data_plane", "unified_plane"],
+    )
+    def test_commander_houston_auth_service_url(self, kube_version, plane_mode, expected_jwks_endpoint):
+        """Test that COMMANDER_HOUSTON_JWKS_ENDPOINT is set from houston.authServiceURL.
+
+        Data plane uses the external Houston URL (https://houston.<baseDomain>).
+        Unified plane uses the in-cluster service URL with .svc.cluster.local to
+        avoid DNS resolution timeouts (PLX-426).
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        commander_env = get_containers_by_name(docs[0])["commander"]["env"]
+        jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
+        assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
+        assert jwks_entries[0]["value"] == expected_jwks_endpoint
+
+    def test_commander_houston_auth_service_url_cp_ha_data_plane(self, kube_version):
+        """CP-HA: a data plane must fetch Houston JWKS from the GLOBAL hostname.
+
+        Pinning the JWKS endpoint to a single CP's per-CP baseDomain breaks deployment
+        operations after a CP/region failover (the pinned CP is the one that is down). Under
+        Control Plane HA it must use the global hostname so validation health-routes to the
+        active control plane.
+        """
+        # baseDomain is passed as the render arg (render_chart --set's global.baseDomain, which
+        # overrides values files) and deliberately differs from globalBaseDomain, so this asserts
+        # the helper uses globalBaseDomain rather than the per-CP baseDomain.
+        docs = render_chart(
+            kube_version=kube_version,
+            baseDomain="cp01.example.com",
+            values={
+                "global": {
+                    "plane": {"mode": "data"},
+                    "controlPlaneHA": {"enabled": True, "globalBaseDomain": "example.com"},
+                }
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        commander_env = get_containers_by_name(docs[0])["commander"]["env"]
+        jwks_entries = [e for e in commander_env if e["name"] == "COMMANDER_HOUSTON_JWKS_ENDPOINT"]
+        assert len(jwks_entries) == 1, "duplicate COMMANDER_HOUSTON_JWKS_ENDPOINT entries would break helm upgrade"
+        assert jwks_entries[0]["value"] == "https://houston.example.com", (
+            "data plane under CP-HA must fetch JWKS from the global hostname (globalBaseDomain), not the per-CP baseDomain"
+        )
+
+    @pytest.mark.parametrize(
+        "plane_mode,laminar_enabled,expected_result,should_render",
+        [
+            (
+                "data",
+                True,
+                True,
+                True,
+            ),
+            (
+                "unified",
+                True,
+                True,
+                True,
+            ),
+            (
+                "control",
+                True,
+                False,
+                False,
+            ),
+        ],
+    )
+    def test_commander_metadata_laminar_overrides(self, kube_version, plane_mode, laminar_enabled, expected_result, should_render):
+        """Test that global.laminar are passed through to commander metadata.yaml."""
+        values = {
+            "global": {
+                "laminar": {
+                    "enabled": laminar_enabled,
+                },
+                "plane": {
+                    "mode": plane_mode,
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        if not should_render:
+            assert len(docs) == 0
+            return
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        assert metadata_file_contents["laminar"] == {"enabled": expected_result}
+
+    def test_commander_laminar_hypervisor_auth_enabled(self, kube_version):
+        """When laminar is enabled, commander gets the hypervisor-auth env, the private-key
+        mount, and the signing-key volume (Laminar Auth Integration ADR, Option 4)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "laminar": {"enabled": True}},
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        commander = get_containers_by_name(doc)["commander"]
+        env_vars = get_env_vars_dict(commander["env"])
+
+        assert env_vars["COMMANDER_SIGNING_KEY_PATH"] == "/etc/astronomer/commander-signing-key/tls.key"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER"] == "local"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "astronomer-ee"
+        base_url = env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"]
+        assert base_url.startswith("http://release-name-hypervisor.")
+        assert base_url.endswith(".svc.cluster.local.:8000")
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "30"
+
+        # Private key mounted read-only for signing.
+        volume_mounts = {mount["name"]: mount for mount in commander["volumeMounts"]}
+        assert volume_mounts["commander-signing-key"]["mountPath"] == "/etc/astronomer/commander-signing-key"
+        assert volume_mounts["commander-signing-key"]["readOnly"] is True
+
+        volumes = {vol["name"]: vol for vol in doc["spec"]["template"]["spec"]["volumes"]}
+        assert volumes["commander-signing-key"]["secret"]["secretName"] == "release-name-commander-signing-key"
+
+    def test_commander_laminar_hypervisor_auth_values_overridable(self, kube_version):
+        """The hypervisor JWT contract, port, and poll interval are configurable."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "laminar": {"enabled": True}},
+                "astronomer": {
+                    "commander": {
+                        "laminar": {
+                            "hypervisor": {
+                                "jwtIssuer": "custom-issuer",
+                                "jwtAudience": "custom-aud",
+                                "port": 9000,
+                                "pollIntervalSecs": 45,
+                            }
+                        }
+                    }
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["commander"]["env"])
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER"] == "custom-issuer"
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "custom-aud"
+        base_url = env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"]
+        assert base_url.startswith("http://release-name-hypervisor.")
+        assert base_url.endswith(".svc.cluster.local.:9000")
+        assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "45"
+
+    def test_commander_laminar_hypervisor_auth_absent_when_laminar_disabled(self, kube_version):
+        """With laminar disabled, none of the hypervisor-auth env, mount, or volume render."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "data"}, "laminar": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        commander = get_containers_by_name(doc)["commander"]
+        env_vars = get_env_vars_dict(commander["env"])
+
+        assert not any(name.startswith("COMMANDER_LAMINAR_HYPERVISOR_") for name in env_vars)
+        assert "COMMANDER_SIGNING_KEY_PATH" not in env_vars
+        assert "commander-signing-key" not in {mount["name"] for mount in commander["volumeMounts"]}
+        assert "commander-signing-key" not in {vol["name"] for vol in doc["spec"]["template"]["spec"]["volumes"]}

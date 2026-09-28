@@ -21,7 +21,7 @@ service:
 - name: cert
   secret:
     defaultMode: 420
-    secretName: {{ .Values.webhooks.certSecretName }}
+    secretName: {{ .Release.Name }}-webhook-server-cert
 {{- else -}}
 - name: custom-certs
   secret:
@@ -53,7 +53,7 @@ service:
 - --health-probe-bind-address=:{{ .Values.ports.managerPort }}
 - --leader-elect
 {{ if .Values.manager.metrics.enabled }}
-- --metrics-bind-address=127.0.0.1:{{ .Values.ports.managerUpstreamPort }}
+- --metrics-bind-address=:{{ .Values.ports.managerUpstreamPort }}
 {{- end -}}
 {{- if .Values.airgapped }}
 - --airgapped
@@ -64,47 +64,72 @@ service:
 {{- if .Values.kedaEnabled }}
 - --keda
 {{- end -}}
+{{- include "operator.extraArgs" . }}
 {{- end }}
 
 {{ define "manager.containers" -}}
-- name: manager
-  args: {{ include "manager.args" . | indent 2 }}
+- args: {{ include "manager.args" . | indent 2 }}
   command:
     - /manager
   env:
     - name: WEBHOOK_CERT_DIRECTORY
       value: '{{- if .Values.webhooks.useCustomTlsCerts -}}/tmp/custom-certs{{- else -}}{{- end -}}'
+{{- if .Values.allowDeprecatedRuntimeVersions }}
     - name: ALLOW_DEPRECATED_RUNTIME_VERSIONS
       value: "true"
+{{- end }}
+{{- if .Values.environment }}
+    - name: AIRFLOW_OPERATOR_ENVIRONMENT
+      value: {{ .Values.environment | quote }}
+{{- end }}
 {{- range $i, $config := .Values.manager.env }}
     - name: {{ $config.name }}
       value: {{ $config.value | quote }}
 {{- end }}
   image: {{ include "operator.image" . }}
   imagePullPolicy: {{ .Values.images.manager.pullPolicy }}
-  resources: {{- toYaml .Values.manager.resources | nindent 4 }}
-  securityContext:
-    {{- $required := dict "readOnlyRootFilesystem" true }}
-    {{- merge $required .Values.securityContext | toYaml | nindent 4 }}
-  volumeMounts: {{- include "manager.volumeMounts" . | nindent 2 }}
-  {{- if .Values.livenessProbe }}
-  livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 4 }}
+  {{- if .Values.manager.livenessProbe }}
+  livenessProbe: {{ tpl (toYaml .Values.manager.livenessProbe) . | nindent 4 }}
   {{- else }}
   livenessProbe:
     httpGet:
       path: /healthz
       port: {{ .Values.ports.managerPort }}
   {{- end }}
-  {{- if .Values.readinessProbe }}
-  readinessProbe: {{- tpl (toYaml .Values.readinessProbe) . | nindent 4 }}
+  name: manager
+  {{- if .Values.manager.readinessProbe }}
+  readinessProbe: {{- tpl (toYaml .Values.manager.readinessProbe) . | nindent 4 }}
   {{- else }}
   readinessProbe:
     httpGet:
       path: /readyz
       port: {{ .Values.ports.managerPort }}
   {{- end }}
+  {{- if .Values.manager.startupProbe }}
+  startupProbe: {{- tpl (toYaml .Values.manager.startupProbe) . | nindent 4 }}
+  {{- else }}
+  startupProbe:
+    httpGet:
+      path: /healthz
+      port: {{ .Values.ports.managerPort }}
+    failureThreshold: 30
+    periodSeconds: 10
+  {{- end }}
+  resources:
+    limits:
+      cpu: '{{ .Values.manager.resources.limits.cpu }}'
+      memory: '{{ .Values.manager.resources.limits.memory }}'
+    requests:
+      cpu: '{{ .Values.manager.resources.requests.cpu }}'
+      memory: '{{ .Values.manager.resources.requests.memory }}'
+  securityContext: {{- include "platform.containerSecurityContext" (list . nil) | nindent 4 }}
+  volumeMounts: {{ include "manager.volumeMounts" . | nindent 2 }}
 {{- end }}
 
+{{/*
+Name of the controller-manager ServiceAccount. Defaults to
+"aocm" name; override via serviceAccount.name.
+*/}}
 {{- define "operator.serviceAccountName" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbac.enabled -}}
     {{- default (printf "%s-aocm" .Release.Name) .Values.serviceAccount.name }}
@@ -129,11 +154,35 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Whether airflow-operator resources should render: the operator must be enabled
+and the plane mode must be data or unified.
+*/}}
+{{- define "operator.enabled" -}}
+{{- if and (eq (include "astronomer.dataPlaneEnabled" .) "true") .Values.global.airflowOperator.enabled -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "manager.imagePullSecrets" -}}
 {{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
-{{ toYaml .Values.global.privateRegistry.secretName  | nindent 2 }}
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- else if .Values.manager.imagePullSecrets }}
+imagePullSecrets:
+{{- toYaml .Values.manager.imagePullSecrets | nindent 2 }}
 {{- end -}}
 {{- end -}}
+
+{{- define "operator.extraArgs" -}}
+{{- range $key, $value := .Values.extraArgs }}
+{{- /* Accept keys without values or with false as value */}}
+{{- if eq ($value | quote | len) 2 }}
+- --{{ $key }}
+{{- else }}
+- --{{ $key }}={{ $value }}
+{{- end }}
+{{- end }}
+{{- end }}

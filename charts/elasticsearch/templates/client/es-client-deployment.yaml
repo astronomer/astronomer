@@ -1,7 +1,7 @@
 #####################################
 ## Elasticsearch Client Deployment ##
 #####################################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "logging.enabled" .) "true" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -45,9 +45,7 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
-{{- if eq .Values.global.openshift.enabled false }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
-{{- end }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
       nodeSelector:
         {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       {{- if eq .Values.client.antiAffinity "hard" }}
@@ -88,7 +86,12 @@ spec:
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         resources: {{- toYaml .Values.client.initResources | nindent 10 }}
         securityContext:
-          readOnlyRootFilesystem: true
+        {{- if .Values.client.securityContext }}
+          {{- $required := dict "readOnlyRootFilesystem" true }}
+          {{- merge $required .Values.client.securityContext | toYaml | nindent 10}}
+        {{- else }}
+          {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
+        {{- end }}
         volumeMounts:
           - name: es-config-dir
             mountPath: /usr/share/elasticsearch/config_copy
@@ -116,7 +119,7 @@ spec:
           {{- $required := dict "readOnlyRootFilesystem" true }}
           {{- merge $required .Values.client.securityContext | toYaml | nindent 10}}
         {{- else }}
-          {{- include "elasticsearch.securityContext" . | nindent 10 }}
+          {{- include "platform.containerSecurityContext" (list $ nil) | nindent 10 }}
         {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
@@ -171,6 +174,9 @@ spec:
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 90
         {{- end }}
+        {{- if .Values.client.startupProbe }}
+        startupProbe: {{- tpl (toYaml .Values.client.startupProbe) . | nindent 10 }}
+        {{- else }}
         startupProbe:
           httpGet:
             # without local=true, we are waiting for this pod's
@@ -179,6 +185,7 @@ spec:
             port: {{ .Values.common.ports.http }}
           failureThreshold: 30
           periodSeconds: 10
+        {{- end }}
         volumeMounts:
         - mountPath: /tmp
           name: tmp

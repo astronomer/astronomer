@@ -1,8 +1,56 @@
+import re
 from pathlib import Path
 
 import yaml
 
+from tests import git_root_dir
 from tests.utils.chart import render_chart
+
+# Kinds that manage pods (and therefore carry pod/container securityContexts).
+pod_managers = ["CronJob", "DaemonSet", "Deployment", "Job", "StatefulSet", "ReplicaSet"]
+
+# A template is a pod manager if one of its YAML documents declares a pod-managing resource at
+# the top level, i.e. a column-0 `kind:` line. Anchoring at column 0 (no leading whitespace) is
+# what distinguishes a real resource from a nested reference such as an HPA's
+# `scaleTargetRef.kind: Deployment`, which is indented.
+_pod_manager_kind_re = re.compile(
+    r"^kind:[ \t]*[\"']?(?:" + "|".join(pod_managers) + r")[\"']?[ \t]*$",
+    re.MULTILINE,
+)
+
+
+def find_all_pod_manager_templates() -> list[str]:
+    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir.
+
+    Detection is by content, not filename. Filename matching is unreliable in both directions: it
+    misses Jobs/CronJobs whose filename omits the kind (e.g. add-labels-to-namespace.yaml,
+    houston-check-runtime-updates.yaml) and would false-positive on resources that merely reference
+    a pod manager through an indented field (e.g. an HPA's scaleTargetRef.kind: Deployment). We
+    instead look for a top-level `kind:` naming a pod-managing resource in the template source.
+    """
+
+    return sorted(
+        {
+            str(path.relative_to(git_root_dir))
+            for path in (git_root_dir / "charts").rglob("*.yaml")
+            if path.is_file() and _pod_manager_kind_re.search(path.read_text())
+        }
+    )
+
+
+def new_docs_by_kind(base_docs: list[dict], candidate_docs: list[dict], kinds: list[str]) -> list[dict]:
+    """Return docs from candidate_docs with a kind in kinds not already present in base_docs.
+
+    Useful for folding in a second render (e.g. a non-default feature-flag combination) without
+    re-testing components that already appeared in the first render.
+    """
+    base_ids = {f"{doc['kind']}/{doc['metadata']['name']}" for doc in base_docs}
+    new_docs = []
+    for doc in candidate_docs:
+        doc_id = f"{doc['kind']}/{doc['metadata']['name']}"
+        if doc["kind"] in kinds and doc_id not in base_ids:
+            new_docs.append(doc)
+    return new_docs
 
 
 def get_env_vars_dict(container_env):
@@ -43,8 +91,8 @@ def get_containers_by_name(doc: dict, *, include_init_containers=False) -> dict:
     """
 
     pod_template = get_pod_template(doc)
-    containers = pod_template.get("spec", {}).get("containers", [])
-    initContainers = pod_template.get("spec", {}).get("initContainers", [])
+    containers = pod_template.get("spec", {}).get("containers") or []
+    initContainers = pod_template.get("spec", {}).get("initContainers") or []
 
     c_by_name = {c["name"]: c for c in containers}
 
@@ -81,6 +129,11 @@ def get_all_features():
     return yaml.safe_load((Path(__file__).parent.parent / "enable_all_features.yaml").read_text())
 
 
+def get_chart_version():
+    with open("charts/astronomer/Chart.yaml") as chart_file:
+        return yaml.safe_load(chart_file)["version"]
+
+
 def get_chart_containers(
     k8s_version: str,
     chart_values: dict,
@@ -100,8 +153,8 @@ def get_chart_containers(
         {
             "name": doc.get("metadata", {}).get("name"),
             "kind": doc.get("kind"),
-            "containers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("containers", []),
-            "initContainers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("initContainers", []),
+            "containers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("containers") or [],
+            "initContainers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("initContainers") or [],
         }
         for doc in docs
         if "spec" in doc

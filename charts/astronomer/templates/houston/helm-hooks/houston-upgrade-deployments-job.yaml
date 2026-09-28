@@ -3,7 +3,7 @@
 #######################################
 {{- if .Values.houston.upgradeDeployments.enabled }}
 {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
@@ -45,8 +45,8 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston) | fromYaml)) | nindent 8 }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
-      {{- include "astronomer.secretsFromFiles.podSecurityContext" (dict "ctx" $ "component" .Values.houston) | nindent 6 }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
@@ -69,16 +69,12 @@ spec:
               mountPath: /etc/ssl/certs_copy
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
@@ -86,13 +82,6 @@ spec:
             - "echo"
             - "DB ready"
           env:
-            {{- if not $secretsFromFiles }}
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
-            {{- end }}
             {{- include "houston_environment" . | indent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
@@ -100,9 +89,7 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: BOOTSTRAP_DB
@@ -110,12 +97,11 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-            # we need to hardcode it to be able to upgrade from prisma1 to prisma2
             - name: SCHEMA_NAME
-              value: "houston$default"
-            {{ if .Values.global.sslmodeEnabled }}
+              value: {{ .Values.global.houston.database.schemaName | quote }}
+            {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
             - name: SSLMODE
-              value: "require"
+              value: {{ .Values.global.ssl.mode }}
             {{- end }}
             # Connection Limit for Prisma Connection Pool: https://www.prisma.io/docs/concepts/components/prisma-client/deployment#database-connection-limit
             {{ if .Values.houston.prismaConnectionLimit }}
@@ -147,24 +133,24 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
           args: ["yarn", "upgrade-deployments", "--", "--canary={{ .Values.houston.upgradeDeployments.canary }}"]
-          securityContext:
-            {{- $required := dict "readOnlyRootFilesystem" true }}
-            {{- merge $required .Values.securityContext | toYaml | nindent 12 }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           env:
-            {{- if not $secretsFromFiles }}
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.backendSecret" . }}
-                  key: connection
-            {{- end }}
             {{- include "houston_environment" . | indent 12 }}
           {{- if .Values.houston.upgradeDeployments.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.readinessProbe) . | nindent 12 }}
           {{- end }}
           {{- if .Values.houston.upgradeDeployments.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.upgradeDeployments.startupProbe }}
+          startupProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.startupProbe) . | nindent 12 }}
+          {{- else }}
+          startupProbe:
+            exec:
+              command: ["true"]
+            failureThreshold: 30
+            periodSeconds: 10
           {{- end }}
           volumeMounts:
             - name: etc-ssl-certs

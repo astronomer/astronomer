@@ -5,6 +5,7 @@ from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
 DEPLOYMENT_FILE = "charts/grafana/templates/grafana-deployment.yaml"
+CONFIGMAP_FILE = "charts/grafana/templates/grafana-configmap.yaml"
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -86,9 +87,27 @@ def test_deployment_with_securitycontext_defaults(kube_version, plane_mode):
     doc = docs[0]
     c_by_name = get_containers_by_name(doc, include_init_containers=True)
     assert doc["kind"] == "Deployment"
-    assert c_by_name["grafana"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
-    assert c_by_name["wait-for-db"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
-    assert c_by_name["bootstrapper"]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsNonRoot": True}
+    assert c_by_name["grafana"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
+        "readOnlyRootFilesystem": True,
+        "runAsNonRoot": True,
+        "runAsUser": 65532,
+    }
+    assert c_by_name["wait-for-db"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
+        "readOnlyRootFilesystem": True,
+        "runAsNonRoot": True,
+        "runAsUser": 65532,
+    }
+    assert c_by_name["bootstrapper"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
+        "readOnlyRootFilesystem": True,
+        "runAsNonRoot": True,
+        "runAsUser": 1000,
+    }
 
 
 @pytest.mark.parametrize("plane_mode", ["control", "unified"])
@@ -109,19 +128,25 @@ def test_deployment_with_securitycontext_overrides(kube_version, plane_mode):
     assert doc["kind"] == "Deployment"
     c_by_name = get_containers_by_name(doc, include_init_containers=True)
     assert c_by_name["grafana"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
         "runAsNonRoot": True,
         "runAsUser": 467,
         "readOnlyRootFilesystem": True,
     }
 
     assert c_by_name["wait-for-db"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
         "runAsNonRoot": True,
         "runAsUser": 467,
         "readOnlyRootFilesystem": True,
     }
     assert c_by_name["bootstrapper"]["securityContext"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
         "runAsNonRoot": True,
-        "runAsUser": 467,
+        "runAsUser": 1000,
         "readOnlyRootFilesystem": True,
     }
 
@@ -145,6 +170,71 @@ def test_grafana_init_containers_disabled_with_custom_secret_name(kube_version, 
         "name": "GF_DATABASE_URL",
         "valueFrom": {"secretKeyRef": {"name": "grafanabackend", "key": "connection"}},
     } in c_by_name["grafana"]["env"]
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified"])
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+def test_grafana_container_volume_mounts(kube_version, plane_mode):
+    """Test that the grafana container has the expected volume mounts."""
+    docs = render_chart(
+        kube_version=kube_version,
+        values={"global": {"plane": {"mode": plane_mode}}},
+        show_only=[DEPLOYMENT_FILE],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "Deployment"
+
+    c_by_name = get_containers_by_name(doc)
+    grafana_volume_mounts = c_by_name["grafana"]["volumeMounts"]
+
+    expected_volume_mounts = [
+        {"name": "grafana-dashboards", "mountPath": "/etc/grafana/provisioning/dashboards"},
+        {"name": "var-lib-grafana", "mountPath": "/var/lib/grafana"},
+        {"name": "grafana-datasource-volume", "mountPath": "/etc/grafana/provisioning/datasources"},
+        {"name": "tmp", "mountPath": "/tmp"},
+    ]
+    for mount in expected_volume_mounts:
+        assert mount in grafana_volume_mounts, f"Expected volume mount {mount} not found"
+
+    volumes = doc["spec"]["template"]["spec"]["volumes"]
+    assert {"name": "tmp", "emptyDir": {}} in volumes
+    assert {
+        "name": "grafana-dashboards",
+        "configMap": {
+            "name": "release-name-grafana-dashboard-provisioner",
+            "items": [{"key": "dashboard.yaml", "path": "dashboard.yaml"}],
+        },
+    } in volumes
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified"])
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+def test_grafana_dashboard_provisioner_configmap(kube_version, plane_mode):
+    """Test that the grafana-dashboard-provisioner ConfigMap renders with the expected content."""
+    docs = render_chart(
+        kube_version=kube_version,
+        values={"global": {"plane": {"mode": plane_mode}}},
+        show_only=[CONFIGMAP_FILE],
+    )
+
+    provisioner_cm = next(
+        (d for d in docs if d.get("metadata", {}).get("name", "").endswith("-dashboard-provisioner")),
+        None,
+    )
+    assert provisioner_cm is not None
+    assert provisioner_cm["kind"] == "ConfigMap"
+
+    dashboard_yaml = provisioner_cm["data"]["dashboard.yaml"]
+    assert "apiVersion: 1" in dashboard_yaml
+    assert "providers:" in dashboard_yaml
+    assert '- name: "default"' in dashboard_yaml
+    assert "org_id: 1" in dashboard_yaml
+    assert 'folder: ""' in dashboard_yaml
+    assert "type: file" in dashboard_yaml
+    assert "folder: /var/lib/grafana/dashboards" not in dashboard_yaml
+    assert "path: /var/lib/grafana/dashboards" in dashboard_yaml
 
 
 @pytest.mark.parametrize("plane_mode", ["control", "unified"])
@@ -200,7 +290,7 @@ def test_grafana_auth_sidecar_volumes_and_mounts(kube_version, plane_mode):
 @pytest.mark.parametrize("plane_mode", ["control", "unified"])
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 def test_grafana_auth_sidecar_disabled_no_sidecar_volumes(kube_version, plane_mode):
-    """Test that when auth sidecar is disabled, auth-proxy container and tmp volume are not present."""
+    """Test that when auth sidecar is disabled, auth-proxy container and sidecar-specific volumes are not present."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"plane": {"mode": plane_mode}, "authSidecar": {"enabled": False}}},
@@ -219,10 +309,9 @@ def test_grafana_auth_sidecar_disabled_no_sidecar_volumes(kube_version, plane_mo
     )
     assert auth_proxy_container is None
 
-    # Check that tmp volume is not present when auth sidecar is disabled
+    # Check that sidecar-specific volumes are not present when auth sidecar is disabled
     volumes = doc["spec"]["template"]["spec"]["volumes"]
-    tmp_volume = next(
-        (volume for volume in volumes if volume["name"] == "tmp"),
-        None,
-    )
-    assert tmp_volume is None
+    volume_names = [v["name"] for v in volumes]
+    assert "grafana-sidecar-conf" not in volume_names
+    assert "nginx-write-dir" not in volume_names
+    assert "nginx-run-dir" not in volume_names

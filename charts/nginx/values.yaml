@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.14.4
+    tag: 1.15.10-3
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.29.2
+    tag: 0.30.8
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -26,6 +26,11 @@ securityContext:
       - NET_BIND_SERVICE
   allowPrivilegeEscalation: false
 
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -34,6 +39,8 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ~
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
 
 podAnnotations: {}
 
@@ -47,13 +54,13 @@ maxUnavailableDefaultBackend: 25%
 
 minReadySeconds: 0
 
-resources: {}
-#  limits:
-#   cpu: 100m
-#   memory: 128Mi
-#  requests:
-#   cpu: 100m
-#   memory: 128Mi
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
 
 livenessProbe: {}
   # httpGet:
@@ -62,6 +69,7 @@ livenessProbe: {}
   # initialDelaySeconds: 30
   # timeoutSeconds: 5
 readinessProbe: {}
+startupProbe: {}
 
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"
@@ -125,9 +133,16 @@ allowSnippetAnnotations: true
 
 defaultBackend:
   enabled: true
-  resources: {}
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
   readinessProbe: {}
   livenessProbe: {}
+  startupProbe: {}
   podAnnotations: {}
   serviceAccount:
     # Specifies whether a service account should be created
@@ -137,9 +152,14 @@ defaultBackend:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ~
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
 
 cspPolicy:
-  cdnEnabled: true
+  enabled: true
   connectsrc: "cdn.jsdelivr.net"
   fontsrc: "fonts.gstatic.com"
   scriptsrc: "fonts.googleapis.com cdn.jsdelivr.net"
+
+extraArgs: {}
+  ## enable-metrics: true
