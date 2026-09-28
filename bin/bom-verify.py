@@ -13,12 +13,31 @@
 # Author: github.com/danielhoherd, Claude Sonnet 5
 """Report the version, sha256, architectures, and cosign-signed status of every image in an Astronomer BOM JSON."""
 
+# signal and sys only: these need to be imported, and the handler installed, before any of the slower
+# third-party imports below -- otherwise a Ctrl-C during those imports (typer/yaml/diskcache/rich, or their
+# own transitive imports) hits Python's default KeyboardInterrupt handling instead of ours, and prints a
+# raw traceback anyway.
+# ruff: noqa: E402
+import signal
+import sys
+
+
+def handle_sigint(signum: int, frame: object) -> None:
+    """Exit cleanly (no traceback) on Ctrl-C, with the conventional 128+SIGINT exit code.
+
+    Lets a wrapping shell loop that checks the exit status (e.g. `for v in ...; do bom-verify.py "$v" || break; done`)
+    correctly detect the interruption and stop, instead of an uncaught KeyboardInterrupt's traceback and exit code 1.
+    """
+    print("\nInterrupted.", file=sys.stderr)
+    sys.exit(128 + signum)
+
+
+signal.signal(signal.SIGINT, handle_sigint)
+
 import hashlib
 import json
 import shutil
-import signal
 import subprocess
-import sys
 from enum import StrEnum
 from pathlib import Path
 
@@ -34,19 +53,6 @@ app = typer.Typer(add_completion=False)
 BOM_URL_TEMPLATE = "https://updates.astronomer.io/astronomer-software/releases/astronomer-{version}.json"
 DEFAULT_CACHE_DIR = Path.home() / ".cache" / "bom-verify"
 CACHE_EXPIRE_SECONDS = 24 * 60 * 60
-
-
-def handle_sigint(signum: int, frame: object) -> None:
-    """Exit cleanly (no traceback) on Ctrl-C, with the conventional 128+SIGINT exit code.
-
-    Lets a wrapping shell loop that checks the exit status (e.g. `for v in ...; do bom-verify.py "$v" || break; done`)
-    correctly detect the interruption and stop, instead of an uncaught KeyboardInterrupt's traceback and exit code 1.
-    """
-    print("\nInterrupted.", file=sys.stderr)
-    sys.exit(128 + signum)
-
-
-signal.signal(signal.SIGINT, handle_sigint)
 
 
 class OutputFormat(StrEnum):
