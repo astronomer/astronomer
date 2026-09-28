@@ -227,3 +227,12 @@ Common Helper template for control or unified mode
 true
 {{- end -}}
 {{- end -}}
+
+{{- /*
+Common Helper template for data or unified mode
+*/ -}}
+{{- define "astronomer.dataPlaneEnabled" -}}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+true
+{{- end -}}
+{{- end -}}

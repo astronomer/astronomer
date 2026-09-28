@@ -778,6 +778,26 @@ commander:
       # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
       automountServiceAccountToken: true
 
+  # -- Commander's own signing keypair, used to issue JWTs to dataplane services.
+  signingKey:
+    # -- Regenerate the keypair on every upgrade. Default false keeps a stable key
+    # (pre-install only) so a consumer's trusted public key is not rotated out from
+    # under it on upgrades.
+    regenerateKeyEachUpgrade: false
+
+  # -- Config for the JWTs commander mints for laminar components.
+  laminar:
+    # -- Hypervisor JWT contract. jwtIssuer / jwtAudience must match the
+    # hypervisor's LAMINAR_JWT_ISSUER / _AUDIENCE (set in the laminar sub-chart).
+    # Hypervisor-only — the laminar api-server uses the Houston user-facing JWT,
+    # not this token.
+    hypervisor:
+      jwtIssuer: local
+      jwtAudience: astronomer-ee
+      port: 8000
+      # -- Interval in seconds between hibernation-status polls of the laminar hypervisor.
+      pollIntervalSecs: 30
+
 
 pilot:
   # -- Enable Pilot deployment (data plane only)
