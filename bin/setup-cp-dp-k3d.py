@@ -687,13 +687,9 @@ laminar:
     # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
     # that flag is on; we emit it only in that case for clarity.
-    # Drift correction on scaling objects is its own switch, separate from the identity
-    # global.keda.enabled creates. Only meaningful where this script installed KEDA.
-    operator_keda_line = "  kedaEnabled: true\n" if settings.with_keda else ""
     operator_subchart_block = (
-        f"""\
+        """\
 airflow-operator:
-{operator_keda_line}\
   crd:
     create: true
   certManager:

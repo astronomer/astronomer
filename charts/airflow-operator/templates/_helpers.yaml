@@ -61,7 +61,7 @@ service:
 {{- if .Values.global.openshift.enabled }}
 - --openshift
 {{- end -}}
-{{- if .Values.kedaEnabled }}
+{{- if .Values.global.keda.enabled }}
 - --keda
 {{- end -}}
 {{- include "operator.extraArgs" . }}

@@ -250,7 +250,7 @@ which only run on a data plane.
 Returns the string "true" or "false" — compare with eq.
 */ -}}
 {{- define "keda.workerScalingEnabled" -}}
-{{- and .Values.global.keda.enabled (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) -}}
+{{- and .Values.global.keda.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
 {{- end -}}
 
 {{- /*
