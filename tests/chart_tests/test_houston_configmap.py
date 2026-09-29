@@ -799,8 +799,9 @@ def test_houston_configmap_with_mcp_server_enabled():
 
 
 def test_houston_configmap_with_mcp_server_disabled():
-    """mcpServer must be absent, not merely false, when the feature is off -- appConfig's
-    resolver reads config.get('mcpServer.enabled') and a missing key must not throw."""
+    """mcpServer must always be present with an explicit enabled: false, not omitted --
+    appConfig's resolver reads config.get('mcpServer.enabled'), and the `config` package's
+    .get() throws on a genuinely missing key rather than returning a falsy value."""
     docs = render_chart(
         values={"astronomer": {"mcpServer": {"enabled": False}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -809,7 +810,8 @@ def test_houston_configmap_with_mcp_server_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert "mcpServer" not in prod
+    assert prod["mcpServer"]["enabled"] is False
+    assert "enabledGroups" not in prod["mcpServer"]
 
 
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
