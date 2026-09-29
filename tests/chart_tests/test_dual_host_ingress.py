@@ -16,7 +16,6 @@ from tests.utils.chart import render_chart
 
 PUBLIC_INGRESS = "charts/astronomer/templates/ingress.yaml"
 HOUSTON_INGRESS = "charts/astronomer/templates/houston/ingress.yaml"
-HOUSTON_AIRFLOW_PROXY_INGRESS = "charts/astronomer/templates/houston/airflow-proxy-ingress.yaml"
 GRAFANA_INGRESS = "charts/grafana/templates/grafana-ingress.yaml"
 ALERTMANAGER_INGRESS = "charts/alertmanager/templates/ingress.yaml"
 PROMETHEUS_INGRESS = "charts/prometheus/templates/ingress.yaml"
@@ -33,7 +32,6 @@ INGRESS_HOSTS = {
         [GLOBAL_BASE_DOMAIN, f"app.{GLOBAL_BASE_DOMAIN}"],
     ),
     HOUSTON_INGRESS: ([f"houston.{BASE_DOMAIN}"], [f"houston.{GLOBAL_BASE_DOMAIN}"]),
-    HOUSTON_AIRFLOW_PROXY_INGRESS: ([f"houston.{BASE_DOMAIN}"], [f"houston.{GLOBAL_BASE_DOMAIN}"]),
     GRAFANA_INGRESS: ([f"grafana.{BASE_DOMAIN}"], [f"grafana.{GLOBAL_BASE_DOMAIN}"]),
     ALERTMANAGER_INGRESS: ([f"alertmanager.{BASE_DOMAIN}"], [f"alertmanager.{GLOBAL_BASE_DOMAIN}"]),
     PROMETHEUS_INGRESS: ([f"prometheus.{BASE_DOMAIN}"], [f"prometheus.{GLOBAL_BASE_DOMAIN}"]),

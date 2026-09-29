@@ -85,7 +85,7 @@ class TestIngress:
     def test_single_ingress_per_host(self, kube_version):
         default_docs = render_chart(values={"global": {"perHostIngress": {"enabled": True}}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
-        assert len(ingresses) == 9
+        assert len(ingresses) == 8
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
         assert all(len(doc["spec"]["tls"][0]["hosts"]) == 1 for doc in ingresses)
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)
@@ -95,7 +95,7 @@ class TestIngress:
     def test_global_disabled_overrides(self, kube_version):
         """global.ingress.enabled=false disables Ingress templates rendered by default from the platform."""
         # perHostIngress enabled so the most ingresses would otherwise render (see
-        # test_single_ingress_per_host, which counts 9 with the gate on).
+        # test_single_ingress_per_host, which counts 8 with the gate on).
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"ingress": {"enabled": False}, "perHostIngress": {"enabled": True}}},
