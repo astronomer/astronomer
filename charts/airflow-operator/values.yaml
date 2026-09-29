@@ -8,6 +8,9 @@ images:
 crd:
   create: true
 
+# Watch for keda scaled objects, if enabled, KEDA HAS to be installed in the cluster.
+kedaEnabled: false
+
 certManager:
   # When true, cert-manager provisions the webhook server's TLS
   # certificate. Set to false only if you supply your own certificates via

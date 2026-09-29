@@ -1,0 +1,16 @@
+# Lets KEDA mint a token for the scaling identity, and for no other account.
+{{- if eq (include "keda.workerScalingEnabled" .) "true" }}
+{{- $identity := include "keda.scalingIdentityName" . }}
+apiVersion: {{ template "apiVersion.rbac" . }}
+kind: Role
+metadata:
+  name: {{ $identity }}-token-minter
+  namespace: {{ include "keda.clusterObjectNamespace" . }}
+  labels:
+    {{- include "keda.scalingIdentityLabels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["serviceaccounts/token"]
+    resourceNames: [{{ $identity | quote }}]
+    verbs: ["create"]
+{{- end }}
