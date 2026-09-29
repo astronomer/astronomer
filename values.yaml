@@ -137,7 +137,9 @@ global:
   # Worker autoscaling. You install and run KEDA 2.17 or later yourself; turn this on
   # to have the platform create the identity KEDA presents when it asks how many
   # workers a queue needs. Doing so writes a service account, a role and a role
-  # binding into the namespace below, plus one cluster-scoped authentication object.
+  # binding into the namespace below, plus one cluster-scoped authentication object. It
+  # also has the Airflow operator watch your scaling objects, so one changed or deleted
+  # outside the platform is restored.
   keda:
     enabled: false
     # The namespace KEDA is installed in.

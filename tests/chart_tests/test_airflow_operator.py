@@ -746,7 +746,7 @@ class TestAirflowOperator:
 
     @pytest.mark.parametrize("keda_enabled", [True, False])
     def test_airflow_operator_keda_flag(self, kube_version, keda_enabled):
-        """kedaEnabled must propagate to the manager as the --keda arg.
+        """global.keda.enabled must propagate to the manager as the --keda arg.
 
         Without it the operator still creates scaling objects, it just stops noticing when one is
         changed or deleted underneath it, so drift goes uncorrected. Off by default, because the
@@ -756,8 +756,10 @@ class TestAirflowOperator:
             validate_objects=False,
             kube_version=kube_version,
             values={
-                "global": {"airflowOperator": {"enabled": True}},
-                "airflow-operator": {"kedaEnabled": keda_enabled},
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "keda": {"enabled": keda_enabled},
+                },
             },
             show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
         )

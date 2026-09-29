@@ -21,7 +21,8 @@ TOKEN_MINTER = f"{IDENTITY}-token-minter"
 
 show_only = [
     "templates/worker-autoscaling/serviceaccount.yaml",
-    "templates/worker-autoscaling/rbac.yaml",
+    "templates/worker-autoscaling/role.yaml",
+    "templates/worker-autoscaling/rolebinding.yaml",
     "templates/worker-autoscaling/clustertriggerauthentication.yaml",
 ]
 
@@ -101,7 +102,11 @@ class TestWorkerAutoscalingIdentity:
 
     def test_token_minter_is_scoped_to_the_one_identity(self, kube_version):
         """Test that KEDA can mint a token for the scaling identity and for no other account."""
-        docs = render_chart(kube_version=kube_version, show_only="templates/worker-autoscaling/rbac.yaml", values=keda_values())
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["templates/worker-autoscaling/role.yaml", "templates/worker-autoscaling/rolebinding.yaml"],
+            values=keda_values(),
+        )
         docs_by_kind = by_kind(docs)
         role, role_binding = docs_by_kind["Role"], docs_by_kind["RoleBinding"]
 
