@@ -14,6 +14,7 @@ dependencies = [
     "jmespath>=1.1",
     "jsonschema>=4.26",
     "kubernetes>=34.1.0",
+    "pre-commit>=4.6.2",
     "pytest>=9.1",
     "pytest-forked>=1.6",
     "pytest-pretty>=1.3",

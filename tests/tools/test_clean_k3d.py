@@ -77,9 +77,7 @@ def test_k3d_query_failure_aborts_before_deleting(monkeypatch: pytest.MonkeyPatc
     assert deleted == []
 
 
-def test_resolver_removed_only_when_contents_are_managed(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_resolver_removed_only_when_contents_are_managed(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     resolver = tmp_path / "localtest.me"
     resolver.write_text(f"nameserver 127.0.0.1\nport {clean_k3d.CP_DP_LOCAL_DNS_PORT}\n")
     commands: list[list[str]] = []
@@ -95,9 +93,7 @@ def test_resolver_removed_only_when_contents_are_managed(
     assert commands == []
 
 
-def test_network_cleanup_is_idempotent_when_resources_are_absent(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_network_cleanup_is_idempotent_when_resources_are_absent(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     def inspect_missing(command: list[str], **_kwargs: object) -> SimpleNamespace:
         return SimpleNamespace(returncode=1, stderr=f"Error: No such object: {command[2]}")
 
@@ -109,9 +105,7 @@ def test_network_cleanup_is_idempotent_when_resources_are_absent(
     assert clean_k3d._cleanup_cp_dp_networking("localtest.me") == []
 
 
-def test_docker_inspection_error_preserves_configs_and_resolver(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_docker_inspection_error_preserves_configs_and_resolver(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     dns_config = tmp_path / "dnsmasq.conf"
     proxy_config = tmp_path / "proxy.conf"
     dns_config.write_text("managed dns config")
