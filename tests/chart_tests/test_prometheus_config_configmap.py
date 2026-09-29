@@ -524,11 +524,11 @@ class TestPrometheusConfigConfigmap:
         assert resolve_deployment("myrelease-pgbouncer-5c9cfdbd5c-jlffk") == "myrelease"
 
     def test_prometheus_cadvisor_deployment_relabel_resolves_multiword_component_pods(self, kube_version):
-        """Some components' own names contain a dash (api-server, dag-processor), one segment
-        longer than the single-token `<release>-<component>` this regex otherwise assumes. The
-        `deployment` relabel must still resolve to `<release>` for these pods, for single-word
-        components, and for a release name that itself contains dashes. Regression guard for
-        APC-1899."""
+        """Some components' own names contain a dash (api-server, dag-processor, dag-server,
+        git-sync-relay), one segment longer than the single-token `<release>-<component>` this
+        regex otherwise assumes. The `deployment` relabel must still resolve to `<release>` for
+        these pods, for single-word components, and for a release name that itself contains
+        dashes. Regression guard for APC-1899."""
         cadvisor_job = self.get_cadvisor_job(kube_version)
         deployment_relabels = jmespath.search(
             "metric_relabel_configs[?target_label == 'deployment' && source_labels == ['pod_name']]",
@@ -546,6 +546,8 @@ class TestPrometheusConfigConfigmap:
 
         assert resolve_deployment("wq-test-api-server-c4879c8b9-96zxh") == "wq-test"
         assert resolve_deployment("wq-test-dag-processor-ffd6d4776-zskqq") == "wq-test"
+        assert resolve_deployment("wq-test-dag-server-c4879c8b9-96zxh") == "wq-test"
+        assert resolve_deployment("wq-test-git-sync-relay-ffd6d4776-zskqq") == "wq-test"
         assert resolve_deployment("my-release-api-server-c4879c8b9-96zxh") == "my-release"
         assert resolve_deployment("myrelease-scheduler-675678c989-2cpqt") == "myrelease"
         assert resolve_deployment("myrelease-pgbouncer-5c9cfdbd5c-jlffk") == "myrelease"
@@ -619,6 +621,8 @@ class TestPrometheusConfigConfigmap:
         for pod_name, expected_deployment, expected_component in [
             ("wq-test-api-server-c4879c8b9-96zxh", "wq-test", "api-server"),
             ("wq-test-dag-processor-ffd6d4776-zskqq", "wq-test", "dag-processor"),
+            ("wq-test-dag-server-c4879c8b9-96zxh", "wq-test", "dag-server"),
+            ("wq-test-git-sync-relay-ffd6d4776-zskqq", "wq-test", "git-sync-relay"),
             ("my-release-api-server-c4879c8b9-96zxh", "my-release", "api-server"),
             ("myrelease-scheduler-675678c989-2cpqt", "myrelease", "scheduler"),
         ]:
