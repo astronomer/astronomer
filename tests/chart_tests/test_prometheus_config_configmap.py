@@ -507,7 +507,7 @@ class TestPrometheusConfigConfigmap:
             cadvisor_job,
         )
         assert len(deployment_relabels) == 1
-        assert deployment_relabels[0]["replacement"] == "$1$2"
+        assert deployment_relabels[0]["replacement"] == "$1$2$3"
 
         pattern = re.compile(f"^(?:{deployment_relabels[0]['regex']})$")
 
@@ -520,6 +520,33 @@ class TestPrometheusConfigConfigmap:
         assert resolve_deployment("myrelease-worker-wq01-575dcd8686-vtfw2") == "myrelease"
         assert resolve_deployment("myrelease-worker-high-priority-7c9987ddf-ks7cv") == "myrelease"
         assert resolve_deployment("my-release-worker-default-7c9987ddf-ks7cv") == "my-release"
+        assert resolve_deployment("myrelease-scheduler-675678c989-2cpqt") == "myrelease"
+        assert resolve_deployment("myrelease-pgbouncer-5c9cfdbd5c-jlffk") == "myrelease"
+
+    def test_prometheus_cadvisor_deployment_relabel_resolves_multiword_component_pods(self, kube_version):
+        """Some components' own names contain a dash (api-server, dag-processor), one segment
+        longer than the single-token `<release>-<component>` this regex otherwise assumes. The
+        `deployment` relabel must still resolve to `<release>` for these pods, for single-word
+        components, and for a release name that itself contains dashes. Regression guard for
+        APC-1899."""
+        cadvisor_job = self.get_cadvisor_job(kube_version)
+        deployment_relabels = jmespath.search(
+            "metric_relabel_configs[?target_label == 'deployment' && source_labels == ['pod_name']]",
+            cadvisor_job,
+        )
+        assert len(deployment_relabels) == 1
+        assert deployment_relabels[0]["replacement"] == "$1$2$3"
+
+        pattern = re.compile(f"^(?:{deployment_relabels[0]['regex']})$")
+
+        def resolve_deployment(pod_name):
+            match = pattern.match(pod_name)
+            assert match, f"pod_name {pod_name!r} did not match the deployment relabel regex"
+            return "".join(group or "" for group in match.groups())
+
+        assert resolve_deployment("wq-test-api-server-c4879c8b9-96zxh") == "wq-test"
+        assert resolve_deployment("wq-test-dag-processor-ffd6d4776-zskqq") == "wq-test"
+        assert resolve_deployment("my-release-api-server-c4879c8b9-96zxh") == "my-release"
         assert resolve_deployment("myrelease-scheduler-675678c989-2cpqt") == "myrelease"
         assert resolve_deployment("myrelease-pgbouncer-5c9cfdbd5c-jlffk") == "myrelease"
 
@@ -556,6 +583,43 @@ class TestPrometheusConfigConfigmap:
             ("myrelease-worker-wq01-575dcd8686-vtfw2", "myrelease", "worker"),
             ("myrelease-worker-high-priority-7c9987ddf-ks7cv", "myrelease", "worker"),
             ("my-release-worker-default-7c9987ddf-ks7cv", "my-release", "worker"),
+            ("myrelease-scheduler-675678c989-2cpqt", "myrelease", "scheduler"),
+        ]:
+            assert resolve(pod_name, by_target["deployment"]["replacement"]) == expected_deployment
+            assert resolve(pod_name, by_target["component_name"]["replacement"]) == expected_component
+
+    def test_prometheus_cadvisor_container_network_relabel_resolves_multiword_component_pods(self, kube_version):
+        """The container_network_* relabels carry the same `<release>-<component>-<rs>-<pod>`
+        positional assumption as the deployment relabel above, and must be fixed the same way
+        for multi-word component names. Regression guard for APC-1899."""
+        cadvisor_job = self.get_cadvisor_job(kube_version)
+        network_relabels = jmespath.search(
+            "metric_relabel_configs[?source_labels == ['__name__', 'container_name', 'pod_name']]",
+            cadvisor_job,
+        )
+        assert len(network_relabels) == 3
+        by_target = {relabel["target_label"]: relabel for relabel in network_relabels}
+        assert set(by_target) == {"deployment", "component_name", "component_instance"}
+
+        # all three relabels share the same regex; only the replacement differs
+        regex = by_target["deployment"]["regex"]
+        assert by_target["component_name"]["regex"] == regex
+        assert by_target["component_instance"]["regex"] == regex
+        pattern = re.compile(f"^(?:{regex})$")
+
+        def resolve(pod_name, replacement):
+            value = f"container_network_receive_bytes_total;POD;{pod_name}"
+            match = pattern.match(value)
+            assert match, f"{value!r} did not match the container_network relabel regex"
+            result = replacement
+            for index, group in enumerate(match.groups(), start=1):
+                result = result.replace(f"${index}", group or "")
+            return result
+
+        for pod_name, expected_deployment, expected_component in [
+            ("wq-test-api-server-c4879c8b9-96zxh", "wq-test", "api-server"),
+            ("wq-test-dag-processor-ffd6d4776-zskqq", "wq-test", "dag-processor"),
+            ("my-release-api-server-c4879c8b9-96zxh", "my-release", "api-server"),
             ("myrelease-scheduler-675678c989-2cpqt", "myrelease", "scheduler"),
         ]:
             assert resolve(pod_name, by_target["deployment"]["replacement"]) == expected_deployment
