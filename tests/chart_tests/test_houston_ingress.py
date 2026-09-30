@@ -1,3 +1,5 @@
+from subprocess import CalledProcessError
+
 import jmespath
 import pytest
 
@@ -44,7 +46,7 @@ class TestIngress:
             assert "houston-http" in [port[0] for port in jmespath.search("spec.rules[*].http.paths[*].backend.servicePort", doc)]
 
     def test_ingress_does_not_intercept_404(self, kube_version):
-        """Houston is a JSON API (the Airflow proxy path shares this ingress); nginx
+        """Houston is a JSON API, including the Airflow proxy responses it serves; nginx
         must not replace upstream 404 bodies with the branded default-backend page,
         so custom-http-errors must be absent."""
         docs = render_chart(
@@ -55,28 +57,9 @@ class TestIngress:
         annotations = jmespath.search("metadata.annotations", docs[0])
         assert "nginx.ingress.kubernetes.io/custom-http-errors" not in annotations
 
-    def test_ingress_serves_airflow_proxy_regex_path(self, kube_version):
-        """The Airflow proxy path is merged into this ingress; use-regex must render
-        so the regex path is matched as a regex, and it must coexist with the `/` root."""
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
-        )
-        assert len(docs) == 1
-        doc = docs[0]
-        annotations = jmespath.search("metadata.annotations", doc)
-        assert annotations["nginx.ingress.kubernetes.io/use-regex"] == "true"
-
-        for rule in doc["spec"]["rules"]:
-            paths = {p["path"]: p for p in rule["http"]["paths"]}
-            assert "/" in paths
-            proxy = paths["/v1/deployments/[^/]+/airflow/"]
-            assert proxy["pathType"] == "ImplementationSpecific"
-            assert proxy["backend"]["service"]["name"] == "release-name-houston"
-
-    def test_airflow_proxy_path_on_both_control_plane_ha_hosts(self, kube_version):
+    def test_root_path_on_both_control_plane_ha_hosts(self, kube_version):
         """Under control-plane HA the ingress emits a second (globalBaseDomain) host
-        rule; the Airflow proxy path must render on both, not just the per-CP host."""
+        rule; the root path must render on both, not just the per-CP host."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/ingress.yaml"],
@@ -91,21 +74,8 @@ class TestIngress:
         rules = docs[0]["spec"]["rules"]
         assert {rule["host"] for rule in rules} == {"houston.example.com", "houston.astro.example.com"}
         for rule in rules:
-            proxy_paths = [p for p in rule["http"]["paths"] if p["path"] == "/v1/deployments/[^/]+/airflow/"]
-            assert len(proxy_paths) == 1, f"missing Airflow proxy path on host {rule['host']}"
-            assert proxy_paths[0]["pathType"] == "ImplementationSpecific"
-
-    def test_use_regex_present_with_auth_sidecar(self, kube_version):
-        """The Airflow proxy path is a regex, so use-regex must render regardless of
-        auth mode; an auth-sidecar install would otherwise match the path literally."""
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
-            values={"global": {"authSidecar": {"enabled": True}}},
-        )
-        assert len(docs) == 1
-        annotations = jmespath.search("metadata.annotations", docs[0])
-        assert annotations["nginx.ingress.kubernetes.io/use-regex"] == "true"
+            paths = {p["path"] for p in rule["http"]["paths"]}
+            assert paths == {"/"}, f"unexpected paths on host {rule['host']}: {paths}"
 
     def test_protect_houston_internal_urls(self, kube_version):
         docs = render_chart(
@@ -139,6 +109,23 @@ class TestIngress:
         annotations = jmespath.search("metadata.annotations", doc)
         assert annotations["nginx.ingress.kubernetes.io/upstream-keepalive-connections"] == "9999"
         assert annotations["nginx.ingress.kubernetes.io/upstream-keepalive-timeout"] == "7777"
+
+    def test_ingress_annotation_override_cannot_reenable_custom_http_errors(self, kube_version):
+        """A customer override must not silently restore custom-http-errors, which would
+        make nginx replace the JSON 404 bodies this ingress is meant to pass through."""
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                kube_version=kube_version,
+                show_only=["charts/astronomer/templates/houston/ingress.yaml"],
+                values={
+                    "astronomer": {
+                        "houston": {
+                            "ingress": {"annotation": {"nginx.ingress.kubernetes.io/custom-http-errors": "404"}}
+                        }
+                    }
+                },
+            )
+        assert "custom-http-errors" in excinfo.value.stderr.decode("utf-8")
 
     def test_houston_ingress_with_tls_secret(self, kube_version):
         """Test that houston ingress includes tls with hosts when tlsSecret is set."""
