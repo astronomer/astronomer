@@ -414,6 +414,7 @@ class Settings:
     chart_version: str | None = None
     chart_is_prerelease: bool = False
     agents: int = 0
+    k3d_cluster_version: str = K3D_CLUSTER_VERSION
 
 
 def _ts() -> str:
@@ -1418,7 +1419,7 @@ def _ensure_nginx_resolver_ipv6_off(*, context: str, namespace: str, configmap_n
     _debug(f"{context}/{configmap_name}: http-snippet set (resolver {dns_ip} valid=30s ipv6=off;)")
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Automate Astronomer CP/DP local setup using k3d.")
     parser.add_argument("--base-domain", default="localtest.me")
     parser.add_argument("--namespace", default="astronomer")
@@ -1651,7 +1652,7 @@ def parse_args() -> argparse.Namespace:
         help=f"Override the k3d cluster version. Default {K3D_CLUSTER_VERSION}.",
     )
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 class Delegate037(Exception):
