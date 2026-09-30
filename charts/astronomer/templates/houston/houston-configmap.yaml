@@ -694,6 +694,13 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
+
+    mcpServer:
+      enabled: {{ .Values.mcpServer.enabled }}
+      {{- if .Values.mcpServer.enabled }}
+      enabledGroups: {{ include "mcpServer.enabledGroups" . | quote }}
+      {{- end }}
+
     updateRuntimeCheck:
       enabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
     strictSchemaCheck:
