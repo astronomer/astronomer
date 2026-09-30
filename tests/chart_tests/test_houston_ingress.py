@@ -119,9 +119,7 @@ class TestIngress:
                 show_only=["charts/astronomer/templates/houston/ingress.yaml"],
                 values={
                     "astronomer": {
-                        "houston": {
-                            "ingress": {"annotation": {"nginx.ingress.kubernetes.io/custom-http-errors": "404"}}
-                        }
+                        "houston": {"ingress": {"annotation": {"nginx.ingress.kubernetes.io/custom-http-errors": "404"}}}
                     }
                 },
             )
