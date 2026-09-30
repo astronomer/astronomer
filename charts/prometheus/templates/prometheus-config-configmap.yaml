@@ -464,8 +464,12 @@ data:
           # Worker deployments are named `<release>-worker-<queue>`, one segment longer than
           # other components' `<release>-<component>`, so the `-worker-` infix is matched
           # explicitly rather than assuming a fixed number of trailing pod-name segments.
+          # `queueName` itself may contain dashes (CRD pattern `[a-z]([-a-z0-9]*[a-z0-9])?`, e.g.
+          # "high-priority"), so the queue portion is matched greedily up to the trailing
+          # ReplicaSet-hash/pod-hash pair (a fixed alphanumeric shape, not a fixed segment count)
+          # rather than assuming the queue is exactly one dash-free segment.
           - source_labels: [pod_name]
-            regex: "(.*)-worker-[^-]+-[^-]+-[^-]+|(.*)-[^-]+-[^-]+-[^-]+"
+            regex: "(.*)-worker-.+-[0-9a-z]{5,10}-[0-9a-z]{5}|(.*)-[^-]+-[^-]+-[^-]+"
             replacement: "$1$2"
             target_label: deployment
 
@@ -482,16 +486,18 @@ data:
           # Same `-worker-` infix issue as the deployment relabel above, applied to the
           # pod-name parsing used for container_network_* metrics (whose container_name is
           # the pause container, not the component, so component_name is re-derived here too).
+          # Same dash-containing-queueName fix as above: the queue portion is matched greedily up
+          # to the trailing hash-shaped ReplicaSet/pod suffix rather than assuming a single segment.
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;(?:(.*)-(worker)-[^-]+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
+            regex: "container_network_.*;(?:(.*)-(worker)-.+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
             replacement: "$1$4"
             target_label: deployment
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;(?:(.*)-(worker)-[^-]+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
+            regex: "container_network_.*;(?:(.*)-(worker)-.+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
             replacement: "$2$5"
             target_label: component_name
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;(?:(.*)-(worker)-[^-]+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
+            regex: "container_network_.*;(?:(.*)-(worker)-.+-([0-9a-z]{5,10}-[0-9a-z]{5})|(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5}))$"
             replacement: "$3$6"
             target_label: component_instance
           - source_labels: [__name__, pod_name]

@@ -497,8 +497,10 @@ class TestPrometheusConfigConfigmap:
         """Worker Deployments are named `<release>-worker-<queue>`, one segment longer than
         other components' `<release>-<component>`, so a worker pod name is
         `<release>-worker-<queue>-<rs>-<pod>`. The `deployment` relabel must still resolve to
-        `<release>` for these pods, for non-worker components, and for a release name that
-        itself contains dashes. Regression guard for APC-1887 (WQ-25)."""
+        `<release>` for these pods, for non-worker components, for a release name that itself
+        contains dashes, and for a queue name that itself contains dashes (the CRD pattern
+        `[a-z]([-a-z0-9]*[a-z0-9])?` permits e.g. "high-priority"). Regression guard for
+        APC-1887 (WQ-25)."""
         cadvisor_job = self.get_cadvisor_job(kube_version)
         deployment_relabels = jmespath.search(
             "metric_relabel_configs[?target_label == 'deployment' && source_labels == ['pod_name']]",
@@ -516,6 +518,7 @@ class TestPrometheusConfigConfigmap:
 
         assert resolve_deployment("myrelease-worker-default-7c9987ddf-ks7cv") == "myrelease"
         assert resolve_deployment("myrelease-worker-wq01-575dcd8686-vtfw2") == "myrelease"
+        assert resolve_deployment("myrelease-worker-high-priority-7c9987ddf-ks7cv") == "myrelease"
         assert resolve_deployment("my-release-worker-default-7c9987ddf-ks7cv") == "my-release"
         assert resolve_deployment("myrelease-scheduler-675678c989-2cpqt") == "myrelease"
         assert resolve_deployment("myrelease-pgbouncer-5c9cfdbd5c-jlffk") == "myrelease"
@@ -551,6 +554,7 @@ class TestPrometheusConfigConfigmap:
         for pod_name, expected_deployment, expected_component in [
             ("myrelease-worker-default-7c9987ddf-ks7cv", "myrelease", "worker"),
             ("myrelease-worker-wq01-575dcd8686-vtfw2", "myrelease", "worker"),
+            ("myrelease-worker-high-priority-7c9987ddf-ks7cv", "myrelease", "worker"),
             ("my-release-worker-default-7c9987ddf-ks7cv", "my-release", "worker"),
             ("myrelease-scheduler-675678c989-2cpqt", "myrelease", "scheduler"),
         ]:
