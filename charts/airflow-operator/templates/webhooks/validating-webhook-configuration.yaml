@@ -179,5 +179,6 @@ webhooks:
     - UPDATE
     resources:
     - workers/scale
+  sideEffects: None
 {{ end }}
 {{- end }}
