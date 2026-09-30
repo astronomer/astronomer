@@ -893,7 +893,7 @@ def _helm_upgrade_install(
     if debug:
         cmd.append("--debug")
     if force_incompatible_kubernetes_version:
-        cmd.extend("--set", "forceIncompatibleKubernetes=true")
+        cmd.extend(["--set", "forceIncompatibleKubernetes=true"])
     _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
     _run(cmd, check=True, capture=False)
 
