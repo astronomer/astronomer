@@ -1648,7 +1648,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--k3d-cluster-version",
         default=K3D_CLUSTER_VERSION,
-        help=f"Override the k3d cluster version. Default {K3D_CLUSTER_VERSION}."
+        help=f"Override the k3d cluster version. Default {K3D_CLUSTER_VERSION}.",
     )
 
     return parser.parse_args()

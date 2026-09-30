@@ -500,7 +500,7 @@ def _k3d_create_cluster(
         "--volume",
         volume,
         "--image",
-        f"rancher/k3s:{cluster_version}"
+        f"rancher/k3s:{cluster_version}",
     ]
     if registry_config is not None:
         cmd.extend(["--registry-config", str(registry_config)])
