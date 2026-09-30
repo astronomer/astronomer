@@ -776,6 +776,44 @@ def test_houston_configmap_strict_schema_check_disabled():
     assert prod["strictSchemaCheck"]["enabled"] is False
 
 
+def test_houston_configmap_with_mcp_server_enabled():
+    """Validate the houston configmap surfaces mcpServer.enabled and enabledGroups so
+    appConfig (APC-1798) can report real status rather than nothing at all."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "mcpServer": {
+                    "enabled": True,
+                    "enabledGroups": ["platform_read", "platform_write"],
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["mcpServer"]["enabled"] is True
+    assert prod["mcpServer"]["enabledGroups"] == "platform_read,platform_write"
+
+
+def test_houston_configmap_with_mcp_server_disabled():
+    """mcpServer must always be present with an explicit enabled: false, not omitted --
+    appConfig's resolver reads config.get('mcpServer.enabled'), and the `config` package's
+    .get() throws on a genuinely missing key rather than returning a falsy value."""
+    docs = render_chart(
+        values={"astronomer": {"mcpServer": {"enabled": False}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["mcpServer"]["enabled"] is False
+    assert "enabledGroups" not in prod["mcpServer"]
+
+
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
     """Validate the houston configmap and its embedded data with
     cleanupAirflowDb."""
