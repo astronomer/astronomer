@@ -17,13 +17,14 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       location ~ ^/v1/(alerts|metrics) {
         deny all;
@@ -33,6 +34,9 @@ metadata:
     {{- end }}
 
     {{- if .Values.houston.ingress.annotation  }}
+    {{- if hasKey .Values.houston.ingress.annotation "nginx.ingress.kubernetes.io/custom-http-errors" }}
+    {{- fail "houston.ingress.annotation must not set nginx.ingress.kubernetes.io/custom-http-errors: this ingress serves JSON API responses (including Airflow proxy 404s) that nginx must pass through unmodified." }}
+    {{- end }}
     {{- toYaml .Values.houston.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
