@@ -326,7 +326,11 @@ data:
           - transform_remove_fields
         mode: bulk
         compression: none
-        endpoints: ["http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]
+        {{- if .Values.global.customLogging.enabled }}
+        endpoints: ["http://{{ printf "%s-external-es-proxy" .Release.Name }}:9201"]
+        {{- else }}
+        endpoints: ["http://{{ include "elasticsearch.host" . }}:{{ .Values.elasticsearch.port }}"]
+        {{- end }}
         api_version: "v8"
         healthcheck:
           enabled: true

@@ -148,7 +148,7 @@ class TestVectorConfigmap:
         # Verify Elasticsearch sink
         assert "elasticsearch:" in config_yaml
         assert "type: elasticsearch" in config_yaml
-        assert 'endpoints: ["http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]' in config_yaml
+        assert 'endpoints: ["http://release-name-elasticsearch:9200"]' in config_yaml
 
         # Verify index pattern includes release
         assert 'index: "fluentd.{{ .release }}.%Y.%m.%d"' in config_yaml
@@ -157,6 +157,18 @@ class TestVectorConfigmap:
         # Verify bulk settings
         assert "mode: bulk" in config_yaml
         assert "max_bytes: 10485760" in config_yaml
+
+    def test_vector_configmap_elasticsearch_sink_uses_external_proxy(self, kube_version):
+        """Test that custom logging renders the external Elasticsearch proxy endpoint."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"customLogging": {"enabled": True}}},
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        config_yaml = docs[0]["data"]["vector-config.yaml"]
+        assert 'endpoints: ["http://release-name-external-es-proxy:9201"]' in config_yaml
 
     def test_vector_configmap_parse_json_messages_normalizes_level_to_string(self, kube_version):
         """Test that parse_json_messages transform normalizes integer level to string."""
