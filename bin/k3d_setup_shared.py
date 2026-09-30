@@ -39,7 +39,6 @@ HELM_REPO_URL = "https://internal-helm.astronomer.io"
 CERT_MANAGER_VERSION = "v1.19.4"
 CERT_MANAGER_MANIFEST_URL = f"https://github.com/jetstack/cert-manager/releases/download/{CERT_MANAGER_VERSION}/cert-manager.yaml"
 
-K3D_CLUSTER_VERSION = "v1.35.1-k3s1"
 
 
 # ---------------------------------------------------------------------------
@@ -478,7 +477,6 @@ def _k3d_create_cluster(
     agents: int = 1,
     extra_k3s_args: list[str] | None = None,
     registry_config: Path | None = None,
-    cluster_version: str = K3D_CLUSTER_VERSION,
 ) -> None:
     """
     Create a k3d cluster and disable traefik.
@@ -499,8 +497,6 @@ def _k3d_create_cluster(
         "--disable=traefik@server:0",
         "--volume",
         volume,
-        "--image",
-        f"rancher/k3s:{cluster_version}",
     ]
     if registry_config is not None:
         cmd.extend(["--registry-config", str(registry_config)])

@@ -47,7 +47,6 @@ from k3d_setup_shared import (
     HELM_REPO_NAME,
     HELM_REPO_URL,
     HELPER_DIR,
-    K3D_CLUSTER_VERSION,
     CommandError,
     Milestones,
     _apply_node_hosts_daemonset,
@@ -414,7 +413,7 @@ class Settings:
     chart_version: str | None = None
     chart_is_prerelease: bool = False
     agents: int = 0
-    k3d_cluster_version: str = K3D_CLUSTER_VERSION
+    force_incompatible_kubernetes_version: bool = False
 
 
 def _ts() -> str:
@@ -844,6 +843,7 @@ def _helm_upgrade_install(
     chart_version: str | None = None,
     chart_is_prerelease: bool = False,
     base_values_files: tuple[Path, ...] = (),
+    force_incompatible_kubernetes_version: bool = False,
 ) -> None:
     """
     `base_values_files` are applied BEFORE `values_file` (lowest precedence — e.g. the plain
@@ -892,6 +892,8 @@ def _helm_upgrade_install(
         cmd.extend(["--values", str(extra)])
     if debug:
         cmd.append("--debug")
+    if force_incompatible_kubernetes_version:
+        cmd.extend("--set", "forceIncompatibleKubernetes=true")
     _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
     _run(cmd, check=True, capture=False)
 
@@ -1647,9 +1649,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--k3d-cluster-version",
-        default=K3D_CLUSTER_VERSION,
-        help=f"Override the k3d cluster version. Default {K3D_CLUSTER_VERSION}.",
+        "--force-incompatible-kubernetes-version",
+        default=False,
+        action="store_true",
+        help=(
+            "Used to bypass incompatible kubernetes cluster versions via version_compatibility.tpl file. "
+            "This check will fail helm install if the cluster version is out of range. "
+            "k3d cluster versions can run ahead of the tested cluster version, in this case use the bypass option. "
+            "This is not recommended and may lead to unexpected behavior."
+        ),
     )
 
     return parser.parse_args(argv)
@@ -1865,7 +1873,7 @@ def main() -> int:  # noqa: C901
         chart_version=resolved_chart_version,
         chart_is_prerelease=chart_is_prerelease,
         agents=args.num_compute_nodes,
-        k3d_cluster_version=args.k3d_cluster_version,
+        force_incompatible_kubernetes_version=args.force_incompatible_kubernetes_version,
     )
 
     try:
@@ -1928,7 +1936,6 @@ def main() -> int:  # noqa: C901
                         # Expand NodePort range so postgres can be exposed as NodePort 5432.
                         extra_k3s_args=["--kube-apiserver-arg=--service-node-port-range=1024-65535@server:0"],
                         registry_config=registry_config,
-                        cluster_version=settings.k3d_cluster_version,
                     )
                 else:
                     _debug(f"Cluster already exists, skipping: {cp.cluster_name}")
@@ -1945,7 +1952,6 @@ def main() -> int:  # noqa: C901
                         mkcert_root_ca=mkcert_root_ca,
                         agents=settings.agents,
                         registry_config=registry_config,
-                        cluster_version=settings.k3d_cluster_version,
                     )
                 else:
                     _debug(f"Cluster already exists, skipping: {dp.cluster_name}")
@@ -2084,6 +2090,7 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
+                    force_incompatible_kubernetes_version=settings.force_incompatible_kubernetes_version,
                 )
                 ms.done(h)
 
@@ -2187,6 +2194,7 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
+                    force_incompatible_kubernetes_version=settings.force_incompatible_kubernetes_version,
                 )
                 ms.done(h)
 

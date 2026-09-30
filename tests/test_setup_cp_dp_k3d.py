@@ -19,22 +19,7 @@ def setup_script(monkeypatch):
     return module
 
 
-def test_k3d_cluster_version_defaults_to_shared_version(setup_script):
-    args = setup_script.parse_args([])
-
-    assert args.k3d_cluster_version == setup_script.K3D_CLUSTER_VERSION
-
-
-def test_k3d_cluster_version_can_be_overridden(setup_script):
-    version = "v1.34.1-k3s1"
-
-    args = setup_script.parse_args(["--k3d-cluster-version", version])
-
-    assert args.k3d_cluster_version == version
-
-
-def test_settings_keep_k3d_cluster_version(setup_script):
-    version = "v1.34.1-k3s1"
+def test_settings_force_incompatible_kubernetes_version(setup_script):
     settings = setup_script.Settings(
         base_domain="localtest.me",
         namespace="astronomer",
@@ -50,7 +35,7 @@ def test_settings_keep_k3d_cluster_version(setup_script):
         helm_debug=False,
         dp_airflow_db="external",
         enable_operator=False,
-        k3d_cluster_version=version,
+        force_incompatible_kubernetes_version=False,
     )
 
-    assert settings.k3d_cluster_version == version
+    assert settings.force_incompatible_kubernetes_version is False
