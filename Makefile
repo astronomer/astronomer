@@ -62,6 +62,10 @@ clean: ## Clean build and test artifacts
 	kind delete cluster -n kind
 	kind delete cluster -n unified
 
+.PHONY: clean-k3d
+clean-k3d: ## Delete local k3d clusters and CP/DP host networking (override with CLEAN_K3D_ARGS)
+	python3 bin/clean_k3d.py $(CLEAN_K3D_ARGS)
+
 .PHONY: build
 build: ## Build the Astronomer helm chart
 	bin/build-helm-chart.sh

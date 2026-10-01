@@ -1083,14 +1083,16 @@ kubectl --context k3d-dp01 -n astronomer logs -l component=commander -f
 ### Delete and Recreate
 
 ```bash
-# Delete helm releases
-helm --kube-context k3d-cp01 uninstall astronomer -n astronomer
-helm --kube-context k3d-dp01 uninstall astronomer -n astronomer
-
-# Delete clusters entirely
-k3d cluster delete cp01
-k3d cluster delete dp01
+# Delete the default CP/DP clusters and their local DNS/SNI proxy configuration
+make clean-k3d CLEAN_K3D_ARGS="--cluster cp01 --cluster dp01"
 ```
+
+With no `CLEAN_K3D_ARGS`, `make clean-k3d` deletes the default `cp01`, `dp01`, and `astro037`
+clusters. For custom cluster names, pass each name with `--cluster`; add `--cp-dp-networking` to
+remove the shared CP/DP DNS and proxy resources, or `--skip-cp-dp-networking` to keep them. The
+managed `/etc/resolver/<base-domain>` entry defaults to `localtest.me` and can be changed with
+`--base-domain`. Registry caches, the Docker network, certificates, and installed tools are
+preserved.
 
 ---
 
