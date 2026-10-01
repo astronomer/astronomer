@@ -36,7 +36,7 @@ images:
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.58.0"
+    tag: "0.58.0-1"
     pullPolicy: IfNotPresent
   # Unlike navigator/dp-link, the MCP server is a separate binary with its own image.
   mcpServer:
