@@ -1,0 +1,48 @@
+################################
+## Astronomer Laminar Ingress ##
+################################
+{{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- $planeDataMode := eq (include "astronomer.dataPlaneEnabled" .) "true" }}
+{{- if $planeDataMode }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-laminar-ingress
+  labels:
+    component: laminar-ingress
+    tier: laminar
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    {{- end }}
+spec:
+  {{- if .Values.global.tlsSecret }}
+  tls:
+    - secretName: {{ .Values.global.tlsSecret }}
+      hosts:
+      {{- if $planeDataMode }}
+        - {{ .Values.global.baseDomain }}
+      {{- end }}
+  {{- end }}
+  rules:
+  - host: {{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /laminar/api/v1
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-api-server
+              port:
+                name: http
+{{- end }}
+{{- end }}

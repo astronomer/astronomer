@@ -19,6 +19,7 @@ def _templates(subdir=""):
 
 LAMINAR_TEMPLATES = _templates()
 LAMINAR_HYPEVISOR_TEMPLATES = _templates("hypervisor")
+LAMINAR_APISERVER_TEMPLATES = _templates("apiserver")
 LAMINAR_BOOTSTRAPPER_TEMPLATES = _templates("bootstrapper")
 LAMINAR_ENV_CONFIGMAP_TEMPLATE = "charts/laminar/templates/configmap.yaml"
 
@@ -509,3 +510,73 @@ class TestLaminar:
 
         assert "laminar_scaling__keda_namespace=keda-cluster" in env
         assert "keda-system" not in env
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_apiserver_defaults_when_enabled(self, kube_version, plane_mode):
+        """Test that laminar apiserver renders only when the plane is data or unified."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        assert len(docs) == 11
+        apiserver_deployment = docs[0]
+        assert apiserver_deployment["apiVersion"] == "apps/v1"
+        assert apiserver_deployment["metadata"]["name"] == "release-name-api-server"
+        assert apiserver_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-api-server"
+        c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
+        assert set(c_by_name) == {"apiserver", "laminar-bootstrapper"}
+        assert c_by_name["apiserver"]["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
+        assert c_by_name["apiserver"]["resources"] == {
+            "requests": {"cpu": "400m", "memory": "256Mi"},
+            "limits": {"cpu": "1", "memory": "1Gi"},
+        }
+        hypervisor_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
+        assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
+        assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+
+        apiserver_service = docs[7]
+        assert apiserver_service["kind"] == "Service"
+        assert apiserver_service["metadata"]["name"] == "release-name-api-server"
+        assert apiserver_service["metadata"]["labels"] == {
+            "component": "apiserver",
+            "release": "release-name",
+            "chart": "laminar-0.12.0",
+            "heritage": "Helm",
+            "tier": "laminar",
+            "plane": plane_mode,
+            "app.kubernetes.io/name": "apiserver",
+        }
+        assert apiserver_service["spec"]["type"] == "ClusterIP"
+        assert apiserver_service["spec"]["ports"] == [
+            {"name": "http", "protocol": "TCP", "port": 8000, "targetPort": "http", "appProtocol": "http"},
+        ]
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
+            docs[0],
+        )
+        expected_hypervisor_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/laminar.env",
+                    "name": "laminar-env",
+                    "subPath": "laminar.env",
+                    "readOnly": True,
+                }
+            ]
+        ]
+        assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
+
+        env_lines = docs[10]["data"]["laminar.env"].strip().splitlines()
+        env_vars = dict(line.split("=", 1) for line in env_lines)
+        assert env_vars == {
+            "laminar_scaling__dry_run_strategy": "NEVER",
+            "laminar_apply_custom_ddl": "True",
+            "laminar_hypervisor__enable_healers": "False",
+            "laminar_hypervisor__enable_health_incidents": "False",
+            "laminar_hypervisor__configmap_metrics_enabled": "False",
+            "laminar_hypervisor__configmap_metrics_use_informer": "False",
+            "laminar_hypervisor__queued_task_second_threshold": "480",
+            "laminar_hypervisor__disabled_metrics_csv": '""',
+            "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
+        }
