@@ -128,6 +128,17 @@ class TestDpLinkDeployment:
         if docs_len != 0:
             assert docs[0]["spec"]["template"]["metadata"]["labels"]["plane"] == plane_mode
 
+    @pytest.mark.parametrize("plane_mode,docs_len", [("control", 1), ("data", 0), ("unified", 1)])
+    def test_dp_link_serviceaccount_control_plane_modes(self, kube_version, plane_mode, docs_len):
+        """The service account renders in the same modes as the deployment it belongs to."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=["charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml"],
+        )
+
+        assert len(docs) == docs_len
+
     def test_dp_link_deployment_not_rendered_in_data_mode(self, kube_version):
         """dp-link never renders in data mode, even if explicitly enabled -- a data plane
         has no cross-cluster claim/lease to manage."""

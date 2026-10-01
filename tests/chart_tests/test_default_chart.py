@@ -8,7 +8,6 @@ from tests.utils import (
     get_containers_by_name,
     get_env_vars_dict,
     get_pod_template,
-    new_docs_by_kind,
     pod_managers,
 )
 from tests.utils.chart import render_chart
@@ -89,17 +88,6 @@ class TestAllPodSpecContainers:
     selector_pod_manager_docs = [doc for doc in default_docs if doc["kind"] in selector_kinds]
     pod_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_managers]
     annotated = [x for x in default_docs if x["metadata"].get("annotations")]
-
-    # global.plane.mode defaults to "unified", under which dp-link never renders: unlike every
-    # other plane-gated template (which renders for "control" OR "unified"), dp-link is the one
-    # component gated on "control" alone, by design (it links a genuinely separate data plane back
-    # to the control plane, which is meaningless in a single unified install). Render once more with
-    # plane.mode=control and fold in any pod/job managers that don't already appear in the default
-    # sweep, so dp-link gets the same coverage as everything else without re-testing components twice.
-    control_mode_values = get_all_features()
-    control_mode_values["global"]["plane"] = {"mode": "control"}
-    control_mode_docs = render_chart(values=control_mode_values)
-    pod_manager_docs += new_docs_by_kind(default_docs, control_mode_docs, pod_managers)
 
     @pytest.mark.parametrize(
         "doc",
