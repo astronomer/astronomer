@@ -275,3 +275,187 @@ Common Helper template for data or unified mode
 true
 {{- end -}}
 {{- end -}}
+
+{{/*
+Resolve whether a component should load its secrets from mounted files instead
+of injecting them into the environment with valueFrom.secretKeyRef.
+
+A component's own `secretsFromFiles.enabled` wins when it is explicitly set to a
+boolean; otherwise `global.secretsFromFiles.enabled` applies. This lets an
+operator flip the whole platform with one value while still holding back any
+component whose image cannot read secrets from files yet.
+
+Renders the string "true" or "false", so call it through `eq`:
+
+  {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.commander)) }}
+*/}}
+{{- define "secretsFromFiles.enabled" -}}
+{{- $component := get (get (.component | default dict) "secretsFromFiles" | default dict) "enabled" -}}
+{{- $global := get (get (.ctx.Values.global | default dict) "secretsFromFiles" | default dict) "enabled" -}}
+{{- if kindIs "bool" $component -}}
+{{- $component -}}
+{{- else if kindIs "bool" $global -}}
+{{- $global -}}
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{/*
+The placeholder written into bootstrapper-managed Secrets by the chart, before
+the ap-db-bootstrapper init container replaces it with a real connection string.
+
+Deterministic on purpose: a random placeholder changes on every render, which
+re-poisons the live Secret on `helm upgrade` and churns pod checksum annotations.
+Consumers compare against this to tell "not bootstrapped yet" from a real value.
+*/}}
+{{- define "astronomer.secretSentinel" -}}
+__ASTRONOMER_NOT_BOOTSTRAPPED__
+{{- end }}
+
+{{/*
+The `connection` value for a Secret that the chart creates as a placeholder and an
+in-pod bootstrapper init container later rewrites.
+
+Two constraints pull against each other:
+
+  - `helm upgrade` must not patch the bootstrapped value back to the placeholder.
+  - The Secret must stay in the release manifest.
+
+A `pre-install`-only hook satisfies the first and breaks the second: hook resources
+are absent from the release manifest, so upgrading from a release where this Secret
+WAS in the manifest makes Helm delete it. With secrets-from-files on, every consumer
+then wedges on the missing volume before the bootstrapper that would recreate it can
+run -- the same deadlock this placeholder exists to prevent, reached by a different
+route. `helm.sh/resource-policy: keep` does not rescue it either: Helm reads that
+annotation off the LIVE object, and the older release created that object without it.
+
+So the Secret stays in the manifest and preserves whatever is already in the cluster.
+A fresh install finds nothing and renders the sentinel; every later render finds the
+bootstrapped value and renders it back byte-identical, so Helm patches nothing and the
+consumers' checksum annotations do not churn.
+
+`lookup` returns empty during `helm template` and client-side dry runs, which is why
+tests see the sentinel. It is also why ArgoCD, which renders without cluster access,
+re-applies the sentinel on every sync -- a limitation the hook form shared, tracked
+separately.
+
+Usage: {{ include "astronomer.bootstrapSecretConnection" (dict "ctx" $ "name" $secretName) }}
+*/}}
+{{- define "astronomer.bootstrapSecretConnection" -}}
+{{- $existing := lookup "v1" "Secret" .ctx.Release.Namespace .name -}}
+{{- $live := get (get ($existing | default dict) "data" | default dict) "connection" | default "" -}}
+{{- if $live -}}
+{{- /* Already base64 -- Secret .data is encoded, so pass it through untouched. */ -}}
+{{- $live | quote -}}
+{{- else -}}
+{{- include "astronomer.secretSentinel" .ctx | b64enc | quote -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+An init container that blocks until a bootstrapper-managed secret file holds a
+real value rather than the sentinel.
+
+Why this is needed: a `secret` volume is projected before ANY container runs,
+and kubelet re-projects it asynchronously with no ordering guarantee against
+container start. So a container that reads the file once at startup can latch
+the sentinel written before the in-pod bootstrapper patched the Secret. Reading
+the same secret via `valueFrom.secretKeyRef` never had this problem, because env
+is resolved per-container at start, after all preceding init containers.
+
+Measured on kind (k8s 1.37): when the bootstrapper's exit drives a pod sync the
+refresh lands in well under a second; with no pod event at all it takes up to
+kubelet's sync period, ~60s. So this gate is normally a no-op and worst case
+adds about a minute to pod start.
+
+Usage:
+  {{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+*/}}
+{{- define "astronomer.waitForSecretFile" -}}
+- name: wait-for-secret
+  image: {{ .image }}
+  imagePullPolicy: IfNotPresent
+  command:
+    - /bin/sh
+    - -c
+    - |
+      # Bounded so a genuinely stuck bootstrapper surfaces as a failed init
+      # container rather than a pod that hangs in Init forever.
+      deadline=$(( $(date +%s) + {{ .timeout | default 300 }} ))
+      while [ "$(cat {{ .path }} 2>/dev/null)" = "{{ include "astronomer.secretSentinel" .ctx }}" ]; do
+        if [ "$(date +%s)" -ge "$deadline" ]; then
+          echo "timed out waiting for {{ .path }} to be bootstrapped" >&2
+          exit 1
+        fi
+        echo "waiting for the bootstrapper to populate {{ .path }}"
+        sleep 2
+      done
+  volumeMounts:
+    - name: {{ .volume }}
+      mountPath: {{ dir .path }}
+      readOnly: true
+{{- end }}
+
+{{/*
+`defaultMode` for every volume carrying a secret that a component reads from a
+file.
+
+0440 rather than Kubernetes' 0644 default: a world-readable file leaves the
+secret open to every UID in the container, which gives back much of what moving
+it out of the environment was meant to buy.
+
+Not 0400 either. Kubernetes owns secret volume files as root:root, and these
+pods run as non-root, so the process can only reach the file through its
+fsGroup. Group read is load-bearing here -- 0400 makes the secret unreadable, and
+the loaders fail closed on a file they were told to read but cannot: the
+container exits instead of starting without its secret. Pair this with
+astronomer.secretsFromFiles.podSecurityContext, which supplies the matching fsGroup.
+
+Emitted as a bare octal literal on purpose: both Helm's and Kubernetes' YAML
+parsers read it as YAML 1.1, where a leading zero means octal, matching the
+`defaultMode: 0755` already used elsewhere in this chart.
+
+Usage, at the same indentation as `sources:` or `secretName:`:
+  {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
+*/}}
+{{- define "astronomer.secretsFromFiles.defaultMode" -}}
+defaultMode: 0440
+{{- end }}
+
+{{/*
+The fsGroup a workload needs when it reads its secrets from mounted files, as an
+override for platform.podSecurityContext to merge in:
+
+  securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston) | fromYaml)) | nindent 8 }}
+
+The fsGroup is what makes astronomer.secretsFromFiles.defaultMode work: kubelet
+chowns an ownership-managed volume to this group and adds the group to every
+container's supplementary groups, so a 0440 root-owned file is readable by the
+pod's processes and by nobody else. With no fsGroup at all the file stays
+root:root and the process -- running as non-root -- cannot open it.
+
+Any fsGroup does the job, so one the operator already set in podSecurityContext
+is left alone rather than replaced. Omitted on OpenShift, which allocates an
+fsGroup per namespace through its SecurityContextConstraints;
+platform.podSecurityContext strips fsGroup there as well.
+
+Resolves the component's toggle itself and renders nothing when it is off, so
+every workload that mounts a secret volume can pass it unconditionally. That
+matters because the set of such workloads is large and easy to under-count --
+the houston family alone is over a dozen, most of them cronjobs. A pod that
+mounts a 0440 secret without an fsGroup cannot read it, and the loaders fail
+closed on an unreadable file, so a missing fsGroup is a container that never
+starts rather than one quietly running on an environment variable the chart
+already removed.
+
+Renders YAML because include can only return a string, so pipe it through
+fromYaml; an empty render becomes an empty dict, which merges as a no-op.
+*/}}
+{{- define "astronomer.secretsFromFiles.podSecurityContextOverride" -}}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" .ctx "component" .component)) -}}
+{{- if and (not ((.ctx.Values.global.openshift).enabled)) (not (hasKey (.ctx.Values.podSecurityContext | default dict) "fsGroup")) -}}
+fsGroup: {{ ((.ctx.Values.global).secretsFromFiles).fsGroup | default 1000 }}
+{{- end -}}
+{{- end -}}
+{{- end }}

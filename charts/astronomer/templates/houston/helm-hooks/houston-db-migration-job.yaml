@@ -2,6 +2,7 @@
 ## Db migration Pre install/update Hook ##
 ##########################################
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
@@ -40,7 +41,7 @@ spec:
           {{- end }}
       {{- end }}
     spec:
-      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston) | fromYaml)) | nindent 8 }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
@@ -118,6 +119,9 @@ spec:
               mountPath: /tmp
             - name: tmp
               mountPath: /houston/node_modules/.cache
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- end }}
       {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
@@ -152,6 +156,7 @@ spec:
             - name: tmp
               mountPath: /houston/node_modules/.cache
           {{- include "houston_volume_mounts" . | indent 12 }}
+          {{- include "houston_secret_volume_mounts" . | indent 12 }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
       volumes:
         - name: etc-ssl-certs
@@ -159,5 +164,6 @@ spec:
         - name: tmp
           emptyDir: {}
         {{- include "houston_volumes" . | indent 8 }}
+        {{- include "houston_secret_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
 {{- end }}

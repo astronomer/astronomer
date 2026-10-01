@@ -2,6 +2,8 @@
 ## Astronomer Commander Deployment ##
 #####################################
 {{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.commander)) }}
+{{- $flightDeckEnabled := eq "true" (include "flightdeck.enabled" . | trim) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -56,7 +58,7 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.commander) | fromYaml)) | nindent 8 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- include "commander.hostAliases" . | nindent 6 }}
@@ -118,22 +120,37 @@ spec:
             - name: tmp
               mountPath: /tmp
 
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "volume" "commander-secrets" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
+{{- end }}
         - name: flightdeck-db-migrations
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           args:
            - "migrate"
            - "up"
+          {{- if not $secretsFromFiles }}
            - "--db"
            - "$(COMMANDER_FLIGHTDECK_DSN)"
+          {{- end }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.commander.resources | nindent 12 }}
           env:
+          {{- if $secretsFromFiles }}
+            # The loader reads /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN before the
+            # migrate subcommand runs, so `migrate up` is invoked without --db
+            # and falls back to the environment the loader populated.
+            - name: COMMANDER_SECRETS_FROM_FILES
+              value: "true"
+            - name: COMMANDER_FLIGHTDECK_DSN_FILE
+              value: /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN
+          {{- else }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-flightdeck-backend
                   key: connection
+          {{- end }}
           {{- if .Values.flightDeck.migrations.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.flightDeck.migrations.readinessProbe) . | nindent 12 }}
           {{- end }}
@@ -145,6 +162,11 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
+            {{- if $secretsFromFiles }}
+            - name: commander-secrets
+              mountPath: /etc/astronomer/secrets
+              readOnly: true
+            {{- end }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
       {{- end }}
 
@@ -208,7 +230,7 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
-            {{- if (include "flightdeck.enabled" .) }}
+            {{- if and $flightDeckEnabled (not $secretsFromFiles) }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:
@@ -264,6 +286,22 @@ spec:
             - name: UPDATE_CA_CERTS
               value: "true"
             {{- end }}
+            {{- if $secretsFromFiles }}
+            - name: COMMANDER_SECRETS_FROM_FILES
+              value: "true"
+            {{- /* Gated on $flightDeckEnabled to match the projected volume below,
+                   which only carries the flightdeck DSN when FlightDeck is on. The
+                   loader fails closed on a <VAR>_FILE it cannot read, so advertising
+                   this path unconditionally crash-looped commander on a default
+                   install with the feature enabled. Mirrors the secretKeyRef branch,
+                   which was always gated this way, and pilot-deployment.yaml. */}}
+            {{- if $flightDeckEnabled }}
+            - name: COMMANDER_FLIGHTDECK_DSN_FILE
+              value: /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN
+            {{- end }}
+            - name: COMMANDER_DATAPLANE_DATABASE_URL_FILE
+              value: /etc/astronomer/secrets/COMMANDER_DATAPLANE_DATABASE_URL
+            {{- end }}
             {{- include "commander_metadataEnv" . | nindent 12 }}
             {{- include "commander_env" . | nindent 12 }}
           volumeMounts:
@@ -271,6 +309,11 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp-workspace
               mountPath: /tmp
+            {{- if $secretsFromFiles }}
+            - name: commander-secrets
+              mountPath: /etc/astronomer/secrets
+              readOnly: true
+            {{- end }}
             - name: commander-home
               mountPath: /home/commander
               subPath: home
@@ -366,6 +409,27 @@ spec:
         - name: commander-signing-key
           secret:
             secretName: {{ .Release.Name }}-commander-signing-key
+        {{- end }}
+        {{- if $secretsFromFiles }}
+        # Commander reads its secrets from files named after the environment
+        # variables they replace. Two different Secrets have to land in the same
+        # directory, so they are combined with a projected volume.
+        - name: commander-secrets
+          projected:
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
+            sources:
+              {{- if $flightDeckEnabled }}
+              - secret:
+                  name: {{ .Release.Name }}-flightdeck-backend
+                  items:
+                    - key: connection
+                      path: COMMANDER_FLIGHTDECK_DSN
+              {{- end }}
+              - secret:
+                  name: astronomer-bootstrap
+                  items:
+                    - key: connection
+                      path: COMMANDER_DATAPLANE_DATABASE_URL
         {{- end }}
         {{- include "custom_ca_volumes" . | nindent 8 }}
       {{- if .Values.commander.extraVolumes }}
