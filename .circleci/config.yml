@@ -20,6 +20,14 @@ parameters:
     type: string
     default: ""
     description: "Chart version to sign via sign-released-image-workflow, triggered manually via the CircleCI Trigger Pipeline feature. Leave blank otherwise."
+  run-zap-scan:
+    type: boolean
+    default: false
+    description: "PLA-614: trigger an on-demand ZAP DAST scan (zap-scan-workflow) of the git ref in zap-scan-ref, via the CircleCI Trigger Pipeline feature. Manual-only -- never set true on an automatic trigger."
+  zap-scan-ref:
+    type: string
+    default: "master"
+    description: "Git ref (branch, tag, or full SHA) of this repo to install and scan when run-zap-scan is true. Checked out explicitly inside the zap-scan job, independent of whatever revision triggered the pipeline."
 
 jobs:
   sign-released-image:
@@ -501,6 +509,49 @@ jobs:
       - store_test_results:
           path: test-results
 
+  # PLA-614: on-demand ZAP DAST scan. Deliberately NOT part of the scenario for-loop
+  # above -- tests/functional/scenarios/zap-scan/test_profile.yaml sets manual_only,
+  # so bin/generate_circleci_config.py::discover_scenarios() skips it entirely, and it
+  # never gets the approve-scenarios gate or a release-to-internal/-public requirement.
+  # Only runs when triggered manually (zap-scan-workflow, gated on
+  # pipeline.parameters.run-zap-scan) via CircleCI's "Trigger Pipeline" feature.
+  zap-scan:
+    machine:
+      image: ubuntu-2404:2026.05.1
+      resource_class: 2xlarge
+    steps:
+      - checkout
+      - run:
+          name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
+          command: |
+            git fetch origin "<< pipeline.parameters.zap-scan-ref >>"
+            git checkout FETCH_HEAD
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      - run:
+          name: "Scenario: zap-scan"
+          command: |
+            uv run bin/run-scenario.py zap-scan
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/scenarios/zap-scan
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: /tmp/zap-scan-report
+          destination: zap-scan-report
+          when: always
+
   check-commander-airflow-version:
     docker:
       - image: cimg/base:current-24.04
@@ -830,6 +881,15 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
+
+  # PLA-614: on-demand ZAP DAST scan, triggered manually via CircleCI's "Trigger
+  # Pipeline" feature with run-zap-scan set true (zap-scan-ref defaults to master).
+  # Never auto-runs -- there is no branch/tag filter here on purpose, since
+  # pipeline.parameters.run-zap-scan already defaults to false on every normal trigger.
+  zap-scan-workflow:
+    when: << pipeline.parameters.run-zap-scan >>
+    jobs:
+      - zap-scan
 
 commands:
   push-to-quay-io:
