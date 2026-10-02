@@ -122,10 +122,29 @@ def build_automation_plan(token: str, report_dir: str, error_level: str = "High"
             # a real run that ZAP's graphql job doesn't accept one ("Unrecognised
             # parameter for job graphql : context") -- it associates with whatever
             # context already matches the endpoint's URL (we only ever have one).
+            #
+            # Query-gen params tuned down from ZAP's defaults (maxQueryDepth 5,
+            # maxAdditionalQueryDepth 5, optionalArgsEnabled true, argsType both,
+            # querySplitType leaf): a live thread dump (jstack) during a real hang
+            # against houston-api's actual schema showed the generator doesn't just
+            # introspect once -- GraphQlGenerator.generate() recursively SENDS A REAL
+            # QUERY PER LEAF while building the generated tree, so the defaults turn
+            # into potentially hundreds of real HTTP round-trips to Houston's live
+            # resolvers. The thread was blocked in a plain socket read waiting on one
+            # of those responses, with no apparent budget to give up and move on --
+            # one slow/expensive generated query (or one port-forward hiccup) stalls
+            # the whole single-threaded run indefinitely. Fewer, shallower, per-
+            # operation requests sidesteps that; `activeScan` below still attacks
+            # whatever queries/mutations this generates.
             {
                 "type": "graphql",
                 "parameters": {
                     "endpoint": f"{houston_url}/v1",
+                    "maxQueryDepth": 2,
+                    "maxAdditionalQueryDepth": 0,
+                    "optionalArgsEnabled": False,
+                    "argsType": "variables",
+                    "querySplitType": "operation",
                 },
             },
             {
