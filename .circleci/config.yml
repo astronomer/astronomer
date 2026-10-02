@@ -545,6 +545,13 @@ jobs:
           command: uv venv -p 3.13 --seed && uv sync
       - run:
           name: "Scenario: zap-scan"
+          # CircleCI's default no_output_timeout (10m) killed the first live run here:
+          # ZAP's automation framework only prints a line when each job starts/finishes
+          # (progressToStdout in tests/utils/zap.py's plan), not during one, and an
+          # activeScan against houston-api's real GraphQL schema + astro-ui is a much
+          # bigger attack surface than anything validated locally -- it can run silent
+          # for a long stretch without that being a hang.
+          no_output_timeout: 45m
           command: |
             uv run bin/run-scenario.py zap-scan
             export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
