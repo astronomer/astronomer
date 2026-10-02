@@ -28,7 +28,7 @@ from tests.utils.zap import (
 
 NAMESPACE = "astronomer"
 ADMIN_EMAIL = "admin@astronomer.io"
-ADMIN_PASSWORD = "zap-scan-password"  # throwaway -- this scenario's cluster is disposable
+ADMIN_PASSWORD = "Zap-Scan-Password1!"  # throwaway -- this scenario's cluster is disposable; must satisfy houston-api's password policy (upper/lower/digit/special)
 
 
 @pytest.fixture(scope="module")
