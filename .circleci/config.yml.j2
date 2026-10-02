@@ -308,11 +308,15 @@ jobs:
       resource_class: 2xlarge
     steps:
       - checkout
-      - run:
-          name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
-          command: |
-            git fetch origin "<< pipeline.parameters.zap-scan-ref >>"
-            git checkout FETCH_HEAD
+      # TEMP-PLA-614-ITERATION: skip the explicit zap-scan-ref checkout while
+      # zap-scan-workflow runs on every push (see that workflow's own TEMP marker
+      # below) -- `checkout` above already has the pushed commit, re-fetching a
+      # fixed ref here would undo that. Restore this step when reverting.
+      # - run:
+      #     name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
+      #     command: |
+      #       git fetch origin "<< pipeline.parameters.zap-scan-ref >>"
+      #       git checkout FETCH_HEAD
       - run:
           name: Create venv-cache-key.txt
           command: |
@@ -569,8 +573,12 @@ workflows:
   # Pipeline" feature with run-zap-scan set true (zap-scan-ref defaults to master).
   # Never auto-runs -- there is no branch/tag filter here on purpose, since
   # pipeline.parameters.run-zap-scan already defaults to false on every normal trigger.
+  # TEMP-PLA-614-ITERATION: `when:` gate commented out below so this runs on every
+  # push to this branch, for fast edit/push/watch iteration while the scenario is
+  # still being debugged live. Restore the `when:` line (and this comment block's
+  # original wording) before merging -- do not ship this workflow auto-running.
   zap-scan-workflow:
-    when: << pipeline.parameters.run-zap-scan >>
+    # when: << pipeline.parameters.run-zap-scan >>
     jobs:
       - zap-scan
 
