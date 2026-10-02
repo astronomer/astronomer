@@ -31,6 +31,11 @@ test-functional-unified: venv ## Run functional tests on the unified installatio
 	bin/reset-local-dev --topology=unified
 	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/unified
 
+.PHONY: zap-scan
+zap-scan: venv ## Run an on-demand OWASP ZAP DAST scan against a local KIND install (PLA-614)
+	uv run bin/run-scenario.py zap-scan
+	uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/scenarios/zap-scan
+
 # unittest-charts is deprecated
 .PHONY: unittest-charts
 unittest-charts: test-unit
