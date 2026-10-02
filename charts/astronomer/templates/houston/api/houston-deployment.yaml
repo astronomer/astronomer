@@ -271,8 +271,6 @@ spec:
             {{- end }}
             {{- end }}
             {{- if .Values.houston.logging.loggingSidecar.elasticsearch.enabled }}
-            - name: ES_ENDPOINT
-              value: {{ include "houston.logging.loggingSidecar.elasticsearch" . | quote }}
             {{- if eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic" }}
             - name: ES_USERNAME
               valueFrom:
