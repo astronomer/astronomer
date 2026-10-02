@@ -61,10 +61,9 @@ def zap_scan_result(_houston_api_module):
         port_forward(KUBECONFIG_UNIFIED, ASTRO_UI_SERVICE, ASTRO_UI_LOCAL_PORT, ASTRO_UI_REMOTE_PORT),
     ):
         result = run_zap_scan(token, REPORT_DIR)
-    print("--- ZAP stdout ---")
-    print(result.stdout)
-    print("--- ZAP stderr ---")
-    print(result.stderr)
+    # run_zap_scan already streamed ZAP's output live as it ran (see its own
+    # docstring) -- no need to reprint the whole thing here, just the verdict.
+    print(f"--- ZAP exited {result.returncode} ---")
     yield result, REPORT_DIR
 
 

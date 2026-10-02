@@ -204,4 +204,17 @@ def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subpr
         "/zap/wrk/automation.yaml",
     ]
     print(f"Running ZAP scan: {shlex.join(command)}")
-    return subprocess.run(command, capture_output=True, text=True)
+    # Stream output live instead of subprocess.run(capture_output=True): that would
+    # buffer everything -- including ZAP's own progressToStdout job-by-job lines --
+    # until the process exits, giving CircleCI's no_output_timeout nothing to see no
+    # matter how long a legitimately-healthy scan takes. Confirmed live: two runs
+    # against the real chart produced literally zero bytes of visible output (not
+    # even ZAP's near-instant Java startup banner) before getting killed, which in
+    # hindsight was this bug, not necessarily the shm-size issue fixed above.
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    lines = []
+    for line in process.stdout:
+        print(line, end="")
+        lines.append(line)
+    process.wait()
+    return subprocess.CompletedProcess(command, process.returncode, stdout="".join(lines), stderr="")
