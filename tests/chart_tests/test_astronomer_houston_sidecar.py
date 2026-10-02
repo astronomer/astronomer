@@ -374,6 +374,8 @@ class TestHoustonSidecarLogging:
             show_only=[
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
                 "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
             ],
             values={
                 "astronomer": {
@@ -396,12 +398,19 @@ class TestHoustonSidecarLogging:
             },
         )
 
-        deployment = docs[0]
-        vector_configmap = docs[1]
-        vector_env = {env_var["name"]: env_var for env_var in get_containers_by_name(deployment)["vector"]["env"]}
+        deployments = [doc for doc in docs if doc["kind"] == "Deployment"]
+        configmaps = [doc for doc in docs if doc["kind"] == "ConfigMap"]
+        assert len(deployments) == 2
+        assert len(configmaps) == 2
 
-        assert vector_env["ES_ENDPOINT"]["value"] == "https://es.example.com:9200"
-        assert vector_env["ES_USERNAME"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
-        assert vector_env["ES_PASSWORD"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
-        assert 'endpoints: ["${ES_ENDPOINT}"]' in vector_configmap["data"]["vector.yaml"]
-        assert "strategy: basic" in vector_configmap["data"]["vector.yaml"]
+        for deployment in deployments:
+            vector_env = {env_var["name"]: env_var for env_var in get_containers_by_name(deployment)["vector"]["env"]}
+
+            assert "ES_ENDPOINT" not in vector_env
+            assert vector_env["ES_USERNAME"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
+            assert vector_env["ES_PASSWORD"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
+
+        for configmap in configmaps:
+            vector_config = configmap["data"]["vector.yaml"]
+            assert 'endpoints: ["https://es.example.com:9200"]' in vector_config
+            assert "strategy: basic" in vector_config

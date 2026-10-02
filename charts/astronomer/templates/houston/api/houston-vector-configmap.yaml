@@ -127,7 +127,7 @@ data:
         type: elasticsearch
         inputs:
           - normalize_levels
-        endpoints: ["${ES_ENDPOINT}"]
+        endpoints: [{{ include "houston.logging.loggingSidecar.elasticsearch" . | quote }}]
         api_version: {{ .Values.houston.logging.loggingSidecar.elasticsearch.apiVersion | quote }}
     {{- if eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic" }}
         auth:

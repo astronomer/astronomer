@@ -1,7 +1,10 @@
+import re
+
 import pytest
 import yaml
 
 from tests import supported_k8s_versions
+from tests.chart_tests.conftest import docker_daemon_present
 from tests.utils.chart import render_chart
 
 
@@ -148,7 +151,7 @@ class TestVectorConfigmap:
         # Verify Elasticsearch sink
         assert "elasticsearch:" in config_yaml
         assert "type: elasticsearch" in config_yaml
-        assert 'endpoints: ["http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"]' in config_yaml
+        assert 'endpoints: ["http://release-name-elasticsearch:9200"]' in config_yaml
 
         # Verify index pattern includes release
         assert 'index: "fluentd.{{ .release }}.%Y.%m.%d"' in config_yaml
@@ -157,6 +160,18 @@ class TestVectorConfigmap:
         # Verify bulk settings
         assert "mode: bulk" in config_yaml
         assert "max_bytes: 10485760" in config_yaml
+
+    def test_vector_configmap_elasticsearch_sink_uses_external_proxy(self, kube_version):
+        """Test that custom logging renders the external Elasticsearch proxy endpoint."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"customLogging": {"enabled": True}}},
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        config_yaml = docs[0]["data"]["vector-config.yaml"]
+        assert 'endpoints: ["http://release-name-external-es-proxy:9201"]' in config_yaml
 
     def test_vector_configmap_parse_json_messages_normalizes_level_to_string(self, kube_version):
         """Test that parse_json_messages transform normalizes integer level to string."""
@@ -241,3 +256,94 @@ class TestVectorConfigmap:
         condition = config_dict["transforms"]["filter_task_logs_only"]["condition"]
 
         assert condition == '.log_type == "task"'
+
+
+_ALLOWED_ENV_REFERENCES = {
+    "${AWS_ACCESS_KEY_ID}",
+    "${AWS_SECRET_ACCESS_KEY}",
+    "${ES_ENDPOINT}",
+    "${ES_USERNAME}",
+    "${ES_PASSWORD}",
+}
+_ENV_TOKEN = re.compile(r"\$\{[^{}]+\}")
+
+
+@pytest.mark.skipif(not docker_daemon_present(), reason="Docker daemon not available")
+def test_rendered_vector_configs_validate_with_the_rendered_image(docker_client, tmp_path):
+    manifests = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "logging": {
+                        "loggingSidecar": {
+                            "enabled": True,
+                            "elasticsearch": {
+                                "enabled": True,
+                                "endpoint": "http://127.0.0.1:9200",
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    )
+
+    configs = [
+        config
+        for manifest in manifests
+        if manifest.get("kind") == "ConfigMap"
+        for key, config in manifest.get("data", {}).items()
+        if key in {"vector-config.yaml", "vector.yaml"}
+        if isinstance(config, str)
+        and (parsed := yaml.safe_load(config))
+        and isinstance(parsed, dict)
+        and "sources" in parsed
+        and "sinks" in parsed
+    ]
+    assert len(configs) == 3, f"Expected daemonset, Houston API, and Houston worker Vector configs; found {len(configs)}"
+
+    images = {
+        container["image"]
+        for manifest in manifests
+        for container in manifest.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [])
+        if container.get("name") == "vector"
+    }
+    assert len(images) == 1, f"Expected one rendered Vector image, found: {images}"
+    image = images.pop()
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    for index, config in enumerate(configs):
+        references = set(_ENV_TOKEN.findall(config))
+        unexpected_references = references - _ALLOWED_ENV_REFERENCES
+        assert not unexpected_references, f"Unexpected Vector environment references: {unexpected_references}"
+
+        validation_config = yaml.safe_load(config)
+        validation_config["data_dir"] = "/vector-data"
+        for sink in validation_config["sinks"].values():
+            if isinstance(sink.get("healthcheck"), dict):
+                sink["healthcheck"]["enabled"] = False
+
+        config_path = config_dir / f"vector-{index}.yaml"
+        config_path.write_text(yaml.safe_dump(validation_config))
+        docker_client.containers.run(
+            image,
+            entrypoint="vector",
+            command=["validate", "--no-environment"],
+            environment={
+                "AWS_ACCESS_KEY_ID": "vector-validation",
+                "AWS_SECRET_ACCESS_KEY": "vector-validation",
+                "ES_ENDPOINT": "http://127.0.0.1:9200",
+                "ES_USERNAME": "vector-validation",
+                "ES_PASSWORD": "vector-validation",
+                "VECTOR_CONFIG": f"/vector-config/vector-{index}.yaml",
+            },
+            volumes={
+                str(config_dir): {"bind": "/vector-config", "mode": "ro"},
+                str(data_dir): {"bind": "/vector-data", "mode": "rw"},
+            },
+            remove=True,
+        )
