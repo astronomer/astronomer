@@ -134,7 +134,11 @@ def build_automation_plan(token: str, report_dir: str, error_level: str = "High"
             },
             {
                 "type": "spiderAjax",
-                "parameters": {"url": astro_ui_url, "context": "apc"},
+                # numberOfBrowsers defaults to the host's core count -- bounded here so a
+                # big CI executor doesn't launch a pile of concurrent headless-Firefox
+                # instances, each already fighting the same shm pressure (see
+                # --shm-size in run_zap_scan() below).
+                "parameters": {"url": astro_ui_url, "context": "apc", "numberOfBrowsers": 2},
             },
             {"type": "passiveScan-wait", "parameters": {"maxDuration": 10}},
             {"type": "activeScan", "parameters": {"context": "apc"}},
@@ -167,6 +171,13 @@ def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subpr
     shares the host's network namespace -- CircleCI's machine executor (and a local
     dev workstation running Docker directly) both support this.
 
+    `--shm-size=2g`: spiderAjax drives a real headless Firefox against astro-ui's real
+    SPA. Docker's default /dev/shm is 64MB, which headless Chrome/Firefox reliably
+    hangs or silently stalls on under any real page load -- confirmed live: a run
+    against astro-ui produced zero further output for 48+ minutes (vs. ~20s total for
+    every job combined in validation against a trivial static page), with no error, no
+    crash, just silence until CircleCI's no_output_timeout killed it.
+
     work_dir must be world-writable: the image runs as its own unprivileged `zap`
     user, which can't write into a bind-mounted directory owned by the invoking root
     user otherwise (confirmed experimentally -- `zap.sh -autogenmax` silently fails to
@@ -182,6 +193,8 @@ def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subpr
         "--rm",
         "--network",
         "host",
+        "--shm-size",
+        "2g",
         "--volume",
         f"{work_dir}:/zap/wrk:rw",
         ZAP_IMAGE,
