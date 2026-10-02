@@ -404,9 +404,7 @@ class TestHoustonSidecarLogging:
         assert len(configmaps) == 2
 
         for deployment in deployments:
-            vector_env = {
-                env_var["name"]: env_var for env_var in get_containers_by_name(deployment)["vector"]["env"]
-            }
+            vector_env = {env_var["name"]: env_var for env_var in get_containers_by_name(deployment)["vector"]["env"]}
 
             assert "ES_ENDPOINT" not in vector_env
             assert vector_env["ES_USERNAME"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
