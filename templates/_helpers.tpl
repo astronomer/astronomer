@@ -29,7 +29,7 @@ auth-flow URL regardless of annotation key.
 {{- end -}}
 
 {{ define "houston.internalauthurl" -}}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
 {{- else }}
 nginx.ingress.kubernetes.io/auth-url: https://houston.{{ include "global.authBaseDomain" . }}/v1/authorization
@@ -202,3 +202,76 @@ Returns the string "true" or "false" — compare with eq.
 true
 {{- end -}}
 {{- end }}
+
+{{- /*
+CP-HA: the control-plane base domain a data plane targets for control-plane services (Houston).
+Under Control Plane HA this is the GLOBAL base domain so DP->CP requests health-route to whichever
+control plane is active as pinning to a single CP's per-CP baseDomain breaks DP->CP calls after a
+CP/region failover (if the pinned CP is the one that is down).
+When HA is enabled, globalBaseDomain is REQUIRED on every plane, so the HA branch always resolves. The
+per-CP fallback below is reached only when HA is disabled. Only meaningful on data planes.
+*/ -}}
+{{- define "houston.controlPlaneBaseDomain" -}}
+{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- .Values.global.controlPlaneHA.globalBaseDomain -}}
+{{- else -}}
+{{- .Values.global.baseDomain -}}
+{{- end -}}
+{{- end -}}
+
+{{- /*
+Common Helper template for control or unified mode
+*/ -}}
+{{- define "astronomer.controlPlaneEnabled" -}}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{- /*
+The namespace KEDA resolves cluster-scoped TriggerAuthentication objects in: its
+KEDA_CLUSTER_OBJECT_NAMESPACE, which defaults to the namespace KEDA runs in.
+*/ -}}
+{{- define "keda.clusterObjectNamespace" -}}
+{{- default .Values.global.keda.namespace .Values.global.keda.clusterObjectNamespace -}}
+{{- end -}}
+
+{{- /*
+Name of the scaling identity and the cluster-scoped authentication object naming it.
+A deployment's scaling trigger references this name, so it is fixed rather than templated.
+*/ -}}
+{{- define "keda.scalingIdentityName" -}}
+metrics-api-worker-trigger
+{{- end -}}
+
+{{- /*
+Whether the worker autoscaling identity should be rendered. KEDA scales Airflow workers,
+which only run on a data plane.
+Returns the string "true" or "false" — compare with eq.
+*/ -}}
+{{- define "keda.workerScalingEnabled" -}}
+{{- and .Values.global.keda.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
+{{- end -}}
+
+{{- /*
+Labels for the objects the platform creates in the KEDA namespace. The astronomer.io
+prefixed label names the platform release that owns them, for anyone reading a namespace
+the platform does not otherwise write to.
+*/ -}}
+{{- define "keda.scalingIdentityLabels" -}}
+tier: astronomer
+component: worker-autoscaling
+release: {{ .Release.Name }}
+chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+heritage: {{ .Release.Service }}
+astronomer.io/platform-release: {{ .Release.Name }}
+{{- end -}}
+
+{{- /*
+Common Helper template for data or unified mode
+*/ -}}
+{{- define "astronomer.dataPlaneEnabled" -}}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+true
+{{- end -}}
+{{- end -}}

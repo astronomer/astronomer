@@ -3,7 +3,7 @@
 ########################################################
 {{- if .Values.global.clusterRoles -}}
 {{- if or .Values.nats.jetStream.enabled .Values.global.nats.jetStream.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- if .Values.global.rbac.enabled }}
 ---
 kind: Role

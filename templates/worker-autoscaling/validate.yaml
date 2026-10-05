@@ -1,0 +1,8 @@
+{{- /*
+The KEDA namespace cannot be derived: the platform has no access to it. An empty value
+would otherwise render these objects into the release namespace, where KEDA never looks.
+Emits no Kubernetes object.
+*/ -}}
+{{- if and .Values.global.keda.enabled (not .Values.global.keda.namespace) }}
+{{- fail "global.keda.namespace is required when global.keda.enabled is true" }}
+{{- end }}

@@ -817,6 +817,13 @@ is a case worth being able to reproduce: the control plane is supposed to refuse
 range where KEDA is absent, and that path needs testing as much as the working one. Leave the flag
 off to get that cluster.
 
+The version is pinned to KEDA 2.17.0, the oldest worker autoscaling supports, rather than the
+newest available, so the floor the documentation publishes is the one this environment exercises.
+
+`--with-keda` also sets `global.keda.enabled` on the data plane release, which is what makes the
+platform create the identity KEDA presents to the scaling endpoint. The two go together: that
+identity lives in the KEDA namespace, so there is nothing to create where KEDA is absent.
+
 `--interactive` asks for both, alongside the existing questions about operator mode and
 topology, so there is nothing to remember:
 
@@ -891,6 +898,23 @@ Check what Commander is actually reporting:
 ```bash
 curl -sk https://commander.dp01.localtest.me/metadata | python3 -m json.tool | grep -A2 '"keda"'
 ```
+
+The scaling identity the platform creates in the KEDA namespace, plus its cluster-scoped
+authentication object:
+
+```bash
+kubectl --context k3d-dp01 -n keda get sa,role,rolebinding -l astronomer.io/platform-release=astronomer
+kubectl --context k3d-dp01 get clustertriggerauthentication metrics-api-worker-trigger
+```
+
+A successful mint is the real check that the binding works:
+
+```bash
+kubectl --context k3d-dp01 create token metrics-api-worker-trigger -n keda
+```
+
+`kubectl auth can-i` reports a false negative here, because a request that names no resource never
+matches a rule scoped with `resourceNames`.
 
 Laminar:
 

@@ -1,7 +1,7 @@
 ##################################
 ## Astronomer Houston ConfigMap ##
 ##################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -694,6 +694,13 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
+
+    mcpServer:
+      enabled: {{ .Values.mcpServer.enabled }}
+      {{- if .Values.mcpServer.enabled }}
+      enabledGroups: {{ include "mcpServer.enabledGroups" . | quote }}
+      {{- end }}
+
     updateRuntimeCheck:
       enabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
     strictSchemaCheck:

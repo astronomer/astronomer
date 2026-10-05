@@ -2,7 +2,7 @@
 ## NATS Pod Disruption Budget
 #############################
 {{- if .Values.global.podDisruptionBudgets.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:

@@ -19,7 +19,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.1-17
+    tag: 3.1.1-18
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
@@ -32,11 +32,11 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.24
+    tag: 2.0.26
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.56.0-3"
+    tag: "0.58.0-1"
     pullPolicy: IfNotPresent
   # Unlike navigator/dp-link, the MCP server is a separate binary with its own image.
   mcpServer:
@@ -778,6 +778,26 @@ commander:
       # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
       automountServiceAccountToken: true
 
+  # -- Commander's own signing keypair, used to issue JWTs to dataplane services.
+  signingKey:
+    # -- Regenerate the keypair on every upgrade. Default false keeps a stable key
+    # (pre-install only) so a consumer's trusted public key is not rotated out from
+    # under it on upgrades.
+    regenerateKeyEachUpgrade: false
+
+  # -- Config for the JWTs commander mints for laminar components.
+  laminar:
+    # -- Hypervisor JWT contract. jwtIssuer / jwtAudience must match the
+    # hypervisor's LAMINAR_JWT_ISSUER / _AUDIENCE (set in the laminar sub-chart).
+    # Hypervisor-only — the laminar api-server uses the Houston user-facing JWT,
+    # not this token.
+    hypervisor:
+      jwtIssuer: local
+      jwtAudience: astronomer-ee
+      port: 8000
+      # -- Interval in seconds between hibernation-status polls of the laminar hypervisor.
+      pollIntervalSecs: 30
+
 
 pilot:
   # -- Enable Pilot deployment (data plane only)
@@ -1037,15 +1057,18 @@ mcpServer:
   # enabledGroups: [platform_disruptive] loses reads and writes. The core group is always
   # enabled regardless of this list and does not need naming.
   #
-  # The five groups: core (always on, not listed here), platform_read, platform_write,
+  # The seven groups: core (always on, not listed here), platform_read, platform_write,
   # platform_disruptive (contract changes — executor/runtime/DAG-mechanism — off by default),
-  # platform_destroy (deletion, off by default). platform_disruptive and platform_destroy are
-  # deliberately absent from the default below so a customer can opt into agent-driven runtime
-  # upgrades without also opting into agent-driven deletion.
-  # @default -- ["platform_read", "platform_write"]
+  # platform_destroy (deletion, off by default), airflow_read (read-only Airflow diagnosis —
+  # task logs, import errors, installed providers), airflow_destroy (delete_dag_run, off by
+  # default). platform_disruptive, platform_destroy, and airflow_destroy are deliberately absent
+  # from the default below so enabling reads and writes never drags in contract changes or
+  # agent-driven deletion — those must be named explicitly.
+  # @default -- ["platform_read", "platform_write", "airflow_read"]
   enabledGroups:
     - platform_read
     - platform_write
+    - airflow_read
 
   # -- Tool names to disable outright (internal/config.DisabledTools in apc-mcp-server). Joined
   # into the MCP_DISABLED_TOOLS env var. This is the per-tool kill switch: it overrides
@@ -1056,6 +1079,20 @@ mcpServer:
 
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
+
+  # -- Cache the nginx auth_request subrequest to Houston, so a burst of calls from the
+  # same caller doesn't re-authenticate on every single one. A latency/load knob, not a
+  # security knob: every downstream tool call still re-authorizes against live Houston.
+  authCache:
+    # @default -- true
+    enabled: true
+    # -- How long a successful auth check is cached.
+    # @default -- 5m
+    validSuccess: "5m"
+    # -- How long a denied/failed auth check is cached — short, so a fixed credential
+    # (e.g. a just-rotated service-account key) stops failing quickly.
+    # @default -- 1m
+    validFailure: "1m"
 
   # For example
   #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`

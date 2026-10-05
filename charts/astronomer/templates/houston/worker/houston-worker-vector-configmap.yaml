@@ -2,7 +2,7 @@
 ## Houston Worker Vector ConfigMap                ##
 ## Vector pipeline for worker audit log shipping  ##
 ####################################################
-{{- if and .Values.houston.worker.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
+{{- if and .Values.houston.worker.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") }}
 {{- if .Values.houston.logging.loggingSidecar.enabled }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
 apiVersion: v1

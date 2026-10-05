@@ -2,7 +2,7 @@
 ## Houston Bootstrap Role Binding ##
 ####################################
 {{- if and .Values.global.rbac.enabled  (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:

@@ -744,6 +744,29 @@ class TestAirflowOperator:
         args = get_containers_by_name(docs[0], include_init_containers=False)["manager"]["args"]
         assert ("--openshift" in args) is openshift_enabled
 
+    @pytest.mark.parametrize("keda_enabled", [True, False])
+    def test_airflow_operator_keda_flag(self, kube_version, keda_enabled):
+        """global.keda.enabled must propagate to the manager as the --keda arg.
+
+        Without it the operator still creates scaling objects, it just stops noticing when one is
+        changed or deleted underneath it, so drift goes uncorrected. Off by default, because the
+        platform does not install KEDA and the flag means nothing where it is absent.
+        """
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                    "keda": {"enabled": keda_enabled},
+                },
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        args = get_containers_by_name(docs[0], include_init_containers=False)["manager"]["args"]
+        assert ("--keda" in args) is keda_enabled
+
     @pytest.mark.parametrize(
         "sa_create,rbac_enabled,expected_sa_name,sa_object_rendered",
         [
@@ -874,3 +897,25 @@ class TestAirflowOperator:
             )
             operator_docs = [f"{doc.get('kind')}/{doc.get('metadata', {}).get('name')}" for doc in docs if _is_operator_doc(doc)]
             assert not operator_docs, f"control plane must not render operator resources, got: {operator_docs}"
+
+    @pytest.mark.parametrize(
+        "extra_args,expected",
+        [
+            ({"keda": ""}, "--keda"),
+            ({"log-level": "debug"}, "--log-level=debug"),
+        ],
+    )
+    def test_airflow_operator_extra_args(self, kube_version, extra_args, expected):
+        """operator extraArgs render as manager args, valued and valueless."""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {"airflowOperator": {"enabled": True}},
+                "airflow-operator": {"extraArgs": extra_args},
+            },
+            show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        args = get_containers_by_name(docs[0], include_init_containers=False)["manager"]["args"]
+        assert expected in args

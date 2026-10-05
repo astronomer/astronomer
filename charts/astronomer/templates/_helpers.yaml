@@ -352,7 +352,7 @@ it alone.
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 - name: COMMANDER_CONTROL_PLANE_HA_ENABLED
@@ -832,22 +832,6 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 {{- end }}
 {{- end }}
 
-{{- /*
-CP-HA: the control-plane base domain a data plane targets for control-plane services (Houston).
-Under Control Plane HA this is the GLOBAL base domain so DP->CP requests health-route to whichever
-control plane is active as pinning to a single CP's per-CP baseDomain breaks DP->CP calls after a
-CP/region failover (if the pinned CP is the one that is down).
-When HA is enabled, globalBaseDomain is REQUIRED on every plane, so the HA branch always resolves. The
-per-CP fallback below is reached only when HA is disabled. Only meaningful on data planes.
-*/ -}}
-{{- define "houston.controlPlaneBaseDomain" -}}
-{{- if and .Values.global.controlPlaneHA.enabled .Values.global.controlPlaneHA.globalBaseDomain -}}
-{{- .Values.global.controlPlaneHA.globalBaseDomain -}}
-{{- else -}}
-{{- .Values.global.baseDomain -}}
-{{- end -}}
-{{- end -}}
-
 {{- define "houston.authServiceURL" -}}
 {{- if (eq .Values.global.plane.mode "data") -}}
 https://houston.{{ include "houston.controlPlaneBaseDomain" . }}
@@ -970,7 +954,7 @@ Master switch registry.enabled (default true) AND the registry plane modes (data
 Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "registry.enabled" -}}
-{{- and .Values.registry.enabled (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) -}}
+{{- and .Values.registry.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
 {{- end }}
 
 {{/*
@@ -1003,7 +987,7 @@ Whether the MCP server should be rendered: mcpServer.enabled AND control/unified
 Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "mcpServer.enabled" -}}
-{{- and .Values.mcpServer.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) -}}
+{{- and .Values.mcpServer.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") -}}
 {{- end }}
 
 {{ define "mcpServer.serviceAccountName" -}}

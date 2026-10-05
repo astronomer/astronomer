@@ -343,6 +343,7 @@ def test_nginx_deployment_defaults(plane_mode):
     assert c_by_name["nginx"]["image"].startswith("quay.io/astronomer/ap-nginx:")
     assert "--election-id=ingress-controller-leader-release-name-nginx" in c_by_name["nginx"]["args"]
     assert "--enable-annotation-validation=true" in c_by_name["nginx"]["args"]
+    assert "--enable-metrics=true" in c_by_name["nginx"]["args"]
     for arg in forbidden_args:
         assert arg not in c_by_name["nginx"]["args"]
     assert c_by_name["nginx"]["volumeMounts"] == [
@@ -493,3 +494,24 @@ def test_nginx_backend_overrides():
     )
 
     assert len(docs) == 0
+
+
+def test_nginx_extraArgs():
+    """Test nginx ingress deployment with extra args."""
+    docs = render_chart(
+        values={
+            "nginx": {
+                "extraArgs": {
+                    "enable-ssl-passthrough": "true",
+                }
+            }
+        },
+        show_only=[
+            "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+            "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
+        ],
+    )
+    EnableSSLPassthrough = "--enable-ssl-passthrough=true"
+    for doc in docs:
+        c_by_name = get_containers_by_name(doc)
+        assert EnableSSLPassthrough in c_by_name["nginx"]["args"]

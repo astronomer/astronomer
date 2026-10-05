@@ -106,7 +106,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.24
+      tag: 2.0.26
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
@@ -133,6 +133,22 @@ global:
 
   laminar:
     enabled: false
+
+  # Worker autoscaling. You install and run KEDA 2.17 or later yourself; turn this on
+  # to have the platform create the identity KEDA presents when it asks how many
+  # workers a queue needs. Doing so writes a service account, a role and a role
+  # binding into the namespace below, plus one cluster-scoped authentication object. It
+  # also has the Airflow operator watch your scaling objects, so one changed or deleted
+  # outside the platform is restored.
+  keda:
+    enabled: false
+    # The namespace KEDA is installed in.
+    namespace: keda
+    # Only needed when KEDA is configured to resolve cluster-scoped objects somewhere
+    # other than its own namespace. Defaults to `namespace`.
+    clusterObjectNamespace: ~
+    # The service account KEDA runs as.
+    operatorServiceAccountName: keda-operator
 
   # Custom roles: define your own roles from a catalog of granular permissions
   # instead of assigning only the built-in roles. Covers Workspace and Deployment
@@ -226,7 +242,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.31.5
+    tag: 1.31.6
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -349,7 +365,7 @@ global:
       enabled: false
       name: sidecar-log-consumer
       repository: quay.io/astronomer/ap-vector
-      tag: 0.56.0-3
+      tag: 0.58.0-1
       customConfig: false
       indexPattern: ~
       extraEnv: []
@@ -436,27 +452,27 @@ global:
         tag: 0.31.0
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.10.1
+        tag: 8.10.2
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-27
+        tag: 1.24.1-28
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.1-9
+        tag: 0.12.1-10
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.9.14
+        tag: 2026.9.21
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.9.14
+        tag: 2026.9.21
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.9.14
+        tag: 2026.9.21
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.6.0
+        tag: 0.6.1
     metrics:
       enabled: false
   certgenerator:
@@ -879,3 +895,12 @@ kube-state:
 external-secrets:
   # Enable external-secrets to install ESO CRDs needed for dataPlaneFailover
   enabled: false
+
+#################################
+## Airflow Operator configuration
+#################################
+airflow-operator:
+  # Have the operator watch your scaling objects, so a change or deletion made outside the
+  # platform is corrected. Requires KEDA. Separate from global.keda.enabled above, which
+  # creates the identity KEDA presents.
+  kedaEnabled: false

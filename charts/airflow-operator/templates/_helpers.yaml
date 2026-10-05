@@ -61,9 +61,10 @@ service:
 {{- if .Values.global.openshift.enabled }}
 - --openshift
 {{- end -}}
-{{- if .Values.kedaEnabled }}
+{{- if .Values.global.keda.enabled }}
 - --keda
 {{- end -}}
+{{- include "operator.extraArgs" . }}
 {{- end }}
 
 {{ define "manager.containers" -}}
@@ -157,7 +158,7 @@ Whether airflow-operator resources should render: the operator must be enabled
 and the plane mode must be data or unified.
 */}}
 {{- define "operator.enabled" -}}
-{{- if and (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) .Values.global.airflowOperator.enabled -}}
+{{- if and (eq (include "astronomer.dataPlaneEnabled" .) "true") .Values.global.airflowOperator.enabled -}}
 true
 {{- end -}}
 {{- end -}}
@@ -174,3 +175,14 @@ imagePullSecrets:
 {{- toYaml .Values.manager.imagePullSecrets | nindent 2 }}
 {{- end -}}
 {{- end -}}
+
+{{- define "operator.extraArgs" -}}
+{{- range $key, $value := .Values.extraArgs }}
+{{- /* Accept keys without values or with false as value */}}
+{{- if eq ($value | quote | len) 2 }}
+- --{{ $key }}
+{{- else }}
+- --{{ $key }}={{ $value }}
+{{- end }}
+{{- end }}
+{{- end }}

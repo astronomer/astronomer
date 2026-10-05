@@ -3,7 +3,7 @@
 ## Shared by Houston API and Houston Worker  ##
 ###############################################
 {{- if .Values.houston.logging.loggingSidecar.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
