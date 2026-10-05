@@ -308,8 +308,13 @@ jobs:
       - checkout
       - run:
           name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
+          # zap-scan-ref is a user-supplied pipeline parameter -- passed as an env var,
+          # not interpolated straight into the script, so shell metacharacters in it
+          # are inert data instead of executable syntax.
+          environment:
+            ZAP_SCAN_REF: << pipeline.parameters.zap-scan-ref >>
           command: |
-            git fetch origin "<< pipeline.parameters.zap-scan-ref >>"
+            git fetch origin "$ZAP_SCAN_REF"
             git checkout FETCH_HEAD
       - run:
           name: Create venv-cache-key.txt

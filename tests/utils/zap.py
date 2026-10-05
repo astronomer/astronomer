@@ -127,6 +127,12 @@ def build_automation_plan(token: str, report_dir: str, error_level: str = "High"
                         "matchType": "req_header",
                         "matchString": "Authorization",
                         "replacementString": f"Bearer {token}",
+                        # Without this, the token would go out on every request ZAP
+                        # makes, including ones to unrelated third-party hosts (e.g.
+                        # spiderAjax's headless Firefox making its own background
+                        # requests). Scoped to exactly the two origins in this plan's
+                        # "apc" context above.
+                        "url": rf"^http://localhost:({HOUSTON_LOCAL_PORT}|{ASTRO_UI_LOCAL_PORT})(/|$)",
                     }
                 ],
             },
