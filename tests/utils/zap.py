@@ -14,6 +14,7 @@ import os
 import shlex
 import socket
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 
@@ -63,7 +64,11 @@ def port_forward(kubeconfig_file: str, service: str, local_port: int, remote_por
         f"{local_port}:{remote_port}",
     ]
     print(f"Starting port-forward: {shlex.join(command)}")
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    # DEVNULL, not PIPE: nothing here ever reads this process's stdout (readiness is
+    # checked via _wait_for_port's own socket connect, not by watching for a log line),
+    # so a PIPE would just fill up over a long scan and deadlock kubectl once its
+    # output buffer backs up.
+    proc = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         _wait_for_port(local_port)
         yield
@@ -198,7 +203,14 @@ def build_automation_plan(token: str, report_dir: str, error_level: str = "High"
 
 
 def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subprocess.CompletedProcess:
-    """Write the automation plan into work_dir and run it via the official ZAP Docker image.
+    """Write the automation plan into a scratch directory and run it via the official
+    ZAP Docker image, writing the report into work_dir.
+
+    The plan and the report live in two separate bind mounts, not one shared
+    directory: the plan embeds the bearer token (see build_automation_plan's
+    `replacer` job), and work_dir is what CI uploads wholesale as the scan's report
+    artifact. Keeping the plan out of work_dir means that upload can never include
+    the token, without having to scrub or allowlist individual files in it.
 
     `--network host`: ZAP (in its own container) needs to reach the `kubectl
     port-forward` processes' listening sockets on localhost, which only works if it
@@ -213,40 +225,50 @@ def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subpr
     (crashhelper/RDD Process/Utility Process) that the image's own entrypoint (plain
     `java`, as PID 1) never reaps. A real init process reaps them properly.
 
-    work_dir must be world-writable: the image runs as its own unprivileged `zap`
-    user, which can't write into a bind-mounted directory owned by the invoking root
-    user otherwise.
+    Both mounted directories must be world-writable/readable: the image runs as its
+    own unprivileged `zap` user, which can't access a bind-mounted directory owned by
+    the invoking root user otherwise.
     """
-    os.chmod(work_dir, 0o777)  # noqa: S103 -- must be world-writable: the image runs as its own unprivileged `zap` user
-    plan_path = work_dir / "automation.yaml"
-    plan_path.write_text(yaml.safe_dump(build_automation_plan(token, "/zap/wrk", error_level), sort_keys=False))
+    os.chmod(work_dir, 0o777)  # noqa: S103 -- see docstring: the image's `zap` user needs to write the report here
+    with tempfile.TemporaryDirectory() as plan_dir:
+        os.chmod(plan_dir, 0o777)  # noqa: S103 -- see docstring: the image's `zap` user needs to read the plan here
+        plan_path = Path(plan_dir) / "automation.yaml"
+        plan_path.write_text(yaml.safe_dump(build_automation_plan(token, "/zap/wrk", error_level), sort_keys=False))
 
-    command = [
-        "docker",
-        "run",
-        "--rm",
-        "--init",
-        "--network",
-        "host",
-        "--shm-size",
-        "2g",
-        "--volume",
-        f"{work_dir}:/zap/wrk:rw",
-        ZAP_IMAGE,
-        "zap.sh",
-        "-cmd",
-        "-autorun",
-        "/zap/wrk/automation.yaml",
-    ]
-    print(f"Running ZAP scan: {shlex.join(command)}")
-    # Stream output live instead of subprocess.run(capture_output=True): that would
-    # buffer everything -- including ZAP's own progressToStdout job-by-job lines --
-    # until the process exits, giving CircleCI's no_output_timeout nothing to see no
-    # matter how long a legitimately-healthy scan takes.
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-    lines = []
-    for line in process.stdout:
-        print(line, end="")
-        lines.append(line)
-    process.wait()
-    return subprocess.CompletedProcess(command, process.returncode, stdout="".join(lines), stderr="")
+        command = [
+            "docker",
+            "run",
+            "--rm",
+            "--init",
+            "--network",
+            "host",
+            "--shm-size",
+            "2g",
+            "--volume",
+            f"{plan_dir}:/zap/plan:ro",
+            "--volume",
+            f"{work_dir}:/zap/wrk:rw",
+            ZAP_IMAGE,
+            "zap.sh",
+            "-cmd",
+            "-autorun",
+            "/zap/plan/automation.yaml",
+        ]
+        print(f"Running ZAP scan: {shlex.join(command)}")
+        # Stream output live instead of subprocess.run(capture_output=True): that would
+        # buffer everything -- including ZAP's own progressToStdout job-by-job lines --
+        # until the process exits, giving CircleCI's no_output_timeout nothing to see no
+        # matter how long a legitimately-healthy scan takes.
+        #
+        # Tee to a log file in work_dir rather than an in-memory list: ZAP's own output
+        # has no size bound we control, and work_dir is already the directory CI uploads
+        # as the scan's artifacts, so the full log becomes downloadable right alongside
+        # the HTML/JSON report instead of only living in the CI job's console output.
+        log_path = work_dir / "zap-scan.log"
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        with log_path.open("w") as log_file:
+            for line in process.stdout:
+                print(line, end="")
+                log_file.write(line)
+        process.wait()
+        return subprocess.CompletedProcess(command, process.returncode, stdout="", stderr="")
