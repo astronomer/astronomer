@@ -68,16 +68,13 @@ def zap_scan_result(_houston_api_module):
 
 
 def test_zap_scan_produced_a_report(zap_scan_result):
-    """This test intentionally does not assert on ZAP's own exit code or on alert risk
-    levels: those encode "did the scan find High-risk issues", which is the whole
-    point of running it, not "did the test suite pass". There is no automated trigger
-    for this scenario at all (manual-only, see test_profile.yaml) -- a human reads the
-    report regardless of whether this test is green. The useful thing to assert is
-    that the tool actually ran and produced output, since the automation.yaml plan's
-    `exitStatus` job (tests/utils/zap.py::build_automation_plan) means a non-zero
-    return code is ambiguous between "High alert found" and "a job in the plan
-    errored" -- distinguishing those is only possible by reading the report/summary,
-    not the return code alone.
+    """Doesn't assert on ZAP's exit code or alert risk levels -- those mean "did the
+    scan find High-risk issues," not "did the test pass," and this scenario has no
+    automated trigger anyway (manual-only, see test_profile.yaml) -- a human reads the
+    report regardless of whether this test is green. What's worth asserting is that
+    the tool ran and produced output: a non-zero exit code here is ambiguous between
+    "High alert found" and "a job in the plan errored" (see build_automation_plan's
+    exitStatus job), and only the report/summary can tell those apart.
     """
     result, work_dir = zap_scan_result
     assert result.returncode in (0, 1, 2), (

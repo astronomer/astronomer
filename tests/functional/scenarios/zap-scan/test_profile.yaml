@@ -1,23 +1,18 @@
 description: >-
-  PLA-614: on-demand DAST scan of a running APC install via OWASP ZAP's Automation
-  Framework (https://www.zaproxy.org/). Scans houston-api's GraphQL API (schema-aware,
-  via introspection) and astro-ui (spider + ajaxSpider), authenticated as a freshly
-  created admin user. Active scan, not baseline/passive-only -- safe here because the
-  target is this scenario's own disposable per-run cluster, not shared staging.
+  On-demand DAST scan of a running APC install via OWASP ZAP's Automation Framework
+  (https://www.zaproxy.org/). Scans houston-api's GraphQL API (schema-aware, via
+  introspection) and astro-ui (spider + ajaxSpider), authenticated as a freshly created
+  admin user, with ZAP's active scanner enabled -- safe here since the target is this
+  scenario's own disposable per-run cluster, not shared staging.
 
-  Manual-only: this scenario is deliberately excluded from the normal CircleCI
-  scenario-discovery wiring (see `manual_only` below and
-  bin/generate_circleci_config.py::discover_scenarios()) and from the per-PR/master
-  pipeline entirely. It has its own hand-written `zap-scan` job and `zap-scan-workflow`
-  in .circleci/config.yml.j2, triggered manually via CircleCI's "Trigger Pipeline"
-  feature with the `run-zap-scan` pipeline parameter, scanning whatever git ref
-  `zap-scan-ref` names (default `master`). Run locally with:
+  Manual-only (see `manual_only` below): excluded from the normal scenario-discovery
+  wiring and the per-PR/master pipeline entirely. Its own `zap-scan` job and
+  `zap-scan-workflow` in .circleci/config.yml.j2 run only via CircleCI's "Trigger
+  Pipeline" feature (`run-zap-scan` + `zap-scan-ref`, default `master`). Run locally:
   `uv run bin/run-scenario.py zap-scan && uv run pytest tests/functional/scenarios/zap-scan`.
 topology: unified
 values: []
-# Not read by bin/run-scenario.py (which only cares about topology/values/etc. -- see
-# tests/functional/scenarios/README.md) -- read only by
-# bin/generate_circleci_config.py::discover_scenarios(), which skips any scenario
-# setting this, so it never gets wired into the auto-discovered scenario-* jobs, the
-# approve-scenarios gate, or the release-to-internal/-public requirements.
+# Read only by bin/generate_circleci_config.py::discover_scenarios() (not by
+# bin/run-scenario.py) -- skips this scenario entirely: no auto-discovered scenario-*
+# job, no approve-scenarios gate, no release-to-internal/-public requirement.
 manual_only: true

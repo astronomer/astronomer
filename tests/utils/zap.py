@@ -117,25 +117,19 @@ def build_automation_plan(token: str, report_dir: str, error_level: str = "High"
                 ],
             },
             # Schema-aware API scan: imports houston-api's GraphQL schema via
-            # introspection, then the activeScan job below attacks every query/mutation
-            # it generates from that schema. No `context` param here: confirmed against
-            # a real run that ZAP's graphql job doesn't accept one ("Unrecognised
-            # parameter for job graphql : context") -- it associates with whatever
-            # context already matches the endpoint's URL (we only ever have one).
+            # introspection; `activeScan` below then attacks every query/mutation it
+            # generates from that schema. No `context` param -- this ZAP version's
+            # graphql job doesn't accept one, it just uses whichever context matches
+            # the endpoint URL (we only ever have one).
             #
             # Query-gen params tuned down from ZAP's defaults (maxQueryDepth 5,
             # maxAdditionalQueryDepth 5, optionalArgsEnabled true, argsType both,
-            # querySplitType leaf): a live thread dump (jstack) during a real hang
-            # against houston-api's actual schema showed the generator doesn't just
-            # introspect once -- GraphQlGenerator.generate() recursively SENDS A REAL
-            # QUERY PER LEAF while building the generated tree, so the defaults turn
-            # into potentially hundreds of real HTTP round-trips to Houston's live
-            # resolvers. The thread was blocked in a plain socket read waiting on one
-            # of those responses, with no apparent budget to give up and move on --
-            # one slow/expensive generated query (or one port-forward hiccup) stalls
-            # the whole single-threaded run indefinitely. Fewer, shallower, per-
-            # operation requests sidesteps that; `activeScan` below still attacks
-            # whatever queries/mutations this generates.
+            # querySplitType leaf): generating queries isn't pure local computation --
+            # GraphQlGenerator.generate() sends a real HTTP request per leaf while
+            # building the query tree, so the defaults mean hundreds of real
+            # round-trips to Houston's live resolvers, each one a chance for a slow
+            # response or a port-forward hiccup to stall the whole single-threaded job.
+            # Fewer, shallower, per-operation requests avoids that.
             {
                 "type": "graphql",
                 "parameters": {
@@ -161,19 +155,14 @@ def build_automation_plan(token: str, report_dir: str, error_level: str = "High"
                 "parameters": {"url": astro_ui_url, "context": "apc", "numberOfBrowsers": 2, "maxDuration": 10},
             },
             {"type": "passiveScan-wait", "parameters": {"maxDuration": 10}},
-            # threadPerHost defaults to 2x core count (15-28 observed) -- confirmed live
-            # via jstack during a real multi-day run that every single ZAP-ActiveScanner
-            # thread was stuck in SocksSocketImpl.connect()/timedFinishConnect, i.e.
-            # failing to even establish new TCP connections, not waiting on slow HTTP
-            # responses. All of them were hammering the one kubectl port-forward tunnel
-            # (see port_forward() above) with concurrent connection attempts -- a known
-            # limitation of port-forward, which isn't built for this kind of sustained
-            # concurrent load. Dropped to 2 so it doesn't overwhelm that one tunnel.
-            # maxScanDurationInMins/maxRuleDurationInMins (both default: unlimited)
-            # bound worst case regardless -- a real run was still going after 70+ hours.
-            # defaultStrength/defaultThreshold dropped from Medium to Low to cut total
-            # payload volume, further reducing connection churn through that same
-            # single tunnel independent of concurrency.
+            # threadPerHost defaults to 2x core count (15-28 here) -- too many concurrent
+            # threads for the single `kubectl port-forward` tunnel (see port_forward()
+            # above) to handle: it starts failing to establish new connections rather
+            # than just answering slowly. Dropped to 2 so it isn't overwhelmed.
+            # maxScanDurationInMins/maxRuleDurationInMins (both default unlimited) bound
+            # worst case regardless of root cause.
+            # defaultStrength/defaultThreshold dropped Medium->Low to cut total payload
+            # volume, reducing connection churn independent of concurrency.
             {
                 "type": "activeScan",
                 "parameters": {
@@ -217,21 +206,16 @@ def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subpr
     dev workstation running Docker directly) both support this.
 
     `--shm-size=2g`: spiderAjax drives a real headless Firefox against astro-ui's real
-    SPA. Docker's default /dev/shm is 64MB, which headless Chrome/Firefox reliably
-    hangs or silently stalls on under any real page load -- confirmed live: a run
-    against astro-ui produced zero further output for 48+ minutes (vs. ~20s total for
-    every job combined in validation against a trivial static page), with no error, no
-    crash, just silence until CircleCI's no_output_timeout killed it.
-
-    work_dir must be world-writable: the image runs as its own unprivileged `zap`
-    user, which can't write into a bind-mounted directory owned by the invoking root
-    user otherwise (confirmed experimentally -- `zap.sh -autogenmax` silently fails to
-    write its output file without this).
+    SPA. Docker's default /dev/shm (64MB) is too small for headless Chrome/Firefox to
+    render a real page reliably -- it hangs or silently stalls rather than erroring.
 
     `--init`: spiderAjax's headless Firefox leaves behind child processes
     (crashhelper/RDD Process/Utility Process) that the image's own entrypoint (plain
-    `java`, as PID 1) never reaps -- confirmed live, 72 zombies accumulated over one
-    run. A real init process reaps them properly.
+    `java`, as PID 1) never reaps. A real init process reaps them properly.
+
+    work_dir must be world-writable: the image runs as its own unprivileged `zap`
+    user, which can't write into a bind-mounted directory owned by the invoking root
+    user otherwise.
     """
     os.chmod(work_dir, 0o777)  # noqa: S103 -- must be world-writable: the image runs as its own unprivileged `zap` user
     plan_path = work_dir / "automation.yaml"
@@ -258,10 +242,7 @@ def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subpr
     # Stream output live instead of subprocess.run(capture_output=True): that would
     # buffer everything -- including ZAP's own progressToStdout job-by-job lines --
     # until the process exits, giving CircleCI's no_output_timeout nothing to see no
-    # matter how long a legitimately-healthy scan takes. Confirmed live: two runs
-    # against the real chart produced literally zero bytes of visible output (not
-    # even ZAP's near-instant Java startup banner) before getting killed, which in
-    # hindsight was this bug, not necessarily the shm-size issue fixed above.
+    # matter how long a legitimately-healthy scan takes.
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
     lines = []
     for line in process.stdout:

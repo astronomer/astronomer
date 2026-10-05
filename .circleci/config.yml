@@ -23,11 +23,11 @@ parameters:
   run-zap-scan:
     type: boolean
     default: false
-    description: "PLA-614: trigger an on-demand ZAP DAST scan (zap-scan-workflow) of the git ref in zap-scan-ref, via the CircleCI Trigger Pipeline feature. Manual-only -- never set true on an automatic trigger."
+    description: "Trigger an on-demand ZAP DAST scan (zap-scan-workflow) of the git ref in zap-scan-ref. Manual-only -- never set true on an automatic trigger."
   zap-scan-ref:
     type: string
     default: "master"
-    description: "Git ref (branch, tag, or full SHA) of this repo to install and scan when run-zap-scan is true. Checked out explicitly inside the zap-scan job, independent of whatever revision triggered the pipeline."
+    description: "Git ref (branch, tag, or full SHA) to scan when run-zap-scan is true. Checked out explicitly in the zap-scan job, independent of what triggered the pipeline."
 
 jobs:
   sign-released-image:
@@ -509,27 +509,21 @@ jobs:
       - store_test_results:
           path: test-results
 
-  # PLA-614: on-demand ZAP DAST scan. Deliberately NOT part of the scenario for-loop
-  # above -- tests/functional/scenarios/zap-scan/test_profile.yaml sets manual_only,
-  # so bin/generate_circleci_config.py::discover_scenarios() skips it entirely, and it
-  # never gets the approve-scenarios gate or a release-to-internal/-public requirement.
-  # Only runs when triggered manually (zap-scan-workflow, gated on
-  # pipeline.parameters.run-zap-scan) via CircleCI's "Trigger Pipeline" feature.
+  # On-demand ZAP DAST scan (PLA-614). Hand-written, not from the scenario for-loop
+  # above: test_profile.yaml sets manual_only, so discover_scenarios() skips it --
+  # no approve-scenarios gate, no release requirement. Runs only via zap-scan-workflow,
+  # manually triggered with pipeline.parameters.run-zap-scan.
   zap-scan:
     machine:
       image: ubuntu-2404:2026.05.1
       resource_class: 2xlarge
     steps:
       - checkout
-      # TEMP-PLA-614-ITERATION: skip the explicit zap-scan-ref checkout while
-      # zap-scan-workflow runs on every push (see that workflow's own TEMP marker
-      # below) -- `checkout` above already has the pushed commit, re-fetching a
-      # fixed ref here would undo that. Restore this step when reverting.
-      # - run:
-      #     name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
-      #     command: |
-      #       git fetch origin "<< pipeline.parameters.zap-scan-ref >>"
-      #       git checkout FETCH_HEAD
+      - run:
+          name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
+          command: |
+            git fetch origin "<< pipeline.parameters.zap-scan-ref >>"
+            git checkout FETCH_HEAD
       - run:
           name: Create venv-cache-key.txt
           command: |
@@ -545,20 +539,16 @@ jobs:
           command: uv venv -p 3.13 --seed && uv sync
       - run:
           name: "Scenario: zap-scan"
-          # CircleCI's default no_output_timeout (10m) killed the first live run here:
-          # ZAP's automation framework only prints a line when each job starts/finishes
-          # (progressToStdout in tests/utils/zap.py's plan), not during one. This still
-          # has margin even now that activeScan/spiderAjax are internally bounded
-          # (tests/utils/zap.py), since neither one prints anything mid-job.
+          # ZAP only prints a line per job start/finish (tests/utils/zap.py), not
+          # during one -- activeScan/spiderAjax are bounded now but still silent
+          # mid-job, so this needs real margin over their internal caps.
           no_output_timeout: 45m
           command: |
             uv run bin/run-scenario.py zap-scan
             export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
-            # Hard backstop independent of ZAP's own internal time caps: a real run sat
-            # in activeScan for 70+ hours before those caps existed (port-forward
-            # concurrency, see tests/utils/zap.py), and no_output_timeout alone doesn't
-            # bound total duration -- only silence. 75m gives headroom over
-            # activeScan's own 30m cap plus spiderAjax/graphql/report overhead.
+            # Hard backstop independent of ZAP's own internal caps (tests/utils/zap.py)
+            # and of no_output_timeout, which only bounds silence, not total duration.
+            # 75m leaves headroom over activeScan's 30m cap plus other job overhead.
             timeout 75m uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/scenarios/zap-scan
       - store_test_results:
           path: test-results
@@ -897,16 +887,10 @@ workflows:
               only:
                 - '/^release-\d+\.\d+$/'
 
-  # PLA-614: on-demand ZAP DAST scan, triggered manually via CircleCI's "Trigger
-  # Pipeline" feature with run-zap-scan set true (zap-scan-ref defaults to master).
-  # Never auto-runs -- there is no branch/tag filter here on purpose, since
-  # pipeline.parameters.run-zap-scan already defaults to false on every normal trigger.
-  # TEMP-PLA-614-ITERATION: `when:` gate commented out below so this runs on every
-  # push to this branch, for fast edit/push/watch iteration while the scenario is
-  # still being debugged live. Restore the `when:` line (and this comment block's
-  # original wording) before merging -- do not ship this workflow auto-running.
+  # On-demand ZAP DAST scan, triggered manually via run-zap-scan (zap-scan-ref
+  # defaults to master). No branch/tag filter needed -- run-zap-scan defaults false.
   zap-scan-workflow:
-    # when: << pipeline.parameters.run-zap-scan >>
+    when: << pipeline.parameters.run-zap-scan >>
     jobs:
       - zap-scan
 
