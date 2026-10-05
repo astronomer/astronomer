@@ -1,0 +1,72 @@
+description: >-
+  Runtime proof for file-based secret loading (global.secretsFromFiles). The chart side has
+  ~7200 render tests, so this scenario deliberately asserts only what `helm template` cannot
+  see: that each converted process actually READS its secret from the mounted file, that the
+  converted values have left every container's environment block, that an unreadable file
+  fails the process closed instead of starting it unauthenticated, and that the 0440 +
+  fsGroup pairing is what makes the file readable at all. Two bugs in this feature's history
+  were invisible to render tests and fatal at container start -- a mount path that made runc
+  refuse to create the pod, and an import specifier that never resolved -- which is why
+  runtime coverage exists separately from the render suite.
+topology: unified
+
+# Pinned rather than defaulted. run-scenario.py otherwise picks the NEWEST entry in
+# metadata.yaml's test_k8s_versions, while bin/setup-kind.py's own default is the
+# second-newest -- so an unpinned scenario silently tests a different version than a
+# plain `reset-local-dev` does. 1.34.3 also matches where this feature's earlier
+# live-cluster results were recorded, so runs stay comparable.
+kube_version: 1.34.3
+
+# The platform plus the full Elasticsearch stack (tags.logging) plus the monitoring stack
+# plus navigator, pilot, dp-link and nine cronjobs. No Airflow Deployment is created, so
+# this is lighter than auth-sidecar, but xlarge was already marginal for the platform alone
+# in PINF-1080. Drop to xlarge if it proves comfortable.
+resource_class: 2xlarge
+
+# TEMPORARY: no published image carries a loader, so this cannot pass in CI yet. Flip to
+# true in the same change that publishes loader-bearing images, bumps the chart's image
+# tags, and deletes values-overlay-images.yaml plus the kind-load-images step below.
+#
+# This matters beyond a red badge: on master and release-X.Y the scenario job runs
+# automatically AND gates release-to-internal, so merging it enabled against stock images
+# would block the release pipeline. On every other branch it sits behind the manual
+# approve-scenarios gate, which is why it is safe to land here.
+ci: false
+
+pre_helm_scripts:
+  # Both run after the cluster exists but before `helm install`, which is the only correct
+  # window for either.
+  #
+  # The fixture Secrets are named by install-time values and mounted as VOLUMES. A missing
+  # volume Secret makes kubelet refuse the whole pod with FailedMount -- unlike a missing
+  # secretKeyRef, which fails one container -- so they must exist before scheduling.
+  - bin/setup-secrets-from-files-fixtures.py --namespace astronomer
+  # Images must be on the node before the kubelet looks, and pullPolicy: Never means it
+  # never pulls. setup-kind.py's own image loading cannot cover these: it only loads refs
+  # that appear in the chart's DEFAULT image values, and these come from a values overlay.
+  - bin/kind-load-images.py --cluster unified
+    quay.io/astronomer/ap-houston-api:2.2.0-sff
+    quay.io/astronomer/ap-commander:2.2.1-sff
+    quay.io/astronomer/ap-kuiper-reloader:0.3.5-sff
+
+values:
+  # Turns the feature on and enables every component that participates in it. Most are off
+  # by default, so the flag alone would exercise four of houston's nineteen secrets and none
+  # of the third-party mechanisms.
+  - configs/enable-secrets-from-files.yaml
+  # No converted component needs the IN-CLUSTER Elasticsearch stack. The two
+  # logging-related pieces this feature touches both talk to endpoints outside it: the
+  # external-es-proxy (gated by global.customLogging.enabled) and Houston's Vector audit
+  # sidecar (gated by houston.logging.loggingSidecar.enabled). Dropping the stack removes
+  # three heavy pods and a large source of failures unrelated to what is under test.
+  #
+  # It is also mandatory on an Apple Silicon host: ap-elasticsearch is amd64-only and the
+  # JVM cannot install a seccomp filter under Rosetta, so it dies at startup with the
+  # misleading "CONFIG_SECCOMP not compiled into kernel" -- the kind node's kernel in fact
+  # reports CONFIG_SECCOMP=y and CONFIG_SECCOMP_FILTER=y.
+  - configs/disable-logging.yaml
+  # Workarounds for defects outside this feature that would otherwise make the scenario
+  # red for reasons it is not testing. See that file -- each entry names its root cause.
+  - tests/functional/scenarios/secrets-from-files/values-external-workarounds.yaml
+  # TEMPORARY, see the header of that file -- delete alongside `ci: false`.
+  - tests/functional/scenarios/secrets-from-files/values-overlay-images.yaml
