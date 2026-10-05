@@ -64,20 +64,29 @@ def port_forward(kubeconfig_file: str, service: str, local_port: int, remote_por
         f"{local_port}:{remote_port}",
     ]
     print(f"Starting port-forward: {shlex.join(command)}")
-    # DEVNULL, not PIPE: nothing here ever reads this process's stdout (readiness is
-    # checked via _wait_for_port's own socket connect, not by watching for a log line),
-    # so a PIPE would just fill up over a long scan and deadlock kubectl once its
-    # output buffer backs up.
-    proc = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    try:
-        _wait_for_port(local_port)
-        yield
-    finally:
-        proc.terminate()
+    with tempfile.TemporaryDirectory() as log_dir:
+        log_path = Path(log_dir) / "kubectl-port-forward.log"
+        # A file, not DEVNULL or an unread PIPE: readiness is checked via
+        # _wait_for_port's own socket connect, not by watching this output, but a real
+        # kubectl failure (RBAC, missing service) should still be visible if the port
+        # never comes up -- DEVNULL would silently swallow it behind a generic timeout,
+        # and an unread PIPE risks the deadlock this replaced in the first place.
+        log_file = log_path.open("w")
+        proc = subprocess.Popen(command, stdout=log_file, stderr=subprocess.STDOUT)
         try:
-            proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            proc.kill()
+            try:
+                _wait_for_port(local_port)
+            except RuntimeError as exc:
+                log_file.flush()
+                raise RuntimeError(f"{exc}\nkubectl port-forward output:\n{log_path.read_text()}") from None
+            yield
+        finally:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+            log_file.close()
 
 
 def build_automation_plan(token: str, report_dir: str, error_level: str = "High") -> dict:
