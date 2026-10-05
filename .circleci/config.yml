@@ -547,15 +547,19 @@ jobs:
           name: "Scenario: zap-scan"
           # CircleCI's default no_output_timeout (10m) killed the first live run here:
           # ZAP's automation framework only prints a line when each job starts/finishes
-          # (progressToStdout in tests/utils/zap.py's plan), not during one, and an
-          # activeScan against houston-api's real GraphQL schema + astro-ui is a much
-          # bigger attack surface than anything validated locally -- it can run silent
-          # for a long stretch without that being a hang.
+          # (progressToStdout in tests/utils/zap.py's plan), not during one. This still
+          # has margin even now that activeScan/spiderAjax are internally bounded
+          # (tests/utils/zap.py), since neither one prints anything mid-job.
           no_output_timeout: 45m
           command: |
             uv run bin/run-scenario.py zap-scan
             export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
-            uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/scenarios/zap-scan
+            # Hard backstop independent of ZAP's own internal time caps: a real run sat
+            # in activeScan for 70+ hours before those caps existed (port-forward
+            # concurrency, see tests/utils/zap.py), and no_output_timeout alone doesn't
+            # bound total duration -- only silence. 75m gives headroom over
+            # activeScan's own 30m cap plus spiderAjax/graphql/report overhead.
+            timeout 75m uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/scenarios/zap-scan
       - store_test_results:
           path: test-results
       - store_artifacts:

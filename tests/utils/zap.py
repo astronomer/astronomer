@@ -156,11 +156,37 @@ def build_automation_plan(token: str, report_dir: str, error_level: str = "High"
                 # numberOfBrowsers defaults to the host's core count -- bounded here so a
                 # big CI executor doesn't launch a pile of concurrent headless-Firefox
                 # instances, each already fighting the same shm pressure (see
-                # --shm-size in run_zap_scan() below).
-                "parameters": {"url": astro_ui_url, "context": "apc", "numberOfBrowsers": 2},
+                # --shm-size in run_zap_scan() below). maxDuration defaults to unlimited;
+                # bounded for the same reason activeScan is below.
+                "parameters": {"url": astro_ui_url, "context": "apc", "numberOfBrowsers": 2, "maxDuration": 10},
             },
             {"type": "passiveScan-wait", "parameters": {"maxDuration": 10}},
-            {"type": "activeScan", "parameters": {"context": "apc"}},
+            # threadPerHost defaults to 2x core count (15-28 observed) -- confirmed live
+            # via jstack during a real multi-day run that every single ZAP-ActiveScanner
+            # thread was stuck in SocksSocketImpl.connect()/timedFinishConnect, i.e.
+            # failing to even establish new TCP connections, not waiting on slow HTTP
+            # responses. All of them were hammering the one kubectl port-forward tunnel
+            # (see port_forward() above) with concurrent connection attempts -- a known
+            # limitation of port-forward, which isn't built for this kind of sustained
+            # concurrent load. Dropped to 2 so it doesn't overwhelm that one tunnel.
+            # maxScanDurationInMins/maxRuleDurationInMins (both default: unlimited)
+            # bound worst case regardless -- a real run was still going after 70+ hours.
+            # defaultStrength/defaultThreshold dropped from Medium to Low to cut total
+            # payload volume, further reducing connection churn through that same
+            # single tunnel independent of concurrency.
+            {
+                "type": "activeScan",
+                "parameters": {
+                    "context": "apc",
+                    "threadPerHost": 2,
+                    "maxScanDurationInMins": 30,
+                    "maxRuleDurationInMins": 10,
+                },
+                "policyDefinition": {
+                    "defaultStrength": "Low",
+                    "defaultThreshold": "Low",
+                },
+            },
             {
                 "type": "report",
                 "parameters": {
@@ -201,6 +227,11 @@ def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subpr
     user, which can't write into a bind-mounted directory owned by the invoking root
     user otherwise (confirmed experimentally -- `zap.sh -autogenmax` silently fails to
     write its output file without this).
+
+    `--init`: spiderAjax's headless Firefox leaves behind child processes
+    (crashhelper/RDD Process/Utility Process) that the image's own entrypoint (plain
+    `java`, as PID 1) never reaps -- confirmed live, 72 zombies accumulated over one
+    run. A real init process reaps them properly.
     """
     os.chmod(work_dir, 0o777)  # noqa: S103 -- must be world-writable: the image runs as its own unprivileged `zap` user
     plan_path = work_dir / "automation.yaml"
@@ -210,6 +241,7 @@ def run_zap_scan(token: str, work_dir: Path, error_level: str = "High") -> subpr
         "docker",
         "run",
         "--rm",
+        "--init",
         "--network",
         "host",
         "--shm-size",
