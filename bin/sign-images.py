@@ -138,10 +138,14 @@ def main():
                     "Error: No version specified. Use --version, or set CIRCLE_TAG (set automatically on CircleCI tag-triggered builds)."
                 )
                 sys.exit(1)
-            # sign-images.py reads the published BOM at
-            # updates.astronomer.io/astronomer-software/releases/astronomer-<version>.json,
-            # which is keyed by chart version, so drop the tag's leading "v".
-            version = circle_tag.removeprefix("v")
+            version = circle_tag
+
+        # sign-images.py reads the published BOM at
+        # updates.astronomer.io/astronomer-software/releases/astronomer-<version>.json,
+        # which is keyed by chart version, so drop a leading "v" regardless of whether
+        # version came from CIRCLE_TAG or was given directly via --version (a manual
+        # sign-version pipeline-parameter trigger can be given either form).
+        version = version.removeprefix("v")
 
         print(f"Signing images for version: {version}")
 
