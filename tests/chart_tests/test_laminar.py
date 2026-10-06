@@ -580,3 +580,18 @@ class TestLaminar:
             "laminar_hypervisor__disabled_metrics_csv": '""',
             "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
         }
+
+        apiserver_ingress = docs[9]
+        assert apiserver_ingress["apiVersion"] == "networking.k8s.io/v1"
+        assert apiserver_ingress["kind"] == "Ingress"
+        assert apiserver_ingress["metadata"]["name"] == "release-name-laminar-ingress"
+        assert apiserver_ingress["metadata"]["labels"] == {
+            "component": "laminar-ingress",
+            "release": "release-name",
+            "chart": "laminar-0.12.0",
+            "heritage": "Helm",
+            "tier": "laminar",
+            "plane": plane_mode,
+        }
+        paths = apiserver_ingress["spec"]["rules"][0]["http"]["paths"]
+        assert len(paths) == 1
