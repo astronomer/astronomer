@@ -306,19 +306,16 @@ jobs:
       resource_class: 2xlarge
     steps:
       - checkout
-      # TEMP-PLA-614-ITERATION: disabled while zap-scan-workflow auto-runs on every
-      # push (see its own TEMP marker below) -- checkout above already has the pushed
-      # commit; fetching zap-scan-ref here would overwrite it. Restore when reverting.
-      # - run:
-      #     name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
-      #     # zap-scan-ref is a user-supplied pipeline parameter -- passed as an env var,
-      #     # not interpolated straight into the script, so shell metacharacters in it
-      #     # are inert data instead of executable syntax.
-      #     environment:
-      #       ZAP_SCAN_REF: << pipeline.parameters.zap-scan-ref >>
-      #     command: |
-      #       git fetch origin "$ZAP_SCAN_REF"
-      #       git checkout FETCH_HEAD
+      - run:
+          name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
+          # zap-scan-ref is a user-supplied pipeline parameter -- passed as an env var,
+          # not interpolated straight into the script, so shell metacharacters in it
+          # are inert data instead of executable syntax.
+          environment:
+            ZAP_SCAN_REF: << pipeline.parameters.zap-scan-ref >>
+          command: |
+            git fetch origin "$ZAP_SCAN_REF"
+            git checkout FETCH_HEAD
       - run:
           name: Create venv-cache-key.txt
           command: |
@@ -580,10 +577,8 @@ workflows:
 
   # On-demand ZAP DAST scan, triggered manually via run-zap-scan (zap-scan-ref
   # defaults to master). No branch/tag filter needed -- run-zap-scan defaults false.
-  # TEMP-PLA-614-ITERATION: `when:` gate disabled below so this auto-runs on every
-  # push, for fast iteration. Restore it before merging -- never ship this auto-running.
   zap-scan-workflow:
-    # when: << pipeline.parameters.run-zap-scan >>
+    when: << pipeline.parameters.run-zap-scan >>
     jobs:
       - zap-scan
 
