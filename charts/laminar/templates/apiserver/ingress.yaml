@@ -1,6 +1,7 @@
 ################################
 ## Astronomer Laminar Ingress ##
 ################################
+{{- if .Values.global.baseDomain }}
 {{- if eq (include "global.ingress.enabled" .) "true" }}
 {{- $planeDataMode := eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 {{- if $planeDataMode }}
@@ -29,12 +30,10 @@ spec:
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
       hosts:
-      {{- if $planeDataMode }}
-        - {{ .Values.global.baseDomain }}
-      {{- end }}
+        - {{ include "laminar.baseDomain" . }}
   {{- end }}
   rules:
-  - host: {{ .Values.global.baseDomain }}
+  - host: {{ include "laminar.baseDomain" . }}
     http:
       paths:
         - path: /laminar/api/v1
@@ -44,5 +43,6 @@ spec:
               name: {{ .Release.Name }}-api-server
               port:
                 name: http
+{{- end }}
 {{- end }}
 {{- end }}
