@@ -158,8 +158,8 @@ QUAY_PULL_SECRET_NAME = "quay-pull-secret"  # noqa: S105 -- k8s Secret name, not
 # Note the repository is `laminar`, not `ap-laminar`. That rules out global.privateRegistry as
 # the lever: its image helper hardcodes the ap- prefix. So the repository is set directly on the
 # subchart and the credential is supplied through laminar.imagePullSecrets.
-LAMINAR_IMAGE_REPOSITORY = "quay.io/astronomer/laminar"
-LAMINAR_IMAGE_TAG = "1.0.0-rc1"
+LAMINAR_IMAGE_REPOSITORY = "quay.io/astronomer/ap-laminar"
+LAMINAR_IMAGE_TAG = "1.0.0-rc4"
 
 
 def _quay_credentials(*, interactive: bool = False) -> tuple[str, str] | None:
