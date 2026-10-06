@@ -473,16 +473,29 @@ spec:
                 type: integer
               reason:
                 type: string
+              replicas:
+                default: 0
+                format: int32
+                type: integer
+              selector:
+                default: app=airflow,component=worker
+                type: string
               status:
                 type: string
             required:
             - readyReplicas
+            - replicas
+            - selector
             - status
             type: object
         type: object
     served: true
     storage: true
     subresources:
+      scale:
+        labelSelectorPath: .status.selector
+        specReplicasPath: .spec.replicas
+        statusReplicasPath: .status.replicas
       status: {}
 {{- end }}
 {{- end }}
