@@ -11,7 +11,11 @@ description: >-
   Pipeline" feature (`run-zap-scan` + `zap-scan-ref`, default `master`). Run locally:
   `uv run bin/run-scenario.py zap-scan && uv run pytest tests/functional/scenarios/zap-scan`.
 topology: unified
-values: []
+# Without this, astro-ui's in-browser API calls go to the baseDomain-derived
+# https://houston.localtest.me/v1, which nothing listens on here -- see
+# configs/zap-scan-astro-ui-api-loc.yaml.
+values:
+  - configs/zap-scan-astro-ui-api-loc.yaml
 # Read only by bin/generate_circleci_config.py::discover_scenarios() (not by
 # bin/run-scenario.py) -- skips this scenario entirely: no auto-discovered scenario-*
 # job, no approve-scenarios gate, no release-to-internal/-public requirement.
