@@ -29,6 +29,7 @@ HOUSTON_SECRET_ENV_VARS = {
 # fsGroup verification per image. They are still on 0644.
 LOADER_SECRET_VOLUMES = {
     "commander-secrets",
+    "db-bootstrapper-secret",
     "flightdeck-dsn-secret",
     "houston-secrets",
     "houston-registry-auth-secret",
@@ -91,10 +92,22 @@ def secret_env_injections(docs):
     ]
 
 
+# The ap-db-bootstrapper toggle defaults to an explicit false rather than inheriting,
+# because the pinned image has no loader. "Feature fully on" sets it explicitly too --
+# a null would not inherit, see test_db_bootstrapper_null_override_does_not_inherit --
+# so every sweep below also covers the bootstrapper init containers.
+def db_bootstrapper_toggle(enabled):
+    return {"secretsFromFiles": {"enabled": enabled}}
+
+
 def with_secrets_from_files(enabled=True, **overrides):
     """FULL_VALUES with the global toggle set, plus any extra overrides."""
     values = {
-        "global": {**FULL_VALUES["global"], "secretsFromFiles": {"enabled": enabled}},
+        "global": {
+            **FULL_VALUES["global"],
+            "secretsFromFiles": {"enabled": enabled},
+            "dbBootstrapper": db_bootstrapper_toggle(enabled),
+        },
         "astronomer": {**FULL_VALUES["astronomer"]},
     }
     for key, value in overrides.items():
@@ -926,7 +939,11 @@ GATED_WORKLOADS = {
 
 def full_feature_values(enabled=True, plane="unified"):
     return {
-        "global": {"plane": {"mode": plane}, "secretsFromFiles": {"enabled": enabled}},
+        "global": {
+            "plane": {"mode": plane},
+            "secretsFromFiles": {"enabled": enabled},
+            "dbBootstrapper": db_bootstrapper_toggle(enabled),
+        },
         "astronomer": {
             "flightDeck": {"enabled": True},
             "pilot": {"enabled": True},
@@ -2015,3 +2032,240 @@ def test_commander_only_advertises_the_flightdeck_dsn_file_when_flightdeck_is_on
         for var, path in get_env_vars_dict(container.get("env") or []).items():
             if var.endswith("_FILE") and isinstance(path, str) and path.startswith("/etc/astronomer/secrets/"):
                 assert path.rsplit("/", 1)[-1] in projected, f"{container['name']}: {var}={path} has no file behind it"
+
+
+# ── ap-db-bootstrapper init containers (BOOTSTRAP_DB) ──────────────────────────
+#
+# One image, run as an init container in three subcharts, so one global toggle:
+# global.dbBootstrapper.secretsFromFiles.enabled. It defaults to an explicit false
+# because the pinned image has no loader, so `global.secretsFromFiles.enabled` alone
+# must leave every bootstrapper exactly as it was.
+
+BOOTSTRAP_DB_FILE = "/etc/astronomer/secrets/BOOTSTRAP_DB"
+DB_BOOTSTRAPPER_VOLUME = "db-bootstrapper-secret"
+
+# Every bootstrapper the chart renders with FlightDeck and laminar on. The CP-HA-only
+# houston-cp-refresh hook is covered by its own test.
+DB_BOOTSTRAPPER_CONTAINERS = {
+    ("release-name-commander", "flightdeck-bootstrapper"),
+    ("release-name-houston", "houston-bootstrapper"),
+    ("release-name-houston-worker", "houston-bootstrapper"),
+    ("release-name-houston-db-migrations", "houston-bootstrapper"),
+    ("release-name-houston-upgrade-deployments", "houston-bootstrapper"),
+    ("release-name-grafana", "bootstrapper"),
+    ("release-name-api-server", "laminar-bootstrapper"),
+    ("release-name-hypervisor", "laminar-bootstrapper"),
+}
+
+CP_REFRESH_GLOBAL = {
+    "plane": {"mode": "control"},
+    "controlPlaneHA": {
+        "enabled": True,
+        "globalBaseDomain": "astro.example.com",
+        "cpId": "00000000-0000-0000-0000-000000000001",
+    },
+}
+
+
+def db_bootstrapper_values(sff=None, bootstrapper=None, **global_values):
+    """Unified install with every bootstrapper rendered. None leaves a toggle at its default."""
+    values = {
+        "global": {"plane": {"mode": "unified"}, "laminar": {"enabled": True}, **global_values},
+        "astronomer": {"flightDeck": {"enabled": True}},
+    }
+    if sff is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": sff}
+    if bootstrapper is not None:
+        values["global"]["dbBootstrapper"] = {"secretsFromFiles": {"enabled": bootstrapper}}
+    return values
+
+
+def bootstrap_db_consumers(docs):
+    """(workload, container, pod_spec) for every container that reads BOOTSTRAP_DB either way."""
+    for name, spec in pod_specs(docs):
+        for container in all_containers(spec):
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            if "BOOTSTRAP_DB" in env_vars or "BOOTSTRAP_DB_FILE" in env_vars:
+                yield name, container, spec
+
+
+class TestDbBootstrapperSecretsFromFiles:
+    def test_global_flag_alone_leaves_every_bootstrapper_on_the_env_var(self):
+        """The explicit-false default is what keeps a loader-less image working.
+
+        With it inherited instead, turning the platform flag on would drop BOOTSTRAP_DB
+        from the environment of an image that cannot read the file, and every
+        bootstrapper -- and so every pod behind it -- would fail on a missing option.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=db_bootstrapper_values(sff=True))
+
+        found = set()
+        for name, container, spec in bootstrap_db_consumers(docs):
+            found.add((name, container["name"]))
+            env_vars = get_env_vars_dict(container["env"])
+            assert env_vars["BOOTSTRAP_DB"] == {"secretKeyRef": {"name": "astronomer-bootstrap", "key": "connection"}}
+            assert "DB_BOOTSTRAPPER_SECRETS_FROM_FILES" not in env_vars
+            assert "BOOTSTRAP_DB_FILE" not in env_vars
+            assert DB_BOOTSTRAPPER_VOLUME not in {v["name"] for v in spec.get("volumes") or []}
+        assert found == DB_BOOTSTRAPPER_CONTAINERS
+
+    def test_enabled_reads_bootstrap_db_from_a_file_everywhere(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=db_bootstrapper_values(bootstrapper=True))
+
+        found = set()
+        for name, container, spec in bootstrap_db_consumers(docs):
+            found.add((name, container["name"]))
+            where = f"{name}/{container['name']}"
+            env_vars = get_env_vars_dict(container["env"])
+
+            # The value is gone from the pod spec; only the gate and the path remain.
+            assert "BOOTSTRAP_DB" not in env_vars, where
+            assert env_vars["DB_BOOTSTRAPPER_SECRETS_FROM_FILES"] == "true", where
+            assert env_vars["BOOTSTRAP_DB_FILE"] == BOOTSTRAP_DB_FILE, where
+
+            mount = next(m for m in container["volumeMounts"] if m["name"] == DB_BOOTSTRAPPER_VOLUME)
+            assert mount["mountPath"] == "/etc/astronomer/secrets", where
+            assert mount["readOnly"] is True, where
+
+            volume = next(v for v in spec["volumes"] if v["name"] == DB_BOOTSTRAPPER_VOLUME)
+            assert volume["secret"] == {
+                "secretName": "astronomer-bootstrap",
+                "defaultMode": SECRET_FILE_MODE,
+                "items": [{"key": "connection", "path": "BOOTSTRAP_DB"}],
+            }, where
+
+            # 0440 is root-owned and the bootstrapper runs as non-root: only the
+            # pod's fsGroup lets it open the file, and the loader fails closed if not.
+            assert (spec.get("securityContext") or {}).get("fsGroup") is not None, f"{where} has no fsGroup"
+        assert found == DB_BOOTSTRAPPER_CONTAINERS
+
+    def test_cp_refresh_hook_bootstrapper_reads_from_a_file(self):
+        """houston-cp-refresh only renders with controlPlaneHA on, so the sweep above misses it."""
+        values = {"global": {**CP_REFRESH_GLOBAL, "dbBootstrapper": {"secretsFromFiles": {"enabled": True}}}}
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-cp-refresh-job.yaml"],
+        )
+        spec = docs[0]["spec"]["template"]["spec"]
+        bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["houston-bootstrapper"]
+
+        env_vars = get_env_vars_dict(bootstrapper["env"])
+        assert "BOOTSTRAP_DB" not in env_vars
+        assert env_vars["BOOTSTRAP_DB_FILE"] == BOOTSTRAP_DB_FILE
+        assert DB_BOOTSTRAPPER_VOLUME in {m["name"] for m in bootstrapper["volumeMounts"]}
+        assert DB_BOOTSTRAPPER_VOLUME in {v["name"] for v in spec["volumes"]}
+        assert spec["securityContext"]["fsGroup"] == 1000
+
+    @pytest.mark.parametrize(
+        "workload,extra",
+        [
+            ("release-name-houston", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
+            ("release-name-houston-worker", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
+            ("release-name-houston-db-migrations", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
+            ("release-name-houston-upgrade-deployments", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
+            ("release-name-grafana", {"grafana": {"backendSecretName": "my-grafana-db"}}),
+            ("release-name-api-server", {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}}),
+            ("release-name-hypervisor", {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}}),
+            ("release-name-commander", {"astronomer": {"flightDeck": {"enabled": False}}}),
+        ],
+    )
+    def test_no_volume_when_the_bootstrapper_is_skipped(self, workload, extra):
+        """kubelet mounts every pod volume whether or not a container uses it.
+
+        When the operator supplies the backend secret, the bootstrapper is skipped and
+        `astronomer-bootstrap` need not exist -- so a leftover volume naming it would
+        leave the pod stuck on FailedMount, a regression for exactly the operators
+        who opted out of the bootstrapper.
+        """
+        values = db_bootstrapper_values(bootstrapper=True)
+        for key, value in extra.items():
+            values[key] = {**values.get(key, {}), **value}
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        spec = dict(pod_specs(docs))[workload]
+        assert not any("BOOTSTRAP_DB" in str(c.get("env")) for c in all_containers(spec)), f"{workload} still runs a bootstrapper"
+        assert DB_BOOTSTRAPPER_VOLUME not in {v["name"] for v in spec.get("volumes") or []}
+
+    def test_bootstrapper_gets_an_fsgroup_even_when_its_component_reads_env_vars(self):
+        """The two toggles are independent, so the fsGroup must follow either one.
+
+        Without it the bootstrapper's 0440 file is unreadable in a pod whose own
+        component has not opted in, and the loader fails closed.
+        """
+        values = db_bootstrapper_values(sff=False, bootstrapper=True)
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+        specs = dict(pod_specs(docs))
+
+        for name, _container in DB_BOOTSTRAPPER_CONTAINERS:
+            assert (specs[name].get("securityContext") or {}).get("fsGroup") is not None, name
+
+        # And houston itself is untouched: still on env vars, no houston volume.
+        deployment = next(d for d in docs if d["kind"] == "Deployment" and d["metadata"]["name"] == "release-name-houston")
+        houston = get_containers_by_name(deployment)["houston"]
+        assert "secretKeyRef" in get_env_vars_dict(houston["env"])["DATABASE__CONNECTION"]
+        assert "houston-secrets" not in {v["name"] for v in specs["release-name-houston"]["volumes"]}
+
+    def test_no_fsgroup_on_openshift(self):
+        """OpenShift assigns an fsGroup from the namespace's SCC range; never hardcode one."""
+        values = db_bootstrapper_values(bootstrapper=True, openshift={"enabled": True})
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+        for name, spec in pod_specs(docs):
+            if any(v["name"] == DB_BOOTSTRAPPER_VOLUME for v in spec.get("volumes") or []):
+                assert (spec.get("securityContext") or {}).get("fsGroup") is None, name
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (None, None, False),
+        (True, None, False),  # the explicit-false default holds the image back
+        (True, False, False),
+        (True, True, True),
+        (False, True, True),
+        (None, True, True),
+    ],
+)
+def test_db_bootstrapper_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """global.dbBootstrapper.secretsFromFiles.enabled overrides global.secretsFromFiles.enabled."""
+    values = {"global": {"plane": {"mode": "unified"}}}
+    if global_enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": global_enabled}
+    if component_enabled is not None:
+        values["global"]["dbBootstrapper"] = db_bootstrapper_toggle(component_enabled)
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+    )
+    bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["houston-bootstrapper"]
+    env_vars = get_env_vars_dict(bootstrapper["env"])
+    assert (env_vars.get("DB_BOOTSTRAPPER_SECRETS_FROM_FILES") == "true") is expected
+    assert ("BOOTSTRAP_DB" in env_vars) is not expected
+
+
+def test_db_bootstrapper_null_override_does_not_inherit():
+    """Pins a Helm behaviour the values.yaml comment depends on.
+
+    A null in user values normally deletes a chart default, but Helm keeps the default
+    for a null under `global`. So an operator cannot opt the bootstrapper into the
+    platform-wide flag by setting it to ~; they have to set it to true. The default
+    itself becomes ~ in values.yaml once a loader-bearing image is pinned, which does
+    inherit. If Helm ever starts honouring the null, this fails and the comment can
+    offer ~ as an option.
+    """
+    values = {
+        "global": {
+            "plane": {"mode": "unified"},
+            "secretsFromFiles": {"enabled": True},
+            "dbBootstrapper": db_bootstrapper_toggle(None),
+        }
+    }
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+    )
+    bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["houston-bootstrapper"]
+    assert "BOOTSTRAP_DB" in get_env_vars_dict(bootstrapper["env"])

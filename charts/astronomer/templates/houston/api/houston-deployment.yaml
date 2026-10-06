@@ -53,7 +53,7 @@ spec:
       {{- include "houston.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -108,11 +108,7 @@ spec:
           livenessProbe: {{- tpl (toYaml .Values.houston.bootstrapper.livenessProbe) . | nindent 12 }}
           {{- end }}
           env:
-            - name: BOOTSTRAP_DB
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
+            {{- include "astronomer.dbBootstrapper.secretEnv" $ | nindent 12 }}
             - name: SCHEMA_NAME
               value: {{ .Values.global.houston.database.schemaName | quote }}
             {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
@@ -139,6 +135,7 @@ spec:
               mountPath: /tmp
             - name: tmp
               mountPath: /houston/node_modules/.cache
+            {{- include "astronomer.dbBootstrapper.secretVolumeMount" $ | nindent 12 }}
 {{- if $secretsFromFiles }}
 {{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
 {{- end }}
@@ -368,6 +365,10 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        {{- /* Same guard as the initContainers: only houston-bootstrapper mounts it. */}}
+        {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+        {{- include "astronomer.dbBootstrapper.secretVolume" $ | nindent 8 }}
+        {{- end }}
       {{- if .Values.houston.extraVolumes }}
       {{- tpl (toYaml .Values.houston.extraVolumes) $ | nindent 8 }}
       {{- end }}

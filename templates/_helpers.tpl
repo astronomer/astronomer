@@ -414,9 +414,95 @@ Renders YAML because include can only return a string, so pipe it through
 fromYaml; an empty render becomes an empty dict, which merges as a no-op.
 */}}
 {{- define "astronomer.secretsFromFiles.podSecurityContextOverride" -}}
-{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" .ctx "component" .component)) -}}
+{{- $readsFiles := false -}}
+{{- if hasKey . "component" -}}
+{{- $readsFiles = eq "true" (include "secretsFromFiles.enabled" (dict "ctx" .ctx "component" .component)) -}}
+{{- end -}}
+{{- /* A pod running an ap-db-bootstrapper init container needs the fsGroup for that
+       container's file too, whatever the main component's own toggle says. */ -}}
+{{- if and .dbBootstrapper (eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .ctx)) -}}
+{{- $readsFiles = true -}}
+{{- end -}}
+{{- if $readsFiles -}}
 {{- if and (not ((.ctx.Values.global.openshift).enabled)) (not (hasKey (.ctx.Values.podSecurityContext | default dict) "fsGroup")) -}}
 fsGroup: {{ ((.ctx.Values.global).secretsFromFiles).fsGroup | default 1000 }}
 {{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Whether the ap-db-bootstrapper init containers read BOOTSTRAP_DB from a mounted file.
+
+Resolved from `global.dbBootstrapper.secretsFromFiles.enabled` through the usual
+precedence, so it can inherit `global.secretsFromFiles.enabled`. Global rather than
+per-subchart because the same image runs in the astronomer, grafana and laminar
+subcharts, and one image either has the loader or does not.
+
+Renders the string "true" or "false"; call it through `eq`. Takes the root context.
+*/}}
+{{- define "astronomer.dbBootstrapper.secretsFromFiles.enabled" -}}
+{{- include "secretsFromFiles.enabled" (dict "ctx" . "component" ((.Values.global).dbBootstrapper)) -}}
+{{- end }}
+
+{{/*
+The env entries an ap-db-bootstrapper init container gets for BOOTSTRAP_DB: either the
+original secretKeyRef, or the loader's gate plus an explicit path to the mounted file.
+
+No wait-for-secret gate is needed for this file, unlike the other bootstrapped
+secrets. `astronomer-bootstrap` is never written by a bootstrapper: the bundled
+postgresql chart renders it with its real value, or the operator creates it before
+install, so it already holds the final value when the volume is projected.
+
+Usage, at the indentation of the other env entries:
+  {{- include "astronomer.dbBootstrapper.secretEnv" $ | nindent 12 }}
+*/}}
+{{- define "astronomer.dbBootstrapper.secretEnv" -}}
+{{- if eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .) -}}
+- name: DB_BOOTSTRAPPER_SECRETS_FROM_FILES
+  value: "true"
+- name: BOOTSTRAP_DB_FILE
+  value: /etc/astronomer/secrets/BOOTSTRAP_DB
+{{- else -}}
+- name: BOOTSTRAP_DB
+  valueFrom:
+    secretKeyRef:
+      name: astronomer-bootstrap
+      key: connection
+{{- end -}}
+{{- end }}
+
+{{/*
+The mount for an ap-db-bootstrapper init container's BOOTSTRAP_DB file. Renders
+nothing when the toggle is off. Pair with astronomer.dbBootstrapper.secretVolume.
+*/}}
+{{- define "astronomer.dbBootstrapper.secretVolumeMount" -}}
+{{- if eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .) -}}
+- name: db-bootstrapper-secret
+  mountPath: /etc/astronomer/secrets
+  readOnly: true
+{{- end -}}
+{{- end }}
+
+{{/*
+The pod volume carrying BOOTSTRAP_DB. Renders nothing when the toggle is off.
+
+Callers must render it under the SAME condition as the bootstrapper container, not
+merely the toggle. kubelet mounts every volume in a pod spec whether or not a
+container uses it, and `astronomer-bootstrap` need not exist when an operator supplies
+the backend secrets directly and the bootstrapper is skipped. An unused volume naming
+a missing Secret would leave that pod stuck in ContainerCreating on FailedMount.
+
+The pod also needs an fsGroup to read this 0440 file: pass "dbBootstrapper" true to
+astronomer.secretsFromFiles.podSecurityContextOverride.
+*/}}
+{{- define "astronomer.dbBootstrapper.secretVolume" -}}
+{{- if eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .) -}}
+- name: db-bootstrapper-secret
+  secret:
+    secretName: astronomer-bootstrap
+    {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 4 }}
+    items:
+      - key: connection
+        path: BOOTSTRAP_DB
 {{- end -}}
 {{- end }}

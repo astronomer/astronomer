@@ -37,7 +37,7 @@ spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "dbBootstrapper" (not .Values.databaseBootstrapper.backendSecretName)) | fromYaml)) | nindent 8 }}
       {{- include "laminar.imagePullSecrets" . | nindent 6 }}
       {{- if not .Values.databaseBootstrapper.backendSecretName }}
       initContainers:
@@ -72,6 +72,10 @@ spec:
             {{- include "laminar.envVolumeMount" . | nindent 12 }}
       volumes:
         {{- include "laminar.envVolume" . | nindent 8 }}
+        {{- /* Same guard as the initContainers: only laminar-bootstrapper mounts it. */}}
+        {{- if not .Values.databaseBootstrapper.backendSecretName }}
+        {{- include "astronomer.dbBootstrapper.secretVolume" . | nindent 8 }}
+        {{- end }}
       dnsConfig:
         options:
           - name: ndots

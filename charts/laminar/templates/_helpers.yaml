@@ -171,11 +171,7 @@ idempotent, which is the same contract houston's copy already has.
   securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 4 }}
   resources: {{- toYaml .Values.apiServer.resources | nindent 4 }}
   env:
-    - name: BOOTSTRAP_DB
-      valueFrom:
-        secretKeyRef:
-          name: astronomer-bootstrap
-          key: connection
+    {{- include "astronomer.dbBootstrapper.secretEnv" . | nindent 4 }}
     - name: DB_NAME
       value: {{ .Release.Name }}-laminar
     - name: SECRET_NAME
@@ -188,6 +184,10 @@ idempotent, which is the same contract houston's copy already has.
       value: {{ .Release.Namespace }}
     - name: IN_CLUSTER
       value: "true"
+  {{- if eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .) }}
+  volumeMounts:
+    {{- include "astronomer.dbBootstrapper.secretVolumeMount" . | nindent 4 }}
+  {{- end }}
 {{- end }}
 
 {{/*

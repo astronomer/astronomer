@@ -96,6 +96,24 @@ global:
     # @default -- 1000
     fsGroup: 1000
 
+  # The ap-db-bootstrapper init containers: houston, houston-worker and the houston
+  # hook Jobs, commander's flightdeck-bootstrapper, grafana and laminar. They share
+  # one image, so they share one toggle, global because they span three subcharts.
+  dbBootstrapper:
+    secretsFromFiles:
+      # -- Read BOOTSTRAP_DB from a mounted file instead of injecting it with
+      # valueFrom.secretKeyRef. Explicitly false, NOT inherited from
+      # `global.secretsFromFiles.enabled`, because the pinned ap-db-bootstrapper image
+      # has no file loader: with this on, the chart drops BOOTSTRAP_DB from the
+      # environment and that image fails on a missing --bootstrap-db. Change this
+      # default to ~ (inherit) in the same change that bumps `images.dbBootstrapper.tag`
+      # to a release with the loader, in every subchart that pins one. Until then, opt
+      # in by setting it to true alongside a loader-bearing image tag. Setting it to ~
+      # in your own values does not work: Helm keeps this default for a null override
+      # under `global`.
+      # @default -- false
+      enabled: false
+
   # Labels to add to every pod
   podLabels: {}
 

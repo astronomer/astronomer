@@ -58,7 +58,7 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.commander) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.commander "dbBootstrapper" $flightDeckEnabled) | fromYaml)) | nindent 8 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- include "commander.hostAliases" . | nindent 6 }}
@@ -94,11 +94,7 @@ spec:
                 configMapKeyRef:
                   name: {{ .Release.Name }}-cluster-local-data
                   key: local_cluster_id
-            - name: BOOTSTRAP_DB
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
+            {{- include "astronomer.dbBootstrapper.secretEnv" $ | nindent 12 }}
             {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
             - name: SSLMODE
               value: {{ .Values.global.ssl.mode }}
@@ -119,6 +115,7 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
+            {{- include "astronomer.dbBootstrapper.secretVolumeMount" $ | nindent 12 }}
 
 {{- if $secretsFromFiles }}
 {{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "volume" "commander-secrets" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
@@ -384,6 +381,10 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
+        {{- /* Same guard as flightdeck-bootstrapper, the only container that mounts it. */}}
+        {{- if $flightDeckEnabled }}
+        {{- include "astronomer.dbBootstrapper.secretVolume" $ | nindent 8 }}
+        {{- end }}
         - name: nginx-write-logs
           emptyDir: {}
         - name: nginx-write-dir
