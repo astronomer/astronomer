@@ -634,6 +634,10 @@ global:
     - {settings.mkcert_root_ca_secret_name}
   networkPolicy:
     enabled: false
+  nodeExporter:
+    enabled: true
+  cadvisor:
+    enabled: true
   defaultDenyNetworkPolicy: false
 {operator_block}
 
@@ -740,6 +744,10 @@ global:
   nginx:
     enabled: true
   prometheus:
+    enabled: true
+  nodeExporter:
+    enabled: true
+  cadvisor:
     enabled: true
 {global_operator_block}{global_laminar_block}{global_keda_block}
 tags:
