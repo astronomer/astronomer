@@ -173,23 +173,17 @@ def main(
         None,
         "--public-key",
         "-k",
-        help="Path to the cosign public key to verify against. Without this, signed status only reports whether "
-        "a signature artifact exists, not whether it's cryptographically valid.",
+        help="Path to the cosign public key to verify against. Required to verify that signature is cryptographically valid.",
     ),
-    include_airflow: bool = typer.Option(True, help="Also check images listed under the airflow chart's own BOM section."),
     cache_dir: Path = typer.Option(DEFAULT_CACHE_DIR, "--cache-dir", help="Directory for the on-disk registry-lookup cache."),
     no_cache: bool = typer.Option(
         False,
         "--no-cache",
-        help="Skip cache reads and query the registry fresh for every image, same as `docker build --no-cache` -- "
-        "the fresh results still overwrite whatever was cached, so this also repairs a stale entry rather than "
-        "just ignoring it for this one run.",
+        help="Skip cache reads and query the registry fresh for every image, but write new cache data.",
     ),
 ):
     data = load_bom(bom)
     images = collect_images(data)
-    if not include_airflow:
-        images = [image for image in images if image["chart"] != "airflow"]
 
     def check_signed_keyed(repository: str, sha256: str, public_key: str | None, _public_key_fingerprint: str | None) -> str:
         """check_signed, plus an argument that exists only so the cache keys on the key's contents, not its path."""
