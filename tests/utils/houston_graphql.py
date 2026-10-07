@@ -128,6 +128,21 @@ def get_workspace_id_by_label(houston_api, token: str, label: str) -> str | None
     return matches[0]["id"] if matches else None
 
 
+def get_deployment_id_by_label(houston_api, token: str, workspace_id: str, label: str) -> str | None:
+    """
+    Return the id of the deployment with this exact label in the given workspace, or
+    None if none matches.
+    """
+    query = """
+    query WorkspaceDeployments($workspaceUuid: Uuid!) {
+      workspaceDeployments(workspaceUuid: $workspaceUuid) { id label }
+    }
+    """
+    data = graphql(houston_api, query, {"workspaceUuid": workspace_id}, token=token)
+    matches = [d for d in (data.get("workspaceDeployments") or []) if d.get("label") == label]
+    return matches[0]["id"] if matches else None
+
+
 def get_cluster_id(houston_api, token: str) -> str:
     """Look up the default Cluster houston-api's populate-default-cluster script creates
     on startup in unified mode. No registerCluster call is needed for this topology."""
