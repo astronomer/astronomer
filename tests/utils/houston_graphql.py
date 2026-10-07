@@ -302,21 +302,54 @@ def validate_git_sync_credentials(
     return graphql(houston_api, query, variables, token=token)["validateGitSyncCredentials"]
 
 
+def _format_container_state(state) -> str:
+    """Collapse a V1ContainerState to one compact token for a status line.
+
+    The raw object repr dumps all three of running/terminated/waiting -- two of which are
+    always None -- across several lines, so a release with a dozen containers buries the one
+    that actually matters under screenfuls of 'terminated': None, 'waiting': None. This
+    keeps only the populated branch, with the reason (waiting) or exit detail (terminated)
+    that explains *why* a container is not ready."""
+    if state is None:
+        return "no-state"
+    if state.running is not None:
+        return f"running(since {state.running.started_at})"
+    if state.waiting is not None:
+        reason = state.waiting.reason or "Waiting"
+        message = (state.waiting.message or "").strip()
+        return f"waiting({reason}{': ' + message if message else ''})"
+    if state.terminated is not None:
+        t = state.terminated
+        return f"terminated({t.reason or 'Terminated'}, exit={t.exit_code})"
+    return "unknown"
+
+
 def _summarize_pods(k8s_core_v1_client, namespace: str, label_selector: str) -> list[str]:
     """One line per pod matching label_selector: phase plus each container's ready/state.
 
     Shared by wait_for_release_ready's per-iteration status line (so a crash-looping
     container is visible on every poll, not just once the 600s timeout finally fires)
     and dump_release_diagnostics' fuller post-mortem below.
+
+    Each pod line leads with the count of not-ready containers and names them, so the one
+    laggard (e.g. a worker still waiting on its startup probe) stands out instead of being
+    lost among a dozen already-ready containers.
     """
     pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
     if not pods:
         return [f"no pods exist yet in {namespace} for {label_selector}"]
     lines = []
     for pod in pods:
-        statuses = [f"{c.name}: ready={c.ready} state={c.state}" for c in pod.status.container_statuses or []]
+        container_statuses = pod.status.container_statuses or []
+        statuses = [
+            f"{c.name}: ready={c.ready} restarts={c.restart_count} state={_format_container_state(c.state)}"
+            for c in container_statuses
+        ]
+        not_ready = [c.name for c in container_statuses if not c.ready]
+        blocker = f"NOT-READY[{', '.join(not_ready)}] " if not_ready else ""
         lines.append(
-            f"{namespace}/{pod.metadata.name}: phase={pod.status.phase} -- {'; '.join(statuses) or 'no container statuses yet'}"
+            f"{namespace}/{pod.metadata.name}: phase={pod.status.phase} {blocker}-- "
+            f"{'; '.join(statuses) or 'no container statuses yet'}"
         )
     return lines
 
