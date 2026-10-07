@@ -1063,9 +1063,11 @@ mcpServer:
   # task logs, import errors, installed providers — off by default), airflow_destroy
   # (delete_dag_run, off by default), and skills_load (skill-delivery tools, prompts, and
   # resources — off by default, toggled by mcpServer.skills.enabled below rather than named
-  # here). platform_disruptive, platform_destroy, airflow_read, and airflow_destroy are
-  # deliberately absent from the default below so enabling reads and writes never drags in
-  # contract changes, Airflow access, or agent-driven deletion — those must be named explicitly.
+  # here). platform_disruptive, platform_destroy, and airflow_destroy are deliberately absent
+  # from the default below so enabling reads and writes never drags in contract changes or
+  # agent-driven deletion — those must be named explicitly. airflow_read is likewise off by
+  # default, but turning on mcpServer.skills.enabled implies it (the shipped skills require it),
+  # so it need not be named when skills are enabled.
   # @default -- ["platform_read", "platform_write"]
   enabledGroups:
     - platform_read
