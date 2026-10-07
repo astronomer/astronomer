@@ -123,7 +123,11 @@ def _install_service_monitor_crd(context: str) -> None:
 # The default namespace and service account names matter beyond tidiness. Laminar authorises the
 # scaling caller by name, so installing KEDA somewhere else locally means the scaling request is
 # refused for a reason that looks nothing like a namespace problem.
-KEDA_VERSION = "v2.20.2"
+#
+# Pinned to the oldest version we tell customers works, not the newest available, so the floor we
+# publish is the one actually exercised. 2.17.0 is where a bound service account token became a
+# TriggerAuthentication source; below it the scaling caller has no way to prove who it is.
+KEDA_VERSION = "v2.17.0"
 KEDA_NAMESPACE = "keda"
 KEDA_MANIFEST_URL = f"https://github.com/kedacore/keda/releases/download/{KEDA_VERSION}/keda-{KEDA_VERSION.lstrip('v')}.yaml"
 # Our own field manager for the node pin, kept distinct from the `kubectl` manager that owns the
@@ -154,8 +158,8 @@ QUAY_PULL_SECRET_NAME = "quay-pull-secret"  # noqa: S105 -- k8s Secret name, not
 # Note the repository is `laminar`, not `ap-laminar`. That rules out global.privateRegistry as
 # the lever: its image helper hardcodes the ap- prefix. So the repository is set directly on the
 # subchart and the credential is supplied through laminar.imagePullSecrets.
-LAMINAR_IMAGE_REPOSITORY = "quay.io/astronomer/laminar"
-LAMINAR_IMAGE_TAG = "1.0.0-rc1"
+LAMINAR_IMAGE_REPOSITORY = "quay.io/astronomer/ap-laminar"
+LAMINAR_IMAGE_TAG = "1.0.0-rc4"
 
 
 def _quay_credentials(*, interactive: bool = False) -> tuple[str, str] | None:
@@ -630,6 +634,10 @@ global:
     - {settings.mkcert_root_ca_secret_name}
   networkPolicy:
     enabled: false
+  nodeExporter:
+    enabled: true
+  cadvisor:
+    enabled: true
   defaultDenyNetworkPolicy: false
 {operator_block}
 
@@ -663,6 +671,9 @@ def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     # along because it is the only route the subchart offers to an imagePullSecret, and it is
     # harmless for the other images: they already resolve to this same registry.
     global_laminar_block = "  laminar:\n    enabled: true\n" if settings.with_laminar else ""
+    # Worker autoscaling writes its scaling identity into the KEDA namespace, so it is only
+    # switched on where this script installed KEDA. Its CRDs are applied before this release.
+    global_keda_block = f"  keda:\n    enabled: true\n    namespace: {KEDA_NAMESPACE}\n" if settings.with_keda else ""
     laminar_subchart_block = (
         f"""\
 laminar:
@@ -680,9 +691,13 @@ laminar:
     # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
     # that flag is on; we emit it only in that case for clarity.
+    # Drift correction on scaling objects is its own switch, separate from the identity
+    # global.keda.enabled creates. Only meaningful where this script installed KEDA.
+    operator_keda_line = "  kedaEnabled: true\n" if settings.with_keda else ""
     operator_subchart_block = (
-        """\
+        f"""\
 airflow-operator:
+{operator_keda_line}\
   crd:
     create: true
   certManager:
@@ -730,7 +745,11 @@ global:
     enabled: true
   prometheus:
     enabled: true
-{global_operator_block}{global_laminar_block}
+  nodeExporter:
+    enabled: true
+  cadvisor:
+    enabled: true
+{global_operator_block}{global_laminar_block}{global_keda_block}
 tags:
   platform: true
 
@@ -1618,8 +1637,9 @@ def parse_args() -> argparse.Namespace:
         help=(
             f"Install KEDA {KEDA_VERSION} into the data plane clusters, in the '{KEDA_NAMESPACE}' namespace. "
             "Off by default: the platform does not ship KEDA and customers install it themselves, so this "
-            "stands in for the customer rather than being part of the platform. Needed to exercise worker "
-            "autoscaling locally; leave it off to reproduce a cluster that cannot autoscale."
+            "stands in for the customer rather than being part of the platform. Also turns on "
+            "global.keda.enabled, so the platform creates the scaling identity in that namespace. Needed to "
+            "exercise worker autoscaling locally; leave it off to reproduce a cluster that cannot autoscale."
         ),
     )
     parser.add_argument(

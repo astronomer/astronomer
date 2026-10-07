@@ -13,6 +13,28 @@
 # Author: github.com/danielhoherd, Claude Sonnet 5
 """Report the version, sha256, architectures, and cosign-signed status of every image in an Astronomer BOM JSON."""
 
+# signal and sys only: these need to be imported, and the handler installed, before any of the slower
+# third-party imports below -- otherwise a Ctrl-C during those imports (typer/yaml/diskcache/rich, or their
+# own transitive imports) hits Python's default KeyboardInterrupt handling instead of ours, and prints a
+# raw traceback anyway.
+# ruff: noqa: E402
+import signal
+import sys
+
+
+def handle_sigint(signum: int, frame: object) -> None:
+    """Exit cleanly (no traceback) on Ctrl-C, with the conventional 128+SIGINT exit code.
+
+    Lets a wrapping shell loop that checks the exit status (e.g. `for v in ...; do bom-verify.py "$v" || break; done`)
+    correctly detect the interruption and stop, instead of an uncaught KeyboardInterrupt's traceback and exit code 1.
+    """
+    print("\nInterrupted.", file=sys.stderr)
+    sys.exit(128 + signum)
+
+
+signal.signal(signal.SIGINT, handle_sigint)
+
+import hashlib
 import json
 import shutil
 import subprocess
@@ -127,6 +149,20 @@ def check_signed(repository: str, sha256: str, public_key: str | None) -> str:
     return "yes (unverified)" if inspect.returncode == 0 else "no"
 
 
+def cache_key_for_public_key(public_key: str | None) -> str | None:
+    """Return a hash of the public key file's contents, or None.
+
+    check_signed's own `public_key` argument is a file path, and diskcache's memoize keys on argument
+    values -- so caching check_signed directly would key on that path string, not the file's actual
+    contents. If the file at that path is ever edited in place (a corrected key saved over an old one),
+    a memoized run would keep returning the stale result for the old content. Passing this hash as an
+    extra argument to the cached wrapper makes the cache key track the key's real contents instead.
+    """
+    if not public_key:
+        return None
+    return hashlib.sha256(Path(public_key).read_bytes()).hexdigest()
+
+
 @app.command()
 def main(
     bom: str = typer.Argument(
@@ -137,37 +173,45 @@ def main(
         None,
         "--public-key",
         "-k",
-        help="Path to the cosign public key to verify against. Without this, signed status only reports whether "
-        "a signature artifact exists, not whether it's cryptographically valid.",
+        help="Path to the cosign public key to verify against. Required to verify that signature is cryptographically valid.",
     ),
-    include_airflow: bool = typer.Option(True, help="Also check images listed under the airflow chart's own BOM section."),
     cache_dir: Path = typer.Option(DEFAULT_CACHE_DIR, "--cache-dir", help="Directory for the on-disk registry-lookup cache."),
     no_cache: bool = typer.Option(
-        False, "--no-cache", help="Bypass the on-disk cache and query the registry fresh for every image."
+        False,
+        "--no-cache",
+        help="Skip cache reads and query the registry fresh for every image, but write new cache data.",
     ),
 ):
     data = load_bom(bom)
     images = collect_images(data)
-    if not include_airflow:
-        images = [image for image in images if image["chart"] != "airflow"]
 
-    get_architectures_cached = get_architectures
-    check_signed_cached = check_signed
-    if not no_cache:
-        cache = Cache(str(cache_dir))
-        get_architectures_cached = cache.memoize(expire=CACHE_EXPIRE_SECONDS, tag="architectures")(get_architectures)
-        check_signed_cached = cache.memoize(expire=CACHE_EXPIRE_SECONDS, tag="signed")(check_signed)
+    def check_signed_keyed(repository: str, sha256: str, public_key: str | None, _public_key_fingerprint: str | None) -> str:
+        """check_signed, plus an argument that exists only so the cache keys on the key's contents, not its path."""
+        return check_signed(repository, sha256, public_key)
 
+    cache = Cache(str(cache_dir))
+    get_architectures_cached = cache.memoize(expire=CACHE_EXPIRE_SECONDS, tag="architectures")(get_architectures)
+    check_signed_cached = cache.memoize(expire=CACHE_EXPIRE_SECONDS, tag="signed")(check_signed_keyed)
+
+    def call_fresh_if_requested(cached_fn, *args):
+        """Call a memoized function, forcing a fresh (and freshly-cached) result when --no-cache is set."""
+        if no_cache:
+            cache.delete(cached_fn.__cache_key__(*args))
+        return cached_fn(*args)
+
+    public_key_fingerprint = cache_key_for_public_key(public_key)
     rows = []
     for image in images:
-        signed = check_signed_cached(image["repository"], image["sha256"], public_key)
+        signed = call_fresh_if_requested(
+            check_signed_cached, image["repository"], image["sha256"], public_key, public_key_fingerprint
+        )
         rows.append(
             {
                 "chart": image["chart"],
                 "image": image["repository"],
                 "version": image["tag"],
                 "sha256": image["sha256"],
-                "architectures": get_architectures_cached(image["repository"], image["sha256"]),
+                "architectures": call_fresh_if_requested(get_architectures_cached, image["repository"], image["sha256"]),
                 "signed": signed,
             }
         )

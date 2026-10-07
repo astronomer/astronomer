@@ -95,7 +95,7 @@ class TestMcpServerDeployment:
 
         assert env_vars["LISTEN_ADDR"] == ":8080"
         assert env_vars["HOUSTON_API_URL"] == "http://release-name-houston.default.svc.cluster.local:8871/v1"
-        assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,platform_write"
+        assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,platform_write,airflow_read"
 
     def test_deployment_enabled_groups_customizable(self, kube_version):
         docs = render_chart(
