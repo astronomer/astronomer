@@ -125,8 +125,8 @@ class TestMcpServerDeployment:
         env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
         assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,platform_write,skills_load"
 
-    def test_deployment_skills_load_controlled_only_by_toggle(self, kube_version):
-        stripped = render_chart(
+    def test_deployment_skills_load_stripped_from_enabled_groups_without_toggle(self, kube_version):
+        docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "control"}},
@@ -134,10 +134,12 @@ class TestMcpServerDeployment:
             },
             show_only=[DEPLOYMENT],
         )
-        env_vars = get_env_vars_dict(get_containers_by_name(stripped[0])["mcp-server"]["env"])
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["mcp-server"]["env"])
         assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read"
 
-        both = render_chart(
+    def test_deployment_skills_load_from_enabled_groups_requires_toggle(self, kube_version):
+        docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "control"}},
@@ -151,7 +153,8 @@ class TestMcpServerDeployment:
             },
             show_only=[DEPLOYMENT],
         )
-        env_vars = get_env_vars_dict(get_containers_by_name(both[0])["mcp-server"]["env"])
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["mcp-server"]["env"])
         assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,skills_load"
 
     def test_deployment_replicas(self, kube_version):
