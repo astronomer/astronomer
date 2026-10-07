@@ -1007,10 +1007,16 @@ Returns the string "true" or "false" — compare with eq.
 {{- end }}
 
 {{/*
-Joins mcpServer.enabledGroups into the CSV the MCP_ENABLED_GROUPS env var expects.
+Joins mcpServer.enabledGroups into the CSV the MCP_ENABLED_GROUPS env var expects,
+appending skills_load when mcpServer.skills.enabled. The server implies the read groups
+the enabled skills require, so the chart never computes that union itself.
 */}}
 {{- define "mcpServer.enabledGroups" -}}
-{{- join "," .Values.mcpServer.enabledGroups -}}
+{{- $groups := .Values.mcpServer.enabledGroups -}}
+{{- if .Values.mcpServer.skills.enabled -}}
+{{- $groups = concat $groups (list "skills_load") -}}
+{{- end -}}
+{{- join "," $groups -}}
 {{- end }}
 
 {{/*
