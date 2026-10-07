@@ -2034,6 +2034,62 @@ def test_commander_only_advertises_the_flightdeck_dsn_file_when_flightdeck_is_on
                 assert path.rsplit("/", 1)[-1] in projected, f"{container['name']}: {var}={path} has no file behind it"
 
 
+# Must match `secretEnvVars` in astronomer/commander config/secrets_from_files.go.
+# The two repos cannot read each other in CI, so this is a deliberate mirror: if
+# commander's list changes, update it here and the sweep below re-checks the chart.
+COMMANDER_SECRET_ENV_VARS = {
+    "COMMANDER_DATAPLANE_DATABASE_URL",
+    "COMMANDER_FLIGHTDECK_DSN",
+}
+
+PILOT_TEMPLATE = "charts/astronomer/templates/pilot/pilot-deployment.yaml"
+
+
+@pytest.mark.parametrize("plane", ["unified", "data"])
+def test_commander_file_vars_are_all_ones_commander_loads(plane):
+    """Every `<VAR>_FILE` the chart hands a commander-loader container must name a
+    variable commander's loader actually reads.
+
+    This is the dangerous direction of list drift. Under the toggle the chart drops
+    the `secretKeyRef` and sets `<VAR>_FILE` instead, so if commander's
+    `secretEnvVars` does not include `<VAR>`, nothing reads the file and `<VAR>`
+    ends up unset -- with no error, because an unlisted `_FILE` is just an env var
+    nobody looks at. Commander's own guard tests only compare its list against its
+    config struct, and the live-cluster scenario that would notice is `ci: false`.
+    """
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=full_feature_values(plane=plane),
+        show_only=[COMMANDER_TEMPLATE, PILOT_TEMPLATE],
+    )
+
+    advertised = set()
+    unknown = []
+    loader_containers = 0
+    for name, spec in pod_specs(docs):
+        for container in all_containers(spec):
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            # Only containers that run commander's loader; it is gated by this var.
+            if env_vars.get("COMMANDER_SECRETS_FROM_FILES") != "true":
+                continue
+            loader_containers += 1
+            for var in env_vars:
+                if not var.endswith("_FILE"):
+                    continue
+                target = var.removesuffix("_FILE")
+                advertised.add(target)
+                if target not in COMMANDER_SECRET_ENV_VARS:
+                    unknown.append(f"{name}/{container['name']}: {var}")
+
+    # Guards against the sweep silently matching nothing: commander's main and
+    # migrations containers plus pilot, all with FlightDeck on.
+    assert loader_containers >= 3, f"only {loader_containers} commander-loader containers rendered"
+    assert unknown == [], "_FILE vars commander does not load:\n" + "\n".join(unknown)
+    # And the mirror has no dead entries: with every toggle on, each listed var is
+    # actually delivered as a file somewhere.
+    assert advertised == COMMANDER_SECRET_ENV_VARS
+
+
 # ── ap-db-bootstrapper init containers (BOOTSTRAP_DB) ──────────────────────────
 #
 # One image, run as an init container in three subcharts, so one global toggle:
