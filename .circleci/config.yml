@@ -382,8 +382,8 @@ workflows:
     jobs:
       - run_pre_commit
       - build-artifact:
-        requires:
-            - run_pre_commit
+          requires:
+              - run_pre_commit
 
       # Manual gate for the custom functional scenarios on non-release branches.
       # On master and release-X.Y they run automatically (below) and gate the
