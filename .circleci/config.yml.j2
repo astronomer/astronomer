@@ -407,9 +407,6 @@ workflows:
                 - '/^release-\d+\.\d+$/'
           requires:
             - approve-internal-release
-{%- for version in [kube_versions[0], kube_versions[-1]] %}
-            - scenario-unified-{{ version | replace(".", "-") }}
-{%- endfor %}
 {%- for scenario in scenarios %}
             - scenario-{{ scenario.name }}
 {%- endfor %}
@@ -417,9 +414,6 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-{%- for version in kube_versions[1:-1] %}
-            - scenario-unified-{{ version | replace(".", "-") }}
-{%- endfor %}
           filters:
             branches:
               only:
