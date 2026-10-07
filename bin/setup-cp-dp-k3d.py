@@ -159,7 +159,7 @@ QUAY_PULL_SECRET_NAME = "quay-pull-secret"  # noqa: S105 -- k8s Secret name, not
 # the lever: its image helper hardcodes the ap- prefix. So the repository is set directly on the
 # subchart and the credential is supplied through laminar.imagePullSecrets.
 LAMINAR_IMAGE_REPOSITORY = "quay.io/astronomer/ap-laminar"
-LAMINAR_IMAGE_TAG = "1.0.0-rc4"
+LAMINAR_IMAGE_TAG = "main"
 
 
 def _quay_credentials(*, interactive: bool = False) -> tuple[str, str] | None:
@@ -603,6 +603,34 @@ def _version_specific_values_file(chart_version: str | None) -> Path:
     return GIT_ROOT_DIR / "configs" / filename
 
 
+def _laminar_global_block(enabled: bool) -> str:
+    """`global.laminar.enabled` line, emitted only for the cluster(s) that should run laminar.
+
+    Shared by the CP (unified only) and DP value builders so the flag reads identically on both.
+    """
+    return "  laminar:\n    enabled: true\n" if enabled else ""
+
+
+def _laminar_subchart_block(settings: Settings, enabled: bool) -> str:
+    """laminar subchart values (pull secret + image); consumed only when the subchart is on.
+
+    privateRegistry is not needed here: the credential rides on the subchart's own
+    `laminar.imagePullSecrets`, and the repository/tag point straight at the quay image.
+    """
+    if not enabled:
+        return ""
+    return f"""\
+laminar:
+  imagePullSecrets:
+    - name: {QUAY_PULL_SECRET_NAME}
+  images:
+    laminar:
+      repository: {LAMINAR_IMAGE_REPOSITORY}
+      tag: {settings.laminar_tag}
+
+"""
+
+
 def _cp_values_yaml(settings: Settings) -> str:
     operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
     operator_subchart_block = (
@@ -623,6 +651,12 @@ airflow-operator:
         if settings.enable_operator
         else ""
     )
+    # In a unified install the one cluster runs the data-plane workloads too, so laminar belongs
+    # here. In a cp/dp split the CP is control-only and laminar rides on the DP instead (see
+    # _dp_values_yaml), so it is deliberately left off the CP there.
+    laminar_on_cp = settings.with_laminar and settings.cp_mode == "unified"
+    global_laminar_block = _laminar_global_block(laminar_on_cp)
+    laminar_subchart_block = _laminar_subchart_block(settings, laminar_on_cp)
     return f"""\
 global:
   baseDomain: {settings.base_domain}
@@ -639,7 +673,7 @@ global:
   cadvisor:
     enabled: true
   defaultDenyNetworkPolicy: false
-{operator_block}
+{operator_block}{global_laminar_block}
 
 tags:
   platform: true
@@ -660,34 +694,19 @@ postgresql:
     type: NodePort
     nodePort: {CP_POSTGRES_NODEPORT}
 
-{operator_subchart_block}"""
+{operator_subchart_block}{laminar_subchart_block}"""
 
 
 def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     """Generate DP Helm values. Postgres on/off is decided by main() via configs/postgres-*.yaml
     depending on --dp-airflow-db — each DP runs its own database rather than sharing the CP's."""
     global_operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
-    # Laminar renders on a data plane when global.laminar.enabled is on. privateRegistry rides
-    # along because it is the only route the subchart offers to an imagePullSecret, and it is
-    # harmless for the other images: they already resolve to this same registry.
-    global_laminar_block = "  laminar:\n    enabled: true\n" if settings.with_laminar else ""
+    # Laminar renders on a data plane whenever --with-laminar is set.
+    global_laminar_block = _laminar_global_block(settings.with_laminar)
     # Worker autoscaling writes its scaling identity into the KEDA namespace, so it is only
     # switched on where this script installed KEDA. Its CRDs are applied before this release.
     global_keda_block = f"  keda:\n    enabled: true\n    namespace: {KEDA_NAMESPACE}\n" if settings.with_keda else ""
-    laminar_subchart_block = (
-        f"""\
-laminar:
-  imagePullSecrets:
-    - name: {QUAY_PULL_SECRET_NAME}
-  images:
-    laminar:
-      repository: {LAMINAR_IMAGE_REPOSITORY}
-      tag: {settings.laminar_tag}
-
-"""
-        if settings.with_laminar
-        else ""
-    )
+    laminar_subchart_block = _laminar_subchart_block(settings, settings.with_laminar)
     # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
     # (see Chart.yaml condition). The values block below is only consumed when
     # that flag is on; we emit it only in that case for clarity.
@@ -2049,6 +2068,20 @@ def main() -> int:  # noqa: C901
                 h = ms.start(f"Helm install/upgrade Control Plane (context=k3d-{cp.cluster_name})")
 
                 cp_ctx = f"k3d-{cp.cluster_name}"
+
+                # A unified CP runs laminar itself (see _cp_values_yaml), so it needs the quay
+                # pull secret the laminar pods reference. Created before the release so those pods
+                # never start without it. A control-only CP never runs laminar, so it is skipped.
+                if settings.with_laminar and settings.cp_mode == "unified":
+                    h = ms.start(f"Create quay pull secret on {cp.cluster_name} (laminar image)")
+                    assert quay_credentials is not None  # noqa: S101 — guaranteed by the check in main()
+                    _ensure_quay_pull_secret(
+                        context=cp_ctx,
+                        namespace=settings.namespace,
+                        username=quay_credentials[0],
+                        password=quay_credentials[1],
+                    )
+                    ms.done(h, detail=f"secret={QUAY_PULL_SECRET_NAME}")
 
                 # The airflow-operator webhooks need cert-manager's Issuer/Certificate
                 # flow to produce `webhook-server-cert`. Install cert-manager before the
