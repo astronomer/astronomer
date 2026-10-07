@@ -325,33 +325,42 @@ def _format_container_state(state) -> str:
 
 
 def _summarize_pods(k8s_core_v1_client, namespace: str, label_selector: str) -> list[str]:
-    """One line per pod matching label_selector: phase plus each container's ready/state.
+    """An aligned table of the release's pods: one row per container.
 
     Shared by wait_for_release_ready's per-iteration status line (so a crash-looping
     container is visible on every poll, not just once the 600s timeout finally fires)
     and dump_release_diagnostics' fuller post-mortem below.
 
-    Each pod line leads with the count of not-ready containers and names them, so the one
-    laggard (e.g. a worker still waiting on its startup probe) stands out instead of being
-    lost among a dozen already-ready containers.
+    Columns: POD | CONTAINER | READY | RESTARTS | STATE. The pod name and phase print only
+    on a pod's first container row, so each pod reads as one visual group, and a not-ready
+    container shows READY=no -- so the one laggard (e.g. a worker still on its startup probe)
+    stands out instead of being lost in a run-on line of a dozen already-ready containers.
     """
     pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
     if not pods:
         return [f"no pods exist yet in {namespace} for {label_selector}"]
-    lines = []
+
+    header = ("POD", "CONTAINER", "READY", "RESTARTS", "STATE")
+    rows = [header]
     for pod in pods:
         container_statuses = pod.status.container_statuses or []
-        statuses = [
-            f"{c.name}: ready={c.ready} restarts={c.restart_count} state={_format_container_state(c.state)}"
-            for c in container_statuses
-        ]
-        not_ready = [c.name for c in container_statuses if not c.ready]
-        blocker = f"NOT-READY[{', '.join(not_ready)}] " if not_ready else ""
-        lines.append(
-            f"{namespace}/{pod.metadata.name}: phase={pod.status.phase} {blocker}-- "
-            f"{'; '.join(statuses) or 'no container statuses yet'}"
-        )
-    return lines
+        pod_cell = f"{pod.metadata.name} ({pod.status.phase})"
+        if not container_statuses:
+            rows.append((pod_cell, "-", "-", "-", "no container statuses yet"))
+            continue
+        for i, c in enumerate(container_statuses):
+            rows.append(
+                (
+                    pod_cell if i == 0 else "",  # name once per pod, so rows group visually
+                    c.name,
+                    "yes" if c.ready else "no",
+                    str(c.restart_count),
+                    _format_container_state(c.state),
+                )
+            )
+
+    widths = [max(len(row[col]) for row in rows) for col in range(len(header))]
+    return [" | ".join(cell.ljust(widths[col]) for col, cell in enumerate(row)).rstrip() for row in rows]
 
 
 def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector: str) -> None:
@@ -366,7 +375,7 @@ def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector:
     same distinction at the single-Deployment level).
     """
     for line in _summarize_pods(k8s_core_v1_client, namespace, label_selector):
-        print(f"pod {line}")
+        print(line)
 
     events = k8s_core_v1_client.list_namespaced_event(namespace).items
     print(f"--- events in {namespace} ({len(events)}) ---")
@@ -492,7 +501,8 @@ def wait_for_release_ready(
         namespace = workloads[0].metadata.namespace if workloads else None
         if namespace:
             for line in _summarize_pods(k8s_core_v1_client, namespace, label_selector):
-                print(f"  pod {line}")
+                print(f"  {line}")
+            print()  # blank line between iterations so each poll's pod block reads as one group
         if time.monotonic() >= deadline:
             if namespace:
                 dump_release_diagnostics(k8s_core_v1_client, namespace, label_selector)
