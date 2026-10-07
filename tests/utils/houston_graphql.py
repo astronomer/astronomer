@@ -363,16 +363,45 @@ def _summarize_pods(k8s_core_v1_client, namespace: str, label_selector: str) -> 
     return [" | ".join(cell.ljust(widths[col]) for col, cell in enumerate(row)).rstrip() for row in rows]
 
 
+def _dump_not_ready_container_logs(k8s_core_v1_client, namespace: str, label_selector: str, tail_lines: int = 200) -> None:
+    """
+    Print recent logs for only the not-ready containers of the release's pods.
+    """
+    pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
+    for pod in pods:
+        for cs in pod.status.container_statuses or []:
+            if cs.ready:
+                continue
+            name = pod.metadata.name
+            print(f"--- logs: {namespace}/{name} ({cs.name}), last {tail_lines} lines ---")
+            try:
+                print(k8s_core_v1_client.read_namespaced_pod_log(name, namespace, container=cs.name, tail_lines=tail_lines))
+            except Exception as exc:  # noqa: BLE001
+                print(f"(failed to fetch logs for {name}/{cs.name}: {exc})")
+            if (cs.restart_count or 0) > 0:
+                print(f"--- previous logs: {namespace}/{name} ({cs.name}), last {tail_lines} lines ---")
+                try:
+                    print(
+                        k8s_core_v1_client.read_namespaced_pod_log(
+                            name, namespace, container=cs.name, previous=True, tail_lines=tail_lines
+                        )
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    print(f"(failed to fetch previous logs for {name}/{cs.name}: {exc})")
+
+
 def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector: str) -> None:
     """
-    Print actual Pod status and namespace Events for a release that never became ready.
+    Print actual Pod status, namespace Events, and not-ready container logs for a release
+    that never became ready.
 
     A Deployment's readyReplicas alone can't distinguish two very different failures:
     a pod Pod Security Admission rejects is never created at all -- it never becomes an
     unhealthy Pod, it only ever shows up as a FailedCreate Event on its ReplicaSet -- vs.
     a pod that *was* created but is stuck (image pull, crash loop, unschedulable). This
     prints both so the two aren't confused (see PINF-1031's auth-sidecar scenario for the
-    same distinction at the single-Deployment level).
+    same distinction at the single-Deployment level). The logs of the not-ready containers
+    then show *why* a created-but-stuck pod is stuck.
     """
     for line in _summarize_pods(k8s_core_v1_client, namespace, label_selector):
         print(line)
@@ -382,6 +411,8 @@ def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector:
     for event in events:
         obj = event.involved_object
         print(f"{event.type} {event.reason}: {obj.kind}/{obj.name}: {event.message}")
+
+    _dump_not_ready_container_logs(k8s_core_v1_client, namespace, label_selector)
 
 
 def _workload_settled(w) -> bool:

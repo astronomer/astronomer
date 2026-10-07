@@ -38,20 +38,19 @@ def discover_scenarios() -> list[dict]:
     profile_paths = sorted(scenarios_dir.glob("*/test_profile.yaml"), key=lambda p: p.parent.name)
     scenarios = []
     for profile_path in profile_paths:
-        if "sidecar-logging-custom-config" in str(profile_path):
-            profile = yaml.safe_load(profile_path.read_text()) or {}
-            if profile.get("topology") not in ("unified", "control", "data"):
-                raise SystemExit(
-                    f"ERROR: {profile_path} must set topology to one of unified/control/data, got {profile.get('topology')!r}"
-                )
-            scenarios.append(
-                {
-                    "name": profile_path.parent.name,
-                    "topology": profile["topology"],
-                    "resource_class": profile.get("resource_class", "xlarge"),
-                    "kyverno_scan": profile.get("kyverno_scan", False),
-                }
+        profile = yaml.safe_load(profile_path.read_text()) or {}
+        if profile.get("topology") not in ("unified", "control", "data"):
+            raise SystemExit(
+                f"ERROR: {profile_path} must set topology to one of unified/control/data, got {profile.get('topology')!r}"
             )
+        scenarios.append(
+            {
+                "name": profile_path.parent.name,
+                "topology": profile["topology"],
+                "resource_class": profile.get("resource_class", "xlarge"),
+                "kyverno_scan": profile.get("kyverno_scan", False),
+            }
+        )
     return scenarios
 
 
