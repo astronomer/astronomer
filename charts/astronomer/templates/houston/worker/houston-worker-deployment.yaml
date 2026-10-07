@@ -237,32 +237,6 @@ spec:
             {{- if .Values.houston.logging.loggingSidecar.cloudwatch.enabled }}
             - name: AWS_REGION
               value: {{ .Values.houston.logging.loggingSidecar.cloudwatch.region | quote }}
-            {{- if not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA }}
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.houston.logging.loggingSidecar.cloudwatch.secretName }}
-                  key: aws_access_key_id
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.houston.logging.loggingSidecar.cloudwatch.secretName }}
-                  key: aws_secret_access_key
-            {{- end }}
-            {{- end }}
-            {{- if .Values.houston.logging.loggingSidecar.elasticsearch.enabled }}
-            {{- if eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic" }}
-            - name: ES_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.houston.logging.loggingSidecar.elasticsearch.auth.secretName }}
-                  key: username
-            - name: ES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.houston.logging.loggingSidecar.elasticsearch.auth.secretName }}
-                  key: password
-            {{- end }}
             {{- end }}
           resources: {{- toYaml .Values.houston.logging.loggingSidecar.resources | nindent 12 }}
           volumeMounts:
@@ -281,9 +255,19 @@ spec:
               mountPath: /etc/gcp-credentials
               readOnly: true
             {{- end }}
+            {{- if and .Values.houston.logging.loggingSidecar.cloudwatch.enabled (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) }}
+            - name: aws-creds
+              mountPath: /etc/vector/secrets/cloudwatch
+              readOnly: true
+            {{- end }}
             {{- if and .Values.houston.logging.loggingSidecar.elasticsearch.enabled .Values.houston.logging.loggingSidecar.elasticsearch.tls.enabled }}
             - name: es-tls-ca
               mountPath: /etc/es-tls
+              readOnly: true
+            {{- end }}
+            {{- if and .Values.houston.logging.loggingSidecar.elasticsearch.enabled (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") }}
+            - name: es-creds
+              mountPath: /etc/vector/secrets/elasticsearch
               readOnly: true
             {{- end }}
           startupProbe:
@@ -337,10 +321,30 @@ spec:
           secret:
             secretName: {{ .Values.houston.logging.loggingSidecar.gcpCloudLogging.credentialsSecretName }}
         {{- end }}
+        {{- if and .Values.houston.logging.loggingSidecar.cloudwatch.enabled (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) }}
+        - name: aws-creds
+          secret:
+            secretName: {{ .Values.houston.logging.loggingSidecar.cloudwatch.secretName }}
+            items:
+              - key: aws_access_key_id
+                path: aws_access_key_id
+              - key: aws_secret_access_key
+                path: aws_secret_access_key
+        {{- end }}
         {{- if and .Values.houston.logging.loggingSidecar.elasticsearch.enabled .Values.houston.logging.loggingSidecar.elasticsearch.tls.enabled }}
         - name: es-tls-ca
           secret:
             secretName: {{ .Values.houston.logging.loggingSidecar.elasticsearch.tls.caSecretName }}
+        {{- end }}
+        {{- if and .Values.houston.logging.loggingSidecar.elasticsearch.enabled (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") }}
+        - name: es-creds
+          secret:
+            secretName: {{ .Values.houston.logging.loggingSidecar.elasticsearch.auth.secretName }}
+            items:
+              - key: username
+                path: username
+              - key: password
+                path: password
         {{- end }}
         {{- end }}
 {{- end }}

@@ -258,35 +258,22 @@ class TestVectorConfigmap:
         assert condition == '.log_type == "task"'
 
 
-_ALLOWED_ENV_REFERENCES = {
-    "${AWS_ACCESS_KEY_ID}",
-    "${AWS_SECRET_ACCESS_KEY}",
-    "${ES_ENDPOINT}",
-    "${ES_USERNAME}",
-    "${ES_PASSWORD}",
-}
+# The ap-vector image sets VECTOR_DANGEROUSLY_ALLOW_ENV_VAR_INTERPOLATION=true as a stopgap, so
+# `vector validate` would accept any ${VAR} reference. Rendered configs must not contain any:
+# sink credentials are read through Vector's secrets backend (SECRET[...]) instead.
 _ENV_TOKEN = re.compile(r"\$\{[^{}]+\}")
 
 
 @pytest.mark.skipif(not docker_daemon_present(), reason="Docker daemon not available")
-def test_rendered_vector_configs_validate_with_the_rendered_image(docker_client, tmp_path):
-    manifests = render_chart(
-        values={
-            "astronomer": {
-                "houston": {
-                    "logging": {
-                        "loggingSidecar": {
-                            "enabled": True,
-                            "elasticsearch": {
-                                "enabled": True,
-                                "endpoint": "http://127.0.0.1:9200",
-                            },
-                        }
-                    }
-                }
-            }
-        }
-    )
+@pytest.mark.parametrize(
+    "sink_values",
+    [
+        pytest.param({"elasticsearch": {"enabled": True, "endpoint": "http://127.0.0.1:9200"}}, id="elasticsearch"),
+        pytest.param({"cloudwatch": {"enabled": True, "region": "us-east-2", "useIRSA": False}}, id="cloudwatch-static-keys"),
+    ],
+)
+def test_rendered_vector_configs_validate_with_the_rendered_image(docker_client, tmp_path, sink_values):
+    manifests = render_chart(values={"astronomer": {"houston": {"logging": {"loggingSidecar": {"enabled": True, **sink_values}}}}})
 
     configs = [
         config
@@ -318,8 +305,7 @@ def test_rendered_vector_configs_validate_with_the_rendered_image(docker_client,
 
     for index, config in enumerate(configs):
         references = set(_ENV_TOKEN.findall(config))
-        unexpected_references = references - _ALLOWED_ENV_REFERENCES
-        assert not unexpected_references, f"Unexpected Vector environment references: {unexpected_references}"
+        assert not references, f"Unexpected Vector environment references: {references}"
 
         validation_config = yaml.safe_load(config)
         validation_config["data_dir"] = "/vector-data"
@@ -334,11 +320,6 @@ def test_rendered_vector_configs_validate_with_the_rendered_image(docker_client,
             entrypoint="vector",
             command=["validate", "--no-environment"],
             environment={
-                "AWS_ACCESS_KEY_ID": "vector-validation",
-                "AWS_SECRET_ACCESS_KEY": "vector-validation",
-                "ES_ENDPOINT": "http://127.0.0.1:9200",
-                "ES_USERNAME": "vector-validation",
-                "ES_PASSWORD": "vector-validation",
                 "VECTOR_CONFIG": f"/vector-config/vector-{index}.yaml",
             },
             volumes={
