@@ -196,8 +196,18 @@ class TestLaminar:
             {"apiGroups": [""], "resources": ["secrets"], "verbs": ["list", "get", "create", "patch"]}
         ]
 
-    @pytest.mark.parametrize("template,app_container", LAMINAR_DEPLOYMENTS)
-    def test_laminar_bootstrapper_init_container(self, kube_version, template, app_container):
+    @pytest.mark.parametrize(
+        "template,expected_init_containers",
+        [
+            pytest.param(
+                APISERVER_DEPLOYMENT_TEMPLATE,
+                ["laminar-bootstrapper", "etc-ssl-certs-copier"],
+                id="apiserver",
+            ),
+            pytest.param(HYPERVISOR_DEPLOYMENT_TEMPLATE, ["laminar-bootstrapper"], id="hypervisor"),
+        ],
+    )
+    def test_laminar_bootstrapper_init_container(self, kube_version, template, expected_init_containers):
         """Test the bootstrapper init container that creates the laminar database.
 
         It runs on every pod start rather than once per release, so it has to stay idempotent, and
@@ -208,7 +218,7 @@ class TestLaminar:
 
         assert len(docs) == 1
         pod_spec = docs[0]["spec"]["template"]["spec"]
-        assert [container["name"] for container in pod_spec["initContainers"]] == ["laminar-bootstrapper"]
+        assert [container["name"] for container in pod_spec["initContainers"]] == expected_init_containers
         bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["laminar-bootstrapper"]
         assert bootstrapper["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
         assert bootstrapper["imagePullPolicy"] == "IfNotPresent"
@@ -527,7 +537,7 @@ class TestLaminar:
         assert apiserver_deployment["metadata"]["name"] == "release-name-api-server"
         assert apiserver_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-api-server"
         c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
-        assert set(c_by_name) == {"apiserver", "laminar-bootstrapper"}
+        assert set(c_by_name) == {"apiserver", "etc-ssl-certs-copier", "laminar-bootstrapper"}
         assert c_by_name["apiserver"]["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
         assert c_by_name["apiserver"]["resources"] == {
             "requests": {"cpu": "400m", "memory": "256Mi"},
