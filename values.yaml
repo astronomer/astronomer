@@ -15,71 +15,6 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainPrefix: ""    # cluster-id
 
-  # Houston's database. Global rather than under the astronomer subchart because
-  # the prometheus and prometheus-postgres-exporter subcharts read these too,
-  # and Helm does not share one subchart's values with another.
-  houston:
-    database:
-      # The Postgres schema Houston's tables live in.
-      #
-      # Existing installs must leave this alone: their tables are already in
-      # houston$default, and changing it points Houston at an empty schema.
-      # Set it only on a fresh install, e.g. to "public" when the database does
-      # not permit creating schemas.
-      schemaName: "houston$default"
-
-  # Shared secret for internal service-to-service authentication (e.g. pilot -> commander gRPC).
-  # Auto-generated on install if empty; preserved across upgrades.
-  clusterLocalServiceAuth:
-    token: ""
-
-  # Control Plane High Availability: run multiple active CPs serving traffic concurrently within a region.
-  # Default false keeps single-CP installs unchanged (no behavior change).
-  controlPlaneHA:
-    enabled: false
-    # Only for the FIRST CP install of a fresh HA cluster. When true (with
-    # enabled: true), overrides the HA-mode hard-block on JWKS + registry
-    # keypair generation, allowing the chart to generate the shared secret
-    # material into local k8s Secrets. Customer then copies those Secrets to
-    # subsequent CP clusters before installing them (see runbook).
-    # Default false: subsequent CPs and single-CP-to-HA migrations skip
-    # generation and expect Secrets to be pre-provisioned.
-    bootstrapJwks: false
-    # Parent domain of the global customer-facing hostname. REQUIRED when enabled.
-    # E.g. set to "astro.example.com" when the global URL is "app.astro.example.com".
-    #
-    # TLS cert SANs (customer prerequisite: when
-    # enabled, each CP's ingresses serve two host families, so the per-CP TLS cert
-    # (global.tlsSecret) on EVERY CP must include SANs for both:
-    #   per-CP admin (under baseDomain):  <baseDomain>, app.<baseDomain>,
-    #     houston.<baseDomain>, grafana.<baseDomain>, alertmanager.<baseDomain>,
-    #     prometheus.<baseDomain>
-    #   global customer-facing (under globalBaseDomain): the same subdomains under
-    #     <globalBaseDomain> (app./houston./grafana./alertmanager./prometheus.) plus the
-    #     bare <globalBaseDomain>
-    # One physical cert per CP serves both families. Issue via DNS-01 ACME — HTTP-01 will
-    # not work because the global host only routes to active-region CPs.
-    globalBaseDomain: ~
-    # Stable per-CP identity (UUID), exposed to pods as the CP_ID env var. Generated on
-    # every control/unified plane install regardless of controlPlaneHA.enabled — the value
-    # is preserved for future HA enablement even if not currently in use.
-    # When unset, the chart looks up the existing cp-identity Secret and reuses its value,
-    # or generates a new UUID on first install (preserved across `helm upgrade`).
-    # Set explicitly to keep cp_id deterministic for GitOps / offline `helm template`
-    # workflows where the cluster lookup is unavailable (otherwise a new UUID is rendered
-    # each time). May also point Houston at an externally-managed value.
-    cpId: ~
-    # Optional override for the customer session cookie Domain= attribute.
-    # When unset, Houston defaults it to `.<globalBaseDomain>`. Set explicitly only for the
-    # advanced single-cookie mode: a common parent of globalBaseDomain and the per-CP admin
-    # baseDomain (not derivable from globalBaseDomain alone) so one cookie covers both flows.
-    cookieDomain: ~
-    # Optional override for the customer session cookie name.
-    # When unset, Houston defaults it to `astronomer_<snakeCase(globalBaseDomain)>_auth` (same
-    # on every CP). Set explicitly only to pin an existing cookie name during HA migration so
-    # current sessions aren't invalidated.
-    cookieName: ~
-
   # Labels to add to every pod
   podLabels: {}
 
@@ -105,77 +40,22 @@ global:
     containerdnodeAffinitys: []
     containerdTolerations: []
     certCopier:
-      repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.0.26
+      repository: quay.io/astronomer/ap-base
+      tag: 2026.10.5
       pullPolicy: IfNotPresent
-      startupProbe: {}
-    containerdCertCopier:
-      startupProbe: {}
     priorityClassName: ~
-  airflowOperator:
-    # Turn on operator-based Airflow deployments. When enabled, this chart installs
-    # the airflow-operator by default and grants APC the permissions it needs
-    # to manage Airflow deployments through the operator.
-    #
-    # Already running your own operator on the cluster? Keep this enabled, but set
-    # `airflow-operator.enabled: false` (see Chart.yaml) so APC works with your
-    # existing operator instead of installing its own.
-    enabled: false
-
-    adoption:
-      # Allow APC to adopt Airflow deployments that already exist on your
-      # cluster, so you can bring them under management without recreating them.
-      enabled: true
-
-  # Feature flags
-  rbac:
-    enabled: true
-
-  laminar:
-    enabled: false
-
-  # Worker autoscaling. You install and run KEDA 2.17 or later yourself; turn this on
-  # to have the platform create the identity KEDA presents when it asks how many
-  # workers a queue needs. Doing so writes a service account, a role and a role
-  # binding into the namespace below, plus one cluster-scoped authentication object. It
-  # also has the Airflow operator watch your scaling objects, so one changed or deleted
-  # outside the platform is restored.
-  keda:
-    enabled: false
-    # The namespace KEDA is installed in.
-    namespace: keda
-    # Only needed when KEDA is configured to resolve cluster-scoped objects somewhere
-    # other than its own namespace. Defaults to `namespace`.
-    clusterObjectNamespace: ~
-    # The service account KEDA runs as.
-    operatorServiceAccountName: keda-operator
-
-  # Custom roles: define your own roles from a catalog of granular permissions
-  # instead of assigning only the built-in roles. Covers Workspace and Deployment
-  # access, including access to the Airflow UI and API.
-  # Unrelated to `rbac` above, which controls Kubernetes RBAC resources.
-  customRBAC:
-    enabled: false
-
-  scc:
-    enabled: false
-
-  openshift:
-    enabled: false
-
+  # Global flag to enable to user to enable/disable Astronomer platform
+  # level Network Policy
   networkPolicy:
     enabled: true
 
-  networkNSLabels:
+  #Global flag to enable Operator based deployment
+  airflowOperator:
     enabled: false
 
-  # Namespace management features
-  namespaceManagement:
-    # Configure vector to gather logs from all available namespaces
-    manualNamespaceNames:
-      enabled: false
-    namespaceFreeFormEntry:
-      enabled: false
+  # Specific Astronomer features configuration
+  features:
+    # namespace pools: define k8s namespaces in which Astronomer will manage Airflow deployments
     namespacePools:
       enabled: false
       # if createRbac is set to false then platform does not create roles and rolebinding.
@@ -185,58 +65,107 @@ global:
         create: false
         names: []
 
-  # dataPlaneFailover: master switch for DR failover
-  # On data plane (mode=data): enables pilot, flightDeck, and commander StartFlight RPC
-  # On control plane (mode=control): enables navigator, dp-link, and houston dispatcher
-  # On unified (mode=unified): no effect — enable components individually
-  dataPlaneFailover:
+  # namespaceLabels is a map of Kubernetes labels that will be applied to airflow deployment namespaces
+  namespaceLabels: {}
+    # To enforce PSA baseline policy, use the following values:
+    # pod-security.kubernetes.io/enforce: baseline
+
+  namespaceFreeFormEntry: false
+
+  # If RBAC on cluster is enabled
+  rbacEnabled: true
+
+  # whether to create pod disruption budgets by default for platform components
+  podDisruptionBudgetsEnabled: true
+
+  # URL to the Astronomer helm repo
+  helmRepo: "https://helm.astronomer.io"
+
+  # Use cluster roles
+  clusterRoles: true
+
+  # Enables necessary components for compatibility with Istio Service Mesh
+  istio:
     enabled: false
-    # The name of a manually created ClusterSecretStore
-    # externalSecretManagerName: your-css-name
+    rootNamespace: "istio-config"
 
-  # sharedElasticsearch: Allows sharing logging components with control plane.
-  # Built specially for cp dp split mode
-  sharedElasticsearch:
+  # Enable default postgresql database.
+  # This is not recommended for production.
+  postgresqlEnabled: false
+
+  prometheusPostgresExporterEnabled: false
+
+  # Configure vector to gather logs from all available namespaces
+  manualNamespaceNamesEnabled: false
+
+  # Used to enable nats-server
+  nats:
+    enabled: true
+    replicas: 3
+    jetStream:
+      enabled: true
+      tls: false
+
+  # Do you want to apply the global, default deny ingress network policy?
+  defaultDenyNetworkPolicy: true
+
+  openshiftEnabled: false
+
+  # Enable security context constraints required for OpenShift
+  sccEnabled: false
+
+  # Enables namespace labels for network policies
+  networkNSLabels: false
+
+  taskUsageMetricsEnabled: false
+
+  deployRollbackEnabled: false
+
+  disableManageClusterScopedResources: false
+
+  enablePerHostIngress: false
+
+  dagOnlyDeployment:
     enabled: false
+    repository: quay.io/astronomer/ap-dag-deploy
+    tag: 0.10.1
+    securityContexts:
+      pod:
+        fsGroup: 50000
+    server:
+      readinessProbe: {}
+      livenessProbe: {}
+      nodeSelector: {}
+      affinity: {}
+      tolerations: []
+    client:
+      readinessProbe: {}
+      livenessProbe: {}
+    resources: {}
+    persistence: {}
 
-  # Metrics and reporting features
-  metricsReporting:
-    taskUsageMetrics:
-      enabled: false
+  logging:
+    indexNamePrefix: ~
 
-  # Deployment lifecycle features
-  deploymentLifecycle:
-    deployRollback:
-      enabled: false
-      dagTarballVersionValidation:
-        enabled: true
-
-  # Deploy mechanisms
-  deployMechanisms:
-    dagOnlyDeployment:
-      enabled: false
-      repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.10.1
-      securityContexts:
-        pod:
-          fsGroup: 50000
-      server:
-        readinessProbe: {}
-        livenessProbe: {}
-        nodeSelector: {}
-        affinity: {}
-        tolerations: []
-      client:
-        readinessProbe: {}
-        livenessProbe: {}
-      resources:
-        limits:
-          cpu: 200m
-          memory: 384Mi
-        requests:
-          cpu: 200m
-          memory: 384Mi
-      persistence: {}
+  # Sidecar Logging
+  loggingSidecar:
+    enabled: false
+    name: sidecar-log-consumer
+    repository: quay.io/astronomer/ap-vector
+    tag: 0.59.0
+    customConfig: false
+    indexPattern: ~
+    extraEnv: []
+    securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
+    resources: {}
+    #  requests:
+    #    cpu: "100m"
+    #    memory: "386Mi"
+    #  limits:
+    #    cpu: "100m"
+    #    memory: "386Mi"
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
@@ -306,80 +235,6 @@ global:
         cpu: "1000m"
         memory: "1024Mi"
 
-  # namespaceLabels is a map of Kubernetes labels that will be applied to airflow deployment namespaces
-  namespaceLabels: {}
-    # To enforce PSA baseline policy, use the following values:
-    # pod-security.kubernetes.io/enforce: baseline
-
-  # whether to create pod disruption budgets by default for platform components
-  podDisruptionBudgets:
-    enabled: true
-
-  # URL to the Astronomer helm repo
-  helmRepo: "https://helm.astronomer.io"
-
-  # Use cluster roles
-  clusterRoles: true
-
-  # Enables necessary components for compatibility with Istio Service Mesh
-  istio:
-    enabled: false
-    rootNamespace: "istio-config"
-
-  # Enable default postgresql database.
-  # This is not recommended for production.
-  postgresql:
-    enabled: false
-
-  prometheusPostgresExporter:
-    enabled: false
-  nodeExporter:
-    enabled: false
-  cadvisor:
-    enabled: false
-
-  # Used to enable nats-server
-  nats:
-    enabled: true
-    replicas: 3
-    jetStream:
-      enabled: true
-      tls: false
-
-  # Do you want to apply the global, default deny ingress network policy?
-  defaultDenyNetworkPolicy: true
-
-  manageClusterScopedResources:
-    enabled: true
-
-  perHostIngress:
-    enabled: false
-
-  # Global Ingress flag to control ingress spec creation.
-  ingress:
-    enabled: true
-
-  logging:
-    indexNamePrefix: ~
-    loggingSidecar:
-      enabled: false
-      name: sidecar-log-consumer
-      repository: quay.io/astronomer/ap-vector
-      tag: 0.58.0-1
-      customConfig: false
-      indexPattern: ~
-      extraEnv: []
-      securityContext: {}
-      readinessProbe: {}
-      livenessProbe: {}
-      resources:
-        requests:
-          cpu: "100m"
-          memory: "384Mi"
-        limits:
-          cpu: "100m"
-          memory: "384Mi"
-
   # External ES logging
   customLogging:
     enabled: false
@@ -441,9 +296,7 @@ global:
   # Enable argo CD annotations currently available only for:
   # ServiceAccounts, ClusterRoles, RoleBindings, ClusterRoleBindings
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
-  argoCD:
-    annotation:
-      enabled: false
+  enableArgoCDAnnotation: false
 
   airflow:
     images:
@@ -461,10 +314,10 @@ global:
         tag: 0.12.1-11
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.9.28
+        tag: 2026.10.5
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.9.28
+        tag: 2026.10.5
   gitSyncRelay:
     images:
       gitDaemon:
@@ -473,8 +326,6 @@ global:
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.6.1
-    metrics:
-      enabled: false
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
@@ -495,9 +346,6 @@ global:
       # another: thing
     extraLabels: []
       # do-funky-injection: maybe
-  daemonsetLogging:
-    enabled: true
-
 
 #################################
 ## Default tagged groups enabled
@@ -526,67 +374,6 @@ astronomer:
         memory: "1024Mi"
 
   houston:
-    # Vector sidecar for audit log shipping from Houston API and worker.
-    # This mirrors charts/astronomer/values.yaml for customers who install
-    # or upgrade the umbrella chart from the repo root or packaged release.
-    # Choose exactly one supported sink for Houston audit logging:
-    # - CloudWatch on EKS
-    # - GCP Cloud Logging on GKE
-    # - External Elasticsearch from EKS or GKE
-    logging:
-      loggingSidecar:
-        enabled: false
-
-        securityContext:
-          runAsNonRoot: true
-          allowPrivilegeEscalation: false
-          runAsUser: 65532
-          capabilities:
-            drop:
-              - ALL
-
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "50m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
-
-        cloudwatch:
-          enabled: false
-          region: ""
-          logGroupName: "/astronomer/houston/audit"
-          useIRSA: true
-          secretName: "houston-cloudwatch-creds"
-
-        gcpCloudLogging:
-          enabled: false
-          projectId: ""
-          logId: "houston-audit"
-          resource:
-            type: "k8s_container"
-            location: ""
-            clusterName: ""
-          severityKey: "level"
-          useWorkloadIdentity: true
-          credentialsSecretName: "houston-gcp-logging-creds"
-          credentialsSecretKey: "key.json"
-
-        elasticsearch:
-          enabled: false
-          # External endpoint URL for the Elasticsearch cluster.
-          # This must be set explicitly when Elasticsearch sink support is enabled.
-          endpoint: ~
-          index: "houston-audit-%Y.%m.%d"
-          apiVersion: "v8"
-          auth:
-            strategy: "basic"
-            secretName: "houston-elasticsearch-creds"
-          tls:
-            enabled: false
-            caSecretName: ""
-
     resources:
       requests:
         cpu: "500m"
@@ -594,9 +381,6 @@ astronomer:
       limits:
         cpu: "1000m"
         memory: "2048Mi"
-
-    strictSchemaCheck:
-      enabled: true
 
   commander:
     resources:
@@ -703,7 +487,6 @@ grafana:
 #################################
 prometheus:
   podLabels: {}
-
   # Data retention
   retention: 15d
 
@@ -723,10 +506,10 @@ prometheus:
     resources:
       limits:
         cpu: 100m
-        memory: 128Mi
+        memory: 25Mi
       requests:
         cpu: 100m
-        memory: 128Mi
+        memory: 25Mi
 
   filesdReloader:
     resources:
@@ -888,19 +671,3 @@ kube-state:
     limits:
       cpu: "500m"
       memory: "1024Mi"
-
-#################################
-## External Secrets configuration
-#################################
-external-secrets:
-  # Enable external-secrets to install ESO CRDs needed for dataPlaneFailover
-  enabled: false
-
-#################################
-## Airflow Operator configuration
-#################################
-airflow-operator:
-  # Have the operator watch your scaling objects, so a change or deletion made outside the
-  # platform is corrected. Requires KEDA. Separate from global.keda.enabled above, which
-  # creates the identity KEDA presents.
-  kedaEnabled: false
