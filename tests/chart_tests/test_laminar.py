@@ -597,3 +597,36 @@ class TestLaminar:
         }
         paths = apiserver_ingress["spec"]["rules"][0]["http"]["paths"]
         assert len(paths) == 1
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_privateca_enabled(self, kube_version, plane_mode):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"privateCaCerts": ["private-root-ca"], "laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+        apiserver_deployment = by_kind_and_name["deployment_api_server"]
+        c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
+        apiserver_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
+            apiserver_deployment,
+        )
+        volume_search_result = jmespath.search(
+            "spec.template.spec.volumes[?name == 'private-root-ca']",
+            apiserver_deployment,
+        )
+        expected_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/usr/local/share/ca-certificates/private-root-ca.crt",
+                    "name": "private-root-ca",
+                    "subPath": "cert.pem",
+                }
+            ]
+        ]
+        expected_volume_result = [{"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}]
+        assert volume_mount_search_result == expected_volume_mounts_result
+        assert volume_search_result == expected_volume_result
+        assert apiserver_container_env["SSL_CERT_DIR"] == "/etc/ssl/certs"
