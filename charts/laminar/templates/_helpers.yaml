@@ -190,6 +190,26 @@ idempotent, which is the same contract houston's copy already has.
       value: "true"
 {{- end }}
 
+{{- define "laminar.sslCertCopierInitContainer" -}}
+- name: etc-ssl-certs-copier
+  image: {{ include "laminar.image" . }}
+  imagePullPolicy: {{ .Values.images.laminar.pullPolicy }}
+  securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 4 }}
+  resources: {{- toYaml .Values.apiServer.resources | nindent 4 }}
+  command:
+    - sh
+    - -c
+    - |
+      if [ -d /etc/ssl/certs ]; then
+        cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+      else
+        echo "No /etc/ssl/certs directory found, skipping copy."
+      fi
+  volumeMounts:
+    - name: etc-ssl-certs
+      mountPath: /etc/ssl/certs_copy
+{{- end }}
+
 {{/*
 The secret holding laminar's database connection, under a "connection" key.
 
@@ -201,7 +221,6 @@ naming one without the other leaves laminar waiting on a secret nothing creates.
 {{ default (printf "%s-laminar-backend" .Release.Name) .Values.databaseBootstrapper.backendSecretName }}
 {{- end }}
 
-
 {{- define "laminar.baseDomain" -}}
 {{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
 {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
@@ -209,3 +228,23 @@ naming one without the other leaves laminar waiting on a secret nothing creates.
 {{ .Values.global.baseDomain }}
 {{- end }}
 {{- end -}}
+
+{{- define "laminar.custom_ca_volume_mounts" }}
+{{ if .Values.global.privateCaCerts }}
+{{- range $secret_name := (.Values.global.privateCaCerts) }}
+- name: {{ $secret_name }}
+  mountPath: /usr/local/share/ca-certificates/{{ $secret_name }}.crt
+  subPath: cert.pem
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "laminar.custom_ca_volumes"}}
+{{ if .Values.global.privateCaCerts }}
+{{- range .Values.global.privateCaCerts }}
+- name: {{ . }}
+  secret:
+    secretName: {{ . }}
+{{- end }}
+{{- end }}
+{{- end }}
