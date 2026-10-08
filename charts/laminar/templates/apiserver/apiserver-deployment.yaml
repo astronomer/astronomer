@@ -72,6 +72,8 @@ spec:
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
+            - mountPath: /tmp
+              name: tmp
             {{- include "laminar.envVolumeMount" . | nindent 12 }}
             {{- include "laminar.custom_ca_volume_mounts" . | indent 12  }}
             {{- if .Values.extraVolumeMounts }}
@@ -80,6 +82,8 @@ spec:
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
+        - emptyDir: {}
+          name: tmp
         {{- include "laminar.envVolume" . | nindent 8 }}
         {{- include "laminar.custom_ca_volumes" . | indent 8  }}
         {{- if .Values.extraVolumes }}
