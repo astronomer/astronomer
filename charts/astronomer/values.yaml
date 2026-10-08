@@ -580,8 +580,8 @@ dpLink:
     automountServiceAccountToken: true
 
   # -- Number of DP-Link replicas
-  # @default -- 3
-  replicas: 3
+  # @default -- 2
+  replicas: 2
 
   # -- Claim interval in seconds
   # @default -- 30

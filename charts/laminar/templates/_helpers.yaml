@@ -200,3 +200,12 @@ naming one without the other leaves laminar waiting on a secret nothing creates.
 {{ define "laminar.backend.secret" -}}
 {{ default (printf "%s-laminar-backend" .Release.Name) .Values.databaseBootstrapper.backendSecretName }}
 {{- end }}
+
+
+{{- define "laminar.baseDomain" -}}
+{{- if and (eq .Values.global.plane.mode "data") .Values.global.plane.domainPrefix -}}
+{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+{{ .Values.global.baseDomain }}
+{{- end }}
+{{- end -}}

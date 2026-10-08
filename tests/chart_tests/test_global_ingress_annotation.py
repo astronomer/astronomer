@@ -5,6 +5,8 @@ import pytest
 from tests import git_root_dir, supported_k8s_versions
 from tests.utils.chart import render_chart
 
+FEATURE_GATED_INGRESS = ("external-es-proxy-ingress.yaml", "apiserver-ingress.yaml")
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestGlobalIngressAnnotation:
@@ -13,7 +15,7 @@ class TestGlobalIngressAnnotation:
 
         all_ingress_files = [str(x.relative_to(git_root_dir)) for x in Path(git_root_dir).rglob("*ingress*.yaml")]
 
-        always_rendered_ingress = [f for f in all_ingress_files if "external-es-proxy-ingress.yaml" not in f]
+        always_rendered_ingress = [f for f in all_ingress_files if all(excluded not in f for excluded in FEATURE_GATED_INGRESS)]
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
@@ -49,7 +51,7 @@ class TestGlobalIngressAnnotation:
         """Test global ingress annotation overrides for platform ingress."""
 
         all_ingress_files = [str(x.relative_to(git_root_dir)) for x in Path(git_root_dir).rglob("*ingress*.yaml")]
-        always_rendered_ingress = [f for f in all_ingress_files if "external-es-proxy-ingress.yaml" not in f]
+        always_rendered_ingress = [f for f in all_ingress_files if all(excluded not in f for excluded in FEATURE_GATED_INGRESS)]
 
         custom_class = "custom-ingress-class"
         docs = render_chart(
@@ -86,7 +88,7 @@ class TestGlobalIngressAnnotation:
         """Without an override, kubernetes.io/ingress.class falls back to the platform default."""
 
         all_ingress_files = [str(x.relative_to(git_root_dir)) for x in Path(git_root_dir).rglob("*ingress*.yaml")]
-        always_rendered_ingress = [f for f in all_ingress_files if "external-es-proxy-ingress.yaml" not in f]
+        always_rendered_ingress = [f for f in all_ingress_files if all(excluded not in f for excluded in FEATURE_GATED_INGRESS)]
 
         docs = render_chart(
             kube_version=kube_version,
@@ -96,3 +98,23 @@ class TestGlobalIngressAnnotation:
         assert len(docs) == 6
         for doc in docs:
             assert doc["metadata"]["annotations"]["kubernetes.io/ingress.class"].endswith("-nginx")
+
+    def test_global_ingress_with_laminar_ingress(self, kube_version):
+        """Laminar's data-plane ingress propagates global annotations once the feature is enabled."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "laminar": {"enabled": True},
+                    "extraAnnotations": {"route.openshift.io/termination": "passthrough"},
+                },
+            },
+            show_only=["charts/laminar/templates/apiserver/apiserver-ingress.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Ingress"
+        assert doc["apiVersion"] == "networking.k8s.io/v1"
+        assert doc["metadata"]["annotations"]["route.openshift.io/termination"] == "passthrough"
+        assert doc["metadata"]["annotations"]["kubernetes.io/ingress.class"].endswith("-nginx")
