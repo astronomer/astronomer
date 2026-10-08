@@ -9,7 +9,7 @@ tolerations: []
 images:
   alertmanager:
     repository: quay.io/astronomer/ap-alertmanager
-    tag: 0.34.1-1
+    tag: 0.34.1-2
     pullPolicy: IfNotPresent
 
 podSecurityContext:
@@ -25,8 +25,6 @@ securityContext:
   runAsUser: 65534
 
 serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
   # Specifies whether a service account should be created
   create: false
   # Annotations to add to the service account
@@ -64,11 +62,6 @@ readinessProbe: {}
   #   port: {{ .Values.ports.http }}
   # initialDelaySeconds: 30
   # timeoutSeconds: 30
-
-startupProbe: {}
-
-authProxy:
-  startupProbe: {}
 
 ports:
   http: 9093
