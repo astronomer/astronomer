@@ -6,7 +6,7 @@ import pytest
 from deepmerge import always_merger
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_containers_by_name, get_env_vars_dict
+from tests.utils import get_containers_by_name, get_docs_by_kind_and_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -19,6 +19,7 @@ def _templates(subdir=""):
 
 LAMINAR_TEMPLATES = _templates()
 LAMINAR_HYPEVISOR_TEMPLATES = _templates("hypervisor")
+LAMINAR_APISERVER_TEMPLATES = _templates("apiserver")
 LAMINAR_BOOTSTRAPPER_TEMPLATES = _templates("bootstrapper")
 LAMINAR_ENV_CONFIGMAP_TEMPLATE = "charts/laminar/templates/configmap.yaml"
 
@@ -91,7 +92,8 @@ class TestLaminar:
             show_only=[*LAMINAR_HYPEVISOR_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
         )
         assert len(docs) == 11
-        hypervisor_deployment = docs[0]
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+        hypervisor_deployment = by_kind_and_name["deployment_hypervisor"]
         assert hypervisor_deployment["apiVersion"] == "apps/v1"
         assert hypervisor_deployment["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-hypervisor"
@@ -112,7 +114,7 @@ class TestLaminar:
             "key": "tls.crt",
         }
 
-        hypervisor_service = docs[4]
+        hypervisor_service = by_kind_and_name["service_hypervisor"]
         assert hypervisor_service["kind"] == "Service"
         assert hypervisor_service["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_service["metadata"]["labels"] == {
@@ -130,7 +132,7 @@ class TestLaminar:
         ]
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
-            docs[0],
+            hypervisor_deployment,
         )
         expected_hypervisor_volume_mounts_result = [
             [
@@ -144,7 +146,7 @@ class TestLaminar:
         ]
         assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
 
-        env_lines = docs[10]["data"]["laminar.env"].strip().splitlines()
+        env_lines = by_kind_and_name["configmap_laminar_env"]["data"]["laminar.env"].strip().splitlines()
         env_vars = dict(line.split("=", 1) for line in env_lines)
         assert env_vars == {
             "laminar_scaling__dry_run_strategy": "NEVER",
@@ -509,3 +511,89 @@ class TestLaminar:
 
         assert "laminar_scaling__keda_namespace=keda-cluster" in env
         assert "keda-system" not in env
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_apiserver_defaults_when_enabled(self, kube_version, plane_mode):
+        """Test that laminar apiserver renders only when the plane is data or unified."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        assert len(docs) == 11
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+        apiserver_deployment = by_kind_and_name["deployment_api_server"]
+        assert apiserver_deployment["apiVersion"] == "apps/v1"
+        assert apiserver_deployment["metadata"]["name"] == "release-name-api-server"
+        assert apiserver_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-api-server"
+        c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
+        assert set(c_by_name) == {"apiserver", "laminar-bootstrapper"}
+        assert c_by_name["apiserver"]["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
+        assert c_by_name["apiserver"]["resources"] == {
+            "requests": {"cpu": "400m", "memory": "256Mi"},
+            "limits": {"cpu": "1", "memory": "1Gi"},
+        }
+        hypervisor_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
+        assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
+        assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+
+        apiserver_service = by_kind_and_name["service_api_server"]
+        assert apiserver_service["kind"] == "Service"
+        assert apiserver_service["metadata"]["name"] == "release-name-api-server"
+        assert apiserver_service["metadata"]["labels"] == {
+            "component": "apiserver",
+            "release": "release-name",
+            "chart": "laminar-0.12.0",
+            "heritage": "Helm",
+            "tier": "laminar",
+            "plane": plane_mode,
+            "app.kubernetes.io/name": "apiserver",
+        }
+        assert apiserver_service["spec"]["type"] == "ClusterIP"
+        assert apiserver_service["spec"]["ports"] == [
+            {"name": "http", "protocol": "TCP", "port": 8000, "targetPort": "http", "appProtocol": "http"},
+        ]
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
+            apiserver_deployment,
+        )
+        expected_hypervisor_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/laminar.env",
+                    "name": "laminar-env",
+                    "subPath": "laminar.env",
+                    "readOnly": True,
+                }
+            ]
+        ]
+        assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
+
+        env_lines = by_kind_and_name["configmap_laminar_env"]["data"]["laminar.env"].strip().splitlines()
+        env_vars = dict(line.split("=", 1) for line in env_lines)
+        assert env_vars == {
+            "laminar_scaling__dry_run_strategy": "NEVER",
+            "laminar_apply_custom_ddl": "True",
+            "laminar_hypervisor__enable_healers": "False",
+            "laminar_hypervisor__enable_health_incidents": "False",
+            "laminar_hypervisor__configmap_metrics_enabled": "False",
+            "laminar_hypervisor__configmap_metrics_use_informer": "False",
+            "laminar_hypervisor__queued_task_second_threshold": "480",
+            "laminar_hypervisor__disabled_metrics_csv": '""',
+            "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
+        }
+
+        apiserver_ingress = by_kind_and_name["ingress_laminar_ingress"]
+        assert apiserver_ingress["apiVersion"] == "networking.k8s.io/v1"
+        assert apiserver_ingress["kind"] == "Ingress"
+        assert apiserver_ingress["metadata"]["name"] == "release-name-laminar-ingress"
+        assert apiserver_ingress["metadata"]["labels"] == {
+            "component": "laminar-ingress",
+            "release": "release-name",
+            "chart": "laminar-0.12.0",
+            "heritage": "Helm",
+            "tier": "laminar",
+            "plane": plane_mode,
+        }
+        paths = apiserver_ingress["spec"]["rules"][0]["http"]["paths"]
+        assert len(paths) == 1
