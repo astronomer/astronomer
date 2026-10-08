@@ -22,6 +22,7 @@
   runs it ahead of the post-upgrade houston-upgrade-deployments hook (weight "1").
 */}}
 {{- if and (eq (include "astronomer.controlPlaneEnabled" .) "true") .Values.global.controlPlaneHA.enabled }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
@@ -63,7 +64,7 @@ spec:
         {{- end }}
       {{- end }}
     spec:
-      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
@@ -110,11 +111,7 @@ spec:
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           env:
-            - name: BOOTSTRAP_DB
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
+            {{- include "astronomer.dbBootstrapper.secretEnv" $ | nindent 12 }}
             - name: SCHEMA_NAME
               value: {{ .Values.global.houston.database.schemaName | quote }}
             {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
@@ -141,6 +138,10 @@ spec:
               mountPath: /tmp
             - name: tmp
               mountPath: /houston/node_modules/.cache
+            {{- include "astronomer.dbBootstrapper.secretVolumeMount" $ | nindent 12 }}
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- end }}
       {{- end }}
       containers:
         - name: refresh-cp-chart-version-job
@@ -175,12 +176,18 @@ spec:
             - name: tmp
               mountPath: /houston/node_modules/.cache
           {{- include "houston_volume_mounts" . | indent 12 }}
+          {{- include "houston_secret_volume_mounts" . | indent 12 }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        {{- /* Same guard as the initContainers: only houston-bootstrapper mounts it. */}}
+        {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+        {{- include "astronomer.dbBootstrapper.secretVolume" $ | nindent 8 }}
+        {{- end }}
         {{- include "houston_volumes" . | indent 8 }}
+        {{- include "houston_secret_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
 {{- end }}

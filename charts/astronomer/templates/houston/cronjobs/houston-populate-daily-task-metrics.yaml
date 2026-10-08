@@ -41,7 +41,7 @@ spec:
           {{- end }}
           {{- end }}
         spec:
-          securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 12 }}
+          securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston) | fromYaml)) | nindent 12 }}
           serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
           nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
           affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
@@ -82,6 +82,7 @@ spec:
                 - name: tmp
                   mountPath: /houston/node_modules/.cache
                 {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "houston_secret_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
@@ -106,6 +107,7 @@ spec:
             - name: tmp
               emptyDir: {}
             {{- include "houston_volumes" . | indent 12 }}
+            {{- include "houston_secret_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
 {{- end }}
 {{- end }}

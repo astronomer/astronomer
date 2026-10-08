@@ -80,6 +80,40 @@ global:
     # current sessions aren't invalidated.
     cookieName: ~
 
+  # Platform-wide default for loading secrets from files mounted into the pod
+  # instead of injecting them with valueFrom.secretKeyRef. Each component may
+  # override this with its own `secretsFromFiles.enabled`. Components whose
+  # image cannot read secrets from files keep using environment variables
+  # regardless of this setting.
+  secretsFromFiles:
+    # -- Load secrets from mounted files instead of environment variables
+    # @default -- false
+    enabled: false
+    # -- Supplementary group applied to pods that read secrets from files, so a
+    # 0440 root-owned secret file is readable by the non-root process and by no
+    # one else. Must match a group the component's image runs in. Ignored on
+    # OpenShift, which allocates its own fsGroup per namespace.
+    # @default -- 1000
+    fsGroup: 1000
+
+  # The ap-db-bootstrapper init containers: houston, houston-worker and the houston
+  # hook Jobs, commander's flightdeck-bootstrapper, grafana and laminar. They share
+  # one image, so they share one toggle, global because they span three subcharts.
+  dbBootstrapper:
+    secretsFromFiles:
+      # -- Read BOOTSTRAP_DB from a mounted file instead of injecting it with
+      # valueFrom.secretKeyRef. Explicitly false, NOT inherited from
+      # `global.secretsFromFiles.enabled`, because the pinned ap-db-bootstrapper image
+      # has no file loader: with this on, the chart drops BOOTSTRAP_DB from the
+      # environment and that image fails on a missing --bootstrap-db. Change this
+      # default to ~ (inherit) in the same change that bumps `images.dbBootstrapper.tag`
+      # to a release with the loader, in every subchart that pins one. Until then, opt
+      # in by setting it to true alongside a loader-bearing image tag. Setting it to ~
+      # in your own values does not work: Helm keeps this default for a null override
+      # under `global`.
+      # @default -- false
+      enabled: false
+
   # Labels to add to every pod
   podLabels: {}
 
@@ -383,6 +417,14 @@ global:
   # External ES logging
   customLogging:
     enabled: false
+    # -- Read the Elasticsearch credentials and AWS keys from mounted files
+    # instead of injecting them with valueFrom.secretKeyRef. The esproxy reads
+    # its file in nginx's init_by_lua (once at startup, not per request); the
+    # awsproxy reads its files in a shell preamble before exec'ing aws-es-proxy.
+    # Leave unset to inherit `global.secretsFromFiles.enabled`.
+    # @default -- inherits global.secretsFromFiles.enabled
+    secretsFromFiles:
+      enabled: ~
     scheme: https
     host: ""
     port: ""

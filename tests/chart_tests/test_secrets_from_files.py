@@ -1,0 +1,2327 @@
+"""Tests for loading secrets from mounted files instead of environment variables.
+
+The feature is cross-cutting: one toggle changes ~16 workloads, so most of these
+tests sweep the whole rendered chart rather than a single template.
+"""
+
+import base64
+import re
+
+import pytest
+import yaml
+
+from tests import newest_supported_kube_version, supported_k8s_versions
+from tests.utils import get_containers_by_name, get_env_vars_dict
+from tests.utils.chart import render_chart
+
+# Secret env vars the houston family loads from files when the feature is on.
+HOUSTON_SECRET_ENV_VARS = {
+    "DATABASE_URL",
+    "DATABASE__CONNECTION",
+    "DEPLOYMENTS__DATABASE__CONNECTION",
+    "REGISTRY__AUTH_HEADER",
+}
+
+# Volumes that carry a secret a component reads from a file. Scoped to the two
+# Astronomer-authored loaders (houston-api and commander) deliberately: the
+# postgresql, vector and external-es-proxy groups mount their own secrets under
+# separate toggles and run as other UIDs, so tightening their modes needs its own
+# fsGroup verification per image. They are still on 0644.
+LOADER_SECRET_VOLUMES = {
+    "commander-secrets",
+    "db-bootstrapper-secret",
+    "flightdeck-dsn-secret",
+    "houston-secrets",
+    "houston-registry-auth-secret",
+    "navigator-secrets",
+    "dp-link-secrets",
+}
+
+SECRET_FILE_MODE = 0o440
+
+
+# Every cronjob in the houston family, so the sweeps cover them.
+ALL_CRONJOBS = {
+    "houston": {
+        "updateRuntimeCheck": {"enabled": True},
+        "updateCheck": {"enabled": True},
+        "cleanupAirflowDb": {"enabled": True},
+        "cleanupClusterAudits": {"enabled": True},
+        "cleanupDeployRevisions": {"enabled": True},
+        "cleanupDeployments": {"enabled": True},
+        "syncDataplaneClusters": {"enabled": True},
+    },
+    "navigator": {"enabled": True},
+    "dpLink": {"enabled": True},
+}
+
+FULL_VALUES = {
+    "global": {
+        "plane": {"mode": "unified"},
+        "metricsReporting": {"taskUsageMetrics": {"enabled": True}},
+    },
+    "astronomer": ALL_CRONJOBS,
+}
+
+
+def houston_family_pod_specs(docs):
+    """Yield (workload_name, pod_spec) for every houston-family workload."""
+    for doc in docs:
+        name = doc["metadata"]["name"]
+        if not any(part in name for part in ("houston", "navigator", "dp-link")):
+            continue
+        if doc["kind"] in ("Deployment", "StatefulSet", "Job"):
+            yield name, doc["spec"]["template"]["spec"]
+        elif doc["kind"] == "CronJob":
+            yield name, doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+
+
+def all_containers(spec):
+    """Every container in a pod spec, init containers included."""
+    return (spec.get("containers") or []) + (spec.get("initContainers") or [])
+
+
+def secret_env_injections(docs):
+    """All (workload, container, env) triples still using valueFrom.secretKeyRef."""
+    return [
+        (name, container["name"], env["name"])
+        for name, spec in houston_family_pod_specs(docs)
+        for container in all_containers(spec)
+        for env in container.get("env") or []
+        if env["name"] in HOUSTON_SECRET_ENV_VARS and "valueFrom" in env
+    ]
+
+
+# The ap-db-bootstrapper toggle defaults to an explicit false rather than inheriting,
+# because the pinned image has no loader. "Feature fully on" sets it explicitly too --
+# a null would not inherit, see test_db_bootstrapper_null_override_does_not_inherit --
+# so every sweep below also covers the bootstrapper init containers.
+def db_bootstrapper_toggle(enabled):
+    return {"secretsFromFiles": {"enabled": enabled}}
+
+
+def with_secrets_from_files(enabled=True, **overrides):
+    """FULL_VALUES with the global toggle set, plus any extra overrides."""
+    values = {
+        "global": {
+            **FULL_VALUES["global"],
+            "secretsFromFiles": {"enabled": enabled},
+            "dbBootstrapper": db_bootstrapper_toggle(enabled),
+        },
+        "astronomer": {**FULL_VALUES["astronomer"]},
+    }
+    for key, value in overrides.items():
+        values["astronomer"][key] = {**values["astronomer"].get(key, {}), **value}
+    return values
+
+
+class TestSecretsFromFilesDefaults:
+    """With the feature off, nothing about the chart may change."""
+
+    def test_secret_env_vars_still_injected(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=FULL_VALUES)
+        injections = secret_env_injections(docs)
+        assert injections, "expected the default chart to inject secrets as env vars"
+
+        # Nothing opts into the file-based path.
+        for _name, spec in houston_family_pod_specs(docs):
+            for container in all_containers(spec):
+                env_vars = get_env_vars_dict(container.get("env") or [])
+                assert "HOUSTON_SECRETS_FROM_FILES" not in env_vars
+                assert "REGISTRY__AUTH_HEADER_FILE" not in env_vars
+            volume_names = {v["name"] for v in spec.get("volumes") or []}
+            assert not {"houston-secrets", "navigator-secrets", "dp-link-secrets"} & volume_names
+
+
+class TestSecretsFromFilesEnabled:
+    """With the feature on, no houston-family secret may reach the pod spec."""
+
+    def test_no_secret_env_vars_remain(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+        assert secret_env_injections(docs) == []
+
+    def test_every_workload_opts_in_and_mounts_its_secrets(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+        # API, worker, two helm hooks, nine cronjobs, navigator and dp-link. The
+        # CP-HA-only houston-cp-refresh hook is covered by its own test below.
+        workloads = list(houston_family_pod_specs(docs))
+        assert len(workloads) >= 15, f"expected the whole houston family, only rendered {len(workloads)}"
+
+        for name, spec in workloads:
+            volumes = {v["name"]: v for v in spec.get("volumes") or []}
+            secret_volume = next(
+                (v for v in ("houston-secrets", "navigator-secrets", "dp-link-secrets") if v in volumes),
+                None,
+            )
+            # Every houston-family workload must be wired; a new one that isn't
+            # would silently keep reading secrets from the environment.
+            assert secret_volume, f"{name} has no file-based secret volume"
+
+            # The projected volume names each file after the env var it replaces.
+            sources = volumes[secret_volume]["projected"]["sources"]
+            paths = {item["path"] for source in sources for item in source["secret"]["items"]}
+            assert "DATABASE_URL" in paths, f"{name} does not project DATABASE_URL"
+
+            # Whichever container reads the secrets must set the gate flag.
+            mounting = [c for c in spec["containers"] if any(m["name"] == secret_volume for m in c.get("volumeMounts") or [])]
+            assert mounting, f"{name} defines {secret_volume} but no container mounts it"
+            for container in mounting:
+                env_vars = get_env_vars_dict(container["env"])
+                assert env_vars["HOUSTON_SECRETS_FROM_FILES"] == "true"
+                mount = next(m for m in container["volumeMounts"] if m["name"] == secret_volume)
+                assert mount["mountPath"] == "/etc/astronomer/secrets"
+                assert mount["readOnly"] is True
+
+    def test_no_dangling_mounts_or_duplicate_mount_paths(self):
+        """A mount with no matching volume, or two volumes on one path, fails to schedule."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+        for name, spec in houston_family_pod_specs(docs):
+            volume_names = {v["name"] for v in spec.get("volumes") or []}
+            for container in all_containers(spec):
+                mounts = container.get("volumeMounts") or []
+                for mount in mounts:
+                    assert mount["name"] in volume_names, (
+                        f"{name}/{container['name']} mounts {mount['name']}, which is not a pod volume"
+                    )
+                paths = [m["mountPath"] for m in mounts]
+                assert len(paths) == len(set(paths)), f"{name}/{container['name']} mounts two volumes on one path: {paths}"
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+class TestHoustonSecretsFromFiles:
+    show_only = ["charts/astronomer/templates/houston/api/houston-deployment.yaml"]
+
+    def test_houston_projects_both_connection_env_var_names(self, kube_version):
+        """DATABASE__CONNECTION and DATABASE_URL share one secret key but need separate files."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=with_secrets_from_files(),
+            show_only=self.show_only,
+        )
+        volumes = {v["name"]: v for v in docs[0]["spec"]["template"]["spec"]["volumes"]}
+        sources = volumes["houston-secrets"]["projected"]["sources"]
+
+        backend = next(s for s in sources if s["secret"]["items"][0]["path"] == "DATABASE__CONNECTION")
+        assert backend["secret"]["items"] == [
+            {"key": "connection", "path": "DATABASE__CONNECTION"},
+            {"key": "connection", "path": "DATABASE_URL"},
+        ]
+
+    def test_registry_auth_header_uses_its_own_volume(self, kube_version):
+        """The API is the only consumer, so it must not land in the shared volume."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=with_secrets_from_files(),
+            show_only=self.show_only,
+        )
+        spec = docs[0]["spec"]["template"]["spec"]
+        volumes = {v["name"]: v for v in spec["volumes"]}
+
+        shared_paths = {
+            item["path"] for source in volumes["houston-secrets"]["projected"]["sources"] for item in source["secret"]["items"]
+        }
+        assert "REGISTRY__AUTH_HEADER" not in shared_paths
+
+        assert volumes["houston-registry-auth-secret"]["secret"] == {
+            "secretName": "release-name-registry-auth-key",
+            "items": [{"key": "token", "path": "token"}],
+            "defaultMode": SECRET_FILE_MODE,
+        }
+
+        houston = get_containers_by_name(docs[0])["houston"]
+        env_vars = get_env_vars_dict(houston["env"])
+        assert "REGISTRY__AUTH_HEADER" not in env_vars
+        assert env_vars["REGISTRY__AUTH_HEADER_FILE"] == "/etc/houston/secrets/registry/token"
+        mount = next(m for m in houston["volumeMounts"] if m["name"] == "houston-registry-auth-secret")
+        assert mount == {
+            "name": "houston-registry-auth-secret",
+            "mountPath": "/etc/houston/secrets/registry",
+            "readOnly": True,
+        }
+
+    def test_registry_auth_header_not_mounted_into_cronjobs(self, kube_version):
+        """Keep the token out of the workloads that never read it."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=with_secrets_from_files(),
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"],
+        )
+        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert "houston-registry-auth-secret" not in {v["name"] for v in spec["volumes"]}
+
+    def test_wait_for_db_drops_its_unused_database_url(self, kube_version):
+        """The init container runs a shell entrypoint that never reads DATABASE_URL."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=with_secrets_from_files(),
+            show_only=self.show_only,
+        )
+        containers = get_containers_by_name(docs[0], include_init_containers=True)
+        assert "DATABASE_URL" not in get_env_vars_dict(containers["houston-wait-for-db"]["env"])
+
+    def test_deployments_connection_not_projected_when_set_inline(self, kube_version):
+        """Don't mount a file for a secret the chart isn't using."""
+        values = with_secrets_from_files()
+        values["astronomer"]["houston"] = {
+            **values["astronomer"]["houston"],
+            "config": {"deployments": {"database": {"connection": {"host": "inline-host"}}}},
+        }
+        docs = render_chart(kube_version=kube_version, values=values, show_only=self.show_only)
+
+        volumes = {v["name"]: v for v in docs[0]["spec"]["template"]["spec"]["volumes"]}
+        paths = {
+            item["path"] for source in volumes["houston-secrets"]["projected"]["sources"] for item in source["secret"]["items"]
+        }
+        assert "DEPLOYMENTS__DATABASE__CONNECTION" not in paths
+        assert "DATABASE_URL" in paths
+
+
+@pytest.mark.parametrize(
+    "component,template,container,secret_values",
+    [
+        (
+            "houston",
+            "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+            "houston",
+            {"secret": [{"envName": "EMAIL__SMTP_URL", "secretName": "my-smtp", "secretKey": "connection"}]},
+        ),
+        (
+            "navigator",
+            "charts/astronomer/templates/navigator/navigator-deployment.yaml",
+            "navigator",
+            {"secret": [{"envName": "NAV_TOKEN", "secretName": "nav-secret"}]},
+        ),
+        (
+            "dpLink",
+            "charts/astronomer/templates/dp-link/dp-link-deployment.yaml",
+            "dp-link",
+            {"secret": [{"envName": "DPL_TOKEN", "secretName": "dpl-secret"}]},
+        ),
+    ],
+    ids=["houston", "navigator", "dpLink"],
+)
+class TestOperatorDefinedSecrets:
+    """Operator-defined secret env vars, whose names the loader can't know at build time."""
+
+    def test_secret_env_replaced_by_file_and_extra_list(self, component, template, container, secret_values):
+        values = with_secrets_from_files(**{component: secret_values})
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values, show_only=[template])
+
+        env_name = secret_values["secret"][0]["envName"]
+        expected_key = secret_values["secret"][0].get("secretKey", "value")
+
+        target = get_containers_by_name(docs[0])[container]
+        env_vars = get_env_vars_dict(target["env"])
+        assert env_name not in env_vars, "the operator's secret should no longer be an env var"
+        assert env_vars["HOUSTON_SECRETS_FROM_FILES_EXTRA"] == env_name
+
+        spec = docs[0]["spec"]["template"]["spec"]
+        sources = next(v for v in spec["volumes"] if v["name"].endswith("-secrets"))["projected"]["sources"]
+        operator_source = next(s for s in sources if s["secret"]["name"] == secret_values["secret"][0]["secretName"])
+        assert operator_source["secret"]["items"] == [{"key": expected_key, "path": env_name}]
+
+    def test_no_extra_list_when_no_operator_secrets(self, component, template, container, secret_values):
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=with_secrets_from_files(),
+            show_only=[template],
+        )
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])[container]["env"])
+        assert "HOUSTON_SECRETS_FROM_FILES_EXTRA" not in env_vars
+
+
+@pytest.mark.parametrize(
+    "houston_enabled,dplink_enabled",
+    [(False, False), (False, True), (True, False), (True, True)],
+)
+def test_houston_and_dplink_toggles_are_independent(houston_enabled, dplink_enabled):
+    """dp-link shares houston_volumes, so its toggle must not affect houston's mount (or vice versa).
+
+    Getting this wrong yields either two volumes on /etc/astronomer/secrets or a dropped env
+    var with no file to replace it.
+    """
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values={
+            "global": {"plane": {"mode": "unified"}},
+            "astronomer": {
+                "dpLink": {"enabled": True, "secretsFromFiles": {"enabled": dplink_enabled}},
+                "houston": {"secretsFromFiles": {"enabled": houston_enabled}},
+            },
+        },
+        show_only=[
+            "charts/astronomer/templates/dp-link/dp-link-deployment.yaml",
+            "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+        ],
+    )
+
+    expected = {"dp-link": dplink_enabled, "houston": houston_enabled}
+    for doc in docs:
+        spec = doc["spec"]["template"]["spec"]
+        for container in spec["containers"]:
+            if container["name"] not in expected:
+                continue
+            on = expected[container["name"]]
+            mounts = [m["mountPath"] for m in container.get("volumeMounts") or []]
+            assert mounts.count("/etc/astronomer/secrets") == (1 if on else 0)
+            env_vars = get_env_vars_dict(container["env"])
+            assert ("HOUSTON_SECRETS_FROM_FILES" in env_vars) is on
+            assert ("DATABASE__CONNECTION" in env_vars) is not on
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (None, None, False),
+        (False, None, False),
+        (True, None, True),
+        (True, False, False),
+        (False, True, True),
+        (None, True, True),
+    ],
+)
+def test_houston_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """houston.secretsFromFiles.enabled overrides global.secretsFromFiles.enabled."""
+    values = {"global": {"plane": {"mode": "unified"}}, "astronomer": {}}
+    if global_enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": global_enabled}
+    if component_enabled is not None:
+        values["astronomer"]["houston"] = {"secretsFromFiles": {"enabled": component_enabled}}
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+    )
+    env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["houston"]["env"])
+    assert (env_vars.get("HOUSTON_SECRETS_FROM_FILES") == "true") is expected
+    assert ("DATABASE__CONNECTION" in env_vars) is not expected
+
+
+# Vector Sidecar
+#
+# Unlike the houston loader, this uses Vector's own native `secret` directory
+# backend, so it has its own toggle. Verified end to end against the pinned
+# ap-vector:0.53.0 image: the ES sink's Basic auth header decoded byte-for-byte
+# to the mounted file contents.
+
+# The chart allows exactly one sink per sidecar (houston.logging.loggingSidecar.validate),
+# so every case below runs once per credential-using sink rather than with both on.
+VECTOR_SINKS = {
+    "cloudwatch": {
+        "values": {"cloudwatch": {"enabled": True, "useIRSA": False, "region": "us-east-1"}},
+        "envs": {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"},
+        "items": [
+            {"key": "aws_access_key_id", "path": "aws_access_key_id"},
+            {"key": "aws_secret_access_key", "path": "aws_secret_access_key"},
+        ],
+        "env_auth": {"access_key_id": "${AWS_ACCESS_KEY_ID}"},
+        "file_auth": {
+            "access_key_id": "SECRET[cloudwatch.aws_access_key_id]",
+            "secret_access_key": "SECRET[cloudwatch.aws_secret_access_key]",
+        },
+    },
+    "elasticsearch": {
+        "values": {"elasticsearch": {"enabled": True, "endpoint": "https://es.example.com:9200"}},
+        "envs": {"ES_USERNAME", "ES_PASSWORD"},
+        "items": [
+            {"key": "username", "path": "username"},
+            {"key": "password", "path": "password"},
+        ],
+        "env_auth": {"password": "${ES_PASSWORD}"},
+        "file_auth": {
+            "strategy": "basic",
+            "user": "SECRET[elasticsearch.username]",
+            "password": "SECRET[elasticsearch.password]",
+        },
+    },
+}
+
+VECTOR_SECRET_ENVS = set().union(*(sink["envs"] for sink in VECTOR_SINKS.values()))
+
+VECTOR_TEMPLATES = [
+    (
+        "api",
+        "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+        "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+    ),
+    (
+        "worker",
+        "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+        "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
+    ),
+]
+
+
+def sidecar_values(sidecar, enabled=None):
+    """Chart values for an enabled audit sidecar, with an optional secretsFromFiles setting."""
+    sidecar = {"enabled": True, **sidecar}
+    if enabled is not None:
+        sidecar["secretsFromFiles"] = {"enabled": enabled}
+    return {
+        "global": {"plane": {"mode": "unified"}},
+        "astronomer": {"houston": {"logging": {"loggingSidecar": sidecar}}},
+    }
+
+
+def vector_values(sink, enabled=None):
+    """One credential-using sink on, with an optional secretsFromFiles setting."""
+    return sidecar_values(VECTOR_SINKS[sink]["values"], enabled)
+
+
+def vector_config(docs):
+    """The parsed vector.yaml out of whichever configmap is in docs."""
+    configmap = next(d for d in docs if d["kind"] == "ConfigMap")
+    return yaml.safe_load(configmap["data"]["vector.yaml"])
+
+
+@pytest.mark.parametrize("sink", list(VECTOR_SINKS))
+@pytest.mark.parametrize("label,deployment,configmap", VECTOR_TEMPLATES, ids=[t[0] for t in VECTOR_TEMPLATES])
+class TestVectorSidecarSecretsFromFiles:
+    def test_defaults_keep_env_vars(self, label, deployment, configmap, sink):
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=vector_values(sink),
+            show_only=[deployment, configmap],
+        )
+        vector = get_containers_by_name(next(d for d in docs if d["kind"] == "Deployment"))["vector"]
+        env_vars = get_env_vars_dict(vector["env"])
+        assert VECTOR_SINKS[sink]["envs"] <= set(env_vars)
+
+        config = vector_config(docs)
+        assert "secret" not in config
+        assert VECTOR_SINKS[sink]["env_auth"].items() <= config["sinks"][sink]["auth"].items()
+
+    def test_enabled_replaces_env_with_secret_placeholders(self, label, deployment, configmap, sink):
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=vector_values(sink, enabled=True),
+            show_only=[deployment, configmap],
+        )
+        doc = next(d for d in docs if d["kind"] == "Deployment")
+        spec = doc["spec"]["template"]["spec"]
+        vector = get_containers_by_name(doc)["vector"]
+        volume = f"vector-{sink}-secret"
+
+        # No credential ever reaches the pod spec.
+        assert not VECTOR_SECRET_ENVS & set(get_env_vars_dict(vector["env"]))
+
+        volumes = {v["name"]: v for v in spec["volumes"]}
+        assert volumes[volume]["secret"]["items"] == VECTOR_SINKS[sink]["items"]
+
+        mounts = {m["name"]: m for m in vector["volumeMounts"]}
+        assert mounts[volume]["mountPath"] == f"/etc/vector/secrets/{sink}"
+        assert mounts[volume]["readOnly"]
+
+        config = vector_config(docs)
+        assert config["sinks"][sink]["auth"] == VECTOR_SINKS[sink]["file_auth"]
+
+        # The backend's directory must match the mountPath it reads from.
+        assert config["secret"][sink]["path"] == mounts[volume]["mountPath"]
+
+    def test_backend_names_are_word_characters_only(self, label, deployment, configmap, sink):
+        """Vector's placeholder regex is SECRET\\[([[:word:]]+)\\....\\].
+
+        A hyphen in a backend name does not match, so the placeholder is left in
+        the config verbatim and Vector ships the literal string as a credential --
+        a silent failure. Confirmed against ap-vector:0.53.0.
+        """
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=vector_values(sink, enabled=True),
+            show_only=[deployment, configmap],
+        )
+        for backend in vector_config(docs)["secret"]:
+            assert re.fullmatch(r"\w+", backend), f"backend {backend!r} will not be substituted"
+
+    def test_every_backend_removes_trailing_whitespace(self, label, deployment, configmap, sink):
+        """Without this, the newline a Secret mount adds becomes a trailing space.
+
+        The value sits in a double-quoted YAML scalar, so the newline is folded to
+        a space rather than dropped, and the credential is silently wrong.
+        """
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=vector_values(sink, enabled=True),
+            show_only=[deployment, configmap],
+        )
+        for name, backend in vector_config(docs)["secret"].items():
+            assert backend["type"] == "directory"
+            assert backend["remove_trailing_whitespace"] is True, f"{name} would keep the trailing newline"
+
+    def test_config_change_rolls_the_pod(self, label, deployment, configmap, sink):
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=vector_values(sink, enabled=True),
+            show_only=[deployment],
+        )
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert "checksum/vector-config" in annotations
+
+
+@pytest.mark.parametrize("label,deployment,configmap", VECTOR_TEMPLATES, ids=[t[0] for t in VECTOR_TEMPLATES])
+@pytest.mark.parametrize(
+    "sidecar",
+    [
+        {"cloudwatch": {"enabled": True, "useIRSA": True, "region": "us-east-1"}},
+        {"elasticsearch": {"enabled": True, "endpoint": "https://es:9200", "auth": {"strategy": "none"}}},
+        {
+            "gcpCloudLogging": {
+                "enabled": True,
+                "projectId": "p",
+                "resource": {"location": "us-east4", "clusterName": "c"},
+            }
+        },
+    ],
+    ids=["cloudwatch_uses_irsa", "es_auth_not_basic", "only_gcp"],
+)
+def test_no_credentials_mounted_for_a_sink_that_needs_none(label, deployment, configmap, sidecar):
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=sidecar_values(sidecar, enabled=True),
+        show_only=[deployment, configmap],
+    )
+    spec = next(d for d in docs if d["kind"] == "Deployment")["spec"]["template"]["spec"]
+    assert "secret" not in vector_config(docs)
+    assert not {"vector-cloudwatch-secret", "vector-elasticsearch-secret"} & {v["name"] for v in spec["volumes"]}
+
+
+def test_vector_toggle_is_independent_of_houston_toggle():
+    """The sidecar uses Vector's native mechanism, not the houston loader."""
+    values = vector_values("cloudwatch", enabled=False)
+    values["astronomer"]["houston"]["secretsFromFiles"] = {"enabled": True}
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=[
+            "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+            "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+        ],
+    )
+    doc = next(d for d in docs if d["kind"] == "Deployment")
+    containers = get_containers_by_name(doc)
+
+    # houston moved to files, vector did not.
+    assert get_env_vars_dict(containers["houston"]["env"])["HOUSTON_SECRETS_FROM_FILES"] == "true"
+    assert VECTOR_SINKS["cloudwatch"]["envs"] <= set(get_env_vars_dict(containers["vector"]["env"]))
+    assert "secret" not in vector_config(docs)
+
+
+# ── PostgreSQL ─────────────────────────────────────────────────────────────────
+#
+# ap-postgresql is NOT a Bitnami image -- it is a Chainguard/Wolfi build running
+# docker-library's docker-entrypoint.sh, so the mechanism is that entrypoint's
+# file_env() helper and the var is POSTGRES_PASSWORD_FILE. POSTGRESQL_PASSWORD_FILE
+# does not exist in the image; verified by running ap-postgresql:17.9.0-1, where
+# that name leaves the DB uninitialised and the container exits 1.
+
+PG_STATEFULSETS = [
+    ("master", "charts/postgresql/templates/statefulset.yaml"),
+    ("slave", "charts/postgresql/templates/statefulset-slaves.yaml"),
+]
+
+PG_PASSWORD_FILE = "/etc/astronomer/secrets/postgresql-password"
+
+
+def pg_values(enabled=None, **postgresql):
+    values = {
+        "global": {"postgresql": {"enabled": True}},
+        "postgresql": {"postgresqlDatabase": "astrodb", "replication": {"enabled": True}, **postgresql},
+    }
+    if enabled is not None:
+        values["postgresql"]["secretsFromFiles"] = {"enabled": enabled}
+    return values
+
+
+@pytest.mark.parametrize("label,template", PG_STATEFULSETS, ids=[t[0] for t in PG_STATEFULSETS])
+class TestPostgresqlSecretsFromFiles:
+    def test_defaults_keep_env_vars(self, label, template):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=pg_values(), show_only=[template])
+        spec = docs[0]["spec"]["template"]["spec"]
+        postgres = next(c for c in spec["containers"] if "postgresql" in c["name"])
+        env_vars = get_env_vars_dict(postgres["env"])
+
+        assert env_vars["POSTGRES_PASSWORD"]["secretKeyRef"]["key"] == "postgresql-password"
+        assert "POSTGRES_PASSWORD_FILE" not in env_vars
+        assert "postgresql-password" not in {v["name"] for v in spec.get("volumes") or []}
+
+    def test_enabled_uses_the_file_env_var(self, label, template):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=pg_values(enabled=True), show_only=[template])
+        spec = docs[0]["spec"]["template"]["spec"]
+        postgres = next(c for c in spec["containers"] if "postgresql" in c["name"])
+        env_vars = get_env_vars_dict(postgres["env"])
+
+        assert env_vars["POSTGRES_PASSWORD_FILE"] == PG_PASSWORD_FILE
+        # The Bitnami-style name would be silently ignored by this image.
+        assert "POSTGRESQL_PASSWORD_FILE" not in env_vars
+
+        volumes = {v["name"]: v for v in spec["volumes"]}
+        assert volumes["postgresql-password"]["secret"]["items"] == [{"key": "postgresql-password", "path": "postgresql-password"}]
+        mount = next(m for m in postgres["volumeMounts"] if m["name"] == "postgresql-password")
+        assert mount["mountPath"] == PG_PASSWORD_FILE.rsplit("/", 1)[0]
+        assert mount["readOnly"] is True
+
+    @pytest.mark.parametrize("enabled", [None, False, True], ids=["unset", "off", "on"])
+    def test_password_and_password_file_are_never_both_set(self, label, template, enabled):
+        """The entrypoint's file_env() exits 1 if both are set, on every start.
+
+        Verified against ap-postgresql:17.9.0-1:
+          "error: both POSTGRES_PASSWORD and POSTGRES_PASSWORD_FILE are set
+           (but are exclusive)"
+        Emitting both would crash-loop the database, so this must stay either/or.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=pg_values(enabled=enabled), show_only=[template])
+        for container in docs[0]["spec"]["template"]["spec"]["containers"]:
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            assert not ("POSTGRES_PASSWORD" in env_vars and "POSTGRES_PASSWORD_FILE" in env_vars)
+
+    def test_replication_password_is_dropped_rather_than_filed(self, label, template):
+        """This image has no replication support at all, so the var is already unread.
+
+        Dropping it removes a secret from the pod spec; projecting it to a file
+        would create something nothing opens.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=pg_values(enabled=True), show_only=[template])
+        spec = docs[0]["spec"]["template"]["spec"]
+        postgres = next(c for c in spec["containers"] if "postgresql" in c["name"])
+        env_vars = get_env_vars_dict(postgres["env"])
+
+        assert "POSTGRES_REPLICATION_PASSWORD" not in env_vars
+        assert "POSTGRES_REPLICATION_PASSWORD_FILE" not in env_vars
+        projected = {item["path"] for v in spec["volumes"] if v["name"] == "postgresql-password" for item in v["secret"]["items"]}
+        assert "postgresql-replication-password" not in projected
+
+
+class TestPostgresqlMetricsSidecarSecretsFromFiles:
+    show_only = ["charts/postgresql/templates/statefulset.yaml"]
+
+    def test_defaults_keep_env_var(self):
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=pg_values(metrics={"enabled": True}),
+            show_only=self.show_only,
+        )
+        metrics = next(c for c in docs[0]["spec"]["template"]["spec"]["containers"] if c["name"] == "metrics")
+        assert get_env_vars_dict(metrics["env"])["DATA_SOURCE_PASS"]["secretKeyRef"]["key"] == "postgresql-password"
+        assert metrics["volumeMounts"] == []
+
+    def test_enabled_uses_data_source_pass_file(self):
+        """postgres_exporter's precedence is DATA_SOURCE_NAME > *_FILE > *, and it
+        TrimSpace's the file, so a Secret mount's trailing newline is handled."""
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=pg_values(enabled=True, metrics={"enabled": True}),
+            show_only=self.show_only,
+        )
+        spec = docs[0]["spec"]["template"]["spec"]
+        metrics = next(c for c in spec["containers"] if c["name"] == "metrics")
+        env_vars = get_env_vars_dict(metrics["env"])
+
+        assert env_vars["DATA_SOURCE_PASS_FILE"] == PG_PASSWORD_FILE
+        assert "DATA_SOURCE_PASS" not in env_vars
+        # DATA_SOURCE_NAME would take precedence over the file and silently win.
+        assert "DATA_SOURCE_NAME" not in env_vars
+
+        mount = next(m for m in metrics["volumeMounts"] if m["name"] == "postgresql-password")
+        assert mount["mountPath"] == PG_PASSWORD_FILE.rsplit("/", 1)[0]
+        assert mount["name"] in {v["name"] for v in spec["volumes"]}
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [(None, None, False), (True, None, True), (True, False, False), (False, True, True)],
+)
+def test_postgresql_toggle_override_precedence(global_enabled, component_enabled, expected):
+    values = pg_values(enabled=component_enabled)
+    if global_enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": global_enabled}
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/postgresql/templates/statefulset.yaml"],
+    )
+    postgres = next(c for c in docs[0]["spec"]["template"]["spec"]["containers"] if "postgresql" in c["name"])
+    env_vars = get_env_vars_dict(postgres["env"])
+    assert ("POSTGRES_PASSWORD_FILE" in env_vars) is expected
+    assert ("POSTGRES_PASSWORD" in env_vars) is not expected
+
+
+# ── external-es-proxy ──────────────────────────────────────────────────────────
+#
+# Neither image has a *_FILE convention, so both halves are chart-owned:
+#   esproxy  (ap-openresty)   -- nginx.conf and setenv.lua are mounted over the
+#                                image's copies via subPath, so the lua is ours.
+#                                The credential is read once in init_by_lua_block;
+#                                setenv.lua runs per request and must not do I/O.
+#   awsproxy (ap-awsesproxy)  -- aws-es-proxy uses the AWS SDK default credential
+#                                chain, so a shell preamble exports the values
+#                                before exec. The container already runs /bin/sh -c.
+#
+# Both verified against the pinned images: the esproxy set
+# "Basic ZXN1c2VyOmVzcGFzcw==" from a mounted file, and the preamble set both AWS
+# vars to the newline-stripped file contents.
+
+ESP_TEMPLATES = [
+    "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+    "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+    "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
+]
+
+
+def esp_values(enabled=None, **custom_logging):
+    logging_values = {
+        "enabled": True,
+        "host": "es.example.com",
+        "secretName": "my-es-creds",
+        "awsSecretName": "my-aws-creds",
+        **custom_logging,
+    }
+    if enabled is not None:
+        logging_values["secretsFromFiles"] = {"enabled": enabled}
+    return {"global": {"plane": {"mode": "unified"}, "customLogging": logging_values}}
+
+
+def esp_docs(enabled=None, **custom_logging):
+    return render_chart(
+        kube_version=newest_supported_kube_version,
+        values=esp_values(enabled, **custom_logging),
+        show_only=ESP_TEMPLATES,
+    )
+
+
+def esp_parts(docs):
+    deployment = next(d for d in docs if d["kind"] == "Deployment")
+    configs = {}
+    for d in docs:
+        if d["kind"] == "ConfigMap":
+            configs.update(d["data"])
+    return deployment, configs
+
+
+class TestExternalEsProxySecretsFromFiles:
+    def test_defaults_keep_env_vars(self):
+        deployment, configs = esp_parts(esp_docs())
+        spec = deployment["spec"]["template"]["spec"]
+        containers = {c["name"]: c for c in spec["containers"]}
+
+        esproxy_env = get_env_vars_dict(containers["external-es-proxy"]["env"])
+        assert esproxy_env["ES_SECRET_NAME"]["secretKeyRef"]["key"] == "elastic"
+
+        aws_env = get_env_vars_dict(containers["awsproxy"]["env"])
+        assert aws_env["AWS_ACCESS_KEY_ID"]["secretKeyRef"]["key"] == "aws_access_key"
+        assert aws_env["AWS_SECRET_ACCESS_KEY"]["secretKeyRef"]["key"] == "aws_secret_key"
+        assert containers["awsproxy"]["args"] == ["aws-es-proxy -listen :9203"]
+
+        assert "es-secret" not in {v["name"] for v in spec["volumes"]}
+        assert "init_by_lua_block" not in configs["nginx.conf"]
+        assert "ES_SECRET_FROM_FILE" not in configs["setenv.lua"]
+
+    def test_enabled_reads_both_credentials_from_files(self):
+        deployment, configs = esp_parts(esp_docs(enabled=True))
+        spec = deployment["spec"]["template"]["spec"]
+        volumes = {v["name"]: v for v in spec["volumes"]}
+        containers = {c["name"]: c for c in spec["containers"]}
+
+        # esproxy: no env, file mounted, lua reads it at startup and encodes it.
+        esproxy = containers["external-es-proxy"]
+        assert "ES_SECRET_NAME" not in get_env_vars_dict(esproxy.get("env") or [])
+        assert volumes["es-secret"]["secret"]["items"] == [{"key": "elastic", "path": "ES_SECRET"}]
+        esproxy_mount = next(m for m in esproxy["volumeMounts"] if m["name"] == "es-secret")
+        assert esproxy_mount["mountPath"] == "/etc/astronomer/secrets"
+        assert esproxy_mount["readOnly"] is True
+
+        assert "init_by_lua_block" in configs["nginx.conf"]
+        assert "/etc/astronomer/secrets/ES_SECRET" in configs["nginx.conf"]
+        # The `elastic` key holds raw credentials, so the lua must encode them --
+        # matching the ES_SECRET_NAME branch, not the pre-encoded ES_SECRET one.
+        assert "ngx.encode_base64(ES_SECRET_FROM_FILE)" in configs["setenv.lua"]
+
+        # awsproxy: no env, preamble reads the files before exec.
+        awsproxy = containers["awsproxy"]
+        aws_env = get_env_vars_dict(awsproxy.get("env") or [])
+        assert "AWS_ACCESS_KEY_ID" not in aws_env
+        assert "AWS_SECRET_ACCESS_KEY" not in aws_env
+        args = awsproxy["args"][0]
+        assert 'export AWS_ACCESS_KEY_ID="$(cat /etc/astronomer/secrets/aws_access_key)"' in args
+        assert 'export AWS_SECRET_ACCESS_KEY="$(cat /etc/astronomer/secrets/aws_secret_key)"' in args
+        assert args.strip().endswith("exec aws-es-proxy -listen :9203")
+        aws_mount = next(m for m in awsproxy["volumeMounts"] if m["name"] == "awssecret")
+        assert aws_mount["mountPath"] == "/etc/astronomer/secrets"
+
+    def test_setenv_lua_does_no_file_io_itself(self):
+        """setenv.lua runs per request; reading the file there would hit the disk
+        on every proxied request. The read belongs in init_by_lua_block."""
+        _deployment, configs = esp_parts(esp_docs(enabled=True))
+        assert "io.open" in configs["nginx.conf"]
+        assert "io.open" not in configs["setenv.lua"]
+
+    def test_inline_secret_value_takes_precedence_over_the_file(self):
+        """global.customLogging.secret is a literal value, not a Secret reference,
+        so there is nothing to move to a file and the lua's ES_SECRET branch wins.
+
+        The literal below is a test fixture standing in for an operator-supplied
+        value, hence the S106 suppression.
+        """
+        deployment, _configs = esp_parts(esp_docs(enabled=True, secret="cHJlLWVuY29kZWQ="))  # noqa: S106
+        spec = deployment["spec"]["template"]["spec"]
+        esproxy = next(c for c in spec["containers"] if c["name"] == "external-es-proxy")
+
+        assert get_env_vars_dict(esproxy["env"])["ES_SECRET"] == "cHJlLWVuY29kZWQ="
+        assert "es-secret" not in {v["name"] for v in spec["volumes"]}
+        assert "es-secret" not in {m["name"] for m in esproxy["volumeMounts"]}
+
+    def test_no_preamble_when_aws_credentials_are_not_used(self):
+        """With an IAM role instead of keys, awsproxy still renders but has no
+        credentials to read, so the args must stay untouched."""
+        docs = esp_docs(enabled=True, awsSecretName=None, awsIAMRole="arn:aws:iam::123:role/es")
+        deployment, _configs = esp_parts(docs)
+        awsproxy = next(c for c in deployment["spec"]["template"]["spec"]["containers"] if c["name"] == "awsproxy")
+        assert awsproxy["args"] == ["aws-es-proxy -listen :9203"]
+        assert "cat /etc/astronomer/secrets" not in awsproxy["args"][0]
+
+    def test_no_dangling_mounts(self):
+        deployment, _configs = esp_parts(esp_docs(enabled=True))
+        spec = deployment["spec"]["template"]["spec"]
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for container in spec["containers"]:
+            for mount in container.get("volumeMounts") or []:
+                assert mount["name"] in volume_names, f"{container['name']} mounts {mount['name']}"
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [(None, None, False), (True, None, True), (True, False, False), (False, True, True)],
+)
+def test_external_es_proxy_toggle_override_precedence(global_enabled, component_enabled, expected):
+    values = esp_values(component_enabled)
+    if global_enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": global_enabled}
+    docs = render_chart(kube_version=newest_supported_kube_version, values=values, show_only=ESP_TEMPLATES)
+    deployment, configs = esp_parts(docs)
+    esproxy = next(c for c in deployment["spec"]["template"]["spec"]["containers"] if c["name"] == "external-es-proxy")
+    env_vars = get_env_vars_dict(esproxy.get("env") or [])
+    assert ("ES_SECRET_NAME" in env_vars) is not expected
+    assert ("init_by_lua_block" in configs["nginx.conf"]) is expected
+
+
+# ── Bootstrapper-managed secrets: sentinel + wait gate ─────────────────────────
+#
+# A `secret` volume is projected before ANY container runs and re-projected
+# asynchronously, with no ordering guarantee against container start. So a pod
+# must never depend on reading a Secret that a container inside that same pod
+# writes. Reading via valueFrom.secretKeyRef never had this problem, because env
+# is resolved per-container after all preceding init containers.
+#
+# Verified on kind (k8s 1.37):
+#   * mounting a secret at /run/secrets makes the container fail to start
+#     outright, because the service-account token mounts under
+#     /var/run/secrets/... and every relevant image symlinks /var/run -> /run.
+#     Hence /etc/astronomer/secrets.
+#   * a RUNNING init container does observe kubelet's in-place refresh: under a
+#     second when a pod-sync event drives it, up to ~60s (the kubelet sync
+#     period) with no event. Hence the gate works and is normally a no-op.
+
+SENTINEL = "__ASTRONOMER_NOT_BOOTSTRAPPED__"
+
+GATED_WORKLOADS = {
+    "release-name-commander",
+    "release-name-pilot",
+    "release-name-houston",
+    "release-name-houston-worker",
+    "release-name-navigator",
+    "release-name-dp-link",
+    "release-name-houston-db-migrations",
+    "release-name-houston-upgrade-deployments",
+}
+
+
+def full_feature_values(enabled=True, plane="unified"):
+    return {
+        "global": {
+            "plane": {"mode": plane},
+            "secretsFromFiles": {"enabled": enabled},
+            "dbBootstrapper": db_bootstrapper_toggle(enabled),
+        },
+        "astronomer": {
+            "flightDeck": {"enabled": True},
+            "pilot": {"enabled": True},
+            "navigator": {"enabled": True},
+            "dpLink": {"enabled": True},
+        },
+    }
+
+
+# The sweeps below run per plane because some workloads exist in only one of them.
+# prometheus-federation-auth is data-plane only, so a unified-mode-only sweep never
+# rendered it and could not have caught a dangling mount or a bad mount path there.
+SWEPT_PLANES = ["unified", "control", "data"]
+
+# (plane, workload, secret) triples that dangle today, for reasons predating this
+# feature. Listed rather than folded into `external` so they stay visible: each is
+# a latent deadlock, not an operator-supplied Secret.
+#
+# registry mounts houston.jwtCertificateSecret unconditionally (unless
+# registry.enableInsecureAuth, default False), but
+# houston-jwt-certificate-secret.yaml is gated to the control and unified planes.
+# So a data-plane install renders a registry StatefulSet whose Secret nothing
+# creates, and kubelet blocks on it before running any container. Surfaced by
+# parametrizing this sweep over planes; unrelated to secrets-from-files, and needs
+# an owner decision (gate the mount, sync the Secret, or document a manual step).
+KNOWN_DANGLING = {
+    ("data", "release-name-registry", "release-name-houston-jwt-signing-certificate"),
+}
+
+
+def pod_specs(docs):
+    for doc in docs:
+        kind = doc["kind"]
+        if kind in ("Deployment", "StatefulSet", "Job"):
+            yield doc["metadata"]["name"], doc["spec"]["template"]["spec"]
+        elif kind == "CronJob":
+            yield doc["metadata"]["name"], doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+
+
+class TestNoSecretMountEverDangles:
+    """The bug this class exists to prevent.
+
+    <release>-flightdeck-backend was mounted as a volume but created by no
+    template -- its only writer was an init container inside the very pod that
+    mounted it. kubelet blocks on the missing Secret before running any
+    container, so the pod deadlocked permanently on a fresh install. The manifest
+    is schema-valid, so only a cross-referencing check like this catches it.
+    """
+
+    @pytest.mark.parametrize("plane", SWEPT_PLANES)
+    def test_every_secret_volume_source_is_created_by_the_chart(self, plane):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values(plane=plane))
+        created = {d["metadata"]["name"] for d in docs if d["kind"] == "Secret"}
+
+        # Secrets an operator supplies, or that live outside this chart.
+        external = {"astronomer-bootstrap", "release-name-tls", "astronomer-tls"}
+
+        def secret_sources(volume):
+            if isinstance(volume.get("secret"), dict):
+                yield volume["secret"]["secretName"]
+            for source in (volume.get("projected") or {}).get("sources") or []:
+                if "secret" in source:
+                    yield source["secret"]["name"]
+
+        missing = [
+            f"{name} mounts {secret_name}, which no template creates"
+            for name, spec in pod_specs(docs)
+            for volume in spec.get("volumes") or []
+            for secret_name in secret_sources(volume)
+            if secret_name not in created and secret_name not in external and (plane, name, secret_name) not in KNOWN_DANGLING
+        ]
+        assert missing == [], "\n".join(missing)
+
+    def test_the_known_dangling_mount_still_dangles(self):
+        """Fails once the registry/data-plane bug below is fixed, so the
+        exception cannot outlive it. Delete both this test and the entry.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values(plane="data"))
+        created = {d["metadata"]["name"] for d in docs if d["kind"] == "Secret"}
+
+        for plane, workload, secret_name in KNOWN_DANGLING:
+            assert plane == "data"
+            mounted = any(
+                (v.get("secret") or {}).get("secretName") == secret_name
+                for name, spec in pod_specs(docs)
+                if name == workload
+                for v in spec.get("volumes") or []
+            )
+            assert mounted, f"{workload} no longer mounts {secret_name} -- drop this exception"
+            assert secret_name not in created, f"{secret_name} is now created in the data plane -- drop this exception"
+
+
+class TestBootstrapperSentinel:
+    def test_sentinel_is_deterministic_across_renders(self):
+        """A random placeholder re-poisons the live Secret on every upgrade and
+        churns the pod checksum, forcing a roll into the placeholder."""
+        values = full_feature_values()
+        first = render_chart(kube_version=newest_supported_kube_version, values=values)
+        second = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        def connections(docs):
+            return {
+                d["metadata"]["name"]: d["data"]["connection"]
+                for d in docs
+                if d["kind"] == "Secret" and (d.get("data") or {}).get("connection")
+            }
+
+        assert connections(first) == connections(second)
+        assert connections(first), "expected the chart to create bootstrapper-managed secrets"
+
+    @pytest.mark.parametrize(
+        "secret_name",
+        ["release-name-houston-backend", "release-name-flightdeck-backend"],
+    )
+    def test_sentinel_secret_stays_in_the_release_manifest(self, secret_name):
+        """These must NOT be `pre-install` hooks, which is what they were first
+        written as.
+
+        A hook keeps `helm upgrade` from patching the bootstrapped value back to the
+        placeholder, but hook resources are absent from the release manifest -- so
+        upgrading from any release that HAD this Secret in its manifest makes Helm
+        delete it, and with this feature on every consumer then wedges on the missing
+        volume before the bootstrapper that would recreate it can run. That is the
+        same deadlock the placeholder exists to prevent, reached by upgrade rather
+        than install.
+
+        `helm.sh/resource-policy: keep` would not rescue it: Helm reads that
+        annotation off the LIVE object, which the older release created without it.
+        The value is instead preserved by `astronomer.bootstrapSecretConnection`,
+        which re-renders whatever is already in the cluster.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        secret = next(d for d in docs if d["kind"] == "Secret" and d["metadata"]["name"] == secret_name)
+
+        annotations = secret["metadata"].get("annotations") or {}
+        assert "helm.sh/hook" not in annotations, (
+            "a hook resource is excluded from the release manifest and gets deleted on upgrade"
+        )
+        # lookup returns nothing without a cluster, so a fresh render is the sentinel.
+        assert base64.b64decode(secret["data"]["connection"]).decode() == SENTINEL
+
+
+class TestWaitForSecretGate:
+    def test_gate_present_in_every_workload_that_reads_a_bootstrapped_secret(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        gated = {
+            name for name, spec in pod_specs(docs) if any(c["name"] == "wait-for-secret" for c in spec.get("initContainers") or [])
+        }
+        assert GATED_WORKLOADS <= gated, f"ungated: {GATED_WORKLOADS - gated}"
+
+    def test_gate_runs_after_any_in_pod_bootstrapper(self):
+        """If the gate ran first it would read the sentinel, wait for the
+        bootstrapper that has not started yet, and time out."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        for name, spec in pod_specs(docs):
+            names = [c["name"] for c in spec.get("initContainers") or []]
+            if "wait-for-secret" not in names:
+                continue
+            bootstrappers = [i for i, n in enumerate(names) if "bootstrapper" in n]
+            if bootstrappers:
+                assert names.index("wait-for-secret") > max(bootstrappers), f"{name}: {names}"
+
+    def test_gate_polls_a_file_it_actually_mounts(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values())
+        for name, spec in pod_specs(docs):
+            gate = next((c for c in spec.get("initContainers") or [] if c["name"] == "wait-for-secret"), None)
+            if not gate:
+                continue
+            volume_names = {v["name"] for v in spec["volumes"]}
+            mount = gate["volumeMounts"][0]
+            assert mount["name"] in volume_names, f"{name}: gate mounts {mount['name']}"
+            script = gate["command"][-1] if len(gate["command"]) > 2 else gate["args"][0]
+            assert mount["mountPath"] in script, f"{name}: gate polls a path it does not mount"
+            assert SENTINEL in script, f"{name}: gate does not compare against the sentinel"
+
+    def test_no_gate_when_the_feature_is_off(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values(enabled=False))
+        for name, spec in pod_specs(docs):
+            names = [c["name"] for c in spec.get("initContainers") or []]
+            assert "wait-for-secret" not in names, name
+
+
+@pytest.mark.parametrize("plane", SWEPT_PLANES)
+def test_no_secret_is_mounted_under_run_secrets(plane):
+    """/run/secrets is unusable: the service-account token mounts at
+    /var/run/secrets/kubernetes.io/serviceaccount, every relevant image symlinks
+    /var/run -> /run, and a read-only mount at /run/secrets makes runc unable to
+    create that mountpoint. The container fails to start with a StartError.
+    Reproduced on kind; the rendered manifest is schema-valid, so only this check
+    catches it.
+    """
+    docs = render_chart(kube_version=newest_supported_kube_version, values=full_feature_values(plane=plane))
+    offenders = []
+    for name, spec in pod_specs(docs):
+        for container in (spec.get("containers") or []) + (spec.get("initContainers") or []):
+            for mount in container.get("volumeMounts") or []:
+                path = mount["mountPath"]
+                if path == "/run/secrets" or path.startswith("/run/secrets/"):
+                    offenders.append(f"{name}/{container['name']} mounts {path}")
+    assert offenders == [], "\n".join(offenders)
+
+
+def loader_secret_volumes(spec):
+    """Yield (volume_name, volume_source) for each loader secret volume in a pod."""
+    for volume in spec.get("volumes") or []:
+        if volume["name"] in LOADER_SECRET_VOLUMES:
+            yield volume["name"], volume.get("projected") or volume.get("secret")
+
+
+class TestSecretFilePermissions:
+    """A mounted secret must be readable by the process and by nobody else.
+
+    Kubernetes defaults secret volume files to 0644, which leaves the secret
+    readable by every UID in the container -- most of what moving it out of the
+    environment was meant to prevent. Tightening the mode alone is not enough
+    though: the files are owned by root and these pods run as non-root, so
+    without a matching fsGroup a 0440 file is unreadable, the loader treats it as
+    "no secret configured", and the process silently falls back to an
+    environment variable the chart has already removed. Mode and fsGroup only
+    make sense as a pair, which is what these tests check.
+    """
+
+    def test_every_loader_secret_volume_is_mode_0440(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+        seen = 0
+        for name, spec in houston_family_pod_specs(docs):
+            for volume_name, source in loader_secret_volumes(spec):
+                seen += 1
+                assert source.get("defaultMode") == SECRET_FILE_MODE, (
+                    f"{name}/{volume_name} has defaultMode {source.get('defaultMode')}, expected {SECRET_FILE_MODE} (0440)"
+                )
+        assert seen >= 15, f"expected the whole houston family, only checked {seen} volumes"
+
+    def test_no_loader_secret_is_readable_by_other(self):
+        """The bit that actually leaks the secret to unrelated UIDs."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+        offenders = [
+            f"{name}/{volume_name} is mode {oct(source['defaultMode'])}"
+            for name, spec in houston_family_pod_specs(docs)
+            for volume_name, source in loader_secret_volumes(spec)
+            if source.get("defaultMode", 0o644) & 0o004
+        ]
+        assert offenders == [], "\n".join(offenders)
+
+    def test_every_pod_mounting_a_secret_has_a_matching_fsgroup(self):
+        """The regression guard for the gap this change found.
+
+        The eight workloads carrying the wait-for-secret gate are not the same
+        set as the workloads that mount a secret volume -- the ten houston
+        cronjobs mount one too. Tightening the mode without giving those pods an
+        fsGroup left them unable to read their own secrets, and nothing in the
+        rendered manifest looks wrong. Assert against who mounts the volume, not
+        against a hand-maintained list.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+        checked = 0
+        for name, spec in houston_family_pod_specs(docs):
+            volumes = dict(loader_secret_volumes(spec))
+            if not volumes:
+                continue
+            checked += 1
+
+            fs_group = (spec.get("securityContext") or {}).get("fsGroup")
+            assert fs_group is not None, f"{name} mounts {sorted(volumes)} but sets no fsGroup"
+
+            # Group read is what the fsGroup buys; without it the mode is unreadable.
+            for volume_name, source in volumes.items():
+                assert source["defaultMode"] & 0o040, (
+                    f"{name}/{volume_name} is mode {oct(source['defaultMode'])}, which the fsGroup cannot read"
+                )
+        assert checked >= 15, f"expected the whole houston family, only checked {checked}"
+
+    def test_no_fsgroup_is_added_when_the_feature_is_off(self):
+        """The default path must stay byte-identical."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=FULL_VALUES)
+
+        for name, spec in houston_family_pod_specs(docs):
+            assert (spec.get("securityContext") or {}).get("fsGroup") is None, f"{name} gained an fsGroup with the feature disabled"
+
+    def test_fsgroup_is_omitted_on_openshift(self):
+        """OpenShift allocates an fsGroup per namespace through its SCC. A
+        hardcoded one is rejected or overridden, and the allocated one already
+        matches the process, so the mode still works."""
+        values = with_secrets_from_files()
+        values["global"]["openshift"] = {"enabled": True}
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        mounting = 0
+        for name, spec in houston_family_pod_specs(docs):
+            if not dict(loader_secret_volumes(spec)):
+                continue
+            mounting += 1
+            assert (spec.get("securityContext") or {}).get("fsGroup") is None, f"{name} hardcodes an fsGroup on OpenShift"
+        assert mounting >= 15, f"only checked {mounting} workloads"
+
+    def test_fsgroup_is_configurable(self):
+        """Images that run as another group need to be able to change it."""
+        values = with_secrets_from_files()
+        values["global"]["secretsFromFiles"]["fsGroup"] = 65532
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        groups = {
+            (spec.get("securityContext") or {}).get("fsGroup")
+            for _name, spec in houston_family_pod_specs(docs)
+            if dict(loader_secret_volumes(spec))
+        }
+        assert groups == {65532}
+
+
+# The four wait-for-db init containers include `houston_environment`, so they
+# inherit HOUSTON_SECRETS_FROM_FILES and the <VAR>_FILE paths, but they
+# deliberately get no secret mount: they run a shell-only entrypoint (nc and wget
+# waits) that reads none of those vars, so the Node loader never executes there.
+#
+# That was merely redundant while the loader logged an unreadable file and carried
+# on. Now that it fails closed, a container in this state *would* crash-loop the
+# pod if it ever ran Node. None of these can today -- verified: houston-api's
+# bin/entrypoint is pure shell and never invokes node. This test exists so the set
+# cannot grow silently, because the next container added in this shape might not
+# be shell-only, and that is a decision rather than an accident.
+CONTAINERS_EXEMPT_FROM_FILE_PATH_MOUNTS = {
+    ("release-name-houston", "houston-wait-for-db"),
+    ("release-name-houston-worker", "wait-for-db"),
+    ("release-name-houston-db-migrations", "wait-for-db"),
+    ("release-name-houston-upgrade-deployments", "wait-for-db"),
+}
+
+SHELL_ENTRYPOINT = "/houston/bin/entrypoint"
+
+
+def test_every_file_env_var_points_inside_a_mount_or_is_a_known_shell_container():
+    """A `<VAR>_FILE` path with no mount behind it is now fatal, not ignored.
+
+    The loader fails closed on a file it was told to read but cannot, so a
+    container that advertises a path it never mounts is a crash loop waiting for
+    someone to change its command. The exemptions are all shell-only containers
+    that never run the loader, and this asserts that -- if one stops being
+    shell-only, it has to be dealt with here.
+    """
+    docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
+
+    unsatisfied = {}
+    for name, spec in houston_family_pod_specs(docs):
+        for container in all_containers(spec):
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            file_paths = {k: v for k, v in env_vars.items() if k.endswith("_FILE") and v}
+            if not file_paths:
+                continue
+
+            mount_paths = [m["mountPath"].rstrip("/") for m in container.get("volumeMounts") or []]
+            missing = sorted(
+                var for var, path in file_paths.items() if not any(path == m or path.startswith(m + "/") for m in mount_paths)
+            )
+            if missing:
+                unsatisfied[(name, container["name"])] = (missing, container.get("command") or [])
+
+    unexpected = [
+        f"{workload}/{container} sets {missing} but mounts no volume containing those paths"
+        for (workload, container), (missing, _cmd) in unsatisfied.items()
+        if (workload, container) not in CONTAINERS_EXEMPT_FROM_FILE_PATH_MOUNTS
+    ]
+    assert unexpected == [], "\n".join(unexpected)
+
+    # The exemption only holds because these containers never run the loader.
+    for key in CONTAINERS_EXEMPT_FROM_FILE_PATH_MOUNTS:
+        assert key in unsatisfied, f"{key} no longer sets an unmounted _FILE path; drop it from the exemption set"
+        _missing, command = unsatisfied[key]
+        assert command and command[0] == SHELL_ENTRYPOINT, (
+            f"{key} is exempt only because it runs the shell entrypoint, but its command is {command}. "
+            "If it now runs Node, the loader will fail closed on those unmounted paths."
+        )
+
+    _assert_file_env_vars_have_a_projected_file(docs)
+
+
+def test_cp_refresh_hook_mounts_what_it_advertises():
+    """houston-cp-refresh only renders with controlPlaneHA on, so the sweep above never sees it.
+
+    It includes houston_environment, so with the feature on it inherits the gate flag and
+    every <VAR>_FILE path. Its main container runs `yarn refresh-cp-chart-version`, which
+    imports the loader, and the loader fails closed on a path it cannot read -- so without
+    the mount this post-upgrade hook fails, and with it the whole helm upgrade.
+    """
+    values = with_secrets_from_files()
+    values["global"] = {
+        **values["global"],
+        "plane": {"mode": "control"},
+        "controlPlaneHA": {
+            "enabled": True,
+            "globalBaseDomain": "astro.example.com",
+            "cpId": "00000000-0000-0000-0000-000000000001",
+        },
+    }
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/astronomer/templates/houston/helm-hooks/houston-cp-refresh-job.yaml"],
+    )
+    assert len(docs) == 1
+    spec = docs[0]["spec"]["template"]["spec"]
+    containers = get_containers_by_name(docs[0], include_init_containers=True)
+
+    main = containers["refresh-cp-chart-version-job"]
+    assert get_env_vars_dict(main["env"])["HOUSTON_SECRETS_FROM_FILES"] == "true"
+    mounts = [m["mountPath"].rstrip("/") for m in main["volumeMounts"]]
+    for var, path in get_env_vars_dict(main["env"]).items():
+        if var.endswith("_FILE") and path:
+            assert any(path == m or path.startswith(m + "/") for m in mounts), f"{var}={path} has no mount behind it"
+    assert "houston-secrets" in {v["name"] for v in spec["volumes"]}
+
+    # 0440 needs an fsGroup, and the file-mode consumer must wait out the sentinel.
+    assert spec["securityContext"]["fsGroup"] == 1000
+    init_names = [c["name"] for c in spec["initContainers"]]
+    assert init_names.index("wait-for-secret") > init_names.index("houston-bootstrapper")
+
+    # Its wait-for-db also advertises unmounted paths; that is only safe while it stays shell-only.
+    assert containers["wait-for-db"]["command"][0] == SHELL_ENTRYPOINT
+
+
+def _secret_volume_filenames(volume):
+    """Every filename a secret/projected volume actually places in its mount dir."""
+    sources = [volume["secret"]] if isinstance(volume.get("secret"), dict) else []
+    sources += [s["secret"] for s in (volume.get("projected") or {}).get("sources") or [] if "secret" in s]
+    names = set()
+    for source in sources:
+        items = source.get("items")
+        if items is None:
+            # Whole-Secret mount: every key becomes a file, and the key names are
+            # not knowable from the manifest. Treat as "anything could be here".
+            return None
+        names.update(item["path"] for item in items)
+    return names
+
+
+def _assert_file_env_vars_have_a_projected_file(docs):
+    """A <VAR>_FILE inside a mounted directory is not enough -- the volume has to
+    actually put a FILE at that path.
+
+    This is the gap that let commander ship broken: its `_FILE` env var was emitted
+    under the feature toggle alone, while the projected volume only carried the
+    flightdeck DSN when FlightDeck was enabled. The path was inside
+    /etc/astronomer/secrets, so a directory-level check passed, but the file was not
+    there on a default install and the fail-closed loader crash-looped the pod.
+    """
+    dangling = []
+    for name, spec in pod_specs(docs):
+        volumes = {v["name"]: v for v in spec.get("volumes") or []}
+        for container in all_containers(spec):
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            for var, path in env_vars.items():
+                if not var.endswith("_FILE") or not isinstance(path, str) or not path:
+                    continue
+                for mount in container.get("volumeMounts") or []:
+                    mount_path = mount["mountPath"].rstrip("/")
+                    if not (path == mount_path or path.startswith(mount_path + "/")):
+                        continue
+                    volume = volumes.get(mount["name"])
+                    if volume is None:
+                        continue
+                    filenames = _secret_volume_filenames(volume)
+                    if filenames is None:
+                        break  # whole-Secret mount, cannot be checked statically
+                    relative = path[len(mount_path) :].lstrip("/")
+                    if relative and relative not in filenames:
+                        dangling.append(
+                            f"{name}/{container['name']}: {var}={path} but volume {mount['name']} projects {sorted(filenames)}"
+                        )
+                    break
+
+    assert dangling == [], "\n".join(dangling)
+
+
+def test_no_secret_feeding_a_loader_renders_empty():
+    """An empty secret is no longer merely useless, it is a silent unset.
+
+    The loaders skip a file that trims to nothing and warn, rather than blanking
+    whatever the environment held. That is the right call for a rotation window,
+    but it means a Secret the chart renders empty produces a warning on every
+    install and a secret that is never set -- with the pod starting anyway. The
+    Grafana group is already blocked on exactly this shape, where a bootstrap
+    Secret defaults to `connection: ""`.
+
+    So check the inputs rather than trusting them: every (Secret, key) pair that a
+    loader volume projects must carry a non-empty value. postgresql is enabled here
+    because that is what creates `astronomer-bootstrap`, the one input the
+    astronomer chart does not render itself.
+    """
+    values = with_secrets_from_files()
+    values["global"]["postgresql"] = {"enabled": True}
+    docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+    secrets = {d["metadata"]["name"]: d for d in docs if d["kind"] == "Secret"}
+
+    projected = set()
+    for _name, spec in houston_family_pod_specs(docs):
+        for volume_name, source in loader_secret_volumes(spec):
+            del volume_name
+            sources = [source] if "secretName" in source else [s["secret"] for s in source["sources"]]
+            for src in sources:
+                secret_name = src.get("secretName") or src.get("name")
+                for item in src.get("items") or []:
+                    projected.add((secret_name, item["key"]))
+
+    assert projected, "expected the loader volumes to project at least one secret key"
+
+    problems = []
+    for secret_name, key in sorted(projected):
+        doc = secrets.get(secret_name)
+        if doc is None:
+            problems.append(f"{secret_name}/{key}: no template creates this Secret")
+            continue
+        raw = (doc.get("data") or {}).get(key)
+        if raw is None:
+            problems.append(f"{secret_name}/{key}: the Secret has no such key")
+            continue
+        if base64.b64decode(raw).decode(errors="replace").strip() == "":
+            problems.append(f"{secret_name}/{key}: renders empty, so the loader will warn and leave it unset")
+
+    assert problems == [], "\n".join(problems)
+
+
+FILESD_RELOADER_TEMPLATE = "charts/prometheus/templates/prometheus-statefulset.yaml"
+FILESD_RELOADER_SECRET_VOLUME = "filesd-reloader-secrets"
+
+
+def filesd_reloader(enabled=None, component_enabled=None):
+    """Render the prometheus StatefulSet and return (pod spec, sidecar container)."""
+    values = {"global": {"plane": {"mode": "unified"}}}
+    if enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": enabled}
+    if component_enabled is not None:
+        values["prometheus"] = {"filesdReloader": {"secretsFromFiles": {"enabled": component_enabled}}}
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=[FILESD_RELOADER_TEMPLATE],
+    )
+    spec = docs[0]["spec"]["template"]["spec"]
+    container = next(c for c in spec["containers"] if c["name"] == "filesd-reloader")
+
+    return spec, container
+
+
+class TestFilesdReloaderSecretsFromFiles:
+    """The kuiper-reloader sidecar reads DATABASE_URL from astronomer-bootstrap."""
+
+    def test_defaults_keep_the_env_var(self):
+        spec, container = filesd_reloader()
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert "DATABASE_URL" in env_vars
+        assert "KUIPER_SECRETS_FROM_FILES" not in env_vars
+        assert "DATABASE_URL_FILE" not in env_vars
+
+        assert FILESD_RELOADER_SECRET_VOLUME not in {v["name"] for v in spec["volumes"]}
+
+    def test_enabled_replaces_the_env_var_with_a_file(self):
+        spec, container = filesd_reloader(enabled=True)
+
+        env_vars = get_env_vars_dict(container["env"])
+        # The plaintext secret must be gone from the pod spec entirely.
+        assert "DATABASE_URL" not in env_vars
+        assert env_vars["KUIPER_SECRETS_FROM_FILES"] == "true"
+        # The chart owns the path rather than relying on the image's default.
+        assert env_vars["DATABASE_URL_FILE"] == "/etc/astronomer/secrets/DATABASE_URL"
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FILESD_RELOADER_SECRET_VOLUME)
+        assert volume["secret"]["secretName"] == "astronomer-bootstrap"
+        # The file is named after the env var it replaces, which is what lets the
+        # loader find it at the default path too.
+        assert volume["secret"]["items"] == [{"key": "connection", "path": "DATABASE_URL"}]
+
+        mount = next(m for m in container["volumeMounts"] if m["name"] == FILESD_RELOADER_SECRET_VOLUME)
+        assert mount["mountPath"] == "/etc/astronomer/secrets"
+        assert mount["readOnly"] is True
+
+    def test_the_secret_file_is_mode_0440(self):
+        spec, _container = filesd_reloader(enabled=True)
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FILESD_RELOADER_SECRET_VOLUME)
+        assert volume["secret"]["defaultMode"] == SECRET_FILE_MODE
+
+    def test_the_pods_own_fsgroup_can_read_that_mode(self):
+        """This pod is the reason the shared podSecurityContext helper is not used here.
+
+        prometheus already sets its own fsGroup (65534) for its other volumes, and
+        the kuiper-reloader image runs as uid 1000. fsGroup is added to every
+        container's supplementary groups, so a root:65534 file at 0440 is readable
+        by that process. Applying the shared helper would override the pod's fsGroup
+        with a different default and break the volumes prometheus already depends on.
+        """
+        spec, _container = filesd_reloader(enabled=True)
+
+        fs_group = spec["securityContext"]["fsGroup"]
+        assert fs_group is not None, "0440 is unreadable without an fsGroup"
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FILESD_RELOADER_SECRET_VOLUME)
+        assert volume["secret"]["defaultMode"] & 0o040, "the fsGroup must be able to read the file"
+
+        # Pin the value, so a change to prometheus's fsGroup has to be a decision.
+        assert fs_group == 65534
+
+    def test_no_wait_for_secret_gate(self):
+        """astronomer-bootstrap holds a real connection string from the start.
+
+        It is not one of the sentinel-managed Secrets an in-pod bootstrapper
+        rewrites, so there is no pre-bootstrap placeholder for a file consumer to
+        latch and the gate would only add startup latency.
+        """
+        spec, _container = filesd_reloader(enabled=True)
+
+        init_names = [c["name"] for c in spec.get("initContainers") or []]
+        assert "wait-for-secret" not in init_names
+
+    def test_no_dangling_mount(self):
+        spec, container = filesd_reloader(enabled=True)
+
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for mount in container["volumeMounts"]:
+            assert mount["name"] in volume_names
+
+        paths = [m["mountPath"] for m in container["volumeMounts"]]
+        assert len(paths) == len(set(paths))
+
+    def test_prometheus_container_is_untouched(self):
+        """Only the sidecar reads this secret; it must not leak into prometheus."""
+        spec, _sidecar = filesd_reloader(enabled=True)
+
+        prometheus = next(c for c in spec["containers"] if c["name"] == "prometheus")
+        mounts = {m["name"] for m in prometheus.get("volumeMounts") or []}
+        assert FILESD_RELOADER_SECRET_VOLUME not in mounts
+
+        env_vars = get_env_vars_dict(prometheus.get("env") or [])
+        assert "KUIPER_SECRETS_FROM_FILES" not in env_vars
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (False, None, False),
+        (True, None, True),
+        (False, True, True),
+        (True, False, False),
+        (None, True, True),
+        (None, None, False),
+    ],
+)
+def test_filesd_reloader_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """The component toggle wins when set; otherwise the global one applies."""
+    _spec, container = filesd_reloader(enabled=global_enabled, component_enabled=component_enabled)
+
+    env_vars = get_env_vars_dict(container["env"])
+    assert ("KUIPER_SECRETS_FROM_FILES" in env_vars) is expected
+    assert ("DATABASE_URL" in env_vars) is not expected
+
+
+FEDERATION_AUTH_DEPLOYMENT = "charts/prometheus/templates/prometheus-federation-auth-deployment.yaml"
+FEDERATION_AUTH_CONFIGMAP = "charts/prometheus/templates/prometheus-federation-auth-configmap.yaml"
+FEDERATION_AUTH_SECRET_VOLUME = "federation-auth-secrets"
+FEDERATION_AUTH_TOKEN_FILE = "/etc/astronomer/secrets/REGISTRY_AUTH_TOKEN"
+
+
+def federation_auth(enabled=None, component_enabled=None):
+    """Render the data-plane federation-auth Deployment and its nginx ConfigMap.
+
+    Returns (pod spec, container, nginx.conf). This workload exists only in the
+    data plane, which is why it needs its own renderer rather than reusing the
+    unified-mode helpers above.
+    """
+    values = {"global": {"plane": {"mode": "data"}}}
+    if enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": enabled}
+    if component_enabled is not None:
+        values["prometheus"] = {"federation": {"auth": {"secretsFromFiles": {"enabled": component_enabled}}}}
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=[FEDERATION_AUTH_DEPLOYMENT, FEDERATION_AUTH_CONFIGMAP],
+    )
+    deployment = next(d for d in docs if d["kind"] == "Deployment")
+    configmap = next(d for d in docs if d["kind"] == "ConfigMap")
+    spec = deployment["spec"]["template"]["spec"]
+    container = next(c for c in spec["containers"] if c["name"] == "federation-auth")
+
+    return spec, container, configmap["data"]["nginx.conf"]
+
+
+class TestFederationAuthSecretsFromFiles:
+    """The data-plane federation-auth proxy validates a bearer token against
+    registry.authHeaderSecret. The lua that reads it ships in this chart's
+    ConfigMap, so switching to a file needs no ap-openresty rebuild.
+    """
+
+    def test_defaults_keep_the_env_var(self):
+        spec, container, nginx_conf = federation_auth()
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert env_vars["REGISTRY_AUTH_TOKEN"]["secretKeyRef"]["key"] == "token"
+        assert "REGISTRY_AUTH_TOKEN_FILE" not in env_vars
+
+        assert "env REGISTRY_AUTH_TOKEN;" in nginx_conf
+        assert 'os.getenv("REGISTRY_AUTH_TOKEN")' in nginx_conf
+        assert "init_by_lua_block" not in nginx_conf
+
+        assert FEDERATION_AUTH_SECRET_VOLUME not in {v["name"] for v in spec["volumes"]}
+
+    def test_enabled_replaces_the_env_var_with_a_file(self):
+        spec, container, _nginx_conf = federation_auth(enabled=True)
+
+        env_vars = get_env_vars_dict(container["env"])
+        # The plaintext token must be gone from the pod spec entirely.
+        assert "REGISTRY_AUTH_TOKEN" not in env_vars
+        # The chart owns the path rather than relying on the lua's default.
+        assert env_vars["REGISTRY_AUTH_TOKEN_FILE"] == FEDERATION_AUTH_TOKEN_FILE
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FEDERATION_AUTH_SECRET_VOLUME)
+        assert volume["secret"]["secretName"] == "release-name-registry-auth-key"
+        # The file is named after the env var it replaces, so the lua's default
+        # path finds it even if the _FILE var were ever dropped.
+        assert volume["secret"]["items"] == [{"key": "token", "path": "REGISTRY_AUTH_TOKEN"}]
+
+        mount = next(m for m in container["volumeMounts"] if m["name"] == FEDERATION_AUTH_SECRET_VOLUME)
+        assert mount["mountPath"] == "/etc/astronomer/secrets"
+        assert mount["readOnly"] is True
+
+    def test_env_key_is_never_empty(self):
+        """REGISTRY_AUTH_TOKEN was this container's only env var. Dropping it
+        without putting something back renders `env: null`, which fails schema
+        validation -- the same trap the prometheus statefulset hit when
+        FEDERATION_AUTH_TOKEN was deleted.
+        """
+        for kwargs in ({}, {"enabled": True}):
+            _spec, container, _conf = federation_auth(**kwargs)
+            assert container["env"], f"env is empty for {kwargs}"
+
+    def test_enabled_reads_the_token_once_at_startup(self):
+        """Reading per request would put a filesystem hit on every federated
+        scrape, so the token is read in init_by_lua_block and cached in the
+        shared dict that was already declared but unused.
+        """
+        _spec, _container, nginx_conf = federation_auth(enabled=True)
+
+        assert "init_by_lua_block" in nginx_conf
+        assert "lua_shared_dict federation_auth_cache" in nginx_conf
+        assert 'ngx.shared.federation_auth_cache:set("registry_auth_token"' in nginx_conf
+        assert 'ngx.shared.federation_auth_cache:get("registry_auth_token")' in nginx_conf
+
+        # The env-var read must be gone, or a stale env value could win.
+        assert 'os.getenv("REGISTRY_AUTH_TOKEN")' not in nginx_conf
+        assert "env REGISTRY_AUTH_TOKEN;" not in nginx_conf
+        assert "env REGISTRY_AUTH_TOKEN_FILE;" in nginx_conf
+
+    def test_enabled_fails_closed_on_a_bad_token_file(self):
+        """Verified against openresty/openresty:alpine: with the file missing,
+        empty or whitespace-only, nginx refuses to start and logs the path. The
+        alternative is coming up and answering every scrape with a misleading
+        403.
+        """
+        _spec, _container, nginx_conf = federation_auth(enabled=True)
+
+        init_block = nginx_conf.split("init_by_lua_block")[1].split("\n        }")[0]
+        assert init_block.count("error(") == 3, "expected open, unreadable and empty to all fail closed"
+        # The message has to name the path, or an operator cannot act on it.
+        assert "path" in init_block
+
+    def test_enabled_trims_the_trailing_newline(self):
+        """A Secret mount adds a newline; an untrimmed token never matches."""
+        _spec, _container, nginx_conf = federation_auth(enabled=True)
+
+        init_block = nginx_conf.split("init_by_lua_block")[1]
+        assert 'gsub("%s+$", "")' in init_block
+
+    def test_the_configmap_checksum_still_rolls_the_pod(self):
+        """Reading once at startup is only safe because a Secret change rolls the
+        pod. Both checksums must survive, or a rotated token would be served
+        stale until the next unrelated restart.
+        """
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values={"global": {"plane": {"mode": "data"}, "secretsFromFiles": {"enabled": True}}},
+            show_only=[FEDERATION_AUTH_DEPLOYMENT],
+        )
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert "checksum/prom-auth-config" in annotations
+        assert "checksum/registry-auth-secret" in annotations
+
+    def test_no_dangling_mount(self):
+        spec, container, _conf = federation_auth(enabled=True)
+
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for mount in container["volumeMounts"]:
+            assert mount["name"] in volume_names
+
+        paths = [m["mountPath"] for m in container["volumeMounts"]]
+        assert len(paths) == len(set(paths))
+
+    def test_secret_file_mode_is_left_at_the_image_default(self):
+        """Deliberately not 0440. This pod sets no fsGroup and ap-openresty does
+        not run as root, so 0440 on a root-owned file would leave the token
+        unreadable and every federated scrape would 403. Same deferred decision
+        as the external-es-proxy group, which mounts secrets from this same
+        image. Tightening this means verifying the image UID and adding an
+        fsGroup, per LOADER_SECRET_VOLUMES above.
+        """
+        spec, _container, _conf = federation_auth(enabled=True)
+
+        volume = next(v for v in spec["volumes"] if v["name"] == FEDERATION_AUTH_SECRET_VOLUME)
+        assert "defaultMode" not in volume["secret"]
+        assert "fsGroup" not in (spec.get("securityContext") or {})
+
+    def test_no_wait_for_secret_gate(self):
+        """registry.authHeaderSecret is rendered by the chart from the houston JWT
+        certificate, not written by an in-pod bootstrapper, so there is no
+        sentinel for a file consumer to latch.
+        """
+        spec, _container, _conf = federation_auth(enabled=True)
+
+        init_names = [c["name"] for c in spec.get("initContainers") or []]
+        assert "wait-for-secret" not in init_names
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (False, None, False),
+        (True, None, True),
+        (False, True, True),
+        (True, False, False),
+        (None, True, True),
+        (None, None, False),
+    ],
+)
+def test_federation_auth_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """The component toggle wins when set; otherwise the global one applies."""
+    _spec, container, nginx_conf = federation_auth(enabled=global_enabled, component_enabled=component_enabled)
+
+    env_vars = get_env_vars_dict(container["env"])
+    assert ("REGISTRY_AUTH_TOKEN_FILE" in env_vars) is expected
+    assert ("REGISTRY_AUTH_TOKEN" in env_vars) is not expected
+    assert ("init_by_lua_block" in nginx_conf) is expected
+
+
+PG_EXPORTER_TEMPLATE = "charts/prometheus-postgres-exporter/templates/deployment.yaml"
+PG_EXPORTER_SECRET_VOLUME = "data-source-pass"
+PG_EXPORTER_PASS_FILE = "/etc/astronomer/secrets/data_source_password"
+
+
+def pg_exporter(enabled=None, component_enabled=None, datasource=None, show_secret=False):
+    """Render the standalone postgres-exporter Deployment.
+
+    datasource=None keeps the chart default, which is the connectionSecret
+    (DATA_SOURCE_NAME) form. Pass a dict to switch to the split
+    URI/USER/PASS form.
+    """
+    exporter = {}
+    if component_enabled is not None:
+        exporter["secretsFromFiles"] = {"enabled": component_enabled}
+    if datasource is not None:
+        exporter["config"] = {"datasource": {"connectionSecret": None, "host": "pg.example.com", "user": "exporter", **datasource}}
+
+    values = {"global": {"prometheusPostgresExporter": {"enabled": True}}}
+    if enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": enabled}
+    if exporter:
+        values["prometheus-postgres-exporter"] = exporter
+
+    show_only = [PG_EXPORTER_TEMPLATE]
+    if show_secret:
+        show_only.append("charts/prometheus-postgres-exporter/templates/secret.yaml")
+
+    docs = render_chart(kube_version=newest_supported_kube_version, values=values, show_only=show_only)
+    deployment = next(d for d in docs if d["kind"] == "Deployment")
+    spec = deployment["spec"]["template"]["spec"]
+    container = next(c for c in spec["containers"] if c["name"] == "prometheus-postgres-exporter")
+    secrets = {d["metadata"]["name"] for d in docs if d["kind"] == "Secret"}
+
+    return spec, container, secrets
+
+
+# A password source is required for the split form; either of these reaches it.
+EXTERNAL_PASSWORD = {"passwordSecret": {"name": "my-pg-secret", "key": "my-password-key"}}
+INLINE_PASSWORD = {"password": "s3cr3t"}
+
+
+class TestPostgresExporterSecretsFromFiles:
+    """postgres_exporter can read the password from a file, but only in the split
+    DATA_SOURCE_URI/_USER/_PASS form. Verified against the ap-postgres-exporter
+    0.19.1-2 binary: it ships DATA_SOURCE_URI_FILE, _USER_FILE and _PASS_FILE, and
+    no _NAME_FILE.
+    """
+
+    def test_the_default_connection_secret_path_is_unaffected(self):
+        """The known gap, asserted rather than left implicit.
+
+        connectionSecret is the chart default, and that path uses
+        DATA_SOURCE_NAME, for which no _FILE variant exists. So enabling the
+        feature does not remove this component's plaintext secret from the pod
+        spec -- an operator flipping the global toggle needs to know that. Closing
+        it means splitting astronomer-bootstrap's connection string into
+        URI/user/password keys, which is the db-bootstrapper group's problem.
+        """
+        _spec, container, _secrets = pg_exporter(enabled=True)
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert env_vars["DATA_SOURCE_NAME"]["secretKeyRef"] == {
+            "name": "astronomer-bootstrap",
+            "key": "connection",
+        }
+        assert "DATA_SOURCE_PASS_FILE" not in env_vars
+
+    def test_default_path_renders_identically_with_the_flag_on(self):
+        off = pg_exporter(enabled=False)
+        on = pg_exporter(enabled=True)
+        assert off[0] == on[0], "the flag must be a no-op on the connectionSecret path"
+
+    @pytest.mark.parametrize("datasource", [EXTERNAL_PASSWORD, INLINE_PASSWORD], ids=["passwordSecret", "inline-password"])
+    def test_split_form_defaults_keep_the_env_var(self, datasource):
+        _spec, container, _secrets = pg_exporter(enabled=False, datasource=datasource)
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert "secretKeyRef" in env_vars["DATA_SOURCE_PASS"]
+        assert "DATA_SOURCE_PASS_FILE" not in env_vars
+
+    def test_split_form_enabled_reads_an_external_secret_from_a_file(self):
+        spec, container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert "DATA_SOURCE_PASS" not in env_vars
+        assert env_vars["DATA_SOURCE_PASS_FILE"] == PG_EXPORTER_PASS_FILE
+        # The other two stay env vars: neither is a secret.
+        assert "DATA_SOURCE_URI" in env_vars
+        assert env_vars["DATA_SOURCE_USER"] == "exporter"
+
+        volume = next(v for v in spec["volumes"] if v["name"] == PG_EXPORTER_SECRET_VOLUME)
+        assert volume["secret"]["secretName"] == "my-pg-secret"
+        # The operator's key name is remapped to the filename the env var points at.
+        assert volume["secret"]["items"] == [{"key": "my-password-key", "path": "data_source_password"}]
+
+        mount = next(m for m in container["volumeMounts"] if m["name"] == PG_EXPORTER_SECRET_VOLUME)
+        assert mount["mountPath"] == "/etc/astronomer/secrets"
+        assert mount["readOnly"] is True
+
+    def test_split_form_enabled_mounts_the_chart_created_secret(self):
+        """With an inline password the chart creates the Secret itself, so the
+        mount must name that one -- and it has to actually exist.
+        """
+        spec, container, secrets = pg_exporter(enabled=True, datasource=INLINE_PASSWORD, show_secret=True)
+
+        volume = next(v for v in spec["volumes"] if v["name"] == PG_EXPORTER_SECRET_VOLUME)
+        secret_name = volume["secret"]["secretName"]
+        assert volume["secret"]["items"] == [{"key": "data_source_password", "path": "data_source_password"}]
+        assert secret_name in secrets, f"{secret_name} is mounted but not created"
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert env_vars["DATA_SOURCE_PASS_FILE"] == PG_EXPORTER_PASS_FILE
+
+    def test_no_mount_without_a_password_source(self):
+        """Neither passwordSecret nor password set: the Secret the existing
+        secretKeyRef names is never created. Mounting it would upgrade a
+        container-start failure into an unschedulable pod, so this stays on the
+        env-var path.
+        """
+        spec, container, _secrets = pg_exporter(enabled=True, datasource={})
+
+        assert PG_EXPORTER_SECRET_VOLUME not in {v["name"] for v in spec["volumes"]}
+        env_vars = get_env_vars_dict(container["env"])
+        assert "secretKeyRef" in env_vars["DATA_SOURCE_PASS"]
+
+    def test_no_dangling_mount(self):
+        spec, container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for mount in container["volumeMounts"]:
+            assert mount["name"] in volume_names
+
+        paths = [m["mountPath"] for m in container["volumeMounts"]]
+        assert len(paths) == len(set(paths))
+
+    def test_secret_file_mode_is_left_at_the_image_default(self):
+        """Not 0440: the container is runAsNonRoot with no runAsUser and this pod
+        sets no fsGroup, so 0440 on a root-owned file would be unreadable. Same
+        deferred decision as external-es-proxy and federation-auth.
+        """
+        spec, _container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+
+        volume = next(v for v in spec["volumes"] if v["name"] == PG_EXPORTER_SECRET_VOLUME)
+        assert "defaultMode" not in volume["secret"]
+        assert not (spec.get("securityContext") or {}).get("fsGroup")
+
+    def test_the_mount_path_is_never_under_run_secrets(self):
+        _spec, container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+
+        for mount in container["volumeMounts"]:
+            assert not mount["mountPath"].startswith("/run/secrets")
+        env_vars = get_env_vars_dict(container["env"])
+        assert not env_vars["DATA_SOURCE_PASS_FILE"].startswith("/run/secrets")
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (False, None, False),
+        (True, None, True),
+        (False, True, True),
+        (True, False, False),
+        (None, True, True),
+        (None, None, False),
+    ],
+)
+def test_postgres_exporter_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """The component toggle wins when set; otherwise the global one applies."""
+    _spec, container, _secrets = pg_exporter(
+        enabled=global_enabled,
+        component_enabled=component_enabled,
+        datasource=EXTERNAL_PASSWORD,
+    )
+
+    env_vars = get_env_vars_dict(container["env"])
+    assert ("DATA_SOURCE_PASS_FILE" in env_vars) is expected
+    assert ("DATA_SOURCE_PASS" in env_vars) is not expected
+
+
+COMMANDER_TEMPLATE = "charts/astronomer/templates/commander/commander-deployment.yaml"
+
+
+@pytest.mark.parametrize(
+    "extra_values,flightdeck_expected",
+    [
+        ({}, False),
+        ({"astronomer": {"flightDeck": {"enabled": True}}}, True),
+        ({"global": {"plane": {"mode": "data"}, "dataPlaneFailover": {"enabled": True}}}, True),
+    ],
+    ids=["flightdeck-off-default", "flightdeck-on", "dataplane-failover"],
+)
+def test_commander_only_advertises_the_flightdeck_dsn_file_when_flightdeck_is_on(extra_values, flightdeck_expected):
+    """Regression: commander crash-looped on a DEFAULT install with the feature on.
+
+    The `COMMANDER_FLIGHTDECK_DSN_FILE` env var was emitted under the feature toggle
+    alone, while the projected volume only carries the flightdeck DSN when FlightDeck
+    is enabled -- default off. The loader fails closed on a `<VAR>_FILE` it cannot
+    read, so commander exited non-zero and never started. The `secretKeyRef` branch
+    was always gated correctly; only the file branch was not.
+
+    The pre-existing sweep missed it twice over: it checked the path was inside a
+    mounted *directory* rather than that the volume projects a *file* there, and it
+    only walked the houston family, which excludes commander.
+    """
+    values = {"global": {"secretsFromFiles": {"enabled": True}}}
+    for key, value in extra_values.items():
+        values[key] = {**values.get(key, {}), **value}
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=[COMMANDER_TEMPLATE],
+    )
+    spec = docs[0]["spec"]["template"]["spec"]
+
+    projected = {
+        item["path"]
+        for volume in spec["volumes"]
+        if volume["name"] == "commander-secrets"
+        for source in volume["projected"]["sources"]
+        for item in source["secret"]["items"]
+    }
+    assert ("COMMANDER_FLIGHTDECK_DSN" in projected) is flightdeck_expected
+    # The dataplane DSN comes from astronomer-bootstrap and is always present.
+    assert "COMMANDER_DATAPLANE_DATABASE_URL" in projected
+
+    # Only containers that actually consume the flightdeck DSN may advertise it, and
+    # whether any does at all has to track the projected volume.
+    advertisers = [
+        container["name"]
+        for container in all_containers(spec)
+        if "COMMANDER_FLIGHTDECK_DSN_FILE" in get_env_vars_dict(container.get("env") or [])
+    ]
+    assert bool(advertisers) is flightdeck_expected, f"flightdeck DSN file advertised by {advertisers}"
+
+    # And no container may advertise any secrets path without a file behind it.
+    for container in all_containers(spec):
+        for var, path in get_env_vars_dict(container.get("env") or []).items():
+            if var.endswith("_FILE") and isinstance(path, str) and path.startswith("/etc/astronomer/secrets/"):
+                assert path.rsplit("/", 1)[-1] in projected, f"{container['name']}: {var}={path} has no file behind it"
+
+
+# Must match `secretEnvVars` in astronomer/commander config/secrets_from_files.go.
+# The two repos cannot read each other in CI, so this is a deliberate mirror: if
+# commander's list changes, update it here and the sweep below re-checks the chart.
+COMMANDER_SECRET_ENV_VARS = {
+    "COMMANDER_DATAPLANE_DATABASE_URL",
+    "COMMANDER_FLIGHTDECK_DSN",
+}
+
+PILOT_TEMPLATE = "charts/astronomer/templates/pilot/pilot-deployment.yaml"
+
+
+@pytest.mark.parametrize("plane", ["unified", "data"])
+def test_commander_file_vars_are_all_ones_commander_loads(plane):
+    """Every `<VAR>_FILE` the chart hands a commander-loader container must name a
+    variable commander's loader actually reads.
+
+    This is the dangerous direction of list drift. Under the toggle the chart drops
+    the `secretKeyRef` and sets `<VAR>_FILE` instead, so if commander's
+    `secretEnvVars` does not include `<VAR>`, nothing reads the file and `<VAR>`
+    ends up unset -- with no error, because an unlisted `_FILE` is just an env var
+    nobody looks at. Commander's own guard tests only compare its list against its
+    config struct, and the live-cluster scenario that would notice is `ci: false`.
+    """
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=full_feature_values(plane=plane),
+        show_only=[COMMANDER_TEMPLATE, PILOT_TEMPLATE],
+    )
+
+    advertised = set()
+    unknown = []
+    loader_containers = 0
+    for name, spec in pod_specs(docs):
+        for container in all_containers(spec):
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            # Only containers that run commander's loader; it is gated by this var.
+            if env_vars.get("COMMANDER_SECRETS_FROM_FILES") != "true":
+                continue
+            loader_containers += 1
+            for var in env_vars:
+                if not var.endswith("_FILE"):
+                    continue
+                target = var.removesuffix("_FILE")
+                advertised.add(target)
+                if target not in COMMANDER_SECRET_ENV_VARS:
+                    unknown.append(f"{name}/{container['name']}: {var}")
+
+    # Guards against the sweep silently matching nothing: commander's main and
+    # migrations containers plus pilot, all with FlightDeck on.
+    assert loader_containers >= 3, f"only {loader_containers} commander-loader containers rendered"
+    assert unknown == [], "_FILE vars commander does not load:\n" + "\n".join(unknown)
+    # And the mirror has no dead entries: with every toggle on, each listed var is
+    # actually delivered as a file somewhere.
+    assert advertised == COMMANDER_SECRET_ENV_VARS
+
+
+# ── ap-db-bootstrapper init containers (BOOTSTRAP_DB) ──────────────────────────
+#
+# One image, run as an init container in three subcharts, so one global toggle:
+# global.dbBootstrapper.secretsFromFiles.enabled. It defaults to an explicit false
+# because the pinned image has no loader, so `global.secretsFromFiles.enabled` alone
+# must leave every bootstrapper exactly as it was.
+
+BOOTSTRAP_DB_FILE = "/etc/astronomer/secrets/BOOTSTRAP_DB"
+DB_BOOTSTRAPPER_VOLUME = "db-bootstrapper-secret"
+
+# Every bootstrapper the chart renders with FlightDeck and laminar on. The CP-HA-only
+# houston-cp-refresh hook is covered by its own test.
+DB_BOOTSTRAPPER_CONTAINERS = {
+    ("release-name-commander", "flightdeck-bootstrapper"),
+    ("release-name-houston", "houston-bootstrapper"),
+    ("release-name-houston-worker", "houston-bootstrapper"),
+    ("release-name-houston-db-migrations", "houston-bootstrapper"),
+    ("release-name-houston-upgrade-deployments", "houston-bootstrapper"),
+    ("release-name-grafana", "bootstrapper"),
+    ("release-name-api-server", "laminar-bootstrapper"),
+    ("release-name-hypervisor", "laminar-bootstrapper"),
+}
+
+CP_REFRESH_GLOBAL = {
+    "plane": {"mode": "control"},
+    "controlPlaneHA": {
+        "enabled": True,
+        "globalBaseDomain": "astro.example.com",
+        "cpId": "00000000-0000-0000-0000-000000000001",
+    },
+}
+
+
+def db_bootstrapper_values(sff=None, bootstrapper=None, **global_values):
+    """Unified install with every bootstrapper rendered. None leaves a toggle at its default."""
+    values = {
+        "global": {"plane": {"mode": "unified"}, "laminar": {"enabled": True}, **global_values},
+        "astronomer": {"flightDeck": {"enabled": True}},
+    }
+    if sff is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": sff}
+    if bootstrapper is not None:
+        values["global"]["dbBootstrapper"] = {"secretsFromFiles": {"enabled": bootstrapper}}
+    return values
+
+
+def bootstrap_db_consumers(docs):
+    """(workload, container, pod_spec) for every container that reads BOOTSTRAP_DB either way."""
+    for name, spec in pod_specs(docs):
+        for container in all_containers(spec):
+            env_vars = get_env_vars_dict(container.get("env") or [])
+            if "BOOTSTRAP_DB" in env_vars or "BOOTSTRAP_DB_FILE" in env_vars:
+                yield name, container, spec
+
+
+class TestDbBootstrapperSecretsFromFiles:
+    def test_global_flag_alone_leaves_every_bootstrapper_on_the_env_var(self):
+        """The explicit-false default is what keeps a loader-less image working.
+
+        With it inherited instead, turning the platform flag on would drop BOOTSTRAP_DB
+        from the environment of an image that cannot read the file, and every
+        bootstrapper -- and so every pod behind it -- would fail on a missing option.
+        """
+        docs = render_chart(kube_version=newest_supported_kube_version, values=db_bootstrapper_values(sff=True))
+
+        found = set()
+        for name, container, spec in bootstrap_db_consumers(docs):
+            found.add((name, container["name"]))
+            env_vars = get_env_vars_dict(container["env"])
+            assert env_vars["BOOTSTRAP_DB"] == {"secretKeyRef": {"name": "astronomer-bootstrap", "key": "connection"}}
+            assert "DB_BOOTSTRAPPER_SECRETS_FROM_FILES" not in env_vars
+            assert "BOOTSTRAP_DB_FILE" not in env_vars
+            assert DB_BOOTSTRAPPER_VOLUME not in {v["name"] for v in spec.get("volumes") or []}
+        assert found == DB_BOOTSTRAPPER_CONTAINERS
+
+    def test_enabled_reads_bootstrap_db_from_a_file_everywhere(self):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=db_bootstrapper_values(bootstrapper=True))
+
+        found = set()
+        for name, container, spec in bootstrap_db_consumers(docs):
+            found.add((name, container["name"]))
+            where = f"{name}/{container['name']}"
+            env_vars = get_env_vars_dict(container["env"])
+
+            # The value is gone from the pod spec; only the gate and the path remain.
+            assert "BOOTSTRAP_DB" not in env_vars, where
+            assert env_vars["DB_BOOTSTRAPPER_SECRETS_FROM_FILES"] == "true", where
+            assert env_vars["BOOTSTRAP_DB_FILE"] == BOOTSTRAP_DB_FILE, where
+
+            mount = next(m for m in container["volumeMounts"] if m["name"] == DB_BOOTSTRAPPER_VOLUME)
+            assert mount["mountPath"] == "/etc/astronomer/secrets", where
+            assert mount["readOnly"] is True, where
+
+            volume = next(v for v in spec["volumes"] if v["name"] == DB_BOOTSTRAPPER_VOLUME)
+            assert volume["secret"] == {
+                "secretName": "astronomer-bootstrap",
+                "defaultMode": SECRET_FILE_MODE,
+                "items": [{"key": "connection", "path": "BOOTSTRAP_DB"}],
+            }, where
+
+            # 0440 is root-owned and the bootstrapper runs as non-root: only the
+            # pod's fsGroup lets it open the file, and the loader fails closed if not.
+            assert (spec.get("securityContext") or {}).get("fsGroup") is not None, f"{where} has no fsGroup"
+        assert found == DB_BOOTSTRAPPER_CONTAINERS
+
+    def test_cp_refresh_hook_bootstrapper_reads_from_a_file(self):
+        """houston-cp-refresh only renders with controlPlaneHA on, so the sweep above misses it."""
+        values = {"global": {**CP_REFRESH_GLOBAL, "dbBootstrapper": {"secretsFromFiles": {"enabled": True}}}}
+        docs = render_chart(
+            kube_version=newest_supported_kube_version,
+            values=values,
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-cp-refresh-job.yaml"],
+        )
+        spec = docs[0]["spec"]["template"]["spec"]
+        bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["houston-bootstrapper"]
+
+        env_vars = get_env_vars_dict(bootstrapper["env"])
+        assert "BOOTSTRAP_DB" not in env_vars
+        assert env_vars["BOOTSTRAP_DB_FILE"] == BOOTSTRAP_DB_FILE
+        assert DB_BOOTSTRAPPER_VOLUME in {m["name"] for m in bootstrapper["volumeMounts"]}
+        assert DB_BOOTSTRAPPER_VOLUME in {v["name"] for v in spec["volumes"]}
+        assert spec["securityContext"]["fsGroup"] == 1000
+
+    @pytest.mark.parametrize(
+        "workload,extra",
+        [
+            ("release-name-houston", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
+            ("release-name-houston-worker", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
+            ("release-name-houston-db-migrations", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
+            ("release-name-houston-upgrade-deployments", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
+            ("release-name-grafana", {"grafana": {"backendSecretName": "my-grafana-db"}}),
+            ("release-name-api-server", {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}}),
+            ("release-name-hypervisor", {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}}),
+            ("release-name-commander", {"astronomer": {"flightDeck": {"enabled": False}}}),
+        ],
+    )
+    def test_no_volume_when_the_bootstrapper_is_skipped(self, workload, extra):
+        """kubelet mounts every pod volume whether or not a container uses it.
+
+        When the operator supplies the backend secret, the bootstrapper is skipped and
+        `astronomer-bootstrap` need not exist -- so a leftover volume naming it would
+        leave the pod stuck on FailedMount, a regression for exactly the operators
+        who opted out of the bootstrapper.
+        """
+        values = db_bootstrapper_values(bootstrapper=True)
+        for key, value in extra.items():
+            values[key] = {**values.get(key, {}), **value}
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        spec = dict(pod_specs(docs))[workload]
+        assert not any("BOOTSTRAP_DB" in str(c.get("env")) for c in all_containers(spec)), f"{workload} still runs a bootstrapper"
+        assert DB_BOOTSTRAPPER_VOLUME not in {v["name"] for v in spec.get("volumes") or []}
+
+    def test_bootstrapper_gets_an_fsgroup_even_when_its_component_reads_env_vars(self):
+        """The two toggles are independent, so the fsGroup must follow either one.
+
+        Without it the bootstrapper's 0440 file is unreadable in a pod whose own
+        component has not opted in, and the loader fails closed.
+        """
+        values = db_bootstrapper_values(sff=False, bootstrapper=True)
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+        specs = dict(pod_specs(docs))
+
+        for name, _container in DB_BOOTSTRAPPER_CONTAINERS:
+            assert (specs[name].get("securityContext") or {}).get("fsGroup") is not None, name
+
+        # And houston itself is untouched: still on env vars, no houston volume.
+        deployment = next(d for d in docs if d["kind"] == "Deployment" and d["metadata"]["name"] == "release-name-houston")
+        houston = get_containers_by_name(deployment)["houston"]
+        assert "secretKeyRef" in get_env_vars_dict(houston["env"])["DATABASE__CONNECTION"]
+        assert "houston-secrets" not in {v["name"] for v in specs["release-name-houston"]["volumes"]}
+
+    def test_no_fsgroup_on_openshift(self):
+        """OpenShift assigns an fsGroup from the namespace's SCC range; never hardcode one."""
+        values = db_bootstrapper_values(bootstrapper=True, openshift={"enabled": True})
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+        for name, spec in pod_specs(docs):
+            if any(v["name"] == DB_BOOTSTRAPPER_VOLUME for v in spec.get("volumes") or []):
+                assert (spec.get("securityContext") or {}).get("fsGroup") is None, name
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (None, None, False),
+        (True, None, False),  # the explicit-false default holds the image back
+        (True, False, False),
+        (True, True, True),
+        (False, True, True),
+        (None, True, True),
+    ],
+)
+def test_db_bootstrapper_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """global.dbBootstrapper.secretsFromFiles.enabled overrides global.secretsFromFiles.enabled."""
+    values = {"global": {"plane": {"mode": "unified"}}}
+    if global_enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": global_enabled}
+    if component_enabled is not None:
+        values["global"]["dbBootstrapper"] = db_bootstrapper_toggle(component_enabled)
+
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+    )
+    bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["houston-bootstrapper"]
+    env_vars = get_env_vars_dict(bootstrapper["env"])
+    assert (env_vars.get("DB_BOOTSTRAPPER_SECRETS_FROM_FILES") == "true") is expected
+    assert ("BOOTSTRAP_DB" in env_vars) is not expected
+
+
+def test_db_bootstrapper_null_override_does_not_inherit():
+    """Pins a Helm behaviour the values.yaml comment depends on.
+
+    A null in user values normally deletes a chart default, but Helm keeps the default
+    for a null under `global`. So an operator cannot opt the bootstrapper into the
+    platform-wide flag by setting it to ~; they have to set it to true. The default
+    itself becomes ~ in values.yaml once a loader-bearing image is pinned, which does
+    inherit. If Helm ever starts honouring the null, this fails and the comment can
+    offer ~ as an option.
+    """
+    values = {
+        "global": {
+            "plane": {"mode": "unified"},
+            "secretsFromFiles": {"enabled": True},
+            "dbBootstrapper": db_bootstrapper_toggle(None),
+        }
+    }
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=values,
+        show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+    )
+    bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["houston-bootstrapper"]
+    assert "BOOTSTRAP_DB" in get_env_vars_dict(bootstrapper["env"])

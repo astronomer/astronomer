@@ -3,6 +3,8 @@
 ###################################
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
+{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar)) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -33,6 +35,9 @@ spec:
         {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
+        {{- if .Values.houston.logging.loggingSidecar.enabled }}
+        checksum/vector-config: {{ include (print $.Template.BasePath "/houston/api/houston-vector-configmap.yaml") . | sha256sum }}
+        {{- end }}
         checksum/houston-backend-secret: {{ include (print $.Template.BasePath "/houston/api/houston-backend-secret.yaml") . | sha256sum }}
         {{- include "houston.jetStreamTLSChecksum" . | nindent 8 }}
         {{- if .Values.global.podAnnotations }}
@@ -48,7 +53,7 @@ spec:
       {{- include "houston.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -103,11 +108,7 @@ spec:
           livenessProbe: {{- tpl (toYaml .Values.houston.bootstrapper.livenessProbe) . | nindent 12 }}
           {{- end }}
           env:
-            - name: BOOTSTRAP_DB
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
+            {{- include "astronomer.dbBootstrapper.secretEnv" $ | nindent 12 }}
             - name: SCHEMA_NAME
               value: {{ .Values.global.houston.database.schemaName | quote }}
             {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
@@ -134,6 +135,10 @@ spec:
               mountPath: /tmp
             - name: tmp
               mountPath: /houston/node_modules/.cache
+            {{- include "astronomer.dbBootstrapper.secretVolumeMount" $ | nindent 12 }}
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- end }}
       {{- end }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       containers:
@@ -150,6 +155,12 @@ spec:
             - name: tmp
               mountPath: /houston/node_modules/.cache
             {{- include "houston_volume_mounts" . | indent 12 }}
+            {{- include "houston_secret_volume_mounts" . | indent 12 }}
+            {{- if $secretsFromFiles }}
+            - name: houston-registry-auth-secret
+              mountPath: /etc/houston/secrets/registry
+              readOnly: true
+            {{- end }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
             {{- if .Values.houston.volumeMounts }}
             {{- tpl (toYaml .Values.houston.volumeMounts) $ | nindent 12 }}
@@ -225,11 +236,18 @@ spec:
               value: {{ template "houston.image" . }}
             - name: APOLLO_SERVER_PLATFORM
               value: "kubernetes/deployment"
+            {{- if $secretsFromFiles }}
+            {{- /* Only the API consumes this, so it gets its own volume rather
+                   than a source in the shared /etc/astronomer/secrets projected volume. */}}
+            - name: REGISTRY__AUTH_HEADER_FILE
+              value: /etc/houston/secrets/registry/token
+            {{- else }}
             - name: REGISTRY__AUTH_HEADER
               valueFrom:
                 secretKeyRef:
                   name: {{ template "registry.authHeaderSecret" . }}
                   key: token
+            {{- end }}
           {{- if .Values.global.cadvisor.enabled }}
             - name: PROMETHEUS__CADVISOR__ENABLED
               value: "true"
@@ -257,7 +275,7 @@ spec:
             {{- if .Values.houston.logging.loggingSidecar.cloudwatch.enabled }}
             - name: AWS_REGION
               value: {{ .Values.houston.logging.loggingSidecar.cloudwatch.region | quote }}
-            {{- if not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA }}
+            {{- if and (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) (not $vectorSecretsFromFiles) }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -273,7 +291,7 @@ spec:
             {{- if .Values.houston.logging.loggingSidecar.elasticsearch.enabled }}
             - name: ES_ENDPOINT
               value: {{ include "houston.logging.loggingSidecar.elasticsearch" . | quote }}
-            {{- if eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic" }}
+            {{- if and (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") (not $vectorSecretsFromFiles) }}
             - name: ES_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -291,6 +309,16 @@ spec:
             - name: vector-config
               mountPath: /etc/vector/config
               readOnly: true
+            {{- if and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.cloudwatch.enabled (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) }}
+            - name: vector-cloudwatch-secret
+              mountPath: /etc/vector/secrets/cloudwatch
+              readOnly: true
+            {{- end }}
+            {{- if and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.elasticsearch.enabled (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") }}
+            - name: vector-elasticsearch-secret
+              mountPath: /etc/vector/secrets/elasticsearch
+              readOnly: true
+            {{- end }}
             - name: vector-data
               mountPath: /var/lib/vector
             - name: sidecar-log-volume
@@ -337,12 +365,46 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        {{- /* Same guard as the initContainers: only houston-bootstrapper mounts it. */}}
+        {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+        {{- include "astronomer.dbBootstrapper.secretVolume" $ | nindent 8 }}
+        {{- end }}
       {{- if .Values.houston.extraVolumes }}
       {{- tpl (toYaml .Values.houston.extraVolumes) $ | nindent 8 }}
       {{- end }}
         {{- include "houston_volumes" . | nindent 8 }}
+        {{- include "houston_secret_volumes" . | nindent 8 }}
+        {{- if $secretsFromFiles }}
+        - name: houston-registry-auth-secret
+          secret:
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
+            secretName: {{ template "registry.authHeaderSecret" . }}
+            items:
+              - key: token
+                path: token
+        {{- end }}
         {{- include "custom_ca_volumes" . | indent 8 }}
         {{- if .Values.houston.logging.loggingSidecar.enabled }}
+        {{- if and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.cloudwatch.enabled (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) }}
+        - name: vector-cloudwatch-secret
+          secret:
+            secretName: {{ .Values.houston.logging.loggingSidecar.cloudwatch.secretName }}
+            items:
+              - key: aws_access_key_id
+                path: aws_access_key_id
+              - key: aws_secret_access_key
+                path: aws_secret_access_key
+        {{- end }}
+        {{- if and $vectorSecretsFromFiles .Values.houston.logging.loggingSidecar.elasticsearch.enabled (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") }}
+        - name: vector-elasticsearch-secret
+          secret:
+            secretName: {{ .Values.houston.logging.loggingSidecar.elasticsearch.auth.secretName }}
+            items:
+              - key: username
+                path: username
+              - key: password
+                path: password
+        {{- end }}
         - name: vector-config
           configMap:
             name: {{ .Release.Name }}-houston-vector-config

@@ -2,6 +2,7 @@
 ## Elasticsearch Proxy ConfigMap ##
 ###################################
 {{- if eq (include "logging.enabled" .) "true" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.global.customLogging)) }}
 {{- $authCacheEnabled := .Values.authCache.enabled }}
 kind: ConfigMap
 apiVersion: v1
@@ -24,6 +25,20 @@ data:
     env ES_SECRET_NAME;
 
     http {
+{{- if $secretsFromFiles }}
+      # Read the Elasticsearch credential from its mounted file once, at startup.
+      # setenv.lua runs per request, so it must not do file I/O itself.
+      init_by_lua_block {
+        local handle = io.open("/etc/astronomer/secrets/ES_SECRET", "r")
+        if handle then
+          local contents = handle:read("*a")
+          handle:close()
+          if contents then
+            ES_SECRET_FROM_FILE = contents:gsub("%s+$", "")
+          end
+        end
+      }
+{{- end }}
       {{- if $authCacheEnabled }}
       log_format cache_status '$remote_addr - $remote_user [$time_local] '
                               '"$request" $status $body_bytes_sent '

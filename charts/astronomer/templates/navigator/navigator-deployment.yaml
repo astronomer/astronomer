@@ -2,6 +2,7 @@
 ## Astronomer Navigator Deployment  ##
 ######################################
 {{- if and (or .Values.navigator.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control"))) (eq (include "astronomer.controlPlaneEnabled" .) "true") }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.navigator)) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -44,7 +45,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "navigator.serviceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.navigator) | fromYaml)) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -64,6 +65,9 @@ spec:
               mountPath: /etc/ssl/certs_copy
           resources: {{- toYaml .Values.navigator.resources | nindent 12 }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "navigator-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- end }}
       containers:
         - name: navigator
           image: {{ template "houston.image" . }}
@@ -98,6 +102,11 @@ spec:
               mountPath: /etc/ssl/certs
             - name: tmp
               mountPath: /tmp
+            {{- if $secretsFromFiles }}
+            - name: navigator-secrets
+              mountPath: /etc/astronomer/secrets
+              readOnly: true
+            {{- end }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
             # Component Flag
@@ -105,6 +114,27 @@ spec:
               value: "true"
 
             # Houston common configurations
+            {{- if $secretsFromFiles }}
+            - name: HOUSTON_SECRETS_FROM_FILES
+              value: "true"
+            - name: DATABASE_URL_FILE
+              value: /etc/astronomer/secrets/DATABASE_URL
+            {{- if not (((.Values.houston.config.deployments).database).connection) }}
+            - name: DEPLOYMENTS__DATABASE__CONNECTION_FILE
+              value: /etc/astronomer/secrets/DEPLOYMENTS__DATABASE__CONNECTION
+            {{- end }}
+            {{- /* The loader cannot know operator-defined secret env var names at build time, so pass them through. */}}
+            {{- $extraSecrets := list }}
+            {{- range $i, $config := .Values.navigator.secret }}
+            {{- $extraSecrets = append $extraSecrets $config.envName }}
+            - name: {{ $config.envName }}_FILE
+              value: /etc/astronomer/secrets/{{ $config.envName }}
+            {{- end }}
+            {{- if $extraSecrets }}
+            - name: HOUSTON_SECRETS_FROM_FILES_EXTRA
+              value: {{ join "," $extraSecrets | quote }}
+            {{- end }}
+            {{- else }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -116,6 +146,7 @@ spec:
                 secretKeyRef:
                   name: {{ template "houston.airflowBackendSecret" . }}
                   key: connection
+            {{- end }}
             {{- end }}
             - name: NODE_ENV
               value: "production"
@@ -168,6 +199,7 @@ spec:
             {{- end }}
 
             # User provided secret vars
+            {{- if not $secretsFromFiles }}
             {{- range $i, $config := .Values.navigator.secret }}
             - name: {{ $config.envName }}
               valueFrom:
@@ -175,10 +207,36 @@ spec:
                   name: {{ $config.secretName }}
                   key: {{ default "value" $config.secretKey }}
             {{- end }}
+            {{- end }}
       volumes:
         - name: etc-ssl-certs
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        {{- if $secretsFromFiles }}
+        - name: navigator-secrets
+          projected:
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
+            sources:
+              - secret:
+                  name: {{ template "houston.backendSecret" . }}
+                  items:
+                    - key: connection
+                      path: DATABASE_URL
+              {{- if not (((.Values.houston.config.deployments).database).connection) }}
+              - secret:
+                  name: {{ template "houston.airflowBackendSecret" . }}
+                  items:
+                    - key: connection
+                      path: DEPLOYMENTS__DATABASE__CONNECTION
+              {{- end }}
+              {{- range $i, $config := .Values.navigator.secret }}
+              - secret:
+                  name: {{ $config.secretName }}
+                  items:
+                    - key: {{ default "value" $config.secretKey }}
+                      path: {{ $config.envName }}
+              {{- end }}
+        {{- end }}
         {{- include "custom_ca_volumes" . | nindent 8 }}
 {{- end }}

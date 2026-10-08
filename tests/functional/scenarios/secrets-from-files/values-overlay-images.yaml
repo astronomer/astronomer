@@ -1,0 +1,36 @@
+############################################################################
+## TEMPORARY. Delete this file, its entry in test_profile.yaml's `values`,
+## and the kind-load-images.py pre-helm step once loader-bearing images are
+## published -- then flip `ci: false` to `ci: true` in the same change.
+##
+## No published image contains a loader. The feature lives on unmerged
+## branches in houston-api, commander and kuiper-reloader, and nothing has
+## been cut from them, so the chart's toggles have nothing to act on against
+## stock tags: with the gate on, the chart drops each `secretKeyRef` and the
+## process then starts with the variable unset.
+##
+## These `-sff` tags are locally built overlays: the published image for the
+## tag the chart pins, with only the feature's own files replaced. See
+## .sff-worktrees/build-overlays.sh.
+##
+## pullPolicy: Never is load-bearing, not caution. These tags exist only on
+## this machine. With IfNotPresent, a node that somehow lacks the image would
+## pull the *published* tag of the same name from quay -- which has no loader --
+## and every assertion about file-based loading would pass against code that
+## cannot do it. Never turns that into ErrImageNeverPull, which is loud.
+############################################################################
+
+astronomer:
+  images:
+    houston:
+      tag: 2.2.0-sff
+      pullPolicy: Never
+    commander:
+      tag: 2.2.1-sff
+      pullPolicy: Never
+
+prometheus:
+  images:
+    filesdReloader:
+      tag: 0.3.5-sff
+      pullPolicy: Never
