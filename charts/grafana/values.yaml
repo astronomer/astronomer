@@ -32,8 +32,6 @@ podSecurityContext:
     type: RuntimeDefault
 
 serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
   # Specifies whether a ServiceAccount should be created
   create: true
   # Annotations to add to the service account
@@ -54,13 +52,13 @@ backendConnection:
 ports:
   http: 3000
 
-resources:
-  limits:
-    cpu: 250m
-    memory: 512Mi
-  requests:
-    cpu: 100m
-    memory: 256Mi
+resources: {}
+#  limits:
+#   cpu: 100m
+#   memory: 128Mi
+#  requests:
+#   cpu: 100m
+#   memory: 128Mi
 
 ## Configure grafana dashboard to import
 ## NOTE: To use dashboards you must also enable/configure dashboardProviders
@@ -94,11 +92,6 @@ extraEnvVars:
   #     secretKeyRef:
   #       name: grafana-smtp-secret
   #       key: smtp_password
-
-startupProbe: {}
-
-authProxy:
-  startupProbe: {}
 
 bootstrapper:
   # ap-db-bootstrapper runs as UID 1000; override the chart-wide runAsUser default for this init container.
