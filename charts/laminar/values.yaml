@@ -138,3 +138,6 @@ hypervisor:
       path: /laminar/healthz
     periodSeconds: 10
     failureThreshold: 30
+
+extraVolumes: []
+extraVolumeMounts: []
