@@ -34,8 +34,6 @@ rbac:
   create: true
 
 serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
   # Specifies whether a ServiceAccount should be created
   create: true
   # Annotations to add to the service account
@@ -54,12 +52,6 @@ readinessProbe: {}
   # tcpSocket:
   #   port: {{ .Values.service.targetPort }}
   # initialDelaySeconds: 5
-  # periodSeconds: 10
-
-startupProbe: {}
-  # tcpSocket:
-  #   port: {{ .Values.service.targetPort }}
-  # failureThreshold: 30
   # periodSeconds: 10
 
 
@@ -102,7 +94,7 @@ config:
   queries: |-
     airflow_chart_version:
       query: |
-        SET search_path TO "{{ .Values.global.houston.database.schemaName }}", public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
+        SET search_path TO houston$default, public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
       master: false
       cache_seconds: 30
       metrics:
