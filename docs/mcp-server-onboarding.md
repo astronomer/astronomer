@@ -30,6 +30,49 @@ Example client config (shape varies by client — this is the VS Code `mcp.json`
 
 A revoked or expired key keeps working until its cached success entry expires, bounded by `mcpServer.authCache.validSuccess` in `charts/astronomer/values.yaml` (5 minutes by default) — not instantly, since the gate caches a successful check rather than re-authenticating Houston on every single call. Only once that check fails does the gate cache the denial, and only then for the shorter `validFailure` window (1 minute by default).
 
+## Tool groups
+
+Which tools the server exposes is governed by `mcpServer.enabledGroups` in `charts/astronomer/values.yaml`, joined into the `MCP_ENABLED_GROUPS` env var. It is a replacement list, not additive: a group you do not name is not exposed. The `core` group is always on and is not listed. Naming has two exceptions: `skills_load` is controlled by `mcpServer.skills.enabled` rather than listed here, and when skills are on the server also implies the read groups the shipped skills require (`platform_read` and `airflow_read`).
+
+Operator overrides nest under the umbrella chart's `astronomer` key, as the examples below show.
+
+The groups:
+
+| Group | Holds | Default |
+| -- | -- | -- |
+| `core` | always-on baseline tools | always on |
+| `platform_read` | deployment/workspace reads | **on** |
+| `platform_write` | deployment/workspace lifecycle writes | **on** |
+| `platform_disruptive` | contract changes — executor, runtime, DAG mechanism | off |
+| `platform_destroy` | deployment/workspace deletion | off |
+| `airflow_read` | read-only Airflow diagnosis — task logs, import errors, installed providers | off |
+| `airflow_destroy` | `delete_dag_run` | off |
+| `skills_load` | skill delivery — the `load_skill`, `list_skills` and `read_skill_file` tools, the per-skill prompts, and the skill resources | off — see below |
+
+Skills are toggled by a dedicated flag rather than named in `enabledGroups`:
+
+```yaml
+astronomer:
+  mcpServer:
+    skills:
+      enabled: true
+```
+
+When on, the server also enables the read groups the shipped skills require (`platform_read` and `airflow_read`, for the `debugging-dags` and `migrating-airflow-2-to-3` skills) — you do not list those yourself.
+
+### Upgrading: `airflow_read` now holds three tools that used to be in `platform_read`
+
+`get_task_logs`, `get_import_errors`, and `get_installed_providers` moved out of `platform_read` into the new `airflow_read` group, which is **off by default**. An install running the previous `enabledGroups: [platform_read, platform_write]` keeps a valid config but silently loses those three tools. To keep them, add `airflow_read` explicitly:
+
+```yaml
+astronomer:
+  mcpServer:
+    enabledGroups:
+      - platform_read
+      - platform_write
+      - airflow_read
+```
+
 ## Not yet supported
 
 OAuth 2.1 with dynamic client registration is targeted for v1.1 and is out of scope here.
