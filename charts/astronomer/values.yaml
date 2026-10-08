@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.18.11
+airflowChartVersion: 1.17.37
 
 nodeSelector: {}
 affinity: {}
@@ -15,34 +15,26 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 2.2.1
+    tag: 1.2.2
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.2
+    tag: 3.1.2-1
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 2.2.0
+    tag: 1.2.5
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 2.1.12
+    tag: 1.2.1
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 2.0.26
     pullPolicy: IfNotPresent
-  vector:
-    repository: quay.io/astronomer/ap-vector
-    tag: "0.58.0-1"
-    pullPolicy: IfNotPresent
-  # Unlike navigator/dp-link, the MCP server is a separate binary with its own image.
-  mcpServer:
-    repository: quay.io/astronomer/ap-mcp-server
-    tag: "1.0.0"
-    pullPolicy: IfNotPresent
+
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -65,19 +57,16 @@ astroUI:
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources:
-    limits:
-      cpu: 200m
-      memory: 256Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
   readinessProbe: {}
   livenessProbe: {}
-  startupProbe: {}
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: false
     # Annotations to add to the service account
@@ -106,7 +95,6 @@ houston:
     # initialDelaySeconds: 30
     # periodSeconds: 10
     # failureThreshold: 10
-  startupProbe: {}
 
   # Houston can regenerate its certificate authority on each 'helm upgrade'
   # or leave it alone. If this is set to 'true', then all users are logged
@@ -116,7 +104,8 @@ houston:
   regenerateCaEachUpgrade: false
   # Houston datastore
   backendSecretName: ~
-  backendConnection: {}
+  backendConnection:
+    {}
     # user: ~
     # pass: ~
     # host: ~
@@ -125,7 +114,8 @@ houston:
 
   # Airflow backends
   airflowBackendSecretName: ~
-  airflowBackendConnection: {}
+  airflowBackendConnection:
+    {}
     # user: ~
     # pass: ~
     # host: ~
@@ -137,20 +127,7 @@ houston:
   jwtSigningKeySecretName: ~
   jwtSigningCertificateSecretName: ~
 
-  # Houston JWT (JWKS) signing keypair generation. Default true generates a
-  # self-signed keypair at install for single-CP mode. In HA mode
-  # (global.controlPlaneHA.enabled: true), this flag is overridden and generation
-  # is SKIPPED — Secrets must be pre-provisioned in the release namespace.
-  # Exception: set global.controlPlaneHA.bootstrapJwks: true on the FIRST CP
-  # install of a fresh HA cluster to generate the shared material once; copy the
-  # resulting Secrets to subsequent CPs before installing them.
-  jwks:
-    generation:
-      enabled: true
-
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -161,7 +138,6 @@ houston:
 
   podAnnotations: {}
 
-  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
   env: []
 
   # For example
@@ -174,13 +150,13 @@ houston:
   #   secretKey: "connection"
   secret: []
 
-  resources:
-    limits:
-      cpu: 500m
-      memory: 1Gi
-    requests:
-      cpu: 250m
-      memory: 512Mi
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
@@ -196,143 +172,7 @@ houston:
     replicas: 2
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
     hostAliases: []
-
-    # Dispatcher configuration for houston-worker
-    dispatcher:
-      # Enable/disable the dispatcher feature
-      enabled: false
-
-      # Dispatcher loop knobs
-      lease:
-        # TTL for dispatcher leases in seconds
-        ttlSeconds: 30
-
-      batch:
-        # Maximum batch size for dispatches
-        size: 50
-
-      inflight:
-        # Maximum inflight operations
-        max: 50
-        # Maximum inflight operations per data plane
-        maxPerDp: 5
-
-      poll:
-        # Poll interval in seconds
-        seconds: 10
-
-      # Maximum attempts per lease (per process retry loop)
-      maxAttemptsPerLease: 5
-
-      # Maximum attempts per flight (durable total retries across processes)
-      maxAttemptsPerFlight: 25
-
-      # Cooloff period after max attempts exceeded (in seconds)
-      retryCooloffPeriodSeconds: 60
-
-      # RPC timeouts
-      rpc:
-        # In-region StartFlight RPC timeout in milliseconds
-        inRegionTimeoutMs: 5000
-        # Cross-region StartFlight RPC timeout in milliseconds
-        crossRegionTimeoutMs: 12000
-
-      # Circuit breaker configuration
-      circuitBreaker:
-        # Failure threshold before circuit opens
-        failureThreshold: 10
-        # Cooloff period in seconds after circuit opens
-        cooloffSeconds: 30
-        # Maximum inflight probe requests
-        probeMaxInflight: 1
-
-  logging:
-    # Vector sidecar for audit log shipping from Houston API and worker.
-    # When enabled, a Vector sidecar container is added to both Houston API
-    # and Houston Worker pods, along with a log wrapper script that redirects
-    # stdout/stderr to files which Vector reads and ships to the configured sink.
-    # Choose exactly one supported sink for Houston audit logging:
-    # - CloudWatch on EKS
-    # - GCP Cloud Logging on GKE
-    # - External Elasticsearch from EKS or GKE
-    loggingSidecar:
-      enabled: false
-
-      securityContext:
-        runAsNonRoot: true
-        allowPrivilegeEscalation: false
-        runAsUser: 65532
-        capabilities:
-          drop:
-            - ALL
-
-      resources:
-        requests:
-          memory: "128Mi"
-          cpu: "50m"
-        limits:
-          memory: "256Mi"
-          cpu: "200m"
-
-      # AWS CloudWatch Logs configuration for Houston audit logging on EKS.
-      cloudwatch:
-        enabled: false
-        region: ""
-        logGroupName: "/astronomer/houston/audit"
-        # Use IRSA (IAM Roles for Service Accounts) for authentication on EKS.
-        # When true, no access keys are needed; the service account must be
-        # annotated with eks.amazonaws.com/role-arn via houston.serviceAccount.annotations.
-        useIRSA: true
-        # Secret containing aws_access_key_id and aws_secret_access_key keys.
-        # Use this fallback when IRSA is unavailable for the EKS deployment.
-        secretName: "houston-cloudwatch-creds"
-
-      # GCP Cloud Logging configuration for Houston audit logging on GKE.
-      gcpCloudLogging:
-        enabled: false
-        # GCP project ID to which logs are published (required).
-        projectId: ""
-        # Custom log ID that identifies this Houston audit stream in Cloud Logging.
-        logId: "houston-audit"
-        # Monitored resource type. "k8s_container" is the standard for GKE pods.
-        resource:
-          type: "k8s_container"
-          # Required for k8s_container resources. This should be the GKE
-          # cluster location, for example "us-east4" or "us-east4-b".
-          location: ""
-          # Required for k8s_container resources. This should match the GKE
-          # cluster name as it appears in Cloud Logging.
-          clusterName: ""
-        # Map the "level" field in log entries to GCP severity levels.
-        severityKey: "level"
-        # Use GKE Workload Identity for authentication (recommended).
-        # When true, no credentials file is needed; the K8s service account must
-        # be annotated with iam.gke.io/gcp-service-account via
-        # houston.serviceAccount.annotations.
-        useWorkloadIdentity: true
-        # Name of the K8s Secret containing a GCP service account JSON key file.
-        # Use this fallback when Workload Identity is unavailable for the GKE deployment.
-        credentialsSecretName: "houston-gcp-logging-creds"
-        credentialsSecretKey: "key.json"
-
-      # Elasticsearch configuration for Houston audit logging to an external cluster.
-      elasticsearch:
-        enabled: false
-        # External endpoint URL for the Elasticsearch cluster.
-        # This must be set explicitly when Elasticsearch sink support is enabled.
-        # e.g. "https://es.example.com:9200"
-        endpoint: ~
-        # Index name pattern. Supports strftime format for date-based indices.
-        index: "houston-audit-%Y.%m.%d"
-        apiVersion: "v8"
-        auth:
-          strategy: "basic"
-          secretName: "houston-elasticsearch-creds"
-        tls:
-          enabled: false
-          caSecretName: ""
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
@@ -343,8 +183,6 @@ houston:
 
     # Only run on deployments marked as canary
     canary: false
-
-    startupProbe: {}
 
   # Cleanup deployments that have been soft-deleted in Houston
   # This runs as a CronJob
@@ -366,26 +204,48 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
 
-  # Airflow db cleanup (PLX-930): no longer a built-in CronJob. `enabled` still
-  # gates the cleanupAirflowDb API/Config Governance feature flag
-  # (deployments.deploymentLifecycle.cleanupAirflowDb.enabled) -- call the
-  # cleanupAirflowDb GraphQL query directly (pass perClusterConfig: true for
-  # the same per-cluster behavior the old CronJob had) on whatever schedule
-  # you need. See houston-api's cleanupAirflowDb resolver for the full set of
-  # per-call arguments (olderThan, dryRun, dropArchives, provider,
-  # bucketName, providerEnvSecretName, tables, etc.) that used to be
-  # fixed Helm values here.
+  # Cleanup airflow db data
+  # This runs as a CronJob
   cleanupAirflowDb:
-    # Enable the cleanupAirflowDb API feature flag
+    # Enable cleanup CronJob
     enabled: false
+
+    # Default run is at 5:23 every morning https://crontab.guru/#23_5_*_*_*
+    schedule: "23 5 * * *"
+
+    # Cleanup deployments older than this many days
+    olderThan: 365
+
+    # Output path of archived data csv export
+    outputPath: "/tmp"
+
+    # Delete archived tables
+    dropArchives: true
+
+    # Print out the deployments that should be cleaned up and skip actual cleanup
+    dryRun: false
+
+    # Name of file storage provider, supported providers - aws/azure/gcp/local
+    provider: local
+
+    # Name of the provider bucket name / local file path
+    bucketName: "/tmp"
+
+    # Airflow provider connection id to connect to provider bucket, read more - https://airflow.apache.org/docs/apache-airflow/stable/howto/connection.html
+    providerEnvSecretName: ""
+
+    # Run cleanup on specific table or list of tables in a comma separated format
+    tables: ""
+
+    readinessProbe: {}
+    livenessProbe: {}
 
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:
     # Run at 23:40 every night
-    schedule: "40 23 * * *" # https://crontab.guru/#40_23_*_*_*
+    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
 
     # Cleanup deployments older than this many days
     olderThan: 90
@@ -406,14 +266,13 @@ houston:
     enabled: true
 
     # Run at 23:11 every night
-    schedule: "11 23 * * *" # https://crontab.guru/#11_23_*_*_*
+    schedule: "11 23 * * *"  # https://crontab.guru/#11_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
 
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
 
   # Cleanup cluster audits in Houston
   # This runs as a CronJob
@@ -422,13 +281,12 @@ houston:
     enabled: true
 
     # Run at 23:49 every night
-    schedule: "49 23 * * *" # https://crontab.guru/#49_23_*_*_*
+    schedule: "49 23 * * *"  # https://crontab.guru/#49_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
 
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
@@ -444,7 +302,6 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
 
   # Check for Astronomer Runtime Updates
   # This runs as a CronJob
@@ -460,11 +317,6 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
-
-  # When true, Houston rejects deployment config overrides that fail JSON-schema validation.
-  strictSchemaCheck:
-    enabled: true
 
   # Populate daily task usage data
   # This runs as a CronJob
@@ -497,7 +349,6 @@ houston:
 
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
 
   runtimeReleasesConfigMapName: ~
   runtimeReleasesConfig:
@@ -526,12 +377,6 @@ houston:
   dbMigration:
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
-
-  refreshCpChartVersion:
-    readinessProbe: {}
-    livenessProbe: {}
-    startupProbe: {}
 
   bootstrapper:
     readinessProbe: {}
@@ -544,130 +389,14 @@ houston:
   taskUsageMetrics:
     readinessProbe: {}
     livenessProbe: {}
-    startupProbe: {}
-
-# -- DP-Link configuration for data plane linking
-dpLink:
-  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
-  env: []
-    # - name: DEBUG
-    #   value: "prisma*"
-
-  # -- Extra secret environment variables to insert into the env.
-  # For example
-  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
-  # and then set:
-  #
-  # secret:
-  # - envName: "EMAIL__SMTP_URL"
-  #   secretName: "my-scret"
-  #   secretKey: "connection"
-  secret: []
-
-  # -- Enable DP-Link deployment. Only applicable when global.plane.mode is "control" --
-  # dp-link never renders in "data" or "unified" mode regardless of this value.
-  enabled: true
-
-  # -- Service account configuration
-  serviceAccount:
-    # -- Specifies whether a service account should be created
-    create: true
-    # -- Annotations to add to the service account
-    annotations: {}
-    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
-    name: ""
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
-
-  # -- Number of DP-Link replicas
-  # @default -- 2
-  replicas: 2
-
-  # -- Claim interval in seconds
-  # @default -- 30
-  claimIntervalSeconds: 30
-
-  # -- Lease renewal interval in seconds
-  # @default -- 15
-  leaseRenewalIntervalSeconds: 15
-
-  # -- Lease duration in seconds
-  # @default -- 60
-  leaseDurationSeconds: 60
-
-  # -- Unreachable threshold in seconds (heartbeat failure threshold, ~9 heartbeat failures)
-  # @default -- 90
-  unreachableThresholdSeconds: 90
-
-  # -- Degraded threshold in seconds (heartbeat failure threshold, ~3 heartbeat failures)
-  # @default -- 30
-  degradedThresholdSeconds: 30
-
-  # -- Maximum reconnection attempts
-  # @default -- 10
-  reconnectMaxAttempts: 10
-
-  # -- Initial reconnection delay in seconds
-  # @default -- 1
-  initialReconnectDelaySeconds: 1
-
-  # -- Maximum reconnection delay in seconds
-  # @default -- 30
-  maxReconnectDelaySeconds: 30
-
-  # -- Reconnection delay multiplier for exponential backoff
-  # @default -- 2
-  reconnectDelayMultiplier: 2
-
-  # -- Jitter fraction for reconnection delay (0.2 = ~20% randomness)
-  # @default -- 0.2
-  jitterFraction: 0.2
-
-  # -- Pod annotations
-  podAnnotations: {}
-
-  # -- Resource requests and limits
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
-
-  # -- Liveness probe configuration
-  livenessProbe: {}
-
-  # -- Readiness probe configuration
-  readinessProbe: {}
-
-  # -- Startup probe configuration
-  startupProbe: {}
-
-  # -- Arguments to pass to the container
-  args: ~
-
-  # -- Volume mounts
-  volumeMounts: ~
-
-  # -- Extra volumes
-  extraVolumes: []
 
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
   securityContext: {}
-  resources:
-    limits:
-      cpu: 200m
-      memory: 256Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
+  resources: {}
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -677,30 +406,15 @@ configSyncer:
     name: ""
   readinessProbe: {}
   livenessProbe: {}
-  startupProbe: {}
 
-flightDeck:
-  # -- Enable the flightDeck feature
-  # @default -- false
-  enabled: false
-  migrations:
-    securityContext: {}
-    resources:
-      requests:
-        cpu: 100m
-        memory: 16Mi
-      limits:
-        cpu: 200m
-        memory: 32Mi
-    livenessProbe: {}
-    readinessProbe: {}
 
 commander:
   replicas: 2
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources: {}
+  resources:
+    {}
     # limits:
     #  cpu: 100m
     #  memory: 128Mi
@@ -721,10 +435,6 @@ commander:
     #   port: {{ .Values.ports.commanderHTTP }}
     # initialDelaySeconds: 10
     # periodSeconds: 10
-  startupProbe: {}
-  # Auth sidecar (nginx) probe overrides
-  authProxy:
-    startupProbe: {}
   podAnnotations: {}
 
   # Add custom annotation for commander ingress
@@ -738,8 +448,6 @@ commander:
   upgradeTimeout: 600
 
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -753,9 +461,6 @@ commander:
   # Add extra containers to your commander deployment.
   extraContainers: []
 
-  # Add extra volumesMounts to your commander deployment.
-  extraVolumeMounts: []
-
   # Add extra volumes to your commander deployment.
   extraVolumes: []
 
@@ -767,385 +472,18 @@ commander:
     retryAttempts: 2
     retryDelay: 10
     extraEnv: []
-    # -- Service account configuration
-    serviceAccount:
-      # -- Specifies whether a service account should be created
-      create: true
-      # -- Annotations to add to the service account
-      annotations: {}
-      # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
-      name: ""
-      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-      automountServiceAccountToken: true
-
-  # -- Commander's own signing keypair, used to issue JWTs to dataplane services.
-  signingKey:
-    # -- Regenerate the keypair on every upgrade. Default false keeps a stable key
-    # (pre-install only) so a consumer's trusted public key is not rotated out from
-    # under it on upgrades.
-    regenerateKeyEachUpgrade: false
-
-  # -- Config for the JWTs commander mints for laminar components.
-  laminar:
-    # -- Hypervisor JWT contract. jwtIssuer / jwtAudience must match the
-    # hypervisor's LAMINAR_JWT_ISSUER / _AUDIENCE (set in the laminar sub-chart).
-    # Hypervisor-only — the laminar api-server uses the Houston user-facing JWT,
-    # not this token.
-    hypervisor:
-      jwtIssuer: local
-      jwtAudience: astronomer-ee
-      port: 8000
-      # -- Interval in seconds between hibernation-status polls of the laminar hypervisor.
-      pollIntervalSecs: 30
-
-
-pilot:
-  # -- Enable Pilot deployment (data plane only)
-  # @default -- false
-  enabled: false
-
-  # -- Number of Pilot replicas (data plane only)
-  # @default -- 3
-  replicas: 3
-
-  # -- Service account configuration
-  serviceAccount:
-    # -- Specifies whether a service account should be created
-    create: true
-    # -- Annotations to add to the service account
-    annotations: {}
-    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
-    name: ""
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
-
-  # -- Pod annotations
-  podAnnotations: {}
-
-  # -- Resource requests and limits
-  resources:
-    limits:
-      cpu: 250m
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 256Mi
-
-  # -- Liveness probe configuration
-  livenessProbe: {}
-
-  # -- Readiness probe configuration
-  readinessProbe: {}
-
-  # -- Startup probe configuration
-  startupProbe: {}
-
-  # -- Extra environment variables
-  env: []
-
-  # -- Extra volumes
-  extraVolumes: []
-
-  # Claim knobs
-  # -- Maximum number of in-flight tasks per worker
-  # @default -- 5
-  maxInflightPerWorker: 5
-
-  # -- Claim poll interval in milliseconds
-  # @default -- 5000
-  claimPollIntervalMs: 5000
-
-  # -- Maximum batch claim size (defaults to 2 × maxInflightPerWorker)
-  # @default -- 10
-  maxBatchClaimSize: 10
-
-  # Leasing knobs
-  # -- Lease TTL in seconds
-  # @default -- 60
-  leaseTtlSeconds: 60
-
-  # -- Lease renew tick interval in seconds
-  # @default -- 5
-  leaseRenewTickSeconds: 5
-
-  # -- Lease renew threshold in seconds
-  # @default -- 20
-  leaseRenewThresholdSeconds: 20
-
-  # Retry knobs
-  # -- Maximum retry attempts per lease
-  # @default -- 3
-  maxAttemptsPerLease: 3
-
-  # -- Maximum retry attempts per flight
-  # @default -- 5
-  maxAttemptsPerFlight: 15
-
-  # -- Retry base interval in milliseconds
-  # @default -- 250
-  retryBaseIntervalMs: 250
-
-  # -- Retry maximum interval in milliseconds
-  # @default -- 5000
-  retryMaxIntervalMs: 5000
-
-  # -- Retry cool-off period in seconds
-  # @default -- 30
-  retryCooloffSeconds: 30
-
-  # -- Retry backoff multiplier
-  # @default -- 2.0
-  retryMultiplier: 2.0
-
-  # -- Retry jitter percentage (0.2 = 20%)
-  # @default -- 0.2
-  retryJitterPct: 0.2
-
-  # Circuit breaker knobs
-  # -- Circuit breaker failure threshold
-  # @default -- 10
-  cbFailureThreshold: 10
-
-  # -- Circuit breaker cool-off period in seconds
-  # @default -- 30
-  cbCooloffSeconds: 30
-
-  # -- Circuit breaker probe maximum in-flight
-  # @default -- 1
-  cbProbeMaxInflight: 1
-
-navigator:
-  # -- Enable Navigator deployment (control plane or unified mode only)
-  # @default -- false
-  enabled: false
-
-  # -- Number of Navigator replicas
-  # @default -- 3
-  replicas: 3
-
-  # -- Pod annotations
-  podAnnotations: {}
-
-  # -- Service account configuration
-  serviceAccount:
-    # -- Specifies whether a service account should be created
-    create: true
-    # -- Annotations to add to the service account
-    annotations: {}
-    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
-    name: ""
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
-
-  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
-  env: []
-
-  # For example
-  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
-  # and then set:
-  #
-  # secret:
-  # - envName: "EMAIL__SMTP_URL"
-  #   secretName: "my-scret"
-  #   secretKey: "connection"
-  secret: []
-
-  # -- Resource requests and limits
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
-
-  # -- Custom liveness probe configuration (overrides default)
-  livenessProbe: {}
-
-  # -- Custom readiness probe configuration (overrides default)
-  readinessProbe: {}
-
-  # -- Custom startup probe configuration (overrides default)
-  startupProbe: {}
-
-  # Failover request reconcile loop knobs
-  # -- Interval in seconds between failover request reconciler runs
-  # @default -- 10
-  failoverRequestReconcilerIntervalSeconds: 10
-
-  # Deployment admission control loop knobs
-  # -- Interval in seconds for admitting deployments with in-progress missions
-  # @default -- 10
-  deploymentAdmitForInProgressMissionsIntervalSeconds: 10
-
-  # -- Interval in seconds for admitting deployments with pending cleanup missions
-  # @default -- 30
-  deploymentAdmitForPendingCleanupMissionsIntervalSeconds: 30
-
-  # -- Batch size for deployment claim operations
-  # @default -- 50
-  deploymentClaimBatchSize: 50
-
-  # -- Batch size for deployment admit operations
-  # @default -- 5
-  deploymentAdmitBatchSize: 5
-
-  # Mission reconciler loop knobs
-  # -- Minimum batch size for mission claim operations
-  # @default -- 10
-  missionClaimMinBatchSize: 10
-
-  # -- Batch size for mission plan operations
-  # @default -- 5
-  missionPlanBatchSize: 5
-
-  # -- Batch size for mission reconcile operations
-  # @default -- 5
-  missionReconcileBatchSize: 5
-
-  # -- Interval in seconds between claim loop runs
-  # @default -- 10
-  claimIntervalSeconds: 10
-
-  # -- Fraction of available capacity to claim per interval
-  # @default -- 0.5
-  claimFraction: 0.5
-
-  # Cleanup knobs
-  # -- Interval in seconds between cleanup loop runs
-  # @default -- 300
-  cleanupIntervalSeconds: 300
-
-  # -- Time-to-live in seconds for completed missions before cleanup (7 days)
-  # @default -- 604800
-  missionCleanupTtl: 604800
-
-  # -- Time-to-live in seconds for completed flights before cleanup (7 days)
-  # @default -- 604800
-  flightCleanupTtl: 604800
-
-mcpServer:
-  # -- Enable the MCP server deployment (control plane or unified mode only)
-  # @default -- false
-  enabled: false
-
-  # -- Number of MCP server replicas. The server is stateless (no session affinity, no
-  # shared cache) by design, so this is safely > 1.
-  # @default -- 2
-  replicas: 2
-
-  # -- Pod annotations
-  podAnnotations: {}
-
-  # -- Service account configuration
-  serviceAccount:
-    # -- Specifies whether a service account should be created
-    create: true
-    # -- Annotations to add to the service account
-    annotations: {}
-    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
-    name: ""
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
-
-  # -- Tool groups to enable (internal/toolreg.Group in apc-mcp-server). Joined into the
-  # MCP_ENABLED_GROUPS env var — see mcpServer.enabledGroups helper. Disabling a group here
-  # removes its tools from the catalog entirely, not just from what's visible to a given caller.
-  #
-  # This is a REPLACEMENT list: naming one opt-in group here means every other group the
-  # install should expose must be named too, or it's silently disabled. Setting
-  # enabledGroups: [platform_disruptive] loses reads and writes. The core group is always
-  # enabled regardless of this list and does not need naming.
-  #
-  # The eight groups: core (always on, not listed here), platform_read, platform_write,
-  # platform_disruptive (contract changes — executor/runtime/DAG-mechanism — off by default),
-  # platform_destroy (deletion, off by default), airflow_read (read-only Airflow diagnosis —
-  # task logs, import errors, installed providers — off by default), airflow_destroy
-  # (delete_dag_run, off by default), and skills_load (skill-delivery tools, prompts, and
-  # resources — off by default, toggled by mcpServer.skills.enabled below rather than named
-  # here). platform_disruptive, platform_destroy, and airflow_destroy are deliberately absent
-  # from the default below so enabling reads and writes never drags in contract changes or
-  # agent-driven deletion — those must be named explicitly. Turning on mcpServer.skills.enabled
-  # implies the read groups the shipped skills require (platform_read and airflow_read), so those
-  # need not be named when skills are enabled.
-  # @default -- ["platform_read", "platform_write"]
-  enabledGroups:
-    - platform_read
-    - platform_write
-
-  # -- Enable the skill-delivery surface: the load_skill, list_skills and read_skill_file tools,
-  # the per-skill prompts, and the skill resources (the skills_load group in apc-mcp-server).
-  # Opt-in. When on, the server also enables the read groups the shipped skills require
-  # (platform_read and airflow_read, for the debugging-dags and migrating-airflow-2-to-3 skills)
-  # — you do not list those yourself.
-  # @default -- false
-  skills:
-    enabled: false
-
-  # -- Tool names to disable outright (internal/config.DisabledTools in apc-mcp-server). Joined
-  # into the MCP_DISABLED_TOOLS env var. This is the per-tool kill switch: it overrides
-  # everything, including the always-on core group and enabledGroups above, since naming a tool
-  # is deliberate in a way that omitting a group from enabledGroups is not.
-  # @default -- []
-  disabledTools: []
-
-  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
-  env: []
-
-  # -- Cache the nginx auth_request subrequest to Houston, so a burst of calls from the
-  # same caller doesn't re-authenticate on every single one. A latency/load knob, not a
-  # security knob: every downstream tool call still re-authorizes against live Houston.
-  authCache:
-    # @default -- true
-    enabled: true
-    # -- How long a successful auth check is cached.
-    # @default -- 5m
-    validSuccess: "5m"
-    # -- How long a denied/failed auth check is cached — short, so a fixed credential
-    # (e.g. a just-rotated service-account key) stops failing quickly.
-    # @default -- 1m
-    validFailure: "1m"
-
-  # For example
-  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
-  # and then set:
-  #
-  # secret:
-  # - envName: "SOME_ENV_VAR"
-  #   secretName: "my-secret"
-  #   secretKey: "connection"
-  secret: []
-
-  # -- Resource requests and limits
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-
-  # -- Custom liveness probe configuration (overrides default: httpGet /healthz)
-  livenessProbe: {}
-
-  # -- Custom readiness probe configuration (overrides default: httpGet /readyz)
-  readinessProbe: {}
-
-  # -- Custom startup probe configuration (overrides default: httpGet /readyz)
-  startupProbe: {}
 
 registry:
-  enabled: true
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False
   replicas: 1
-  resources:
-    limits:
-      cpu: 500m
-      memory: 1Gi
-    requests:
-      cpu: 250m
-      memory: 512Mi
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
   livenessProbe: {}
     # httpGet:
@@ -1162,7 +500,6 @@ registry:
     # initialDelaySeconds: 10
     # periodSeconds: 10
     # timeoutSeconds: 5
-  startupProbe: {}
 
   podSecurityContext:
     fsGroup: 1000
@@ -1173,8 +510,6 @@ registry:
   extraEnv: []
 
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: false
     # Annotations to add to the service account
@@ -1247,5 +582,3 @@ ports:
   registryScrape: 5001
   commanderSidecarHTTP: 8080
   commanderSidecarGRPC: 9090
-  # Matches apc-mcp-server's LISTEN_ADDR default (cmd/apc-mcp-server/main.go).
-  mcpServerHTTP: 8080
