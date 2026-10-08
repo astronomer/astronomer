@@ -6,7 +6,7 @@ import pytest
 from deepmerge import always_merger
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_containers_by_name, get_env_vars_dict
+from tests.utils import get_containers_by_name, get_docs_by_kind_and_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -92,7 +92,8 @@ class TestLaminar:
             show_only=[*LAMINAR_HYPEVISOR_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
         )
         assert len(docs) == 11
-        hypervisor_deployment = docs[0]
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+        hypervisor_deployment = by_kind_and_name["deployment_hypervisor"]
         assert hypervisor_deployment["apiVersion"] == "apps/v1"
         assert hypervisor_deployment["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-hypervisor"
@@ -113,7 +114,7 @@ class TestLaminar:
             "key": "tls.crt",
         }
 
-        hypervisor_service = docs[4]
+        hypervisor_service = by_kind_and_name["service_hypervisor"]
         assert hypervisor_service["kind"] == "Service"
         assert hypervisor_service["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_service["metadata"]["labels"] == {
@@ -131,7 +132,7 @@ class TestLaminar:
         ]
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
-            docs[0],
+            hypervisor_deployment,
         )
         expected_hypervisor_volume_mounts_result = [
             [
@@ -145,7 +146,7 @@ class TestLaminar:
         ]
         assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
 
-        env_lines = docs[10]["data"]["laminar.env"].strip().splitlines()
+        env_lines = by_kind_and_name["configmap_laminar_env"]["data"]["laminar.env"].strip().splitlines()
         env_vars = dict(line.split("=", 1) for line in env_lines)
         assert env_vars == {
             "laminar_scaling__dry_run_strategy": "NEVER",
@@ -520,7 +521,8 @@ class TestLaminar:
             show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
         )
         assert len(docs) == 11
-        apiserver_deployment = docs[0]
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+        apiserver_deployment = by_kind_and_name["deployment_api_server"]
         assert apiserver_deployment["apiVersion"] == "apps/v1"
         assert apiserver_deployment["metadata"]["name"] == "release-name-api-server"
         assert apiserver_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-api-server"
@@ -535,7 +537,7 @@ class TestLaminar:
         assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
         assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
 
-        apiserver_service = docs[7]
+        apiserver_service = by_kind_and_name["service_api_server"]
         assert apiserver_service["kind"] == "Service"
         assert apiserver_service["metadata"]["name"] == "release-name-api-server"
         assert apiserver_service["metadata"]["labels"] == {
@@ -553,7 +555,7 @@ class TestLaminar:
         ]
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
-            docs[0],
+            apiserver_deployment,
         )
         expected_hypervisor_volume_mounts_result = [
             [
@@ -567,7 +569,7 @@ class TestLaminar:
         ]
         assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
 
-        env_lines = docs[10]["data"]["laminar.env"].strip().splitlines()
+        env_lines = by_kind_and_name["configmap_laminar_env"]["data"]["laminar.env"].strip().splitlines()
         env_vars = dict(line.split("=", 1) for line in env_lines)
         assert env_vars == {
             "laminar_scaling__dry_run_strategy": "NEVER",
@@ -581,7 +583,7 @@ class TestLaminar:
             "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
         }
 
-        apiserver_ingress = docs[9]
+        apiserver_ingress = by_kind_and_name["ingress_laminar_ingress"]
         assert apiserver_ingress["apiVersion"] == "networking.k8s.io/v1"
         assert apiserver_ingress["kind"] == "Ingress"
         assert apiserver_ingress["metadata"]["name"] == "release-name-laminar-ingress"
