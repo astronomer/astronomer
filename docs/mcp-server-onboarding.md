@@ -32,7 +32,7 @@ A revoked or expired key keeps working until its cached success entry expires, b
 
 ## Tool groups
 
-Which tools the server exposes is governed by `mcpServer.enabledGroups` in `charts/astronomer/values.yaml`, joined into the `MCP_ENABLED_GROUPS` env var. It is a replacement list, not additive: a group you do not name is not exposed. The `core` group is always on and is not listed. Two groups are exceptions to naming: `skills_load` is controlled by `mcpServer.skills.enabled` rather than listed here, and when skills are on the server also implies `airflow_read`.
+Which tools the server exposes is governed by `mcpServer.enabledGroups` in `charts/astronomer/values.yaml`, joined into the `MCP_ENABLED_GROUPS` env var. It is a replacement list, not additive: a group you do not name is not exposed. The `core` group is always on and is not listed. Naming has two exceptions: `skills_load` is controlled by `mcpServer.skills.enabled` rather than listed here, and when skills are on the server also implies the read groups the shipped skills require (`platform_read` and `airflow_read`).
 
 Operator overrides nest under the umbrella chart's `astronomer` key, as the examples below show.
 
@@ -58,7 +58,7 @@ astronomer:
       enabled: true
 ```
 
-When on, the server also enables the read-only Airflow groups the shipped skills require (`airflow_read`, for the `debugging-dags` and `migrating-airflow-2-to-3` skills) — you do not list those yourself.
+When on, the server also enables the read groups the shipped skills require (`platform_read` and `airflow_read`, for the `debugging-dags` and `migrating-airflow-2-to-3` skills) — you do not list those yourself.
 
 ### Upgrading: `airflow_read` now holds three tools that used to be in `platform_read`
 

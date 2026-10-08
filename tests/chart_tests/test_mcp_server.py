@@ -111,6 +111,19 @@ class TestMcpServerDeployment:
         env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
         assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read"
 
+    def test_deployment_enabled_groups_null_renders_empty(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True, "enabledGroups": None}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["mcp-server"]["env"])
+        assert env_vars["MCP_ENABLED_GROUPS"] == ""
+
     def test_deployment_skills_toggle_appends_skills_load(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
