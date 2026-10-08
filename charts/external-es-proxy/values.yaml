@@ -11,7 +11,7 @@ images:
     pullPolicy: IfNotPresent
   awsproxy:
     repository: quay.io/astronomer/ap-awsesproxy
-    tag: 2026.9.28
+    tag: 2026.10.5
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -19,8 +19,6 @@ nameOverride: ""
 fullnameOverride: ""
 
 serviceAccount:
-  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  automountServiceAccountToken: true
   # Specifies whether a service account should be created
   create: true
   # Annotations to add to the service account
@@ -47,9 +45,6 @@ securityContext:
 awsproxy:
   livenessProbe: {}
   readinessProbe: {}
-  startupProbe: {}
-
-startupProbe: {}
 
 service:
   type: ClusterIP
