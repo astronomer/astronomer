@@ -14,11 +14,11 @@ images:
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 2026.9.28
+    tag: 2026.10.5
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.21-33
+    tag: 8.0.21-34
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
@@ -35,8 +35,6 @@ common:
   protocol: http
 
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a ServiceAccount should be created
     create: true
     # Annotations to add to the service account
@@ -110,12 +108,6 @@ client:
     #   path: /_cluster/health?local=true
     #   port: {{ .Values.common.ports.http }}
     # initialDelaySeconds: 5
-  startupProbe: {}
-    # httpGet:
-    #   path: /_cluster/health
-    #   port: {{ .Values.common.ports.http }}
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   env:
     NODE_DATA: "false"
@@ -158,11 +150,6 @@ data:
     # initialDelaySeconds: 20
     # periodSeconds: 10
   readinessProbe: {}
-  startupProbe: {}
-    # tcpSocket:
-    #   port: {{ .Values.common.ports.transport }}
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   env:
     NODE_DATA: "true"
@@ -220,11 +207,6 @@ master:
   livenessProbe: {}
     # tcpSocket:
     #   port: {{ .Values.common.ports.transport }}
-  startupProbe: {}
-    # tcpSocket:
-    #   port: {{ .Values.common.ports.transport }}
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   env:
     NODE_DATA: "false"
@@ -255,13 +237,7 @@ curator:
     capabilities:
       drop:
       - ALL
-  resources:
-    limits:
-      cpu: 200m
-      memory: 256Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
+  resources: {}
 
   # Allows modification of the default age-based filter. If you require more
   # sophisticated filtering, modify the action file specified in
@@ -273,7 +249,6 @@ curator:
 
   livenessProbe: {}
   readinessProbe: {}
-  startupProbe: {}
 
 exporter:
   podAnnotations: {}
@@ -294,13 +269,13 @@ exporter:
       drop:
       - ALL
 
-  resources:
-    requests:
-      cpu: 50m
-      memory: 64Mi
-    limits:
-      cpu: 100m
-      memory: 128Mi
+  resources: {}
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
 
   livenessProbe: {}
     # httpGet:
@@ -314,12 +289,6 @@ exporter:
     #   port: http
     # initialDelaySeconds: 10
     # timeoutSeconds: 10
-  startupProbe: {}
-    # httpGet:
-    #   path: /healthz
-    #   port: http
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   service:
     type: ClusterIP
@@ -343,18 +312,7 @@ nginx:
   podAnnotations: {}
   fullnameOverride: ~
   ingressClass: ~
-  resources:
-    limits:
-      cpu: 200m
-      memory: 256Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  startupProbe: {}
-    # tcpSocket:
-    #   port: {{ .Values.common.ports.http }}
-    # failureThreshold: 30
-    # periodSeconds: 10
+  resources: {}
   securityContext:
     allowPrivilegeEscalation: false
     runAsNonRoot: true
