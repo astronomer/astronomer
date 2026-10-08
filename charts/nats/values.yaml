@@ -23,8 +23,6 @@ nats:
   # then a service account would be required to be able to
   # gather the public ip from a node.
   serviceAccount:
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-    automountServiceAccountToken: true
     # Specifies whether a ServiceAccount should be created
     create: false
     # Annotations to add to the service account
@@ -42,13 +40,13 @@ nats:
 
   terminationGracePeriodSeconds: 60
 
-  resources:
-    limits:
-      cpu: 250m
-      memory: 256Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
   livenessProbe: {}
     # httpGet:
@@ -63,13 +61,6 @@ nats:
     #   port: 8222
     # initialDelaySeconds: 10
     # timeoutSeconds: 5
-
-  startupProbe: {}
-    # httpGet:
-    #   path: /
-    #   port: 8222
-    # failureThreshold: 30
-    # periodSeconds: 10
 
   # Server settings.
   limits:
@@ -87,16 +78,9 @@ nats:
 
   jetStream:
     enabled: true
-    startupProbe: {}
-      # exec:
-      #   command: ["true"]
-      # failureThreshold: 30
-      # periodSeconds: 10
     serviceAccount:
       create: true
       name: ~
-      # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-      automountServiceAccountToken: true
 
 
     # Jetstream Domain
@@ -279,22 +263,17 @@ gateway:
 # The NATS config reloader image to use.
 reloader:
   enabled: false
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 50m
-      memory: 64Mi
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
-  startupProbe: {}
-    # tcpSocket:
-    #   port: 7777
-    # failureThreshold: 30
-    # periodSeconds: 10
   # resource configuration for the metrics sidecar
   resources:
     limits:
