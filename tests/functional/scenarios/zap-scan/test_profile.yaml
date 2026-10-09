@@ -1,0 +1,22 @@
+description: >-
+  On-demand DAST scan of a running APC install via OWASP ZAP's Automation Framework
+  (https://www.zaproxy.org/). Scans houston-api's GraphQL API (schema-aware, via
+  introspection) and astro-ui (spider + ajaxSpider), authenticated as a freshly created
+  admin user, with ZAP's active scanner enabled -- safe here since the target is this
+  scenario's own disposable per-run cluster, not shared staging.
+
+  Manual-only (see `manual_only` below): excluded from the normal scenario-discovery
+  wiring and the per-PR/master pipeline entirely. Its own `zap-scan` job and
+  `zap-scan-workflow` in .circleci/config.yml.j2 run only via CircleCI's "Trigger
+  Pipeline" feature (`run-zap-scan` + `zap-scan-ref`, default `master`). Run locally:
+  `uv run bin/run-scenario.py zap-scan && uv run pytest tests/functional/scenarios/zap-scan`.
+topology: unified
+# Without this, astro-ui's in-browser API calls go to the baseDomain-derived
+# https://houston.localtest.me/v1, which nothing listens on here -- see
+# configs/zap-scan-astro-ui-api-loc.yaml.
+values:
+  - configs/zap-scan-astro-ui-api-loc.yaml
+# Read only by bin/generate_circleci_config.py::discover_scenarios() (not by
+# bin/run-scenario.py) -- skips this scenario entirely: no auto-discovered scenario-*
+# job, no approve-scenarios gate, no release-to-internal/-public requirement.
+manual_only: true

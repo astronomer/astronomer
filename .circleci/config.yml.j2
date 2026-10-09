@@ -33,6 +33,14 @@ parameters:
     type: string
     default: ""
     description: "Chart version to sign via sign-released-image-workflow, triggered manually via the CircleCI Trigger Pipeline feature. Leave blank otherwise."
+  run-zap-scan:
+    type: boolean
+    default: false
+    description: "Trigger an on-demand ZAP DAST scan (zap-scan-workflow) of the git ref in zap-scan-ref. Manual-only -- never set true on an automatic trigger."
+  zap-scan-ref:
+    type: string
+    default: "master"
+    description: "Git ref (branch, tag, or full SHA) to scan when run-zap-scan is true. Checked out explicitly in the zap-scan job, independent of what triggered the pipeline."
 
 jobs:
   sign-released-image:
@@ -288,6 +296,59 @@ jobs:
 {%- endif %}
 {%- endfor %}
 
+  # On-demand ZAP DAST scan (PLA-614). Hand-written, not from the scenario for-loop
+  # above: test_profile.yaml sets manual_only, so discover_scenarios() skips it --
+  # no approve-scenarios gate, no release requirement. Runs only via zap-scan-workflow,
+  # manually triggered with pipeline.parameters.run-zap-scan.
+  zap-scan:
+    machine:
+      image: {{ machine_image_version }}
+      resource_class: 2xlarge
+    steps:
+      - checkout
+      - run:
+          name: "Check out scan target: << pipeline.parameters.zap-scan-ref >>"
+          # zap-scan-ref is a user-supplied pipeline parameter -- passed as an env var,
+          # not interpolated straight into the script, so shell metacharacters in it
+          # are inert data instead of executable syntax.
+          environment:
+            ZAP_SCAN_REF: << pipeline.parameters.zap-scan-ref >>
+          command: |
+            git fetch origin "$ZAP_SCAN_REF"
+            git checkout FETCH_HEAD
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ '{{' }} checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p {{ python_image_version }} --seed && uv sync
+      - run:
+          name: "Scenario: zap-scan"
+          # ZAP only prints a line per job start/finish (tests/utils/zap.py), not
+          # during one -- activeScan/spiderAjax are bounded now but still silent
+          # mid-job, so this needs real margin over their internal caps.
+          no_output_timeout: 45m
+          command: |
+            uv run bin/run-scenario.py zap-scan
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            # Hard backstop independent of ZAP's own internal caps (tests/utils/zap.py)
+            # and of no_output_timeout, which only bounds silence, not total duration.
+            # 75m leaves headroom over activeScan's 30m cap plus other job overhead.
+            timeout 75m uv run pytest -sv --junitxml=test-results/junit.xml tests/functional/scenarios/zap-scan
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: /tmp/zap-scan-report
+          destination: zap-scan-report
+          when: always
+
   check-commander-airflow-version:
     docker:
       - image: cimg/base:{{ base_image_version }}
@@ -513,6 +574,13 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
+
+  # On-demand ZAP DAST scan, triggered manually via run-zap-scan (zap-scan-ref
+  # defaults to master). No branch/tag filter needed -- run-zap-scan defaults false.
+  zap-scan-workflow:
+    when: << pipeline.parameters.run-zap-scan >>
+    jobs:
+      - zap-scan
 
 commands:
   push-to-quay-io:
