@@ -24,6 +24,27 @@ data:
       address: "0.0.0.0:8686"
 
     data_dir: "/var/lib/vector"
+    {{- $cloudwatchSecrets := and .Values.houston.logging.loggingSidecar.cloudwatch.enabled (not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA) }}
+    {{- $elasticsearchSecrets := and .Values.houston.logging.loggingSidecar.elasticsearch.enabled (eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic") }}
+    {{- if or $cloudwatchSecrets $elasticsearchSecrets }}
+
+    # Vector 0.57+ no longer interpolates environment variables in config files. Sink
+    # credentials are read from the mounted Kubernetes secrets at config load time
+    # via Vector's secrets backend instead (one file per secret key).
+    secret:
+    {{- if $cloudwatchSecrets }}
+      aws_creds:
+        type: directory
+        path: /etc/vector/secrets/cloudwatch
+        remove_trailing_whitespace: true
+    {{- end }}
+    {{- if $elasticsearchSecrets }}
+      es_creds:
+        type: directory
+        path: /etc/vector/secrets/elasticsearch
+        remove_trailing_whitespace: true
+    {{- end }}
+    {{- end }}
 
     sources:
       worker_logs:
@@ -99,8 +120,8 @@ data:
         stream_name: "{{ "{{" }} kubernetes.pod_name {{ "}}" }}"
     {{- if not .Values.houston.logging.loggingSidecar.cloudwatch.useIRSA }}
         auth:
-          access_key_id: "${AWS_ACCESS_KEY_ID}"
-          secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+          access_key_id: "SECRET[aws_creds.aws_access_key_id]"
+          secret_access_key: "SECRET[aws_creds.aws_secret_access_key]"
     {{- end }}
         encoding:
           codec: json
@@ -127,13 +148,13 @@ data:
         type: elasticsearch
         inputs:
           - normalize_levels
-        endpoints: ["${ES_ENDPOINT}"]
+        endpoints: [{{ include "houston.logging.loggingSidecar.elasticsearch" . | quote }}]
         api_version: {{ .Values.houston.logging.loggingSidecar.elasticsearch.apiVersion | quote }}
     {{- if eq .Values.houston.logging.loggingSidecar.elasticsearch.auth.strategy "basic" }}
         auth:
           strategy: basic
-          user: "${ES_USERNAME}"
-          password: "${ES_PASSWORD}"
+          user: "SECRET[es_creds.username]"
+          password: "SECRET[es_creds.password]"
     {{- end }}
         mode: bulk
         bulk:
