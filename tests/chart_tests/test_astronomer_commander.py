@@ -1199,3 +1199,24 @@ class TestAstronomerCommander:
         assert "COMMANDER_SIGNING_KEY_PATH" not in env_vars
         assert "commander-signing-key" not in {mount["name"] for mount in commander["volumeMounts"]}
         assert "commander-signing-key" not in {vol["name"] for vol in doc["spec"]["template"]["spec"]["volumes"]}
+
+    @pytest.mark.parametrize(
+        "keda_values,expected",
+        [
+            ({}, "false"),
+            ({"enabled": False}, "false"),
+            ({"enabled": True}, "true"),
+        ],
+        ids=["default", "keda_disabled", "keda_enabled"],
+    )
+    def test_commander_keda_discovery_follows_global_keda(self, kube_version, keda_values, expected):
+        """Commander only looks for KEDA when the platform is set up to use it."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}, "keda": keda_values}},
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["commander"]["env"])
+        assert env_vars["COMMANDER_KEDA_DISCOVERY_ENABLED"] == expected

@@ -260,6 +260,8 @@ spec:
             - name: COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS
               value: {{ .Values.commander.laminar.hypervisor.pollIntervalSecs | quote }}
             {{- end }}
+            - name: COMMANDER_KEDA_DISCOVERY_ENABLED
+              value: {{ ternary "true" "false" .Values.global.keda.enabled | quote }}
             {{- if .Values.global.privateCaCerts }}
             - name: UPDATE_CA_CERTS
               value: "true"

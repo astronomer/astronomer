@@ -892,6 +892,8 @@ kubectl --context k3d-dp01 get crd scaledobjects.keda.sh
 Both KEDA deployments should be `Available`, and the CRD should exist. The CRD is the part that
 matters to the control plane: Commander reports KEDA's presence by asking the cluster whether it
 serves `scaledobjects.keda.sh`, and Houston offers worker autoscaling on that answer alone.
+Commander only asks when `global.keda.enabled` is set, which `--with-keda` does; otherwise it
+reports `installed: false` without looking.
 
 Check what Commander is actually reporting:
 
