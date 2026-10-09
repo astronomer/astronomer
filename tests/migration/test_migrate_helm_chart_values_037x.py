@@ -6,7 +6,7 @@ import importlib.util
 import sys
 from io import StringIO
 from pathlib import Path
-from textwrap import dedent
+from textwrap import dedent, indent
 
 import pytest
 from ruamel.yaml import YAML
@@ -776,6 +776,107 @@ class TestHoustonDeploymentDeleteKey:
         changes = rule.apply(data)
 
         assert len(changes) == 0
+
+
+# ---------------------------------------------------------------------------
+# PgBouncer auth_type (effective for Helm-mode deployments on 2.x)
+# ---------------------------------------------------------------------------
+
+
+_PGBOUNCER_PREFIX = (
+    "astronomer:\n  houston:\n    config:\n      deployments:\n        helm:\n          airflow:\n            pgbouncer:\n"
+)
+
+
+def _pgbouncer_values(body: str) -> str:
+    """Wrap a PgBouncer passthrough block in the Houston config path.
+
+    Parameters:
+        body: YAML for the keys under ``pgbouncer``, at any uniform indentation.
+
+    Returns:
+        A full values document as YAML text.
+    """
+    return _PGBOUNCER_PREFIX + indent(dedent(body).strip("\n") + "\n", " " * 14)
+
+
+class TestPgbouncerAuthType:
+    """PgBouncer passthrough keys survive the migration, and the advisory is emitted.
+
+    Helm remains the default deployment mode on 2.x and an existing Deployment
+    cannot be converted to operator mode, so `deployments.helm.airflow.pgbouncer.*`
+    stays effective after the upgrade. The migration must not rewrite any of it.
+    """
+
+    @pytest.mark.parametrize("auth_type", ["md5", "scram-sha-256"])
+    def test_auth_type_is_preserved(self, auth_type: str):
+        """auth_type is left alone: it is still honored by Helm-mode Deployments."""
+        data = _load_rt(
+            _pgbouncer_values(f"""
+                auth_type: {auth_type}
+                replicas: 2
+                """)
+        )
+        changes = migrate_values(data)
+
+        result = _to_plain(data)
+        pgbouncer = result["astronomer"]["houston"]["config"]["deployments"]["helm"]["airflow"]["pgbouncer"]
+        assert pgbouncer["auth_type"] == auth_type
+        assert pgbouncer["replicas"] == 2
+        assert [c for c in changes if "pgbouncer" in c.old_path] == []
+
+    def test_all_pgbouncer_keys_are_preserved(self):
+        """No key under the pgbouncer passthrough block is rewritten."""
+        data = _load_rt(
+            _pgbouncer_values("""
+                auth_type: scram-sha-256
+                maxClientConn: 400
+                metadataPoolSize: 20
+                resources:
+                  requests:
+                    cpu: 800m
+                """)
+        )
+        migrate_values(data)
+
+        result = _to_plain(data)
+        pgbouncer = result["astronomer"]["houston"]["config"]["deployments"]["helm"]["airflow"]["pgbouncer"]
+        assert pgbouncer["auth_type"] == "scram-sha-256"
+        assert pgbouncer["maxClientConn"] == 400
+        assert pgbouncer["metadataPoolSize"] == 20
+        assert pgbouncer["resources"]["requests"]["cpu"] == "800m"
+
+    def test_extra_ini_is_preserved(self):
+        """An auth_type line in extraIni is left in place: extraIni is honored too."""
+        data = _load_rt(
+            _pgbouncer_values("""
+                extraIni: |
+                  auth_type = md5
+                  server_idle_timeout = 30
+                """)
+        )
+        migrate_values(data)
+
+        result = _to_plain(data)
+        pgbouncer = result["astronomer"]["houston"]["config"]["deployments"]["helm"]["airflow"]["pgbouncer"]
+        assert "auth_type = md5" in pgbouncer["extraIni"]
+        assert "server_idle_timeout = 30" in pgbouncer["extraIni"]
+
+    def test_note_always_emitted(self):
+        """The advisory is emitted even when no auth_type key is present.
+
+        This is the common case: the customer is on the chart default and has no
+        auth_type key of their own.
+        """
+        data = _load_rt("global:\n  baseDomain: x.com\n")
+        notes = migrate_mod.collect_pgbouncer_auth_type_notes(data)
+
+        assert len(notes) == 1
+        assert "scram-sha-256" in notes[0]
+
+    def test_note_skipped_for_non_mapping(self):
+        """An empty or non-mapping document produces no notes."""
+        assert migrate_mod.collect_pgbouncer_auth_type_notes(None) == []
 
 
 # ---------------------------------------------------------------------------
