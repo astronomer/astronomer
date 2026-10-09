@@ -1134,6 +1134,24 @@ mcpServer:
   # -- Custom startup probe configuration (overrides default: httpGet /readyz)
   startupProbe: {}
 
+# -- Houston's Laminar passthrough (internal/laminar in apc-mcp-server reaches Laminar only
+# through this route). Protects Houston itself, not just agent traffic — Houston serves the
+# APC UI and the Astro CLI from the same workers, so an agent's fan-out is a load source
+# those callers would otherwise share in. Applies regardless of whether mcpServer.enabled is
+# set: the route exists in Houston whenever a caller is authorized to reach it.
+laminarProxy:
+  # -- Per-request upstream timeout, in milliseconds. A hung Laminar releases the Houston
+  # worker within this window rather than holding it on an unbounded wait.
+  # @default -- 30000
+  timeoutMs: 30000
+
+  # -- Max concurrent in-flight passthrough requests to Laminar, per deployment. Beyond this,
+  # a request is shed immediately with a retryable, distinguishable error (429) rather than
+  # queued, so one deployment's agent fan-out cannot consume the pool other deployments and
+  # non-agent callers share.
+  # @default -- 10
+  maxConcurrentPerDeployment: 10
+
 registry:
   enabled: true
   # flag to bypass secure (tls) authentication to astronomer registry

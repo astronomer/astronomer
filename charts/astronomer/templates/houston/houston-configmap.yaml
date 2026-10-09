@@ -701,6 +701,10 @@ data:
       enabledGroups: {{ include "mcpServer.enabledGroups" . | quote }}
       {{- end }}
 
+    laminarProxy:
+      timeoutMs: {{ .Values.laminarProxy.timeoutMs }}
+      maxConcurrentPerDeployment: {{ .Values.laminarProxy.maxConcurrentPerDeployment }}
+
     updateRuntimeCheck:
       enabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
     strictSchemaCheck:
