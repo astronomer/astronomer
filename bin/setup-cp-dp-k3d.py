@@ -42,6 +42,11 @@ from pathlib import Path
 
 from k3d_setup_shared import (
     CERT_MANAGER_VERSION,
+    CP_DP_DNSMASQ_CONF_PATH,
+    CP_DP_DNSMASQ_CONTAINER_NAME,
+    CP_DP_LOCAL_DNS_PORT,
+    CP_DP_PROXY_CONF_PATH,
+    CP_DP_PROXY_CONTAINER_NAME,
     DEFAULT_DOCKER_NETWORK,
     HELM_CHART,
     HELM_REPO_NAME,
@@ -86,13 +91,13 @@ GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".
 #     to the right cluster's *published host port* (each CP/DP already publishes its own :443
 #     to a distinct host port at cluster-creation time — see `_k3d_create_cluster`).
 # ---------------------------------------------------------------------------
-LOCAL_DNS_PORT = 15354
-DNSMASQ_CONF_PATH = HELPER_DIR / "cp-dp-dnsmasq.conf"
-DNSMASQ_CONTAINER_NAME = "astro-cp-dp-dnsmasq"
+LOCAL_DNS_PORT = CP_DP_LOCAL_DNS_PORT
+DNSMASQ_CONF_PATH = CP_DP_DNSMASQ_CONF_PATH
+DNSMASQ_CONTAINER_NAME = CP_DP_DNSMASQ_CONTAINER_NAME
 DNSMASQ_IMAGE = "alpine:3.20"
 
-PROXY_CONTAINER_NAME = "astro-cp-dp-proxy"
-PROXY_CONF_PATH = HELPER_DIR / "cp-dp-proxy-nginx.conf"
+PROXY_CONTAINER_NAME = CP_DP_PROXY_CONTAINER_NAME
+PROXY_CONF_PATH = CP_DP_PROXY_CONF_PATH
 PROXY_IMAGE = "nginx:stable-alpine"  # official nginx; includes the stream + ssl_preread modules
 
 # ServiceMonitor CRD: the airflow-operator's apiserver controller watches monitoring.coreos.com/v1

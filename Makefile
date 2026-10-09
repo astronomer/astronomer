@@ -2,7 +2,7 @@
 
 .PHONY: help
 help: ## Print Makefile help.
-	@grep -Eh '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1;36m%-41s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^[a-z.A-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1;36m%-41s\033[0m %s\n", $$1, $$2}'
 
 # List of charts to build
 CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch vector kube-state postgresql
@@ -61,6 +61,10 @@ clean: ## Clean build and test artifacts
 	kind delete cluster -n data
 	kind delete cluster -n kind
 	kind delete cluster -n unified
+
+.PHONY: clean-k3d
+clean-k3d: ## Delete local k3d clusters and CP/DP host networking (override with CLEAN_K3D_ARGS)
+	python3 bin/clean_k3d.py $(CLEAN_K3D_ARGS)
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
