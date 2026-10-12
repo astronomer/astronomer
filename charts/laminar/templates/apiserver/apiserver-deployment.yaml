@@ -38,6 +38,7 @@ spec:
       {{- if not .Values.databaseBootstrapper.backendSecretName }}
       initContainers:
         {{- include "laminar.bootstrapperInitContainer" . | nindent 8 }}
+        {{- include "laminar.sslCertCopierInitContainer" . | nindent 8 }}
       {{- end }}
       containers:
         - name: apiserver
@@ -45,15 +46,19 @@ spec:
           imagePullPolicy: {{ .Values.images.laminar.pullPolicy }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           command:
-            - "python"
-            - "-m"
-            - "laminar"
-            - "api-server"
+          - sh
+          - -c
+          - |
+            update-ca-certificates; python -m laminar api-server
           resources: {{- toYaml .Values.apiServer.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: {{ .Values.apiServer.port }}
           env:
+            {{- if .Values.global.privateCaCerts }}
+            - name: SSL_CERT_DIR
+              value: /etc/ssl/certs
+            {{- end }}
             {{- include "laminar.env" (list $ .Values.apiServer) | nindent 12 }}
           {{- with .Values.apiServer.livenessProbe }}
           livenessProbe: {{- toYaml . | nindent 12 }}
@@ -65,9 +70,25 @@ spec:
           startupProbe: {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
+            - mountPath: /tmp
+              name: tmp
             {{- include "laminar.envVolumeMount" . | nindent 12 }}
+            {{- include "laminar.custom_ca_volume_mounts" . | indent 12  }}
+            {{- if .Values.extraVolumeMounts }}
+            {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
+            {{- end }}
       volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
+        - emptyDir: {}
+          name: tmp
         {{- include "laminar.envVolume" . | nindent 8 }}
+        {{- include "laminar.custom_ca_volumes" . | indent 8  }}
+        {{- if .Values.extraVolumes }}
+          {{- toYaml .Values.extraVolumes | nindent 8 }}
+        {{- end }}
       dnsConfig:
         options:
           - name: ndots

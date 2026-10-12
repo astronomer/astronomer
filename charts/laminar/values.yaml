@@ -14,8 +14,8 @@ imagePullSecrets: []
 
 images:
   laminar:
-    repository: core.harbor.astro-qa.link/astrocloud/ap-laminar
-    tag: latest
+    repository: quay.io/astronomer/ap-laminar
+    tag: 1.0.0-rc4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -138,3 +138,6 @@ hypervisor:
       path: /laminar/healthz
     periodSeconds: 10
     failureThreshold: 30
+
+extraVolumes: []
+extraVolumeMounts: []

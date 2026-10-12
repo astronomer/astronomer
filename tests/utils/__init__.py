@@ -97,6 +97,11 @@ def get_service_account_name_from_doc(doc: dict, *, include_init_containers=Fals
     return None
 
 
+def get_docs_by_kind_and_name(docs) -> dict:
+    """Index rendered docs by a readable "{kind}_{name}" key instead of by list position."""
+    return {f"{x['kind'].lower()}_{x['metadata']['name'].replace('-', '_').replace('release_name_', '')}": x for x in docs}
+
+
 def dot_notation_to_dict(dotted_string, default_value=None):
     """Return a dotted string for a nested dict structure where the deepest values is assigned to None or the given default.
 
