@@ -128,6 +128,21 @@ def get_workspace_id_by_label(houston_api, token: str, label: str) -> str | None
     return matches[0]["id"] if matches else None
 
 
+def get_deployment_id_by_label(houston_api, token: str, workspace_id: str, label: str) -> str | None:
+    """
+    Return the id of the deployment with this exact label in the given workspace, or
+    None if none matches.
+    """
+    query = """
+    query WorkspaceDeployments($workspaceUuid: Uuid!) {
+      workspaceDeployments(workspaceUuid: $workspaceUuid) { id label }
+    }
+    """
+    data = graphql(houston_api, query, {"workspaceUuid": workspace_id}, token=token)
+    matches = [d for d in (data.get("workspaceDeployments") or []) if d.get("label") == label]
+    return matches[0]["id"] if matches else None
+
+
 def get_cluster_id(houston_api, token: str) -> str:
     """Look up the default Cluster houston-api's populate-default-cluster script creates
     on startup in unified mode. No registerCluster call is needed for this topology."""
@@ -287,44 +302,117 @@ def validate_git_sync_credentials(
     return graphql(houston_api, query, variables, token=token)["validateGitSyncCredentials"]
 
 
+def _format_container_state(state) -> str:
+    """Collapse a V1ContainerState to one compact token for a status line.
+
+    The raw object repr dumps all three of running/terminated/waiting -- two of which are
+    always None -- across several lines, so a release with a dozen containers buries the one
+    that actually matters under screenfuls of 'terminated': None, 'waiting': None. This
+    keeps only the populated branch, with the reason (waiting) or exit detail (terminated)
+    that explains *why* a container is not ready."""
+    if state is None:
+        return "no-state"
+    if state.running is not None:
+        return f"running(since {state.running.started_at})"
+    if state.waiting is not None:
+        reason = state.waiting.reason or "Waiting"
+        message = (state.waiting.message or "").strip()
+        return f"waiting({reason}{': ' + message if message else ''})"
+    if state.terminated is not None:
+        t = state.terminated
+        return f"terminated({t.reason or 'Terminated'}, exit={t.exit_code})"
+    return "unknown"
+
+
 def _summarize_pods(k8s_core_v1_client, namespace: str, label_selector: str) -> list[str]:
-    """One line per pod matching label_selector: phase plus each container's ready/state.
+    """An aligned table of the release's pods: one row per container.
 
     Shared by wait_for_release_ready's per-iteration status line (so a crash-looping
     container is visible on every poll, not just once the 600s timeout finally fires)
     and dump_release_diagnostics' fuller post-mortem below.
+
+    Columns: POD | CONTAINER | READY | RESTARTS | STATE. The pod name and phase print only
+    on a pod's first container row, so each pod reads as one visual group, and a not-ready
+    container shows READY=no -- so the one laggard (e.g. a worker still on its startup probe)
+    stands out instead of being lost in a run-on line of a dozen already-ready containers.
     """
     pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
     if not pods:
         return [f"no pods exist yet in {namespace} for {label_selector}"]
-    lines = []
+
+    header = ("POD", "CONTAINER", "READY", "RESTARTS", "STATE")
+    rows = [header]
     for pod in pods:
-        statuses = [f"{c.name}: ready={c.ready} state={c.state}" for c in pod.status.container_statuses or []]
-        lines.append(
-            f"{namespace}/{pod.metadata.name}: phase={pod.status.phase} -- {'; '.join(statuses) or 'no container statuses yet'}"
-        )
-    return lines
+        container_statuses = pod.status.container_statuses or []
+        pod_cell = f"{pod.metadata.name} ({pod.status.phase})"
+        if not container_statuses:
+            rows.append((pod_cell, "-", "-", "-", "no container statuses yet"))
+            continue
+        for i, c in enumerate(container_statuses):
+            rows.append(
+                (
+                    pod_cell if i == 0 else "",  # name once per pod, so rows group visually
+                    c.name,
+                    "yes" if c.ready else "no",
+                    str(c.restart_count),
+                    _format_container_state(c.state),
+                )
+            )
+
+    widths = [max(len(row[col]) for row in rows) for col in range(len(header))]
+    return [" | ".join(cell.ljust(widths[col]) for col, cell in enumerate(row)).rstrip() for row in rows]
+
+
+def _dump_not_ready_container_logs(k8s_core_v1_client, namespace: str, label_selector: str, tail_lines: int = 200) -> None:
+    """
+    Print recent logs for only the not-ready containers of the release's pods.
+    """
+    pods = k8s_core_v1_client.list_namespaced_pod(namespace, label_selector=label_selector).items
+    for pod in pods:
+        for cs in pod.status.container_statuses or []:
+            if cs.ready:
+                continue
+            name = pod.metadata.name
+            print(f"--- logs: {namespace}/{name} ({cs.name}), last {tail_lines} lines ---")
+            try:
+                print(k8s_core_v1_client.read_namespaced_pod_log(name, namespace, container=cs.name, tail_lines=tail_lines))
+            except Exception as exc:  # noqa: BLE001
+                print(f"(failed to fetch logs for {name}/{cs.name}: {exc})")
+            if (cs.restart_count or 0) > 0:
+                print(f"--- previous logs: {namespace}/{name} ({cs.name}), last {tail_lines} lines ---")
+                try:
+                    print(
+                        k8s_core_v1_client.read_namespaced_pod_log(
+                            name, namespace, container=cs.name, previous=True, tail_lines=tail_lines
+                        )
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    print(f"(failed to fetch previous logs for {name}/{cs.name}: {exc})")
 
 
 def dump_release_diagnostics(k8s_core_v1_client, namespace: str, label_selector: str) -> None:
     """
-    Print actual Pod status and namespace Events for a release that never became ready.
+    Print actual Pod status, namespace Events, and not-ready container logs for a release
+    that never became ready.
 
     A Deployment's readyReplicas alone can't distinguish two very different failures:
     a pod Pod Security Admission rejects is never created at all -- it never becomes an
     unhealthy Pod, it only ever shows up as a FailedCreate Event on its ReplicaSet -- vs.
     a pod that *was* created but is stuck (image pull, crash loop, unschedulable). This
     prints both so the two aren't confused (see PINF-1031's auth-sidecar scenario for the
-    same distinction at the single-Deployment level).
+    same distinction at the single-Deployment level). The logs of the not-ready containers
+    then show *why* a created-but-stuck pod is stuck.
     """
     for line in _summarize_pods(k8s_core_v1_client, namespace, label_selector):
-        print(f"pod {line}")
+        print(line)
 
     events = k8s_core_v1_client.list_namespaced_event(namespace).items
     print(f"--- events in {namespace} ({len(events)}) ---")
     for event in events:
         obj = event.involved_object
         print(f"{event.type} {event.reason}: {obj.kind}/{obj.name}: {event.message}")
+
+    _dump_not_ready_container_logs(k8s_core_v1_client, namespace, label_selector)
 
 
 def _workload_settled(w) -> bool:
@@ -444,7 +532,8 @@ def wait_for_release_ready(
         namespace = workloads[0].metadata.namespace if workloads else None
         if namespace:
             for line in _summarize_pods(k8s_core_v1_client, namespace, label_selector):
-                print(f"  pod {line}")
+                print(f"  {line}")
+            print()  # blank line between iterations so each poll's pod block reads as one group
         if time.monotonic() >= deadline:
             if namespace:
                 dump_release_diagnostics(k8s_core_v1_client, namespace, label_selector)

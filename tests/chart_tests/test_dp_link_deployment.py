@@ -28,7 +28,7 @@ class TestDpLinkDeployment:
         assert dp_link_deployment["kind"] == "Deployment"
         assert dp_link_deployment["metadata"]["name"] == "release-name-dp-link"
 
-        assert dp_link_deployment["spec"]["replicas"] == 3
+        assert dp_link_deployment["spec"]["replicas"] == 2
         assert dp_link_deployment["spec"]["selector"]["matchLabels"] == {
             "tier": "astronomer",
             "component": "dp-link",

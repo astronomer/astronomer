@@ -139,7 +139,8 @@ global:
   # workers a queue needs. Doing so writes a service account, a role and a role
   # binding into the namespace below, plus one cluster-scoped authentication object. It
   # also has the Airflow operator watch your scaling objects, so one changed or deleted
-  # outside the platform is restored.
+  # outside the platform is restored. Worker autoscaling is only offered on a cluster where
+  # this is on and the platform finds KEDA installed.
   keda:
     enabled: false
     # The namespace KEDA is installed in.
