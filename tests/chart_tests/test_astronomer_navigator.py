@@ -107,7 +107,7 @@ class TestAstronomerNavigator:
         assert env_vars["CLAIM_FRACTION"] == "0.5"
 
         # Cleanup knobs
-        assert env_vars["CLEANUP_INTERVAL_SECONDS"] == "300"
+        assert env_vars["NAVIGATOR_CLEANUP_INTERVAL_SECONDS"] == "300"
         assert env_vars["MISSION_CLEANUP_TTL"] == "604800"
         assert env_vars["FLIGHT_CLEANUP_TTL"] == "604800"
 
@@ -153,7 +153,7 @@ class TestAstronomerNavigator:
         assert env_vars["MISSION_RECONCILE_BATCH_SIZE"] == "10"
         assert env_vars["CLAIM_INTERVAL_SECONDS"] == "15"
         assert env_vars["CLAIM_FRACTION"] == "0.75"
-        assert env_vars["CLEANUP_INTERVAL_SECONDS"] == "600"
+        assert env_vars["NAVIGATOR_CLEANUP_INTERVAL_SECONDS"] == "600"
         assert env_vars["MISSION_CLEANUP_TTL"] == "86400"
         assert env_vars["FLIGHT_CLEANUP_TTL"] == "172800"
 
