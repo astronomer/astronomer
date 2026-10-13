@@ -7,6 +7,19 @@ import yaml
 from tests import supported_k8s_versions
 from tests.utils.chart import render_chart
 
+def _keeps(rule, values, separator=";"):
+    return re.fullmatch(rule["regex"], separator.join(values)) is not None
+
+
+def _apply_replace(rule, values, separator=";"):
+    source = separator.join(values)
+    match = re.fullmatch(rule["regex"], source)
+    if match is None:
+        return None
+    # Prometheus replacement syntax is $1; Python's expand() wants \1.
+    return match.expand(re.sub(r"\$(\d+)", r"\\\1", rule["replacement"]))
+
+
 prometheus_job = {
     "job_name": "prometheus",
     "static_configs": [{"targets": ["localhost:9090"]}],
@@ -462,6 +475,55 @@ class TestPrometheusConfigConfigmap:
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         nats_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == scrape_targets]
         assert len(nats_scrape_config) == expected_count
+
+    @pytest.mark.parametrize(
+        ("mode", "expected_count"),
+        [
+            ("control", 1),
+            ("unified", 1),
+            ("data", 0),
+        ],
+    )
+    def test_prometheus_mcp_server_scrape_config(self, kube_version, mode, expected_count):
+        """The MCP server is control-plane only, so its scrape job renders on control/unified
+        planes and not on a data plane. The job keys on the Service's prometheus.io annotations
+        and maps the port the same way the other service-discovery jobs do."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"plane": {"mode": mode}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        mcp_jobs = [s for s in scrape_configs if s["job_name"] == "mcp-server"]
+        assert len(mcp_jobs) == expected_count
+        if expected_count:
+            job = mcp_jobs[0]
+            assert job["kubernetes_sd_configs"][0]["role"] == "service"
+            assert job["kubernetes_sd_configs"][0]["namespaces"]["names"] == ["default"]
+
+            relabels = job["relabel_configs"]
+            assert relabels[0]["source_labels"] == ["__meta_kubernetes_service_name"]
+            assert relabels[0]["action"] == "keep"
+            assert _keeps(relabels[0], ["astronomer-mcp-server"])
+            assert not _keeps(relabels[0], ["astronomer-mcp-server-canary"])
+            assert not _keeps(relabels[0], ["other-mcp-server"])
+
+            assert relabels[1]["source_labels"] == ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
+            assert relabels[1]["action"] == "keep"
+            assert relabels[1]["regex"] is True
+
+            port_rule = next(r for r in relabels if r["source_labels"][-1] == "__meta_kubernetes_service_annotation_prometheus_io_port")
+            assert port_rule["source_labels"] == ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"]
+            assert port_rule["action"] == "replace"
+            assert port_rule["target_label"] == "__address__"
+
+            for discovered_address, annotation_port, expected in [
+                ("10.0.0.5:80", "9090", "10.0.0.5:9090"),
+                ("10.0.0.5", "9090", "10.0.0.5:9090"),
+                ("172.16.0.3:8080", "2112", "172.16.0.3:2112"),
+            ]:
+                assert _apply_replace(port_rule, [discovered_address, annotation_port]) == expected
 
     @pytest.mark.parametrize(
         ("mode", "scrape_targets", "expected_count"),
