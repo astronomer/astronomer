@@ -362,6 +362,9 @@ class TestMcpServerNetworkPolicy:
         assert {
             "podSelector": {"matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}}
         } in ingress_from
+        assert {
+            "podSelector": {"matchLabels": {"tier": "monitoring", "component": "prometheus", "release": "release-name"}}
+        } in ingress_from
         assert docs[0]["spec"]["ingress"][0]["ports"][0]["port"] == 8080
 
     def test_networkpolicy_absent_when_mcp_server_disabled(self, kube_version):
