@@ -248,3 +248,17 @@ naming one without the other leaves laminar waiting on a secret nothing creates.
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Checksum of the JWKS cert laminar reads, so a regenerated cert rolls the pods.
+Call with (list $ $componentValues).
+*/}}
+{{- define "laminar.jwksChecksum" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+{{- if $component.jwtIssuer -}}
+{{- $name := $component.jwksSecretName | default (printf "%s-commander-signing-cert" $.Release.Name) -}}
+{{- $data := (get ((lookup "v1" "Secret" $.Release.Namespace $name) | default dict) "data") | default dict -}}
+checksum/commander-jwks-secret: {{ (get $data "tls.crt") | b64dec | sha256sum }}
+{{- end -}}
+{{- end -}}
