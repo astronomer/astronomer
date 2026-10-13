@@ -1008,9 +1008,17 @@ Returns the string "true" or "false" — compare with eq.
 
 {{/*
 Joins mcpServer.enabledGroups into the CSV the MCP_ENABLED_GROUPS env var expects.
+skills_load is controlled solely by mcpServer.skills.enabled, so it is stripped from the
+operator's list and re-appended only when the toggle is on — the toggle stays authoritative
+and the group is never emitted twice. The server implies the read groups the enabled skills
+require, so the chart never computes that union itself.
 */}}
 {{- define "mcpServer.enabledGroups" -}}
-{{- join "," .Values.mcpServer.enabledGroups -}}
+{{- $groups := without (.Values.mcpServer.enabledGroups | default (list)) "skills_load" -}}
+{{- if .Values.mcpServer.skills.enabled -}}
+{{- $groups = concat $groups (list "skills_load") -}}
+{{- end -}}
+{{- join "," $groups -}}
 {{- end }}
 
 {{/*

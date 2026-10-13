@@ -35,6 +35,7 @@ from tests.utils.houston_graphql import (
     create_workspace,
     dump_pod_logs,
     get_cluster_id,
+    get_deployment_id_by_label,
     get_workspace_id_by_label,
     snapshot_release_revisions,
     upsert_deployment,
@@ -157,6 +158,20 @@ def _create_workspace(houston_api, token: str, label: str) -> str:
         return workspace_id
 
 
+def _create_or_get_deployment(houston_api, token: str, *, workspace_id: str, cluster_id: str, **kwargs) -> dict:
+    """
+    Create the deployment, or recover the existing one on a duplicate-label collision
+    """
+    try:
+        return upsert_deployment(houston_api, token, workspace_id=workspace_id, cluster_id=cluster_id, **kwargs)
+    except HoustonError as exc:
+        if "already has a deployment" not in str(exc):
+            raise
+        deployment_id = get_deployment_id_by_label(houston_api, token, workspace_id, kwargs["label"])
+        assert deployment_id, f"upsert said {kwargs['label']!r} exists, but workspaceDeployments returned none"
+        return upsert_deployment(houston_api, token, executor=kwargs["executor"], deployment_uuid=deployment_id)
+
+
 def _create_sidecar_config_secret(core_client, namespace: str) -> None:
     """Create (or replace) the fixed-name 'sidecar-config' Secret the injected sidecar
     mounts under customConfig: true. Houston references but never creates it, so without
@@ -173,6 +188,23 @@ def _create_sidecar_config_secret(core_client, namespace: str) -> None:
         core_client.replace_namespaced_secret(SIDECAR_CONFIG_SECRET_NAME, namespace, secret)
 
 
+def _restart_sidecar_pods(core_client, namespace: str, release_name: str) -> list[str]:
+    """
+    Delete this release's sidecar-carrying pods so their controllers respawn them.
+    """
+    deleted = []
+    for pod in core_client.list_namespaced_pod(namespace, label_selector=f"release={release_name}").items:
+        if DEPLOYMENT_SIDECAR_CONTAINER_NAME not in {c.name for c in pod.spec.containers}:
+            continue
+        try:
+            core_client.delete_namespaced_pod(pod.metadata.name, namespace)
+            deleted.append(pod.metadata.name)
+        except client.exceptions.ApiException as exc:
+            if exc.status != 404:  # already gone (kubelet/controller raced us) -- fine
+                raise
+    return deleted
+
+
 @pytest.fixture(scope="module")
 def deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
     """Creates a real dag_deploy Airflow Deployment through Houston"""
@@ -180,7 +212,7 @@ def deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k
     workspace_id = _create_workspace(_houston_api_module, token, WORKSPACE_LABEL)
     cluster_id = get_cluster_id(_houston_api_module, token)
     try:
-        created = upsert_deployment(
+        created = _create_or_get_deployment(
             _houston_api_module,
             token,
             executor="CeleryExecutor",
@@ -197,6 +229,10 @@ def deployment(_admin_token, _houston_api_module, _k8s_apps_v1_client_module, _k
     release_name = created["releaseName"]
     namespace = _wait_for_release_namespace(_k8s_apps_v1_client_module, release_name)
     _create_sidecar_config_secret(_k8s_core_v1_client_module, namespace)
+
+    restarted = _restart_sidecar_pods(_k8s_core_v1_client_module, namespace, release_name)
+    if restarted:
+        print(f"Restarted pods for {release_name!r} after creating the sidecar Secret: {restarted}")
 
     wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, release_name)
     return {
