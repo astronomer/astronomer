@@ -113,6 +113,8 @@ class TestLaminar:
             "name": "release-name-commander-signing-cert",
             "key": "tls.crt",
         }
+        annotations = hypervisor_deployment["spec"]["template"]["metadata"]["annotations"]
+        assert "checksum/commander-jwks-secret" in annotations
 
         hypervisor_service = by_kind_and_name["service_hypervisor"]
         assert hypervisor_service["kind"] == "Service"
@@ -543,9 +545,9 @@ class TestLaminar:
             "requests": {"cpu": "400m", "memory": "256Mi"},
             "limits": {"cpu": "1", "memory": "1Gi"},
         }
-        hypervisor_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
-        assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
-        assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+        apiserver_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
+        assert apiserver_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
+        assert apiserver_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
 
         apiserver_service = by_kind_and_name["service_api_server"]
         assert apiserver_service["kind"] == "Service"
@@ -567,7 +569,7 @@ class TestLaminar:
             "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
             apiserver_deployment,
         )
-        expected_hypervisor_volume_mounts_result = [
+        expected_apiserver_volume_mounts_result = [
             [
                 {
                     "mountPath": "/laminar.env",
@@ -577,7 +579,7 @@ class TestLaminar:
                 }
             ]
         ]
-        assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
+        assert volume_mount_search_result == expected_apiserver_volume_mounts_result
 
         env_lines = by_kind_and_name["configmap_laminar_env"]["data"]["laminar.env"].strip().splitlines()
         env_vars = dict(line.split("=", 1) for line in env_lines)
