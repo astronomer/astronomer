@@ -7,6 +7,7 @@ import yaml
 from tests import supported_k8s_versions
 from tests.utils.chart import render_chart
 
+
 def _keeps(rule, values, separator=";"):
     return re.fullmatch(rule["regex"], separator.join(values)) is not None
 
@@ -513,7 +514,9 @@ class TestPrometheusConfigConfigmap:
             assert relabels[1]["action"] == "keep"
             assert relabels[1]["regex"] is True
 
-            port_rule = next(r for r in relabels if r["source_labels"][-1] == "__meta_kubernetes_service_annotation_prometheus_io_port")
+            port_rule = next(
+                r for r in relabels if r["source_labels"][-1] == "__meta_kubernetes_service_annotation_prometheus_io_port"
+            )
             assert port_rule["source_labels"] == ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"]
             assert port_rule["action"] == "replace"
             assert port_rule["target_label"] == "__address__"
