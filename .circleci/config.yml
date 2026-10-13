@@ -181,6 +181,17 @@ jobs:
             fi
             bin/trigger_stage_cluster_update.py "${args[@]}"
 
+  validate-release-images:
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:2026-10
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Fail the release if any image is a release candidate
+          command: |
+            uv run bin/check-no-rc-images.py
+
   release-to-public:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2026-10
@@ -760,12 +771,19 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
+      - validate-release-images:
+          requires:
+            - approve-public-release
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - release-to-public:
           context:
             - gcp-astronomer-prod
             - github-repo
           requires:
-            - approve-public-release
+            - validate-release-images
           filters:
             branches:
               only:

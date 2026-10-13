@@ -34,7 +34,7 @@ set -ex
 "${BIN_DIR}/install-ci-tools.py"
 
 # install-ci-tools.py only puts this directory on PATH within its own process, which
-# doesn't help anything shelled out to below (e.g. setup-kind.py -> show-docker-images.py's
+# doesn't help anything shelled out to below (e.g. setup-kind.py -> show_docker_images.py's
 # bare `helm template` call). Export it here so it's on PATH for the rest of this script.
 export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
 
