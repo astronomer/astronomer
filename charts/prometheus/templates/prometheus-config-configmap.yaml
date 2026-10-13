@@ -541,17 +541,22 @@ data:
             target_label: __address__
 
       # Control-plane only, so it lives in this block. No mcpServer.enabled guard
-      # needed: with the Service absent, the service-name keep below matches nothing.
+      # needed: with the Service absent, the keeps below match nothing.
       - job_name: mcp-server
         kubernetes_sd_configs:
-          - role: service
+          - role: endpoints
             namespaces:
               names:
                 - {{ .Release.Namespace }}
         relabel_configs:
-          - source_labels: [__meta_kubernetes_service_name]
+          # Key on stable Service metadata, not the templated name: mcpServer.fullname can dedupe
+          # a contained component name, honor an override, or truncate at 63 chars.
+          - source_labels: [__meta_kubernetes_service_label_release]
             action: keep
-            regex: "^{{ .Release.Name }}-mcp-server$"
+            regex: "^{{ .Release.Name }}$"
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: "^mcp-server-http$"
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
             action: keep
             regex: true

@@ -487,8 +487,11 @@ class TestPrometheusConfigConfigmap:
     )
     def test_prometheus_mcp_server_scrape_config(self, kube_version, mode, expected_count):
         """The MCP server is control-plane only, so its scrape job renders on control/unified
-        planes and not on a data plane. The job keys on the Service's prometheus.io annotations
-        and maps the port the same way the other service-discovery jobs do."""
+        planes and not on a data plane. It discovers by endpoints, not service: the server runs
+        multiple replicas, and a service-role target scrapes the ClusterIP, which load-balances
+        to a random pod each scrape and makes per-pod counters flap. The job keys on stable
+        Service metadata -- the release label and mcp-server-http port name, not the templated
+        Service name -- and maps the port the same way the other endpoint jobs do."""
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -500,19 +503,23 @@ class TestPrometheusConfigConfigmap:
         assert len(mcp_jobs) == expected_count
         if expected_count:
             job = mcp_jobs[0]
-            assert job["kubernetes_sd_configs"][0]["role"] == "service"
+            assert job["kubernetes_sd_configs"][0]["role"] == "endpoints"
             assert job["kubernetes_sd_configs"][0]["namespaces"]["names"] == ["default"]
 
             relabels = job["relabel_configs"]
-            assert relabels[0]["source_labels"] == ["__meta_kubernetes_service_name"]
+            assert relabels[0]["source_labels"] == ["__meta_kubernetes_service_label_release"]
             assert relabels[0]["action"] == "keep"
-            assert _keeps(relabels[0], ["astronomer-mcp-server"])
-            assert not _keeps(relabels[0], ["astronomer-mcp-server-canary"])
-            assert not _keeps(relabels[0], ["other-mcp-server"])
+            assert _keeps(relabels[0], ["astronomer"])
+            assert not _keeps(relabels[0], ["astronomer-other"])
 
-            assert relabels[1]["source_labels"] == ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
+            assert relabels[1]["source_labels"] == ["__meta_kubernetes_endpoint_port_name"]
             assert relabels[1]["action"] == "keep"
-            assert relabels[1]["regex"] is True
+            assert _keeps(relabels[1], ["mcp-server-http"])
+            assert not _keeps(relabels[1], ["mcp-server-grpc"])
+
+            assert relabels[2]["source_labels"] == ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
+            assert relabels[2]["action"] == "keep"
+            assert relabels[2]["regex"] is True
 
             port_rule = next(
                 r for r in relabels if r["source_labels"][-1] == "__meta_kubernetes_service_annotation_prometheus_io_port"

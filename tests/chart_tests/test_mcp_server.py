@@ -302,6 +302,24 @@ class TestMcpServerService:
         assert annotations["prometheus.io/scrape"] == "true"
         assert annotations["prometheus.io/port"] == "8080"
 
+    def test_service_discovery_handles_survive_contained_name(self, kube_version):
+        """When the release name contains the component, mcpServer.fullname dedupes it, so the
+        Service name is no longer release-name + '-mcp-server'. The scrape job must therefore key
+        on the release label and mcp-server-http port name, which stay stable here."""
+        docs = render_chart(
+            kube_version=kube_version,
+            name="astronomer-mcp-server",
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        svc = docs[0]
+        assert svc["metadata"]["name"] == "astronomer-mcp-server"
+        assert svc["metadata"]["labels"]["release"] == "astronomer-mcp-server"
+        assert svc["spec"]["ports"][0]["name"] == "mcp-server-http"
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestMcpServerServiceAccount:
