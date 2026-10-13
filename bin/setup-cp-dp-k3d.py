@@ -707,16 +707,9 @@ def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     # switched on where this script installed KEDA. Its CRDs are applied before this release.
     global_keda_block = f"  keda:\n    enabled: true\n    namespace: {KEDA_NAMESPACE}\n" if settings.with_keda else ""
     laminar_subchart_block = _laminar_subchart_block(settings, settings.with_laminar)
-    # The airflow-operator subchart is enabled by `global.airflowOperator.enabled`
-    # (see Chart.yaml condition). The values block below is only consumed when
-    # that flag is on; we emit it only in that case for clarity.
-    # Drift correction on scaling objects is its own switch, separate from the identity
-    # global.keda.enabled creates. Only meaningful where this script installed KEDA.
-    operator_keda_line = "  kedaEnabled: true\n" if settings.with_keda else ""
     operator_subchart_block = (
-        f"""\
+        """\
 airflow-operator:
-{operator_keda_line}\
   crd:
     create: true
   certManager:
