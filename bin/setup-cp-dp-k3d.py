@@ -40,6 +40,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
 from k3d_setup_shared import (
     CERT_MANAGER_VERSION,
     DEFAULT_DOCKER_NETWORK,
@@ -151,6 +152,44 @@ KEDA_PIN_FIELD_MANAGER = "astronomer-k3d-setup"
 # untouched.
 QUAY_SERVER = "quay.io"
 QUAY_PULL_SECRET_NAME = "quay-pull-secret"  # noqa: S105 -- k8s Secret name, not a credential
+
+# The private airflow-operator development build lives at this repository name. It is the only
+# operator image that needs a pull secret; the released `airflow-operator` repo is public. We match
+# on the name rather than compare to a fixed full path so a dev image on any registry still triggers
+# the secret.
+OPERATOR_DEV_IMAGE_NAME = "airflow-operator-dev"
+OPERATOR_CHART_VALUES = GIT_ROOT_DIR / "charts" / "airflow-operator" / "values.yaml"
+
+
+def _operator_repo_in(values: dict) -> str | None:
+    """Pull the operator manager repository out of one parsed values mapping, or None if absent."""
+    root = values.get("airflow-operator", values)
+    if not isinstance(root, dict):
+        return None
+    repo = root.get("images", {}).get("manager", {}).get("repository")
+    return repo if isinstance(repo, str) and repo else None
+
+
+def _load_yaml(path: Path) -> dict:
+    """Parse a YAML file to a mapping; {} on any read/parse error or non-mapping content."""
+    try:
+        parsed = yaml.safe_load(path.read_text())
+    except (OSError, yaml.YAMLError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _resolve_operator_image_repo(extra_values_files: list[Path]) -> str | None:
+    """
+    Resolve the operator manager repository this run will actually install, or None if unknown.
+    """
+    repo = _operator_repo_in(_load_yaml(OPERATOR_CHART_VALUES))
+    for path in extra_values_files:
+        override = _operator_repo_in(_load_yaml(path))
+        if override:
+            repo = override
+    return repo
+
 
 # The laminar image the local setup installs. The chart's own default points at a QA Harbor and
 # is anonymously pullable; this is the release candidate, which is not, hence the pull secret.
@@ -410,9 +449,18 @@ class Settings:
     with_keda: bool = False
     with_laminar: bool = False
     laminar_tag: str = LAMINAR_IMAGE_TAG
+    operator_image_repo: str | None = None
     chart_version: str | None = None
     chart_is_prerelease: bool = False
     agents: int = 0
+
+    @property
+    def operator_needs_quay(self) -> bool:
+        """
+        True when the operator is on AND points at the private airflow-operator-dev image.
+        """
+        repo = self.operator_image_repo
+        return self.enable_operator and bool(repo) and repo.rsplit("/", 1)[-1] == OPERATOR_DEV_IMAGE_NAME
 
 
 def _ts() -> str:
@@ -631,6 +679,20 @@ laminar:
 """
 
 
+def _operator_image_pull_secret_block(settings: Settings) -> str:
+    """`manager.imagePullSecrets` for the operator subchart, emitted only for the private image.
+
+    The airflow-operator-dev image lives on private quay, so its pull needs the same secret
+    laminar uses. We reuse QUAY_PULL_SECRET_NAME rather than a second secret: it is the same
+    credential, and the setup already creates that secret on every cluster that runs the operator.
+    Honoured by the chart's `manager.imagePullSecrets` branch (see
+    charts/airflow-operator/templates/_helpers.yaml). Indented to sit under `manager:`.
+    """
+    if not settings.operator_needs_quay:
+        return ""
+    return f"  manager:\n    imagePullSecrets:\n      - name: {QUAY_PULL_SECRET_NAME}\n"
+
+
 def _cp_values_yaml(settings: Settings) -> str:
     operator_block = "  airflowOperator:\n    enabled: true\n" if settings.enable_operator else ""
     operator_subchart_block = (
@@ -648,6 +710,7 @@ airflow-operator:
       cpu: 100m
       memory: 128Mi
 """
+        + _operator_image_pull_secret_block(settings)
         if settings.enable_operator
         else ""
     )
@@ -707,14 +770,20 @@ def _dp_values_yaml(settings: Settings, dp: DataPlane) -> str:
     # switched on where this script installed KEDA. Its CRDs are applied before this release.
     global_keda_block = f"  keda:\n    enabled: true\n    namespace: {KEDA_NAMESPACE}\n" if settings.with_keda else ""
     laminar_subchart_block = _laminar_subchart_block(settings, settings.with_laminar)
+    # Nested one level under the subchart's existing `manager:` key, so it reads `airflow-operator`
+    # -> `manager` -> `imagePullSecrets`. Only emitted for the private airflow-operator-dev image.
+    operator_pull_secret_line = (
+        f"    imagePullSecrets:\n      - name: {QUAY_PULL_SECRET_NAME}\n" if settings.operator_needs_quay else ""
+    )
     operator_subchart_block = (
-        """\
+        f"""\
 airflow-operator:
   crd:
     create: true
   certManager:
     enabled: true
   manager:
+{operator_pull_secret_line}\
     replicas: 1
     # Pin the operator controller (which also serves the admission webhook) to
     # the control-plane node.  The kube-apiserver runs on that same node and
@@ -1643,6 +1712,17 @@ def parse_args() -> argparse.Namespace:
         help=f"Override the laminar image tag. Default {LAMINAR_IMAGE_TAG}.",
     )
     parser.add_argument(
+        "--operator-image-repo",
+        default=None,
+        help=(
+            "The airflow-operator manager image repository this run installs. Omit to resolve it "
+            "from the chart default layered with any --helm-values overrides (which is what helm "
+            f"actually installs). When it resolves to a private {OPERATOR_DEV_IMAGE_NAME} image, "
+            f"the setup creates the {QUAY_PULL_SECRET_NAME} pull secret and wires it into the "
+            "operator's manager.imagePullSecrets. Pass this only to force the value explicitly."
+        ),
+    )
+    parser.add_argument(
         "--with-keda",
         action="store_true",
         default=None,
@@ -1802,13 +1882,25 @@ def main() -> int:  # noqa: C901
             interactive=args.interactive,
         )
 
-    # Resolved as soon as the laminar answer is known and before any cluster is created: the
-    # alternative is discovering it after two clusters and a cert-manager install, when the
-    # laminar pods sit in ImagePullBackOff and nothing says why.
-    quay_credentials = _quay_credentials(interactive=args.interactive) if with_laminar else None
-    if with_laminar and quay_credentials is None:
+    # Resolve the operator image repo this run actually installs: an explicit --operator-image-repo
+    # wins, else the chart default layered with any --helm-values overrides (same precedence helm
+    # uses), or None if nothing names one. The private airflow-operator-dev image needs the same
+    # quay credentials laminar does, so decide that here — before resolving credentials — so a run
+    # needing them only for the operator still gets the early check rather than an ImagePullBackOff
+    # two clusters later. A None repo is left alone: unknown, so don't touch quay.
+    operator_image_repo = args.operator_image_repo or _resolve_operator_image_repo([Path(f) for f in args.helm_values])
+    operator_needs_quay = (
+        enable_operator and bool(operator_image_repo) and operator_image_repo.rsplit("/", 1)[-1] == OPERATOR_DEV_IMAGE_NAME
+    )
+
+    needs_quay = with_laminar or operator_needs_quay
+    quay_credentials = _quay_credentials(interactive=args.interactive) if needs_quay else None
+    if needs_quay and quay_credentials is None:
+        wanted = ", ".join(
+            filter(None, [LAMINAR_IMAGE_REPOSITORY if with_laminar else "", operator_image_repo if operator_needs_quay else ""])
+        )
         _print(
-            f"\n❌ Installing laminar needs {QUAY_SERVER} credentials for {LAMINAR_IMAGE_REPOSITORY}.\n"
+            f"\n❌ This run needs {QUAY_SERVER} credentials for: {wanted}.\n"
             "   Set QUAY_USERNAME and QUAY_PASSWORD, or run `docker login quay.io`,\n"
             "   or re-run with --interactive to be prompted."
         )
@@ -1875,6 +1967,7 @@ def main() -> int:  # noqa: C901
         with_keda=with_keda,
         with_laminar=with_laminar,
         laminar_tag=args.laminar_tag,
+        operator_image_repo=operator_image_repo,
         chart_version=resolved_chart_version,
         chart_is_prerelease=chart_is_prerelease,
         agents=args.num_compute_nodes,
@@ -2062,11 +2155,16 @@ def main() -> int:  # noqa: C901
 
                 cp_ctx = f"k3d-{cp.cluster_name}"
 
-                # A unified CP runs laminar itself (see _cp_values_yaml), so it needs the quay
-                # pull secret the laminar pods reference. Created before the release so those pods
-                # never start without it. A control-only CP never runs laminar, so it is skipped.
-                if settings.with_laminar and settings.cp_mode == "unified":
-                    h = ms.start(f"Create quay pull secret on {cp.cluster_name} (laminar image)")
+                # The quay pull secret is needed on the CP for either of two pods that reference
+                # it: a unified CP runs laminar itself (see _cp_values_yaml), and an operator on
+                # the private airflow-operator-dev image pulls through the same secret. One secret
+                # covers both. Created before the release so neither pod starts without it.
+                cp_laminar = settings.with_laminar and settings.cp_mode == "unified"
+                if cp_laminar or settings.operator_needs_quay:
+                    reasons = ", ".join(
+                        filter(None, ["laminar" if cp_laminar else "", "operator" if settings.operator_needs_quay else ""])
+                    )
+                    h = ms.start(f"Create quay pull secret on {cp.cluster_name} ({reasons} image)")
                     assert quay_credentials is not None  # noqa: S101 — guaranteed by the check in main()
                     _ensure_quay_pull_secret(
                         context=cp_ctx,
@@ -2177,9 +2275,16 @@ def main() -> int:  # noqa: C901
                 else:
                     ms.skip(f"Install KEDA on {dp.cluster_name}", reason="not requested")
 
-                # Before the release, so the pods that reference it never start without it.
-                if settings.with_laminar:
-                    h = ms.start(f"Create quay pull secret on {dp.cluster_name} (laminar image)")
+                # Before the release, so the pods that reference it never start without it. Needed
+                # for laminar and for the operator on the private airflow-operator-dev image; one
+                # secret serves both.
+                if settings.with_laminar or settings.operator_needs_quay:
+                    reasons = ", ".join(
+                        filter(
+                            None, ["laminar" if settings.with_laminar else "", "operator" if settings.operator_needs_quay else ""]
+                        )
+                    )
+                    h = ms.start(f"Create quay pull secret on {dp.cluster_name} ({reasons} image)")
                     assert quay_credentials is not None  # noqa: S101 — guaranteed by the check in main()
                     _ensure_quay_pull_secret(
                         context=dp_ctx,

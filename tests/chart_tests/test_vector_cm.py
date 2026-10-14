@@ -175,6 +175,25 @@ class TestVectorConfigmap:
         assert "is_integer(.level)" in source
         assert ".level = to_string!(.level)" in source
 
+    def test_vector_configmap_stamps_worker_queue_on_worker_records(self, kube_version):
+        """Test that worker records carry the queue, read before .kubernetes is dropped."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        config_dict = yaml.safe_load(docs[0]["data"]["vector-config.yaml"])
+        source = config_dict["transforms"]["transform_airflow_logs"]["source"]
+
+        assert 'if .component == "worker"' in source
+        assert '.kubernetes.pod_annotations."astronomer.io/worker-queue-name"' in source
+        assert ".kubernetes.pod_labels.queue" in source
+        assert ".worker_queue = queue" in source
+        # The queue must be read in the pod-log transform, which runs before the
+        # field cleanup removes .kubernetes.
+        assert "del(.kubernetes)" in config_dict["transforms"]["transform_remove_fields"]["source"]
+
     def test_vector_configmap_filters_task_logs_out_of_k8s_logs_pipeline(self, kube_version):
         """AF3 tasks write each line to both stdout and attempt=N.log, so the stdout
         pipeline must drop the duplicate before the shared elasticsearch sink."""

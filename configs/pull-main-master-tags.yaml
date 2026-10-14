@@ -4,7 +4,7 @@ airflow-operator:
   images:
     manager:
       pullPolicy: IfNotPresent
-      repository: quay.io/astronomer/airflow-operator-controller
+      repository: quay.io/astronomer/airflow-operator-dev
       # tag: This has no floating tag
 alertmanager:
   images:
