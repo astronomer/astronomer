@@ -3899,6 +3899,39 @@ spec:
                         stabilizationWindowSeconds:
                           format: int32
                           type: integer
+                        triggers:
+                          items:
+                            properties:
+                              authenticationRef:
+                                properties:
+                                  kind:
+                                    enum:
+                                    - TriggerAuthentication
+                                    - ClusterTriggerAuthentication
+                                    type: string
+                                  name:
+                                    type: string
+                                required:
+                                - name
+                                type: object
+                              metadata:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                              metricType:
+                                type: string
+                              name:
+                                type: string
+                              type:
+                                minLength: 1
+                                type: string
+                              useCachedMetrics:
+                                type: boolean
+                            required:
+                            - metadata
+                            - type
+                            type: object
+                          type: array
                       type: object
                     logRetentionDays:
                       default: 15
