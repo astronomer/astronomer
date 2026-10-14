@@ -1139,9 +1139,15 @@ mcpServer:
 # APC UI and the Astro CLI from the same workers, so an agent's fan-out is a load source
 # those callers would otherwise share in. Applies regardless of whether mcpServer.enabled is
 # set: the route exists in Houston whenever a caller is authorized to reach it.
-laminarProxy:
+laminar:
   # -- Per-request upstream timeout, in milliseconds. A hung Laminar releases the Houston
   # worker within this window rather than holding it on an unbounded wait.
+  #
+  # Must stay below apc-mcp-server's Laminar client timeout (35000ms, a Go constant --
+  # internal/laminar/client.go's defaultTimeout, not itself chart-configurable). Raising this
+  # past that ceiling reintroduces the bug both timeouts were set to avoid: the MCP client
+  # gives up and surfaces its own generic timeout before Houston's real LAMINAR_TIMEOUT
+  # response ever arrives.
   # @default -- 30000
   timeoutMs: 30000
 

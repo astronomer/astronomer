@@ -815,7 +815,7 @@ def test_houston_configmap_with_mcp_server_disabled():
 
 
 def test_houston_configmap_laminar_proxy_defaults():
-    """laminarProxy renders with its documented defaults when not overridden -- unlike
+    """laminar renders with its documented defaults when not overridden -- unlike
     mcpServer, this is unconditional: the passthrough route exists in Houston regardless of
     whether the MCP server deployment is enabled."""
     docs = render_chart(
@@ -825,16 +825,16 @@ def test_houston_configmap_laminar_proxy_defaults():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["laminarProxy"]["timeoutMs"] == 30000
-    assert prod["laminarProxy"]["maxConcurrentPerDeployment"] == 10
+    assert prod["laminar"]["timeoutMs"] == 30000
+    assert prod["laminar"]["maxConcurrentPerDeployment"] == 10
 
 
 def test_houston_configmap_laminar_proxy_overrides():
-    """Both laminarProxy knobs are independently settable from chart values (APC-1794)."""
+    """Both laminar knobs are independently settable from chart values (APC-1794)."""
     docs = render_chart(
         values={
             "astronomer": {
-                "laminarProxy": {"timeoutMs": 45000, "maxConcurrentPerDeployment": 25},
+                "laminar": {"timeoutMs": 45000, "maxConcurrentPerDeployment": 25},
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -843,8 +843,8 @@ def test_houston_configmap_laminar_proxy_overrides():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["laminarProxy"]["timeoutMs"] == 45000
-    assert prod["laminarProxy"]["maxConcurrentPerDeployment"] == 25
+    assert prod["laminar"]["timeoutMs"] == 45000
+    assert prod["laminar"]["maxConcurrentPerDeployment"] == 25
 
 
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
