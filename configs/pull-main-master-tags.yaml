@@ -32,7 +32,7 @@ astronomer:
       tag: main
     mcpServer:
       pullPolicy: IfNotPresent
-      repository: quay.io/astronomer/ap-mcp-server
+      repository: quay.io/astronomer/ap-apc-mcp-server
       tag: main
     registry:
       pullPolicy: IfNotPresent

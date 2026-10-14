@@ -71,7 +71,7 @@ class TestMcpServerDeployment:
         c_by_name = get_containers_by_name(doc)
         assert "mcp-server" in c_by_name
         container = c_by_name["mcp-server"]
-        assert "ap-mcp-server" in container["image"]
+        assert "ap-apc-mcp-server" in container["image"]
         assert container["securityContext"]["readOnlyRootFilesystem"] is True
 
         # mcp-server is excluded from tests/enable_all_features.yaml (it conflicts with
