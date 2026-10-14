@@ -1000,7 +1000,7 @@ Returns the string "true" or "false" — compare with eq.
 
 {{ define "mcpServer.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-mcp-server:{{ .Values.images.mcpServer.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-apc-mcp-server:{{ .Values.images.mcpServer.tag }}
 {{- else -}}
 {{ .Values.images.mcpServer.repository }}:{{ .Values.images.mcpServer.tag }}
 {{- end }}
