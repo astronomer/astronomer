@@ -78,6 +78,18 @@ data:
           .workspace = .kubernetes.pod_labels.workspace
           .release = .kubernetes.pod_labels.release
           .namespace = .kubernetes.pod_namespace
+          # Every worker queue shares the worker component, so stamp the queue on
+          # the record. The operator stores it as a pod annotation; read it here
+          # because transform_remove_fields drops .kubernetes before the sink.
+          if .component == "worker" {
+            queue = .kubernetes.pod_annotations."astronomer.io/worker-queue-name"
+            if queue == null {
+              queue = .kubernetes.pod_labels.queue
+            }
+            if is_string(queue) {
+              .worker_queue = queue
+            }
+          }
 
       parse_json_messages:
         type: remap
