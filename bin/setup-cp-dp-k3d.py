@@ -392,7 +392,9 @@ def _wait_for_keda(context: str, timeout_s: int = 180) -> None:
     )
 
 
-# Friendly `--version` aliases (shown in the interactive picker and accepted on the CLI).
+# Friendly `--version` aliases accepted on the CLI. The interactive picker lists every published
+# major.minor from MENU_FLOOR up instead (see `_version_menu`), and falls back to this static
+# list only when the Helm repo can't be reached.
 #
 # Numbered aliases resolve to a published chart version on HELM_REPO_URL, including
 # prereleases (most release-branch versions are only ever published as `-betaN` / timestamped
@@ -406,6 +408,8 @@ def _wait_for_keda(context: str, timeout_s: int = 180) -> None:
 VERSION_ALIASES: tuple[str, ...] = ("0.37", "1.1.x", "1.2.x", "2.0.0", "2.0.1", "2.1", "local")
 DELEGATE_037_ALIAS = "0.37"
 LOCAL_CHECKOUT_ALIAS = "local"
+# Oldest major.minor the picker offers from the repo. 0.37 and local are always added separately.
+MENU_FLOOR: tuple[int, int] = (1, 1)
 
 # Friendly topology labels for the interactive picker, mapped to the actual `global.plane.mode`
 # value the CP is installed with (see docs/architecture.md). "cp/dp" -> "control" because the DP
@@ -519,7 +523,34 @@ def _helm_search_versions(chart_ref: str) -> list[str]:
     return [str(e["version"]) for e in entries if "version" in e]
 
 
-def _resolve_chart_version(alias: str, chart_ref: str) -> str:
+def _published_versions_or_none(chart_ref: str) -> list[str] | None:
+    """Refresh the Helm repo and list its versions, or None (with a warning) if it can't be reached."""
+    try:
+        _ensure_helm_repo()
+        return _helm_search_versions(chart_ref)
+    except (RuntimeError, OSError) as e:
+        _print(f"WARNING: could not list chart versions from {HELM_REPO_URL}; showing the built-in list.\n  {e}")
+        return None
+
+
+def _version_menu(versions: list[str] | None) -> list[str]:
+    """
+    Picker options: 0.37, then every published major.minor from MENU_FLOOR up (oldest first),
+    then local. Falls back to VERSION_ALIASES when `versions` is None or yields nothing.
+    """
+    minors: set[tuple[int, int]] = set()
+    for v in versions or []:
+        parts = v.split(".")
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            minor = (int(parts[0]), int(parts[1]))
+            if minor >= MENU_FLOOR:
+                minors.add(minor)
+    if not minors:
+        return list(VERSION_ALIASES)
+    return [DELEGATE_037_ALIAS, *(f"{major}.{minor}" for major, minor in sorted(minors)), LOCAL_CHECKOUT_ALIAS]
+
+
+def _resolve_chart_version(alias: str, chart_ref: str, versions: list[str] | None = None) -> str:
     """
     Resolve a friendly `--version` alias to a concrete published chart version.
 
@@ -528,8 +559,11 @@ def _resolve_chart_version(alias: str, chart_ref: str) -> str:
       get a final release before the next one is cut.
     - A minor-only alias (e.g. "1.1.x", "2.1") matches the newest version under that
       major[.minor] prefix, released or not.
+
+    Pass `versions` to reuse an earlier `helm search` instead of running another one.
     """
-    versions = _helm_search_versions(chart_ref)
+    if versions is None:
+        versions = _helm_search_versions(chart_ref)
     if not versions:
         raise RuntimeError(f"`helm search repo {chart_ref} --versions --devel` returned no versions.")
 
@@ -1771,10 +1805,14 @@ def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool]:
         return args.chart_version, "-" in args.chart_version
 
     alias = args.version_alias
+    versions: list[str] | None = None
     if alias is None:
+        # Only reach out to the repo when the picker is actually shown; non-interactive runs default to local.
+        if args.interactive:
+            versions = _published_versions_or_none(HELM_CHART)
         alias = _prompt_choice(
             "Which Astronomer version do you want to install?",
-            list(VERSION_ALIASES),
+            _version_menu(versions),
             default=LOCAL_CHECKOUT_ALIAS,
             interactive=args.interactive,
         )
@@ -1783,8 +1821,9 @@ def _resolve_version(args: argparse.Namespace) -> tuple[str | None, bool]:
     if alias == LOCAL_CHECKOUT_ALIAS:
         return None, False
 
-    _ensure_helm_repo()
-    resolved = _resolve_chart_version(alias, HELM_CHART)
+    if versions is None:
+        _ensure_helm_repo()
+    resolved = _resolve_chart_version(alias, HELM_CHART, versions)
     return resolved, "-" in resolved
 
 
