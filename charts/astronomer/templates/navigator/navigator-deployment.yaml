@@ -1,7 +1,7 @@
 ######################################
 ## Astronomer Navigator Deployment  ##
 ######################################
-{{- if and (or .Values.navigator.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control"))) (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) }}
+{{- if and (or .Values.navigator.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control"))) (eq (include "astronomer.controlPlaneEnabled" .) "true") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -154,7 +154,7 @@ spec:
               value: {{ .Values.navigator.claimFraction | quote }}
 
             # Cleanup knobs
-            - name: CLEANUP_INTERVAL_SECONDS
+            - name: NAVIGATOR_CLEANUP_INTERVAL_SECONDS
               value: {{ .Values.navigator.cleanupIntervalSeconds | quote }}
             - name: MISSION_CLEANUP_TTL
               value: {{ .Values.navigator.missionCleanupTtl | quote }}

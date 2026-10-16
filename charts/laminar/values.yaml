@@ -14,12 +14,12 @@ imagePullSecrets: []
 
 images:
   laminar:
-    repository: core.harbor.astro-qa.link/astrocloud/ap-laminar
-    tag: latest
+    repository: quay.io/astronomer/ap-laminar
+    tag: 1.0.0-rc4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.24
+    tag: 2.0.26
     pullPolicy: IfNotPresent
 
 priorityClassName: ~
@@ -107,6 +107,9 @@ hypervisor:
   progressDeadlineSeconds: 1200
   minReadySeconds: 5
   port: 8000
+  jwtIssuer: local
+  jwtAudience: astronomer-ee
+  jwksSecretName: ""
   resources:
     requests:
       cpu: "200m"
@@ -135,3 +138,6 @@ hypervisor:
       path: /laminar/healthz
     periodSeconds: 10
     failureThreshold: 30
+
+extraVolumes: []
+extraVolumeMounts: []

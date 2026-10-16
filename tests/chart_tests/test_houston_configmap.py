@@ -776,6 +776,77 @@ def test_houston_configmap_strict_schema_check_disabled():
     assert prod["strictSchemaCheck"]["enabled"] is False
 
 
+def test_houston_configmap_with_mcp_server_enabled():
+    """Validate the houston configmap surfaces mcpServer.enabled and enabledGroups so
+    appConfig (APC-1798) can report real status rather than nothing at all."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "mcpServer": {
+                    "enabled": True,
+                    "enabledGroups": ["platform_read", "platform_write"],
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["mcpServer"]["enabled"] is True
+    assert prod["mcpServer"]["enabledGroups"] == "platform_read,platform_write"
+
+
+def test_houston_configmap_with_mcp_server_disabled():
+    """mcpServer must always be present with an explicit enabled: false, not omitted --
+    appConfig's resolver reads config.get('mcpServer.enabled'), and the `config` package's
+    .get() throws on a genuinely missing key rather than returning a falsy value."""
+    docs = render_chart(
+        values={"astronomer": {"mcpServer": {"enabled": False}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["mcpServer"]["enabled"] is False
+    assert "enabledGroups" not in prod["mcpServer"]
+
+
+def test_houston_configmap_laminar_proxy_defaults():
+    """laminar renders with its documented defaults when not overridden -- unlike
+    mcpServer, this is unconditional: the passthrough route exists in Houston regardless of
+    whether the MCP server deployment is enabled."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["laminar"]["timeoutMs"] == 30000
+    assert prod["laminar"]["maxConcurrentPerDeployment"] == 10
+
+
+def test_houston_configmap_laminar_proxy_overrides():
+    """Both laminar knobs are independently settable from chart values (APC-1794)."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "laminar": {"timeoutMs": 45000, "maxConcurrentPerDeployment": 25},
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["laminar"]["timeoutMs"] == 45000
+    assert prod["laminar"]["maxConcurrentPerDeployment"] == 25
+
+
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
     """Validate the houston configmap and its embedded data with
     cleanupAirflowDb."""

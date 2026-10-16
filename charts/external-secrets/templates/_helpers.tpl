@@ -173,7 +173,7 @@ Fail the install if a cluster scoped reconciler is enabled while its namespace s
 Whether external-secrets resources should render: the plane mode must be data or unified.
 */}}
 {{- define "external-secrets.enabled" -}}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" -}}
 true
 {{- end -}}
 {{- end -}}

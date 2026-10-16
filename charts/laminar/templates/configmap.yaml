@@ -20,5 +20,9 @@ data:
     laminar_hypervisor__queued_task_second_threshold=480
     laminar_hypervisor__disabled_metrics_csv=""
     laminar_hypervisor__dry_run_healers_csv=CatatonicWorkerTerminator
+{{- if eq (include "keda.workerScalingEnabled" .) "true" }}
+    laminar_scaling__keda_namespace={{ include "keda.clusterObjectNamespace" . }}
+    laminar_scaling__keda_service_account={{ include "keda.scalingIdentityName" . }}
+{{- end }}
 {{ .Values.envConfigMap.content | default "" | indent 4 }}
 {{- end }}

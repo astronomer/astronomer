@@ -3,7 +3,7 @@
 ########################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
 {{- if and .Values.global.baseDomain ( not .Values.global.perHostIngress.enabled ) }}
-{{- $planeControlMode := or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $planeControlMode := eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- /* The global customer-facing host is served from the control plane only (customer UIs live on
    the CP). It is gated on plane.mode, so a data plane never emits it even though globalBaseDomain is now
    also set on DP installs under HA. */}}

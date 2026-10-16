@@ -15,7 +15,7 @@ class TestDpLinkDeployment:
     def test_dp_link_deployment_defaults(self, kube_version):
         """Test the default configuration of the DP-Link deployment.
 
-        dp-link only ever renders in control mode, so it must be requested explicitly here.
+        dp-link renders in control/unified mode, so the mode is requested explicitly here.
         """
         docs = render_chart(
             kube_version=kube_version,
@@ -28,7 +28,7 @@ class TestDpLinkDeployment:
         assert dp_link_deployment["kind"] == "Deployment"
         assert dp_link_deployment["metadata"]["name"] == "release-name-dp-link"
 
-        assert dp_link_deployment["spec"]["replicas"] == 3
+        assert dp_link_deployment["spec"]["replicas"] == 2
         assert dp_link_deployment["spec"]["selector"]["matchLabels"] == {
             "tier": "astronomer",
             "component": "dp-link",
@@ -64,16 +64,25 @@ class TestDpLinkDeployment:
         assert dp_link_env["DB_NAME"] == "release-name-houston"
 
         # Verify DP-Link specific environment variables are set with default values
-        assert dp_link_env["CLAIM_INTERVAL_SECONDS"] == "30"
-        assert dp_link_env["LEASE_RENEWAL_INTERVAL_SECONDS"] == "15"
-        assert dp_link_env["LEASE_DURATION_SECONDS"] == "60"
-        assert dp_link_env["UNREACHABLE_THRESHOLD_SECONDS"] == "90"
-        assert dp_link_env["DEGRADED_THRESHOLD_SECONDS"] == "30"
-        assert dp_link_env["RECONNECT_MAX_ATTEMPTS"] == "10"
-        assert dp_link_env["INITIAL_RECONNECT_DELAY_SECONDS"] == "1"
-        assert dp_link_env["MAX_RECONNECT_DELAY_SECONDS"] == "30"
-        assert dp_link_env["RECONNECT_DELAY_MULTIPLIER"] == "2"
-        assert dp_link_env["JITTER_FRACTION"] == "0.2"
+        assert dp_link_env["WORKERS__DPLINK__CLAIM_INTERVAL_SECONDS"] == "30"
+        assert dp_link_env["WORKERS__DPLINK__LEASE_RENEWAL_INTERVAL_SECONDS"] == "15"
+        assert dp_link_env["WORKERS__DPLINK__LEASE_DURATION_SECONDS"] == "60"
+        assert dp_link_env["WORKERS__DPLINK__UNREACHABLE_THRESHOLD_SECONDS"] == "90"
+        assert dp_link_env["WORKERS__DPLINK__DEGRADED_THRESHOLD_SECONDS"] == "30"
+        assert dp_link_env["WORKERS__DPLINK__RECONNECT_MAX_ATTEMPTS"] == "10"
+        assert dp_link_env["WORKERS__DPLINK__INITIAL_RECONNECT_DELAY_SECONDS"] == "1"
+        assert dp_link_env["WORKERS__DPLINK__MAX_RECONNECT_DELAY_SECONDS"] == "30"
+        assert dp_link_env["WORKERS__DPLINK__RECONNECT_DELAY_MULTIPLIER"] == "2"
+        assert dp_link_env["WORKERS__DPLINK__JITTER_FRACTION"] == "0.2"
+
+        # Bare names are not bound to DP-Link config in houston (CLAIM_INTERVAL_SECONDS
+        # belongs to workers.navigator), so they must not be emitted. APC-1958.
+        bare_tunables = {
+            n
+            for n in dp_link_env
+            if n.endswith(("_SECONDS", "_ATTEMPTS", "_MULTIPLIER", "_FRACTION")) and not n.startswith("WORKERS__DPLINK__")
+        }
+        assert not bare_tunables
 
         volumes = {v["name"]: v for v in docs[0]["spec"]["template"]["spec"]["volumes"]}
         # Check required volumes
@@ -114,9 +123,10 @@ class TestDpLinkDeployment:
         assert dp_link_container["readinessProbe"]["httpGet"]["path"] == "/ready"
         assert dp_link_container["readinessProbe"]["initialDelaySeconds"] == 10
 
-    @pytest.mark.parametrize("plane_mode,docs_len", [("control", 1), ("data", 0), ("unified", 0)])
-    def test_dp_link_deployment_control_mode(self, kube_version, plane_mode, docs_len):
-        """Test that dp-link is deployed only in control mode, never in data or unified mode."""
+    @pytest.mark.parametrize("plane_mode,docs_len", [("control", 1), ("data", 0), ("unified", 1)])
+    def test_dp_link_deployment_control_plane_modes(self, kube_version, plane_mode, docs_len):
+        """dp-link is a control-plane component: it renders in control and unified mode
+        (both control-plane-enabled), never in data mode."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": plane_mode}}},
@@ -127,19 +137,44 @@ class TestDpLinkDeployment:
         if docs_len != 0:
             assert docs[0]["spec"]["template"]["metadata"]["labels"]["plane"] == plane_mode
 
-    def test_dp_link_deployment_enabled_has_no_effect_outside_control_mode(self, kube_version):
-        """dp-link never renders outside control mode, even if explicitly enabled -- unified/data plane
-        installs have no cross-cluster claim/lease to manage."""
+    @pytest.mark.parametrize("plane_mode,docs_len", [("control", 1), ("data", 0), ("unified", 1)])
+    def test_dp_link_serviceaccount_control_plane_modes(self, kube_version, plane_mode, docs_len):
+        """The service account renders in the same modes as the deployment it belongs to."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}},
+            show_only=["charts/astronomer/templates/dp-link/dp-link-serviceaccount.yaml"],
+        )
+
+        assert len(docs) == docs_len
+
+    def test_dp_link_deployment_not_rendered_in_data_mode(self, kube_version):
+        """dp-link never renders in data mode, even if explicitly enabled -- a data plane
+        has no cross-cluster claim/lease to manage."""
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"plane": {"mode": "unified"}},
+                "global": {"plane": {"mode": "data"}},
                 "astronomer": {"dpLink": {"enabled": True}},
             },
             show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
         )
 
         assert len(docs) == 0
+
+    def test_dp_link_deployment_renders_when_laminar_enabled(self, kube_version):
+        """dp-link renders when laminar is enabled even if dpLink.enabled is false --
+        it transports hibernation status for the laminar integration."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}, "laminar": {"enabled": True}},
+                "astronomer": {"dpLink": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/dp-link/dp-link-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
 
     def test_dp_link_deployment_disabled(self, kube_version):
         """Test that dp-link is not deployed when disabled in control mode."""
@@ -183,16 +218,16 @@ class TestDpLinkDeployment:
         c_by_name = get_containers_by_name(docs[0])
         dp_link_env = get_env_vars_dict(c_by_name["dp-link"]["env"])
 
-        assert dp_link_env["CLAIM_INTERVAL_SECONDS"] == "60"
-        assert dp_link_env["LEASE_RENEWAL_INTERVAL_SECONDS"] == "30"
-        assert dp_link_env["LEASE_DURATION_SECONDS"] == "120"
-        assert dp_link_env["UNREACHABLE_THRESHOLD_SECONDS"] == "180"
-        assert dp_link_env["DEGRADED_THRESHOLD_SECONDS"] == "60"
-        assert dp_link_env["RECONNECT_MAX_ATTEMPTS"] == "20"
-        assert dp_link_env["INITIAL_RECONNECT_DELAY_SECONDS"] == "2"
-        assert dp_link_env["MAX_RECONNECT_DELAY_SECONDS"] == "60"
-        assert dp_link_env["RECONNECT_DELAY_MULTIPLIER"] == "3"
-        assert dp_link_env["JITTER_FRACTION"] == "0.5"
+        assert dp_link_env["WORKERS__DPLINK__CLAIM_INTERVAL_SECONDS"] == "60"
+        assert dp_link_env["WORKERS__DPLINK__LEASE_RENEWAL_INTERVAL_SECONDS"] == "30"
+        assert dp_link_env["WORKERS__DPLINK__LEASE_DURATION_SECONDS"] == "120"
+        assert dp_link_env["WORKERS__DPLINK__UNREACHABLE_THRESHOLD_SECONDS"] == "180"
+        assert dp_link_env["WORKERS__DPLINK__DEGRADED_THRESHOLD_SECONDS"] == "60"
+        assert dp_link_env["WORKERS__DPLINK__RECONNECT_MAX_ATTEMPTS"] == "20"
+        assert dp_link_env["WORKERS__DPLINK__INITIAL_RECONNECT_DELAY_SECONDS"] == "2"
+        assert dp_link_env["WORKERS__DPLINK__MAX_RECONNECT_DELAY_SECONDS"] == "60"
+        assert dp_link_env["WORKERS__DPLINK__RECONNECT_DELAY_MULTIPLIER"] == "3"
+        assert dp_link_env["WORKERS__DPLINK__JITTER_FRACTION"] == "0.5"
         assert dp_link_env["PRISMA_CONNECTION_LIMIT"] == "50"
 
     def test_dp_link_deployment_with_pod_annotations(self, kube_version):

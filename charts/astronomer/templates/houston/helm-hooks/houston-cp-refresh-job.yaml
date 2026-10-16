@@ -21,7 +21,7 @@
   advertises its new chartVersion once its new schema is live. hook-weight "0"
   runs it ahead of the post-upgrade houston-upgrade-deployments hook (weight "1").
 */}}
-{{- if and (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) .Values.global.controlPlaneHA.enabled }}
+{{- if and (eq (include "astronomer.controlPlaneEnabled" .) "true") .Values.global.controlPlaneHA.enabled }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:

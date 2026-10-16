@@ -6,7 +6,7 @@ import pytest
 from deepmerge import always_merger
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_containers_by_name, get_env_vars_dict
+from tests.utils import get_containers_by_name, get_docs_by_kind_and_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -19,12 +19,14 @@ def _templates(subdir=""):
 
 LAMINAR_TEMPLATES = _templates()
 LAMINAR_HYPEVISOR_TEMPLATES = _templates("hypervisor")
+LAMINAR_APISERVER_TEMPLATES = _templates("apiserver")
 LAMINAR_BOOTSTRAPPER_TEMPLATES = _templates("bootstrapper")
 LAMINAR_ENV_CONFIGMAP_TEMPLATE = "charts/laminar/templates/configmap.yaml"
 
 APISERVER_DEPLOYMENT_TEMPLATE = "charts/laminar/templates/apiserver/apiserver-deployment.yaml"
 HYPERVISOR_DEPLOYMENT_TEMPLATE = "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml"
 BOOTSTRAPPER_ROLEBINDING_TEMPLATE = "charts/laminar/templates/bootstrapper/laminar-bootstrapper-rolebinding.yaml"
+APISERVER_NETWORKPOLICY_TEMPLATE = "charts/laminar/templates/apiserver/apiserver-networkpolicy.yaml"
 
 # The two pods laminar runs. Anything shared between them is parametrized over the pair rather
 # than checked on one of them: each deployment template includes the shared pieces itself, so a
@@ -90,7 +92,8 @@ class TestLaminar:
             show_only=[*LAMINAR_HYPEVISOR_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
         )
         assert len(docs) == 11
-        hypervisor_deployment = docs[0]
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+        hypervisor_deployment = by_kind_and_name["deployment_hypervisor"]
         assert hypervisor_deployment["apiVersion"] == "apps/v1"
         assert hypervisor_deployment["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-hypervisor"
@@ -102,10 +105,18 @@ class TestLaminar:
             "limits": {"cpu": "1", "memory": "1Gi"},
         }
         hypervisor_container_env = get_env_vars_dict(c_by_name["hypervisor"]["env"])
-        assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
-        assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+        assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "local"
+        assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "astronomer-ee"
+        jwks_ref = c_by_name["hypervisor"]["env"]
+        laminar_jwks = next(e for e in jwks_ref if e["name"] == "LAMINAR_JWKS")
+        assert laminar_jwks["valueFrom"]["secretKeyRef"] == {
+            "name": "release-name-commander-signing-cert",
+            "key": "tls.crt",
+        }
+        annotations = hypervisor_deployment["spec"]["template"]["metadata"]["annotations"]
+        assert "checksum/commander-jwks-secret" in annotations
 
-        hypervisor_service = docs[4]
+        hypervisor_service = by_kind_and_name["service_hypervisor"]
         assert hypervisor_service["kind"] == "Service"
         assert hypervisor_service["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_service["metadata"]["labels"] == {
@@ -123,7 +134,7 @@ class TestLaminar:
         ]
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
-            docs[0],
+            hypervisor_deployment,
         )
         expected_hypervisor_volume_mounts_result = [
             [
@@ -137,7 +148,7 @@ class TestLaminar:
         ]
         assert volume_mount_search_result == expected_hypervisor_volume_mounts_result
 
-        env_lines = docs[10]["data"]["laminar.env"].strip().splitlines()
+        env_lines = by_kind_and_name["configmap_laminar_env"]["data"]["laminar.env"].strip().splitlines()
         env_vars = dict(line.split("=", 1) for line in env_lines)
         assert env_vars == {
             "laminar_scaling__dry_run_strategy": "NEVER",
@@ -150,6 +161,22 @@ class TestLaminar:
             "laminar_hypervisor__disabled_metrics_csv": '""',
             "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
         }
+
+    def test_laminar_apiserver_keeps_houston_auth(self, kube_version):
+        """The shared laminar.env helper drives both deployments, so guard that the
+        commander/local-issuer override applies to the hypervisor ONLY
+        the api-server stays on the Houston user-facing JWT
+        and gains no local-issuer LAMINAR_JWKS override."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(),
+            show_only=[APISERVER_DEPLOYMENT_TEMPLATE],
+        )
+        assert len(docs) == 1
+        env = get_env_vars_dict(get_containers_by_name(docs[0])["apiserver"]["env"])
+        assert env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
+        assert env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+        assert "LAMINAR_JWKS" not in env
 
     @pytest.mark.parametrize("plane_mode", ["unified", "data"])
     def test_laminar_bootstrapper_rbac_objects(self, kube_version, plane_mode):
@@ -171,8 +198,18 @@ class TestLaminar:
             {"apiGroups": [""], "resources": ["secrets"], "verbs": ["list", "get", "create", "patch"]}
         ]
 
-    @pytest.mark.parametrize("template,app_container", LAMINAR_DEPLOYMENTS)
-    def test_laminar_bootstrapper_init_container(self, kube_version, template, app_container):
+    @pytest.mark.parametrize(
+        "template,expected_init_containers",
+        [
+            pytest.param(
+                APISERVER_DEPLOYMENT_TEMPLATE,
+                ["laminar-bootstrapper", "etc-ssl-certs-copier"],
+                id="apiserver",
+            ),
+            pytest.param(HYPERVISOR_DEPLOYMENT_TEMPLATE, ["laminar-bootstrapper"], id="hypervisor"),
+        ],
+    )
+    def test_laminar_bootstrapper_init_container(self, kube_version, template, expected_init_containers):
         """Test the bootstrapper init container that creates the laminar database.
 
         It runs on every pod start rather than once per release, so it has to stay idempotent, and
@@ -183,7 +220,7 @@ class TestLaminar:
 
         assert len(docs) == 1
         pod_spec = docs[0]["spec"]["template"]["spec"]
-        assert [container["name"] for container in pod_spec["initContainers"]] == ["laminar-bootstrapper"]
+        assert [container["name"] for container in pod_spec["initContainers"]] == expected_init_containers
         bootstrapper = get_containers_by_name(docs[0], include_init_containers=True)["laminar-bootstrapper"]
         assert bootstrapper["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
         assert bootstrapper["imagePullPolicy"] == "IfNotPresent"
@@ -370,3 +407,238 @@ class TestLaminar:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["apiserver"]["image"] == expected_image
+
+    def test_apiserver_networkpolicy_refuses_keda_by_default(self, kube_version):
+        """Test that the api-server accepts only its two existing callers until autoscaling is on."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(),
+            show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
+        )
+
+        from_entries = docs[0]["spec"]["ingress"][0]["from"]
+        assert [entry for entry in from_entries if "namespaceSelector" in entry] == []
+        assert len(from_entries) == 2
+
+    def test_apiserver_networkpolicy_admits_the_keda_namespace(self, kube_version):
+        """Test that KEDA reaches the api-server on its serving port once autoscaling is on.
+
+        Without this rule the polls are dropped at the network layer, KEDA gives up, and every
+        queue holds at its minimum worker count. A queue with a minimum of zero then runs nothing,
+        which looks like a configured Deployment that has stopped responding to load.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values({"global": {"keda": {"enabled": True}}}),
+            show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
+        )
+
+        ingress = docs[0]["spec"]["ingress"][0]
+        assert {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "keda"}}} in ingress["from"]
+        # The two callers that could already reach it are untouched.
+        assert len([entry for entry in ingress["from"] if "podSelector" in entry]) == 2
+        assert ingress["ports"] == [{"protocol": "TCP", "port": 8000}]
+
+    def test_apiserver_networkpolicy_admits_where_keda_runs_not_where_its_objects_live(self, kube_version):
+        """Test that the rule follows global.keda.namespace, not global.keda.clusterObjectNamespace.
+
+        The two differ when KEDA resolves cluster-scoped objects outside its own namespace. A
+        network policy matches the namespace of the pod sending the traffic, which is where KEDA
+        runs. Selecting the other one produces an install whose identity is correct and whose
+        polls are still dropped.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(
+                {"global": {"keda": {"enabled": True, "namespace": "keda-system", "clusterObjectNamespace": "keda-cluster"}}}
+            ),
+            show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
+        )
+
+        namespaces = [
+            entry["namespaceSelector"]["matchLabels"]["kubernetes.io/metadata.name"]
+            for entry in docs[0]["spec"]["ingress"][0]["from"]
+            if "namespaceSelector" in entry
+        ]
+        assert namespaces == ["keda-system"]
+
+    def test_apiserver_networkpolicy_absent_when_network_policies_are_off(self, kube_version):
+        """Test that turning autoscaling on does not resurrect the policy where the customer disabled them."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values({"global": {"networkPolicy": {"enabled": False}, "keda": {"enabled": True}}}),
+        )
+
+        assert not [doc for doc in docs if doc["kind"] == "NetworkPolicy"]
+
+    def test_env_configmap_omits_the_keda_identity_by_default(self, kube_version):
+        """Test that nothing about KEDA is configured until worker autoscaling is turned on."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(),
+            show_only=[LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+
+        assert "keda" not in docs[0]["data"]["laminar.env"]
+
+    def test_env_configmap_names_the_identity_the_platform_creates(self, kube_version):
+        """Test that the account the scaling endpoint trusts is the one the platform created.
+
+        Three settings have to agree on one namespace, and each disagreement looks like the
+        others: the identity is created in one, the network policy admits another, and this
+        decides which subject is answered.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values({"global": {"keda": {"enabled": True}}}),
+            show_only=[LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        env = docs[0]["data"]["laminar.env"]
+
+        assert "laminar_scaling__keda_namespace=keda" in env
+        assert "laminar_scaling__keda_service_account=metrics-api-worker-trigger" in env
+
+    def test_env_configmap_trusts_where_the_identity_lives_not_where_keda_runs(self, kube_version):
+        """Test that the trusted namespace follows clusterObjectNamespace, not namespace.
+
+        The token KEDA presents is minted for the account the platform created, which sits in the
+        namespace KEDA resolves cluster-scoped objects in. Trusting the namespace KEDA runs in
+        instead refuses every request on a split install.
+        """
+        split_namespaces = {
+            "global": {
+                "keda": {
+                    "enabled": True,
+                    "namespace": "keda-system",
+                    "clusterObjectNamespace": "keda-cluster",
+                }
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(split_namespaces),
+            show_only=[LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        env = docs[0]["data"]["laminar.env"]
+
+        assert "laminar_scaling__keda_namespace=keda-cluster" in env
+        assert "keda-system" not in env
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_apiserver_defaults_when_enabled(self, kube_version, plane_mode):
+        """Test that laminar apiserver renders only when the plane is data or unified."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        assert len(docs) == 11
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+        apiserver_deployment = by_kind_and_name["deployment_api_server"]
+        assert apiserver_deployment["apiVersion"] == "apps/v1"
+        assert apiserver_deployment["metadata"]["name"] == "release-name-api-server"
+        assert apiserver_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-api-server"
+        c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
+        assert set(c_by_name) == {"apiserver", "etc-ssl-certs-copier", "laminar-bootstrapper"}
+        assert c_by_name["apiserver"]["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
+        assert c_by_name["apiserver"]["resources"] == {
+            "requests": {"cpu": "400m", "memory": "256Mi"},
+            "limits": {"cpu": "1", "memory": "1Gi"},
+        }
+        apiserver_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
+        assert apiserver_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
+        assert apiserver_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
+
+        apiserver_service = by_kind_and_name["service_api_server"]
+        assert apiserver_service["kind"] == "Service"
+        assert apiserver_service["metadata"]["name"] == "release-name-api-server"
+        assert apiserver_service["metadata"]["labels"] == {
+            "component": "apiserver",
+            "release": "release-name",
+            "chart": "laminar-0.12.0",
+            "heritage": "Helm",
+            "tier": "laminar",
+            "plane": plane_mode,
+            "app.kubernetes.io/name": "apiserver",
+        }
+        assert apiserver_service["spec"]["type"] == "ClusterIP"
+        assert apiserver_service["spec"]["ports"] == [
+            {"name": "http", "protocol": "TCP", "port": 8000, "targetPort": "http", "appProtocol": "http"},
+        ]
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'laminar-env']",
+            apiserver_deployment,
+        )
+        expected_apiserver_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/laminar.env",
+                    "name": "laminar-env",
+                    "subPath": "laminar.env",
+                    "readOnly": True,
+                }
+            ]
+        ]
+        assert volume_mount_search_result == expected_apiserver_volume_mounts_result
+
+        env_lines = by_kind_and_name["configmap_laminar_env"]["data"]["laminar.env"].strip().splitlines()
+        env_vars = dict(line.split("=", 1) for line in env_lines)
+        assert env_vars == {
+            "laminar_scaling__dry_run_strategy": "NEVER",
+            "laminar_apply_custom_ddl": "True",
+            "laminar_hypervisor__enable_healers": "False",
+            "laminar_hypervisor__enable_health_incidents": "False",
+            "laminar_hypervisor__configmap_metrics_enabled": "False",
+            "laminar_hypervisor__configmap_metrics_use_informer": "False",
+            "laminar_hypervisor__queued_task_second_threshold": "480",
+            "laminar_hypervisor__disabled_metrics_csv": '""',
+            "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
+        }
+
+        apiserver_ingress = by_kind_and_name["ingress_laminar_ingress"]
+        assert apiserver_ingress["apiVersion"] == "networking.k8s.io/v1"
+        assert apiserver_ingress["kind"] == "Ingress"
+        assert apiserver_ingress["metadata"]["name"] == "release-name-laminar-ingress"
+        assert apiserver_ingress["metadata"]["labels"] == {
+            "component": "laminar-ingress",
+            "release": "release-name",
+            "chart": "laminar-0.12.0",
+            "heritage": "Helm",
+            "tier": "laminar",
+            "plane": plane_mode,
+        }
+        paths = apiserver_ingress["spec"]["rules"][0]["http"]["paths"]
+        assert len(paths) == 1
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_privateca_enabled(self, kube_version, plane_mode):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"privateCaCerts": ["private-root-ca"], "laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
+        )
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+        apiserver_deployment = by_kind_and_name["deployment_api_server"]
+        c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
+        apiserver_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
+            apiserver_deployment,
+        )
+        volume_search_result = jmespath.search(
+            "spec.template.spec.volumes[?name == 'private-root-ca']",
+            apiserver_deployment,
+        )
+        expected_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/usr/local/share/ca-certificates/private-root-ca.crt",
+                    "name": "private-root-ca",
+                    "subPath": "cert.pem",
+                }
+            ]
+        ]
+        expected_volume_result = [{"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}]
+        assert volume_mount_search_result == expected_volume_mounts_result
+        assert volume_search_result == expected_volume_result
+        assert apiserver_container_env["SSL_CERT_DIR"] == "/etc/ssl/certs"

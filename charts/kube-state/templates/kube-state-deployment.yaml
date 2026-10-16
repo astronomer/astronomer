@@ -1,7 +1,7 @@
 ###########################
 ## Kube State Deployment ##
 ###########################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 {{- $useRoles := .Values.global.namespaceManagement.namespacePools.enabled }}
 {{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}

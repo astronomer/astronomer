@@ -6,7 +6,7 @@
 # 2. Create ClusterRoleBinding if namespacePools disabled
 # 3. Create RoleBinding for each namespace in the namespacePool (+ astronomer namespace) if enabled
 {{- if and .Values.configSyncer.enabled .Values.global.rbac.enabled .Values.configSyncer.serviceAccount.create }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 {{- $namespacepoolsRBACresources:= and .Values.global.namespaceManagement.namespacePools.createRbac .Values.global.namespaceManagement.namespacePools.enabled }}
 {{- $useClusterRoles := and .Values.global.rbac.enabled (not .Values.global.namespaceManagement.namespacePools.enabled)}}
 {{- $namespaces := .Values.global.namespaceManagement.namespacePools.namespaces.names }}

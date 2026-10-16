@@ -27,6 +27,11 @@ spec:
           component: houston
           tier: astronomer
           release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          component: commander
+          tier: astronomer
+          release: {{ .Release.Name }}
 
     ports:
     - protocol: TCP

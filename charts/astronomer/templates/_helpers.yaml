@@ -352,7 +352,7 @@ it alone.
 - name: COMMANDER_NAMESPACE_POOLS_LIST
   value: {{ .Values.global.namespaceManagement.namespacePools.namespaces.names | join "," | quote }}
 {{- end }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
 - name: COMMANDER_DATAPLANE_FAILOVER_ENABLED
   value: {{ ternary "true" "false" .Values.global.dataPlaneFailover.enabled | quote }}
 - name: COMMANDER_CONTROL_PLANE_HA_ENABLED
@@ -650,7 +650,7 @@ s3:
         path: production.yaml
       - key: local-production.yaml
         path: local-production.yaml
-      {{- if and .Values.houston.RuntimeReleasesConfig (not .Values.houston.runtimeReleasesconfigMapName )}}
+      {{- if and .Values.houston.runtimeReleasesConfig (not .Values.houston.runtimeReleasesConfigMapName )}}
       - key: astro_runtime_releases.json
         path: astro_runtime_releases.json
       {{- end }}
@@ -954,7 +954,7 @@ Master switch registry.enabled (default true) AND the registry plane modes (data
 Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "registry.enabled" -}}
-{{- and .Values.registry.enabled (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) -}}
+{{- and .Values.registry.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
 {{- end }}
 
 {{/*
@@ -987,7 +987,7 @@ Whether the MCP server should be rendered: mcpServer.enabled AND control/unified
 Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "mcpServer.enabled" -}}
-{{- and .Values.mcpServer.enabled (or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified")) -}}
+{{- and .Values.mcpServer.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") -}}
 {{- end }}
 
 {{ define "mcpServer.serviceAccountName" -}}
@@ -1000,7 +1000,7 @@ Returns the string "true" or "false" — compare with eq.
 
 {{ define "mcpServer.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-mcp-server:{{ .Values.images.mcpServer.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-apc-mcp-server:{{ .Values.images.mcpServer.tag }}
 {{- else -}}
 {{ .Values.images.mcpServer.repository }}:{{ .Values.images.mcpServer.tag }}
 {{- end }}
@@ -1008,9 +1008,17 @@ Returns the string "true" or "false" — compare with eq.
 
 {{/*
 Joins mcpServer.enabledGroups into the CSV the MCP_ENABLED_GROUPS env var expects.
+skills_load is controlled solely by mcpServer.skills.enabled, so it is stripped from the
+operator's list and re-appended only when the toggle is on — the toggle stays authoritative
+and the group is never emitted twice. The server implies the read groups the enabled skills
+require, so the chart never computes that union itself.
 */}}
 {{- define "mcpServer.enabledGroups" -}}
-{{- join "," .Values.mcpServer.enabledGroups -}}
+{{- $groups := without (.Values.mcpServer.enabledGroups | default (list)) "skills_load" -}}
+{{- if .Values.mcpServer.skills.enabled -}}
+{{- $groups = concat $groups (list "skills_load") -}}
+{{- end -}}
+{{- join "," $groups -}}
 {{- end }}
 
 {{/*

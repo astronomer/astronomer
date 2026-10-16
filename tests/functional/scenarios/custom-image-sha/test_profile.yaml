@@ -1,0 +1,7 @@
+description: >-
+  Custom Astro Runtime SHA256-digest pinning on an airgapped platform
+topology: unified
+resource_class: 2xlarge
+values:
+  - configs/enable-custom-image-sha.yaml
+  - configs/scenario-airflow-reduce-resources.yaml

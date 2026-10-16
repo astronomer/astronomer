@@ -1,0 +1,14 @@
+# Cluster-scoped, so one object serves every deployment. It carries no namespace of its
+# own: KEDA resolves the service account below in its cluster object namespace.
+{{- if eq (include "keda.workerScalingEnabled" .) "true" }}
+apiVersion: keda.sh/v1alpha1
+kind: ClusterTriggerAuthentication
+metadata:
+  name: {{ include "keda.scalingIdentityName" . }}
+  labels:
+    {{- include "keda.scalingIdentityLabels" . | nindent 4 }}
+spec:
+  boundServiceAccountToken:
+    - parameter: token
+      serviceAccountName: {{ include "keda.scalingIdentityName" . }}
+{{- end }}

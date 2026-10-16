@@ -1,7 +1,7 @@
 ###################################
 ## Astronomer Houston Deployment ##
 ###################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
 kind: Deployment
 apiVersion: apps/v1

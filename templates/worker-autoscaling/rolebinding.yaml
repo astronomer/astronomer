@@ -1,0 +1,20 @@
+# A KEDA install grants itself no permission to mint tokens, so this binding is what
+# makes the mint possible.
+{{- if eq (include "keda.workerScalingEnabled" .) "true" }}
+{{- $identity := include "keda.scalingIdentityName" . }}
+apiVersion: {{ template "apiVersion.rbac" . }}
+kind: RoleBinding
+metadata:
+  name: {{ $identity }}-token-minter
+  namespace: {{ include "keda.clusterObjectNamespace" . }}
+  labels:
+    {{- include "keda.scalingIdentityLabels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $identity }}-token-minter
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.global.keda.operatorServiceAccountName }}
+    namespace: {{ .Values.global.keda.namespace }}
+{{- end }}

@@ -2,7 +2,7 @@
 ## Nginx Control Plane controller metrics pods NetworkPolicy ##
 ###############################################################
 {{- if .Values.global.networkPolicy.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

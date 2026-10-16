@@ -2,7 +2,7 @@
 ## Houston Update Check CronJob ##
 ##################################
 {{- if .Values.houston.updateRuntimeCheck.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:

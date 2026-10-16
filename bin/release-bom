@@ -69,10 +69,10 @@ fi
 gcloud auth activate-service-account --key-file=<(echo "${GCP_TOKEN}")
 
 echo "Uploading ${json_file_name} to ${bucket_path}..."
-gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${json_file_name}" "${bucket_path}"
+gcloud storage cp --cache-control="public, max-age=${max_age}" "${json_file_name}" "${bucket_path}"
 
 echo "Updating index files"
-gsutil -h "Cache-Control: public, max-age=${max_age}" -m cp index.html index.json "${bucket_path}/"
+gcloud storage cp --cache-control="public, max-age=${max_age}" index.html index.json "${bucket_path}/"
 
 echo "Successfully published new data to:
   ${repo_url}/index.html
