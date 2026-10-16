@@ -168,6 +168,7 @@ def upsert_deployment(
     https_token: str | None = None,
     git_sync_repo_fetch_mode: str | None = None,
     git_sync_repo_share_mode: str | None = None,
+    runtime_version: str | None = None,
     deployment_uuid: str | None = None,
 ) -> dict:
     """
@@ -201,6 +202,8 @@ def upsert_deployment(
     else:
         variables.update({"label": label, "workspaceUuid": workspace_id, "clusterId": cluster_id})
         dag_deployment_type = dag_deployment_type or "image"
+    if runtime_version:
+        variables["runtimeVersion"] = runtime_version
 
     if dag_deployment_type:
         dag_deployment = {"type": dag_deployment_type}
@@ -232,6 +235,7 @@ def upsert_deployment(
       $clusterId: Uuid
       $executor: ExecutorType
       $dagDeployment: DagDeployment
+      $runtimeVersion: String
       $deploymentUuid: Uuid
     ) {
       upsertDeployment(
@@ -240,6 +244,7 @@ def upsert_deployment(
         clusterId: $clusterId
         executor: $executor
         dagDeployment: $dagDeployment
+        runtimeVersion: $runtimeVersion
         deploymentUuid: $deploymentUuid
       ) {
         id
