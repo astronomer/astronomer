@@ -266,9 +266,15 @@ curator:
   # Allows modification of the default age-based filter. If you require more
   # sophisticated filtering, modify the action file specified in
   # templates/es-curator-config.yaml.
+  #
+  # Leave `unit` null (the default) and it is derived from the timestring:
+  #   %Y.%m.%d -> days    %Y.%m -> months    %Y -> years
+  # Set it explicitly only if you need a different unit, and note that a value finer
+  # than the timestring granularity is rejected at `helm template` time.
+
   age:
     timestring: "%Y.%m.%d"
-    unit: "days"
+    unit: ~
     unit_count: 10
 
   livenessProbe: {}
