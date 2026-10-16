@@ -134,6 +134,9 @@ def test_runtime_images_are_sha_pinned(deployment, _k8s_core_v1_client_module):
         f"Found no Runtime-image containers for release {deployment['release_name']!r} "
         f"(expected images under one of {RUNTIME_REPOS}). Selector/label drift?"
     )
+    print(f"[sha check: {deployment['runtime_version']}] asserting {len(refs)} Runtime container(s):")
+    for ref, image in sorted(refs.items()):
+        print(f"  {ref} -> {image}")
     expected_repo = deployment["expected_repo"]
     bad = {}
     for ref, image in refs.items():
