@@ -40,6 +40,11 @@ astronomer:
         runtimeManagement:
           customImageSha:
             enabled: true
+        deploymentImagesRegistry:
+          updateDeploymentImageEndpoint:
+            enabled: true
+          updateDeploymentImageEndpointDockerValidation:
+            enabled: true
         helm:
           runtimeImages:
             airflow:

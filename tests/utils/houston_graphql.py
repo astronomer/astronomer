@@ -257,6 +257,35 @@ def upsert_deployment(
     return data["upsertDeployment"]
 
 
+def update_deployment_image(
+    houston_api,
+    token: str,
+    *,
+    release_name: str,
+    image: str,
+    runtime_version: str,
+) -> dict:
+    query = """
+    mutation UpdateDeploymentImage(
+      $releaseName: String!
+      $image: String!
+      $runtimeVersion: String!
+    ) {
+      updateDeploymentImage(
+        releaseName: $releaseName
+        image: $image
+        runtimeVersion: $runtimeVersion
+      ) {
+        id
+        releaseName
+      }
+    }
+    """
+    variables = {"releaseName": release_name, "image": image, "runtimeVersion": runtime_version}
+    data = graphql(houston_api, query, variables, token=token)
+    return data["updateDeploymentImage"]
+
+
 def validate_git_sync_credentials(
     houston_api,
     token: str,

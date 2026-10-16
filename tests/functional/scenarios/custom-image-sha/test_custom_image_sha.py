@@ -19,6 +19,12 @@ asserts exactly (expected_repo is the bare repo + the config's digest in both ca
 
 2. (test_runtime_images_are_sha_pinned) Every Airflow runtime container references the Runtime
     image, by this deployment's major's repo, as <repo>@sha256:<64-hex>
+
+3. (test_update_deployment_image_passes_manifest_validation) The updateDeploymentImage endpoint,
+    with Docker manifest validation enabled, accepts a digest-resolved image.
+
+4. (test_updated_runtime_images_are_sha_pinned) After the image update settles, every Airflow
+    runtime container is still pinned to the single-prefix <repo>@sha256:<64-hex>.
 """
 
 import time
@@ -33,6 +39,7 @@ from tests.utils.houston_graphql import (
     create_workspace,
     dump_pod_logs,
     get_cluster_id,
+    update_deployment_image,
     upsert_deployment,
     wait_for_release_ready,
 )
@@ -45,18 +52,36 @@ WORKSPACE_LABEL = "custom-image-sha"
 
 AF2_REPO = "quay.io/astronomer/astro-runtime"
 AF3_REPO = "astrocrpublic.azurecr.io/runtime"
-RUNTIME_REPOS = (AF2_REPO, AF3_REPO)
 
 AF2_SHA256 = "9c57ed87a58e1822ff7b42ba824820c6372d43c2ce3876a49d8029efcd113a91"
 AF3_SHA256 = "5a15c6628f4fcf8e7ce06573d98f4873c8cbede63e80ac744d448733ceae9c72"
 
+AF2_COMPONENTS = frozenset({"scheduler", "webserver", "triggerer", "worker", "flower"})
+AF3_COMPONENTS = frozenset({"scheduler", "api-server", "triggerer", "dag-processor", "worker", "flower"})
+
+NON_RUNTIME_SIDECAR_CONTAINERS = frozenset(
+    {"auth-proxy", "git-sync", "git-sync-home", "dag-server", "nginx-sidecar-conf", "sidecar-logging-consumer"}
+)
+
 RUNTIME_CASES = [
     pytest.param(
-        {"runtime_version": "13.1.0", "expected_repo": AF2_REPO, "expected_sha256": AF2_SHA256, "label": "custom-image-sha-af2"},
+        {
+            "runtime_version": "13.1.0",
+            "expected_repo": AF2_REPO,
+            "expected_sha256": AF2_SHA256,
+            "expected_components": AF2_COMPONENTS,
+            "label": "custom-image-sha-af2",
+        },
         id="af2",
     ),
     pytest.param(
-        {"runtime_version": "3.1-2", "expected_repo": AF3_REPO, "expected_sha256": AF3_SHA256, "label": "custom-image-sha-af3"},
+        {
+            "runtime_version": "3.1-2",
+            "expected_repo": AF3_REPO,
+            "expected_sha256": AF3_SHA256,
+            "expected_components": AF3_COMPONENTS,
+            "label": "custom-image-sha-af3",
+        },
         id="af3",
     ),
 ]
@@ -123,19 +148,58 @@ def deployment(request, _admin_token, _houston_api_module, _k8s_apps_v1_client_m
         "release_name": created["releaseName"],
         "expected_repo": case["expected_repo"],
         "expected_sha256": case["expected_sha256"],
+        "expected_components": case["expected_components"],
         "runtime_version": case["runtime_version"],
     }
 
 
-def _runtime_image_refs(core_client, release_name: str) -> dict[str, str]:
+def _runtime_containers(core_client, release_name: str, expected_components: frozenset[str]):
     pods = core_client.list_pod_for_all_namespaces(label_selector=f"release={release_name}").items
     refs: dict[str, str] = {}
+    found_components: set[str] = set()
     for pod in pods:
-        containers = list(pod.spec.containers) + list(pod.spec.init_containers or [])
-        for c in containers:
-            if c.image and c.image.startswith(RUNTIME_REPOS):
-                refs[f"{pod.metadata.name}/{c.name}"] = c.image
-    return refs
+        component = (pod.metadata.labels or {}).get("component")
+        if component not in expected_components:
+            continue
+        found_components.add(component)
+        for c in list(pod.spec.init_containers or []) + list(pod.spec.containers):
+            if c.name in NON_RUNTIME_SIDECAR_CONTAINERS:
+                continue
+            refs[f"{pod.metadata.name}/{c.name}"] = c.image
+    return refs, found_components
+
+
+@pytest.fixture(scope="module")
+def image_updated_deployment(deployment, _houston_api_module, _k8s_apps_v1_client_module, _k8s_core_v1_client_module):
+    """
+    Drive updateDeploymentImage on the ready deployment with a digest-resolved image.
+    """
+    start = time.monotonic()
+    release_name = deployment["release_name"]
+    runtime_version = deployment["runtime_version"]
+    image = f"{deployment['expected_repo']}:{runtime_version}"
+
+    def _log(step: str) -> None:
+        print(f"[image-update fixture: {release_name}] {step} ({time.monotonic() - start:.1f}s elapsed)")
+
+    _log(f"calling updateDeploymentImage (image={image!r}, runtimeVersion={runtime_version})")
+    try:
+        update_deployment_image(
+            _houston_api_module,
+            deployment["token"],
+            release_name=release_name,
+            image=image,
+            runtime_version=runtime_version,
+        )
+    except HoustonError:
+        _log("updateDeploymentImage raised a HoustonError, dumping houston/commander logs")
+        dump_pod_logs(_k8s_core_v1_client_module, "component=houston")
+        dump_pod_logs(_k8s_core_v1_client_module, "component=commander")
+        raise
+    _log("updateDeploymentImage accepted the image, waiting for readiness")
+    wait_for_release_ready(_k8s_apps_v1_client_module, _k8s_core_v1_client_module, release_name)
+    _log("release is ready after image update")
+    return deployment
 
 
 def test_deployment_reaches_ready(deployment):
@@ -143,10 +207,19 @@ def test_deployment_reaches_ready(deployment):
 
 
 def test_runtime_images_are_sha_pinned(deployment, _k8s_core_v1_client_module):
-    refs = _runtime_image_refs(_k8s_core_v1_client_module, deployment["release_name"])
+    expected_components = deployment["expected_components"]
+    refs, found_components = _runtime_containers(_k8s_core_v1_client_module, deployment["release_name"], expected_components)
+
+    missing = expected_components - found_components
+    assert not missing, (
+        f"Release {deployment['release_name']!r} ({deployment['runtime_version']}) is missing expected "
+        f"Airflow component pod(s): {sorted(missing)} (found {sorted(found_components)}). "
+        f"A missing component would hide its Runtime container from the image check."
+    )
+
     assert refs, (
-        f"Found no Runtime-image containers for release {deployment['release_name']!r} "
-        f"(expected images under one of {RUNTIME_REPOS}). Selector/label drift?"
+        f"Found no Runtime containers for release {deployment['release_name']!r} across components "
+        f"{sorted(expected_components)} -- selector/label drift?"
     )
     expected_ref = f"{deployment['expected_repo']}@sha256:{deployment['expected_sha256']}"
     print(f"[sha check: {deployment['runtime_version']}] asserting {len(refs)} Runtime container(s) == {expected_ref}:")
@@ -157,4 +230,44 @@ def test_runtime_images_are_sha_pinned(deployment, _k8s_core_v1_client_module):
         f"These Runtime containers for {deployment['runtime_version']} are not pinned to the "
         f"expected immutable reference {expected_ref} (mutable tag, wrong repo, wrong digest, or the "
         f"invalid double-prefixed @sha256:sha256:... form the doc warns about): {bad}"
+    )
+
+
+def test_update_deployment_image_passes_manifest_validation(image_updated_deployment):
+    """The image_updated_deployment fixture raises if updateDeploymentImage was rejected -- which,
+    with Docker manifest validation enabled, is exactly the regression: Houston would have fetched
+    the manifest at the invalid <repo>@sha256/manifests/<hex> URL, gotten a 404, and raised
+    DockerRetrieveManifestError. Reaching this assertion means validation hit the correct
+    <repo>/manifests/sha256:<hex> URL and the update was accepted.
+    """
+    assert image_updated_deployment["release_name"]
+
+
+def test_updated_runtime_images_are_sha_pinned(image_updated_deployment, _k8s_core_v1_client_module):
+    """
+    After the registry-path image update settles, pods are still single-prefix digest-pinned.
+    """
+    deployment = image_updated_deployment
+    expected_components = deployment["expected_components"]
+    refs, found_components = _runtime_containers(_k8s_core_v1_client_module, deployment["release_name"], expected_components)
+
+    missing = expected_components - found_components
+    assert not missing, (
+        f"Release {deployment['release_name']!r} ({deployment['runtime_version']}) is missing expected "
+        f"Airflow component pod(s) after image update: {sorted(missing)} (found {sorted(found_components)})."
+    )
+    assert refs, (
+        f"Found no Runtime containers for release {deployment['release_name']!r} after image update "
+        f"across components {sorted(expected_components)} -- selector/label drift?"
+    )
+    expected_ref = f"{deployment['expected_repo']}@sha256:{deployment['expected_sha256']}"
+    print(
+        f"[sha check after update: {deployment['runtime_version']}] asserting {len(refs)} Runtime container(s) == {expected_ref}:"
+    )
+    for ref, image in sorted(refs.items()):
+        print(f"  {ref} -> {image}")
+    bad = {ref: image for ref, image in refs.items() if image != expected_ref}
+    assert not bad, (
+        f"After updateDeploymentImage, these Runtime containers for {deployment['runtime_version']} are "
+        f"not pinned to the expected immutable reference {expected_ref}: {bad}"
     )
