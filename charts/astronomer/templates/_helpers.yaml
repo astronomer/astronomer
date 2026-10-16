@@ -650,7 +650,7 @@ s3:
         path: production.yaml
       - key: local-production.yaml
         path: local-production.yaml
-      {{- if and .Values.houston.RuntimeReleasesConfig (not .Values.houston.runtimeReleasesconfigMapName )}}
+      {{- if and .Values.houston.runtimeReleasesConfig (not .Values.houston.runtimeReleasesConfigMapName )}}
       - key: astro_runtime_releases.json
         path: astro_runtime_releases.json
       {{- end }}
