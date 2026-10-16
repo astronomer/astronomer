@@ -94,13 +94,19 @@ spec:
             periodSeconds: 10
           {{- end }}
           env:
+            {{- $userEnvNames := dict }}
+            {{- range .Values.astroUI.env }}
+            {{- $_ := set $userEnvNames .name true }}
+            {{- end }}
             {{- range $i, $config := .Values.astroUI.env }}
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
-            {{- if .Values.global.baseDomain }}
+            {{- if and .Values.global.baseDomain (not (hasKey $userEnvNames "APP_API_LOC_HTTPS")) }}
             - name: APP_API_LOC_HTTPS
               value: "https://houston.{{ .Values.global.baseDomain }}/v1"
+            {{- end }}
+            {{- if and .Values.global.baseDomain (not (hasKey $userEnvNames "APP_API_LOC_WSS")) }}
             - name: APP_API_LOC_WSS
               value: "wss://houston.{{ .Values.global.baseDomain }}/ws"
             {{- end }}
