@@ -11,8 +11,12 @@ value that comes from a test fixture in tests/enable_all_features.yaml, not a re
 default) and is a general guard against scanning private-registry test values that `docker
 pull` can't reach anonymously in CI.
 
+EXCLUDED_NAMES filters out quay.io/astronomer/* repos that exist but aren't public, so an
+anonymous `docker pull` in CI would 401. airflow-operator-dev is the only one of those in the
+stack right now (confirmed 2026-10-16, live CI failure on astronomer/astronomer#3564).
+
 If $IMAGE_OVERRIDE is set, the matrix collapses to a single entry pointing at that
-fully-qualified image reference, bypassing the catalog entirely.
+fully-qualified image reference, bypassing the catalog entirely (including EXCLUDED_NAMES).
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ import sys
 from pathlib import Path
 
 KEPT_PREFIX = "quay.io/astronomer/"
+EXCLUDED_NAMES = {"airflow-operator-dev"}
 
 REPO_ROOT = next(
     iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]),
@@ -44,6 +49,8 @@ def catalog_targets() -> list[dict[str, str]]:
             continue
         repo = ref.rpartition(":")[0]
         name = repo.rsplit("/", 1)[-1]
+        if name in EXCLUDED_NAMES:
+            continue
         targets.append({"ref": ref, "name": name})
 
     if not targets:

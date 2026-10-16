@@ -58,6 +58,14 @@ jobs:
       max-parallel: 1
       matrix: ${{ fromJSON(needs.build-matrix.outputs.matrix) }}
     steps:
+      # endorctl associates each scan with a repo/project context and errors out
+      # ("unable to open repository: ... repository does not exist") if run from a
+      # directory that isn't a git repo. astro-agent's own copy of this workflow checks
+      # out its own repo first for the same reason, before doing anything else.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
       # astronomer/astronomer is a public repo, and GitHub Actions will not resolve a
       # `uses: owner/repo/path@ref` reference into a private/internal repo's action from a
       # public repo's workflow, no matter what access is granted — that restriction is
