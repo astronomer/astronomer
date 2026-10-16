@@ -43,7 +43,9 @@ astronomer:
         helm:
           runtimeImages:
             airflow:
-              repository: quay.io/astronomer/astro-runtime
+              # WITH @sha256 -- exercises houston's idempotency guard (must not double-append).
+              repository: quay.io/astronomer/astro-runtime@sha256
           runtimeImagesV3:
             airflow:
+              # WITHOUT @sha256 -- the normal path where houston appends it.
               repository: astrocrpublic.azurecr.io/runtime

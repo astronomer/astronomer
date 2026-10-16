@@ -1,8 +1,15 @@
 """Custom Astro Runtime SHA256-digest pinning, end to end on an airgapped platform.
 
-Covers BOTH Runtime majors, since custom image SHA has to work for each on its own repo:
-  - Airflow 2.x: runtime 13.1.0 on quay.io/astronomer/astro-runtime (helm.runtimeImages)
-  - Airflow 3.x: runtime 3.1-2 on astrocrpublic.azurecr.io/runtime (helm.runtimeImagesV3)
+Covers BOTH Runtime majors, since custom image SHA has to work for each on its own repo, AND
+both of houston's @sha256-append paths (the config pins the repos differently on purpose):
+  - Airflow 2.x: runtime 13.1.0 on quay.io/astronomer/astro-runtime, configured WITH a trailing
+    @sha256 -- exercises houston's idempotency guard (.endsWith("@sha256")), which must NOT
+    double-append. The final pod image is still the single-prefix quay.io/astronomer/astro-runtime
+    @sha256:<hex>, NOT the ...@sha256:sha256:... an older doc warned about.
+  - Airflow 3.x: runtime 3.1-2 on astrocrpublic.azurecr.io/runtime, configured WITHOUT @sha256 --
+    the normal path where houston appends it.
+Both must resolve to an identical valid single-prefix reference, which test_runtime_images_are_sha_pinned
+asserts exactly (expected_repo is the bare repo + the config's digest in both cases).
 
 1. (test_deployment_reaches_ready) The deployment's Airflow pods reach full readiness. This is
     the functional half: the pods can only go Running if the digest houston pinned is a real,
@@ -14,7 +21,6 @@ Covers BOTH Runtime majors, since custom image SHA has to work for each on its o
     image, by this deployment's major's repo, as <repo>@sha256:<64-hex>
 """
 
-import re
 import time
 
 import pytest
@@ -41,12 +47,19 @@ AF2_REPO = "quay.io/astronomer/astro-runtime"
 AF3_REPO = "astrocrpublic.azurecr.io/runtime"
 RUNTIME_REPOS = (AF2_REPO, AF3_REPO)
 
-RUNTIME_CASES = [
-    pytest.param({"runtime_version": "13.1.0", "expected_repo": AF2_REPO, "label": "custom-image-sha-af2"}, id="af2"),
-    pytest.param({"runtime_version": "3.1-2", "expected_repo": AF3_REPO, "label": "custom-image-sha-af3"}, id="af3"),
-]
+AF2_SHA256 = "9c57ed87a58e1822ff7b42ba824820c6372d43c2ce3876a49d8029efcd113a91"
+AF3_SHA256 = "5a15c6628f4fcf8e7ce06573d98f4873c8cbede63e80ac744d448733ceae9c72"
 
-SHA_PINNED_RE = re.compile(r"^[^@\s]+@sha256:[0-9a-f]{64}$")
+RUNTIME_CASES = [
+    pytest.param(
+        {"runtime_version": "13.1.0", "expected_repo": AF2_REPO, "expected_sha256": AF2_SHA256, "label": "custom-image-sha-af2"},
+        id="af2",
+    ),
+    pytest.param(
+        {"runtime_version": "3.1-2", "expected_repo": AF3_REPO, "expected_sha256": AF3_SHA256, "label": "custom-image-sha-af3"},
+        id="af3",
+    ),
+]
 
 
 @pytest.fixture(scope="module")
@@ -109,6 +122,7 @@ def deployment(request, _admin_token, _houston_api_module, _k8s_apps_v1_client_m
         "id": created["id"],
         "release_name": created["releaseName"],
         "expected_repo": case["expected_repo"],
+        "expected_sha256": case["expected_sha256"],
         "runtime_version": case["runtime_version"],
     }
 
@@ -134,18 +148,13 @@ def test_runtime_images_are_sha_pinned(deployment, _k8s_core_v1_client_module):
         f"Found no Runtime-image containers for release {deployment['release_name']!r} "
         f"(expected images under one of {RUNTIME_REPOS}). Selector/label drift?"
     )
-    print(f"[sha check: {deployment['runtime_version']}] asserting {len(refs)} Runtime container(s):")
+    expected_ref = f"{deployment['expected_repo']}@sha256:{deployment['expected_sha256']}"
+    print(f"[sha check: {deployment['runtime_version']}] asserting {len(refs)} Runtime container(s) == {expected_ref}:")
     for ref, image in sorted(refs.items()):
         print(f"  {ref} -> {image}")
-    expected_repo = deployment["expected_repo"]
-    bad = {}
-    for ref, image in refs.items():
-        if not SHA_PINNED_RE.match(image):
-            bad[ref] = f"{image} (not a bare @sha256:<64-hex> digest)"
-        elif not image.startswith(expected_repo + "@"):
-            bad[ref] = f"{image} (wrong repo, expected {expected_repo})"
+    bad = {ref: image for ref, image in refs.items() if image != expected_ref}
     assert not bad, (
-        f"These Runtime containers for {deployment['runtime_version']} are not pinned to "
-        f"{expected_repo}@sha256:<64-hex> (mutable tag, wrong repo, or the invalid double-prefixed "
-        f"@sha256:sha256:... form the doc warns about): {bad}"
+        f"These Runtime containers for {deployment['runtime_version']} are not pinned to the "
+        f"expected immutable reference {expected_ref} (mutable tag, wrong repo, wrong digest, or the "
+        f"invalid double-prefixed @sha256:sha256:... form the doc warns about): {bad}"
     )
