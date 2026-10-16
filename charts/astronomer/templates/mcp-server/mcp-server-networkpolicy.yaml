@@ -28,12 +28,17 @@ spec:
   - Ingress
   ingress:
   - from:
-    # BYO-ingress is unsupported with the MCP server (see mcp-server-ingress.yaml), so the
-    # only reachable peer here is the in-cluster nginx controller.
+    # BYO-ingress is unsupported with the MCP server (see mcp-server-ingress.yaml), so the only
+    # app-traffic peer is the in-cluster nginx controller. Prometheus scrapes metrics on the same port.
     - podSelector:
         matchLabels:
           tier: nginx
           component: {{ ternary "dp-ingress-controller" "cp-ingress-controller" (eq .Values.global.plane.mode "data")}}
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: prometheus
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP

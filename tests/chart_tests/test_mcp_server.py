@@ -286,6 +286,40 @@ class TestMcpServerService:
         )
         assert len(docs) == 0
 
+    def test_service_carries_scrape_annotations(self, kube_version):
+        """The Service advertises itself to Prometheus on its HTTP port; the
+        mcp-server scrape job keys on these annotations, so dropping them silently
+        stops the component from being scraped."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        annotations = docs[0]["metadata"]["annotations"]
+        assert annotations["prometheus.io/scrape"] == "true"
+        assert annotations["prometheus.io/port"] == "8080"
+
+    def test_service_discovery_handles_survive_contained_name(self, kube_version):
+        """When the release name contains the component, mcpServer.fullname dedupes it, so the
+        Service name is no longer release-name + '-mcp-server'. The scrape job must therefore key
+        on the release label and mcp-server-http port name, which stay stable here."""
+        docs = render_chart(
+            kube_version=kube_version,
+            name="astronomer-mcp-server",
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        svc = docs[0]
+        assert svc["metadata"]["name"] == "astronomer-mcp-server"
+        assert svc["metadata"]["labels"]["release"] == "astronomer-mcp-server"
+        assert svc["spec"]["ports"][0]["name"] == "mcp-server-http"
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestMcpServerServiceAccount:
@@ -345,6 +379,9 @@ class TestMcpServerNetworkPolicy:
         ingress_from = docs[0]["spec"]["ingress"][0]["from"]
         assert {
             "podSelector": {"matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}}
+        } in ingress_from
+        assert {
+            "podSelector": {"matchLabels": {"tier": "monitoring", "component": "prometheus", "release": "release-name"}}
         } in ingress_from
         assert docs[0]["spec"]["ingress"][0]["ports"][0]["port"] == 8080
 
