@@ -10,7 +10,7 @@ A USER value of "" means the image runs as root (UID 0).
 
 Examples:
     bin/show-docker-image-user.py quay.io/astronomer/ap-commander:2.0.15
-    bin/show-docker-images.py --with-houston | awk '{print $2}' | bin/show-docker-image-user.py
+    bin/show_docker_images.py --with-houston | awk '{print $2}' | bin/show-docker-image-user.py
 """
 
 import argparse

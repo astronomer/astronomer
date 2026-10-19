@@ -650,7 +650,7 @@ s3:
         path: production.yaml
       - key: local-production.yaml
         path: local-production.yaml
-      {{- if and .Values.houston.RuntimeReleasesConfig (not .Values.houston.runtimeReleasesconfigMapName )}}
+      {{- if and .Values.houston.runtimeReleasesConfig (not .Values.houston.runtimeReleasesConfigMapName )}}
       - key: astro_runtime_releases.json
         path: astro_runtime_releases.json
       {{- end }}
@@ -1000,7 +1000,7 @@ Returns the string "true" or "false" — compare with eq.
 
 {{ define "mcpServer.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-mcp-server:{{ .Values.images.mcpServer.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-apc-mcp-server:{{ .Values.images.mcpServer.tag }}
 {{- else -}}
 {{ .Values.images.mcpServer.repository }}:{{ .Values.images.mcpServer.tag }}
 {{- end }}

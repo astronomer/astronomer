@@ -22,7 +22,7 @@ repos:
         additional_dependencies: ["jinja2", "PyYAML"]
         name: Ensure unique tags per image
         entry: python3
-        args: ["bin/show-docker-images.py", "--private-registry", "--with-houston", "-c"]
+        args: ["bin/show_docker_images.py", "--private-registry", "--with-houston", "-c"]
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
       - id: refuse-authsidecar-files

@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = [
+#     "pyyaml>=6.0",
+# ]
+# ///
 """Show a list of docker images that are deployed by the astronomer platform."""
 
 import argparse
@@ -154,6 +159,35 @@ def helm_template(args, label, files):
     return list(yaml.safe_load_all(output))
 
 
+def collect_image_tags(args):
+    """
+    Render the platform charts and return the set of `repository:tag` strings they deploy.
+    """
+    docs = []
+    for run in HELM_RUNS:
+        docs.extend(helm_template(args, run["label"], run["files"]))
+
+    containers = set()
+
+    containers.update(get_images_from_values_yaml())
+
+    for doc in docs:
+        if doc is None:
+            continue
+        match doc:
+            case {"spec": {"template": {"spec": _}}}:
+                containers.update(default_spec_parser(doc, args))
+            case {"spec": {"jobTemplate": {"spec": {"template": {"spec": _}}}}}:
+                containers.update(job_template_spec_parser(doc, args))
+            case {"metadata": {"name": "release-name-houston-config"}}:
+                if args.with_houston:
+                    containers.update(get_images_from_houston_configmap(doc, args))
+            case _:
+                pass
+
+    return containers
+
+
 def main():
     """Parse the helm output and print the images."""
 
@@ -177,27 +211,7 @@ def main():
     )
     args = parser.parse_args()
 
-    docs = []
-    for run in HELM_RUNS:
-        docs.extend(helm_template(args, run["label"], run["files"]))
-
-    containers = set()
-
-    containers.update(get_images_from_values_yaml())
-
-    for doc in docs:
-        if doc is None:
-            continue
-        match doc:
-            case {"spec": {"template": {"spec": _}}}:
-                containers.update(default_spec_parser(doc, args))
-            case {"spec": {"jobTemplate": {"spec": {"template": {"spec": _}}}}}:
-                containers.update(job_template_spec_parser(doc, args))
-            case {"metadata": {"name": "release-name-houston-config"}}:
-                if args.with_houston:
-                    containers.update(get_images_from_houston_configmap(doc, args))
-            case _:
-                pass
+    containers = collect_image_tags(args)
 
     if args.check_tags:
         image_tag_counts = defaultdict(int)
