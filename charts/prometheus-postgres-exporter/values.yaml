@@ -77,16 +77,19 @@ securityContext:
 
 # -- Read the datasource password from a mounted file (`DATA_SOURCE_PASS_FILE`)
 # instead of injecting it with valueFrom.secretKeyRef. Leave unset to inherit
-# `global.secretsFromFiles.enabled`.
+# `global.secretsFromFiles.enabled`; set false to keep the exporter on
+# environment variables.
 #
-# This only affects the split `DATA_SOURCE_URI`/`_USER`/`_PASS` form, which
-# requires `config.datasource.passwordSecret` or `config.datasource.password`.
-# It does NOT affect the default `config.datasource.connectionSecret` path:
-# postgres_exporter has no `DATA_SOURCE_NAME_FILE` (verified against the
-# ap-postgres-exporter 0.19.1-2 binary, which ships `_URI_FILE`, `_USER_FILE`
-# and `_PASS_FILE` but no `_NAME_FILE`), so a full DSN can only arrive as an env
-# var. Since `connectionSecret` is the default, enabling this changes nothing
-# unless the datasource is also switched to the split form.
+# The file form only exists for the split `DATA_SOURCE_URI`/`_USER`/`_PASS`
+# datasource, so while this is on the chart requires that form, with
+# `config.datasource.passwordSecret` or `config.datasource.password` to read
+# the password from. The default `config.datasource.connectionSecret` form fails
+# the render: postgres_exporter has no `DATA_SOURCE_NAME_FILE` (verified against
+# the ap-postgres-exporter 0.19.1-2 binary, which ships `_URI_FILE`, `_USER_FILE`
+# and `_PASS_FILE` but no `_NAME_FILE`), so that DSN could only arrive as an env
+# var. To turn this on, set `config.datasource.connectionSecret` to null and
+# fill in host, user and passwordSecret. Unlike the platform's own loaders, the
+# exporter does not refuse an empty password file.
 # @default -- inherits global.secretsFromFiles.enabled
 secretsFromFiles:
   enabled: ~

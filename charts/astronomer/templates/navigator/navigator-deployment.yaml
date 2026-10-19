@@ -2,7 +2,8 @@
 ## Astronomer Navigator Deployment  ##
 ######################################
 {{- if and (or .Values.navigator.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "control"))) (eq (include "astronomer.controlPlaneEnabled" .) "true") }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.navigator)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.navigator "key" "astronomer.navigator")) }}
+{{- include "houston.secretsFromFiles.assert" (dict "ctx" $ "enabled" $secretsFromFiles "key" "astronomer.navigator" "component" "navigator" "env" .Values.navigator.env "secrets" .Values.navigator.secret "chartFiles" (list "DATABASE_URL")) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -45,7 +46,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "navigator.serviceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.navigator) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.navigator "key" "astronomer.navigator") | fromYaml)) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -123,12 +124,12 @@ spec:
             - name: DEPLOYMENTS__DATABASE__CONNECTION_FILE
               value: /etc/astronomer/secrets/DEPLOYMENTS__DATABASE__CONNECTION
             {{- end }}
-            {{- /* The loader cannot know operator-defined secret env var names at build time, so pass them through. */}}
-            {{- $extraSecrets := list }}
-            {{- range $i, $config := .Values.navigator.secret }}
-            {{- $extraSecrets = append $extraSecrets $config.envName }}
-            - name: {{ $config.envName }}_FILE
-              value: /etc/astronomer/secrets/{{ $config.envName }}
+            {{- /* The loader cannot know operator-defined secret env var names (or CP_ID, which
+                   only exists under controlPlaneHA) at build time, so pass them through. */}}
+            {{- $extraSecrets := include "houston.secretsFromFiles.extraNames" (dict "ctx" $ "secrets" .Values.navigator.secret) | fromJsonArray }}
+            {{- range $extraSecrets }}
+            - name: {{ . }}_FILE
+              value: /etc/astronomer/secrets/{{ . }}
             {{- end }}
             {{- if $extraSecrets }}
             - name: HOUSTON_SECRETS_FROM_FILES_EXTRA
@@ -154,7 +155,7 @@ spec:
               value: {{ template "houston.nats.servers" . }}
             - name: NATS__CLUSTER_ID
               value: {{ .Release.Name }}-stan
-            {{- if .Values.global.controlPlaneHA.enabled }}
+            {{- if and .Values.global.controlPlaneHA.enabled (not $secretsFromFiles) }}
             {{- include "houston.cpIdEnv" . | nindent 12 }}
             {{- end }}
 
@@ -236,6 +237,9 @@ spec:
                   items:
                     - key: {{ default "value" $config.secretKey }}
                       path: {{ $config.envName }}
+              {{- end }}
+              {{- if .Values.global.controlPlaneHA.enabled }}
+              {{- include "houston.cpIdSecretSource" . | nindent 14 }}
               {{- end }}
         {{- end }}
         {{- include "custom_ca_volumes" . | nindent 8 }}

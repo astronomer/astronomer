@@ -3,7 +3,10 @@
 ##################################
 {{- if and (or .Values.pilot.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data"))) (eq (include "astronomer.dataPlaneEnabled" .) "true") }}
 {{- $flightDeckEnabled := or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled }}
-{{- $secretsFromFiles := and $flightDeckEnabled (eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.pilot))) }}
+{{- $secretsFromFiles := and $flightDeckEnabled (eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.pilot "key" "astronomer.pilot"))) }}
+{{- /* pilot runs commander's loader, which refuses both of commander's secrets in the
+       environment whichever subcommand runs; pilot.env is rendered verbatim. */}}
+{{- include "secretsFromFiles.assertNoSecretEnv" (dict "enabled" $secretsFromFiles "env" .Values.pilot.env "listKey" "astronomer.pilot.env" "names" (include "secretsFromFiles.commanderSecretEnvVars" . | fromJsonArray) "key" "astronomer.pilot" "component" "pilot" "gate" "COMMANDER_SECRETS_FROM_FILES" "raw" true) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -49,7 +52,7 @@ spec:
       serviceAccountName: {{ template "pilot.serviceAccountName" . }}
       {{- $podSecurityContextOverride := dict }}
       {{- if $flightDeckEnabled }}
-      {{- $podSecurityContextOverride = include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.pilot) | fromYaml }}
+      {{- $podSecurityContextOverride = include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.pilot "key" "astronomer.pilot") | fromYaml }}
       {{- end }}
       securityContext: {{- include "platform.podSecurityContext" (list $ $podSecurityContextOverride) | nindent 8 }}
       restartPolicy: Always

@@ -1,4 +1,7 @@
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values "key" "postgresql")) }}
+{{- /* extraEnv reaches only the postgresql container, verbatim. Its entrypoint exits
+       on POSTGRES_PASSWORD next to the POSTGRES_PASSWORD_FILE the chart sets. */}}
+{{- include "secretsFromFiles.assertNoSecretEnv" (dict "enabled" $secretsFromFiles "env" .Values.extraEnv "listKey" "postgresql.extraEnv" "names" (list "POSTGRES_PASSWORD") "key" "postgresql" "component" "postgresql" "raw" true) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:

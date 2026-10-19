@@ -5,7 +5,7 @@
 {{- if and .Values.houston.worker.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") }}
 {{- if .Values.houston.logging.loggingSidecar.enabled }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
-{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar)) }}
+{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar "key" "astronomer.houston.logging.loggingSidecar")) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

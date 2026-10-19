@@ -2,7 +2,7 @@
 ## Prometheus Federation Auth Deployment ##
 ###########################################
 {{- if eq .Values.global.plane.mode "data" }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.federation.auth)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.federation.auth "key" "prometheus.federation.auth")) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -2,7 +2,13 @@
 ## Elasticsearch Proxy Deployment ##
 ####################################
 {{- if eq (include "logging.enabled" .) "true" }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.global.customLogging)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.global.customLogging "key" "global.customLogging")) }}
+{{- if and $secretsFromFiles .Values.global.customLogging.secret }}
+{{- fail "secret-in-environment: global.customLogging.secret is an inline credential, which the external-es-proxy can only take as the ES_SECRET environment variable, but secrets-from-files is on for it. Store the raw credentials under the key \"elastic\" of a Secret named by global.customLogging.secretName, which is read from a file, or set global.customLogging.secretsFromFiles.enabled=false to keep the proxies on environment variables." }}
+{{- end }}
+{{- /* extraEnv reaches only the esproxy container, verbatim. */}}
+{{- include "secretsFromFiles.assertNoSecretEnv" (dict "enabled" $secretsFromFiles "env" .Values.global.customLogging.extraEnv "listKey" "global.customLogging.extraEnv" "names" (list "ES_SECRET" "ES_SECRET_NAME") "key" "global.customLogging" "component" "the external-es-proxy" "raw" true) }}
+{{- $esSecretFromFile := and $secretsFromFiles .Values.global.customLogging.secretName }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -87,7 +93,7 @@ spec:
                 key: elastic
 {{- end }}
           volumeMounts:
-            {{- if and .Values.global.customLogging.secretName (not .Values.global.customLogging.secret) $secretsFromFiles }}
+            {{- if $esSecretFromFile }}
             - name: es-secret
               mountPath: /etc/astronomer/secrets
               readOnly: true
@@ -141,8 +147,41 @@ spec:
           {{- /* aws-es-proxy uses the AWS SDK default credential chain and has no
                  *_FILE convention, so the values are read from the mounted files
                  here and exported before exec. The container already runs
-                 /bin/sh -c, so this stays a chart-only change. */}}
-          args: ["export AWS_ACCESS_KEY_ID=\"$(cat /etc/astronomer/secrets/aws_access_key)\"; export AWS_SECRET_ACCESS_KEY=\"$(cat /etc/astronomer/secrets/aws_secret_key)\"; exec aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
+                 /bin/sh -c, so this stays a chart-only change.
+
+                 Fails closed, like the loaders: a missing or unreadable file, or
+                 one that is empty once surrounding whitespace (CR included) is
+                 trimmed, stops the container with a message naming the file,
+                 rather than starting the proxy with no credentials. A bare
+                 `export X="$(cat f)"` would not: export's own success hides the
+                 failed cat. The values are trimmed the same way, as the loaders
+                 trim theirs. */}}
+          args:
+            - |
+              set -eu
+              trim() {
+                value=$1
+                while :; do case "$value" in [[:space:]]*) value=${value#?} ;; *) break ;; esac; done
+                while :; do case "$value" in *[[:space:]]) value=${value%?} ;; *) break ;; esac; done
+                printf '%s' "$value"
+              }
+              read_key() {
+                if [ ! -r "$1" ]; then
+                  echo "awsproxy: cannot read the AWS credential file $1" >&2
+                  exit 1
+                fi
+                key="$(trim "$(cat "$1")")"
+                if [ -z "$key" ]; then
+                  echo "awsproxy: the AWS credential file $1 is empty" >&2
+                  exit 1
+                fi
+              }
+              read_key /etc/astronomer/secrets/aws_access_key
+              AWS_ACCESS_KEY_ID=$key
+              read_key /etc/astronomer/secrets/aws_secret_key
+              AWS_SECRET_ACCESS_KEY=$key
+              export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+              exec aws-es-proxy -listen :{{ .Values.service.awsproxy }}
           {{- else }}
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           {{- end }}
@@ -227,7 +266,7 @@ spec:
           secret:
             secretName: {{ .Values.global.customLogging.awsSecretName }}
         {{- end }}
-        {{- if and .Values.global.customLogging.secretName (not .Values.global.customLogging.secret) $secretsFromFiles }}
+        {{- if $esSecretFromFile }}
         - name: es-secret
           secret:
             secretName: {{ .Values.global.customLogging.secretName }}

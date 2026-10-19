@@ -5,7 +5,11 @@
 {{- $planeMode := and (eq .Values.global.plane.mode "unified")  ( not $useClusterRoles ) }}
 {{- $planeCPMode := eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- $dbName := (printf "%s_houston" (.Release.Name | replace "-" "_")) }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.filesdReloader)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.filesdReloader "key" "prometheus.filesdReloader")) }}
+{{- /* The filesd-reloader sidecar renders only on a control-capable plane. Its extraEnv
+       is rendered verbatim, and pydantic reads its settings case-insensitively, so the
+       kuiper loader refuses database_url in any case. */}}
+{{- include "secretsFromFiles.assertNoSecretEnv" (dict "enabled" (and $secretsFromFiles $planeCPMode) "env" .Values.filesdReloader.extraEnv "listKey" "prometheus.filesdReloader.extraEnv" "names" (list "DATABASE_URL") "key" "prometheus.filesdReloader" "component" "filesd-reloader" "gate" "KUIPER_SECRETS_FROM_FILES" "raw" true "caseInsensitive" true) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:

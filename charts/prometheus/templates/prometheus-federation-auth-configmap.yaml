@@ -2,7 +2,7 @@
 ## Prometheus Federation Auth Configmap ##
 ##########################################
 {{- if eq .Values.global.plane.mode "data" }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.federation.auth)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.federation.auth "key" "prometheus.federation.auth")) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -35,9 +35,9 @@ data:
         # filesystem hit to every federated scrape.
         #
         # Erroring here is deliberate: nginx refuses to start rather than coming up
-        # and rejecting every request with a misleading 403. That matches the
-        # fail-closed rule the houston-api and commander loaders follow -- an absent
-        # secret is configuration, an unreadable or empty one is breakage.
+        # and rejecting every request with a misleading 403. That is the strict rule
+        # the secrets loaders follow: with secrets-from-files on, a secret the
+        # component needs must be in a readable, non-empty file, or it does not start.
         #
         # Reading once cannot serve a stale token: the deployment's
         # checksum/registry-auth-secret annotation rolls the pod when the Secret
@@ -47,8 +47,12 @@ data:
                          or "/etc/astronomer/secrets/REGISTRY_AUTH_TOKEN"
             local handle, open_err = io.open(path, "r")
             if not handle then
-                error("federation auth: cannot open token file " .. path ..
-                      ": " .. tostring(open_err))
+                -- io.open's message already starts with the path; name it only once.
+                local reason = tostring(open_err)
+                if not reason:find(path, 1, true) then
+                    reason = path .. ": " .. reason
+                end
+                error("federation auth: cannot open token file " .. reason)
             end
             local contents = handle:read("*a")
             handle:close()

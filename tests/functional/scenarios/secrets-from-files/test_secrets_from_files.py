@@ -54,13 +54,9 @@ LOADER_GATES = {
 # "Done. Loaded 4 secret(s) from files." -- the shape houston and commander both log.
 LOADED_COUNT = re.compile(r"Done\. Loaded (\d+) secret\(s\) from files")
 
-# Containers that carry <VAR>_FILE paths they deliberately do not mount. They include the
-# houston_environment helper, so they inherit the gate flag and every path, but get no
-# secret volume. Safe only because they run the pure-shell /houston/bin/entrypoint and
-# never invoke node, so the loader never runs -- the same exemption, for the same stated
-# reason, as CONTAINERS_EXEMPT_FROM_FILE_PATH_MOUNTS in
-# tests/chart_tests/test_secrets_from_files.py.
-SHELL_ONLY_CONTAINERS = {"houston-wait-for-db", "wait-for-db"}
+# Every gate a loader reads, the ap-db-bootstrapper's included. LOADER_GATES above is the
+# three whose runs Stage 2 inspects; this is the set that makes a container strict.
+STRICT_GATES = (*LOADER_GATES, "DB_BOOTSTRAPPER_SECRETS_FROM_FILES")
 
 # ap-db-bootstrapper init containers. They are expected to restart on a FRESH install and
 # are not part of this feature: BOOTSTRAP_DB is the one path deliberately left on
@@ -170,8 +166,6 @@ def _loader_containers(k8s_core_v1_client, running_only=False):
             env = _env_of(container)
             for gate, loader in LOADER_GATES.items():
                 if str(env.get(gate, "")).lower() == "true":
-                    if container.name in SHELL_ONLY_CONTAINERS:
-                        continue  # inherits the gate but never runs the loader
                     if running_only and container.name not in live:
                         continue
                     found.append((pod.metadata.name, container, loader))
@@ -311,23 +305,36 @@ def test_bootstrap_secret_no_longer_holds_the_sentinel(k8s_core_v1_client, secre
 
 
 def test_no_converted_secret_arrives_via_secret_key_ref(k8s_core_v1_client):
-    """The point of the feature: converted values are gone from the pod's environment block.
+    """The point of the feature: a container whose loader is on takes no secret from its env.
+
+    Strict mode makes that absolute. The loader refuses to start next to a managed secret
+    in its environment, and the chart renders no secretKeyRef at all into a container whose
+    gate is on -- CP_ID included -- and refuses values that would add one. So any
+    secretKeyRef in a gated container is a regression, whatever its name; and in any
+    container, one next to a <VAR>_FILE for the same variable is the old half-converted
+    shape.
 
     Asserted against LIVE pod specs rather than a render, so it also catches a pod left
-    over from a previous configuration. BOOTSTRAP_DB is excluded deliberately: its
-    conversion is blocked on the external ap-db-bootstrapper image and is a disclosed
-    residual, not a regression.
+    over from a previous configuration. BOOTSTRAP_DB still arrives as a secretKeyRef while
+    the ap-db-bootstrapper toggle is off, its default until a loader-bearing image is
+    pinned; those containers then carry no gate, so they are not gated containers here.
     """
-    deferred = {"BOOTSTRAP_DB"}
     offenders = []
     for pod in k8s_core_v1_client.list_namespaced_pod(NAMESPACE).items:
         containers = list(pod.spec.containers or []) + list(pod.spec.init_containers or [])
         for container in containers:
+            env_values = _env_of(container)
+            gated = any(str(env_values.get(gate, "")).lower() == "true" for gate in STRICT_GATES)
             for env in container.env or []:
-                if env.name in deferred:
-                    continue
                 ref = getattr(env.value_from, "secret_key_ref", None) if env.value_from else None
-                if ref and f"{env.name}_FILE" in _env_of(container):
+                if not ref:
+                    continue
+                if gated:
+                    offenders.append(
+                        f"{pod.metadata.name}/{container.name} has its loader on but takes {env.name} "
+                        f"from secretKeyRef({ref.name}/{ref.key})"
+                    )
+                elif f"{env.name}_FILE" in env_values:
                     offenders.append(
                         f"{pod.metadata.name}/{container.name} {env.name} arrives via "
                         f"secretKeyRef({ref.name}/{ref.key}) AND advertises {env.name}_FILE"
@@ -373,12 +380,13 @@ def test_loaded_count_matches_advertised_files(kubeconfig_file, k8s_core_v1_clie
             continue
 
         # Compare against the files actually MOUNTED, not the number of <VAR>_FILE env
-        # vars. Those legitimately differ: the loader reads `<VAR>_FILE` when set and
-        # otherwise probes the default path, so a projected file the chart did not also
-        # advertise via _FILE is still loaded. commander's flightdeck-db-migrations is
-        # exactly that -- one _FILE var, two projected files, two loaded. Counting env
-        # vars calls that a mismatch; counting files is what "did it read everything it
-        # was handed" actually means.
+        # vars. The loader reads `<VAR>_FILE` when set and otherwise probes the default
+        # path, so a projected file the chart did not also advertise would still be
+        # loaded; counting files is what "did it read everything it was handed" means.
+        # Only running containers can be listed, so init containers such as commander's
+        # flightdeck-db-migrations are not compared here; the chart suite's
+        # test_every_gated_container_is_strictly_consistent pins, for every gated
+        # container, that what it can see is exactly what it advertises.
         mounted = set()
         for directory in {value.rsplit("/", 1)[0] for value in advertised.values()}:
             listing = _exec(kubeconfig_file, pod, container.name, "ls", "-1", directory)

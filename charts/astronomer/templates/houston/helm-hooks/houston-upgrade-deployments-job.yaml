@@ -2,7 +2,7 @@
 ## Airflow Post Deployment Upgrade Hook
 #######################################
 {{- if .Values.houston.upgradeDeployments.enabled }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston")) }}
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
@@ -45,7 +45,7 @@ spec:
         {{- end }}
       {{- end }}
     spec:
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston" "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
@@ -82,7 +82,7 @@ spec:
             - "echo"
             - "DB ready"
           env:
-            {{- include "houston_environment" . | indent 12 }}
+            {{- include "houston_wait_for_db_environment" . | indent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs

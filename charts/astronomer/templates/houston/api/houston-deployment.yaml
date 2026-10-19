@@ -3,8 +3,8 @@
 ###################################
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
-{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston")) }}
+{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar "key" "astronomer.houston.logging.loggingSidecar")) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -53,7 +53,7 @@ spec:
       {{- include "houston.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston" "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -92,7 +92,7 @@ spec:
           livenessProbe: {{ tpl (toYaml .Values.houston.waitForDB.livenessProbe) . | nindent 12 }}
           {{- end }}
           env:
-            {{- include "houston_environment" . | indent 12 }}
+            {{- include "houston_wait_for_db_environment" . | indent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs

@@ -2,8 +2,8 @@
 ## Houston Worker ##
 ####################
 {{- if and .Values.houston.worker.enabled (eq (include "astronomer.controlPlaneEnabled" .) "true") }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
-{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston")) }}
+{{- $vectorSecretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston.logging.loggingSidecar "key" "astronomer.houston.logging.loggingSidecar")) }}
 {{- include "houston.logging.loggingSidecar.validate" . }}
 kind: Deployment
 apiVersion: apps/v1
@@ -53,7 +53,7 @@ spec:
       {{- include "houston.worker.hostAliases" . | nindent 6 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston" "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
 
@@ -86,7 +86,7 @@ spec:
             - "DB ready"
           resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
-            {{- include "houston_environment" . | indent 12 }}
+            {{- include "houston_wait_for_db_environment" . | indent 12 }}
           {{- if .Values.houston.waitForDB.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.houston.waitForDB.readinessProbe) . | nindent 12 }}
           {{- end }}

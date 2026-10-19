@@ -40,7 +40,7 @@ spec:
           {{- end }}
           {{- end }}
         spec:
-          securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston) | fromYaml)) | nindent 12 }}
+          securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston") | fromYaml)) | nindent 12 }}
           serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
           nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
           affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}

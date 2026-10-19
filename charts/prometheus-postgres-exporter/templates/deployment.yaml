@@ -7,17 +7,24 @@
 {{- end -}}
 {{- /* Load the password from a file rather than the environment.
 
-       Deliberately narrow. It requires the split DATA_SOURCE_URI/_USER/_PASS form
-       *and* a password source to mount, because:
-         - the default connectionSecret path uses DATA_SOURCE_NAME, and
-           postgres_exporter has no DATA_SOURCE_NAME_FILE (verified against the
-           0.19.1-2 binary), so a full DSN can only arrive as an env var;
-         - with neither passwordSecret nor password set, the Secret the existing
-           secretKeyRef names is never created, so mounting it as a volume would
-           turn a container-start failure into a pod that cannot schedule at all.
-       Enabling the toggle on the default configuration is therefore a no-op, which
-       the values comment and a chart test both state. */}}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values)) }}
+       That needs the split DATA_SOURCE_URI/_USER/_PASS form *and* a password source
+       to mount, so with the toggle on anything else fails the render, rather than
+       leaving a secret in the exporter's environment:
+         - the default connectionSecret form delivers the whole DSN as
+           DATA_SOURCE_NAME, and postgres_exporter has no DATA_SOURCE_NAME_FILE
+           (verified against the 0.19.1-2 binary), so that DSN could only arrive as
+           an env var;
+         - with neither passwordSecret nor password set, the only form left is a
+           secretKeyRef on a Secret the chart never creates. */}}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values "key" "prometheus-postgres-exporter")) }}
+{{- if $secretsFromFiles }}
+{{- if .Values.config.datasource.connectionSecret }}
+{{- fail "secret-in-environment: prometheus-postgres-exporter.config.datasource.connectionSecret delivers the whole DSN as DATA_SOURCE_NAME, which postgres_exporter can only read from its environment (it has no DATA_SOURCE_NAME_FILE), but secrets-from-files is on for the exporter. Use the split form, whose password is read from a file through DATA_SOURCE_PASS_FILE: set config.datasource.connectionSecret to null and set config.datasource.host, user and passwordSecret (or password). Or set prometheus-postgres-exporter.secretsFromFiles.enabled=false to keep the exporter on environment variables." }}
+{{- end }}
+{{- if not (or .Values.config.datasource.passwordSecret .Values.config.datasource.password) }}
+{{- fail "secret-file-missing: prometheus-postgres-exporter.config.datasource sets neither passwordSecret nor password, so secrets-from-files has no password file to give the exporter, and the only alternative is a secretKeyRef on a Secret the chart never creates. Set config.datasource.passwordSecret to the Secret and key holding the password (or set password), or set prometheus-postgres-exporter.secretsFromFiles.enabled=false to keep the exporter on environment variables." }}
+{{- end }}
+{{- end }}
 {{- $passwordFromFile := and $secretsFromFiles (not .Values.config.datasource.connectionSecret) (or .Values.config.datasource.passwordSecret .Values.config.datasource.password) }}
 apiVersion: apps/v1
 kind: Deployment

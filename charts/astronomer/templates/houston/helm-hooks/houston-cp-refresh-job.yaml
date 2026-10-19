@@ -11,8 +11,9 @@
   Gated on both plane mode (control/unified) and controlPlaneHA.enabled: unlike the
   cp-identity Secret (deliberately generated pre-HA so the id is stable ahead of an
   HA-enable), this job has no pre-HA value. Cross-CP chartVersion coordination is
-  only meaningful with multiple active CPs; on a single-CP/non-HA install the CP_ID
-  env (from the cp-identity Secret, via houston_environment) isn't wired either, so
+  only meaningful with multiple active CPs; on a single-CP/non-HA install CP_ID (from
+  the cp-identity Secret, via houston_environment: an env var, or a file while houston
+  reads its secrets from files) isn't wired either, so
   the job would just spin up a pod and no-op. Gating it here avoids that wasted run
   on every single-CP/unified helm upgrade.
 
@@ -22,7 +23,7 @@
   runs it ahead of the post-upgrade houston-upgrade-deployments hook (weight "1").
 */}}
 {{- if and (eq (include "astronomer.controlPlaneEnabled" .) "true") .Values.global.controlPlaneHA.enabled }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston")) }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
@@ -64,7 +65,7 @@ spec:
         {{- end }}
       {{- end }}
     spec:
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston" "dbBootstrapper" true) | fromYaml)) | nindent 8 }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
@@ -101,7 +102,7 @@ spec:
             - "echo"
             - "DB ready"
           env:
-            {{- include "houston_environment" . | indent 12 }}
+            {{- include "houston_wait_for_db_environment" . | indent 12 }}
           volumeMounts:
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs

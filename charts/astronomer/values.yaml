@@ -90,9 +90,13 @@ astroUI:
 houston:
   # -- Load houston's secrets from files mounted at /etc/astronomer/secrets instead of
   # injecting them with valueFrom.secretKeyRef. Applies to the API, worker,
-  # helm-hook jobs and every cronjob. Leave unset to inherit
-  # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
-  # supports HOUSTON_SECRETS_FROM_FILES.
+  # helm-hook jobs and every cronjob. When on, those secrets must come from files:
+  # the loader refuses to start if one is also in the environment or a file is
+  # missing or empty, and the chart refuses an `env` entry that sets one (any of
+  # the loader's managed names, a `secret` envName, or CP_ID under
+  # controlPlaneHA). Leave unset to inherit `global.secretsFromFiles.enabled`; set
+  # false to keep houston on environment variables. Requires an ap-houston-api
+  # image that supports HOUSTON_SECRETS_FROM_FILES.
   # @default -- inherits global.secretsFromFiles.enabled
   secretsFromFiles:
     enabled: ~
@@ -171,8 +175,20 @@ houston:
   podAnnotations: {}
 
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  # While houston reads its secrets from files (houston.secretsFromFiles), an entry
+  # may not set one of those secrets, nor a setting of its loader
+  # (HOUSTON_SECRETS_FROM_FILES, HOUSTON_SECRETS_FROM_FILES_EXTRA or any secret's
+  # <NAME>_FILE); deliver extra secrets through `secret` instead.
   env: []
 
+  # -- Extra secret environment variables. With houston.secretsFromFiles on, each entry
+  # is delivered as a file named after its envName rather than as an environment
+  # variable, and the loader requires that file to exist and be non-empty. Each
+  # envName must be unique and must not name a secret the chart delivers itself:
+  # DATABASE__CONNECTION, DATABASE_URL and REGISTRY__AUTH_HEADER; also
+  # DEPLOYMENTS__DATABASE__CONNECTION unless
+  # houston.config.deployments.database.connection is set inline, and CP_ID under
+  # global.controlPlaneHA.
   # For example
   #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
   # and then set:
@@ -272,8 +288,10 @@ houston:
       # Have Vector read its sink credentials from mounted files instead of
       # environment variables, using Vector's native `secret` directory backend.
       # This is Vector's own mechanism, independent of the houston loader, so it
-      # has its own toggle. Leave unset to inherit
-      # `global.secretsFromFiles.enabled`. Requires ap-vector >= 0.43.
+      # has its own toggle. Vector refuses to start on a missing or empty
+      # secret file. Leave unset to inherit `global.secretsFromFiles.enabled`;
+      # set false to keep the sidecar on environment variables. Requires
+      # ap-vector >= 0.43.
       # @default -- inherits global.secretsFromFiles.enabled
       secretsFromFiles:
         enabled: ~
@@ -567,19 +585,32 @@ houston:
 # -- DP-Link configuration for data plane linking
 dpLink:
   # -- Load dp-link's secrets from files mounted at /etc/astronomer/secrets instead of
-  # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
-  # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
-  # supports HOUSTON_SECRETS_FROM_FILES.
+  # injecting them with valueFrom.secretKeyRef. When on, those secrets must come
+  # from files: the loader refuses to start if one is also in the environment or a
+  # file is missing or empty. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`; set false to keep dp-link on environment
+  # variables. Requires an ap-houston-api image that supports
+  # HOUSTON_SECRETS_FROM_FILES.
   # @default -- inherits global.secretsFromFiles.enabled
   secretsFromFiles:
     enabled: ~
 
-  # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  # -- Extra environment variables, rendered verbatim, so `valueFrom` works too.
+  # While dp-link reads its secrets from files (dpLink.secretsFromFiles), an entry
+  # may not set one of its managed secrets, use a secretKeyRef, or set a setting
+  # of its loader (HOUSTON_SECRETS_FROM_FILES, HOUSTON_SECRETS_FROM_FILES_EXTRA or
+  # any secret's <NAME>_FILE); deliver extra secrets through `secret` instead.
   env: []
     # - name: DEBUG
     #   value: "prisma*"
 
-  # -- Extra secret environment variables to insert into the env.
+  # -- Extra secret environment variables to insert into the env. With
+  # dpLink.secretsFromFiles on, each entry is delivered as a file named after its
+  # envName instead, which must exist and be non-empty. Each envName must be
+  # unique and must not name a secret the chart delivers itself:
+  # DATABASE__CONNECTION and DATABASE_URL; also DEPLOYMENTS__DATABASE__CONNECTION
+  # unless houston.config.deployments.database.connection is set inline, and CP_ID
+  # under global.controlPlaneHA.
   # For example
   #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
   # and then set:
@@ -723,12 +754,19 @@ flightDeck:
 
 commander:
   replicas: 2
+  # -- Extra environment variables, in 'name' and 'value' format. While commander reads
+  # its secrets from files, an entry may not set COMMANDER_DATAPLANE_DATABASE_URL or
+  # COMMANDER_FLIGHTDECK_DSN, nor a setting of its loader
+  # (COMMANDER_SECRETS_FROM_FILES or either secret's <NAME>_FILE).
   env: []
 
   # -- Load commander's secrets from files mounted at /etc/astronomer/secrets instead of
-  # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
-  # `global.secretsFromFiles.enabled`. Requires an ap-commander image that
-  # supports COMMANDER_SECRETS_FROM_FILES.
+  # injecting them with valueFrom.secretKeyRef. When on, those secrets must come
+  # from files: the loader refuses to start if one is also in the environment or a
+  # file is missing or empty. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`; set false to keep commander on environment
+  # variables. Requires an ap-commander image that supports
+  # COMMANDER_SECRETS_FROM_FILES.
   # @default -- inherits global.secretsFromFiles.enabled
   secretsFromFiles:
     enabled: ~
@@ -844,9 +882,13 @@ pilot:
   replicas: 3
 
   # -- Load pilot's secrets from files mounted at /etc/astronomer/secrets instead of
-  # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
-  # `global.secretsFromFiles.enabled`. Requires an ap-commander image that
-  # supports COMMANDER_SECRETS_FROM_FILES.
+  # injecting them with valueFrom.secretKeyRef. Only takes effect with FlightDeck on,
+  # since the FlightDeck DSN is pilot's only secret. When on, the DSN must come
+  # from its file: commander's loader refuses to start if it is also in the
+  # environment or the file is missing or empty. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`; set false to keep pilot on environment
+  # variables. Requires an ap-commander image that supports
+  # COMMANDER_SECRETS_FROM_FILES.
   # @default -- inherits global.secretsFromFiles.enabled
   secretsFromFiles:
     enabled: ~
@@ -883,7 +925,10 @@ pilot:
   # -- Startup probe configuration
   startupProbe: {}
 
-  # -- Extra environment variables
+  # -- Extra environment variables, rendered verbatim. While pilot reads its secrets
+  # from files, an entry may not set COMMANDER_FLIGHTDECK_DSN or
+  # COMMANDER_DATAPLANE_DATABASE_URL, use a secretKeyRef, or set a setting of its
+  # loader (COMMANDER_SECRETS_FROM_FILES or either secret's <NAME>_FILE).
   env: []
 
   # -- Extra volumes
@@ -959,9 +1004,12 @@ pilot:
 
 navigator:
   # -- Load navigator's secrets from files mounted at /etc/astronomer/secrets instead of
-  # injecting them with valueFrom.secretKeyRef. Leave unset to inherit
-  # `global.secretsFromFiles.enabled`. Requires an ap-houston-api image that
-  # supports HOUSTON_SECRETS_FROM_FILES.
+  # injecting them with valueFrom.secretKeyRef. When on, those secrets must come
+  # from files: the loader refuses to start if one is also in the environment or a
+  # file is missing or empty. Leave unset to inherit
+  # `global.secretsFromFiles.enabled`; set false to keep navigator on environment
+  # variables. Requires an ap-houston-api image that supports
+  # HOUSTON_SECRETS_FROM_FILES.
   # @default -- inherits global.secretsFromFiles.enabled
   secretsFromFiles:
     enabled: ~
@@ -989,8 +1037,18 @@ navigator:
     automountServiceAccountToken: true
 
   # -- Extra environment variables. Uses standard k8s env 'name' and 'value' format.
+  # While navigator reads its secrets from files (navigator.secretsFromFiles), an
+  # entry may not set one of those secrets, nor a setting of its loader
+  # (HOUSTON_SECRETS_FROM_FILES, HOUSTON_SECRETS_FROM_FILES_EXTRA or any secret's
+  # <NAME>_FILE); deliver extra secrets through `secret` instead.
   env: []
 
+  # -- Extra secret environment variables. With navigator.secretsFromFiles on, each
+  # entry is delivered as a file named after its envName instead, which must exist
+  # and be non-empty. Each envName must be unique and must not name a secret the
+  # chart delivers itself: DATABASE_URL; also DEPLOYMENTS__DATABASE__CONNECTION
+  # unless houston.config.deployments.database.connection is set inline, and CP_ID
+  # under global.controlPlaneHA.
   # For example
   #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
   # and then set:

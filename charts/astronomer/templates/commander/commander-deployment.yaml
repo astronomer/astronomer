@@ -2,8 +2,9 @@
 ## Astronomer Commander Deployment ##
 #####################################
 {{- if eq (include "astronomer.dataPlaneEnabled" .) "true" }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.commander)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.commander "key" "astronomer.commander")) }}
 {{- $flightDeckEnabled := eq "true" (include "flightdeck.enabled" . | trim) }}
+{{- include "secretsFromFiles.assertNoSecretEnv" (dict "enabled" $secretsFromFiles "env" .Values.commander.env "listKey" "astronomer.commander.env" "names" (include "secretsFromFiles.commanderSecretEnvVars" . | fromJsonArray) "key" "astronomer.commander" "component" "commander" "gate" "COMMANDER_SECRETS_FROM_FILES") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -58,7 +59,7 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "commander.serviceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.commander "dbBootstrapper" $flightDeckEnabled) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.commander "key" "astronomer.commander" "dbBootstrapper" $flightDeckEnabled) | fromYaml)) | nindent 8 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       {{- include "commander.hostAliases" . | nindent 6 }}
@@ -135,8 +136,9 @@ spec:
           env:
           {{- if $secretsFromFiles }}
             # The loader reads /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN before the
-            # migrate subcommand runs, so `migrate up` is invoked without --db
-            # and falls back to the environment the loader populated.
+            # migrate subcommand runs, so `migrate up` is invoked without --db, which
+            # the loader refuses while it is on, and takes the DSN from the
+            # environment the loader populated.
             - name: COMMANDER_SECRETS_FROM_FILES
               value: "true"
             - name: COMMANDER_FLIGHTDECK_DSN_FILE
@@ -160,8 +162,17 @@ spec:
             - name: tmp
               mountPath: /tmp
             {{- if $secretsFromFiles }}
+            {{- /* Only the FlightDeck DSN, although commander-secrets also carries the
+                   data-plane URL: the loader reads every file it manages that it finds
+                   at the default path, so mounting the whole volume would load a secret
+                   this container neither advertises nor uses. A subPath of the volume the
+                   wait-for-secret gate polls, rather than a second volume, so the gate's
+                   guarantee covers this container: kubelet refreshes each volume on its
+                   own schedule. The file is fixed when the container starts, which is
+                   all a run-once init container needs. */}}
             - name: commander-secrets
-              mountPath: /etc/astronomer/secrets
+              mountPath: /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN
+              subPath: COMMANDER_FLIGHTDECK_DSN
               readOnly: true
             {{- end }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}

@@ -1,4 +1,4 @@
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values "key" "postgresql")) }}
 {{- if .Values.replication.enabled }}
 kind: StatefulSet
 apiVersion: apps/v1

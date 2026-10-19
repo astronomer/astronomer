@@ -1086,13 +1086,23 @@ class TestAstronomerCommander:
             },
         ]
 
-        for container_name in ["commander", "flightdeck-db-migrations"]:
-            mounts = {mount["name"]: mount for mount in c_by_name[container_name]["volumeMounts"]}
-            assert mounts["commander-secrets"] == {
-                "name": "commander-secrets",
-                "mountPath": "/etc/astronomer/secrets",
-                "readOnly": True,
-            }
+        mounts = {mount["name"]: mount for mount in c_by_name["commander"]["volumeMounts"]}
+        assert mounts["commander-secrets"] == {
+            "name": "commander-secrets",
+            "mountPath": "/etc/astronomer/secrets",
+            "readOnly": True,
+        }
+
+        # The migrations only advertise the FlightDeck DSN, so they see only that
+        # file: the loader would otherwise also load the data-plane URL it finds at
+        # the default path. A subPath of the same volume the wait-for-secret gate polls.
+        migrations_mounts = {mount["name"]: mount for mount in migrations["volumeMounts"]}
+        assert migrations_mounts["commander-secrets"] == {
+            "name": "commander-secrets",
+            "mountPath": "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN",
+            "subPath": "COMMANDER_FLIGHTDECK_DSN",
+            "readOnly": True,
+        }
 
     def test_commander_secrets_from_files_enabled_without_flightdeck(self, kube_version):
         """Test that only the secrets commander actually consumes are projected."""

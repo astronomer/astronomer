@@ -3,7 +3,7 @@
 ###################################
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- if or .Values.dpLink.enabled .Values.global.dataPlaneFailover.enabled .Values.global.laminar.enabled }}
-{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.dpLink)) }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.dpLink "key" "astronomer.dpLink")) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -45,7 +45,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "dpLink.serviceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.dpLink) | fromYaml)) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.dpLink "key" "astronomer.dpLink") | fromYaml)) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -128,6 +128,10 @@ spec:
               value: {{ .Values.dpLink.reconnectDelayMultiplier | quote }}
             - name: JITTER_FRACTION
               value: {{ .Values.dpLink.jitterFraction | quote }}
+            {{- /* Rendered verbatim, so valueFrom entries and templated values work.
+                   dp_link_environment renders the same entries once more as name and
+                   value, on purpose (see the note there), and checks them against
+                   strict secrets-from-files while dp-link reads its secrets from files. */}}
             {{- if .Values.dpLink.env }}
             {{- tpl (toYaml .Values.dpLink.env) $ | nindent 12 }}
             {{- end }}
