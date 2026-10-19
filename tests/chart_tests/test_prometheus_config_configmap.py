@@ -490,8 +490,9 @@ class TestPrometheusConfigConfigmap:
         planes and not on a data plane. It discovers by endpoints, not service: the server runs
         multiple replicas, and a service-role target scrapes the ClusterIP, which load-balances
         to a random pod each scrape and makes per-pod counters flap. The job keys on stable
-        Service metadata -- the release label and mcp-server-http port name, not the templated
-        Service name -- and maps the port the same way the other endpoint jobs do."""
+        Service metadata -- the release label and mcp-metrics port name, not the templated
+        Service name -- and maps the port the same way the other endpoint jobs do. Keying on
+        mcp-metrics keeps the scrape off the ingress-routed app port, where /metrics is not served."""
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -514,8 +515,8 @@ class TestPrometheusConfigConfigmap:
 
             assert relabels[1]["source_labels"] == ["__meta_kubernetes_endpoint_port_name"]
             assert relabels[1]["action"] == "keep"
-            assert _keeps(relabels[1], ["mcp-server-http"])
-            assert not _keeps(relabels[1], ["mcp-server-grpc"])
+            assert _keeps(relabels[1], ["mcp-metrics"])
+            assert not _keeps(relabels[1], ["mcp-server-http"])
 
             assert relabels[2]["source_labels"] == ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
             assert relabels[2]["action"] == "keep"

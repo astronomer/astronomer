@@ -15,7 +15,7 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/port: {{ .Values.ports.mcpServerHTTP | quote }}
+    prometheus.io/port: {{ .Values.ports.mcpServerMetrics | quote }}
 spec:
   type: ClusterIP
   selector:
@@ -27,5 +27,10 @@ spec:
       protocol: TCP
       port: {{ .Values.ports.mcpServerHTTP }}
       targetPort: {{ .Values.ports.mcpServerHTTP }}
+      appProtocol: http
+    - name: mcp-metrics
+      protocol: TCP
+      port: {{ .Values.ports.mcpServerMetrics }}
+      targetPort: {{ .Values.ports.mcpServerMetrics }}
       appProtocol: http
 {{- end }}

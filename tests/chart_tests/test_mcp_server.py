@@ -73,6 +73,7 @@ class TestMcpServerDeployment:
         container = c_by_name["mcp-server"]
         assert "ap-apc-mcp-server" in container["image"]
         assert container["securityContext"]["readOnlyRootFilesystem"] is True
+        assert {p["name"]: p["containerPort"] for p in container["ports"]} == {"mcp-server-http": 8080, "mcp-metrics": 9090}
 
         # mcp-server is excluded from tests/enable_all_features.yaml (it conflicts with
         # authSidecar there), so the repo-wide guards in test_container_resources.py and
@@ -94,6 +95,7 @@ class TestMcpServerDeployment:
         env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
 
         assert env_vars["LISTEN_ADDR"] == ":8080"
+        assert env_vars["METRICS_LISTEN_ADDR"] == ":9090"
         assert env_vars["HOUSTON_API_URL"] == "http://release-name-houston.default.svc.cluster.local:8871/v1"
         assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,platform_write"
 
@@ -300,7 +302,21 @@ class TestMcpServerService:
         )
         annotations = docs[0]["metadata"]["annotations"]
         assert annotations["prometheus.io/scrape"] == "true"
-        assert annotations["prometheus.io/port"] == "8080"
+        assert annotations["prometheus.io/port"] == "9090"
+
+    def test_service_exposes_metrics_port(self, kube_version):
+        """/metrics is served on its own port the ingress never routes, so the Service must
+        publish it alongside the app port for Prometheus to reach it."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        ports = {p["name"]: p["port"] for p in docs[0]["spec"]["ports"]}
+        assert ports == {"mcp-server-http": 8080, "mcp-metrics": 9090}
 
     def test_service_discovery_handles_survive_contained_name(self, kube_version):
         """When the release name contains the component, mcpServer.fullname dedupes it, so the
@@ -376,14 +392,22 @@ class TestMcpServerNetworkPolicy:
         )
         assert len(docs) == 1
         assert docs[0]["kind"] == "NetworkPolicy"
-        ingress_from = docs[0]["spec"]["ingress"][0]["from"]
-        assert {
+        ingress = docs[0]["spec"]["ingress"]
+
+        nginx_peer = {
             "podSelector": {"matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}}
-        } in ingress_from
-        assert {
+        }
+        prometheus_peer = {
             "podSelector": {"matchLabels": {"tier": "monitoring", "component": "prometheus", "release": "release-name"}}
-        } in ingress_from
-        assert docs[0]["spec"]["ingress"][0]["ports"][0]["port"] == 8080
+        }
+
+        app_rule = next(r for r in ingress if r["ports"][0]["port"] == 8080)
+        metrics_rule = next(r for r in ingress if r["ports"][0]["port"] == 9090)
+
+        # nginx reaches the app port; Prometheus reaches only the metrics port, never the
+        # ingress-routed app port -- that separation is the whole point of the dedicated listener.
+        assert app_rule["from"] == [nginx_peer]
+        assert metrics_rule["from"] == [prometheus_peer]
 
     def test_networkpolicy_absent_when_mcp_server_disabled(self, kube_version):
         docs = render_chart(

@@ -54,6 +54,8 @@ spec:
           ports:
             - name: mcp-server-http
               containerPort: {{ .Values.ports.mcpServerHTTP }}
+            - name: mcp-metrics
+              containerPort: {{ .Values.ports.mcpServerMetrics }}
           {{- if .Values.mcpServer.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.mcpServer.livenessProbe) . | nindent 12 }}
           {{- else }}
@@ -87,6 +89,9 @@ spec:
           env:
             - name: LISTEN_ADDR
               value: ":{{ .Values.ports.mcpServerHTTP }}"
+
+            - name: METRICS_LISTEN_ADDR
+              value: ":{{ .Values.ports.mcpServerMetrics }}"
 
             # Houston is this server's sole upstream (internal.houston package,
             # apc-mcp-server repo) — every call still acts as the caller, this
