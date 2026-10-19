@@ -41,7 +41,7 @@ images:
   # Unlike navigator/dp-link, the MCP server is a separate binary with its own image.
   mcpServer:
     repository: quay.io/astronomer/ap-apc-mcp-server
-    tag: "1.0.0"
+    tag: "1.0.2"
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -1273,3 +1273,6 @@ ports:
   commanderSidecarGRPC: 9090
   # Matches apc-mcp-server's LISTEN_ADDR default (cmd/apc-mcp-server/main.go).
   mcpServerHTTP: 8080
+  # Matches apc-mcp-server's METRICS_LISTEN_ADDR default; serves /metrics on its own
+  # listener the ingress never routes, so only Prometheus reaches it.
+  mcpServerMetrics: 9090
