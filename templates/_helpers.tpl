@@ -623,13 +623,25 @@ refresh lands in well under a second; with no pod event at all it takes up to
 kubelet's sync period, ~60s. So this gate is normally a no-op and worst case
 adds about a minute to pod start.
 
+The same applies to a pod with no bootstrapper of its own, such as a houston
+CronJob: if it is scheduled before another pod's bootstrapper has replaced the
+sentinel, its volume holds the sentinel when it starts.
+
+Pass the image's pull policy and the resources of the pod's other init
+containers. The container gets the chart's container securityContext, like
+every other container.
+
 Usage:
-  {{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+  {{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "pullPolicy" .Values.images.houston.pullPolicy "resources" .Values.houston.resources "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
 */}}
 {{- define "astronomer.waitForSecretFile" -}}
 - name: wait-for-secret
   image: {{ .image }}
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: {{ .pullPolicy | default "IfNotPresent" }}
+  securityContext: {{- include "platform.containerSecurityContext" (list .ctx nil) | nindent 4 }}
+  {{- if .resources }}
+  resources: {{- toYaml .resources | nindent 4 }}
+  {{- end }}
   command:
     - /bin/sh
     - -c

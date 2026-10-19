@@ -119,7 +119,7 @@ spec:
             {{- include "astronomer.dbBootstrapper.secretVolumeMount" $ | nindent 12 }}
 
 {{- if $secretsFromFiles }}
-{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "volume" "commander-secrets" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "pullPolicy" .Values.images.commander.pullPolicy "resources" .Values.commander.resources "volume" "commander-secrets" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
 {{- end }}
         - name: flightdeck-db-migrations
           image: {{ template "commander.image" . }}

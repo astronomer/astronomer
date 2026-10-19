@@ -692,30 +692,26 @@ def test_secret_file_is_0440_root_owned_and_readable_via_fsgroup(kubeconfig_file
     assert "READABLE" in probe.stdout, "the 0440 secret file is not readable by the process"
 
 
-def test_cronjobs_reading_a_bootstrapped_secret_are_still_ungated(k8s_core_v1_client):
-    """KNOWN GAP: the ungated-cronjob window, which bit on a plain install, not only ArgoCD.
+def test_every_cronjob_reading_a_bootstrapped_secret_is_gated(k8s_core_v1_client):
+    """The cronjob half of the wait-for-secret race, closed.
 
     A secret volume is projected ONCE before any container starts, so a file-mode consumer
     can read whatever the Secret held at that moment. The chart therefore seeds each
     bootstrap Secret with a sentinel and puts a wait-for-secret init container on the
     workloads that read it, which polls until the bootstrapper replaces it.
 
-    That gate is on eight workloads and on none of the nine cronjobs. Observed here: the
-    Secret was written at 15:59:22 (sentinel) and rewritten at 16:00:06 (bootstrapper),
-    and the sync-dataplane-clusters cronjob started at 16:00:00 -- six seconds inside the
-    window. Its loader dutifully loaded the sentinel (correct: the sentinel is non-empty,
-    so skipping it is explicitly the gate's job, not the loader's) and Prisma then rejected
+    The cronjobs used to have no gate, and that bit on a plain install, not only under
+    ArgoCD. Observed here: the Secret was written at 15:59:22 (sentinel) and rewritten at
+    16:00:06 (bootstrapper), and the sync-dataplane-clusters cronjob started at 16:00:00 --
+    six seconds inside the window. Its loader loaded the sentinel (correct: the sentinel is
+    non-empty, so skipping it is the gate's job, not the loader's) and Prisma rejected
     `__ASTRONOMER_NOT_BOOTSTRAPPED__` with "the URL must start with the protocol
     postgresql://". The job failed.
 
-    The design docs anticipate this only for ArgoCD, where PreSync re-applies the sentinel
-    on every sync. It is really a property of any install whose cron schedule lands in the
-    bootstrap window, and the failure is at least loud -- the Job fails and the next
-    scheduled run succeeds -- rather than silent.
-
-    Note the sentinel-in-logs assertion above cannot catch this: the loader logs variable
-    names and never values, and Prisma's error does not echo the URL. That is why this
-    structural check exists separately.
+    Every loader-bearing cronjob now carries the same gate. The sentinel-in-logs assertion
+    above cannot catch a regression here -- the loader logs variable names and never
+    values, and Prisma's error does not echo the URL -- which is why this structural check
+    exists separately.
     """
     from kubernetes import client as k8s_client
 
@@ -728,15 +724,5 @@ def test_cronjobs_reading_a_bootstrapped_secret_are_still_ungated(k8s_core_v1_cl
         and not any(c.name == "wait-for-secret" for c in cronjob.spec.job_template.spec.template.spec.init_containers or [])
     ]
 
-    # Asserted as a KNOWN GAP rather than as the desired behaviour, following the same
-    # pattern as the chart suite's test_the_known_dangling_mount_still_dangles: pin the
-    # defect so it stays visible, and fail the moment it is fixed so this exception cannot
-    # outlive it. Flip this to `assert ungated == []` when the gate is added.
-    assert sorted(ungated) == sorted(gated), (
-        "the set of ungated cronjobs changed. If the wait-for-secret gate was added to "
-        "some or all of them, this test has done its job -- replace it with "
-        "`assert ungated == []`.\n"
-        f"  gated-by-loader: {sorted(gated)}\n"
-        f"  still ungated:   {sorted(ungated)}"
-    )
-    assert len(ungated) >= 9, f"expected at least 9 loader-bearing cronjobs to demonstrate the gap, found {len(ungated)}"
+    assert len(gated) >= 9, f"expected at least 9 loader-bearing cronjobs, found {len(gated)}: {sorted(gated)}"
+    assert ungated == [], f"these loader-bearing cronjobs have no wait-for-secret gate: {sorted(ungated)}"

@@ -2,15 +2,22 @@
 
 ## Overview
 
-The Astronomer chart now renders some Secrets as **release-managed manifests**
-that older releases created **out of band** via a bootstrapper init container.
-The most important example is `<release>-flightdeck-backend`: before the
-secrets-from-files change the chart only *consumed* it (via `secretKeyRef`),
-while the flightdeck bootstrapper created the live Secret. That live Secret
-therefore has no Helm ownership metadata.
+With secrets-from-files on, the Astronomer chart renders some Secrets as
+**release-managed manifests** that older releases created **out of band** via a
+bootstrapper init container. The one that matters is `<release>-flightdeck-backend`:
+before the secrets-from-files change the chart only *consumed* it (via
+`secretKeyRef`), while the flightdeck bootstrapper created the live Secret. That
+live Secret therefore has no Helm ownership metadata.
 
-Helm 3 refuses to adopt a live resource it did not create, so `helm upgrade`
-from a FlightDeck-enabled pre-upgrade release aborts before it changes anything:
+The chart renders it only while commander or pilot reads the FlightDeck DSN from a
+file (`astronomer.commander.secretsFromFiles.enabled` or
+`astronomer.pilot.secretsFromFiles.enabled`, directly or inherited from
+`global.secretsFromFiles.enabled`). With both off, nothing about this Secret
+changes: the bootstrapper still creates it, and upgrades need no adoption step.
+
+Helm 3 refuses to adopt a live resource it did not create, so the first
+`helm upgrade` that turns that file mode on for a FlightDeck-enabled release
+aborts before it changes anything:
 
 ```
 Error: UPGRADE FAILED: Unable to continue with update: Secret
@@ -29,9 +36,17 @@ live Secret **before** running `helm upgrade`. The script
 
 Run the adoption step before `helm upgrade` when **all** of the following hold:
 
-- You are upgrading from a chart released **before** secrets-from-files, and
-- the release had **FlightDeck enabled** (or data-plane failover on a data
-  plane), so the `<release>-flightdeck-backend` Secret already exists.
+- the release has **FlightDeck enabled** (or data-plane failover or control-plane
+  HA on a data plane), so the `<release>-flightdeck-backend` Secret already exists;
+- this upgrade turns on secrets-from-files for **commander or pilot**; and
+- the Secret is not yet managed by the release -- it was created by the
+  bootstrapper of a release from before secrets-from-files, or while file mode
+  was off.
+
+Once the release manages the Secret, it carries `helm.sh/resource-policy: keep`.
+Turning file mode off again (or FlightDeck, or rolling back to a release without
+the template) leaves it in place with its Helm ownership metadata, so turning file
+mode back on later adopts it again without this step.
 
 It is **safe to run before every upgrade**: the script is idempotent and does
 nothing on a fresh install, when FlightDeck is disabled, or when the Secret is

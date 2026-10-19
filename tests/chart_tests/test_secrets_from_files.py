@@ -1128,6 +1128,21 @@ class TestAwsproxyPreamble:
 
 SENTINEL = "__ASTRONOMER_NOT_BOOTSTRAPPED__"
 
+# The nine houston CronJobs. No bootstrapper runs in their pods, but on a fresh
+# install one can be scheduled before another pod's houston-bootstrapper has
+# replaced the sentinel in houston-backend, so they are gated too.
+HOUSTON_CRONJOBS = {
+    "release-name-houston-update-runtime-check",
+    "release-name-houston-update-check",
+    "release-name-houston-cleanup-cluster-audits",
+    "release-name-houston-cleanup-deploy-revisions",
+    "release-name-houston-cleanup-deployments",
+    "release-name-houston-cleanup-task-usage-data",
+    "release-name-houston-populate-daily-task-metrics",
+    "release-name-houston-populate-hourly-ta-metrics",
+    "release-name-houston-sync-dataplane-clusters",
+}
+
 GATED_WORKLOADS = {
     "release-name-commander",
     "release-name-pilot",
@@ -1137,7 +1152,7 @@ GATED_WORKLOADS = {
     "release-name-dp-link",
     "release-name-houston-db-migrations",
     "release-name-houston-upgrade-deployments",
-}
+} | HOUSTON_CRONJOBS
 
 
 def full_feature_values(enabled=True, plane="unified"):
@@ -1146,8 +1161,10 @@ def full_feature_values(enabled=True, plane="unified"):
             "plane": {"mode": plane},
             "secretsFromFiles": {"enabled": enabled},
             "dbBootstrapper": db_bootstrapper_toggle(enabled),
+            "metricsReporting": {"taskUsageMetrics": {"enabled": True}},
         },
         "astronomer": {
+            "houston": {**ALL_CRONJOBS["houston"]},
             "flightDeck": {"enabled": True},
             "pilot": {"enabled": True},
             "navigator": {"enabled": True},
@@ -1329,6 +1346,190 @@ class TestWaitForSecretGate:
             assert "wait-for-secret" not in names, name
 
 
+@pytest.mark.parametrize("houston_on", [True, False], ids=["houston-on", "houston-off"])
+def test_every_houston_cronjob_is_gated_exactly_while_houston_reads_files(houston_on):
+    """With houston on, each CronJob polls the file its loader will read until it no
+    longer holds the sentinel, after the CA copier and before the job container. With
+    houston off (the platform-wide toggle still on) none is gated: secretKeyRef waits
+    for the bootstrapper on its own."""
+    values = with_secrets_from_files(houston={"secretsFromFiles": {"enabled": houston_on}})
+    docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+    specs = dict(pod_specs(docs))
+
+    assert HOUSTON_CRONJOBS <= set(specs), f"not rendered: {sorted(HOUSTON_CRONJOBS - set(specs))}"
+    for cronjob in HOUSTON_CRONJOBS:
+        init = specs[cronjob].get("initContainers") or []
+        gates = [c for c in init if c["name"] == "wait-for-secret"]
+        if not houston_on:
+            assert gates == [], f"{cronjob} is gated with houston off"
+            continue
+        assert [c["name"] for c in init] == ["etc-ssl-certs-copier", "wait-for-secret"], cronjob
+        gate = gates[0]
+        assert gate["volumeMounts"] == [{"name": "houston-secrets", "mountPath": "/etc/astronomer/secrets", "readOnly": True}]
+        assert "/etc/astronomer/secrets/DATABASE_URL" in gate["command"][-1], cronjob
+        assert SENTINEL in gate["command"][-1], cronjob
+
+
+def test_every_gate_matches_its_pods_other_init_containers():
+    """The gate honours the image's pull policy and gets the securityContext and
+    resources its neighbours have -- here, each pod's CA copier, which every gated
+    pod runs from the same image."""
+    values = full_feature_values()
+    values["astronomer"]["images"] = {"houston": {"pullPolicy": "Always"}, "commander": {"pullPolicy": "Always"}}
+    docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+    checked = 0
+    for name, spec in pod_specs(docs):
+        init = {c["name"]: c for c in spec.get("initContainers") or []}
+        if "wait-for-secret" not in init:
+            continue
+        checked += 1
+        gate, copier = init["wait-for-secret"], init["etc-ssl-certs-copier"]
+        assert gate["image"] == copier["image"], name
+        assert gate["imagePullPolicy"] == copier["imagePullPolicy"] == "Always", name
+        assert gate["securityContext"] == copier["securityContext"], name
+        assert gate["securityContext"]["readOnlyRootFilesystem"] is True, name
+        assert gate["resources"] == copier["resources"], name
+    assert checked == len(GATED_WORKLOADS), f"checked {checked} gates"
+
+
+FLIGHTDECK_BACKEND_SECRET = "release-name-flightdeck-backend"
+FLIGHTDECK_SECRET_TEMPLATE = "charts/astronomer/templates/commander/commander-flightdeck-backend-secret.yaml"
+
+
+def flightdeck_values(commander=None, pilot=None, global_enabled=None, plane="unified", flightdeck=True, **global_values):
+    """FlightDeck and pilot on; None leaves a switch at its default."""
+    values = {
+        "global": {"plane": {"mode": plane}, **global_values},
+        "astronomer": {"flightDeck": {"enabled": flightdeck}, "pilot": {"enabled": True}},
+    }
+    if plane == "data":
+        values["global"]["plane"]["domainPrefix"] = "dp01"
+    if global_enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": global_enabled}
+    # Built at import time for parametrize, so the switch is spelled out rather
+    # than using _switch, which is defined further down.
+    if commander is not None:
+        values["astronomer"]["commander"] = {"secretsFromFiles": {"enabled": commander}}
+    if pilot is not None:
+        values["astronomer"]["pilot"] = {"enabled": True, "secretsFromFiles": {"enabled": pilot}}
+    return values
+
+
+def flightdeck_secret_mounters(docs):
+    """Workloads that mount <release>-flightdeck-backend as a volume."""
+    mounters = set()
+    for name, spec in pod_specs(docs):
+        for volume in spec.get("volumes") or []:
+            sources = [volume["secret"].get("secretName")] if isinstance(volume.get("secret"), dict) else []
+            sources += [s["secret"]["name"] for s in (volume.get("projected") or {}).get("sources") or [] if "secret" in s]
+            if FLIGHTDECK_BACKEND_SECRET in sources:
+                mounters.add(name)
+    return mounters
+
+
+class TestFlightdeckBackendSecret:
+    """The placeholder exists only for a file-mode consumer, which needs the Secret
+    before its pod starts. Through secretKeyRef nothing does, so with commander's and
+    pilot's file mode off the bootstrapper keeps creating it at runtime, as before
+    secrets-from-files -- and an upgrade does not hit Helm's ownership check on a
+    Secret an older release's bootstrapper created."""
+
+    @pytest.mark.parametrize(
+        "values,rendered",
+        [
+            (flightdeck_values(), False),
+            (flightdeck_values(global_enabled=True, commander=False, pilot=False), False),
+            (flightdeck_values(global_enabled=True, flightdeck=False), False),
+            (flightdeck_values(commander=True), True),
+            (flightdeck_values(pilot=True), True),
+            (flightdeck_values(global_enabled=True), True),
+            (flightdeck_values(global_enabled=True, commander=False, plane="data", dataPlaneFailover={"enabled": True}), True),
+        ],
+        ids=[
+            "all-off",
+            "platform-on-commander-and-pilot-off",
+            "flightdeck-off",
+            "commander-on",
+            "pilot-on",
+            "platform-on",
+            "pilot-on-dp-failover",
+        ],
+    )
+    def test_rendered_only_for_a_file_mode_consumer(self, values, rendered):
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values, show_only=[FLIGHTDECK_SECRET_TEMPLATE])
+        assert (len(docs) == 1) is rendered
+
+    @pytest.mark.parametrize("argocd", [False, True], ids=["plain", "argocd"])
+    def test_is_kept_when_it_drops_out_of_the_manifest(self, argocd):
+        """It holds the only copy of the FlightDeck DB credentials; keep, as on
+        cp-identity, so turning file mode or FlightDeck off, or a rollback, leaves it."""
+        values = flightdeck_values(commander=True)
+        values["global"]["argoCD"] = {"annotation": {"enabled": argocd}}
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values, show_only=[FLIGHTDECK_SECRET_TEMPLATE])
+        annotations = docs[0]["metadata"]["annotations"]
+        assert annotations["helm.sh/resource-policy"] == "keep"
+        assert ("argocd.argoproj.io/sync-wave" in annotations) is argocd
+
+    @pytest.mark.parametrize("argocd", [False, True], ids=["plain", "argocd"])
+    def test_argocd_does_not_prune_it(self, argocd):
+        """ArgoCD ignores helm.sh/resource-policy, so it needs its own instruction not
+        to prune the only copy of the FlightDeck DB credentials -- and only when the
+        chart's ArgoCD annotations are on."""
+        values = flightdeck_values(commander=True)
+        values["global"]["argoCD"] = {"annotation": {"enabled": argocd}}
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values, show_only=[FLIGHTDECK_SECRET_TEMPLATE])
+        annotations = docs[0]["metadata"]["annotations"]
+        if argocd:
+            assert annotations["argocd.argoproj.io/sync-options"] == "Prune=false"
+        else:
+            assert "argocd.argoproj.io/sync-options" not in annotations
+        # Never a hook: hook resources leave the release manifest, and the value has
+        # to be preserved by re-rendering what the cluster holds.
+        assert "helm.sh/hook" not in annotations
+        assert base64.b64decode(docs[0]["data"]["connection"]).decode() == SENTINEL
+
+    @pytest.mark.parametrize(
+        "values",
+        [
+            flightdeck_values(),
+            flightdeck_values(commander=True),
+            flightdeck_values(pilot=True),
+            flightdeck_values(global_enabled=True),
+            flightdeck_values(global_enabled=True, commander=False, pilot=False),
+            flightdeck_values(global_enabled=True, flightdeck=False),
+            flightdeck_values(global_enabled=True, plane="data", flightdeck=False, dataPlaneFailover={"enabled": True}),
+            flightdeck_values(
+                global_enabled=True,
+                plane="data",
+                flightdeck=False,
+                controlPlaneHA={"enabled": True, "globalBaseDomain": "astro.example.com"},
+            ),
+            flightdeck_values(pilot=True, plane="data"),
+            flightdeck_values(commander=True, plane="control"),
+        ],
+        ids=[
+            "all-off",
+            "commander-on",
+            "pilot-on",
+            "platform-on",
+            "platform-on-both-off",
+            "flightdeck-off",
+            "data-dp-failover",
+            "data-cp-ha",
+            "data-pilot-on",
+            "control-plane",
+        ],
+    )
+    def test_rendered_exactly_when_a_workload_mounts_it(self, values):
+        """Pins flightdeck.backendSecretRendered to the deployments' own conditions:
+        rendered without a mounter is the upgrade conflict for nothing, and a mounter
+        without it is a pod stuck on FailedMount."""
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+        rendered = any(d["kind"] == "Secret" and d["metadata"]["name"] == FLIGHTDECK_BACKEND_SECRET for d in docs)
+        assert rendered is bool(flightdeck_secret_mounters(docs)), f"mounted by {sorted(flightdeck_secret_mounters(docs))}"
+
+
 @pytest.mark.parametrize("plane", SWEPT_PLANES)
 def test_no_secret_is_mounted_under_run_secrets(plane):
     """/run/secrets is unusable: the service-account token mounts at
@@ -1395,12 +1596,12 @@ class TestSecretFilePermissions:
     def test_every_pod_mounting_a_secret_has_a_matching_fsgroup(self):
         """The regression guard for the gap this change found.
 
-        The eight workloads carrying the wait-for-secret gate are not the same
-        set as the workloads that mount a secret volume -- the ten houston
-        cronjobs mount one too. Tightening the mode without giving those pods an
-        fsGroup left them unable to read their own secrets, and nothing in the
-        rendered manifest looks wrong. Assert against who mounts the volume, not
-        against a hand-maintained list.
+        The workloads carrying the wait-for-secret gate were once not the same
+        set as the workloads that mount a secret volume -- the houston cronjobs
+        mounted one long before they were gated. Tightening the mode without
+        giving those pods an fsGroup left them unable to read their own secrets,
+        and nothing in the rendered manifest looks wrong. Assert against who
+        mounts the volume, not against a hand-maintained list.
         """
         docs = render_chart(kube_version=newest_supported_kube_version, values=with_secrets_from_files())
 
@@ -3640,6 +3841,8 @@ HOUSTON_GATED_WORKLOADS = {
     "release-name-houston-upgrade-deployments",
 }
 BOOTSTRAPPERS = DB_BOOTSTRAPPER_CONTAINERS
+# Every houston-family workload with a wait-for-secret gate while houston is on.
+HOUSTON_WAITING_WORKLOADS = HOUSTON_GATED_WORKLOADS | HOUSTON_CRONJOBS
 
 # Under controlPlaneHA the houston family also runs the cp-refresh hook, and CP_ID is
 # one of its secrets: a file while houston is on, a secretKeyRef again once it is off.
@@ -3673,7 +3876,7 @@ SWITCH_MATRIX = {
         "values": {"astronomer": {"houston": _switch(False)}},
         "refs": refs(HOUSTON_LOADER_CONTAINERS | WAIT_FOR_DB_CONTAINERS, HOUSTON_DB_REFS)
         | {("release-name-houston", "houston", "REGISTRY__AUTH_HEADER")},
-        "stopped": HOUSTON_LOADER_CONTAINERS | {(w, "wait-for-secret") for w in HOUSTON_GATED_WORKLOADS},
+        "stopped": HOUSTON_LOADER_CONTAINERS | {(w, "wait-for-secret") for w in HOUSTON_WAITING_WORKLOADS},
         "volumes": {w: {"houston-secrets"} for w, _c in HOUSTON_LOADER_CONTAINERS}
         | {"release-name-houston": {"houston-secrets", "houston-registry-auth-secret"}},
         # Their ap-db-bootstrapper is still on, and needs the fsGroup for its own file.
@@ -3764,7 +3967,7 @@ SWITCH_MATRIX = {
         "values": {"astronomer": {"houston": _switch(False)}},
         "refs": refs(HA_HOUSTON_LOADER_CONTAINERS | HA_WAIT_FOR_DB_CONTAINERS, HOUSTON_DB_REFS | {"CP_ID"})
         | {("release-name-houston", "houston", "REGISTRY__AUTH_HEADER")},
-        "stopped": HA_HOUSTON_LOADER_CONTAINERS | {(w, "wait-for-secret") for w in HA_HOUSTON_GATED_WORKLOADS},
+        "stopped": HA_HOUSTON_LOADER_CONTAINERS | {(w, "wait-for-secret") for w in HA_HOUSTON_GATED_WORKLOADS | HOUSTON_CRONJOBS},
         "volumes": {w: {"houston-secrets"} for w, _c in HA_HOUSTON_LOADER_CONTAINERS}
         | {"release-name-houston": {"houston-secrets", "houston-registry-auth-secret"}},
         "keep_fs_group": HA_HOUSTON_GATED_WORKLOADS,

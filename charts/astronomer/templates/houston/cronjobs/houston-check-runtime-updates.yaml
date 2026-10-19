@@ -3,6 +3,7 @@
 ##################################
 {{- if .Values.houston.updateRuntimeCheck.enabled }}
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston")) }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -66,6 +67,12 @@ spec:
               volumeMounts:
                 - name: etc-ssl-certs
                   mountPath: /etc/ssl/certs_copy
+{{- if $secretsFromFiles }}
+{{- /* No bootstrapper runs in this pod, but houston-backend can still hold the
+       sentinel when it starts: on a fresh install the schedule can fire before
+       another pod's houston-bootstrapper has replaced it. */}}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "pullPolicy" .Values.images.houston.pullPolicy "resources" .Values.houston.resources "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 12 }}
+{{- end }}
           containers:
             - name: update-check
               image: {{ template "houston.image" . }}

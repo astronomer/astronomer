@@ -67,7 +67,7 @@ spec:
           resources: {{- toYaml .Values.navigator.resources | nindent 12 }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
 {{- if $secretsFromFiles }}
-{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "navigator-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "pullPolicy" .Values.images.houston.pullPolicy "resources" .Values.navigator.resources "volume" "navigator-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
 {{- end }}
       containers:
         - name: navigator

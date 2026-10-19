@@ -1367,6 +1367,35 @@ true
 {{- end -}}
 {{- end -}}
 
+{{/*
+Whether the chart renders the <release>-flightdeck-backend placeholder Secret:
+only while a component that mounts it as a file reads the FlightDeck DSN from
+it -- commander, or pilot. Both mount it only with FlightDeck on, so this
+requires that too.
+
+With every such switch off the Secret is left to the flightdeck-bootstrapper,
+exactly as before secrets-from-files: the bootstrapper creates it at runtime and
+its consumers read it through secretKeyRef, which waits for the bootstrapper.
+Rendering it then would gain nothing, and would make `helm upgrade` try to adopt
+a Secret an older release's bootstrapper created without Helm ownership metadata,
+failing unless bin/adopt-bootstrap-secrets-pre-upgrade.py ran first.
+
+Mirrors the conditions under which commander-deployment.yaml and
+pilot-deployment.yaml mount the Secret; a chart test pins the two together.
+Renders "true" or nothing.
+*/}}
+{{- define "flightdeck.backendSecretRendered" -}}
+{{- if and (eq (include "astronomer.dataPlaneEnabled" .) "true") (include "flightdeck.enabled" .) -}}
+{{- $commander := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.commander "key" "astronomer.commander")) -}}
+{{- $pilotRenders := or .Values.pilot.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) -}}
+{{- $pilotHasDsn := or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled -}}
+{{- $pilot := and $pilotRenders $pilotHasDsn (eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.pilot "key" "astronomer.pilot"))) -}}
+{{- if or $commander $pilot -}}
+true
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "getCommanderGRPCport" -}}
 {{- if .Values.global.authSidecar.enabled -}}
 {{- .Values.ports.commanderSidecarGRPC -}}

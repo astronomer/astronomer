@@ -2,11 +2,12 @@
 
 """Adopt bootstrapper-created Secrets into a Helm release before `helm upgrade`.
 
-Some Secrets that the Astronomer chart now renders as release-managed manifests
-(for example ``<release>-flightdeck-backend``) were, in older releases, created
-out of band by a bootstrapper init container and therefore carry no Helm
-ownership metadata. Helm 3 refuses to adopt a live resource it did not create,
-so ``helm upgrade`` aborts with:
+Some Secrets that the Astronomer chart renders as release-managed manifests with
+secrets-from-files on (``<release>-flightdeck-backend``, while commander or pilot
+reads the FlightDeck DSN from a file) were, in older releases or with file mode
+off, created out of band by a bootstrapper init container and therefore carry no
+Helm ownership metadata. Helm 3 refuses to adopt a live resource it did not
+create, so the ``helm upgrade`` that turns that file mode on aborts with:
 
     Secret "<release>-flightdeck-backend" ... cannot be imported into the
     current release: invalid ownership metadata; missing key

@@ -51,7 +51,7 @@ pre_helm_scripts:
 
 values:
   # Turns the feature on and enables every component that participates in it. Most are off
-  # by default, so the flag alone would exercise four of houston's nineteen secrets and none
+  # by default, so the flag alone would exercise four of houston's twenty-one secrets and none
   # of the third-party mechanisms.
   - configs/enable-secrets-from-files.yaml
   # No converted component needs the IN-CLUSTER Elasticsearch stack. The two

@@ -117,7 +117,7 @@ spec:
               mountPath: /houston/node_modules/.cache
             {{- include "astronomer.dbBootstrapper.secretVolumeMount" $ | nindent 12 }}
 {{- if $secretsFromFiles }}
-{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "pullPolicy" .Values.images.houston.pullPolicy "resources" .Values.houston.resources "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
 {{- end }}
       {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}

@@ -76,7 +76,7 @@ spec:
           resources: {{- toYaml .Values.pilot.resources | nindent 12 }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
 {{- if $secretsFromFiles }}
-{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "volume" "flightdeck-dsn-secret" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "pullPolicy" .Values.images.commander.pullPolicy "resources" .Values.pilot.resources "volume" "flightdeck-dsn-secret" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
 {{- end }}
       containers:
         - name: pilot

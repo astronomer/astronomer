@@ -66,7 +66,7 @@ spec:
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
 {{- if $secretsFromFiles }}
-{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "volume" "dp-link-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "pullPolicy" .Values.images.houston.pullPolicy "resources" .Values.dpLink.resources "volume" "dp-link-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
 {{- end }}
       containers:
         - name: dp-link
