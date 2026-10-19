@@ -415,6 +415,36 @@ class TestAstronomerCommander:
         )
         assert len(docs) == 0
 
+    @pytest.mark.parametrize(
+        "istio_values,expected",
+        [
+            ({}, False),
+            ({"gateway": {"enabled": False, "name": "istio-system/default-gateway"}}, False),
+            ({"gateway": {"enabled": True, "name": "istio-system/default-gateway"}}, True),
+        ],
+        ids=["default", "gateway_disabled", "gateway_enabled"],
+    )
+    def test_commander_rbac_istio_virtualservices(self, kube_version, istio_values, expected):
+        """Test that commander only gets VirtualService permissions when the istio gateway is enabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={"global": {"istio": istio_values}},
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+
+        vs_rules = [rule for rule in doc["rules"] if rule.get("resources") == ["virtualservices"]]
+
+        if not expected:
+            assert vs_rules == []
+        else:
+            assert vs_rules == [
+                {
+                    "apiGroups": ["networking.istio.io"],
+                    "resources": ["virtualservices"],
+                    "verbs": ["get", "create", "delete", "patch", "list", "watch"],
+                }
+            ]
+
     def test_commander_rbac_multinamespace_mode_disabled(self, kube_version):
         """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode disabled, the rendered commander role
         doesn't have permissions to manage Cluster-level RBAC resources."""
