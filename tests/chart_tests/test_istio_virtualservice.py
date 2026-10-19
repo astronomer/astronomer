@@ -265,12 +265,8 @@ def test_prometheus_federate_virtualservice_route(kube_version):
     """
     values = _istio_values(plane_mode="data")
     values["global"]["plane"]["domainPrefix"] = "dp"
-    rendered = _virtualservices(
-        render_chart(kube_version=kube_version, show_only=[PROMETHEUS_FEDERATE_VS], values=values)
-    )
-    destination = rendered["release-name-prometheus-federate-virtualservice"]["spec"]["http"][0]["route"][0][
-        "destination"
-    ]
+    rendered = _virtualservices(render_chart(kube_version=kube_version, show_only=[PROMETHEUS_FEDERATE_VS], values=values))
+    destination = rendered["release-name-prometheus-federate-virtualservice"]["spec"]["http"][0]["route"][0]["destination"]
     assert destination["host"] == "release-name-prometheus-prom-proxy.default.svc.cluster.local"
     assert destination["port"]["number"] == 8084
 
@@ -283,9 +279,7 @@ def test_elasticsearch_virtualservice_route(kube_version):
     15s, so the timeout has to be templated explicitly or long log queries would break under Istio
     while working under nginx.
     """
-    rendered = _virtualservices(
-        render_chart(kube_version=kube_version, show_only=[ELASTICSEARCH_VS], values=_istio_values())
-    )
+    rendered = _virtualservices(render_chart(kube_version=kube_version, show_only=[ELASTICSEARCH_VS], values=_istio_values()))
     route = rendered["release-name-elasticsearch-virtualservice"]["spec"]["http"][0]
     assert route["timeout"] == "300s"
     assert route["route"][0]["destination"]["host"] == "release-name-elasticsearch.default.svc.cluster.local"
