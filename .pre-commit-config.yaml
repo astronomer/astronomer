@@ -1,4 +1,6 @@
 exclude: '(venv|\.vscode|tests/k8s_schema|tests/chart_tests/test_data)' # regex
+update:
+  cooldown_days: 7
 repos:
   - repo: local
     hooks:
@@ -40,7 +42,7 @@ repos:
         files: 'Chart\.yaml$'
         pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.2
+    rev: v2.4.3
     hooks:
       - id: codespell
         args: ["-L", "AKS,aks,showIn,NotIn,templateAs"]
@@ -51,7 +53,7 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.7"
+    rev: "v0.17.0"
     hooks:
       - id: ruff-check
         args:
@@ -87,7 +89,7 @@ repos:
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: v0.11.0.1-1
     hooks:
       - id: shellcheck
   - repo: https://github.com/astronomer/pre-commit-hooks

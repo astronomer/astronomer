@@ -116,6 +116,7 @@ def test_deployment_should_render(kube_version, plane_mode, docs_count):
 ```python
 from tests.utils import get_all_features
 
+
 def test_with_all_features():
     docs = render_chart(values=get_all_features())
     kinds = [doc["kind"] for doc in docs]

@@ -374,6 +374,7 @@ Example:
 from pathlib import Path
 from typing import List, Dict
 
+
 def process_files(file_paths: List[str]) -> Dict[str, int]:
     """Process a list of files and return results.
 
@@ -393,6 +394,7 @@ def process_files(file_paths: List[str]) -> Dict[str, int]:
             raise FileNotFoundError(f"File not found: {file_path}")
         results[file_path] = len(p.read_text().splitlines())
     return results
+
 
 if __name__ == "__main__":
     files = ["file1.txt", "file2.txt"]
