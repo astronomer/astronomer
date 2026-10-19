@@ -72,6 +72,15 @@ class TestWorkerAutoscalingIdentity:
             assert labels["astronomer.io/platform-release"] == "release-name"
             assert labels["chart"].startswith("astronomer-")
 
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_every_object_renders_once_when_enabled(self, kube_version, plane_mode):
+        """Test that no two objects share a kind, namespace and name, which a fresh install refuses."""
+        docs = render_chart(kube_version=kube_version, values=keda_values(plane_mode))
+
+        keys = [(doc["kind"], doc["metadata"].get("namespace", ""), doc["metadata"]["name"]) for doc in docs]
+        duplicates = sorted({key for key in keys if keys.count(key) > 1})
+        assert not duplicates
+
     def test_not_rendered_on_a_control_plane(self, kube_version):
         """Test that a control plane creates nothing: KEDA scales workers, which only run on a data plane."""
         docs = render_chart(kube_version=kube_version, values=keda_values("control"))
