@@ -3,6 +3,7 @@ import ast
 import pytest
 import yaml
 
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import find_key_paths, render_chart
 
 
@@ -812,6 +813,45 @@ def test_houston_configmap_with_mcp_server_disabled():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["mcpServer"]["enabled"] is False
     assert "enabledGroups" not in prod["mcpServer"]
+
+
+def test_houston_configmap_skills_toggle_appends_skills_load():
+    """mcpServer.skills.enabled must materialize skills_load into the enabledGroups Houston reads.
+    appConfig's skill-delivery flag (mcpServerSkillsEnabled) is derived purely from this membership,
+    so the toggle and the group must never diverge."""
+    docs = render_chart(
+        values={"astronomer": {"mcpServer": {"enabled": True, "skills": {"enabled": True}}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+    assert "skills_load" in prod["mcpServer"]["enabledGroups"].split(",")
+
+
+def test_skills_toggle_consistent_across_houston_and_mcp_server():
+    """The skills toggle is the single source of truth: enabling it puts skills_load in BOTH the
+    Houston configmap and the mcp-server env, so the UI flag can never disagree with the tool groups
+    the server actually serves."""
+    docs = render_chart(
+        values={
+            "global": {"plane": {"mode": "control"}},
+            "astronomer": {"mcpServer": {"enabled": True, "skills": {"enabled": True}}},
+        },
+        show_only=[
+            "charts/astronomer/templates/houston/houston-configmap.yaml",
+            "charts/astronomer/templates/mcp-server/mcp-server-deployment.yaml",
+        ],
+    )
+    configmap = next(doc for doc in docs if doc["kind"] == "ConfigMap")
+    deployment = next(doc for doc in docs if doc["kind"] == "Deployment")
+
+    houston_groups = yaml.safe_load(configmap["data"]["production.yaml"])["mcpServer"]["enabledGroups"].split(",")
+    mcp_env = get_env_vars_dict(get_containers_by_name(deployment)["mcp-server"]["env"])
+    mcp_groups = mcp_env["MCP_ENABLED_GROUPS"].split(",")
+
+    assert "skills_load" in houston_groups
+    assert "skills_load" in mcp_groups
 
 
 def test_houston_configmap_laminar_proxy_defaults():
