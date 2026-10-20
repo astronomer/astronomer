@@ -147,3 +147,45 @@ class TestAstroUIDeployment:
         env_vars = get_env_vars_dict(astro_ui_container["env"])
         assert env_vars["MY_CUSTOM_VAR"] == "custom-value"
         assert env_vars["ANOTHER_VAR"] == "another-value"
+
+    def test_astro_ui_api_loc_default(self, kube_version):
+        """Default render: APP_API_LOC_HTTPS/WSS are derived from global.baseDomain."""
+        docs = render_chart(
+            kube_version=kube_version,
+            baseDomain="example.com",
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml"],
+        )
+        astro_ui_container = get_containers_by_name(docs[0])["astro-ui"]
+        env_vars = get_env_vars_dict(astro_ui_container["env"])
+        assert env_vars["APP_API_LOC_HTTPS"] == "https://houston.example.com/v1"
+        assert env_vars["APP_API_LOC_WSS"] == "wss://houston.example.com/ws"
+
+    def test_astro_ui_api_loc_user_override_wins(self, kube_version):
+        """An explicit astroUI.env entry for APP_API_LOC_HTTPS/WSS must win over the
+        baseDomain-derived default, not get silently overridden by it -- needed so a
+        scenario can point astro-ui's in-browser API calls at a reachable address
+        instead of the baseDomain-derived hostname (PLA-614's ZAP scan)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            baseDomain="example.com",
+            values={
+                "astronomer": {
+                    "astroUI": {
+                        "env": [
+                            {"name": "APP_API_LOC_HTTPS", "value": "http://localhost:18871/v1"},
+                            {"name": "APP_API_LOC_WSS", "value": "ws://localhost:18871/ws"},
+                        ],
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml"],
+        )
+        astro_ui_container = get_containers_by_name(docs[0])["astro-ui"]
+        env_vars = get_env_vars_dict(astro_ui_container["env"])
+        assert env_vars["APP_API_LOC_HTTPS"] == "http://localhost:18871/v1"
+        assert env_vars["APP_API_LOC_WSS"] == "ws://localhost:18871/ws"
+        # Each name appears exactly once in the rendered env list -- not duplicated
+        # with the baseDomain-derived value also present.
+        names = [e["name"] for e in astro_ui_container["env"]]
+        assert names.count("APP_API_LOC_HTTPS") == 1
+        assert names.count("APP_API_LOC_WSS") == 1

@@ -1,0 +1,16 @@
+# Points astro-ui's in-browser API calls at the plain-HTTP localhost address
+# tests/utils/zap.py port-forwards houston-api to, instead of the baseDomain-derived
+# https://houston.<baseDomain>/v1 (charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml)
+# that nothing listens on for this scenario. ZAP's own container shares this host's network
+# namespace (--network host), so "localhost" here resolves the same way for the headless
+# browser as it does for the port-forward tunnel feeding it. Without this, astro-ui's SPA
+# can't reach houston-api at all, so ajaxSpider only ever sees the unauthenticated static
+# shell, not real authenticated routes.
+---
+astronomer:
+  astroUI:
+    env:
+      - name: APP_API_LOC_HTTPS
+        value: "http://localhost:18871/v1"
+      - name: APP_API_LOC_WSS
+        value: "ws://localhost:18871/ws"

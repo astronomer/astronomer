@@ -31,6 +31,11 @@ def discover_scenarios() -> list[dict]:
       the build. Needs a GITHUB_TOKEN with read access to the private
       astronomer/apc-terraform-modules repo, so this also adds the `github-repo`
       CircleCI context to just this scenario's job.
+    - `manual_only: true` (PLA-614) to exclude a scenario from this list entirely --
+      it still runs locally via bin/run-scenario.py, but never gets an auto-discovered
+      scenario-* job, the approve-scenarios gate, or a release-to-internal/-public
+      requirement. For a scenario with its own hand-written, separately-triggered job
+      (e.g. zap-scan in .circleci/config.yml.j2), not one meant to run on every PR.
     """
     scenarios_dir = git_root_dir / "tests" / "functional" / "scenarios"
     if not scenarios_dir.is_dir():
@@ -43,6 +48,8 @@ def discover_scenarios() -> list[dict]:
             raise SystemExit(
                 f"ERROR: {profile_path} must set topology to one of unified/control/data, got {profile.get('topology')!r}"
             )
+        if profile.get("manual_only"):
+            continue
         scenarios.append(
             {
                 "name": profile_path.parent.name,
