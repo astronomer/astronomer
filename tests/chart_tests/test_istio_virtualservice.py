@@ -13,6 +13,8 @@ and registry.<baseDomain> with no route at all under Istio.
 setting it false suppresses all four VirtualServices — see test_no_virtualservices_when_ingress_disabled.
 """
 
+from subprocess import CalledProcessError
+
 import pytest
 
 from tests import supported_k8s_versions
@@ -308,6 +310,32 @@ def test_elasticsearch_virtualservice_logging_gates(kube_version, plane_mode, sh
         values["global"]["plane"]["domainPrefix"] = "dp"
     docs = render_chart(kube_version=kube_version, show_only=ALL_VS_FILES, values=values)
     assert ("release-name-elasticsearch-virtualservice" in _virtualservices(docs)) is expected
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+@pytest.mark.parametrize("gateway_name", [None, ""], ids=["name_unset", "name_empty"])
+def test_istio_gateway_name_is_required(kube_version, gateway_name):
+    """Enabling the gateway without naming one fails the render with a clear message.
+
+    global.istio.gateway.name has to match a Gateway that really exists. A VirtualService that
+    names a non-existent (or empty) gateway is accepted by the API server and silently routes
+    nothing, so a default here would turn a forgotten value into a dead install with no error.
+    """
+    gateway = {"enabled": True}
+    if gateway_name is not None:
+        gateway["name"] = gateway_name
+    values = {
+        "global": {
+            "istio": {"gateway": gateway},
+            "nginx": {"enabled": False},
+            "plane": {"mode": "unified"},
+            "baseDomain": BASE_DOMAIN,
+        }
+    }
+
+    with pytest.raises(CalledProcessError) as excinfo:
+        render_chart(kube_version=kube_version, validate_objects=False, values=values)
+    assert "global.istio.gateway.name is required" in excinfo.value.stderr.decode("utf-8")
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)

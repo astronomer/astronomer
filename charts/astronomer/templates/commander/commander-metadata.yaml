@@ -36,7 +36,7 @@ data:
     istio:
       gateway:
         enabled: true
-        name: {{ $istioGateway.name | default "" | quote }}
+        name: {{ required "global.istio.gateway.name is required when global.istio.gateway.enabled is true" .Values.global.istio.gateway.name | quote }}
     {{- end }}
     laminar:
       enabled: {{ ternary "true" "false" .Values.global.laminar.enabled }}

@@ -16,7 +16,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   gateways:
-    - {{ .Values.global.istio.gateway.name }}
+    - {{ required "global.istio.gateway.name is required when global.istio.gateway.enabled is true" .Values.global.istio.gateway.name }}
   hosts:
     - {{ template "prom-proxy.url" . }}
   http:
