@@ -71,8 +71,9 @@ class TestMcpServerDeployment:
         c_by_name = get_containers_by_name(doc)
         assert "mcp-server" in c_by_name
         container = c_by_name["mcp-server"]
-        assert "ap-mcp-server" in container["image"]
+        assert "ap-apc-mcp-server" in container["image"]
         assert container["securityContext"]["readOnlyRootFilesystem"] is True
+        assert {p["name"]: p["containerPort"] for p in container["ports"]} == {"mcp-server-http": 8080, "mcp-metrics": 9090}
 
         # mcp-server is excluded from tests/enable_all_features.yaml (it conflicts with
         # authSidecar there), so the repo-wide guards in test_container_resources.py and
@@ -94,8 +95,9 @@ class TestMcpServerDeployment:
         env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
 
         assert env_vars["LISTEN_ADDR"] == ":8080"
+        assert env_vars["METRICS_LISTEN_ADDR"] == ":9090"
         assert env_vars["HOUSTON_API_URL"] == "http://release-name-houston.default.svc.cluster.local:8871/v1"
-        assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,platform_write,airflow_read"
+        assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,platform_write"
 
     def test_deployment_enabled_groups_customizable(self, kube_version):
         docs = render_chart(
@@ -110,6 +112,65 @@ class TestMcpServerDeployment:
         c_by_name = get_containers_by_name(docs[0])
         env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
         assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read"
+
+    def test_deployment_enabled_groups_null_renders_empty(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True, "enabledGroups": None}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["mcp-server"]["env"])
+        assert env_vars["MCP_ENABLED_GROUPS"] == ""
+
+    def test_deployment_skills_toggle_appends_skills_load(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True, "skills": {"enabled": True}}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
+        assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,platform_write,skills_load"
+
+    def test_deployment_skills_load_stripped_from_enabled_groups_without_toggle(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True, "enabledGroups": ["platform_read", "skills_load"]}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["mcp-server"]["env"])
+        assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read"
+
+    def test_deployment_skills_load_from_enabled_groups_requires_toggle(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {
+                    "mcpServer": {
+                        "enabled": True,
+                        "enabledGroups": ["platform_read", "skills_load"],
+                        "skills": {"enabled": True},
+                    }
+                },
+            },
+            show_only=[DEPLOYMENT],
+        )
+        assert len(docs) == 1
+        env_vars = get_env_vars_dict(get_containers_by_name(docs[0])["mcp-server"]["env"])
+        assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,skills_load"
 
     def test_deployment_replicas(self, kube_version):
         docs = render_chart(
@@ -227,6 +288,54 @@ class TestMcpServerService:
         )
         assert len(docs) == 0
 
+    def test_service_carries_scrape_annotations(self, kube_version):
+        """The Service advertises itself to Prometheus on its HTTP port; the
+        mcp-server scrape job keys on these annotations, so dropping them silently
+        stops the component from being scraped."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        annotations = docs[0]["metadata"]["annotations"]
+        assert annotations["prometheus.io/scrape"] == "true"
+        assert annotations["prometheus.io/port"] == "9090"
+
+    def test_service_exposes_metrics_port(self, kube_version):
+        """/metrics is served on its own port the ingress never routes, so the Service must
+        publish it alongside the app port for Prometheus to reach it."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        ports = {p["name"]: p["port"] for p in docs[0]["spec"]["ports"]}
+        assert ports == {"mcp-server-http": 8080, "mcp-metrics": 9090}
+
+    def test_service_discovery_handles_survive_contained_name(self, kube_version):
+        """When the release name contains the component, mcpServer.fullname dedupes it, so the
+        Service name is no longer release-name + '-mcp-server'. The scrape job must therefore key
+        on the release label and mcp-server-http port name, which stay stable here."""
+        docs = render_chart(
+            kube_version=kube_version,
+            name="astronomer-mcp-server",
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        svc = docs[0]
+        assert svc["metadata"]["name"] == "astronomer-mcp-server"
+        assert svc["metadata"]["labels"]["release"] == "astronomer-mcp-server"
+        assert svc["spec"]["ports"][0]["name"] == "mcp-server-http"
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestMcpServerServiceAccount:
@@ -283,11 +392,22 @@ class TestMcpServerNetworkPolicy:
         )
         assert len(docs) == 1
         assert docs[0]["kind"] == "NetworkPolicy"
-        ingress_from = docs[0]["spec"]["ingress"][0]["from"]
-        assert {
+        ingress = docs[0]["spec"]["ingress"]
+
+        nginx_peer = {
             "podSelector": {"matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}}
-        } in ingress_from
-        assert docs[0]["spec"]["ingress"][0]["ports"][0]["port"] == 8080
+        }
+        prometheus_peer = {
+            "podSelector": {"matchLabels": {"tier": "monitoring", "component": "prometheus", "release": "release-name"}}
+        }
+
+        app_rule = next(r for r in ingress if r["ports"][0]["port"] == 8080)
+        metrics_rule = next(r for r in ingress if r["ports"][0]["port"] == 9090)
+
+        # nginx reaches the app port; Prometheus reaches only the metrics port, never the
+        # ingress-routed app port -- that separation is the whole point of the dedicated listener.
+        assert app_rule["from"] == [nginx_peer]
+        assert metrics_rule["from"] == [prometheus_peer]
 
     def test_networkpolicy_absent_when_mcp_server_disabled(self, kube_version):
         docs = render_chart(

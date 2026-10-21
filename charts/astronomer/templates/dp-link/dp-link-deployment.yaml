@@ -105,28 +105,28 @@ spec:
             - name: NAMESPACE
               value: {{ .Release.Namespace }}
             # Claim loop configuration
-            - name: CLAIM_INTERVAL_SECONDS
+            - name: WORKERS__DPLINK__CLAIM_INTERVAL_SECONDS
               value: {{ .Values.dpLink.claimIntervalSeconds | quote }}
             # Owner loop configuration
-            - name: LEASE_RENEWAL_INTERVAL_SECONDS
+            - name: WORKERS__DPLINK__LEASE_RENEWAL_INTERVAL_SECONDS
               value: {{ .Values.dpLink.leaseRenewalIntervalSeconds | quote }}
-            - name: LEASE_DURATION_SECONDS
+            - name: WORKERS__DPLINK__LEASE_DURATION_SECONDS
               value: {{ .Values.dpLink.leaseDurationSeconds | quote }}
             # Heartbeat configuration
-            - name: UNREACHABLE_THRESHOLD_SECONDS
+            - name: WORKERS__DPLINK__UNREACHABLE_THRESHOLD_SECONDS
               value: {{ .Values.dpLink.unreachableThresholdSeconds | quote }}
-            - name: DEGRADED_THRESHOLD_SECONDS
+            - name: WORKERS__DPLINK__DEGRADED_THRESHOLD_SECONDS
               value: {{ .Values.dpLink.degradedThresholdSeconds | quote }}
             # Stream reconnect configuration
-            - name: RECONNECT_MAX_ATTEMPTS
+            - name: WORKERS__DPLINK__RECONNECT_MAX_ATTEMPTS
               value: {{ .Values.dpLink.reconnectMaxAttempts | quote }}
-            - name: INITIAL_RECONNECT_DELAY_SECONDS
+            - name: WORKERS__DPLINK__INITIAL_RECONNECT_DELAY_SECONDS
               value: {{ .Values.dpLink.initialReconnectDelaySeconds | quote }}
-            - name: MAX_RECONNECT_DELAY_SECONDS
+            - name: WORKERS__DPLINK__MAX_RECONNECT_DELAY_SECONDS
               value: {{ .Values.dpLink.maxReconnectDelaySeconds | quote }}
-            - name: RECONNECT_DELAY_MULTIPLIER
+            - name: WORKERS__DPLINK__RECONNECT_DELAY_MULTIPLIER
               value: {{ .Values.dpLink.reconnectDelayMultiplier | quote }}
-            - name: JITTER_FRACTION
+            - name: WORKERS__DPLINK__JITTER_FRACTION
               value: {{ .Values.dpLink.jitterFraction | quote }}
             {{- /* Rendered verbatim, so valueFrom entries and templated values work.
                    dp_link_environment renders the same entries once more as name and

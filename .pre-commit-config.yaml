@@ -22,7 +22,7 @@ repos:
         additional_dependencies: ["jinja2", "PyYAML"]
         name: Ensure unique tags per image
         entry: python3
-        args: ["bin/show-docker-images.py", "--private-registry", "--with-houston", "-c"]
+        args: ["bin/show_docker_images.py", "--private-registry", "--with-houston", "-c"]
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
       - id: refuse-authsidecar-files
@@ -47,6 +47,7 @@ repos:
     hooks:
       - id: codespell
         args: ["-L", "AKS,aks,showIn,NotIn,templateAs,als"]
+        exclude: ^tests/kind/calico-crds-.*\.yaml$
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.6
     hooks:

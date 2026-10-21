@@ -15,20 +15,20 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 2.2.1
+    tag: 2.2.2
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.1-18
+    tag: 3.1.2-1
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 2.2.0
+    tag: 2.2.2
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 2.1.12
+    tag: 2.2.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -36,12 +36,12 @@ images:
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.58.0-1"
+    tag: "0.59.0"
     pullPolicy: IfNotPresent
   # Unlike navigator/dp-link, the MCP server is a separate binary with its own image.
   mcpServer:
-    repository: quay.io/astronomer/ap-mcp-server
-    tag: "1.0.0"
+    repository: quay.io/astronomer/ap-apc-mcp-server
+    tag: "1.0.2"
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -637,8 +637,8 @@ dpLink:
     automountServiceAccountToken: true
 
   # -- Number of DP-Link replicas
-  # @default -- 3
-  replicas: 3
+  # @default -- 2
+  replicas: 2
 
   # -- Claim interval in seconds
   # @default -- 30
@@ -1166,18 +1166,30 @@ mcpServer:
   # enabledGroups: [platform_disruptive] loses reads and writes. The core group is always
   # enabled regardless of this list and does not need naming.
   #
-  # The seven groups: core (always on, not listed here), platform_read, platform_write,
+  # The eight groups: core (always on, not listed here), platform_read, platform_write,
   # platform_disruptive (contract changes — executor/runtime/DAG-mechanism — off by default),
   # platform_destroy (deletion, off by default), airflow_read (read-only Airflow diagnosis —
-  # task logs, import errors, installed providers), airflow_destroy (delete_dag_run, off by
-  # default). platform_disruptive, platform_destroy, and airflow_destroy are deliberately absent
+  # task logs, import errors, installed providers — off by default), airflow_destroy
+  # (delete_dag_run, off by default), and skills_load (skill-delivery tools, prompts, and
+  # resources — off by default, toggled by mcpServer.skills.enabled below rather than named
+  # here). platform_disruptive, platform_destroy, and airflow_destroy are deliberately absent
   # from the default below so enabling reads and writes never drags in contract changes or
-  # agent-driven deletion — those must be named explicitly.
-  # @default -- ["platform_read", "platform_write", "airflow_read"]
+  # agent-driven deletion — those must be named explicitly. Turning on mcpServer.skills.enabled
+  # implies the read groups the shipped skills require (platform_read and airflow_read), so those
+  # need not be named when skills are enabled.
+  # @default -- ["platform_read", "platform_write"]
   enabledGroups:
     - platform_read
     - platform_write
-    - airflow_read
+
+  # -- Enable the skill-delivery surface: the load_skill, list_skills and read_skill_file tools,
+  # the per-skill prompts, and the skill resources (the skills_load group in apc-mcp-server).
+  # Opt-in. When on, the server also enables the read groups the shipped skills require
+  # (platform_read and airflow_read, for the debugging-dags and migrating-airflow-2-to-3 skills)
+  # — you do not list those yourself.
+  # @default -- false
+  skills:
+    enabled: false
 
   # -- Tool names to disable outright (internal/config.DisabledTools in apc-mcp-server). Joined
   # into the MCP_DISABLED_TOOLS env var. This is the per-tool kill switch: it overrides
@@ -1230,6 +1242,30 @@ mcpServer:
 
   # -- Custom startup probe configuration (overrides default: httpGet /readyz)
   startupProbe: {}
+
+# -- Houston's Laminar passthrough (internal/laminar in apc-mcp-server reaches Laminar only
+# through this route). Protects Houston itself, not just agent traffic — Houston serves the
+# APC UI and the Astro CLI from the same workers, so an agent's fan-out is a load source
+# those callers would otherwise share in. Applies regardless of whether mcpServer.enabled is
+# set: the route exists in Houston whenever a caller is authorized to reach it.
+laminar:
+  # -- Per-request upstream timeout, in milliseconds. A hung Laminar releases the Houston
+  # worker within this window rather than holding it on an unbounded wait.
+  #
+  # Must stay below apc-mcp-server's Laminar client timeout (35000ms, a Go constant --
+  # internal/laminar/client.go's defaultTimeout, not itself chart-configurable). Raising this
+  # past that ceiling reintroduces the bug both timeouts were set to avoid: the MCP client
+  # gives up and surfaces its own generic timeout before Houston's real LAMINAR_TIMEOUT
+  # response ever arrives.
+  # @default -- 30000
+  timeoutMs: 30000
+
+  # -- Max concurrent in-flight passthrough requests to Laminar, per deployment. Beyond this,
+  # a request is shed immediately with a retryable, distinguishable error (429) rather than
+  # queued, so one deployment's agent fan-out cannot consume the pool other deployments and
+  # non-agent callers share.
+  # @default -- 10
+  maxConcurrentPerDeployment: 10
 
 registry:
   enabled: true
@@ -1346,3 +1382,6 @@ ports:
   commanderSidecarGRPC: 9090
   # Matches apc-mcp-server's LISTEN_ADDR default (cmd/apc-mcp-server/main.go).
   mcpServerHTTP: 8080
+  # Matches apc-mcp-server's METRICS_LISTEN_ADDR default; serves /metrics on its own
+  # listener the ingress never routes, so only Prometheus reaches it.
+  mcpServerMetrics: 9090

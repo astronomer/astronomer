@@ -186,7 +186,7 @@ spec:
               value: {{ .Values.navigator.claimFraction | quote }}
 
             # Cleanup knobs
-            - name: CLEANUP_INTERVAL_SECONDS
+            - name: NAVIGATOR_CLEANUP_INTERVAL_SECONDS
               value: {{ .Values.navigator.cleanupIntervalSeconds | quote }}
             - name: MISSION_CLEANUP_TTL
               value: {{ .Values.navigator.missionCleanupTtl | quote }}

@@ -24,10 +24,11 @@ spec:
       labels:
         {{- include "laminar.selectorLabels" (list $ "hypervisor") | nindent 8 }}
         {{- include "global.podLabels" . | nindent 8 }}
-      {{- if .Values.global.podAnnotations }}
       annotations:
+        {{- include "laminar.jwksChecksum" (list $ .Values.hypervisor) | nindent 8 }}
+        {{- if .Values.global.podAnnotations }}
         {{- toYaml .Values.global.podAnnotations | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
       restartPolicy: Always
       serviceAccountName: {{ include "laminar.serviceAccountName" (list $ "hypervisor") }}
