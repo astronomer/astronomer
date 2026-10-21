@@ -409,7 +409,7 @@ class TestLaminar:
         assert c_by_name["apiserver"]["image"] == expected_image
 
     def test_apiserver_networkpolicy_refuses_keda_by_default(self, kube_version):
-        """Test that the api-server accepts only its two existing callers until autoscaling is on."""
+        """Test that the api-server admits only its fixed pod callers until autoscaling is on."""
         docs = render_chart(
             kube_version=kube_version,
             values=laminar_values(),
@@ -418,7 +418,7 @@ class TestLaminar:
 
         from_entries = docs[0]["spec"]["ingress"][0]["from"]
         assert [entry for entry in from_entries if "namespaceSelector" in entry] == []
-        assert len(from_entries) == 2
+        assert len(from_entries) == 4
 
     def test_apiserver_networkpolicy_admits_the_keda_namespace(self, kube_version):
         """Test that KEDA reaches the api-server on its serving port once autoscaling is on.
@@ -435,8 +435,8 @@ class TestLaminar:
 
         ingress = docs[0]["spec"]["ingress"][0]
         assert {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "keda"}}} in ingress["from"]
-        # The two callers that could already reach it are untouched.
-        assert len([entry for entry in ingress["from"] if "podSelector" in entry]) == 2
+        # The pod callers that could already reach it are untouched.
+        assert len([entry for entry in ingress["from"] if "podSelector" in entry]) == 4
         assert ingress["ports"] == [{"protocol": "TCP", "port": 8000}]
 
     def test_apiserver_networkpolicy_admits_where_keda_runs_not_where_its_objects_live(self, kube_version):
@@ -461,6 +461,45 @@ class TestLaminar:
             if "namespaceSelector" in entry
         ]
         assert namespaces == ["keda-system"]
+
+    @pytest.mark.parametrize(
+        "plane_mode, expected_controller",
+        [("unified", "cp-ingress-controller"), ("data", "dp-ingress-controller")],
+    )
+    def test_apiserver_networkpolicy_admits_the_ingress_controller(self, kube_version, plane_mode, expected_controller):
+        """Test that the in-cluster ingress controller reaches the api-server, matched to its plane.
+
+        Houston's Laminar proxy calls the public baseDomain URL, so dag reads and writes arrive via
+        the ingress controller, not from Houston's own pod. Without this rule they connect but get
+        no response and time out after 30s - a silent drop, since the policy denies by omission
+        rather than rejecting. The controller is dp on a split data plane and cp on unified, so a
+        rule hardcoded to one plane leaves the other dropping all api-server traffic.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(plane_mode=plane_mode),
+            show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
+        )
+
+        assert {
+            "podSelector": {"matchLabels": {"tier": "nginx", "component": expected_controller, "release": "release-name"}}
+        } in docs[0]["spec"]["ingress"][0]["from"]
+
+    def test_apiserver_networkpolicy_admits_commander(self, kube_version):
+        """Test that Commander reaches the api-server for deployment lifecycle calls.
+
+        Commander already has this rule on the hypervisor policy; the api-server needs the same, or
+        its lifecycle traffic is dropped at the network layer the same way the ingress traffic was.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(),
+            show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
+        )
+
+        assert {
+            "podSelector": {"matchLabels": {"component": "commander", "release": "release-name"}}
+        } in docs[0]["spec"]["ingress"][0]["from"]
 
     def test_apiserver_networkpolicy_absent_when_network_policies_are_off(self, kube_version):
         """Test that turning autoscaling on does not resurrect the policy where the customer disabled them."""
