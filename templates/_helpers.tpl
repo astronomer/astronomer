@@ -275,3 +275,542 @@ Common Helper template for data or unified mode
 true
 {{- end -}}
 {{- end -}}
+
+{{/*
+Resolve whether a component loads its secrets from mounted files instead of
+injecting them into the environment with valueFrom.secretKeyRef.
+
+A component's own `secretsFromFiles.enabled` wins when it is true or false;
+when it is unset or null, `global.secretsFromFiles.enabled` applies. So one
+value flips the whole platform, and any single component can still be turned
+off on its own.
+
+That per-component off is the way out of strict mode. A component that is on
+gets its secrets only from files, and its loader refuses to start if a managed
+secret is also in its environment or a file it was pointed at is missing or
+empty. Turning the component off is how an operator keeps it on environment
+variables.
+
+Which is why a value that is neither a boolean nor null is a render error
+rather than "unset". A quoted "false" is a string: read as unset, it would
+let a global true switch the component on anyway, so the switch would fail
+open. The same goes for a typo or a word such as "on" in the global value.
+
+Pass "key", the component's values path (for example "astronomer.commander"),
+so the error names the setting to fix. Renders the string "true" or "false", so
+call it through `eq`:
+
+  {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.commander "key" "astronomer.commander")) }}
+*/}}
+{{- define "secretsFromFiles.enabled" -}}
+{{- $global := include "secretsFromFiles.setting" (dict "owner" (.ctx.Values.global | default dict) "key" "global") -}}
+{{- $component := include "secretsFromFiles.setting" (dict "owner" (.component | default dict) "key" (.key | default "")) -}}
+{{- if $component -}}
+{{- $component -}}
+{{- else if $global -}}
+{{- $global -}}
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{/*
+One `secretsFromFiles.enabled` setting, read from the map that owns the
+`secretsFromFiles` block. Renders "true" or "false" for a boolean and nothing
+when the setting is unset or null; fails on anything else. Internal to
+secretsFromFiles.enabled.
+
+The error offers "leave it unset (null) to inherit" only where that works: every
+component switch defaults to ~, but the global switch has nothing to inherit, and
+global.dbBootstrapper defaults to an explicit false, which Helm keeps for a null
+override under `global`.
+*/}}
+{{- define "secretsFromFiles.setting" -}}
+{{- $block := index .owner "secretsFromFiles" -}}
+{{- if not (kindIs "invalid" $block) -}}
+{{- $where := ternary (printf "%s.secretsFromFiles" .key) "a component's secretsFromFiles" (ne .key "") -}}
+{{- $inherit := ", or leave it unset (null) to inherit global.secretsFromFiles.enabled" -}}
+{{- if eq .key "global" -}}
+{{- $inherit = "" -}}
+{{- else if eq .key "global.dbBootstrapper" -}}
+{{- $inherit = ". A null here does not inherit global.secretsFromFiles.enabled: Helm keeps this setting's explicit false default for a null under global" -}}
+{{- end -}}
+{{- if not (kindIs "map" $block) -}}
+{{- fail (printf "invalid-gate-value: %s is set to %s (type %s), not a map. Set %s.enabled to true or false%s." $where (toJson $block) (kindOf $block) $where $inherit) -}}
+{{- end -}}
+{{- $value := index $block "enabled" -}}
+{{- if kindIs "bool" $value -}}
+{{- $value -}}
+{{- else if not (kindIs "invalid" $value) -}}
+{{- fail (printf "invalid-gate-value: %s.enabled is set to %s (type %s), not a boolean. Set it to true or false without quotes%s." $where (toJson $value) (kindOf $value) $inherit) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+The secret env vars houston-api's loader manages: SECRET_ENV_VARS in houston-api's
+src/lib/secrets-from-files/index.ts, mirrored here because the two repositories
+cannot read each other at build time. houston, navigator and dp-link all run
+that loader. Keep this list and HOUSTON_MANAGED_SECRET_ENV_VARS in
+tests/chart_tests/test_secrets_from_files.py identical to the loader's; a drift
+test compares the two.
+
+The loader also manages every name in HOUSTON_SECRETS_FROM_FILES_EXTRA, which the
+chart builds per component: see houston.secretsFromFiles.extraNames.
+
+Renders a JSON list; read it with fromJsonArray.
+*/}}
+{{- define "secretsFromFiles.houstonSecretEnvVars" -}}
+{{- list
+  "PRISMA__SECRET"
+  "DATABASE__CONNECTION"
+  "DATABASE_URL"
+  "DEPLOYMENTS__DATABASE__CONNECTION"
+  "AUTH__OPENID_CONNECT__AUTH0__CLIENT_SECRET"
+  "AUTH__OPENID_CONNECT__GOOGLE__CLIENT_SECRET"
+  "AUTH__OPENID_CONNECT__OKTA__CLIENT_SECRET"
+  "AUTH__OPENID_CONNECT__MICROSOFT__CLIENT_SECRET"
+  "AUTH__OPENID_CONNECT__CUSTOM__CLIENT_SECRET"
+  "AUTH__OPENID_CONNECT__ADFS__CLIENT_SECRET"
+  "AUTH__OPENID_CONNECT_PROVIDERS"
+  "SCIM_AUTH_CODE_OKTA"
+  "SCIM_AUTH_CODE_MICROSOFT"
+  "AUTH__LDAP__BIND_CREDENTIALS"
+  "JWT__PASSPHRASE"
+  "REGISTRY__AUTH_HEADER"
+  "HELM__REGISTRY_AUTH_SECRET"
+  "EMAIL__SMTP_URL"
+  "EMAIL__SMTP__AUTH__USER"
+  "EMAIL__SMTP__AUTH__PASS"
+  "APOLLO_KEY"
+  | toJson -}}
+{{- end }}
+
+{{/*
+The secret env vars commander's loader manages: secretEnvVars in commander's
+config/secrets_from_files.go, mirrored like the houston list above and pinned by
+COMMANDER_SECRET_ENV_VARS in the chart tests. commander and pilot both run it,
+and it refuses every one of these in the environment whichever subcommand runs.
+
+Renders a JSON list; read it with fromJsonArray.
+*/}}
+{{- define "secretsFromFiles.commanderSecretEnvVars" -}}
+{{- list "COMMANDER_DATAPLANE_DATABASE_URL" "COMMANDER_FLIGHTDECK_DSN" | toJson -}}
+{{- end }}
+
+{{/*
+An env var or secret[] name as Kubernetes ends up seeing it: surrounding
+whitespace trimmed, then one pair of surrounding single or double quotes
+stripped (and the result trimmed again). The name/value env lists and the
+secret[] envNames are rendered unquoted, so YAML turns "DATABASE_URL " and
+"'DATABASE_URL'" into plain DATABASE_URL; the guards compare normalised names so
+neither can slip past them.
+*/}}
+{{- define "secretsFromFiles.normalizeName" -}}
+{{- $name := trim (toString (. | default "")) -}}
+{{- if and (ge (len $name) 2) (or (and (hasPrefix "\"" $name) (hasSuffix "\"" $name)) (and (hasPrefix "'" $name) (hasSuffix "'" $name))) -}}
+{{- $name = trim (substr 1 (int (sub (len $name) 1)) $name) -}}
+{{- end -}}
+{{- $name -}}
+{{- end }}
+
+{{/*
+Render-time guard for strict secrets-from-files.
+
+A component that is on reads its secrets only from files, and its loader
+refuses to start if a secret it manages is also in its environment. The chart
+never renders such a variable itself; this stops the operator's own env list
+from adding one, so the mistake fails `helm upgrade` instead of crash-looping
+the pod.
+
+With the component on, it fails if the env list contains:
+  - a setting the chart owns for the component's loader, with any value: its
+    gate, HOUSTON_SECRETS_FROM_FILES_EXTRA, or the <VAR>_FILE of any managed
+    name. An operator copy would override the chart's (the later entry wins) and
+    turn the loader off or point it somewhere else;
+  - one of the managed names, set with a non-empty value or with any
+    valueFrom. An empty value holds no secret and is how a variable is
+    blanked, so it is allowed, as the loaders allow it; or
+  - for a list the chart renders verbatim ("raw"), any valueFrom.secretKeyRef,
+    whatever its name. A component that is on takes no secret from its
+    environment. The lists that render only name and value cannot carry one.
+
+Names are compared after secretsFromFiles.normalizeName. The message names the
+list, the variable and the switch that keeps the component on environment
+variables. It never includes a value.
+
+Call it with a dict:
+  enabled          the component's resolved toggle; nothing is checked when it is false
+  env              the operator's env list
+  listKey          the list's values path, for example "astronomer.houston.env"
+  names            the managed env var names, as a list
+  key              the component's values path, for example "astronomer.houston"
+  component        what to call the component in the message, for example "houston"
+  gate             optional: the env var that turns the component's loader on. Only
+                   components with a loader have one, and only they have settings
+                   of their own to protect
+  settings         optional: other env vars the chart sets for that loader
+  raw              true when the list is rendered verbatim, valueFrom included
+  caseInsensitive  match names regardless of case (kuiper-reloader: pydantic also reads database_url)
+  fileHint         optional: the values path that delivers extra secrets to this component as files
+  delivered        optional, with fileHint: the secrets the chart delivers itself, which that
+                   path cannot take, so a <VAR>_FILE for one of them gets no such hint
+*/}}
+{{- define "secretsFromFiles.assertNoSecretEnv" -}}
+{{- if .enabled -}}
+{{- $folded := default false .caseInsensitive -}}
+{{- $managed := dict -}}
+{{- $owned := dict -}}
+{{- range .names -}}
+{{- $name := include "secretsFromFiles.normalizeName" . -}}
+{{- $_ := set $managed (ternary (upper $name) $name $folded) true -}}
+{{- if $.gate -}}
+{{- $file := printf "%s_FILE" $name -}}
+{{- $_ := set $owned (ternary (upper $file) $file $folded) true -}}
+{{- end -}}
+{{- end -}}
+{{- if .gate -}}
+{{- range (concat (list .gate) (.settings | default list)) -}}
+{{- $_ := set $owned (ternary (upper .) . $folded) true -}}
+{{- end -}}
+{{- end -}}
+{{- $delivered := dict -}}
+{{- range (.delivered | default list) -}}
+{{- $_ := set $delivered (include "secretsFromFiles.normalizeName" .) true -}}
+{{- end -}}
+{{- $off := printf "or set %s.secretsFromFiles.enabled=false to keep %s on environment variables" .key .component -}}
+{{- range $i, $entry := (.env | default list) -}}
+{{- if kindIs "map" $entry -}}
+{{- $name := include "secretsFromFiles.normalizeName" (get $entry "name") -}}
+{{- $match := ternary (upper $name) $name $folded -}}
+{{- $value := get $entry "value" -}}
+{{- $valueFrom := get $entry "valueFrom" -}}
+{{- $hasValue := and (not (kindIs "invalid" $value)) (ne (toString $value) "") -}}
+{{- $hasValueFrom := and (not (kindIs "invalid" $valueFrom)) (not (empty $valueFrom)) -}}
+{{- if hasKey $owned $match -}}
+{{- $fix := printf "Remove %s from %s" $name $.listKey -}}
+{{- if and $.fileHint (hasSuffix "_FILE" $match) (not (hasKey $delivered (trimSuffix "_FILE" $match))) -}}
+{{- $fix = printf "Remove %s from %s, and deliver the secret as a file through %s instead" $name $.listKey $.fileHint -}}
+{{- end -}}
+{{- fail (printf "loader-setting-in-environment: %s sets %s, a setting of %s's secrets loader. While secrets-from-files is on for %s the chart owns the loader's gate and file paths, and an entry here would override them. %s, %s." $.listKey $name $.component $.component $fix $off) -}}
+{{- end -}}
+{{- if and (hasKey $managed $match) (or $hasValue $hasValueFrom) -}}
+{{- fail (printf "secret-in-environment: %s sets %s, a secret %s loads from a file while secrets-from-files is on for it, and %s refuses to start with that secret in its environment. Remove %s from %s, %s." $.listKey $name $.component $.component $name $.listKey $off) -}}
+{{- end -}}
+{{- if and $.raw (kindIs "map" $valueFrom) (hasKey $valueFrom "secretKeyRef") -}}
+{{- $fix := printf "Remove %s from %s" $name $.listKey -}}
+{{- if $.fileHint -}}
+{{- $fix = printf "Deliver %s as a file through %s instead" $name $.fileHint -}}
+{{- end -}}
+{{- fail (printf "secret-in-environment: %s takes %s from a secretKeyRef, but secrets-from-files is on for %s, so no secret may reach its environment. %s, %s." $.listKey $name $.component $fix $off) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Fails when two of a component's operator-defined secrets would land on one file.
+
+houston, navigator and dp-link deliver each `secret[]` entry as a file named after
+its envName, in the same projected volume as the secrets the chart mounts itself.
+Two sources writing one path make the API server reject the whole volume at apply
+time, so this catches a repeated envName, or one naming a secret the chart already
+delivers, at render. That includes REGISTRY__AUTH_HEADER for houston, which has its
+own volume: a secret[] copy would give the API two REGISTRY__AUTH_HEADER_FILE paths.
+Names are compared after secretsFromFiles.normalizeName. Only checked while the
+component reads files: with it off, these entries are plain secretKeyRef env vars.
+
+Call it with a dict:
+  enabled    the component's resolved toggle; nothing is checked when it is false
+  secrets    the secret[] list
+  listKey    its values path, for example "astronomer.houston.secret"
+  reserved   the names of the secrets the chart itself delivers to the component
+  key, component  as for secretsFromFiles.assertNoSecretEnv
+*/}}
+{{- define "secretsFromFiles.assertUniqueSecretFiles" -}}
+{{- if .enabled -}}
+{{- $off := printf "or set %s.secretsFromFiles.enabled=false to keep %s on environment variables" .key .component -}}
+{{- $reserved := dict -}}
+{{- range (.reserved | default list) -}}
+{{- $_ := set $reserved (include "secretsFromFiles.normalizeName" .) true -}}
+{{- end -}}
+{{- $seen := dict -}}
+{{- range $i, $entry := (.secrets | default list) -}}
+{{- $name := "" -}}
+{{- if kindIs "map" $entry -}}
+{{- $name = include "secretsFromFiles.normalizeName" (get $entry "envName") -}}
+{{- end -}}
+{{- if not $name -}}
+{{- fail (printf "invalid-secret-entry: %s[%d] has no envName. With secrets-from-files on for %s, the envName is the name of the file the secret is delivered as. Set it, %s." $.listKey $i $.component $off) -}}
+{{- end -}}
+{{- if hasKey $reserved $name -}}
+{{- fail (printf "duplicate-secret-name: %s[%d].envName is %s, a secret the chart already delivers to %s as a file, so the two would collide. Use another envName, %s." $.listKey $i $name $.component $off) -}}
+{{- end -}}
+{{- if hasKey $seen $name -}}
+{{- fail (printf "duplicate-secret-name: %s[%d].envName repeats %s from %s[%s]. Each entry becomes a file of that name in %s's secret volume, so the two would collide and the API server would reject the volume. Remove the duplicate, %s." $.listKey $i $name $.listKey (get $seen $name) $.component $off) -}}
+{{- end -}}
+{{- $_ := set $seen $name (toString $i) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+The placeholder written into bootstrapper-managed Secrets by the chart, before
+the ap-db-bootstrapper init container replaces it with a real connection string.
+
+Deterministic on purpose: a random placeholder changes on every render, which
+re-poisons the live Secret on `helm upgrade` and churns pod checksum annotations.
+Consumers compare against this to tell "not bootstrapped yet" from a real value.
+*/}}
+{{- define "astronomer.secretSentinel" -}}
+__ASTRONOMER_NOT_BOOTSTRAPPED__
+{{- end }}
+
+{{/*
+The `connection` value for a Secret that the chart creates as a placeholder and an
+in-pod bootstrapper init container later rewrites.
+
+Two constraints pull against each other:
+
+  - `helm upgrade` must not patch the bootstrapped value back to the placeholder.
+  - The Secret must stay in the release manifest.
+
+A `pre-install`-only hook satisfies the first and breaks the second: hook resources
+are absent from the release manifest, so upgrading from a release where this Secret
+WAS in the manifest makes Helm delete it. With secrets-from-files on, every consumer
+then wedges on the missing volume before the bootstrapper that would recreate it can
+run -- the same deadlock this placeholder exists to prevent, reached by a different
+route. `helm.sh/resource-policy: keep` does not rescue it either: Helm reads that
+annotation off the LIVE object, and the older release created that object without it.
+
+So the Secret stays in the manifest and preserves whatever is already in the cluster.
+A fresh install finds nothing and renders the sentinel; every later render finds the
+bootstrapped value and renders it back byte-identical, so Helm patches nothing and the
+consumers' checksum annotations do not churn.
+
+`lookup` returns empty during `helm template` and client-side dry runs, which is why
+tests see the sentinel. It is also why ArgoCD, which renders without cluster access,
+re-applies the sentinel on every sync -- a limitation the hook form shared, tracked
+separately.
+
+Usage: {{ include "astronomer.bootstrapSecretConnection" (dict "ctx" $ "name" $secretName) }}
+*/}}
+{{- define "astronomer.bootstrapSecretConnection" -}}
+{{- $existing := lookup "v1" "Secret" .ctx.Release.Namespace .name -}}
+{{- $live := get (get ($existing | default dict) "data" | default dict) "connection" | default "" -}}
+{{- if $live -}}
+{{- /* Already base64 -- Secret .data is encoded, so pass it through untouched. */ -}}
+{{- $live | quote -}}
+{{- else -}}
+{{- include "astronomer.secretSentinel" .ctx | b64enc | quote -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+An init container that blocks until a bootstrapper-managed secret file holds a
+real value rather than the sentinel.
+
+Why this is needed: a `secret` volume is projected before ANY container runs,
+and kubelet re-projects it asynchronously with no ordering guarantee against
+container start. So a container that reads the file once at startup can latch
+the sentinel written before the in-pod bootstrapper patched the Secret. Reading
+the same secret via `valueFrom.secretKeyRef` never had this problem, because env
+is resolved per-container at start, after all preceding init containers.
+
+Measured on kind (k8s 1.37): when the bootstrapper's exit drives a pod sync the
+refresh lands in well under a second; with no pod event at all it takes up to
+kubelet's sync period, ~60s. So this gate is normally a no-op and worst case
+adds about a minute to pod start.
+
+The same applies to a pod with no bootstrapper of its own, such as a houston
+CronJob: if it is scheduled before another pod's bootstrapper has replaced the
+sentinel, its volume holds the sentinel when it starts.
+
+Pass the image's pull policy and the resources of the pod's other init
+containers. The container gets the chart's container securityContext, like
+every other container.
+
+Usage:
+  {{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "pullPolicy" .Values.images.houston.pullPolicy "resources" .Values.houston.resources "volume" "houston-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+*/}}
+{{- define "astronomer.waitForSecretFile" -}}
+- name: wait-for-secret
+  image: {{ .image }}
+  imagePullPolicy: {{ .pullPolicy | default "IfNotPresent" }}
+  securityContext: {{- include "platform.containerSecurityContext" (list .ctx nil) | nindent 4 }}
+  {{- if .resources }}
+  resources: {{- toYaml .resources | nindent 4 }}
+  {{- end }}
+  command:
+    - /bin/sh
+    - -c
+    - |
+      # Bounded so a genuinely stuck bootstrapper surfaces as a failed init
+      # container rather than a pod that hangs in Init forever.
+      deadline=$(( $(date +%s) + {{ .timeout | default 300 }} ))
+      while [ "$(cat {{ .path }} 2>/dev/null)" = "{{ include "astronomer.secretSentinel" .ctx }}" ]; do
+        if [ "$(date +%s)" -ge "$deadline" ]; then
+          echo "timed out waiting for {{ .path }} to be bootstrapped" >&2
+          exit 1
+        fi
+        echo "waiting for the bootstrapper to populate {{ .path }}"
+        sleep 2
+      done
+  volumeMounts:
+    - name: {{ .volume }}
+      mountPath: {{ dir .path }}
+      readOnly: true
+{{- end }}
+
+{{/*
+`defaultMode` for every volume carrying a secret that a component reads from a
+file.
+
+0440 rather than Kubernetes' 0644 default: a world-readable file leaves the
+secret open to every UID in the container, which gives back much of what moving
+it out of the environment was meant to buy.
+
+Not 0400 either. Kubernetes owns secret volume files as root:root, and these
+pods run as non-root, so the process can only reach the file through its
+fsGroup. Group read is load-bearing here -- 0400 makes the secret unreadable, and
+a loader refuses to start on a file it was pointed at but cannot read: the
+container exits instead of starting without its secret. Pair this with
+astronomer.secretsFromFiles.podSecurityContextOverride, which supplies the
+matching fsGroup.
+
+Emitted as a bare octal literal on purpose: both Helm's and Kubernetes' YAML
+parsers read it as YAML 1.1, where a leading zero means octal, matching the
+`defaultMode: 0755` already used elsewhere in this chart.
+
+Usage, at the same indentation as `sources:` or `secretName:`:
+  {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
+*/}}
+{{- define "astronomer.secretsFromFiles.defaultMode" -}}
+defaultMode: 0440
+{{- end }}
+
+{{/*
+The fsGroup a workload needs when it reads its secrets from mounted files, as an
+override for platform.podSecurityContext to merge in:
+
+  securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.houston "key" "astronomer.houston") | fromYaml)) | nindent 8 }}
+
+"key" is the component's values path, passed through to secretsFromFiles.enabled
+so a malformed toggle is reported by name.
+
+The fsGroup is what makes astronomer.secretsFromFiles.defaultMode work: kubelet
+chowns an ownership-managed volume to this group and adds the group to every
+container's supplementary groups, so a 0440 root-owned file is readable by the
+pod's processes and by nobody else. With no fsGroup at all the file stays
+root:root and the process -- running as non-root -- cannot open it.
+
+Any fsGroup does the job, so one the operator already set in podSecurityContext
+is left alone rather than replaced. Omitted on OpenShift, which allocates an
+fsGroup per namespace through its SecurityContextConstraints;
+platform.podSecurityContext strips fsGroup there as well.
+
+Resolves the component's toggle itself and renders nothing when it is off, so
+every workload that mounts a secret volume can pass it unconditionally. That
+matters because the set of such workloads is large and easy to under-count --
+the houston family alone is over a dozen, most of them cronjobs. A pod that
+mounts a 0440 secret without an fsGroup cannot read it, and a loader that is on
+refuses to start on an unreadable file, so a missing fsGroup is a container that
+never starts.
+
+Renders YAML because include can only return a string, so pipe it through
+fromYaml; an empty render becomes an empty dict, which merges as a no-op.
+*/}}
+{{- define "astronomer.secretsFromFiles.podSecurityContextOverride" -}}
+{{- $readsFiles := false -}}
+{{- if hasKey . "component" -}}
+{{- $readsFiles = eq "true" (include "secretsFromFiles.enabled" (dict "ctx" .ctx "component" .component "key" (.key | default ""))) -}}
+{{- end -}}
+{{- /* A pod running an ap-db-bootstrapper init container needs the fsGroup for that
+       container's file too, whatever the main component's own toggle says. */ -}}
+{{- if and .dbBootstrapper (eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .ctx)) -}}
+{{- $readsFiles = true -}}
+{{- end -}}
+{{- if $readsFiles -}}
+{{- if and (not ((.ctx.Values.global.openshift).enabled)) (not (hasKey (.ctx.Values.podSecurityContext | default dict) "fsGroup")) -}}
+fsGroup: {{ ((.ctx.Values.global).secretsFromFiles).fsGroup | default 1000 }}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Whether the ap-db-bootstrapper init containers read BOOTSTRAP_DB from a mounted file.
+
+Resolved from `global.dbBootstrapper.secretsFromFiles.enabled` through the usual
+precedence, so it can inherit `global.secretsFromFiles.enabled`. Global rather than
+per-subchart because the same image runs in the astronomer, grafana and laminar
+subcharts, and one image either has the loader or does not.
+
+Renders the string "true" or "false"; call it through `eq`. Takes the root context.
+*/}}
+{{- define "astronomer.dbBootstrapper.secretsFromFiles.enabled" -}}
+{{- include "secretsFromFiles.enabled" (dict "ctx" . "component" ((.Values.global).dbBootstrapper) "key" "global.dbBootstrapper") -}}
+{{- end }}
+
+{{/*
+The env entries an ap-db-bootstrapper init container gets for BOOTSTRAP_DB: either the
+original secretKeyRef, or the loader's gate plus an explicit path to the mounted file.
+
+No wait-for-secret gate is needed for this file, unlike the other bootstrapped
+secrets. `astronomer-bootstrap` is never written by a bootstrapper: the bundled
+postgresql chart renders it with its real value, or the operator creates it before
+install, so it already holds the final value when the volume is projected.
+
+Usage, at the indentation of the other env entries:
+  {{- include "astronomer.dbBootstrapper.secretEnv" $ | nindent 12 }}
+*/}}
+{{- define "astronomer.dbBootstrapper.secretEnv" -}}
+{{- if eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .) -}}
+- name: DB_BOOTSTRAPPER_SECRETS_FROM_FILES
+  value: "true"
+- name: BOOTSTRAP_DB_FILE
+  value: /etc/astronomer/secrets/BOOTSTRAP_DB
+{{- else -}}
+- name: BOOTSTRAP_DB
+  valueFrom:
+    secretKeyRef:
+      name: astronomer-bootstrap
+      key: connection
+{{- end -}}
+{{- end }}
+
+{{/*
+The mount for an ap-db-bootstrapper init container's BOOTSTRAP_DB file. Renders
+nothing when the toggle is off. Pair with astronomer.dbBootstrapper.secretVolume.
+*/}}
+{{- define "astronomer.dbBootstrapper.secretVolumeMount" -}}
+{{- if eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .) -}}
+- name: db-bootstrapper-secret
+  mountPath: /etc/astronomer/secrets
+  readOnly: true
+{{- end -}}
+{{- end }}
+
+{{/*
+The pod volume carrying BOOTSTRAP_DB. Renders nothing when the toggle is off.
+
+Callers must render it under the SAME condition as the bootstrapper container, not
+merely the toggle. kubelet mounts every volume in a pod spec whether or not a
+container uses it, and `astronomer-bootstrap` need not exist when an operator supplies
+the backend secrets directly and the bootstrapper is skipped. An unused volume naming
+a missing Secret would leave that pod stuck in ContainerCreating on FailedMount.
+
+The pod also needs an fsGroup to read this 0440 file: pass "dbBootstrapper" true to
+astronomer.secretsFromFiles.podSecurityContextOverride.
+*/}}
+{{- define "astronomer.dbBootstrapper.secretVolume" -}}
+{{- if eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .) -}}
+- name: db-bootstrapper-secret
+  secret:
+    secretName: astronomer-bootstrap
+    {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 4 }}
+    items:
+      - key: connection
+        path: BOOTSTRAP_DB
+{{- end -}}
+{{- end }}

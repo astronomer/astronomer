@@ -2,6 +2,7 @@
 ## Elasticsearch Proxy ConfigMap ##
 ###################################
 {{- if eq (include "logging.enabled" .) "true" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.global.customLogging "key" "global.customLogging")) }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -15,6 +16,20 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   setenv.lua: |-
+{{- if $secretsFromFiles }}
+    -- ES_SECRET_FROM_FILE is the credential init_by_lua_block in nginx.conf read
+    -- from its mounted file; nginx does not start if that file is missing,
+    -- unreadable or empty. It is nil only when no global.customLogging.secretName
+    -- is set, and then no credential is sent. The `elastic` secret key holds raw
+    -- credentials, so encode it here, as the ES_SECRET_NAME branch does when
+    -- secrets-from-files is off.
+    --
+    -- No environment fallback: with secrets-from-files on, the chart renders no
+    -- ES_SECRET or ES_SECRET_NAME and refuses values that would add one.
+    if ES_SECRET_FROM_FILE then
+        return ngx.req.set_header("Authorization", string.format("Basic %s", ngx.encode_base64(ES_SECRET_FROM_FILE)))
+    end
+{{- else }}
     -- check if  variable is defined
     if not (os.getenv("ES_SECRET") == nil or os.getenv("ES_SECRET") == '') then
         local api_key = os.getenv("ES_SECRET")
@@ -23,4 +38,5 @@ data:
         local api_key = os.getenv("ES_SECRET_NAME")
         return ngx.req.set_header("Authorization", string.format("Basic %s", ngx.encode_base64(api_key)))
     end
+{{- end }}
 {{- end }}
