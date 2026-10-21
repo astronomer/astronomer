@@ -15,11 +15,11 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 2.1.23
+    tag: 2.1.25
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.1.2-1
+    tag: 3.1.2-4
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
@@ -32,7 +32,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.0.26
+    tag: 2.2.1
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
