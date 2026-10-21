@@ -219,6 +219,9 @@ spec:
                 x-kubernetes-preserve-unknown-fields: true
               preStopTerminationSleepDuration:
                 type: integer
+              readOnlyRootFilesystemEnabled:
+                default: false
+                type: boolean
               replicas:
                 default: 1
                 format: int32
