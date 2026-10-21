@@ -497,9 +497,9 @@ class TestLaminar:
             show_only=[APISERVER_NETWORKPOLICY_TEMPLATE],
         )
 
-        assert {
-            "podSelector": {"matchLabels": {"component": "commander", "release": "release-name"}}
-        } in docs[0]["spec"]["ingress"][0]["from"]
+        assert {"podSelector": {"matchLabels": {"component": "commander", "release": "release-name"}}} in docs[0]["spec"][
+            "ingress"
+        ][0]["from"]
 
     def test_apiserver_networkpolicy_absent_when_network_policies_are_off(self, kube_version):
         """Test that turning autoscaling on does not resurrect the policy where the customer disabled them."""
