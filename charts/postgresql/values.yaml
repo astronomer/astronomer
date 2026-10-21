@@ -146,8 +146,28 @@ servicePort: 5432
 ## PostgreSQL password using existing secret
 ## existingSecret: secret
 
-## Mount PostgreSQL secret as a file instead of passing environment variable
+## Superseded by secretsFromFiles below. usePasswordFile was inherited from the
+## upstream Bitnami chart and never worked: it rendered a secret volume that no
+## container mounted, and no *_FILE env var referenced it.
 # usePasswordFile: false
+
+## Read the postgres password from a mounted file instead of injecting it with
+## valueFrom.secretKeyRef, using the image entrypoint's POSTGRES_PASSWORD_FILE
+## support. Covers the primary, the replicas and the metrics sidecar
+## (DATA_SOURCE_PASS_FILE). Leave unset to inherit global.secretsFromFiles.enabled;
+## set false to keep them on environment variables.
+##
+## While this is on, the chart refuses an `extraEnv` entry that sets
+## POSTGRES_PASSWORD (the entrypoint exits when both it and POSTGRES_PASSWORD_FILE
+## are set) or that uses a secretKeyRef.
+##
+## NOTE: this removes the password from the pod spec and the Kubernetes API, but
+## not from the server process environment -- the entrypoint still exports
+## POSTGRES_PASSWORD after reading the file. It is also not strict the way the
+## platform's own loaders are: the entrypoint ignores an empty password once the
+## data directory exists.
+secretsFromFiles:
+  enabled: ~
 
 ## Create a database
 ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#creating-a-database-on-first-run
@@ -448,5 +468,7 @@ metrics:
     # failureThreshold: 30
     # periodSeconds: 10
 
-# Define custom environment variables to pass to the image here
+# Define custom environment variables to pass to the image here, as a list of
+# Kubernetes env entries; they are rendered verbatim. See secretsFromFiles above
+# for what is refused while it is on.
 extraEnv: {}
