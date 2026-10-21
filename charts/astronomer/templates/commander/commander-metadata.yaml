@@ -31,6 +31,13 @@ data:
       isClusterSecretStore: {{ ternary "false" "true" .Values.global.namespaceManagement.namespacePools.enabled }}
     openshift:
       enabled: {{ ternary "true" "false" .Values.global.openshift.enabled }}
+    {{- $istioGateway := (.Values.global.istio | default dict).gateway | default dict }}
+    {{- if $istioGateway.enabled }}
+    istio:
+      gateway:
+        enabled: true
+        name: {{ required "global.istio.gateway.name is required when global.istio.gateway.enabled is true" .Values.global.istio.gateway.name | quote }}
+    {{- end }}
     laminar:
       enabled: {{ ternary "true" "false" .Values.global.laminar.enabled }}
 {{- end }}

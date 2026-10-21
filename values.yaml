@@ -375,6 +375,17 @@ global:
   istio:
     enabled: false
     rootNamespace: "istio-config"
+    # Route platform traffic through an Istio Gateway instead of nginx Ingress.
+    # When enabled, every platform Ingress is suppressed and VirtualServices are
+    # rendered in its place.
+    # name is the <namespace>/<name> of a pre-existing Istio Gateway that the platform
+    # VirtualServices attach to. There is no default: it has to name a Gateway that really
+    # exists, and a VirtualService pointing at one that does not is accepted by the API server
+    # and silently routes nothing. Rendering fails if enabled is true and name is empty.
+    # Example: "istio-system/default-gateway"
+    gateway:
+      enabled: false
+      name: ""
 
   # Enable default postgresql database.
   # This is not recommended for production.
