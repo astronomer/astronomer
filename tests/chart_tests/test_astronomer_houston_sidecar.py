@@ -1,6 +1,8 @@
+import re
 from subprocess import CalledProcessError
 
 import pytest
+import yaml
 
 from tests import supported_k8s_versions
 from tests.utils import get_containers_by_name
@@ -374,6 +376,8 @@ class TestHoustonSidecarLogging:
             show_only=[
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
                 "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
             ],
             values={
                 "astronomer": {
@@ -396,12 +400,194 @@ class TestHoustonSidecarLogging:
             },
         )
 
-        deployment = docs[0]
-        vector_configmap = docs[1]
-        vector_env = {env_var["name"]: env_var for env_var in get_containers_by_name(deployment)["vector"]["env"]}
+        deployments = [doc for doc in docs if doc["kind"] == "Deployment"]
+        configmaps = [doc for doc in docs if doc["kind"] == "ConfigMap"]
+        assert len(deployments) == 2
+        assert len(configmaps) == 2
 
-        assert vector_env["ES_ENDPOINT"]["value"] == "https://es.example.com:9200"
-        assert vector_env["ES_USERNAME"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
-        assert vector_env["ES_PASSWORD"]["valueFrom"]["secretKeyRef"]["name"] == "houston-elasticsearch-creds"
-        assert 'endpoints: ["${ES_ENDPOINT}"]' in vector_configmap["data"]["vector.yaml"]
-        assert "strategy: basic" in vector_configmap["data"]["vector.yaml"]
+        for deployment in deployments:
+            vector = get_containers_by_name(deployment)["vector"]
+            vector_env = {env_var["name"] for env_var in vector["env"]}
+
+            # Vector 0.57+ does not interpolate env vars in config, so credentials are
+            # mounted from the secret and read through Vector's secrets backend.
+            assert not vector_env & {"ES_ENDPOINT", "ES_USERNAME", "ES_PASSWORD"}
+
+            mounts = {mount["name"]: mount for mount in vector["volumeMounts"]}
+            assert mounts["es-creds"]["mountPath"] == "/etc/vector/secrets/elasticsearch"
+            assert mounts["es-creds"]["readOnly"] is True
+
+            volumes = {volume["name"]: volume for volume in deployment["spec"]["template"]["spec"]["volumes"]}
+            assert volumes["es-creds"]["secret"]["secretName"] == "houston-elasticsearch-creds"
+            assert volumes["es-creds"]["secret"]["items"] == [
+                {"key": "username", "path": "username"},
+                {"key": "password", "path": "password"},
+            ]
+
+        for configmap in configmaps:
+            vector_config = configmap["data"]["vector.yaml"]
+            assert 'endpoints: ["https://es.example.com:9200"]' in vector_config
+            assert "strategy: basic" in vector_config
+            assert "${" not in vector_config
+
+            parsed = yaml.safe_load(vector_config)
+            assert parsed["secret"] == {
+                "es_creds": {
+                    "type": "directory",
+                    "path": "/etc/vector/secrets/elasticsearch",
+                    "remove_trailing_whitespace": True,
+                }
+            }
+            assert parsed["sinks"]["elasticsearch"]["auth"] == {
+                "strategy": "basic",
+                "user": "SECRET[es_creds.username]",
+                "password": "SECRET[es_creds.password]",
+            }
+
+            # `vector validate` never resolves secrets, but Vector exits at startup if the directory
+            # or a referenced key is missing, so the config and the pod spec must agree.
+            referenced_keys = {ref.split(".", 1)[1].rstrip("]") for ref in re.findall(r"SECRET\[es_creds\.[^\]]+\]", vector_config)}
+            for deployment in deployments:
+                vector = get_containers_by_name(deployment)["vector"]
+                mount = next(m for m in vector["volumeMounts"] if m["name"] == "es-creds")
+                volume = next(v for v in deployment["spec"]["template"]["spec"]["volumes"] if v["name"] == "es-creds")
+                assert mount["mountPath"] == parsed["secret"]["es_creds"]["path"]
+                assert referenced_keys == {item["path"] for item in volume["secret"]["items"]}
+
+    def test_houston_sidecar_logging_elasticsearch_without_basic_auth_has_no_credentials(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
+            ],
+            values={
+                "astronomer": {
+                    "houston": {
+                        "logging": {
+                            "loggingSidecar": {
+                                "enabled": True,
+                                "elasticsearch": {
+                                    "enabled": True,
+                                    "endpoint": "https://es.example.com:9200",
+                                    "auth": {"strategy": "none"},
+                                },
+                            },
+                        },
+                    }
+                }
+            },
+        )
+
+        for doc in docs:
+            if doc["kind"] == "Deployment":
+                vector = get_containers_by_name(doc)["vector"]
+                assert "es-creds" not in {mount["name"] for mount in vector["volumeMounts"]}
+                assert "es-creds" not in {volume["name"] for volume in doc["spec"]["template"]["spec"]["volumes"]}
+            else:
+                parsed = yaml.safe_load(doc["data"]["vector.yaml"])
+                assert "secret" not in parsed
+                assert "auth" not in parsed["sinks"]["elasticsearch"]
+
+    def test_houston_sidecar_logging_cloudwatch_static_credentials_use_secrets_backend(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
+            ],
+            values={
+                "astronomer": {
+                    "houston": {
+                        "logging": {
+                            "loggingSidecar": {
+                                "enabled": True,
+                                "cloudwatch": {
+                                    "enabled": True,
+                                    "region": "us-east-2",
+                                    "useIRSA": False,
+                                    "secretName": "houston-cloudwatch-creds",
+                                },
+                            },
+                        },
+                    }
+                }
+            },
+        )
+
+        deployments = [doc for doc in docs if doc["kind"] == "Deployment"]
+        configmaps = [doc for doc in docs if doc["kind"] == "ConfigMap"]
+        assert len(deployments) == 2
+        assert len(configmaps) == 2
+
+        for configmap in configmaps:
+            vector_config = configmap["data"]["vector.yaml"]
+            assert "${" not in vector_config
+
+            parsed = yaml.safe_load(vector_config)
+            assert parsed["secret"] == {
+                "aws_creds": {
+                    "type": "directory",
+                    "path": "/etc/vector/secrets/cloudwatch",
+                    "remove_trailing_whitespace": True,
+                }
+            }
+            assert parsed["sinks"]["cloudwatch"]["auth"] == {
+                "access_key_id": "SECRET[aws_creds.aws_access_key_id]",
+                "secret_access_key": "SECRET[aws_creds.aws_secret_access_key]",
+            }
+
+            referenced_keys = {
+                ref.split(".", 1)[1].rstrip("]") for ref in re.findall(r"SECRET\[aws_creds\.[^\]]+\]", vector_config)
+            }
+            for deployment in deployments:
+                vector = get_containers_by_name(deployment)["vector"]
+                mount = next(m for m in vector["volumeMounts"] if m["name"] == "aws-creds")
+                volume = next(v for v in deployment["spec"]["template"]["spec"]["volumes"] if v["name"] == "aws-creds")
+                assert mount["mountPath"] == parsed["secret"]["aws_creds"]["path"]
+                assert mount["readOnly"] is True
+                assert volume["secret"]["secretName"] == "houston-cloudwatch-creds"
+                assert referenced_keys == {item["path"] for item in volume["secret"]["items"]}
+
+        for deployment in deployments:
+            vector_env = {env_var["name"]: env_var for env_var in get_containers_by_name(deployment)["vector"]["env"]}
+            assert vector_env["AWS_REGION"]["value"] == "us-east-2"
+            assert not vector_env.keys() & {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}
+
+    def test_houston_sidecar_logging_cloudwatch_irsa_has_no_credentials(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/api/houston-vector-configmap.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-vector-configmap.yaml",
+            ],
+            values={
+                "astronomer": {
+                    "houston": {
+                        "logging": {
+                            "loggingSidecar": {
+                                "enabled": True,
+                                "cloudwatch": {"enabled": True, "region": "us-east-2", "useIRSA": True},
+                            },
+                        },
+                    }
+                }
+            },
+        )
+
+        assert len(docs) == 4
+        for doc in docs:
+            if doc["kind"] == "Deployment":
+                vector = get_containers_by_name(doc)["vector"]
+                assert "aws-creds" not in {mount["name"] for mount in vector["volumeMounts"]}
+                assert "aws-creds" not in {volume["name"] for volume in doc["spec"]["template"]["spec"]["volumes"]}
+            else:
+                parsed = yaml.safe_load(doc["data"]["vector.yaml"])
+                assert "secret" not in parsed
+                assert "auth" not in parsed["sinks"]["cloudwatch"]
