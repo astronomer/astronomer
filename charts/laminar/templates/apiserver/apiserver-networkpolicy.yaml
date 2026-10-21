@@ -27,6 +27,18 @@ spec:
           component: houston
           tier: astronomer
           release: {{ .Release.Name }}
+    # Houston's Laminar proxy calls the public baseDomain URL, so dag-read/write traffic arrives
+    # via the in-cluster ingress controller rather than Houston directly - dp on split data planes,
+    # cp on unified.
+    - podSelector:
+        matchLabels:
+          tier: nginx
+          component: {{ ternary "dp-ingress-controller" "cp-ingress-controller" (eq .Values.global.plane.mode "data") }}
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          component: commander
+          release: {{ .Release.Name }}
     {{- if eq (include "keda.workerScalingEnabled" .) "true" }}
     # Worker autoscaling: KEDA polls for the number of workers each queue needs.
     - namespaceSelector:
