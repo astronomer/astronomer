@@ -101,6 +101,37 @@ class TestAstronomerCommander:
             "laminar": {"enabled": False},
         }
 
+    @pytest.mark.parametrize(
+        "istio_values,expected",
+        [
+            ({}, None),
+            ({"gateway": {"enabled": False, "name": "istio-system/default-gateway"}}, None),
+            (
+                {"gateway": {"enabled": True, "name": "istio-system/astro-gateway"}},
+                {"gateway": {"enabled": True, "name": "istio-system/astro-gateway"}},
+            ),
+        ],
+        ids=["default", "gateway_disabled", "gateway_enabled"],
+    )
+    def test_commander_metadata_istio_gateway(self, kube_version, istio_values, expected):
+        """Test that the istio gateway block only renders into commander metadata.yaml when the gateway is enabled.
+
+        An unconditional block would change the commander metadata checksum, and so roll
+        commander, on every upgrade of an install that does not use Istio.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"istio": istio_values}},
+            show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
+        )
+
+        assert len(docs) == 1
+        metadata_file_contents = yaml.safe_load(docs[0]["data"]["metadata.yaml"])
+        if expected is None:
+            assert "istio" not in metadata_file_contents
+        else:
+            assert metadata_file_contents["istio"] == expected
+
     def test_commander_metadata_extra_annotations(self, kube_version):
         """Test that global.extraAnnotations are passed through to commander metadata.yaml."""
         extra_annotations = {
@@ -383,6 +414,36 @@ class TestAstronomerCommander:
             ],
         )
         assert len(docs) == 0
+
+    @pytest.mark.parametrize(
+        "istio_values,expected",
+        [
+            ({}, False),
+            ({"gateway": {"enabled": False, "name": "istio-system/default-gateway"}}, False),
+            ({"gateway": {"enabled": True, "name": "istio-system/default-gateway"}}, True),
+        ],
+        ids=["default", "gateway_disabled", "gateway_enabled"],
+    )
+    def test_commander_rbac_istio_virtualservices(self, kube_version, istio_values, expected):
+        """Test that commander only gets VirtualService permissions when the istio gateway is enabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={"global": {"istio": istio_values}},
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+
+        vs_rules = [rule for rule in doc["rules"] if rule.get("resources") == ["virtualservices"]]
+
+        if not expected:
+            assert vs_rules == []
+        else:
+            assert vs_rules == [
+                {
+                    "apiGroups": ["networking.istio.io"],
+                    "resources": ["virtualservices"],
+                    "verbs": ["get", "create", "delete", "patch", "list", "watch"],
+                }
+            ]
 
     def test_commander_rbac_multinamespace_mode_disabled(self, kube_version):
         """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode disabled, the rendered commander role
