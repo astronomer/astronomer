@@ -34,7 +34,7 @@ sessionAffinity: ""
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 3.15.0
+    tag: 3.15.0-1
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
@@ -42,7 +42,7 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.3.3
+    tag: 0.3.11
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
