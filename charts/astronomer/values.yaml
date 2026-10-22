@@ -24,11 +24,11 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 2.1.28
+    tag: 2.1.29
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 2.1.13
+    tag: 2.1.14
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -36,7 +36,7 @@ images:
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.60.0"
+    tag: 0.60.0
     pullPolicy: IfNotPresent
 
 securityContext:
