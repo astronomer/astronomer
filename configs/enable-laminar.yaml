@@ -1,0 +1,15 @@
+# Turns Laminar (api-server + hypervisor) on.
+#
+# Laminar renders only where the data plane is enabled (charts/laminar/templates/_helpers.yaml's
+# "laminar.enabled" -> "astronomer.dataPlaneEnabled"), so this has no effect on a
+# `control` topology -- pair it with `unified` or `data`.
+#
+# Nothing else is needed: the hypervisor's LAMINAR_JWKS comes from
+# <release>-commander-signing-cert, which the astronomer subchart already creates as a
+# plain release resource on any data/unified install, and the laminar database plus its
+# <release>-laminar-backend secret are created by the laminar-bootstrapper init container
+# on each pod.
+---
+global:
+  laminar:
+    enabled: true

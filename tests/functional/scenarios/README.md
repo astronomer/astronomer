@@ -43,3 +43,28 @@ tests/functional/scenarios/<name>/
 uv run bin/run-scenario.py auth-sidecar
 uv run pytest tests/functional/scenarios/auth-sidecar
 ```
+
+### Running a `kyverno_scan: true` scenario locally
+
+`bin/run-scenario.py` does not install Kyverno — only the generated CI job does, in the step
+between `run-scenario.py` and `pytest`. A bare local run of a `kyverno_scan` scenario therefore
+has no Kyverno in the cluster at all, and any test that depends on one should skip itself rather
+than pass vacuously. To reproduce what CI does, run the install step yourself in between:
+
+```sh
+uv run bin/run-scenario.py laminar
+# GITHUB_TOKEN needs read access to the private astronomer/apc-terraform-modules repo,
+# which is where the policies come from.
+uv run bin/install-kyverno-scan.py --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
+uv run pytest tests/functional/scenarios/laminar
+uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
+```
+
+The `laminar` scenario additionally needs `quay.io/astronomer/ap-laminar` in the local Docker
+store before `run-scenario.py`, because that repository is private and its `pre_helm_scripts`
+entry sideloads the image onto the kind node rather than pulling it:
+
+```sh
+docker login quay.io
+docker pull quay.io/astronomer/ap-laminar:1.0.0-rc4  # must match charts/laminar/values.yaml
+```
