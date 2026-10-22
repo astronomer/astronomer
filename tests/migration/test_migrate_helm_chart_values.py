@@ -998,7 +998,7 @@ class TestCommentPreservation:
         """Inline comment on a subtree top-level key survives the move."""
         text = dedent("""\
             global:
-              dagOnlyDeployment:  # DAG deploy config
+              dagOnlyDeployment:  # Dag deploy config
                 enabled: true
                 repository: test/repo  # custom repo
               baseDomain: example.com
@@ -1007,7 +1007,7 @@ class TestCommentPreservation:
         migrate_values(data)
         output = _dump_rt(data)
 
-        assert "# DAG deploy config" in output
+        assert "# Dag deploy config" in output
         assert "# custom repo" in output
         assert "deployMechanisms" in output
 
