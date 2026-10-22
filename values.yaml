@@ -360,7 +360,7 @@ global:
         tag: 2026.10.21
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.5.2
+        tag: 0.6.3
     metrics:
       enabled: false
   certgenerator:
