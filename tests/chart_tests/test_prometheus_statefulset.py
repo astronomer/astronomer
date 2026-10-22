@@ -39,6 +39,10 @@ class TestPrometheusStatefulset:
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert c_by_name["configmap-reloader"]["image"].startswith("quay.io/astronomer/ap-configmap-reloader:")
+        assert c_by_name["configmap-reloader"]["resources"] == {
+            "limits": {"cpu": "100m", "memory": "128Mi"},
+            "requests": {"cpu": "100m", "memory": "128Mi"},
+        }
         assert c_by_name["configmap-reloader"]["volumeMounts"] == [
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/etc/prometheus/config", "name": "prometheus-config-volume"},
