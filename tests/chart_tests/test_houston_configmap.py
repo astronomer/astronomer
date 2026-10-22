@@ -815,28 +815,34 @@ def test_houston_configmap_with_mcp_server_disabled():
     assert "enabledGroups" not in prod["mcpServer"]
 
 
-def test_houston_configmap_skills_toggle_appends_skills_load():
-    """mcpServer.skills.enabled must materialize skills_load into the enabledGroups Houston reads.
-    appConfig's skill-delivery flag (mcpServerSkillsEnabled) is derived purely from this membership,
-    so the toggle and the group must never diverge."""
-    docs = render_chart(
-        values={"astronomer": {"mcpServer": {"enabled": True, "skills": {"enabled": True}}}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-    common_test_cases(docs)
-
-    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-    assert "skills_load" in prod["mcpServer"]["enabledGroups"].split(",")
-
-
-def test_skills_toggle_consistent_across_houston_and_mcp_server():
-    """The skills toggle is the single source of truth: enabling it puts skills_load in BOTH the
-    Houston configmap and the mcp-server env, so the UI flag can never disagree with the tool groups
-    the server actually serves."""
+@pytest.mark.parametrize(
+    "mcp_values,expected",
+    [
+        pytest.param(
+            {"skills": {"enabled": True}},
+            "platform_read,platform_write,skills_load",
+            id="toggle-on-appends-skills_load",
+        ),
+        pytest.param(
+            {"skills": {"enabled": False}, "enabledGroups": ["platform_read", "skills_load"]},
+            "platform_read",
+            id="toggle-off-strips-listed-skills_load",
+        ),
+        pytest.param(
+            {"skills": {"enabled": True}, "enabledGroups": ["platform_read", "skills_load"]},
+            "platform_read,skills_load",
+            id="toggle-on-listed-skills_load-not-duplicated",
+        ),
+    ],
+)
+def test_skills_toggle_consistent_across_houston_and_mcp_server(mcp_values, expected):
+    """The Houston configmap and the mcp-server env must resolve to the same group list, since
+    appConfig derives the mcpServerSkillsEnabled UI flag from skills_load's presence in it. If the
+    two templates disagree, the flag can lie about what the server actually serves."""
     docs = render_chart(
         values={
             "global": {"plane": {"mode": "control"}},
-            "astronomer": {"mcpServer": {"enabled": True, "skills": {"enabled": True}}},
+            "astronomer": {"mcpServer": {"enabled": True, **mcp_values}},
         },
         show_only=[
             "charts/astronomer/templates/houston/houston-configmap.yaml",
@@ -846,12 +852,10 @@ def test_skills_toggle_consistent_across_houston_and_mcp_server():
     configmap = next(doc for doc in docs if doc["kind"] == "ConfigMap")
     deployment = next(doc for doc in docs if doc["kind"] == "Deployment")
 
-    houston_groups = yaml.safe_load(configmap["data"]["production.yaml"])["mcpServer"]["enabledGroups"].split(",")
-    mcp_env = get_env_vars_dict(get_containers_by_name(deployment)["mcp-server"]["env"])
-    mcp_groups = mcp_env["MCP_ENABLED_GROUPS"].split(",")
+    houston_groups = yaml.safe_load(configmap["data"]["production.yaml"])["mcpServer"]["enabledGroups"]
+    mcp_groups = get_env_vars_dict(get_containers_by_name(deployment)["mcp-server"]["env"])["MCP_ENABLED_GROUPS"]
 
-    assert "skills_load" in houston_groups
-    assert "skills_load" in mcp_groups
+    assert houston_groups == mcp_groups == expected
 
 
 def test_houston_configmap_laminar_proxy_defaults():
