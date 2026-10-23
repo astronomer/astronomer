@@ -46,7 +46,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.2.1
+      tag: 2.0.27
       pullPolicy: IfNotPresent
     priorityClassName: ~
   #Global flag to enable Operator based deployment
@@ -607,10 +607,10 @@ prometheus:
     resources:
       limits:
         cpu: 100m
-        memory: 25Mi
+        memory: 128Mi
       requests:
         cpu: 100m
-        memory: 25Mi
+        memory: 128Mi
 
   filesdReloader:
     resources:
