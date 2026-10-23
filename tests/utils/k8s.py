@@ -32,9 +32,11 @@ def get_pod_running_containers(namespace, kubeconfig=None):
         pod_name = pod.metadata.name
         for container_status in pod.status.container_statuses:
             if container_status.ready:
-                container = vars(container_status).copy()
-                container["pod_name"] = pod_name
-                container["namespace"] = namespace
+                container = {
+                    "name": container_status.name,
+                    "pod_name": pod_name,
+                    "namespace": namespace,
+                }
 
                 key = f"{pod_name}_{container_status.name}"
                 containers[key] = container
