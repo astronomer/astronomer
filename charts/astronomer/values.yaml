@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 1.2.3
+    tag: 1.2.4
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -24,7 +24,7 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 1.2.7
+    tag: 1.2.8
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -34,7 +34,6 @@ images:
     repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 2.2.1
     pullPolicy: IfNotPresent
-
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -104,8 +103,7 @@ houston:
   regenerateCaEachUpgrade: false
   # Houston datastore
   backendSecretName: ~
-  backendConnection:
-    {}
+  backendConnection: {}
     # user: ~
     # pass: ~
     # host: ~
@@ -114,8 +112,7 @@ houston:
 
   # Airflow backends
   airflowBackendSecretName: ~
-  airflowBackendConnection:
-    {}
+  airflowBackendConnection: {}
     # user: ~
     # pass: ~
     # host: ~
@@ -245,7 +242,7 @@ houston:
   # This runs as a CronJob
   cleanupTaskUsageData:
     # Run at 23:40 every night
-    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
+    schedule: "40 23 * * *" # https://crontab.guru/#40_23_*_*_*
 
     # Cleanup deployments older than this many days
     olderThan: 90
@@ -266,7 +263,7 @@ houston:
     enabled: true
 
     # Run at 23:11 every night
-    schedule: "11 23 * * *"  # https://crontab.guru/#11_23_*_*_*
+    schedule: "11 23 * * *" # https://crontab.guru/#11_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
@@ -281,7 +278,7 @@ houston:
     enabled: true
 
     # Run at 23:49 every night
-    schedule: "49 23 * * *"  # https://crontab.guru/#49_23_*_*_*
+    schedule: "49 23 * * *" # https://crontab.guru/#49_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
@@ -407,14 +404,12 @@ configSyncer:
   readinessProbe: {}
   livenessProbe: {}
 
-
 commander:
   replicas: 2
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources:
-    {}
+  resources: {}
     # limits:
     #  cpu: 100m
     #  memory: 128Mi
