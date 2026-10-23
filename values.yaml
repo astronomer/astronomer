@@ -943,10 +943,10 @@ vector:    # pod
     resources:
       requests:
         cpu: "250m"
-        memory: "1Gi"
+        memory: "512Mi"
       limits:
         cpu: "1000m"
-        memory: "2Gi"
+        memory: "1024Mi"
     # livenessProbe: {}
     # readinessProbe: {}
 
