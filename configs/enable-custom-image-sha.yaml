@@ -1,0 +1,56 @@
+# Scenario overlay for custom-image-sha: enable Astro Runtime SHA256-digest
+
+# runtimeReleasesConfig is inlined (runtimeReleasesConfigMapName left at its chart default of
+# unset) so houston renders astro_runtime_releases.json straight from these values -- no external
+# configmap, no pre-helm script. The sha256 is the REAL multi-arch digest for
+# astrocrpublic.azurecr.io/runtime:3.1-2; houston forms <repo>@sha256:<hex> from it. Repos are
+# pinned WITHOUT a @sha256 suffix -- houston appends it, and adding it here would make the invalid
+# ...@sha256:sha256:... the doc warns about.
+---
+astronomer:
+  houston:
+    runtimeReleasesConfig:
+      runtimeVersions:
+        "13.1.0":
+          metadata:
+            airflowVersion: "2.11.0"
+            channel: stable
+            releaseDate: "2025-07-02"
+            endOfSupport: "2027-04-30"
+            LTS: true
+          migrations:
+            airflowDatabase: false
+            stellarDatabase: false
+          sha256: "9c57ed87a58e1822ff7b42ba824820c6372d43c2ce3876a49d8029efcd113a91"
+      runtimeVersionsV3:
+        "3.1-2":
+          metadata:
+            airflowVersion: "3.1.0"
+            channel: stable
+            releaseDate: "2025-10-09"
+            endOfSupport: "2027-09-30"
+            LTS: false
+          migrations:
+            airflowDatabase: false
+          sha256: "5a15c6628f4fcf8e7ce06573d98f4873c8cbede63e80ac744d448733ceae9c72"
+    config:
+      airgapped:
+        enabled: true
+      deployments:
+        runtimeManagement:
+          customImageSha:
+            enabled: true
+        deploymentImagesRegistry:
+          updateDeploymentImageEndpoint:
+            enabled: true
+          updateDeploymentImageEndpointDockerValidation:
+            enabled: true
+        helm:
+          runtimeImages:
+            airflow:
+              # WITH @sha256 -- exercises houston's idempotency guard (must not double-append).
+              repository: quay.io/astronomer/astro-runtime@sha256
+          runtimeImagesV3:
+            airflow:
+              # WITHOUT @sha256 -- the normal path where houston appends it.
+              repository: astrocrpublic.azurecr.io/runtime
