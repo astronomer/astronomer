@@ -1167,7 +1167,7 @@ mcpServer:
   # enabled regardless of this list and does not need naming.
   #
   # The eight groups: core (always on, not listed here), platform_read, platform_write,
-  # platform_disruptive (contract changes — executor/runtime/DAG-mechanism — off by default),
+  # platform_disruptive (contract changes — executor/runtime/Dag-mechanism — off by default),
   # platform_destroy (deletion, off by default), airflow_read (read-only Airflow diagnosis —
   # task logs, import errors, installed providers — off by default), airflow_destroy
   # (delete_dag_run, off by default), and skills_load (skill-delivery tools, prompts, and

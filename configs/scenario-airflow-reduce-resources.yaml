@@ -1,5 +1,5 @@
 # Functional-test scenarios create real Airflow Deployments that never run actual
-# DAG tasks, so apc-airflow's production-sized defaults are far more than needed.
+# Dag tasks, so apc-airflow's production-sized defaults are far more than needed.
 # That's a meaningful chunk of why a single Airflow Deployment plus the platform
 # chart exhausted the CI node's CPU (FailedScheduling: Insufficient cpu) once
 # PINF-1049's commander fix stopped masking it by failing before pods were even
