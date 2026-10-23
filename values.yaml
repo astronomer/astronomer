@@ -426,7 +426,7 @@ global:
         tag: 0.12.1-14
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.10.23
+        tag: 2026.10.23-1
       xcom:
         repository: quay.io/astronomer/ap-init
         tag: 2026.10.23
