@@ -160,9 +160,7 @@ data:
           {{- if .Values.global.logging.loggingSidecar.indexPattern }}
           indexPattern: {{ .Values.global.logging.loggingSidecar.indexPattern | squote }}
           {{- end }}
-          {{- if .Values.global.logging.indexNamePrefix }}
-          indexNamePrefix: {{ .Values.global.logging.indexNamePrefix }}
-          {{- end }}
+          indexNamePrefix: {{ include "logging.indexNamePrefix" . }}
           {{- if .Values.global.logging.loggingSidecar.livenessProbe}}
           livenessProbe: {{- .Values.global.logging.loggingSidecar.livenessProbe | toYaml | nindent 12 }}
           {{- end }}
