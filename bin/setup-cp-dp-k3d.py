@@ -457,7 +457,7 @@ class Settings:
     chart_version: str | None = None
     chart_is_prerelease: bool = False
     agents: int = 0
-    force_incompatible_kubernetes_version: bool = False
+    force_incompatible_kubernetes_version: bool = True
 
     @property
     def operator_needs_quay(self) -> bool:
@@ -966,7 +966,7 @@ def _helm_upgrade_install(
     chart_version: str | None = None,
     chart_is_prerelease: bool = False,
     base_values_files: tuple[Path, ...] = (),
-    force_incompatible_kubernetes_version: bool = False,
+    force_incompatible_kubernetes_version: bool = True,
 ) -> None:
     """
     `base_values_files` are applied BEFORE `values_file` (lowest precedence — e.g. the plain
@@ -1784,13 +1784,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--force-incompatible-kubernetes-version",
-        default=False,
-        action="store_true",
+        default=True,
+        action=argparse.BooleanOptionalAction,
         help=(
-            "Used to bypass incompatible kubernetes cluster versions via version_compatibility.tpl file. "
-            "This check will fail helm install if the cluster version is out of range. "
-            "k3d cluster versions can run ahead of the tested cluster version, in this case use the bypass option. "
-            "This is not recommended and may lead to unexpected behavior."
+            "Bypass the incompatible kubernetes cluster version check in version_compatibility_check.tpl "
+            "(sets forceIncompatibleKubernetes=true on the helm install). k3d cluster versions can run "
+            "ahead of the tested cluster versions, so this is enabled by default. "
+            "Pass --no-force-incompatible-kubernetes-version to make helm fail when the cluster version "
+            "is out of range."
         ),
     )
 
