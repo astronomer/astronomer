@@ -119,7 +119,14 @@ def test_kyverno_evaluated_laminar_pods(laminar_pod_uids, custom_objects_client)
     Failing on a violation is specific to this scenario. The scan is audit-only platform-wide
     (PINF-1034) because it is a report, not a gate; here Laminar is the thing under test, so a
     Laminar pod that stops satisfying the policies is a failure, not a line in a report."""
-    reports = custom_objects_client.list_namespaced_custom_object(REPORT_GROUP, REPORT_VERSION, NAMESPACE, "policyreports")["items"]
+    try:
+        reports = custom_objects_client.list_namespaced_custom_object(
+            REPORT_GROUP, REPORT_VERSION, NAMESPACE, "policyreports"
+        )["items"]
+    except client.exceptions.ApiException as exc:
+        if exc.status == 404:
+            pytest.skip("Kyverno PolicyReport CRD is not installed; run bin/install-kyverno-scan.py before this test.")
+        raise
     for deployment_name, pod_uids in laminar_pod_uids.items():
         results = _laminar_results(reports, pod_uids)
         assert results, (
