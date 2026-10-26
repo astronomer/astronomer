@@ -71,8 +71,9 @@ class TestMcpServerDeployment:
         c_by_name = get_containers_by_name(doc)
         assert "mcp-server" in c_by_name
         container = c_by_name["mcp-server"]
-        assert "ap-mcp-server" in container["image"]
+        assert "ap-apc-mcp-server" in container["image"]
         assert container["securityContext"]["readOnlyRootFilesystem"] is True
+        assert {p["name"]: p["containerPort"] for p in container["ports"]} == {"mcp-server-http": 8080, "mcp-metrics": 9090}
 
         # mcp-server is excluded from tests/enable_all_features.yaml (it conflicts with
         # authSidecar there), so the repo-wide guards in test_container_resources.py and
@@ -94,6 +95,7 @@ class TestMcpServerDeployment:
         env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
 
         assert env_vars["LISTEN_ADDR"] == ":8080"
+        assert env_vars["METRICS_LISTEN_ADDR"] == ":9090"
         assert env_vars["HOUSTON_API_URL"] == "http://release-name-houston.default.svc.cluster.local:8871/v1"
         assert env_vars["MCP_ENABLED_GROUPS"] == "platform_read,platform_write"
 
@@ -251,6 +253,112 @@ class TestMcpServerDeployment:
         env_vars = get_env_vars_dict(c_by_name["mcp-server"]["env"])
         assert env_vars["MCP_DISABLED_TOOLS"] == ""
 
+    def test_deployment_pod_security_baseline(self, kube_version):
+        """mcp-server is excluded from tests/enable_all_features.yaml (see its own comment),
+        so the repo-wide guards in test_security_context_override.py never render it and
+        would not catch a regression here. Assert the chart's shared security defaults --
+        confirmed live on a real cluster -- render onto this component directly."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["securityContext"]["seccompProfile"] == {"type": "RuntimeDefault"}
+
+        container = get_containers_by_name(docs[0])["mcp-server"]
+        assert container["securityContext"]["runAsNonRoot"] is True
+        assert container["securityContext"]["allowPrivilegeEscalation"] is False
+        assert container["securityContext"]["capabilities"] == {"drop": ["ALL"]}
+
+    def test_deployment_security_context_override_merges(self, kube_version):
+        """A customer-supplied securityContext/podSecurityContext override must merge into
+        this component the same way it merges into every other platform pod (PINF-713) --
+        not replace the chart's own defaults. Mirrors test_security_context_override.py's
+        sentinel approach, scoped to this component since that file's shared fixture
+        cannot render mcp-server (see its own test_deployment_pod_security_baseline note)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {
+                    "mcpServer": {"enabled": True},
+                    "securityContext": {"xOverrideSentinel": True},
+                    "podSecurityContext": {"xOverrideSentinel": True},
+                },
+            },
+            show_only=[DEPLOYMENT],
+        )
+        pod_sc = docs[0]["spec"]["template"]["spec"]["securityContext"]
+        assert pod_sc["xOverrideSentinel"] is True
+        assert pod_sc["seccompProfile"] == {"type": "RuntimeDefault"}, "override replaced the base instead of merging"
+
+        container_sc = get_containers_by_name(docs[0])["mcp-server"]["securityContext"]
+        assert container_sc["xOverrideSentinel"] is True
+        assert container_sc["runAsNonRoot"] is True, "override replaced the base instead of merging"
+
+    def test_deployment_pod_annotations_merge_global_and_component(self, kube_version):
+        """Both global.podAnnotations and mcpServer.podAnnotations must land on the pod --
+        neither should silently drop the other."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}, "podAnnotations": {"global-ann": "from-global"}},
+                "astronomer": {"mcpServer": {"enabled": True, "podAnnotations": {"component-ann": "from-component"}}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        annotations = docs[0]["spec"]["template"]["metadata"]["annotations"]
+        assert annotations["global-ann"] == "from-global"
+        assert annotations["component-ann"] == "from-component"
+
+    def test_deployment_global_pod_labels_applied(self, kube_version):
+        """global.podLabels must reach this pod template alongside its own existing labels,
+        the same way TestGlobalPodLabels proves for every other component -- that test's own
+        get_all_features() base cannot render mcp-server, so it never actually checks it."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}, "podLabels": {"cost-center": "engineering"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[DEPLOYMENT],
+        )
+        labels = docs[0]["spec"]["template"]["metadata"]["labels"]
+        assert labels["cost-center"] == "engineering"
+        assert labels["component"] == "mcp-server"
+        assert labels["release"] == "release-name"
+
+    def test_deployment_node_pool_placement(self, kube_version):
+        """global.platformNodePool is the platform-wide node-placement override every other
+        component falls back to (see test_nats_sts.py for the same assertion on nats); this
+        component's deployment template reads it through the same `default` fallback."""
+        values = {
+            "global": {
+                "plane": {"mode": "control"},
+                "platformNodePool": {
+                    "nodeSelector": {"role": "astro"},
+                    "affinity": {
+                        "nodeAffinity": {
+                            "requiredDuringSchedulingIgnoredDuringExecution": {
+                                "nodeSelectorTerms": [{"matchExpressions": [{"key": "k", "operator": "Exists"}]}]
+                            }
+                        }
+                    },
+                    "tolerations": [{"key": "astro", "operator": "Exists", "effect": "NoSchedule"}],
+                },
+            },
+            "astronomer": {"mcpServer": {"enabled": True}},
+        }
+        docs = render_chart(kube_version=kube_version, values=values, show_only=[DEPLOYMENT])
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {"role": "astro"}
+        assert spec["affinity"] == values["global"]["platformNodePool"]["affinity"]
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestMcpServerService:
@@ -285,6 +393,69 @@ class TestMcpServerService:
             show_only=[SERVICE],
         )
         assert len(docs) == 0
+
+    def test_service_carries_scrape_annotations(self, kube_version):
+        """The Service advertises itself to Prometheus on its HTTP port; the
+        mcp-server scrape job keys on these annotations, so dropping them silently
+        stops the component from being scraped."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        annotations = docs[0]["metadata"]["annotations"]
+        assert annotations["prometheus.io/scrape"] == "true"
+        assert annotations["prometheus.io/port"] == "9090"
+
+    def test_service_exposes_metrics_port(self, kube_version):
+        """/metrics is served on its own port the ingress never routes, so the Service must
+        publish it alongside the app port for Prometheus to reach it."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        ports = {p["name"]: p["port"] for p in docs[0]["spec"]["ports"]}
+        assert ports == {"mcp-server-http": 8080, "mcp-metrics": 9090}
+
+    def test_service_discovery_handles_survive_contained_name(self, kube_version):
+        """When the release name contains the component, mcpServer.fullname dedupes it, so the
+        Service name is no longer release-name + '-mcp-server'. The scrape job must therefore key
+        on the release label and mcp-server-http port name, which stay stable here."""
+        docs = render_chart(
+            kube_version=kube_version,
+            name="astronomer-mcp-server",
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        svc = docs[0]
+        assert svc["metadata"]["name"] == "astronomer-mcp-server"
+        assert svc["metadata"]["labels"]["release"] == "astronomer-mcp-server"
+        assert svc["spec"]["ports"][0]["name"] == "mcp-server-http"
+
+    def test_service_ports_declare_http_app_protocol(self, kube_version):
+        """appProtocol tells protocol-aware infrastructure (e.g. the mesh, some ingress
+        controllers) how to treat this traffic; both ports should declare it, not just the
+        one the ingress routes."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "control"}},
+                "astronomer": {"mcpServer": {"enabled": True}},
+            },
+            show_only=[SERVICE],
+        )
+        app_protocols = {p["name"]: p.get("appProtocol") for p in docs[0]["spec"]["ports"]}
+        assert app_protocols == {"mcp-server-http": "http", "mcp-metrics": "http"}
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
@@ -342,11 +513,22 @@ class TestMcpServerNetworkPolicy:
         )
         assert len(docs) == 1
         assert docs[0]["kind"] == "NetworkPolicy"
-        ingress_from = docs[0]["spec"]["ingress"][0]["from"]
-        assert {
+        ingress = docs[0]["spec"]["ingress"]
+
+        nginx_peer = {
             "podSelector": {"matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}}
-        } in ingress_from
-        assert docs[0]["spec"]["ingress"][0]["ports"][0]["port"] == 8080
+        }
+        prometheus_peer = {
+            "podSelector": {"matchLabels": {"tier": "monitoring", "component": "prometheus", "release": "release-name"}}
+        }
+
+        app_rule = next(r for r in ingress if r["ports"][0]["port"] == 8080)
+        metrics_rule = next(r for r in ingress if r["ports"][0]["port"] == 9090)
+
+        # nginx reaches the app port; Prometheus reaches only the metrics port, never the
+        # ingress-routed app port -- that separation is the whole point of the dedicated listener.
+        assert app_rule["from"] == [nginx_peer]
+        assert metrics_rule["from"] == [prometheus_peer]
 
     def test_networkpolicy_absent_when_mcp_server_disabled(self, kube_version):
         docs = render_chart(

@@ -171,11 +171,7 @@ idempotent, which is the same contract houston's copy already has.
   securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 4 }}
   resources: {{- toYaml .Values.apiServer.resources | nindent 4 }}
   env:
-    - name: BOOTSTRAP_DB
-      valueFrom:
-        secretKeyRef:
-          name: astronomer-bootstrap
-          key: connection
+    {{- include "astronomer.dbBootstrapper.secretEnv" . | nindent 4 }}
     - name: DB_NAME
       value: {{ .Release.Name }}-laminar
     - name: SECRET_NAME
@@ -188,6 +184,10 @@ idempotent, which is the same contract houston's copy already has.
       value: {{ .Release.Namespace }}
     - name: IN_CLUSTER
       value: "true"
+  {{- if eq "true" (include "astronomer.dbBootstrapper.secretsFromFiles.enabled" .) }}
+  volumeMounts:
+    {{- include "astronomer.dbBootstrapper.secretVolumeMount" . | nindent 4 }}
+  {{- end }}
 {{- end }}
 
 {{- define "laminar.sslCertCopierInitContainer" -}}
@@ -248,3 +248,17 @@ naming one without the other leaves laminar waiting on a secret nothing creates.
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Checksum of the JWKS cert laminar reads, so a regenerated cert rolls the pods.
+Call with (list $ $componentValues).
+*/}}
+{{- define "laminar.jwksChecksum" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+{{- if $component.jwtIssuer -}}
+{{- $name := $component.jwksSecretName | default (printf "%s-commander-signing-cert" $.Release.Name) -}}
+{{- $data := (get ((lookup "v1" "Secret" $.Release.Namespace $name) | default dict) "data") | default dict -}}
+checksum/commander-jwks-secret: {{ (get $data "tls.crt") | b64dec | sha256sum }}
+{{- end -}}
+{{- end -}}

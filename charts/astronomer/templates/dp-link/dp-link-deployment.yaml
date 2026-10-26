@@ -3,6 +3,7 @@
 ###################################
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 {{- if or .Values.dpLink.enabled .Values.global.dataPlaneFailover.enabled .Values.global.laminar.enabled }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.dpLink "key" "astronomer.dpLink")) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -44,7 +45,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "dpLink.serviceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ (include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.dpLink "key" "astronomer.dpLink") | fromYaml)) | nindent 8 }}
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: etc-ssl-certs-copier
@@ -64,6 +65,9 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "houston.image" $) "pullPolicy" .Values.images.houston.pullPolicy "resources" .Values.dpLink.resources "volume" "dp-link-secrets" "path" "/etc/astronomer/secrets/DATABASE_URL") | nindent 8 }}
+{{- end }}
       containers:
         - name: dp-link
           image: {{ template "houston.image" . }}
@@ -72,6 +76,7 @@ spec:
           resources: {{- toYaml .Values.dpLink.resources | nindent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
+            {{- include "dp_link_secret_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
             - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
@@ -100,29 +105,33 @@ spec:
             - name: NAMESPACE
               value: {{ .Release.Namespace }}
             # Claim loop configuration
-            - name: CLAIM_INTERVAL_SECONDS
+            - name: WORKERS__DPLINK__CLAIM_INTERVAL_SECONDS
               value: {{ .Values.dpLink.claimIntervalSeconds | quote }}
             # Owner loop configuration
-            - name: LEASE_RENEWAL_INTERVAL_SECONDS
+            - name: WORKERS__DPLINK__LEASE_RENEWAL_INTERVAL_SECONDS
               value: {{ .Values.dpLink.leaseRenewalIntervalSeconds | quote }}
-            - name: LEASE_DURATION_SECONDS
+            - name: WORKERS__DPLINK__LEASE_DURATION_SECONDS
               value: {{ .Values.dpLink.leaseDurationSeconds | quote }}
             # Heartbeat configuration
-            - name: UNREACHABLE_THRESHOLD_SECONDS
+            - name: WORKERS__DPLINK__UNREACHABLE_THRESHOLD_SECONDS
               value: {{ .Values.dpLink.unreachableThresholdSeconds | quote }}
-            - name: DEGRADED_THRESHOLD_SECONDS
+            - name: WORKERS__DPLINK__DEGRADED_THRESHOLD_SECONDS
               value: {{ .Values.dpLink.degradedThresholdSeconds | quote }}
             # Stream reconnect configuration
-            - name: RECONNECT_MAX_ATTEMPTS
+            - name: WORKERS__DPLINK__RECONNECT_MAX_ATTEMPTS
               value: {{ .Values.dpLink.reconnectMaxAttempts | quote }}
-            - name: INITIAL_RECONNECT_DELAY_SECONDS
+            - name: WORKERS__DPLINK__INITIAL_RECONNECT_DELAY_SECONDS
               value: {{ .Values.dpLink.initialReconnectDelaySeconds | quote }}
-            - name: MAX_RECONNECT_DELAY_SECONDS
+            - name: WORKERS__DPLINK__MAX_RECONNECT_DELAY_SECONDS
               value: {{ .Values.dpLink.maxReconnectDelaySeconds | quote }}
-            - name: RECONNECT_DELAY_MULTIPLIER
+            - name: WORKERS__DPLINK__RECONNECT_DELAY_MULTIPLIER
               value: {{ .Values.dpLink.reconnectDelayMultiplier | quote }}
-            - name: JITTER_FRACTION
+            - name: WORKERS__DPLINK__JITTER_FRACTION
               value: {{ .Values.dpLink.jitterFraction | quote }}
+            {{- /* Rendered verbatim, so valueFrom entries and templated values work.
+                   dp_link_environment renders the same entries once more as name and
+                   value, on purpose (see the note there), and checks them against
+                   strict secrets-from-files while dp-link reads its secrets from files. */}}
             {{- if .Values.dpLink.env }}
             {{- tpl (toYaml .Values.dpLink.env) $ | nindent 12 }}
             {{- end }}
@@ -154,6 +163,7 @@ spec:
         {{- tpl (toYaml .Values.dpLink.extraVolumes) $ | nindent 8 }}
         {{- end }}
         {{- include "houston_volumes" . | nindent 8 }}
+        {{- include "dp_link_secret_volumes" . | nindent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
 
 {{- end }}

@@ -35,14 +35,21 @@ chart_values = get_all_features()
 
 @pytest.mark.parametrize("template", show_only)
 def test_tags_monitoring_enabled(template, chart_values=chart_values, kube_version=newest_supported_kube_version):
-    """Test that when monitoring is enabled, the monitoring components are not present."""
+    """Test that when monitoring is enabled, the monitoring components are present."""
     chart_values["tags"] = {"monitoring": True}
     if "auth-sidecar" in template:
         chart_values["global"] = {"plane": {"mode": "control"}, "authSidecar": {"enabled": True}}
-    elif "prometheus-federate-ingress" in template or "prometheus-federation-auth" in template:
+    elif (
+        "prometheus-federate-ingress" in template
+        or "prometheus-federate-virtualservice" in template
+        or "prometheus-federation-auth" in template
+    ):
         chart_values["global"] = {"plane": {"mode": "data"}}
     else:
         chart_values["global"] = {"plane": {"mode": "unified"}}
+    if "virtualservice" in template:
+        # VirtualServices only render in place of the Ingresses, once an Istio Gateway is configured.
+        chart_values["global"]["istio"] = {"gateway": {"enabled": True, "name": "istio-system/default-gateway"}}
     docs = render_chart(kube_version=kube_version, values=chart_values, show_only=template)
     assert len(docs) >= 1
 

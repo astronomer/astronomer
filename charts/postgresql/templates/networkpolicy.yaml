@@ -35,6 +35,10 @@ spec:
           matchLabels:
             release: {{ .Release.Name }}
             component: grafana
+      - podSelector:
+          matchLabels:
+            release: {{ .Release.Name }}
+            tier: laminar
       {{- if .Values.global.networkNSLabels.enabled  }}
       - namespaceSelector:
           matchLabels:

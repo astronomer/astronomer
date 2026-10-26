@@ -219,6 +219,14 @@ def test_all_containers_omit_runasuser_on_openshift(template_name):
     overrides = {"global": {"openshift": {"enabled": True}, "networkNSLabels": {"enabled": True}}}
     if any(substring in template_name for substring in data_plane_only_template_substrings):
         overrides["global"]["plane"] = {"mode": "data"}
+    if "mcp-server" in template_name:
+        # mcp-server is excluded from get_all_features() (it hard-fails the chart render
+        # alongside authSidecar, see enable_all_features.yaml's own comment), so without this
+        # override this parametrized case renders zero documents and the loop below never runs
+        # -- a false green that would not catch a real runAsUser regression. Force it on and
+        # disable its one real conflict for this render only.
+        overrides["astronomer"] = {"mcpServer": {"enabled": True}}
+        overrides["global"]["authSidecar"] = {"enabled": False}
     values = always_merger.merge(get_all_features(), overrides)
 
     docs = [doc for doc in render_chart(show_only=template_name, values=values) if doc["kind"] in pod_managers]

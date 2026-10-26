@@ -31,6 +31,20 @@ def discover_scenarios() -> list[dict]:
       the build. Needs a GITHUB_TOKEN with read access to the private
       astronomer/apc-terraform-modules repo, so this also adds the `github-repo`
       CircleCI context to just this scenario's job.
+    - `quay_login: true` to run `docker login quay.io` in this scenario's job before
+      run-scenario.py, adding the `quay.io` CircleCI context (QUAY_USERNAME /
+      QUAY_PASSWORD) to just that job. For a scenario that sideloads an image from a
+      private quay repository, which the cluster node cannot pull unauthenticated.
+      Scenario jobs use a machine executor, so the login lands in the host's own Docker
+      config -- the store bin/kind-load-images.py --pull fetches into.
+    - `ci: false` to keep a scenario out of the generated config entirely, while
+      still being runnable locally via bin/run-scenario.py and pytest. For a
+      scenario whose prerequisites are not published yet -- an image carrying
+      code that is still on an unmerged branch, say -- this is not cosmetic: on
+      master and release-X.Y the scenario job runs automatically AND gates
+      release-to-internal, so a scenario that cannot pass would block releases
+      rather than merely show red. Default true; set it back to true in the same
+      change that lands the missing prerequisite.
     """
     scenarios_dir = git_root_dir / "tests" / "functional" / "scenarios"
     if not scenarios_dir.is_dir():
@@ -43,12 +57,16 @@ def discover_scenarios() -> list[dict]:
             raise SystemExit(
                 f"ERROR: {profile_path} must set topology to one of unified/control/data, got {profile.get('topology')!r}"
             )
+        if not profile.get("ci", True):
+            print(f"Skipping CI job for scenario {profile_path.parent.name!r}: test_profile.yaml sets ci: false")
+            continue
         scenarios.append(
             {
                 "name": profile_path.parent.name,
                 "topology": profile["topology"],
                 "resource_class": profile.get("resource_class", "xlarge"),
                 "kyverno_scan": profile.get("kyverno_scan", False),
+                "quay_login": profile.get("quay_login", False),
             }
         )
     return scenarios

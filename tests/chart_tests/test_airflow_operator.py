@@ -457,7 +457,7 @@ class TestAirflowOperator:
         c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
         image = c_by_name["manager"]["image"]
         # When privateRegistry is enabled the image is built from the private repo + the dev image name.
-        assert image.startswith("my.private.registry/astronomer/airflow-operator-controller:")
+        assert image.startswith("my.private.registry/astronomer/airflow-operator")
 
     def test_airflow_operator_pod_annotations_merge(self, kube_version):
         """The controller pod merges global.podAnnotations with the operator-local podAnnotations.

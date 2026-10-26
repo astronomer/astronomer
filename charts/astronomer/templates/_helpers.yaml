@@ -324,11 +324,13 @@ it alone.
   value: {{ .Values.commander.region | default "local" | quote }}
 - name: COMMANDER_VERSION
   value: {{ .Values.images.commander.tag | quote }}
+{{- if not (eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.commander "key" "astronomer.commander"))) }}
 - name: COMMANDER_DATAPLANE_DATABASE_URL
   valueFrom:
     secretKeyRef:
       name: astronomer-bootstrap
       key: connection
+{{- end }}
 - name: COMMANDER_DATAPLANE_ID
   value: {{ .Values.global.plane.domainPrefix | default "astronomer" }}
 - name: COMMANDER_BASE_DOMAIN
@@ -413,6 +415,12 @@ s3:
   `if .Values.global.controlPlaneHA.enabled` — in HA mode it is mounted on every
   control-plane pod that runs a state-mutating/reconciliation loop so it can resolve
   its region's active state (Region-gating).
+
+  Only for a component that is off. One that reads its secrets from files gets
+  CP_ID as a file instead: houston.cpIdSecretSource in its secret volume, plus
+  CP_ID_FILE and an entry in HOUSTON_SECRETS_FROM_FILES_EXTRA, both from
+  houston.secretsFromFiles.extraNames. Its loader refuses a CP_ID in the
+  environment, so render one form or the other, never both.
 */}}
 {{- define "houston.cpIdEnv" -}}
 - name: CP_ID
@@ -422,15 +430,131 @@ s3:
       key: cp_id
 {{- end -}}
 
+{{- /*
+  The projected-volume source that delivers CP_ID as a file into a houston-family
+  component's secret volume, the file form of houston.cpIdEnv. Render it under
+  controlPlaneHA, inside the component's `sources:` list, when the component reads
+  its secrets from files.
+
+  cp-identity is a pre-install/pre-upgrade hook Secret, recreated on every
+  upgrade. A pod that starts inside that brief window waits on FailedMount until
+  the Secret is back, where the env form waited on CreateContainerConfigError.
+  Both clear on their own.
+*/}}
+{{- define "houston.cpIdSecretSource" -}}
+- secret:
+    name: cp-identity
+    items:
+      - key: cp_id
+        path: CP_ID
+{{- end -}}
+
+{{- /*
+  The names a houston-family component (houston, navigator, dp-link) passes to its
+  loader in HOUSTON_SECRETS_FROM_FILES_EXTRA, in order: each operator-defined
+  secret[] envName, then CP_ID under controlPlaneHA. The loader cannot know them at
+  build time. Each gets a <NAME>_FILE env var and a file of that name in the
+  component's secret volume, and the loader treats each as both managed and
+  required. Renders a JSON list:
+
+    {{- $extraSecrets := include "houston.secretsFromFiles.extraNames" (dict "ctx" . "secrets" .Values.houston.secret) | fromJsonArray }}
+*/}}
+{{- define "houston.secretsFromFiles.extraNames" -}}
+{{- $names := list -}}
+{{- range (.secrets | default list) -}}
+{{- $names = append $names .envName -}}
+{{- end -}}
+{{- if .ctx.Values.global.controlPlaneHA.enabled -}}
+{{- $names = append $names "CP_ID" -}}
+{{- end -}}
+{{- $names | toJson -}}
+{{- end -}}
+
+{{- /*
+  Every env var a houston-family component's loader manages, and so refuses in its
+  environment while it reads secrets from files: houston-api's built-in list plus
+  that component's extra names. Same arguments as houston.secretsFromFiles.extraNames;
+  renders a JSON list.
+*/}}
+{{- define "houston.secretsFromFiles.managedNames" -}}
+{{- concat (include "secretsFromFiles.houstonSecretEnvVars" .ctx | fromJsonArray) (include "houston.secretsFromFiles.extraNames" . | fromJsonArray) | toJson -}}
+{{- end -}}
+
+{{- /*
+  The strict secrets-from-files checks for a component running houston-api's loader,
+  while it reads its secrets from files: no secret[] entry may collide with another
+  or with a secret the chart delivers, and its env list may neither set a managed
+  secret nor one of the loader's own settings (HOUSTON_SECRETS_FROM_FILES, its
+  EXTRA list, a managed name's <VAR>_FILE). See
+  secretsFromFiles.assertUniqueSecretFiles and secretsFromFiles.assertNoSecretEnv.
+
+    ctx         the root context
+    enabled     the component's resolved toggle; nothing is checked when it is false
+    key         the component's values path, for example "astronomer.navigator"
+    component   its name in messages
+    env         its env list
+    raw         true when that list is rendered verbatim, valueFrom included
+    secrets     its secret[] list
+    chartFiles  the secrets the chart delivers to it besides DEPLOYMENTS__DATABASE__CONNECTION
+                and CP_ID, which are added here when the chart delivers them
+*/}}
+{{- define "houston.secretsFromFiles.assert" -}}
+{{- if .enabled -}}
+{{- $reserved := .chartFiles -}}
+{{- if not (((.ctx.Values.houston.config.deployments).database).connection) -}}
+{{- $reserved = append $reserved "DEPLOYMENTS__DATABASE__CONNECTION" -}}
+{{- end -}}
+{{- if .ctx.Values.global.controlPlaneHA.enabled -}}
+{{- $reserved = append $reserved "CP_ID" -}}
+{{- end -}}
+{{- include "secretsFromFiles.assertUniqueSecretFiles" (dict "enabled" true "secrets" .secrets "listKey" (printf "%s.secret" .key) "reserved" $reserved "key" .key "component" .component) -}}
+{{- $managed := include "houston.secretsFromFiles.managedNames" (dict "ctx" .ctx "secrets" .secrets) | fromJsonArray -}}
+{{- include "secretsFromFiles.assertNoSecretEnv" (dict "enabled" true "env" .env "listKey" (printf "%s.env" .key) "names" $managed "key" .key "component" .component "gate" "HOUSTON_SECRETS_FROM_FILES" "settings" (list "HOUSTON_SECRETS_FROM_FILES_EXTRA") "raw" (default false .raw) "fileHint" (printf "%s.secret" .key) "delivered" $reserved) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "dp_link_environment" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink "key" "astronomer.dpLink")) }}
+{{- /* dpLink.env is rendered verbatim by dp-link-deployment.yaml, so a valueFrom in it reaches the pod spec. */}}
+{{- include "houston.secretsFromFiles.assert" (dict "ctx" . "enabled" $secretsFromFiles "key" "astronomer.dpLink" "component" "dp-link" "env" .Values.dpLink.env "raw" true "secrets" .Values.dpLink.secret "chartFiles" (list "DATABASE__CONNECTION" "DATABASE_URL")) }}
 - name: NODE_ENV
   value: "production"
-{{- /* Dynamically created envs */ -}}
+{{- if $secretsFromFiles }}
+- name: HOUSTON_SECRETS_FROM_FILES
+  value: "true"
+- name: DATABASE__CONNECTION_FILE
+  value: /etc/astronomer/secrets/DATABASE__CONNECTION
+- name: DATABASE_URL_FILE
+  value: /etc/astronomer/secrets/DATABASE_URL
+{{- if not (((.Values.houston.config.deployments).database).connection) }}
+- name: DEPLOYMENTS__DATABASE__CONNECTION_FILE
+  value: /etc/astronomer/secrets/DEPLOYMENTS__DATABASE__CONNECTION
+{{- end }}
+{{- $extraSecrets := include "houston.secretsFromFiles.extraNames" (dict "ctx" . "secrets" .Values.dpLink.secret) | fromJsonArray }}
+{{- range $extraSecrets }}
+- name: {{ . }}_FILE
+  value: /etc/astronomer/secrets/{{ . }}
+{{- end }}
+{{- if $extraSecrets }}
+- name: HOUSTON_SECRETS_FROM_FILES_EXTRA
+  value: {{ join "," $extraSecrets | quote }}
+{{- end }}
+{{- end }}
+{{- /* Dynamically created envs.
+
+       dp-link-deployment.yaml renders dpLink.env again, verbatim, at the end of the
+       container's env, so every entry appears twice and the later copy wins. The
+       duplicate is kept on purpose. Every release so far rendered both, and dropping
+       one makes Helm's three-way strategic merge patch emit a $patch: delete for
+       that name, which removes BOTH copies: dp-link would restart once without the
+       operator's env. Drop it only in a release that also renames the dp-link
+       container, as PINF-74 did for houston-wait-for-db. */ -}}
 {{- range $i, $config := .Values.dpLink.env }}
 - name: {{ $config.name }}
   value: {{ $config.value | quote }}
 {{- end }}
 {{- /* Dynamically created secret envs */ -}}
+{{- if not $secretsFromFiles }}
 {{- range $i, $config := .Values.dpLink.secret }}
 - name: {{ $config.envName }}
   valueFrom:
@@ -438,11 +562,14 @@ s3:
       name: {{ $config.secretName }}
       key: {{ default "value" $config.secretKey }}
 {{- end }}
+{{- end }}
+{{- if not $secretsFromFiles }}
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- end }}
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
@@ -451,17 +578,21 @@ s3:
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
   value: {{ .Values.registry.auth.service }}
+{{- if not $secretsFromFiles }}
 - name: DATABASE_URL
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- end }}
 {{- if not (((.Values.houston.config.deployments).database).connection) }}
+{{- if not $secretsFromFiles }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
+{{- end }}
 {{ end }}
 # These are set here for Houston's entrypoint script
 - name: HOUSTON__HOST
@@ -482,19 +613,95 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
-{{- if .Values.global.controlPlaneHA.enabled }}
+{{- if and .Values.global.controlPlaneHA.enabled (not $secretsFromFiles) }}
 {{- include "houston.cpIdEnv" . | nindent 0 }}
 {{- end }}
 {{- end }}
 
 
+{{/*
+Same idea as houston_secret_volumes, scoped to dp-link's own toggle and its own
+operator-defined secret list.
+*/}}
+{{- define "dp_link_secret_volumes" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink "key" "astronomer.dpLink")) }}
+- name: dp-link-secrets
+  projected:
+    {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 4 }}
+    sources:
+      - secret:
+          name: {{ template "houston.backendSecret" . }}
+          items:
+            - key: connection
+              path: DATABASE__CONNECTION
+            - key: connection
+              path: DATABASE_URL
+      {{- if not (((.Values.houston.config.deployments).database).connection) }}
+      - secret:
+          name: {{ template "houston.airflowBackendSecret" . }}
+          items:
+            - key: connection
+              path: DEPLOYMENTS__DATABASE__CONNECTION
+      {{- end }}
+      {{- range $i, $config := .Values.dpLink.secret }}
+      - secret:
+          name: {{ $config.secretName }}
+          items:
+            - key: {{ default "value" $config.secretKey }}
+              path: {{ $config.envName }}
+      {{- end }}
+      {{- if .Values.global.controlPlaneHA.enabled }}
+      {{- include "houston.cpIdSecretSource" . | nindent 6 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "dp_link_secret_volume_mounts" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.dpLink "key" "astronomer.dpLink")) }}
+- name: dp-link-secrets
+  mountPath: /etc/astronomer/secrets
+  readOnly: true
+{{- end }}
+{{- end }}
+
 {{- define "houston_environment" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston "key" "astronomer.houston")) }}
+{{- /* REGISTRY__AUTH_HEADER is delivered to the API from its own volume; a secret[] copy
+       would give that container a second REGISTRY__AUTH_HEADER_FILE. */}}
+{{- include "houston.secretsFromFiles.assert" (dict "ctx" . "enabled" $secretsFromFiles "key" "astronomer.houston" "component" "houston" "env" .Values.houston.env "secrets" .Values.houston.secret "chartFiles" (list "DATABASE__CONNECTION" "DATABASE_URL" "REGISTRY__AUTH_HEADER")) }}
+{{- if $secretsFromFiles }}
+- name: HOUSTON_SECRETS_FROM_FILES
+  value: "true"
+{{- /* Point the loader at the chart-owned path explicitly rather than relying on
+       its built-in default, so the chart is not coupled to the image's default
+       and cannot regress if that default changes. */}}
+- name: DATABASE__CONNECTION_FILE
+  value: /etc/astronomer/secrets/DATABASE__CONNECTION
+- name: DATABASE_URL_FILE
+  value: /etc/astronomer/secrets/DATABASE_URL
+{{- if not (((.Values.houston.config.deployments).database).connection) }}
+- name: DEPLOYMENTS__DATABASE__CONNECTION_FILE
+  value: /etc/astronomer/secrets/DEPLOYMENTS__DATABASE__CONNECTION
+{{- end }}
+{{- /* The loader cannot know operator-defined secret env var names (or CP_ID, which
+       only exists under controlPlaneHA) at build time, so pass them through. */}}
+{{- $extraSecrets := include "houston.secretsFromFiles.extraNames" (dict "ctx" . "secrets" .Values.houston.secret) | fromJsonArray }}
+{{- range $extraSecrets }}
+- name: {{ . }}_FILE
+  value: /etc/astronomer/secrets/{{ . }}
+{{- end }}
+{{- if $extraSecrets }}
+- name: HOUSTON_SECRETS_FROM_FILES_EXTRA
+  value: {{ join "," $extraSecrets | quote }}
+{{- end }}
+{{- end }}
 {{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.houston.env }}
 - name: {{ $config.name }}
   value: {{ $config.value | quote }}
 {{- end }}
 {{- /* Dynamically created secret envs */ -}}
+{{- if not $secretsFromFiles }}
 {{- range $i, $config := .Values.houston.secret }}
 - name: {{ $config.envName }}
   valueFrom:
@@ -502,16 +709,19 @@ s3:
       name: {{ $config.secretName }}
       key: {{ default "value" $config.secretKey }}
 {{- end }}
+{{- end }}
 - name: NODE_ENV
   value: "production"
-{{- if .Values.global.controlPlaneHA.enabled }}
+{{- if and .Values.global.controlPlaneHA.enabled (not $secretsFromFiles) }}
 {{- include "houston.cpIdEnv" . | nindent 0 }}
 {{- end }}
+{{- if not $secretsFromFiles }}
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- end }}
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
@@ -520,37 +730,23 @@ s3:
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
   value: {{ .Values.registry.auth.service }}
+{{- if not $secretsFromFiles }}
 - name: DATABASE_URL
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- end }}
 {{- if not (((.Values.houston.config.deployments).database).connection) }}
+{{- if not $secretsFromFiles }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
 {{- end }}
-# These are set here for Houston's entrypoint script
-- name: HOUSTON__HOST
-  value: {{ .Release.Name }}-houston
-- name: COMMANDER__HOST
-  value: {{ .Release.Name }}-commander
-- name: COMMANDER__PORT
-  value: {{ .Values.ports.commanderGRPC | quote }}
-- name: REGISTRY__HOST
-  value: {{ template "registry.fullname" . }}
-- name: REGISTRY__PORT
-  value: {{ .Values.ports.registryHTTP | quote }}
-- name: NATS__SERVERS
-  value: {{ template "houston.nats.servers" . }}
-- name: NATS__CLUSTER_ID
-  value: {{ .Release.Name }}-stan
-- name: COMMANDER_WAIT_ENABLED
-  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
-- name: REGISTRY_WAIT_ENABLED
-  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
+{{- end }}
+{{- include "houston_entrypoint_environment" . }}
 {{- if .Values.houston.updateRuntimeCheck.enabled }}
 - name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
   value: {{ .Values.houston.updateRuntimeCheck.url }}
@@ -608,6 +804,60 @@ s3:
 {{- end }}
 {{- end }}
 
+{{/*
+The variables houston-api's bin/entrypoint reads before it execs its command:
+where commander, the registry and NATS are, and whether to wait for commander and
+the registry. None of them is a secret. Part of houston_environment, and all of it
+that the shell-only wait-for-db init containers get while houston reads its
+secrets from files (houston_wait_for_db_environment).
+*/}}
+{{- define "houston_entrypoint_environment" }}
+# These are set here for Houston's entrypoint script
+- name: HOUSTON__HOST
+  value: {{ .Release.Name }}-houston
+- name: COMMANDER__HOST
+  value: {{ .Release.Name }}-commander
+- name: COMMANDER__PORT
+  value: {{ .Values.ports.commanderGRPC | quote }}
+- name: REGISTRY__HOST
+  value: {{ template "registry.fullname" . }}
+- name: REGISTRY__PORT
+  value: {{ .Values.ports.registryHTTP | quote }}
+- name: NATS__SERVERS
+  value: {{ template "houston.nats.servers" . }}
+- name: NATS__CLUSTER_ID
+  value: {{ .Release.Name }}-stan
+- name: COMMANDER_WAIT_ENABLED
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
+- name: REGISTRY_WAIT_ENABLED
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
+{{- end }}
+
+{{/*
+The env of the wait-for-db init containers. They run houston-api's pure-shell
+bin/entrypoint, which waits for commander, the registry and NATS and then execs
+`echo`; node never starts, so the secrets loader never runs in them, and they
+mount no secret volume.
+
+While houston reads its secrets from files they therefore get only what that
+entrypoint reads, plus the operator's houston.env, which can tune the NATS wait.
+No loader gate, no <VAR>_FILE paths, no HOUSTON_SECRETS_FROM_FILES_EXTRA and no
+CP_ID: a container that advertises files it does not mount would crash loop the
+day it ran node. With houston off they keep the whole houston_environment,
+exactly as before.
+*/}}
+{{- define "houston_wait_for_db_environment" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston "key" "astronomer.houston")) }}
+{{- range $i, $config := .Values.houston.env }}
+- name: {{ $config.name }}
+  value: {{ $config.value | quote }}
+{{- end }}
+{{- include "houston_entrypoint_environment" . }}
+{{- else }}
+{{- include "houston_environment" . }}
+{{- end }}
+{{- end }}
+
 {{- define "houston_volume_mounts" }}
 - name: houston-config-volume
   mountPath: /houston/config/production.yaml
@@ -641,6 +891,64 @@ s3:
 {{- end }}
 {{- end }}
 
+{{/*
+Mount for the file-based secrets. Paired with houston_secret_volumes.
+
+Included explicitly by each houston workload rather than from
+houston_volume_mounts, because dp-link also includes houston_volume_mounts but
+has its own toggle and its own secret list -- sharing would either mount two
+volumes at the same path or leave dp-link with no mount at all.
+*/}}
+{{- define "houston_secret_volume_mounts" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston "key" "astronomer.houston")) }}
+- name: houston-secrets
+  mountPath: /etc/astronomer/secrets
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{/*
+Houston reads its secrets from files named after the environment variables they
+replace. Several different Secrets have to land in one directory, so they are
+combined into a single projected volume.
+
+REGISTRY__AUTH_HEADER is deliberately absent: it is only consumed by the API
+container, so it gets its own volume there rather than being mounted into all
+~14 houston workloads.
+*/}}
+{{- define "houston_secret_volumes" }}
+{{- if eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.houston "key" "astronomer.houston")) }}
+- name: houston-secrets
+  projected:
+    {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 4 }}
+    sources:
+      - secret:
+          name: {{ template "houston.backendSecret" . }}
+          items:
+            - key: connection
+              path: DATABASE__CONNECTION
+            - key: connection
+              path: DATABASE_URL
+      {{- if not (((.Values.houston.config.deployments).database).connection) }}
+      - secret:
+          name: {{ template "houston.airflowBackendSecret" . }}
+          items:
+            - key: connection
+              path: DEPLOYMENTS__DATABASE__CONNECTION
+      {{- end }}
+      {{- range $i, $config := .Values.houston.secret }}
+      - secret:
+          name: {{ $config.secretName }}
+          items:
+            - key: {{ default "value" $config.secretKey }}
+              path: {{ $config.envName }}
+      {{- end }}
+      {{- if .Values.global.controlPlaneHA.enabled }}
+      {{- include "houston.cpIdSecretSource" . | nindent 6 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "houston_volumes" }}
 - name: houston-config-volume
   configMap:
@@ -650,7 +958,7 @@ s3:
         path: production.yaml
       - key: local-production.yaml
         path: local-production.yaml
-      {{- if and .Values.houston.RuntimeReleasesConfig (not .Values.houston.runtimeReleasesconfigMapName )}}
+      {{- if and .Values.houston.runtimeReleasesConfig (not .Values.houston.runtimeReleasesConfigMapName )}}
       - key: astro_runtime_releases.json
         path: astro_runtime_releases.json
       {{- end }}
@@ -1000,7 +1308,7 @@ Returns the string "true" or "false" — compare with eq.
 
 {{ define "mcpServer.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-mcp-server:{{ .Values.images.mcpServer.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-apc-mcp-server:{{ .Values.images.mcpServer.tag }}
 {{- else -}}
 {{ .Values.images.mcpServer.repository }}:{{ .Values.images.mcpServer.tag }}
 {{- end }}
@@ -1064,6 +1372,35 @@ it to data mode — and aligning pilot's DSN gate with this helper — is tracke
 {{- define "flightdeck.enabled" -}}
 {{- if or .Values.flightDeck.enabled (and (or .Values.global.dataPlaneFailover.enabled .Values.global.controlPlaneHA.enabled) (eq .Values.global.plane.mode "data")) }}
 true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether the chart renders the <release>-flightdeck-backend placeholder Secret:
+only while a component that mounts it as a file reads the FlightDeck DSN from
+it -- commander, or pilot. Both mount it only with FlightDeck on, so this
+requires that too.
+
+With every such switch off the Secret is left to the flightdeck-bootstrapper,
+exactly as before secrets-from-files: the bootstrapper creates it at runtime and
+its consumers read it through secretKeyRef, which waits for the bootstrapper.
+Rendering it then would gain nothing, and would make `helm upgrade` try to adopt
+a Secret an older release's bootstrapper created without Helm ownership metadata,
+failing unless bin/adopt-bootstrap-secrets-pre-upgrade.py ran first.
+
+Mirrors the conditions under which commander-deployment.yaml and
+pilot-deployment.yaml mount the Secret; a chart test pins the two together.
+Renders "true" or nothing.
+*/}}
+{{- define "flightdeck.backendSecretRendered" -}}
+{{- if and (eq (include "astronomer.dataPlaneEnabled" .) "true") (include "flightdeck.enabled" .) -}}
+{{- $commander := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.commander "key" "astronomer.commander")) -}}
+{{- $pilotRenders := or .Values.pilot.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data")) -}}
+{{- $pilotHasDsn := or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled -}}
+{{- $pilot := and $pilotRenders $pilotHasDsn (eq "true" (include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values.pilot "key" "astronomer.pilot"))) -}}
+{{- if or $commander $pilot -}}
+true
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
