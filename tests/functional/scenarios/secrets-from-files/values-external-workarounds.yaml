@@ -1,0 +1,61 @@
+############################################################################
+## Workarounds for defects OUTSIDE this feature that would otherwise make the
+## scenario red for reasons it is not testing. Each one is reproducible and
+## scoped; none of them hides anything about secrets-from-files.
+##
+## Delete an entry as soon as its underlying defect is fixed.
+############################################################################
+
+# BOTH entries below are the same root cause: ap-vector:0.58.0 performs NO
+# `${VAR}` environment interpolation in its config.
+#
+# Reproduced in the image with a three-line config and no secrets involved:
+#   uri: "${MY_ENDPOINT}"  ->  "Failed to validate sink: invalid uri character"
+# and it fails IDENTICALLY whether MY_ENDPOINT is set or unset, so it is not a
+# missing-variable problem. The `$`, `{` and `}` are the "invalid uri
+# characters": vector is parsing the placeholder literally.
+#
+# This breaks both Vector configs the chart ships, because both route non-secret
+# values through env vars that Helm already knows at render time:
+#   - houston audit sidecar: endpoints: ["${ES_ENDPOINT}"]
+#   - vector daemonset:      endpoint: "http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"
+# The daemonset has no secret backend and no SECRET[...] at all and fails the
+# same way, which is what proves this is unrelated to secrets-from-files.
+#
+# This feature's OWN Vector mechanism is unaffected, verified in the same image:
+# a `secret: directory` backend plus SECRET[elasticsearch.username] /
+# SECRET[...password] against a LITERAL endpoint validates cleanly. So the
+# feature's conversion survived the image bump from the 0.53.0 it was originally
+# verified against; only the surrounding endpoint interpolation is broken.
+#
+# Consequence for coverage: the Vector half of this feature stays render-only
+# until the chart stops routing those endpoints through env vars (or pins an
+# image that interpolates). Re-enable loggingSidecar here at that point.
+astronomer:
+  houston:
+    logging:
+      loggingSidecar:
+        enabled: false
+
+global:
+  daemonsetLogging:
+    enabled: false
+
+  # astronomer-commander-policy's ingress rule for commander's gRPC port 50051 admits
+  # twelve components by podSelector and omits three that legitimately open it:
+  # dp-link, navigator, and the houston-cleanup-cluster-audits cronjob.
+  #
+  # Verified live rather than read off the template: from the dp-link pod,
+  #   nc -z -w3 astronomer-commander 50051  ->  BLOCKED
+  # dp-link's entrypoint nc-waits on exactly that port, so with the policy on it never
+  # reaches `yarn dplink` -- it sits in "Waiting for host: astronomer-commander 50051"
+  # forever and its loader never runs. The cleanup-cluster-audits cronjob hangs the same
+  # way, which is why Stage 3 can only reach 9/9 cronjobs with the policy off.
+  #
+  # Pre-existing and orthogonal: this feature does not touch NetworkPolicy, and the gap
+  # is latent in a stock install only because dp-link and navigator are not both enabled
+  # there. It is already recorded as plan finding 3a and as a "real but address
+  # separately" item in the security review. Disabled here to isolate what IS under test;
+  # the fix is three more podSelector entries in that ingress rule.
+  networkPolicy:
+    enabled: false

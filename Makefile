@@ -72,11 +72,11 @@ build: ## Build the Astronomer helm chart
 
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
-	@bin/show-docker-images.py --with-houston
+	@bin/show_docker_images.py --with-houston
 
 .PHONY: show-docker-images-with-private-registry
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
-	@bin/show-docker-images.py --private-registry --with-houston
+	@bin/show_docker_images.py --private-registry --with-houston
 
 .PHONY: show-downloaded-tool-versions
 show-test-helper-tool-versions: ## Show the versions of helper tools that were downloaded during testing
@@ -91,7 +91,7 @@ show-test-helper-files: ## Show all the test helper files downloaded and created
 
 .PHONY: cache-docker-images
 cache-docker-images: ## Cache all docker images used in the base helm chart
-	bin/show-docker-images.py --no-enable-all-features | cut -w -f2 | xargs -t -r -n1 docker pull
+	bin/show_docker_images.py --no-enable-all-features | cut -w -f2 | xargs -t -r -n1 docker pull
 
 .PHONY: uv-lock-upgrade
 uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.

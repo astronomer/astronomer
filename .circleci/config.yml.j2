@@ -194,6 +194,17 @@ jobs:
             fi
             bin/trigger_stage_cluster_update.py "${args[@]}"
 
+  validate-release-images:
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Fail the release if any image is a release candidate
+          command: |
+            uv run bin/check-no-rc-images.py
+
   release-to-public:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
@@ -256,6 +267,15 @@ jobs:
       - run:
           name: Create venv
           command: uv venv -p {{ python_image_version }} --seed && uv sync
+{%- if scenario.quay_login %}
+      # This scenario sideloads an image from a private quay.io repository, which an
+      # unauthenticated node cannot pull. Scenario jobs run on a machine executor, so this
+      # login lands in the host's own Docker config -- the same store bin/kind-load-images.py
+      # --pull fetches into and `kind load docker-image` reads from.
+      - run:
+          name: Login to quay.io
+          command: echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USERNAME" --password-stdin quay.io
+{%- endif %}
       - run:
           name: "Scenario: {{ scenario.name }}"
           command: |
@@ -346,9 +366,14 @@ workflows:
       - scenario-{{ scenario.name }}:
           requires:
             - build-artifact
-{%- if scenario.kyverno_scan %}
+{%- if scenario.kyverno_scan or scenario.quay_login %}
           context:
+{%- if scenario.kyverno_scan %}
             - github-repo
+{%- endif %}
+{%- if scenario.quay_login %}
+            - quay.io
+{%- endif %}
 {%- endif %}
           filters:
             branches:
@@ -365,9 +390,14 @@ workflows:
           requires:
             - build-artifact
             - approve-scenarios
-{%- if scenario.kyverno_scan %}
+{%- if scenario.kyverno_scan or scenario.quay_login %}
           context:
+{%- if scenario.kyverno_scan %}
             - github-repo
+{%- endif %}
+{%- if scenario.quay_login %}
+            - quay.io
+{%- endif %}
 {%- endif %}
           filters:
             branches:
@@ -443,12 +473,19 @@ workflows:
             branches:
               only:
                 - '/^release-\d+\.\d+$/'
+      - validate-release-images:
+          requires:
+            - approve-public-release
+          filters:
+            branches:
+              only:
+                - '/^release-\d+\.\d+$/'
       - release-to-public:
           context:
             - gcp-astronomer-prod
             - github-repo
           requires:
-            - approve-public-release
+            - validate-release-images
           filters:
             branches:
               only:

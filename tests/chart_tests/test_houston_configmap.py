@@ -3,6 +3,7 @@ import ast
 import pytest
 import yaml
 
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import find_key_paths, render_chart
 
 
@@ -812,6 +813,82 @@ def test_houston_configmap_with_mcp_server_disabled():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["mcpServer"]["enabled"] is False
     assert "enabledGroups" not in prod["mcpServer"]
+
+
+@pytest.mark.parametrize(
+    "mcp_values,expected",
+    [
+        pytest.param(
+            {"skills": {"enabled": True}},
+            "platform_read,platform_write,skills_load",
+            id="toggle-on-appends-skills_load",
+        ),
+        pytest.param(
+            {"skills": {"enabled": False}, "enabledGroups": ["platform_read", "skills_load"]},
+            "platform_read",
+            id="toggle-off-strips-listed-skills_load",
+        ),
+        pytest.param(
+            {"skills": {"enabled": True}, "enabledGroups": ["platform_read", "skills_load"]},
+            "platform_read,skills_load",
+            id="toggle-on-listed-skills_load-not-duplicated",
+        ),
+    ],
+)
+def test_skills_toggle_consistent_across_houston_and_mcp_server(mcp_values, expected):
+    """The Houston configmap and the mcp-server env must resolve to the same group list, since
+    appConfig derives the mcpServerSkillsEnabled UI flag from skills_load's presence in it. If the
+    two templates disagree, the flag can lie about what the server actually serves."""
+    docs = render_chart(
+        values={
+            "global": {"plane": {"mode": "control"}},
+            "astronomer": {"mcpServer": {"enabled": True, **mcp_values}},
+        },
+        show_only=[
+            "charts/astronomer/templates/houston/houston-configmap.yaml",
+            "charts/astronomer/templates/mcp-server/mcp-server-deployment.yaml",
+        ],
+    )
+    configmap = next(doc for doc in docs if doc["kind"] == "ConfigMap")
+    deployment = next(doc for doc in docs if doc["kind"] == "Deployment")
+
+    houston_groups = yaml.safe_load(configmap["data"]["production.yaml"])["mcpServer"]["enabledGroups"]
+    mcp_groups = get_env_vars_dict(get_containers_by_name(deployment)["mcp-server"]["env"])["MCP_ENABLED_GROUPS"]
+
+    assert houston_groups == mcp_groups == expected
+
+
+def test_houston_configmap_laminar_proxy_defaults():
+    """laminar renders with its documented defaults when not overridden -- unlike
+    mcpServer, this is unconditional: the passthrough route exists in Houston regardless of
+    whether the MCP server deployment is enabled."""
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["laminar"]["timeoutMs"] == 30000
+    assert prod["laminar"]["maxConcurrentPerDeployment"] == 10
+
+
+def test_houston_configmap_laminar_proxy_overrides():
+    """Both laminar knobs are independently settable from chart values (APC-1794)."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "laminar": {"timeoutMs": 45000, "maxConcurrentPerDeployment": 25},
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["laminar"]["timeoutMs"] == 45000
+    assert prod["laminar"]["maxConcurrentPerDeployment"] == 25
 
 
 def test_houston_configmap_with_cleanup_airflow_db_enabled():

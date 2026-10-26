@@ -2,6 +2,9 @@
 ## Elasticsearch Proxy ConfigMap ##
 ###################################
 {{- if eq (include "logging.enabled" .) "true" }}
+{{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.global.customLogging "key" "global.customLogging")) }}
+{{- /* Same condition as the es-secret volume in external-es-proxy-deployment.yaml. */}}
+{{- $esSecretFromFile := and $secretsFromFiles .Values.global.customLogging.secretName }}
 {{- $authCacheEnabled := .Values.authCache.enabled }}
 kind: ConfigMap
 apiVersion: v1
@@ -20,10 +23,45 @@ data:
     pid /tmp/nginx.pid;
     events { worker_connections 1024; }
     error_log /dev/stdout info;
+{{- if not $secretsFromFiles }}
     env ES_SECRET;
     env ES_SECRET_NAME;
+{{- end }}
 
     http {
+{{- if $esSecretFromFile }}
+      # Read the Elasticsearch credential from its mounted file once, at startup.
+      # setenv.lua runs per request, so it must not do file I/O itself.
+      #
+      # Erroring here is deliberate, as in prometheus's federation-auth: nginx
+      # refuses to start rather than coming up and proxying every request without
+      # its credential. That is the strict rule the secrets loaders follow -- with
+      # secrets-from-files on, a secret the component was given must be readable
+      # and non-empty, or the process does not start.
+      init_by_lua_block {
+        local path = "/etc/astronomer/secrets/ES_SECRET"
+        local handle, open_err = io.open(path, "r")
+        if not handle then
+          -- io.open's message already starts with the path; name it only once.
+          local reason = tostring(open_err)
+          if not reason:find(path, 1, true) then
+            reason = path .. ": " .. reason
+          end
+          error("external-es-proxy: cannot open credential file " .. reason)
+        end
+        local contents = handle:read("*a")
+        handle:close()
+        if not contents then
+          error("external-es-proxy: credential file is unreadable: " .. path)
+        end
+        -- Strip the trailing newline a Secret mount may carry.
+        local credential = contents:gsub("%s+$", "")
+        if credential == "" then
+          error("external-es-proxy: credential file is empty: " .. path)
+        end
+        ES_SECRET_FROM_FILE = credential
+      }
+{{- end }}
       {{- if $authCacheEnabled }}
       log_format cache_status '$remote_addr - $remote_user [$time_local] '
                               '"$request" $status $body_bytes_sent '
