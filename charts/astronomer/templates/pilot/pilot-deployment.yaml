@@ -2,6 +2,11 @@
 ## Astronomer Pilot Deployment  ##
 ##################################
 {{- if and (or .Values.pilot.enabled (and .Values.global.dataPlaneFailover.enabled (eq .Values.global.plane.mode "data"))) (eq (include "astronomer.dataPlaneEnabled" .) "true") }}
+{{- $flightDeckEnabled := or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled }}
+{{- $secretsFromFiles := and $flightDeckEnabled (eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.pilot "key" "astronomer.pilot"))) }}
+{{- /* pilot runs commander's loader, which refuses both of commander's secrets in the
+       environment whichever subcommand runs; pilot.env is rendered verbatim. */}}
+{{- include "secretsFromFiles.assertNoSecretEnv" (dict "enabled" $secretsFromFiles "env" .Values.pilot.env "listKey" "astronomer.pilot.env" "names" (include "secretsFromFiles.commanderSecretEnvVars" . | fromJsonArray) "key" "astronomer.pilot" "component" "pilot" "gate" "COMMANDER_SECRETS_FROM_FILES" "raw" true) }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -45,7 +50,11 @@ spec:
       tolerations:
         {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "pilot.serviceAccountName" . }}
-      securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
+      {{- $podSecurityContextOverride := dict }}
+      {{- if $flightDeckEnabled }}
+      {{- $podSecurityContextOverride = include "astronomer.secretsFromFiles.podSecurityContextOverride" (dict "ctx" $ "component" .Values.pilot "key" "astronomer.pilot") | fromYaml }}
+      {{- end }}
+      securityContext: {{- include "platform.podSecurityContext" (list $ $podSecurityContextOverride) | nindent 8 }}
       restartPolicy: Always
       {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       initContainers:
@@ -66,6 +75,9 @@ spec:
               fi
           resources: {{- toYaml .Values.pilot.resources | nindent 12 }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+{{- if $secretsFromFiles }}
+{{- include "astronomer.waitForSecretFile" (dict "ctx" $ "image" (include "commander.image" $) "pullPolicy" .Values.images.commander.pullPolicy "resources" .Values.pilot.resources "volume" "flightdeck-dsn-secret" "path" "/etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN") | nindent 8 }}
+{{- end }}
       containers:
         - name: pilot
           image: {{ template "commander.image" . }}
@@ -102,14 +114,25 @@ spec:
             - name: cluster-local-service-auth
               mountPath: /etc/astronomer/cluster-local-service-auth
               readOnly: true
+            {{- if $secretsFromFiles }}
+            - name: flightdeck-dsn-secret
+              mountPath: /etc/astronomer/secrets
+              readOnly: true
+            {{- end }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
             - name: PILOT_ENABLED
               value: "true"
+            {{- if $secretsFromFiles }}
+            - name: COMMANDER_SECRETS_FROM_FILES
+              value: "true"
+            - name: COMMANDER_FLIGHTDECK_DSN_FILE
+              value: /etc/astronomer/secrets/COMMANDER_FLIGHTDECK_DSN
+            {{- end }}
             # Infrastructure
             - name: PILOT_COMMANDER_ADDR
               value: {{ printf "%s-commander-headless.%s.svc.cluster.local.:%d" .Release.Name .Release.Namespace (int (include "getCommanderGRPCport" .)) | quote }}
-            {{- if or .Values.flightDeck.enabled .Values.global.dataPlaneFailover.enabled }}
+            {{- if and $flightDeckEnabled (not $secretsFromFiles) }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:
                 secretKeyRef:
@@ -164,6 +187,15 @@ spec:
         - name: cluster-local-service-auth
           secret:
             secretName: {{ .Release.Name }}-cluster-local-service-auth
+        {{- if $secretsFromFiles }}
+        - name: flightdeck-dsn-secret
+          secret:
+            {{- include "astronomer.secretsFromFiles.defaultMode" . | nindent 12 }}
+            secretName: {{ .Release.Name }}-flightdeck-backend
+            items:
+              - key: connection
+                path: COMMANDER_FLIGHTDECK_DSN
+        {{- end }}
         {{- include "custom_ca_volumes" . | nindent 8 }}
         {{- if .Values.pilot.extraVolumes }}
         {{- tpl (toYaml .Values.pilot.extraVolumes) $ | nindent 8 }}

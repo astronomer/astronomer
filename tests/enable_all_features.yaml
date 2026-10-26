@@ -14,7 +14,10 @@ astronomer:
         memory: 128Mi
   navigator:
     enabled: true
-  # mcpServer omitted: conflicts with authSidecar below.
+  # mcpServer omitted: conflicts with authSidecar below (the chart hard-fails if both are
+  # enabled). Its cross-cutting coverage instead lives directly in test_mcp_server.py
+  # (TestMcpServerDeployment's security/annotations/labels/node-pool tests) and in
+  # test_openshift.py's per-template override for mcp-server's deployment template.
   houston:
     logging:
       loggingSidecar:

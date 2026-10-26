@@ -43,7 +43,7 @@ The groups:
 | `core` | always-on baseline tools | always on |
 | `platform_read` | deployment/workspace reads | **on** |
 | `platform_write` | deployment/workspace lifecycle writes | **on** |
-| `platform_disruptive` | contract changes — executor, runtime, DAG mechanism | off |
+| `platform_disruptive` | contract changes — executor, runtime, Dag mechanism | off |
 | `platform_destroy` | deployment/workspace deletion | off |
 | `airflow_read` | read-only Airflow diagnosis — task logs, import errors, installed providers | off |
 | `airflow_destroy` | `delete_dag_run` | off |

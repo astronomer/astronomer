@@ -367,6 +367,9 @@ spec:
                 default: default
                 pattern: '[a-z]([-a-z0-9]*[a-z0-9])?'
                 type: string
+              readOnlyRootFilesystemEnabled:
+                default: false
+                type: boolean
               replicas:
                 default: 1
                 format: int32
@@ -422,6 +425,9 @@ spec:
                         x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  readOnlyRootFilesystemEnabled:
+                    default: false
+                    type: boolean
                   replicas:
                     default: 1
                     format: int32

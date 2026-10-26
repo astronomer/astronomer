@@ -3,6 +3,7 @@
 #####################
 {{- if .Values.global.baseDomain }}
 {{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if not ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -72,6 +73,7 @@ spec:
               port:
                 name: houston-http
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
