@@ -1302,6 +1302,7 @@ class TestAstronomerCommander:
                     "mode": plane_mode,
                 },
             },
+            "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
         }
         docs = render_chart(
             kube_version=kube_version,
