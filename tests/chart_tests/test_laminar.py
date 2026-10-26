@@ -535,7 +535,7 @@ class TestLaminar:
         env = docs[0]["data"]["laminar.env"]
 
         assert "laminar_scaling__keda_namespace=keda" in env
-        assert "laminar_scaling__keda_service_account=metrics-api-worker-trigger" in env
+        assert "laminar_scaling__keda_metrics_service_account=metrics-api-worker-trigger" in env
 
     def test_env_configmap_trusts_where_the_identity_lives_not_where_keda_runs(self, kube_version):
         """Test that the trusted namespace follows clusterObjectNamespace, not namespace.
