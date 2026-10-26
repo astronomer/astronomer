@@ -16,6 +16,7 @@ resource_class: 2xlarge
 # Kyverno absent and the Kyverno-dependent tests skip themselves.
 kyverno_scan: true
 ci: true
+quay_login: true
 # quay.io/astronomer/ap-laminar is a private repository, so the node cannot pull it; this sideloads
 # the image before the kubelet looks for it. --pull fetches it when the local store is cold, which
 # still requires `docker login quay.io` on this host -- it does not make the scenario work anywhere

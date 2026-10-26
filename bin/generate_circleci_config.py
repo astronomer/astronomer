@@ -31,6 +31,12 @@ def discover_scenarios() -> list[dict]:
       the build. Needs a GITHUB_TOKEN with read access to the private
       astronomer/apc-terraform-modules repo, so this also adds the `github-repo`
       CircleCI context to just this scenario's job.
+    - `quay_login: true` to run `docker login quay.io` in this scenario's job before
+      run-scenario.py, adding the `quay.io` CircleCI context (QUAY_USERNAME /
+      QUAY_PASSWORD) to just that job. For a scenario that sideloads an image from a
+      private quay repository, which the cluster node cannot pull unauthenticated.
+      Scenario jobs use a machine executor, so the login lands in the host's own Docker
+      config -- the store bin/kind-load-images.py --pull fetches into.
     - `ci: false` to keep a scenario out of the generated config entirely, while
       still being runnable locally via bin/run-scenario.py and pytest. For a
       scenario whose prerequisites are not published yet -- an image carrying
@@ -60,6 +66,7 @@ def discover_scenarios() -> list[dict]:
                 "topology": profile["topology"],
                 "resource_class": profile.get("resource_class", "xlarge"),
                 "kyverno_scan": profile.get("kyverno_scan", False),
+                "quay_login": profile.get("quay_login", False),
             }
         )
     return scenarios
