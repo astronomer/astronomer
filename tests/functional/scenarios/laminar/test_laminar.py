@@ -19,6 +19,7 @@ function-scoped fixtures, the same pattern as auth-sidecar and custom-image-sha.
 
 import pytest
 from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
 
 from tests.utils.k8s import KUBECONFIG_UNIFIED, find_admission_rejection_events
 
@@ -81,6 +82,19 @@ def test_no_admission_rejection_events(core_client):
     assert not rejections, "Admission refused at least one Laminar pod:\n" + "\n".join(f"  {line}" for line in rejections)
 
 
+def _policy_reports(custom_objects_client) -> list[dict]:
+    """Every PolicyReport in the namespace, or [] when the CRD is absent because Kyverno was
+    never installed -- the caller's own "no results" assertion says that far better than a bare
+    404 traceback would."""
+    try:
+        reports = custom_objects_client.list_namespaced_custom_object(REPORT_GROUP, REPORT_VERSION, NAMESPACE, "policyreports")
+    except ApiException as exc:
+        if exc.status != 404:
+            raise
+        return []
+    return reports["items"]
+
+
 def _laminar_results(reports: list[dict], pod_uids: set[str]) -> list[tuple[str, str, str, str]]:
     """(result, pod name, policy/rule, message) for every report entry about one of `pod_uids`.
 
@@ -119,14 +133,7 @@ def test_kyverno_evaluated_laminar_pods(laminar_pod_uids, custom_objects_client)
     Failing on a violation is specific to this scenario. The scan is audit-only platform-wide
     (PINF-1034) because it is a report, not a gate; here Laminar is the thing under test, so a
     Laminar pod that stops satisfying the policies is a failure, not a line in a report."""
-    try:
-        reports = custom_objects_client.list_namespaced_custom_object(
-            REPORT_GROUP, REPORT_VERSION, NAMESPACE, "policyreports"
-        )["items"]
-    except client.exceptions.ApiException as exc:
-        if exc.status == 404:
-            pytest.skip("Kyverno PolicyReport CRD is not installed; run bin/install-kyverno-scan.py before this test.")
-        raise
+    reports = _policy_reports(custom_objects_client)
     for deployment_name, pod_uids in laminar_pod_uids.items():
         results = _laminar_results(reports, pod_uids)
         assert results, (
