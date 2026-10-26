@@ -22,7 +22,7 @@ data:
     laminar_hypervisor__dry_run_healers_csv=CatatonicWorkerTerminator
 {{- if eq (include "keda.workerScalingEnabled" .) "true" }}
     laminar_scaling__keda_namespace={{ include "keda.clusterObjectNamespace" . }}
-    laminar_scaling__keda_service_account={{ include "keda.scalingIdentityName" . }}
+    laminar_scaling__keda_metrics_service_account={{ include "keda.scalingIdentityName" . }}
 {{- end }}
 {{ .Values.envConfigMap.content | default "" | indent 4 }}
 {{- end }}
