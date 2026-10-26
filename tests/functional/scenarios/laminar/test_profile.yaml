@@ -1,0 +1,40 @@
+description: >-
+  Validates that Laminar's api-server and hypervisor still come up and stay Ready while a live
+  Kyverno admission controller is evaluating every pod the cluster admits. The platform chart is
+  installed before Kyverno exists (see the note on kyverno_scan below), so the pods the install
+  creates are never seen by the admission webhook -- the scenario's own tests therefore roll both
+  Laminar Deployments after Kyverno is live, which is the only point at which their pod specs
+  actually pass through admission, and then assert that Kyverno did evaluate the resulting pods
+  rather than matching nothing.
+topology: unified
+
+# The platform plus Laminar's own three pods (api-server x2 at 400m each, hypervisor x1 at 200m),
+# and both Laminar Deployments get rolled a second time mid-test. xlarge was already reported as
+# marginal for the platform alone in PINF-1080, so this follows the other scenarios up a size.
+resource_class: 2xlarge
+
+# Runs this scenario's tests against a real, live Kyverno admission controller, installed
+# audit-only (bin/install-kyverno-scan.py / bin/report-kyverno-scan.py, PINF-1034). Audit-only
+# means Kyverno never blocks anything, so "Laminar operates under Kyverno" cannot be proven by
+# the install succeeding -- it is proven by test_laminar.py rolling the Deployments
+# under the live webhook and asserting they recover.
+#
+# NOTE: the CI job installs Kyverno *between* bin/run-scenario.py and pytest. run-scenario.py
+# does not install it, so a bare local `run-scenario.py laminar` leaves Kyverno absent and the
+# Kyverno-dependent tests skip themselves. To reproduce CI locally, run install-kyverno-scan.py
+# yourself in between -- see the "laminar" section of tests/functional/scenarios/README.md.
+kyverno_scan: true
+
+# ap-laminar lives in a private quay repository, so the CI job needs credentials before the
+# pre_helm_scripts entry below can pull it. Adds the `quay.io` context to just this job.
+quay_login: true
+
+values:
+  - configs/enable-laminar.yaml
+  - configs/disable-logging.yaml
+
+pre_helm_scripts:
+  - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/ap-laminar:1.0.0-rc4
+
+namespace_labels:
+  platform: astronomer
