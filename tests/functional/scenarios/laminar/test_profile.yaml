@@ -8,10 +8,15 @@ description: >-
   rather than matching nothing.
 topology: unified
 
+# The platform plus Laminar's own three pods (api-server x2 at 400m each, hypervisor x1 at 200m),
+# and both Laminar Deployments get rolled a second time mid-test. xlarge was already reported as
+# marginal for the platform alone in PINF-1080, so this follows the other scenarios up a size.
+resource_class: 2xlarge
+
 # Runs this scenario's tests against a real, live Kyverno admission controller, installed
 # audit-only (bin/install-kyverno-scan.py / bin/report-kyverno-scan.py, PINF-1034). Audit-only
 # means Kyverno never blocks anything, so "Laminar operates under Kyverno" cannot be proven by
-# the install succeeding -- it is proven by test_laminar_kyverno.py rolling the Deployments
+# the install succeeding -- it is proven by test_laminar.py rolling the Deployments
 # under the live webhook and asserting they recover.
 #
 # NOTE: the CI job installs Kyverno *between* bin/run-scenario.py and pytest. run-scenario.py
@@ -20,49 +25,22 @@ topology: unified
 # yourself in between -- see the "laminar" section of tests/functional/scenarios/README.md.
 kyverno_scan: true
 
-# TEMPORARY: quay.io/astronomer/ap-laminar is a PRIVATE quay repository (unlike ap-houston-api,
-# ap-commander and ap-db-bootstrapper, which are public), so a CI kind node cannot pull it and
-# this scenario cannot pass in CI as written. The pre_helm_scripts entry below sideloads the
-# image from the operator's own Docker store, which works locally after a `docker login quay.io`
-# but not on a CI machine executor that never logs in or pulls.
-#
-# This matters beyond a red badge: on master and release-X.Y a scenario job runs automatically
-# AND gates release-to-internal, so merging this enabled would block the release pipeline.
-#
-# Flip to true in the same change that either (a) makes ap-laminar public, or (b) gives the
-# generated scenario job the existing `quay.io` CircleCI context plus a `docker login` +
-# `docker pull` step ahead of run-scenario.py -- .circleci/config.yml.j2 currently only adds the
-# `github-repo` context to kyverno_scan jobs, so that is a change to the shared generator, not
-# to this file alone.
-ci: true
+# ap-laminar lives in a private quay repository, so the CI job needs credentials before the
+# pre_helm_scripts entry below can pull it. Adds the `quay.io` context to just this job.
+quay_login: true
 
-# The platform plus Laminar's own three pods (api-server x2 at 400m each, hypervisor x1 at 200m),
-# and both Laminar Deployments get rolled a second time mid-test. xlarge was already reported as
-# marginal for the platform alone in PINF-1080, so this follows the other scenarios up a size.
-resource_class: 2xlarge
+values:
+  - configs/enable-laminar.yaml
+  - configs/disable-logging.yaml
 
 pre_helm_scripts:
   # Sideloads the private ap-laminar image onto the kind node before the kubelet looks for it.
   # The tag MUST match charts/laminar/values.yaml's images.laminar.tag -- a mismatch is loud
   # (the pod falls back to pulling and lands in ImagePullBackOff), not silent.
   #
-  # Pull it first, once, on a host that is logged in:
-  #   docker login quay.io && docker pull quay.io/astronomer/ap-laminar:1.0.0-rc4
-  - bin/kind-load-images.py --cluster unified quay.io/astronomer/ap-laminar:1.0.0-rc4
-
-values:
-  - configs/enable-laminar.yaml
-  # Laminar touches nothing in the in-cluster Elasticsearch stack, and that stack is three heavy
-  # pods plus a large source of unrelated failures. It is also mandatory on an Apple Silicon host:
-  # ap-elasticsearch is amd64-only and its JVM cannot install a seccomp filter under Rosetta.
-  - configs/disable-logging.yaml
+  # --pull fetches the image when the local store is cold. The host must still be logged in
+  # (docker login quay.io) -- --pull does not make this work unauthenticated.
+  - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/ap-laminar:1.0.0-rc4
 
 namespace_labels:
-  # Every policy bin/install-kyverno-scan.py applies restricts its match rules to namespaces
-  # carrying this label (via namespaceSelector). The chart never labels the platform namespace it
-  # installs into, and Laminar runs in exactly that namespace -- so without this, Kyverno would
-  # evaluate zero Laminar pods and the scan would report a clean result it never actually earned.
-  # configs/enable-kyverno-scan.yaml is the other half of this and is deliberately NOT used here:
-  # it labels the namespaces Commander creates per Airflow Deployment, and this scenario creates
-  # no Airflow Deployment.
   platform: astronomer

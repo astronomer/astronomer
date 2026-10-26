@@ -18,6 +18,13 @@ the new behaviour would pass against code that does not have it -- a vacuous gre
 which is worse than a red one. Pair this with `pullPolicy: Never` so a failure here cannot
 be papered over by a pull.
 
+--pull inverts that for the one case where it is wrong: an image that IS published but sits
+in a private repository, so the node cannot pull it but a logged-in operator can. There the
+local store is a cache, not the only copy, and failing because it happens to be cold is just
+friction. It stays opt-in because for a locally built image a pull is exactly the silent
+fallback described above. It does not make a scenario work on a host that is not logged in
+to the registry -- the pull fails and the missing-image error below still fires.
+
 --cluster is REQUIRED and has no default, so a bare invocation cannot act on whatever
 cluster happens to be lying around. KIND cluster names are the topology name
 (unified/control/data) as created by bin/setup-kind.py.
@@ -36,6 +43,12 @@ def parse_args() -> argparse.Namespace:
         help="KIND cluster name to load into, e.g. unified. Required on purpose: no default.",
     )
     parser.add_argument(
+        "--pull",
+        action="store_true",
+        help="docker pull any ref that is not already in the local store, instead of failing on it. "
+        "Only for images that are published but private; see the note above.",
+    )
+    parser.add_argument(
         "images",
         nargs="+",
         metavar="IMAGE",
@@ -44,21 +57,38 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def absent(image: str) -> bool:
+    """Whether `image` is missing from the local Docker image store."""
+    return subprocess.run(["docker", "image", "inspect", image], capture_output=True).returncode != 0
+
+
 def main() -> None:
     args = parse_args()
 
     # Check every image up front, so a typo in the third ref is reported before the first
     # (slow, multi-GB) load rather than after it.
-    missing = [
-        image for image in args.images if subprocess.run(["docker", "image", "inspect", image], capture_output=True).returncode != 0
-    ]
+    missing = [image for image in args.images if absent(image)]
+
+    # A pull that fails (not logged in, wrong tag, registry down) is not reported here: the
+    # recheck below turns it back into the same missing-image error, which says more.
+    if missing and args.pull:
+        for image in missing:
+            print(f"  pulling {image} ...", flush=True)
+            subprocess.run(["docker", "pull", image], check=False)
+        missing = [image for image in missing if absent(image)]
+
     if missing:
+        hint = (
+            "The pull output above says why -- typically not logged in to the registry, a tag that "
+            "does not exist, or a registry rate limit."
+            if args.pull
+            else "Build them before running this scenario, or pass --pull if they are published."
+        )
         raise SystemExit(
             "ERROR: these images are not in the local Docker image store:\n"
             + "\n".join(f"  {image}" for image in missing)
-            + "\n\nBuild them before running this scenario. They are not published, so "
-            "there is nothing to pull -- and with pullPolicy: Never the pods would fail "
-            "with ErrImageNeverPull rather than silently using a published tag."
+            + f"\n\n{hint} With pullPolicy: Never the pods would fail with "
+            "ErrImageNeverPull rather than silently using a published tag."
         )
 
     for image in args.images:

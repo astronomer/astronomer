@@ -584,6 +584,13 @@ jobs:
       - run:
           name: Create venv
           command: uv venv -p 3.13 --seed && uv sync
+      # This scenario sideloads an image from a private quay.io repository, which an
+      # unauthenticated node cannot pull. Scenario jobs run on a machine executor, so this
+      # login lands in the host's own Docker config -- the same store bin/kind-load-images.py
+      # --pull fetches into and `kind load docker-image` reads from.
+      - run:
+          name: Login to quay.io
+          command: echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USERNAME" --password-stdin quay.io
       - run:
           name: "Scenario: laminar"
           command: |
@@ -849,6 +856,7 @@ workflows:
             - build-artifact
           context:
             - github-repo
+            - quay.io
           filters:
             branches:
               only:
@@ -866,6 +874,7 @@ workflows:
             - approve-scenarios
           context:
             - github-repo
+            - quay.io
           filters:
             branches:
               ignore:
