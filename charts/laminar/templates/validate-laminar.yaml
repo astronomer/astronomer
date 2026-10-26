@@ -9,6 +9,7 @@ The check is the rendered output of the laminar.imagePullSecrets helper rather t
 supplies. The helper runs its own value precedence logic and we do not want to replicate that logic
 here and risk it diverging in the future. An empty render means neither of the two possible sources 
 in the helper supplied a secret.
+in the helper supplied a secret.
 
 Gated on laminar.enabled, not on global.laminar.enabled: laminar is enabled chart-wide but only
 runs on a data/unified plane, and a control plane renders no laminar pod to pull an image.
