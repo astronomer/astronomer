@@ -29,7 +29,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]))
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]))
 HELPER_DIR = Path.home() / ".local" / "share" / "astronomer-software"
 HELPER_BIN_DIR = HELPER_DIR / "bin"
 REGISTRY_CONFIG_DIR = HELPER_DIR / "registry-configs"

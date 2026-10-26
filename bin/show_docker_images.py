@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = [
+#     "pyyaml>=6.0",
+# ]
+# ///
 """Show a list of docker images that are deployed by the astronomer platform."""
 
 import argparse
@@ -22,7 +27,9 @@ HELM_RUNS = [
 
 def get_containers_from_spec(spec):
     """Return a list of images used in a kubernetes pod spec."""
-    return [container["image"] for container in spec.get("containers", []) + spec.get("initContainers", [])]
+    containers = spec.get("containers") or []
+    init_containers = spec.get("initContainers") or []
+    return [container["image"] for container in containers + init_containers]
 
 
 def print_results(items):
@@ -71,7 +78,7 @@ def job_template_spec_parser(doc, args):
 def get_images_from_values_yaml():
     """Load values.yaml and all the images defined in it."""
     GIT_ROOT = next(
-        iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+        iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]),
         None,
     )
     with open(GIT_ROOT / "values.yaml") as f:
@@ -133,7 +140,7 @@ def get_images_from_houston_configmap(doc, args):
 def helm_template(args, label, files):
     """Run helm template for the given value files and return the parsed yaml."""
     GIT_ROOT = next(
-        iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+        iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]),
         None,
     )
 
@@ -150,6 +157,35 @@ def helm_template(args, label, files):
     output = subprocess.check_output(command, shell=True, cwd=GIT_ROOT).decode("utf-8")
 
     return list(yaml.safe_load_all(output))
+
+
+def collect_image_tags(args):
+    """
+    Render the platform charts and return the set of `repository:tag` strings they deploy.
+    """
+    docs = []
+    for run in HELM_RUNS:
+        docs.extend(helm_template(args, run["label"], run["files"]))
+
+    containers = set()
+
+    containers.update(get_images_from_values_yaml())
+
+    for doc in docs:
+        if doc is None:
+            continue
+        match doc:
+            case {"spec": {"template": {"spec": _}}}:
+                containers.update(default_spec_parser(doc, args))
+            case {"spec": {"jobTemplate": {"spec": {"template": {"spec": _}}}}}:
+                containers.update(job_template_spec_parser(doc, args))
+            case {"metadata": {"name": "release-name-houston-config"}}:
+                if args.with_houston:
+                    containers.update(get_images_from_houston_configmap(doc, args))
+            case _:
+                pass
+
+    return containers
 
 
 def main():
@@ -175,27 +211,7 @@ def main():
     )
     args = parser.parse_args()
 
-    docs = []
-    for run in HELM_RUNS:
-        docs.extend(helm_template(args, run["label"], run["files"]))
-
-    containers = set()
-
-    containers.update(get_images_from_values_yaml())
-
-    for doc in docs:
-        if doc is None:
-            continue
-        match doc:
-            case {"spec": {"template": {"spec": _}}}:
-                containers.update(default_spec_parser(doc, args))
-            case {"spec": {"jobTemplate": {"spec": {"template": {"spec": _}}}}}:
-                containers.update(job_template_spec_parser(doc, args))
-            case {"metadata": {"name": "release-name-houston-config"}}:
-                if args.with_houston:
-                    containers.update(get_images_from_houston_configmap(doc, args))
-            case _:
-                pass
+    containers = collect_image_tags(args)
 
     if args.check_tags:
         image_tag_counts = defaultdict(int)
