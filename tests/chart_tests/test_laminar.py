@@ -1,5 +1,6 @@
 from copy import deepcopy
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import jmespath
 import pytest
@@ -12,7 +13,9 @@ from tests.utils.chart import render_chart
 
 def _templates(subdir=""):
     root = Path(f"{git_root_dir}/charts/laminar/templates/{subdir}")
-    found = sorted(str(x.relative_to(git_root_dir)) for x in root.glob("**/*.yaml") if not x.name.startswith("_"))
+    # validate-*.yaml guards emit no object, and `--show-only` on a template that renders
+    # nothing is an error, so they are covered by their own tests rather than by these sweeps.
+    found = sorted(str(x.relative_to(git_root_dir)) for x in root.glob("**/*.yaml") if not x.name.startswith(("_", "validate-")))
     assert found, f"no templates under {root}"
     return found
 
@@ -38,6 +41,10 @@ LAMINAR_DEPLOYMENTS = [
 
 BYO_BACKEND_SECRET = {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-secret"}}}
 
+# laminar's images are private, so the chart refuses to render a laminar pod without a pull
+# secret. Every set of values that enables laminar has to supply one.
+LAMINAR_PULL_SECRET = {"laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]}}
+
 EXPECTED_CONTAINER_SECURITY_CONTEXT = {
     "allowPrivilegeEscalation": False,
     "capabilities": {"drop": ["ALL"]},
@@ -49,7 +56,10 @@ EXPECTED_CONTAINER_SECURITY_CONTEXT = {
 
 def laminar_values(*overrides, plane_mode="data"):
     """Return values that render laminar, with any overrides deep merged on top."""
-    values = {"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}}
+    values = {
+        "global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}},
+        **deepcopy(LAMINAR_PULL_SECRET),
+    }
     for override in overrides:
         always_merger.merge(values, deepcopy(override))
     return values
@@ -74,7 +84,7 @@ class TestLaminar:
         """Test that laminar renders only when the plane is data/unified."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}, **LAMINAR_PULL_SECRET},
             show_only=LAMINAR_TEMPLATES,
         )
 
@@ -88,7 +98,7 @@ class TestLaminar:
         """Test that laminar renders only when the plane is data or unified."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}, **LAMINAR_PULL_SECRET},
             show_only=[*LAMINAR_HYPEVISOR_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
         )
         assert len(docs) == 11
@@ -329,11 +339,7 @@ class TestLaminar:
     @pytest.mark.parametrize(
         "extra_values,expected_pull_secrets",
         [
-            ({}, None),
-            (
-                {"laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]}},
-                [{"name": "quay-pull-secret"}],
-            ),
+            ({}, [{"name": "quay-pull-secret"}]),
             (
                 {
                     "global": {
@@ -343,12 +349,11 @@ class TestLaminar:
                             "secretName": "private-registry-secret",
                         }
                     },
-                    "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
                 },
                 [{"name": "private-registry-secret"}],
             ),
         ],
-        ids=["unset", "explicit", "private-registry-wins"],
+        ids=["explicit", "private-registry-wins"],
     )
     def test_laminar_image_pull_secrets(self, kube_version, extra_values, expected_pull_secrets):
         """Test that every laminar pod gets the pull secret, and that privateRegistry takes precedence.
@@ -372,6 +377,30 @@ class TestLaminar:
             assert pod_spec.get("imagePullSecrets") == expected_pull_secrets, (
                 f"unexpected imagePullSecrets on {doc['kind']}/{doc['metadata']['name']}"
             )
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_image_pull_secret_required(self, kube_version, plane_mode):
+        """laminar with neither source of a pull secret fails the render with a clear message,
+        rather than rendering pods that cannot pull a private image.
+
+        The guard is in its own template, so it fires on a whole-chart render and not only on the
+        two deployments: an operator who leaves it out gets the message from `helm upgrade`.
+        """
+        with pytest.raises(CalledProcessError) as excinfo:
+            render_chart(
+                validate_objects=False,
+                kube_version=kube_version,
+                values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            )
+        assert "laminar is enabled but has no image pull secret" in excinfo.value.stderr.decode("utf-8")
+
+    def test_laminar_image_pull_secret_not_required_on_a_control_plane(self, kube_version):
+        """A control plane renders no laminar pod, so it needs no pull secret to enable laminar."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": "control"}}},
+        )
+        assert docs
 
     @pytest.mark.parametrize(
         "extra_values,expected_image",
@@ -568,7 +597,7 @@ class TestLaminar:
         """Test that laminar apiserver renders only when the plane is data or unified."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}, **LAMINAR_PULL_SECRET},
             show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
         )
         assert len(docs) == 11
@@ -653,7 +682,10 @@ class TestLaminar:
     def test_laminar_privateca_enabled(self, kube_version, plane_mode):
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"privateCaCerts": ["private-root-ca"], "laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            values={
+                "global": {"privateCaCerts": ["private-root-ca"], "laminar": {"enabled": True}, "plane": {"mode": plane_mode}},
+                **LAMINAR_PULL_SECRET,
+            },
             show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE],
         )
         by_kind_and_name = get_docs_by_kind_and_name(docs)

@@ -181,7 +181,7 @@ class TestServiceAccounts:
             "alertmanager": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
-            "laminar": {"serviceAccount": {"create": False}},
+            "laminar": {"serviceAccount": {"create": False}, "imagePullSecrets": [{"name": "quay-pull-secret"}]},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
             "prometheus-node-exporter": {"serviceAccount": {"create": False}},
             "pgbouncer": {"serviceAccount": {"create": False}},
@@ -252,7 +252,7 @@ class TestServiceAccounts:
                 "serviceAccount": {"create": True, "annotations": annotations},
                 "webhook": {"serviceAccount": {"create": True, "annotations": annotations}},
             },
-            "laminar": {"serviceAccount": {"create": False}},
+            "laminar": {"serviceAccount": {"create": False}, "imagePullSecrets": [{"name": "quay-pull-secret"}]},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -502,11 +502,11 @@ custom_service_account_names = {
     },
     "charts/laminar/templates/apiserver/apiserver-deployment.yaml": {
         "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
-        "laminar": {"serviceAccount": {"create": True, "name": "prothean"}},
+        "laminar": {"serviceAccount": {"create": True, "name": "prothean"}, "imagePullSecrets": [{"name": "quay-pull-secret"}]},
     },
     "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml": {
         "global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}},
-        "laminar": {"serviceAccount": {"create": True, "name": "prothean"}},
+        "laminar": {"serviceAccount": {"create": True, "name": "prothean"}, "imagePullSecrets": [{"name": "quay-pull-secret"}]},
     },
 }
 

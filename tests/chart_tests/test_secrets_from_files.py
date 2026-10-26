@@ -2568,6 +2568,7 @@ def db_bootstrapper_values(sff=None, bootstrapper=None, **global_values):
     values = {
         "global": {"plane": {"mode": "unified"}, "laminar": {"enabled": True}, **global_values},
         "astronomer": {"flightDeck": {"enabled": True}},
+        "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
     }
     if sff is not None:
         values["global"]["secretsFromFiles"] = {"enabled": sff}
@@ -3604,6 +3605,7 @@ STRICT_ALL_ON = {
         "prometheusPostgresExporter": {"enabled": True},
         "customLogging": {"enabled": True, "host": "es.example.com", "secretName": "my-es-creds", "awsSecretName": "my-aws-creds"},
     },
+    "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
     "astronomer": {
         **ALL_CRONJOBS,
         "houston": {
