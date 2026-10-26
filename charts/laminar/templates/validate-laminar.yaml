@@ -5,9 +5,10 @@ Laminar's images are private, so a pod with no pull secret is an ImagePullBackOf
 running deployment. This fails `helm template` / `helm upgrade` fast with a clear message instead.
 It emits no Kubernetes object.
 
-The check is the rendered output of laminar.imagePullSecrets rather than the values it reads:
-that helper already decides which of the two sources wins, and a second copy of that precedence
-here is one that can disagree with it. An empty render means neither source supplied a secret.
+The check is the rendered output of the laminar.imagePullSecrets helper rather than on the value it
+supplies. The helper runs its own value precedence logic and we do not want to replicate that logic
+here and risk it diverging in the future. An empty render means neither of the two possible sources 
+in the helper supplied a secret.
 
 Gated on laminar.enabled, not on global.laminar.enabled: laminar is enabled chart-wide but only
 runs on a data/unified plane, and a control plane renders no laminar pod to pull an image.
