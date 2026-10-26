@@ -23,7 +23,7 @@ PREREQUISITES = """You MUST set your environment variable TEST_SCENARIO to one o
 - control: Install with the controlplane application mode.
 """
 
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 HELPER_BIN_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "bin"
 KIND_EXE = str(HELPER_BIN_DIR / "kind")
 KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
@@ -64,7 +64,7 @@ def run_command(command: str | list) -> str:
 
 
 def list_docker_images():
-    command = f"{GIT_ROOT_DIR}/bin/show-docker-images.py --with-houston"
+    command = f"{GIT_ROOT_DIR}/bin/show_docker_images.py --with-houston"
     docker_images_output = subprocess.check_output(command, shell=True)
     docker_image_list = [x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")]
 
