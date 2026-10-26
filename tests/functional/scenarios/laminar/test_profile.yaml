@@ -34,7 +34,7 @@ kyverno_scan: true
 # `docker pull` step ahead of run-scenario.py -- .circleci/config.yml.j2 currently only adds the
 # `github-repo` context to kyverno_scan jobs, so that is a change to the shared generator, not
 # to this file alone.
-ci: false
+ci: true
 
 # The platform plus Laminar's own three pods (api-server x2 at 400m each, hypervisor x1 at 200m),
 # and both Laminar Deployments get rolled a second time mid-test. xlarge was already reported as
