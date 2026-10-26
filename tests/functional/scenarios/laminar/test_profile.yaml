@@ -34,12 +34,6 @@ values:
   - configs/disable-logging.yaml
 
 pre_helm_scripts:
-  # Sideloads the private ap-laminar image onto the kind node before the kubelet looks for it.
-  # The tag MUST match charts/laminar/values.yaml's images.laminar.tag -- a mismatch is loud
-  # (the pod falls back to pulling and lands in ImagePullBackOff), not silent.
-  #
-  # --pull fetches the image when the local store is cold. The host must still be logged in
-  # (docker login quay.io) -- --pull does not make this work unauthenticated.
   - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/ap-laminar:1.0.0-rc4
 
 namespace_labels:
