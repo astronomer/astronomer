@@ -17,11 +17,11 @@ resource_class: 2xlarge
 kyverno_scan: true
 ci: true
 # quay.io/astronomer/ap-laminar is a private repository, so the node cannot pull it; this sideloads
-# the image before the kubelet looks for it. The tag MUST match charts/laminar/values.yaml's
-# images.laminar.tag -- a mismatch lands the pod in ImagePullBackOff. Pull it first, on a host that
-# is logged in: docker login quay.io && docker pull quay.io/astronomer/ap-laminar:1.0.0-rc4
+# the image before the kubelet looks for it. --pull fetches it when the local store is cold, which
+# still requires `docker login quay.io` on this host -- it does not make the scenario work anywhere
+# unauthenticated. The tag MUST match charts/laminar/values.yaml's images.laminar.tag.
 pre_helm_scripts:
-  - bin/kind-load-images.py --cluster unified quay.io/astronomer/ap-laminar:1.0.0-rc4
+  - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/ap-laminar:1.0.0-rc4
 values:
   - configs/enable-laminar.yaml
   # Laminar touches nothing in the in-cluster Elasticsearch stack, which is three heavy pods and a
