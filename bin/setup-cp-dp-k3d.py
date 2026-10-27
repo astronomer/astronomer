@@ -457,6 +457,7 @@ class Settings:
     chart_version: str | None = None
     chart_is_prerelease: bool = False
     agents: int = 0
+    force_incompatible_kubernetes_version: bool = True
 
     @property
     def operator_needs_quay(self) -> bool:
@@ -965,6 +966,7 @@ def _helm_upgrade_install(
     chart_version: str | None = None,
     chart_is_prerelease: bool = False,
     base_values_files: tuple[Path, ...] = (),
+    force_incompatible_kubernetes_version: bool = True,
 ) -> None:
     """
     `base_values_files` are applied BEFORE `values_file` (lowest precedence — e.g. the plain
@@ -1013,6 +1015,8 @@ def _helm_upgrade_install(
         cmd.extend(["--values", str(extra)])
     if debug:
         cmd.append("--debug")
+    if force_incompatible_kubernetes_version:
+        cmd.extend(["--set", "forceIncompatibleKubernetes=true"])
     _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
     _run(cmd, check=True, capture=False)
 
@@ -1540,7 +1544,7 @@ def _ensure_nginx_resolver_ipv6_off(*, context: str, namespace: str, configmap_n
     _debug(f"{context}/{configmap_name}: http-snippet set (resolver {dns_ip} valid=30s ipv6=off;)")
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Automate Astronomer CP/DP local setup using k3d.")
     parser.add_argument("--base-domain", default="localtest.me")
     parser.add_argument("--namespace", default="astronomer")
@@ -1778,8 +1782,20 @@ def parse_args() -> argparse.Namespace:
             "Operator (or the CRD) is already installed in the cluster."
         ),
     )
+    parser.add_argument(
+        "--force-incompatible-kubernetes-version",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help=(
+            "Bypass the incompatible kubernetes cluster version check in version_compatibility_check.tpl "
+            "(sets forceIncompatibleKubernetes=true on the helm install). k3d cluster versions can run "
+            "ahead of the tested cluster versions, so this is enabled by default. "
+            "Pass --no-force-incompatible-kubernetes-version to make helm fail when the cluster version "
+            "is out of range."
+        ),
+    )
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 class Delegate037(Exception):
@@ -2010,6 +2026,7 @@ def main() -> int:  # noqa: C901
         chart_version=resolved_chart_version,
         chart_is_prerelease=chart_is_prerelease,
         agents=args.num_compute_nodes,
+        force_incompatible_kubernetes_version=args.force_incompatible_kubernetes_version,
     )
 
     try:
@@ -2245,6 +2262,7 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
+                    force_incompatible_kubernetes_version=settings.force_incompatible_kubernetes_version,
                 )
                 ms.done(h)
 
@@ -2355,6 +2373,7 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
+                    force_incompatible_kubernetes_version=settings.force_incompatible_kubernetes_version,
                 )
                 ms.done(h)
 
