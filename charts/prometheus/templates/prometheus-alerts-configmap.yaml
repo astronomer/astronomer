@@ -177,6 +177,42 @@ data:
             description: {{ printf "%q" "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has had zero available replicas for 10 minutes; it has been scaled to zero, deleted, or no pod has become ready." }}
         {{- end }}
 
+      - name: airflow-operator
+        rules:
+        {{- if and (not .Values.additionalAlerts.airflowOperator) (not .Values.defaultAlerts.airflowOperator.enabled) }}
+          []
+        {{- end }}
+        {{- if .Values.additionalAlerts.airflowOperator }}
+        {{- tpl .Values.additionalAlerts.airflowOperator $ | nindent 8 }}
+        {{- end }}
+        {{- if .Values.defaultAlerts.airflowOperator.enabled }}
+        - alert: AirflowOperatorComponentUnhealthy
+          expr: kube_pod_container_status_ready{container=~"manager"} == 0
+          for: 5m
+          labels:
+            tier: operator
+            component: controller-manager
+            severity: critical
+          annotations:
+            summary: {{ printf "%q" "Airflow Operator {{ $labels.container }} container is not healthy" }}
+            description: {{ printf "%q" "The {{ $labels.container }} container in pod {{ $labels.namespace }}/{{ $labels.pod }} has been not-ready for over 5 minutes." }}
+
+        - alert: AirflowOperatorDeploymentDown
+          expr: >-
+            kube_deployment_status_replicas_available
+              * on(namespace, deployment, clusterid) group_left(label_component)
+              kube_deployment_labels{label_tier="operator"}
+              == 0
+          for: 10m
+          labels:
+            tier: operator
+            component: controller-manager
+            severity: critical
+          annotations:
+            summary: {{ printf "%q" "Airflow Operator {{ $labels.label_component }} has no available replicas" }}
+            description: {{ printf "%q" "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has had zero available replicas for 10 minutes; it has been scaled to zero, deleted, or no pod has become ready." }}
+        {{- end }}
+
       {{- if .Values.global.nodeExporter.enabled }}
       - name: node-exporter-recording.rules
         rules:
