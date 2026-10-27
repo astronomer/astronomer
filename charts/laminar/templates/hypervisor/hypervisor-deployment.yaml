@@ -45,7 +45,7 @@ spec:
         {{- include "laminar.bootstrapperInitContainer" . | nindent 8 }}
       {{- end }}
       containers:
-        - name: hypervisor
+        - name: laminar-hypervisor
           image: {{ include "laminar.image" . }}
           imagePullPolicy: {{ .Values.images.laminar.pullPolicy }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
