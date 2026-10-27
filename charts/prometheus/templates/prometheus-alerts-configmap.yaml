@@ -187,12 +187,12 @@ data:
         {{- end }}
         {{- if .Values.defaultAlerts.airflowOperator.enabled }}
         - alert: AirflowOperatorComponentUnhealthy
-          expr: kube_pod_container_status_ready{container=~"manager"} == 0
+          expr: kube_pod_container_status_ready{container="manager"} == 0
           for: 5m
           labels:
             tier: operator
             component: controller-manager
-            severity: critical
+            severity: warning
           annotations:
             summary: {{ printf "%q" "Airflow Operator {{ $labels.container }} container is not healthy" }}
             description: {{ printf "%q" "The {{ $labels.container }} container in pod {{ $labels.namespace }}/{{ $labels.pod }} has been not-ready for over 5 minutes." }}
