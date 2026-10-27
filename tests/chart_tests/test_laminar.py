@@ -32,8 +32,8 @@ APISERVER_NETWORKPOLICY_TEMPLATE = "charts/laminar/templates/apiserver/apiserver
 # than checked on one of them: each deployment template includes the shared pieces itself, so a
 # template is free to forget one and a single-template test would not notice.
 LAMINAR_DEPLOYMENTS = [
-    pytest.param(APISERVER_DEPLOYMENT_TEMPLATE, "apiserver", id="apiserver"),
-    pytest.param(HYPERVISOR_DEPLOYMENT_TEMPLATE, "hypervisor", id="hypervisor"),
+    pytest.param(APISERVER_DEPLOYMENT_TEMPLATE, "laminar-apiserver", id="apiserver"),
+    pytest.param(HYPERVISOR_DEPLOYMENT_TEMPLATE, "laminar-hypervisor", id="hypervisor"),
 ]
 
 BYO_BACKEND_SECRET = {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-secret"}}}
@@ -98,16 +98,16 @@ class TestLaminar:
         assert hypervisor_deployment["metadata"]["name"] == "release-name-hypervisor"
         assert hypervisor_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-hypervisor"
         c_by_name = get_containers_by_name(hypervisor_deployment, include_init_containers=True)
-        assert set(c_by_name) == {"hypervisor", "laminar-bootstrapper"}
-        assert c_by_name["hypervisor"]["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
-        assert c_by_name["hypervisor"]["resources"] == {
+        assert set(c_by_name) == {"laminar-hypervisor", "laminar-bootstrapper"}
+        assert c_by_name["laminar-hypervisor"]["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
+        assert c_by_name["laminar-hypervisor"]["resources"] == {
             "requests": {"cpu": "200m", "memory": "256Mi"},
             "limits": {"cpu": "1", "memory": "1Gi"},
         }
-        hypervisor_container_env = get_env_vars_dict(c_by_name["hypervisor"]["env"])
+        hypervisor_container_env = get_env_vars_dict(c_by_name["laminar-hypervisor"]["env"])
         assert hypervisor_container_env["LAMINAR_JWT_ISSUER"] == "local"
         assert hypervisor_container_env["LAMINAR_JWT_AUDIENCE"] == "astronomer-ee"
-        jwks_ref = c_by_name["hypervisor"]["env"]
+        jwks_ref = c_by_name["laminar-hypervisor"]["env"]
         laminar_jwks = next(e for e in jwks_ref if e["name"] == "LAMINAR_JWKS")
         assert laminar_jwks["valueFrom"]["secretKeyRef"] == {
             "name": "release-name-commander-signing-cert",
@@ -173,7 +173,7 @@ class TestLaminar:
             show_only=[APISERVER_DEPLOYMENT_TEMPLATE],
         )
         assert len(docs) == 1
-        env = get_env_vars_dict(get_containers_by_name(docs[0])["apiserver"]["env"])
+        env = get_env_vars_dict(get_containers_by_name(docs[0])["laminar-apiserver"]["env"])
         assert env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
         assert env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
         assert "LAMINAR_JWKS" not in env
@@ -406,7 +406,7 @@ class TestLaminar:
 
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["apiserver"]["image"] == expected_image
+        assert c_by_name["laminar-apiserver"]["image"] == expected_image
 
     def test_apiserver_networkpolicy_refuses_keda_by_default(self, kube_version):
         """Test that the api-server admits only its fixed pod callers until autoscaling is on."""
@@ -578,13 +578,13 @@ class TestLaminar:
         assert apiserver_deployment["metadata"]["name"] == "release-name-api-server"
         assert apiserver_deployment["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-api-server"
         c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
-        assert set(c_by_name) == {"apiserver", "etc-ssl-certs-copier", "laminar-bootstrapper"}
-        assert c_by_name["apiserver"]["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
-        assert c_by_name["apiserver"]["resources"] == {
+        assert set(c_by_name) == {"laminar-apiserver", "etc-ssl-certs-copier", "laminar-bootstrapper"}
+        assert c_by_name["laminar-apiserver"]["securityContext"] == EXPECTED_CONTAINER_SECURITY_CONTEXT
+        assert c_by_name["laminar-apiserver"]["resources"] == {
             "requests": {"cpu": "400m", "memory": "256Mi"},
             "limits": {"cpu": "1", "memory": "1Gi"},
         }
-        apiserver_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
+        apiserver_container_env = get_env_vars_dict(c_by_name["laminar-apiserver"]["env"])
         assert apiserver_container_env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
         assert apiserver_container_env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
 
@@ -659,7 +659,7 @@ class TestLaminar:
         by_kind_and_name = get_docs_by_kind_and_name(docs)
         apiserver_deployment = by_kind_and_name["deployment_api_server"]
         c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
-        apiserver_container_env = get_env_vars_dict(c_by_name["apiserver"]["env"])
+        apiserver_container_env = get_env_vars_dict(c_by_name["laminar-apiserver"]["env"])
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
             apiserver_deployment,

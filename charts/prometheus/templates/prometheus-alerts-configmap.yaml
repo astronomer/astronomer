@@ -140,6 +140,43 @@ data:
             description: {{ printf "%q" "{{ $value }} }} schedulers do not have a heartbeat in the last five minutes" }}
         {{- end }}
 
+      # Laminar only runs in data/unified mode; elsewhere these series don't exist and the alerts never fire.
+      - name: laminar
+        rules:
+        {{- if and (not .Values.additionalAlerts.laminar) (not .Values.defaultAlerts.laminar.enabled) }}
+          []
+        {{- end }}
+        {{- if .Values.additionalAlerts.laminar }}
+        {{- tpl .Values.additionalAlerts.laminar $ | nindent 8 }}
+        {{- end }}
+        {{- if .Values.defaultAlerts.laminar.enabled }}
+        - alert: LaminarComponentUnhealthy
+          expr: kube_pod_container_status_ready{container=~"laminar-apiserver|laminar-hypervisor"} == 0
+          for: 5m
+          labels:
+            tier: platform
+            component: laminar
+            severity: critical
+          annotations:
+            summary: {{ printf "%q" "Laminar {{ $labels.container }} container is not healthy" }}
+            description: {{ printf "%q" "The {{ $labels.container }} container in pod {{ $labels.namespace }}/{{ $labels.pod }} has been not-ready for over 5 minutes." }}
+
+        - alert: LaminarDeploymentDown
+          expr: >-
+            kube_deployment_status_replicas_available
+              * on(namespace, deployment, clusterid) group_left(label_component)
+              kube_deployment_labels{label_tier="laminar"}
+              == 0
+          for: 10m
+          labels:
+            tier: platform
+            component: laminar
+            severity: critical
+          annotations:
+            summary: {{ printf "%q" "Laminar {{ $labels.label_component }} has no available replicas" }}
+            description: {{ printf "%q" "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has had zero available replicas for 10 minutes; it has been scaled to zero, deleted, or no pod has become ready." }}
+        {{- end }}
+
       {{- if .Values.global.nodeExporter.enabled }}
       - name: node-exporter-recording.rules
         rules:

@@ -3786,9 +3786,9 @@ RESIDUAL_SECRET_KEY_REFS = {
         ("release-name-grafana", "wait-for-db", "GF_DATABASE_URL"),
         ("release-name-grafana", "grafana", "GF_DATABASE_URL"),
         ("release-name-registry", "registry", "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS"),
-        ("release-name-api-server", "apiserver", "LAMINAR_DATABASE_URL"),
-        ("release-name-hypervisor", "hypervisor", "LAMINAR_DATABASE_URL"),
-        ("release-name-hypervisor", "hypervisor", "LAMINAR_JWKS"),
+        ("release-name-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
+        ("release-name-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
+        ("release-name-hypervisor", "laminar-hypervisor", "LAMINAR_JWKS"),
         ("release-name-mcp-server", "mcp-server", "MCP_TOKEN"),
     },
     "control-ha": {
@@ -3798,9 +3798,9 @@ RESIDUAL_SECRET_KEY_REFS = {
     },
     "data": {
         ("release-name-registry", "registry", "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS"),
-        ("release-name-api-server", "apiserver", "LAMINAR_DATABASE_URL"),
-        ("release-name-hypervisor", "hypervisor", "LAMINAR_DATABASE_URL"),
-        ("release-name-hypervisor", "hypervisor", "LAMINAR_JWKS"),
+        ("release-name-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
+        ("release-name-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
+        ("release-name-hypervisor", "laminar-hypervisor", "LAMINAR_JWKS"),
     },
 }
 
