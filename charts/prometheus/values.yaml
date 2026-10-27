@@ -191,6 +191,8 @@ defaultAlerts:
     enabled: true
   platform:
     enabled: true
+  laminar:
+    enabled: true
 
 additionalAlerts:
   # Additional rules appended to the default 'platform' alert group
@@ -199,6 +201,7 @@ additionalAlerts:
   # Additional rules appended to the default 'airflow' alert group
   # Provide as a block string in yaml list form
   airflow: ~
+  laminar: ~
 # Example:
 # airflow: |
 #   - alert: MyExampleAlert
