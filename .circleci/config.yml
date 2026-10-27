@@ -715,38 +715,36 @@ workflows:
           requires:
             - build-artifact
 
-      # Manual gate for the custom functional scenarios on non-release branches.
-      # On master and release-X.Y they run automatically (below) and gate the
-      # release; on every other branch they wait on this approval before running.
-      - approve-scenarios:
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
+      - scenario-auth-sidecar:
+          name: scenario-auth-sidecar-auto
+          requires:
+            - build-artifact
+          context:
+            - github-repo
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-auth-sidecar:
           type: approval
+          requires:
+            - build-artifact
           filters:
             branches:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
-
-      # master + release-X.Y: run automatically, and gate release-to-internal.
       - scenario-auth-sidecar:
           requires:
-            - build-artifact
-          context:
-            - github-repo
-          filters:
-            branches:
-              only:
-                - master
-                - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-auth-sidecar:
-          name: scenario-auth-sidecar-approved
-          requires:
-            - build-artifact
-            - approve-scenarios
+            - approve-auth-sidecar
           context:
             - github-repo
           filters:
@@ -754,80 +752,112 @@ workflows:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # master + release-X.Y: run automatically, and gate release-to-internal.
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
+      - scenario-custom-image-sha:
+          name: scenario-custom-image-sha-auto
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-custom-image-sha:
+          type: approval
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
       - scenario-custom-image-sha:
           requires:
+            - approve-custom-image-sha
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
+      - scenario-deployment-lifecycle:
+          name: scenario-deployment-lifecycle-auto
+          requires:
             - build-artifact
           filters:
             branches:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-custom-image-sha:
-          name: scenario-custom-image-sha-approved
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-deployment-lifecycle:
+          type: approval
           requires:
             - build-artifact
-            - approve-scenarios
           filters:
             branches:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # master + release-X.Y: run automatically, and gate release-to-internal.
       - scenario-deployment-lifecycle:
           requires:
+            - approve-deployment-lifecycle
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
+      - scenario-git-sync-private-ca:
+          name: scenario-git-sync-private-ca-auto
+          requires:
             - build-artifact
           filters:
             branches:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-deployment-lifecycle:
-          name: scenario-deployment-lifecycle-approved
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-git-sync-private-ca:
+          type: approval
           requires:
             - build-artifact
-            - approve-scenarios
           filters:
             branches:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # master + release-X.Y: run automatically, and gate release-to-internal.
       - scenario-git-sync-private-ca:
           requires:
-            - build-artifact
-          filters:
-            branches:
-              only:
-                - master
-                - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-git-sync-private-ca:
-          name: scenario-git-sync-private-ca-approved
-          requires:
-            - build-artifact
-            - approve-scenarios
+            - approve-git-sync-private-ca
           filters:
             branches:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # master + release-X.Y: run automatically, and gate release-to-internal.
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
       - scenario-git-sync-shared-volume:
+          name: scenario-git-sync-shared-volume-auto
           requires:
             - build-artifact
           filters:
@@ -835,23 +865,32 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-git-sync-shared-volume:
-          name: scenario-git-sync-shared-volume-approved
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-git-sync-shared-volume:
+          type: approval
           requires:
             - build-artifact
-            - approve-scenarios
           filters:
             branches:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # master + release-X.Y: run automatically, and gate release-to-internal.
+      - scenario-git-sync-shared-volume:
+          requires:
+            - approve-git-sync-shared-volume
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
       - scenario-laminar:
+          name: scenario-laminar-auto
           requires:
             - build-artifact
           context:
@@ -862,16 +901,20 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-laminar:
-          name: scenario-laminar-approved
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-laminar:
+          type: approval
           requires:
             - build-artifact
-            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      - scenario-laminar:
+          requires:
+            - approve-laminar
           context:
             - github-repo
             - quay.io
@@ -880,8 +923,13 @@ workflows:
               ignore:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # master + release-X.Y: run automatically, and gate release-to-internal.
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
       - scenario-sidecar-logging-custom-config:
+          name: scenario-sidecar-logging-custom-config-auto
           requires:
             - build-artifact
           filters:
@@ -889,16 +937,20 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-sidecar-logging-custom-config:
-          name: scenario-sidecar-logging-custom-config-approved
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-sidecar-logging-custom-config:
+          type: approval
           requires:
             - build-artifact
-            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      - scenario-sidecar-logging-custom-config:
+          requires:
+            - approve-sidecar-logging-custom-config
           filters:
             branches:
               ignore:
@@ -957,13 +1009,13 @@ workflows:
             - approve-internal-release
             - scenario-unified-1-31-14
             - scenario-unified-1-37-0
-            - scenario-auth-sidecar
-            - scenario-custom-image-sha
-            - scenario-deployment-lifecycle
-            - scenario-git-sync-private-ca
-            - scenario-git-sync-shared-volume
-            - scenario-laminar
-            - scenario-sidecar-logging-custom-config
+            - scenario-auth-sidecar-auto
+            - scenario-custom-image-sha-auto
+            - scenario-deployment-lifecycle-auto
+            - scenario-git-sync-private-ca-auto
+            - scenario-git-sync-shared-volume-auto
+            - scenario-laminar-auto
+            - scenario-sidecar-logging-custom-config-auto
       - approve-public-release:
           type: approval
           requires:
