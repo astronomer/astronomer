@@ -106,3 +106,6 @@ postgresql:
     enabled: true
   postgresqlRunPermissions:
     enabled: false
+laminar:
+  imagePullSecrets:
+    - name: quay-pull-secret

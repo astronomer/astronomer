@@ -437,7 +437,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"laminar": {"enabled": True}}},
+            values={"global": {"laminar": {"enabled": True}}, "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         laminar_hypervisor_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-hypervisor"]

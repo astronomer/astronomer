@@ -1302,6 +1302,7 @@ class TestAstronomerCommander:
                     "mode": plane_mode,
                 },
             },
+            "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -1324,6 +1325,7 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "data"}, "laminar": {"enabled": True}},
+                "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
             },
             show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
@@ -1355,6 +1357,7 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "data"}, "laminar": {"enabled": True}},
+                "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
                 "astronomer": {
                     "commander": {
                         "laminar": {

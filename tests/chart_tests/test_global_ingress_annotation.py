@@ -109,6 +109,7 @@ class TestGlobalIngressAnnotation:
                     "laminar": {"enabled": True},
                     "extraAnnotations": {"route.openshift.io/termination": "passthrough"},
                 },
+                "laminar": {"imagePullSecrets": [{"name": "quay-pull-secret"}]},
             },
             show_only=["charts/laminar/templates/apiserver/apiserver-ingress.yaml"],
         )
