@@ -350,20 +350,14 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}
-{% if scenarios %}
-      # Manual gate for the custom functional scenarios on non-release branches.
-      # On master and release-X.Y they run automatically (below) and gate the
-      # release; on every other branch they wait on this approval before running.
-      - approve-scenarios:
-          type: approval
-          filters:
-            branches:
-              ignore:
-                - master
-                - '/^release-\d+\.\d+$/'
-{% endif %}{% for scenario in scenarios %}
-      # master + release-X.Y: run automatically, and gate release-to-internal.
+{% for scenario in scenarios %}
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
       - scenario-{{ scenario.name }}:
+          name: scenario-{{ scenario.name }}-auto
           requires:
             - build-artifact
 {%- if scenario.kyverno_scan or scenario.quay_login %}
@@ -380,16 +374,20 @@ workflows:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-{{ scenario.name }}:
-          name: scenario-{{ scenario.name }}-approved
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-{{ scenario.name }}:
+          type: approval
           requires:
             - build-artifact
-            - approve-scenarios
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      - scenario-{{ scenario.name }}:
+          requires:
+            - approve-{{ scenario.name }}
 {%- if scenario.kyverno_scan or scenario.quay_login %}
           context:
 {%- if scenario.kyverno_scan %}
@@ -460,7 +458,7 @@ workflows:
             - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
 {%- for scenario in scenarios %}
-            - scenario-{{ scenario.name }}
+            - scenario-{{ scenario.name }}-auto
 {%- endfor %}
       - approve-public-release:
           type: approval
