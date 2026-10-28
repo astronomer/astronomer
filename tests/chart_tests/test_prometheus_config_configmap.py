@@ -339,7 +339,7 @@ class TestPrometheusConfigConfigmap:
             values={"global": {"airflowOperator": {"enabled": True}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
-        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
+        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflows-operator-managed"]
         for index in range(len(airflow_scrape_relabel_config)):
             expected = airflow_scrape_relabel_config[index]
             actual = airflow_operator_scrape_config[0]["relabel_configs"][index]
@@ -353,7 +353,7 @@ class TestPrometheusConfigConfigmap:
             values={"global": {"airflowOperator": {"enabled": False}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
-        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
+        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflows-operator-managed"]
         assert len(airflow_operator_scrape_config) == 0
 
     def test_prometheus_operator_integration_config_disabled_with_no_cluster_role(self, kube_version):
@@ -364,9 +364,9 @@ class TestPrometheusConfigConfigmap:
             values={"global": {"airflowOperator": {"enabled": True}, "clusterRoles": False}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
-        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
+        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflows-operator-managed"]
         assert len(airflow_operator_scrape_config) == 0
-        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
+        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflows-helm-managed"]
         assert len(airflow_scrape_config) == 1
 
     def test_federated_dataplanes_default_scrape_settings(self, kube_version):
@@ -410,9 +410,9 @@ class TestPrometheusConfigConfigmap:
         assert federated[0]["scrape_timeout"] == "5s"
 
     def test_federated_dataplanes_match_includes_operator_job(self, kube_version):
-        """Operator-mode deployments scrape under job 'airflow-operator' on the data plane, while
-        legacy Helm deployments use job 'airflow'. The federation selector is an anchored
-        alternation, so 'airflow' matches only the legacy job — the operator job must be listed
+        """Operator-mode deployments scrape under job 'airflows-operator-managed' on the data plane, while
+        legacy Helm deployments use job 'airflows-helm-managed'. The federation selector is an anchored
+        alternation, so 'airflows-helm-managed' matches only the legacy job — the operator job must be listed
         explicitly or its per-deployment metrics never federate to the control-plane Prometheus the
         Houston metrics UI queries. Regression guard for PLX-504 (operator-inheritance metrics)."""
         doc = render_chart(
@@ -429,8 +429,8 @@ class TestPrometheusConfigConfigmap:
         alternatives = job_regex.split("|")
         # Both the operator-mode job and the legacy Helm job must be federated, since both carry
         # per-deployment Airflow metrics the UI renders.
-        assert "airflow-operator" in alternatives, alternatives
-        assert "airflow" in alternatives, alternatives
+        assert "airflows-operator-managed" in alternatives, alternatives
+        assert "airflows-helm-managed" in alternatives, alternatives
 
     def test_federated_dataplanes_match_includes_every_laminar_job(self, kube_version):
         """Test that every Laminar scrape job is federated, since Houston reads worker scaling history from Laminar's metrics.
