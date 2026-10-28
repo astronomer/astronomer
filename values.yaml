@@ -302,7 +302,7 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.31.0-3
+        tag: 0.31.0-4
       redis:
         repository: quay.io/astronomer/ap-redis
         tag: 8.10.3
