@@ -26,7 +26,7 @@ from tests.utils.k8s import KUBECONFIG_UNIFIED, find_admission_rejection_events
 NAMESPACE = "astronomer"
 
 # Release name is "astronomer" (bin/helm-install.py), and charts/laminar's "laminar.fullname"
-# is "<release>-<component>". The `component` POD label is not simply the name's suffix: the
+# is "<release>-laminar-<component>". The `component` POD label is not simply the name's suffix: the
 # api-server's pods are labelled "apiserver", kept that way from the pre-Helm Kustomize
 # manifests so the existing Services still select them (charts/laminar/templates/_helpers.yaml).
 API_SERVER_DEPLOYMENT = "astronomer-laminar-api-server"
