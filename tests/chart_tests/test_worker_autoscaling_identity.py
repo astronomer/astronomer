@@ -14,6 +14,7 @@ trigger sends an empty token.
 import pytest
 
 from tests import supported_k8s_versions
+from tests.utils import get_helm_lifecycle_annotations
 from tests.utils.chart import render_chart
 
 IDENTITY = "metrics-api-worker-trigger"
@@ -77,6 +78,16 @@ class TestWorkerAutoscalingIdentity:
         docs = render_chart(kube_version=kube_version, values=keda_values("control"))
 
         assert not [doc for doc in docs if (doc.get("metadata") or {}).get("name") in OBJECT_NAMES]
+
+    def test_removed_with_the_release(self, kube_version):
+        """Test that the objects are ordinary release objects, so a rollback to a chart without them deletes them.
+
+        A hook or a keep policy would leave them in the customer's KEDA namespace after a downgrade.
+        """
+        docs = render_chart(kube_version=kube_version, show_only=show_only, values=keda_values())
+
+        assert len(docs) == 4
+        assert not {doc["kind"]: get_helm_lifecycle_annotations(doc) for doc in docs if get_helm_lifecycle_annotations(doc)}
 
     def test_service_account_is_not_mounted(self, kube_version):
         """Test that the identity is not mounted anywhere, so a token can only come from a deliberate mint."""
