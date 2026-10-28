@@ -366,7 +366,7 @@ class TestPrometheusConfigConfigmap:
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflows-operator-managed"]
         assert len(airflow_operator_scrape_config) == 0
-        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflows-helm-managed"]
+        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
         assert len(airflow_scrape_config) == 1
 
     def test_federated_dataplanes_default_scrape_settings(self, kube_version):
@@ -411,8 +411,8 @@ class TestPrometheusConfigConfigmap:
 
     def test_federated_dataplanes_match_includes_operator_job(self, kube_version):
         """Operator-mode deployments scrape under job 'airflows-operator-managed' on the data plane, while
-        legacy Helm deployments use job 'airflows-helm-managed'. The federation selector is an anchored
-        alternation, so 'airflows-helm-managed' matches only the legacy job — the operator job must be listed
+        legacy Helm deployments use job 'airflow'. The federation selector is an anchored
+        alternation, so 'airflow' matches only the legacy job — the operator job must be listed
         explicitly or its per-deployment metrics never federate to the control-plane Prometheus the
         Houston metrics UI queries. Regression guard for PLX-504 (operator-inheritance metrics)."""
         doc = render_chart(
@@ -430,7 +430,7 @@ class TestPrometheusConfigConfigmap:
         # Both the operator-mode job and the legacy Helm job must be federated, since both carry
         # per-deployment Airflow metrics the UI renders.
         assert "airflows-operator-managed" in alternatives, alternatives
-        assert "airflows-helm-managed" in alternatives, alternatives
+        assert "airflow" in alternatives, alternatives
 
     def test_federated_dataplanes_match_includes_every_laminar_job(self, kube_version):
         """Test that every Laminar scrape job is federated, since Houston reads worker scaling history from Laminar's metrics.

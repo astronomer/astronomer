@@ -79,7 +79,7 @@ data:
         scrape_timeout: {{ .Values.config.scrape_configs.federated_dataplanes.scrape_timeout }}
         params:
           'match[]':
-            - '{job=~".*-kube-state$|airflows-helm-managed|airflows-operator-managed|kubernetes-nodes-cadvisor|node-exporter|laminar-hypervisor|laminar-api-server"}'
+            - '{job=~".*-kube-state$|airflow|airflows-operator-managed|kubernetes-nodes-cadvisor|node-exporter|laminar-hypervisor|laminar-api-server"}'
             - '{__name__=~"git_sync.*"}'
         file_sd_configs:
           - files:
@@ -321,7 +321,7 @@ data:
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
       {{- end }}
 
-      - job_name: airflows-helm-managed
+      - job_name: airflow
         #scrape_interval: 10s # Faster scrape to power dashboards
         {{- if not $useClusterRoles }}
         file_sd_configs:
