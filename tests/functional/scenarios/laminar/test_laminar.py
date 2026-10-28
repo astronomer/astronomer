@@ -29,8 +29,8 @@ NAMESPACE = "astronomer"
 # is "<release>-<component>". The `component` POD label is not simply the name's suffix: the
 # api-server's pods are labelled "apiserver", kept that way from the pre-Helm Kustomize
 # manifests so the existing Services still select them (charts/laminar/templates/_helpers.yaml).
-API_SERVER_DEPLOYMENT = "astronomer-api-server"
-HYPERVISOR_DEPLOYMENT = "astronomer-hypervisor"
+API_SERVER_DEPLOYMENT = "astronomer-laminar-api-server"
+HYPERVISOR_DEPLOYMENT = "astronomer-laminar-hypervisor"
 COMPONENT_LABELS = {API_SERVER_DEPLOYMENT: "apiserver", HYPERVISOR_DEPLOYMENT: "hypervisor"}
 LAMINAR_DEPLOYMENTS = tuple(COMPONENT_LABELS)
 

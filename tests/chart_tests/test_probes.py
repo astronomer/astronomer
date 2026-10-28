@@ -100,7 +100,7 @@ class TestDefaultProbes:
                 "port": 8081,
             }
         },
-        "api-server_laminar-apiserver": {
+        "laminar-api-server_laminar-apiserver": {
             "failureThreshold": 3,
             "httpGet": {"path": "/laminar/healthz", "port": 8000},
             "initialDelaySeconds": 5,
@@ -153,7 +153,7 @@ class TestDefaultProbes:
             "periodSeconds": 30,
             "failureThreshold": 5,
         },
-        "hypervisor_laminar-hypervisor": {
+        "laminar-hypervisor_laminar-hypervisor": {
             "failureThreshold": 3,
             "httpGet": {"path": "/laminar/healthz", "port": 8000},
             "initialDelaySeconds": 5,
@@ -236,7 +236,7 @@ class TestDefaultProbes:
                 "port": 8081,
             }
         },
-        "api-server_laminar-apiserver": {
+        "laminar-api-server_laminar-apiserver": {
             "failureThreshold": 3,
             "httpGet": {"path": "/laminar/healthz", "port": 8000},
             "initialDelaySeconds": 5,
@@ -283,7 +283,7 @@ class TestDefaultProbes:
             "periodSeconds": 10,
             "failureThreshold": 5,
         },
-        "hypervisor_laminar-hypervisor": {
+        "laminar-hypervisor_laminar-hypervisor": {
             "failureThreshold": 3,
             "httpGet": {"path": "/laminar/healthz", "port": 8000},
             "initialDelaySeconds": 5,

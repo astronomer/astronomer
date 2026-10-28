@@ -1337,7 +1337,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER"] == "local"
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "astronomer-ee"
         base_url = env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"]
-        assert base_url.startswith("http://release-name-hypervisor.")
+        assert base_url.startswith("http://release-name-laminar-hypervisor.")
         assert base_url.endswith(".svc.cluster.local.:8000")
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "30"
 
@@ -1375,7 +1375,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_ISSUER"] == "custom-issuer"
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE"] == "custom-aud"
         base_url = env_vars["COMMANDER_LAMINAR_HYPERVISOR_BASE_URL"]
-        assert base_url.startswith("http://release-name-hypervisor.")
+        assert base_url.startswith("http://release-name-laminar-hypervisor.")
         assert base_url.endswith(".svc.cluster.local.:9000")
         assert env_vars["COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS"] == "45"
 
