@@ -14,6 +14,7 @@ trigger sends an empty token.
 import pytest
 
 from tests import supported_k8s_versions
+from tests.utils import get_helm_lifecycle_annotations
 from tests.utils.chart import render_chart
 
 IDENTITY = "metrics-api-worker-trigger"
@@ -72,11 +73,30 @@ class TestWorkerAutoscalingIdentity:
             assert labels["astronomer.io/platform-release"] == "release-name"
             assert labels["chart"].startswith("astronomer-")
 
+    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
+    def test_every_object_renders_once_when_enabled(self, kube_version, plane_mode):
+        """Test that no two objects share a kind, namespace and name, which a fresh install refuses."""
+        docs = render_chart(kube_version=kube_version, values=keda_values(plane_mode))
+
+        keys = [(doc["kind"], doc["metadata"].get("namespace", ""), doc["metadata"]["name"]) for doc in docs]
+        duplicates = sorted({key for key in keys if keys.count(key) > 1})
+        assert not duplicates
+
     def test_not_rendered_on_a_control_plane(self, kube_version):
         """Test that a control plane creates nothing: KEDA scales workers, which only run on a data plane."""
         docs = render_chart(kube_version=kube_version, values=keda_values("control"))
 
         assert not [doc for doc in docs if (doc.get("metadata") or {}).get("name") in OBJECT_NAMES]
+
+    def test_removed_with_the_release(self, kube_version):
+        """Test that the objects are ordinary release objects, so a rollback to a chart without them deletes them.
+
+        A hook or a keep policy would leave them in the customer's KEDA namespace after a downgrade.
+        """
+        docs = render_chart(kube_version=kube_version, show_only=show_only, values=keda_values())
+
+        assert len(docs) == 4
+        assert not {doc["kind"]: get_helm_lifecycle_annotations(doc) for doc in docs if get_helm_lifecycle_annotations(doc)}
 
     def test_service_account_is_not_mounted(self, kube_version):
         """Test that the identity is not mounted anywhere, so a token can only come from a deliberate mint."""

@@ -432,6 +432,25 @@ class TestPrometheusConfigConfigmap:
         assert "airflow-operator" in alternatives, alternatives
         assert "airflow" in alternatives, alternatives
 
+    def test_federated_dataplanes_match_includes_every_laminar_job(self, kube_version):
+        """Test that every Laminar scrape job is federated, since Houston reads worker scaling history from Laminar's metrics.
+
+        The selector is an anchored alternation, so a Laminar job missing from it never reaches the control plane.
+        """
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"laminar": {"enabled": True}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        laminar_jobs = [scrape["job_name"] for scrape in scrape_configs if scrape["job_name"].startswith("laminar-")]
+        federated = next(scrape for scrape in scrape_configs if scrape["job_name"] == "federated-dataplanes")
+        job_regex = re.search(r'job=~"([^"]+)"', federated["params"]["match[]"][0]).group(1)
+
+        assert laminar_jobs == ["laminar-hypervisor", "laminar-api-server"]
+        assert not [job for job in laminar_jobs if not re.fullmatch(job_regex, job)]
+
     def test_prometheus_laminar_scrape_config(self, kube_version):
         doc = render_chart(
             kube_version=kube_version,

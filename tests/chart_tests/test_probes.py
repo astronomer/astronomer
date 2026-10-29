@@ -100,12 +100,6 @@ class TestDefaultProbes:
                 "port": 8081,
             }
         },
-        "api-server_laminar-apiserver": {
-            "failureThreshold": 3,
-            "httpGet": {"path": "/laminar/healthz", "port": 8000},
-            "initialDelaySeconds": 5,
-            "periodSeconds": 10,
-        },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {
             "failureThreshold": 5,
@@ -153,13 +147,19 @@ class TestDefaultProbes:
             "periodSeconds": 30,
             "failureThreshold": 5,
         },
-        "hypervisor_laminar-hypervisor": {
+        "kube-state_kube-state": {"httpGet": {"path": "/healthz", "port": 8080}, "initialDelaySeconds": 5, "timeoutSeconds": 5},
+        "laminar-api-server_laminar-apiserver": {
             "failureThreshold": 3,
             "httpGet": {"path": "/laminar/healthz", "port": 8000},
             "initialDelaySeconds": 5,
             "periodSeconds": 10,
         },
-        "kube-state_kube-state": {"httpGet": {"path": "/healthz", "port": 8080}, "initialDelaySeconds": 5, "timeoutSeconds": 5},
+        "laminar-hypervisor_laminar-hypervisor": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+        },
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "nginx-default-backend_default-backend": {
             "httpGet": {"path": "/healthz", "port": 8080, "scheme": "HTTP"},
@@ -236,12 +236,6 @@ class TestDefaultProbes:
                 "port": 8081,
             }
         },
-        "api-server_laminar-apiserver": {
-            "failureThreshold": 3,
-            "httpGet": {"path": "/laminar/healthz", "port": 8000},
-            "initialDelaySeconds": 5,
-            "periodSeconds": 10,
-        },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {"httpGet": {"path": "/healthz", "port": 8880}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "elasticsearch-client_es-client": {
@@ -283,7 +277,13 @@ class TestDefaultProbes:
             "periodSeconds": 10,
             "failureThreshold": 5,
         },
-        "hypervisor_laminar-hypervisor": {
+        "laminar-api-server_laminar-apiserver": {
+            "failureThreshold": 3,
+            "httpGet": {"path": "/laminar/healthz", "port": 8000},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+        },
+        "laminar-hypervisor_laminar-hypervisor": {
             "failureThreshold": 3,
             "httpGet": {"path": "/laminar/healthz", "port": 8000},
             "initialDelaySeconds": 5,
