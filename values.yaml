@@ -183,7 +183,7 @@ global:
   laminar:
     enabled: false
 
-  # Worker autoscaling. You install and run KEDA 2.17 or later yourself; turn this on
+  # Worker autoscaling. You install and run KEDA 2.20.0 or later yourself; turn this on
   # to have the platform create the identity KEDA presents when it asks how many
   # workers a queue needs. Doing so writes a service account, a role and a role
   # binding into the namespace below, plus one cluster-scoped authentication object. It

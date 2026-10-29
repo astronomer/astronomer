@@ -126,9 +126,13 @@ def _install_service_monitor_crd(context: str) -> None:
 # refused for a reason that looks nothing like a namespace problem.
 #
 # Pinned to the oldest version we tell customers works, not the newest available, so the floor we
-# publish is the one actually exercised. 2.17.0 is where a bound service account token became a
-# TriggerAuthentication source; below it the scaling caller has no way to prove who it is.
-KEDA_VERSION = "v2.17.0"
+# publish is the one actually exercised. 2.20.0 is the floor because hibernation pauses each queue
+# with paused-replicas=0, and before 2.20.0 that path has pause bugs that can leave a hibernated
+# queue's workers running (kedacore/keda#7231, fixed in 2.18.2) or pull it back to one worker
+# (kedacore/keda#7663, fixed in 2.20.0). 2.17.0 was where a bound service account token became a
+# TriggerAuthentication source, and 2.20.0 keeps that; below 2.17.0 the scaling caller has no way
+# to prove who it is.
+KEDA_VERSION = "v2.20.0"
 KEDA_NAMESPACE = "keda"
 KEDA_MANIFEST_URL = f"https://github.com/kedacore/keda/releases/download/{KEDA_VERSION}/keda-{KEDA_VERSION.lstrip('v')}.yaml"
 # Our own field manager for the node pin, kept distinct from the `kubectl` manager that owns the
