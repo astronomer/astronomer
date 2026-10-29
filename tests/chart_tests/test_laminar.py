@@ -7,7 +7,7 @@ from deepmerge import always_merger
 
 from tests import git_root_dir, supported_k8s_versions
 from tests.utils import get_containers_by_name, get_docs_by_kind_and_name, get_env_vars_dict, get_helm_lifecycle_annotations
-from tests.utils.chart import render_chart
+from tests.utils.chart import generate_helm_release_name, render_chart
 
 
 def _templates(subdir=""):
@@ -27,6 +27,10 @@ APISERVER_DEPLOYMENT_TEMPLATE = "charts/laminar/templates/apiserver/apiserver-de
 HYPERVISOR_DEPLOYMENT_TEMPLATE = "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml"
 BOOTSTRAPPER_ROLEBINDING_TEMPLATE = "charts/laminar/templates/bootstrapper/laminar-bootstrapper-rolebinding.yaml"
 APISERVER_NETWORKPOLICY_TEMPLATE = "charts/laminar/templates/apiserver/apiserver-networkpolicy.yaml"
+
+# Long enough that "<release>-laminar-<component>" passes the 63 characters laminar.fullname
+# truncates at, so resources end up with names no caller can spell by hand.
+LONG_RELEASE_NAME_LENGTH = 50
 
 # The two pods laminar runs. Anything shared between them is parametrized over the pair rather
 # than checked on one of them: each deployment template includes the shared pieces itself, so a
@@ -192,6 +196,26 @@ class TestLaminar:
         assert env["LAMINAR_JWT_ISSUER"] == "https://houston.example.com/v2"
         assert env["LAMINAR_JWT_AUDIENCE"] == "laminar:api"
         assert "LAMINAR_JWKS" not in env
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_hypervisor_releasename_overrides_when_enabled(self, kube_version, plane_mode):
+        """Test that a long release name truncates consistently across the hypervisor's resources."""
+        release_name = generate_helm_release_name(length=LONG_RELEASE_NAME_LENGTH)
+        expected_name = f"{release_name}-laminar-hypervisor"[:63]
+
+        docs = render_chart(
+            name=release_name,
+            kube_version=kube_version,
+            values={"global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}}},
+            show_only=LAMINAR_HYPEVISOR_TEMPLATES,
+        )
+
+        hypervisor_deployment = next(doc for doc in docs if doc["kind"] == "Deployment")
+        assert hypervisor_deployment["metadata"]["name"] == expected_name
+        assert hypervisor_deployment["spec"]["template"]["spec"]["serviceAccountName"] == expected_name
+
+        hypervisor_service = next(doc for doc in docs if doc["kind"] == "Service")
+        assert hypervisor_service["metadata"]["name"] == expected_name
 
     @pytest.mark.parametrize("plane_mode", ["unified", "data"])
     def test_laminar_bootstrapper_rbac_objects(self, kube_version, plane_mode):
