@@ -1480,10 +1480,53 @@ class TestRoleOverrideCheck:
         assert _check_roles("astronomer:\n  houston:\n    config:\n      roles: nope\n") == []
         assert _check_roles("astronomer:\n  houston:\n    config:\n      roles:\n        DEPLOYMENT_EDITOR: 3\n") == []
 
+    # Houston accepts these per-resource Airflow keys. An earlier copy of its catalog lacked them, so an override
+    # that used one was reported as unsupported.
+    FINE_GRAINED_AIRFLOW_KEYS = (
+        "deployment.airflow.audit_log.read",
+        "deployment.airflow.cluster_activity.read",
+        "deployment.airflow.dag_code.read",
+        "deployment.airflow.dag_run.clear",
+        "deployment.airflow.dag_run.create",
+        "deployment.airflow.dag_run.delete",
+        "deployment.airflow.dag_run.edit",
+        "deployment.airflow.dag_run.read",
+        "deployment.airflow.dag_warning.read",
+        "deployment.airflow.hitl_detail.edit",
+        "deployment.airflow.hitl_detail.read",
+        "deployment.airflow.import_error.read",
+        "deployment.airflow.sla_miss.delete",
+        "deployment.airflow.sla_miss.edit",
+        "deployment.airflow.sla_miss.read",
+        "deployment.airflow.task_instance.create",
+        "deployment.airflow.task_instance.delete",
+        "deployment.airflow.task_instance.edit",
+        "deployment.airflow.task_instance.read",
+        "deployment.airflow.task_log.read",
+        "deployment.airflow.task_reschedule.read",
+    )
+
+    @pytest.mark.parametrize("key", FINE_GRAINED_AIRFLOW_KEYS)
+    def test_fine_grained_airflow_keys_not_reported(self, key):
+        findings = _check_roles(
+            f"""\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    DEPLOYMENT_EDITOR:
+                      permissions:
+                        {key}: true
+            """
+        )
+        assert findings == []
+
     def test_supported_keys_include_catalog_op_and_defaults(self):
         keys = migrate_mod.ROLE_OVERRIDE_SUPPORTED_KEYS
-        assert len(keys) == 161 + 2 + 6
+        # Houston's catalog (188 keys, which now include the six config defaults) plus the two Op keys.
+        assert len(keys) == 188 + 2
         assert {"deployment.airflow.op", "system.airflow.op", "system.controlPlanes.get"} <= keys
+        assert set(self.FINE_GRAINED_AIRFLOW_KEYS) <= keys
 
 
 class TestRoleOverrideCheckCli:

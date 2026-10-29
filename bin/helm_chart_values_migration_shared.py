@@ -1038,9 +1038,14 @@ def dump_yaml(yml: YAML, data: Any, output: Path | None = None) -> str | None:
 # KEEP IN STEP WITH houston-api src/lib/custom-rbac/role-override-warnings.js
 # and src/lib/custom-rbac/permission-catalog.js. Houston treats a key as valid
 # when it is in PERMISSION_CATALOG or EXTRA_KNOWN_KEYS (the Op keys plus six
-# defaults from config/default.yaml). Update this list whenever either changes,
-# or the check will mislead operators. Houston's REMOVED_KEYS set is empty, and
-# the Op keys were restored (PINF-1278), so they are treated as supported.
+# defaults from config/default.yaml, which the catalog now also lists). Update
+# this list whenever either changes, or the check will mislead operators.
+# Houston's REMOVED_KEYS set is empty, and the Op keys were restored (PINF-1278),
+# so they are treated as supported.
+#
+# Last synced with houston-api main at 64aa45c19. To regenerate the catalog keys, in
+# source order, from a houston-api checkout:
+#   grep -oE '^  "[a-z][A-Za-z0-9_.]+":' src/lib/custom-rbac/permission-catalog.js
 _HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
     "system.adminCount.get",
     "system.airflow.admin",
@@ -1054,6 +1059,10 @@ _HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
     "system.clusters.register",
     "system.clusters.update",
     "system.clusters.cordon",
+    "system.controlPlanes.get",
+    "system.controlPlanes.register",
+    "system.controlPlanes.update",
+    "system.controlPlanes.deregister",
     "system.nodePools.get",
     "system.nodePools.create",
     "system.nodePools.update",
@@ -1080,6 +1089,7 @@ _HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
     "system.invite.get",
     "system.invites.get",
     "system.monitoring.get",
+    "system.regions.update",
     "system.registryBaseImages.push",
     "system.roles.create",
     "system.roles.delete",
@@ -1150,6 +1160,7 @@ _HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
     "deployment.airflow.user",
     "deployment.config.delete",
     "deployment.config.get",
+    "deployment.config.unadopt",
     "deployment.config.update",
     "deployment.config.upsert",
     "deployment.dags.push",
@@ -1189,6 +1200,18 @@ _HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
     "deployment.airflow.dag.read",
     "deployment.airflow.dag.edit",
     "deployment.airflow.dag.delete",
+    "deployment.airflow.dag_code.read",
+    "deployment.airflow.import_error.read",
+    "deployment.airflow.dag_run.read",
+    "deployment.airflow.dag_run.create",
+    "deployment.airflow.dag_run.edit",
+    "deployment.airflow.dag_run.delete",
+    "deployment.airflow.dag_run.clear",
+    "deployment.airflow.task_instance.read",
+    "deployment.airflow.task_instance.create",
+    "deployment.airflow.task_instance.edit",
+    "deployment.airflow.task_instance.delete",
+    "deployment.airflow.task_log.read",
     "deployment.airflow.trigger.read",
     "deployment.airflow.xcom.read",
     "deployment.airflow.xcom.create",
@@ -1199,6 +1222,15 @@ _HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
     "deployment.airflow.dataset.read",
     "deployment.airflow.dataset.create",
     "deployment.airflow.dataset.delete",
+    "deployment.airflow.sla_miss.read",
+    "deployment.airflow.sla_miss.edit",
+    "deployment.airflow.sla_miss.delete",
+    "deployment.airflow.task_reschedule.read",
+    "deployment.airflow.cluster_activity.read",
+    "deployment.airflow.dag_warning.read",
+    "deployment.airflow.audit_log.read",
+    "deployment.airflow.hitl_detail.read",
+    "deployment.airflow.hitl_detail.edit",
     "deployment.airflow.backfill.read",
     "deployment.airflow.backfill.create",
     "deployment.airflow.backfill.edit",
