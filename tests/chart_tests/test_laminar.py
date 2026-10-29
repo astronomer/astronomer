@@ -6,7 +6,7 @@ import pytest
 from deepmerge import always_merger
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_containers_by_name, get_docs_by_kind_and_name, get_env_vars_dict
+from tests.utils import get_containers_by_name, get_docs_by_kind_and_name, get_env_vars_dict, get_helm_lifecycle_annotations
 from tests.utils.chart import render_chart
 
 
@@ -82,6 +82,21 @@ class TestLaminar:
             assert len(docs) == 0
         else:
             assert len(docs) > 0
+
+    def test_laminar_removed_with_the_release(self, kube_version):
+        """Test that laminar's objects are ordinary release objects, so a rollback to a chart without laminar deletes them.
+
+        The database and backend secret the bootstrapper creates at runtime are not release objects and stay behind.
+        """
+        docs = render_chart(kube_version=kube_version, values=laminar_values(), show_only=LAMINAR_TEMPLATES)
+
+        assert docs
+        annotated = {
+            f"{doc['kind']}/{doc['metadata']['name']}": get_helm_lifecycle_annotations(doc)
+            for doc in docs
+            if get_helm_lifecycle_annotations(doc)
+        }
+        assert not annotated
 
     @pytest.mark.parametrize("plane_mode", ["unified", "data"])
     def test_laminar_hypervisor_defaults_when_enabled(self, kube_version, plane_mode):
