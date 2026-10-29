@@ -1,0 +1,69 @@
+# Scenario overlay for istio-gateway: route platform north-south traffic through an Istio
+# Gateway instead of nginx Ingress. Every platform Ingress is suppressed and a
+# VirtualService is rendered in its place (the ingress templates are gated on `not
+# istio.gateway.enabled`, e.g. charts/astronomer/templates/houston/ingress.yaml), and the
+# nginx ingress controller is dropped entirely, so nothing but the Gateway can be carrying
+# platform traffic.
+#
+# The Gateway namespace and name below MUST match the arguments the scenario's
+# pre_helm_scripts entry passes to bin/setup-istio.py -- that script installs Istio into
+# istio-system and creates the Gateway this file names. They are repeated in both places
+# rather than derived from one, because the script runs before helm and has no access to
+# these values.
+---
+global:
+  istio:
+    # OFF on purpose, and a separate flag from gateway.enabled below: this scenario tests
+    # the Gateway ingress path, not sidecar injection. Turning it on renders the mesh
+    # Sidecar objects (charts/astronomer/templates/istio/sidecars.yaml), one of which lives
+    # in rootNamespace -- a namespace neither the chart nor bin/setup-istio.py creates, so
+    # the install would fail applying a Sidecar into a namespace that does not exist.
+    # Create it first if you flip this. test_istio_gateway.py::test_no_sidecar_objects
+    # pins it off.
+    enabled: false
+    # Only reaches istiod's own meshConfig.rootNamespace (set by bin/setup-istio.py). Unused
+    # by the chart while istio.enabled is false, since nothing is rendered into it.
+    rootNamespace: "istio-config"
+    gateway:
+      enabled: true
+      # <namespace>/<name> of a Gateway that must already exist: a VirtualService naming a
+      # nonexistent Gateway is accepted by the API server and silently routes nothing.
+      name: istio-system/astronomer-gateway
+
+  # The Istio Gateway is now the platform's ingress, so the nginx ingress controller the
+  # chart ships is redundant. Switching it off (Chart.yaml conditions the nginx subchart on
+  # this) drops cp-nginx and nginx-default-backend -- their Deployments, Services,
+  # ClusterRole/Binding, NetworkPolicies and PDBs -- which is also the point: it proves the
+  # VirtualService path carries platform traffic with no nginx present to fall back on.
+  # NOTE: the cp_nginx/dp_nginx fixtures in tests/functional/conftest.py cannot be used by
+  # this scenario's tests, since the pods they select no longer exist.
+  nginx:
+    enabled: false
+
+  authSidecar:
+    # Turning this on changes what the VirtualServices route TO for the three admin UIs:
+    # grafana, prometheus and alertmanager move from their own ports (3000/9090/9093) to the
+    # auth-proxy's 8084, while houston/astro-ui/registry/elasticsearch are unaffected
+    # (verified by rendering this overlay both ways). That makes this scenario the only
+    # coverage of auth-sidecar AND Istio-gateway routing together -- the auth-sidecar
+    # scenario covers the sidecar against nginx ingress, and chart tests cover the rendered
+    # port, but neither drives a real request through a Gateway into an auth proxy.
+    enabled: true
+    # INERT: nothing in the chart reads global.authSidecar.tlsSecret -- `tlsSecret` is only
+    # ever consumed as global.tlsSecret, and only by the Ingress templates, which this
+    # overlay suppresses outright. configs/local-dev.yaml already sets
+    # global.tlsSecret: astronomer-tls.
+    tlsSecret: astronomer-tls
+    # REQUIRED for this combination, not optional tuning. With authSidecar on, the admin
+    # UIs' NetworkPolicies admit port 8084 only from namespaces labelled
+    # `network.openshift.io/policy-group: ingress` (an OpenShift convention nothing applies
+    # to istio-system) plus whatever is listed here, which the templates turn into a
+    # `kubernetes.io/metadata.name In [...]` namespaceSelector (see
+    # charts/grafana/templates/grafana-networkpolicy.yaml). Without istio-system in this
+    # list, the Istio ingress gateway's requests to grafana/prometheus/alertmanager are
+    # DROPPED by NetworkPolicy and those three UIs are unreachable, even though every
+    # VirtualService looks correct -- a 504 at
+    # test_gateway_reaches_grafana_through_the_auth_sidecar. Must match the scenario's
+    # --gateway-namespace in test_profile.yaml.
+    ingressAllowedNamespaces:
+      - istio-system

@@ -12,6 +12,12 @@ tools:
   helm:
     version: 3.22.1
     url: https://github.com/helm/helm
+  # Only used by bin/setup-istio.py (the istio-gateway scenario's pre-helm step), which
+  # installs the base/istiod/gateway charts at this version. Not downloaded by
+  # bin/install-ci-tools.py -- there is no istioctl in the helper bin dir.
+  istio:
+    version: 1.30.7
+    url: https://github.com/istio/istio
   kind:
     version: 0.33.0
     url: https://github.com/kubernetes-sigs/kind
