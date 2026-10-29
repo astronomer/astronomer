@@ -585,7 +585,7 @@ data:
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
-            regex: "^{{ .Release.Name }}-hypervisor"
+            regex: "^{{ include "laminar.fullname" (list $ "hypervisor") }}"
           - source_labels: [__meta_kubernetes_endpoint_ready]
             action: keep
             regex: "^true"
@@ -600,7 +600,7 @@ data:
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
-            regex: "^{{ .Release.Name }}-api-server"
+            regex: "^{{ include "laminar.fullname" (list $ "api-server") }}"
           - source_labels: [__meta_kubernetes_endpoint_ready]
             action: keep
             regex: "^true"

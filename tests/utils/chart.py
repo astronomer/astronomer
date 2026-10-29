@@ -17,7 +17,9 @@
 
 import json
 import os
+import random
 import shlex
+import string
 import subprocess
 from functools import cache
 from pathlib import Path
@@ -128,6 +130,21 @@ def check_yaml(manifests: str, lines_before: int = 10, lines_after: int = 10):
         return False
 
     return True
+
+
+def generate_helm_release_name(prefix="release", length=16):
+    """Return a release name of exactly `length` characters, starting with `prefix`.
+
+    Generating the name rather than hardcoding one forces a test to derive the resource names it
+    expects from the release name, instead of matching a literal that only happens to line up.
+    Useful for exercising name length limits, where charts truncate and callers must not guess.
+    """
+    suffix_length = length - len(prefix) - 1
+    assert suffix_length > 0, f"length {length} leaves no room for a suffix after prefix {prefix!r}"
+    # Helm names must be lowercase alphanumeric characters or hyphens (RFC 1123)
+    chars = string.ascii_lowercase + string.digits
+    random_suffix = "".join(random.choices(chars, k=suffix_length))
+    return f"{prefix}-{random_suffix}"
 
 
 def render_chart(

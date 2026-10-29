@@ -241,6 +241,30 @@ def show_pod_status() -> None:
     print(pod_status)
 
 
+def dump_pod_diagnostics(pod_names: list[str]) -> None:
+    """Print why each named pod never became healthy: its events, then its containers' logs.
+
+    A status table says a pod is Pending; it never says why. The distinction matters most for
+    exactly the case it reads worst on: a pod whose init container is failing stays in phase
+    Pending for as long as it keeps restarting, so the table looks like a scheduling problem
+    when it is a crashing container. `kubectl logs` defaults to the app container and would
+    show nothing for that pod, hence --all-containers, and --previous for the crash loop's
+    last exit -- the current attempt is usually still starting up and empty.
+    """
+    for name in pod_names:
+        print(f"\n{'=' * 72}\n=== {name}\n{'=' * 72}", flush=True)
+        for description, command in (
+            ("describe (conditions + events)", ["describe", "pod", name]),
+            ("logs, all containers", ["logs", name, "--all-containers", "--prefix", "--tail=100"]),
+            ("logs, previous attempt", ["logs", name, "--all-containers", "--prefix", "--tail=100", "--previous"]),
+        ):
+            print(f"\n--- {name}: {description} ---", flush=True)
+            subprocess.run(
+                [KUBECTL_EXE, f"--kubeconfig={KUBECONFIG_FILE}", "--namespace=astronomer", *command],
+                check=False,
+            )
+
+
 def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=120) -> None:
     """
     Wait for all pods in the 'astronomer' namespace to be in a healthy state.
@@ -267,10 +291,6 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
             text=True,
             check=True,
         )
-        if time.time() >= end_time:
-            err = "Timeout waiting for pods to become healthy."
-            print(output)
-            raise RuntimeError(err)
         lines = output.stdout.splitlines()[1:]  # Skip the header line
         unhealthy_pods = []
         for line in lines:
@@ -293,6 +313,11 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
             return
         date_print(f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}")
         show_pod_status()
+
+        if time.time() >= end_time:
+            dump_pod_diagnostics(unhealthy_pods)
+            raise RuntimeError(f"Timeout waiting for pods to become healthy: {', '.join(unhealthy_pods)}")
+
         time.sleep(5)
 
         print(f"Retrying... {int(end_time - time.time())} seconds left until timeout.")

@@ -267,6 +267,15 @@ jobs:
       - run:
           name: Create venv
           command: uv venv -p {{ python_image_version }} --seed && uv sync
+{%- if scenario.quay_login %}
+      # This scenario sideloads an image from a private quay.io repository, which an
+      # unauthenticated node cannot pull. Scenario jobs run on a machine executor, so this
+      # login lands in the host's own Docker config -- the same store bin/kind-load-images.py
+      # --pull fetches into and `kind load docker-image` reads from.
+      - run:
+          name: Login to quay.io
+          command: echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USERNAME" --password-stdin quay.io
+{%- endif %}
       - run:
           name: "Scenario: {{ scenario.name }}"
           command: |
@@ -341,44 +350,52 @@ workflows:
             - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}
-{% if scenarios %}
-      # Manual gate for the custom functional scenarios on non-release branches.
-      # On master and release-X.Y they run automatically (below) and gate the
-      # release; on every other branch they wait on this approval before running.
-      - approve-scenarios:
-          type: approval
-          filters:
-            branches:
-              ignore:
-                - master
-                - '/^release-\d+\.\d+$/'
-{% endif %}{% for scenario in scenarios %}
-      # master + release-X.Y: run automatically, and gate release-to-internal.
+{% for scenario in scenarios %}
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
       - scenario-{{ scenario.name }}:
+          name: scenario-{{ scenario.name }}-auto
           requires:
             - build-artifact
-{%- if scenario.kyverno_scan %}
+{%- if scenario.kyverno_scan or scenario.quay_login %}
           context:
+{%- if scenario.kyverno_scan %}
             - github-repo
+{%- endif %}
+{%- if scenario.quay_login %}
+            - quay.io
+{%- endif %}
 {%- endif %}
           filters:
             branches:
               only:
                 - master
                 - '/^release-\d+\.\d+$/'
-      # every other branch: gated behind the manual approve-scenarios approval. This
-      # instance MUST have a distinct name from the auto instance above -- CircleCI
-      # rejects two jobs sharing a name in one workflow even when their branch filters
-      # are mutually exclusive. The auto instance keeps the plain name so release-to-internal
-      # can require it on release branches.
-      - scenario-{{ scenario.name }}:
-          name: scenario-{{ scenario.name }}-approved
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-{{ scenario.name }}:
+          type: approval
           requires:
             - build-artifact
-            - approve-scenarios
-{%- if scenario.kyverno_scan %}
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      - scenario-{{ scenario.name }}:
+          requires:
+            - approve-{{ scenario.name }}
+{%- if scenario.kyverno_scan or scenario.quay_login %}
           context:
+{%- if scenario.kyverno_scan %}
             - github-repo
+{%- endif %}
+{%- if scenario.quay_login %}
+            - quay.io
+{%- endif %}
 {%- endif %}
           filters:
             branches:
@@ -441,7 +458,7 @@ workflows:
             - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
 {%- for scenario in scenarios %}
-            - scenario-{{ scenario.name }}
+            - scenario-{{ scenario.name }}-auto
 {%- endfor %}
       - approve-public-release:
           type: approval

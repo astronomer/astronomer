@@ -817,8 +817,12 @@ is a case worth being able to reproduce: the control plane is supposed to refuse
 range where KEDA is absent, and that path needs testing as much as the working one. Leave the flag
 off to get that cluster.
 
-The version is pinned to KEDA 2.17.0, the oldest worker autoscaling supports, rather than the
+The version is pinned to KEDA 2.20.0, the oldest worker autoscaling supports, rather than the
 newest available, so the floor the documentation publishes is the one this environment exercises.
+2.20.0 is the floor because hibernation pauses each queue with `paused-replicas=0`, and before
+2.20.0 that path has upstream pause bugs that can leave a hibernated queue's workers running
+(kedacore/keda#7231, fixed in 2.18.2) or pull it back to one worker (kedacore/keda#7663, fixed in
+2.20.0).
 
 `--with-keda` also sets `global.keda.enabled` on the data plane release, which is what makes the
 platform create the identity KEDA presents to the scaling endpoint. The two go together: that

@@ -126,9 +126,13 @@ def _install_service_monitor_crd(context: str) -> None:
 # refused for a reason that looks nothing like a namespace problem.
 #
 # Pinned to the oldest version we tell customers works, not the newest available, so the floor we
-# publish is the one actually exercised. 2.17.0 is where a bound service account token became a
-# TriggerAuthentication source; below it the scaling caller has no way to prove who it is.
-KEDA_VERSION = "v2.17.0"
+# publish is the one actually exercised. 2.20.0 is the floor because hibernation pauses each queue
+# with paused-replicas=0, and before 2.20.0 that path has pause bugs that can leave a hibernated
+# queue's workers running (kedacore/keda#7231, fixed in 2.18.2) or pull it back to one worker
+# (kedacore/keda#7663, fixed in 2.20.0). 2.17.0 was where a bound service account token became a
+# TriggerAuthentication source, and 2.20.0 keeps that; below 2.17.0 the scaling caller has no way
+# to prove who it is.
+KEDA_VERSION = "v2.20.2"
 KEDA_NAMESPACE = "keda"
 KEDA_MANIFEST_URL = f"https://github.com/kedacore/keda/releases/download/{KEDA_VERSION}/keda-{KEDA_VERSION.lstrip('v')}.yaml"
 # Our own field manager for the node pin, kept distinct from the `kubectl` manager that owns the
@@ -457,6 +461,7 @@ class Settings:
     chart_version: str | None = None
     chart_is_prerelease: bool = False
     agents: int = 0
+    force_incompatible_kubernetes_version: bool = True
 
     @property
     def operator_needs_quay(self) -> bool:
@@ -965,6 +970,7 @@ def _helm_upgrade_install(
     chart_version: str | None = None,
     chart_is_prerelease: bool = False,
     base_values_files: tuple[Path, ...] = (),
+    force_incompatible_kubernetes_version: bool = True,
 ) -> None:
     """
     `base_values_files` are applied BEFORE `values_file` (lowest precedence — e.g. the plain
@@ -1013,6 +1019,8 @@ def _helm_upgrade_install(
         cmd.extend(["--values", str(extra)])
     if debug:
         cmd.append("--debug")
+    if force_incompatible_kubernetes_version:
+        cmd.extend(["--set", "forceIncompatibleKubernetes=true"])
     _print(f"Helm upgrade/install ({context}): {release_name} in ns={namespace}")
     _run(cmd, check=True, capture=False)
 
@@ -1540,7 +1548,7 @@ def _ensure_nginx_resolver_ipv6_off(*, context: str, namespace: str, configmap_n
     _debug(f"{context}/{configmap_name}: http-snippet set (resolver {dns_ip} valid=30s ipv6=off;)")
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Automate Astronomer CP/DP local setup using k3d.")
     parser.add_argument("--base-domain", default="localtest.me")
     parser.add_argument("--namespace", default="astronomer")
@@ -1778,8 +1786,20 @@ def parse_args() -> argparse.Namespace:
             "Operator (or the CRD) is already installed in the cluster."
         ),
     )
+    parser.add_argument(
+        "--force-incompatible-kubernetes-version",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help=(
+            "Bypass the incompatible kubernetes cluster version check in version_compatibility_check.tpl "
+            "(sets forceIncompatibleKubernetes=true on the helm install). k3d cluster versions can run "
+            "ahead of the tested cluster versions, so this is enabled by default. "
+            "Pass --no-force-incompatible-kubernetes-version to make helm fail when the cluster version "
+            "is out of range."
+        ),
+    )
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 class Delegate037(Exception):
@@ -2010,6 +2030,7 @@ def main() -> int:  # noqa: C901
         chart_version=resolved_chart_version,
         chart_is_prerelease=chart_is_prerelease,
         agents=args.num_compute_nodes,
+        force_incompatible_kubernetes_version=args.force_incompatible_kubernetes_version,
     )
 
     try:
@@ -2245,6 +2266,7 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
+                    force_incompatible_kubernetes_version=settings.force_incompatible_kubernetes_version,
                 )
                 ms.done(h)
 
@@ -2355,6 +2377,7 @@ def main() -> int:  # noqa: C901
                     debug=settings.helm_debug,
                     chart_version=settings.chart_version,
                     chart_is_prerelease=settings.chart_is_prerelease,
+                    force_incompatible_kubernetes_version=settings.force_incompatible_kubernetes_version,
                 )
                 ms.done(h)
 

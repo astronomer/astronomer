@@ -73,3 +73,30 @@ def find_psa_rejection_events(k8s_core_v1_client) -> list[str]:
         for event in events
         if event.reason == "FailedCreate" and "violates PodSecurity" in (event.message or "")
     ]
+
+
+def find_admission_rejection_events(k8s_core_v1_client, namespace: str, name_prefix: str, since=None) -> list[str]:
+    """Return one line per FailedCreate event for `name_prefix`'s controllers in `namespace`.
+
+    The same blind spot find_psa_rejection_events covers -- a rejected pod is never created, so
+    there is no unhealthy Pod object, only a Warning on whatever tried to create it -- but for
+    any admitting webhook rather than Pod Security Admission specifically. Use this where the
+    namespace enforces no PSA and the webhook of interest is something else, e.g. Kyverno, whose
+    denials read `admission webhook "validate.kyverno.svc-fail" denied the request`.
+
+    Scoped by namespace and name prefix. `since` is optional and only matters to a caller that
+    creates pods mid-test: Events outlive what produced them (an hour by default), so a rollout
+    poll has to ignore an earlier run's rejections. A scenario whose pods are all created by the
+    chart install can leave it None and check the whole window.
+
+    Note this only sees controller-level failures. A Kyverno policy left on its default autogen
+    settings denies the Deployment write itself, which surfaces as an API error on the write
+    rather than an Event, and never reaches here.
+    """
+    events = k8s_core_v1_client.list_namespaced_event(namespace, field_selector="reason=FailedCreate").items
+    return [
+        f"{event.involved_object.kind}/{event.involved_object.name}: {event.message}"
+        for event in events
+        if (since is None or ((event.last_timestamp or event.event_time) or since) >= since)
+        and (event.involved_object.name or "").startswith(name_prefix)
+    ]
