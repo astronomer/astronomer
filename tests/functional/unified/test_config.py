@@ -122,6 +122,24 @@ def test_houston_metrics_are_collected(prometheus):
     assert len(parsed["data"]["result"]) > 0, f"Expected to find a metric houston_up, but we got this response:\n\n{parsed}"
 
 
+@pytest.mark.flaky(reruns=20, reruns_delay=10)
+def test_nginx_metrics_are_collected(prometheus):
+    """Ensure nginx ingress controller metrics are collected."""
+    metric = "nginx_ingress_controller_config_last_reload_successful"
+    data = prometheus.check_output(f"wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query={metric}")
+    parsed = json.loads(data)
+    assert len(parsed["data"]["result"]) > 0, f"Expected to find a metric {metric}, but we got this response:\n\n{parsed}"
+
+
+@pytest.mark.flaky(reruns=20, reruns_delay=10)
+def test_nats_metrics_are_collected(prometheus):
+    """Ensure nats metrics are collected."""
+    metric = "gnatsd_varz_connections"
+    data = prometheus.check_output(f"wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query={metric}")
+    parsed = json.loads(data)
+    assert len(parsed["data"]["result"]) > 0, f"Expected to find a metric {metric}, but we got this response:\n\n{parsed}"
+
+
 def test_prometheus_config_reloader_works(prometheus, k8s_core_v1_client):
     """Ensure that Prometheus reloads its config when the cofigMap is updated
     and the reloader sidecar triggers the reload."""
