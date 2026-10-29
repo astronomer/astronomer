@@ -11,6 +11,12 @@ and registry.<baseDomain> with no route at all under Istio.
 
 `global.ingress.enabled` *is* honoured (it gates every Ingress and every VirtualService alike), so
 setting it false suppresses all four VirtualServices — see test_no_virtualservices_when_ingress_disabled.
+
+`global.authSidecar.enabled` is a second requirement on top of the gateway flag: the Gateway
+terminates traffic outside the platform, so the sidecar is the only thing authenticating these
+hosts. The gateway without it aborts the whole render — see
+test_istio_gateway_requires_auth_sidecar and templates/validate-istio-gateway-auth-sidecar.yaml.
+That is why the values helper below enables the sidecar.
 """
 
 from subprocess import CalledProcessError
@@ -66,6 +72,7 @@ def _istio_values(plane_mode="unified", per_host_ingress=None, **global_override
         "global": {
             "istio": {"gateway": {"enabled": True, "name": GATEWAY}},
             "nginx": {"enabled": False},
+            "authSidecar": {"enabled": True},
             "plane": {"mode": plane_mode},
             "baseDomain": BASE_DOMAIN,
             **global_overrides,
@@ -168,37 +175,34 @@ def test_astro_ui_virtualservices_ha_hosts(kube_version):
     assert common["http"][1]["redirect"]["authority"] == f"app.{BASE_DOMAIN}"
 
 
-# The forward-auth admin UIs: (template, subdomain, service name, own port). Their Ingresses swap the
-# backend port for the auth sidecar's when it is enabled, and each serves a second host under CP HA.
+# The forward-auth admin UIs: (template, subdomain, service name). Their Ingresses swap the backend
+# port for the auth sidecar's when it is enabled, and each serves a second host under CP HA.
 AUTH_SIDECAR_SERVICES = [
-    pytest.param(ALERTMANAGER_VS, "alertmanager", "release-name-alertmanager", 9093, id="alertmanager"),
-    pytest.param(GRAFANA_VS, "grafana", "release-name-grafana", 3000, id="grafana"),
-    pytest.param(PROMETHEUS_VS, "prometheus", "release-name-prometheus", 9090, id="prometheus"),
+    pytest.param(ALERTMANAGER_VS, "alertmanager", "release-name-alertmanager", id="alertmanager"),
+    pytest.param(GRAFANA_VS, "grafana", "release-name-grafana", id="grafana"),
+    pytest.param(PROMETHEUS_VS, "prometheus", "release-name-prometheus", id="prometheus"),
 ]
 AUTH_SIDECAR_PORT = 8084
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
-@pytest.mark.parametrize("auth_sidecar", [False, True], ids=["auth-sidecar-off", "auth-sidecar-on"])
-@pytest.mark.parametrize("vs_file,subdomain,service,own_port", AUTH_SIDECAR_SERVICES)
-def test_admin_ui_virtualservice_backend_port(kube_version, auth_sidecar, vs_file, subdomain, service, own_port):
-    """The backend port follows global.authSidecar.enabled, exactly as the Ingress backend does.
+@pytest.mark.parametrize("vs_file,subdomain,service", AUTH_SIDECAR_SERVICES)
+def test_admin_ui_virtualservice_backend_port(kube_version, vs_file, subdomain, service):
+    """Traffic enters through the auth sidecar's port, never the service's own port.
 
-    With the sidecar on, traffic must enter through its auth-proxy port (global.authSidecar.port)
-    rather than the service's own port, or auth is bypassed.
+    These three UIs have no auth of their own, so routing the Gateway at their own port would
+    bypass auth entirely. The sidecar is mandatory under Istio, so there is no other case to
+    cover — with it off the render aborts before any of this.
     """
-    values = _istio_values()
-    if auth_sidecar:
-        values["global"]["authSidecar"] = {"enabled": True}
-    rendered = _virtualservices(render_chart(kube_version=kube_version, show_only=[vs_file], values=values))
+    rendered = _virtualservices(render_chart(kube_version=kube_version, show_only=[vs_file], values=_istio_values()))
     destination = rendered[f"{service}-virtualservice"]["spec"]["http"][0]["route"][0]["destination"]
     assert destination["host"] == f"{service}.default.svc.cluster.local"
-    assert destination["port"]["number"] == (AUTH_SIDECAR_PORT if auth_sidecar else own_port)
+    assert destination["port"]["number"] == AUTH_SIDECAR_PORT
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
-@pytest.mark.parametrize("vs_file,subdomain,service,own_port", AUTH_SIDECAR_SERVICES)
-def test_admin_ui_virtualservice_ha_hosts(kube_version, vs_file, subdomain, service, own_port):
+@pytest.mark.parametrize("vs_file,subdomain,service", AUTH_SIDECAR_SERVICES)
+def test_admin_ui_virtualservice_ha_hosts(kube_version, vs_file, subdomain, service):
     """HA on: the global customer-facing host renders alongside the per-CP one, as in the Ingress."""
     values = _istio_values(controlPlaneHA={"enabled": True, "globalBaseDomain": GLOBAL_BASE_DOMAIN})
     rendered = _virtualservices(render_chart(kube_version=kube_version, show_only=[vs_file], values=values))
@@ -328,6 +332,7 @@ def test_istio_gateway_name_is_required(kube_version, gateway_name):
         "global": {
             "istio": {"gateway": gateway},
             "nginx": {"enabled": False},
+            "authSidecar": {"enabled": True},
             "plane": {"mode": "unified"},
             "baseDomain": BASE_DOMAIN,
         }
@@ -336,6 +341,43 @@ def test_istio_gateway_name_is_required(kube_version, gateway_name):
     with pytest.raises(CalledProcessError) as excinfo:
         render_chart(kube_version=kube_version, validate_objects=False, values=values)
     assert "global.istio.gateway.name is required" in excinfo.value.stderr.decode("utf-8")
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+@pytest.mark.parametrize("auth_sidecar", [None, {"enabled": False}], ids=["default", "explicitly_false"])
+def test_istio_gateway_requires_auth_sidecar(kube_version, auth_sidecar):
+    """Gateway on with the auth sidecar off (its default) aborts the install.
+
+    Nothing would authenticate the hosts these VirtualServices route, so the whole render fails
+    closed rather than publishing Houston, the registry and the admin UIs unauthenticated. The
+    guard lives in a top-level template keyed only on these two values, so it fires on every
+    misconfigured install rather than only the ones that reach a VirtualService.
+    """
+    values = _istio_values()
+    if auth_sidecar is None:
+        del values["global"]["authSidecar"]
+    else:
+        values["global"]["authSidecar"] = auth_sidecar
+
+    with pytest.raises(CalledProcessError) as excinfo:
+        render_chart(kube_version=kube_version, validate_objects=False, values=values)
+    stderr = excinfo.value.stderr.decode("utf-8")
+    assert "global.istio.gateway.enabled is true but global.authSidecar.enabled is false" in stderr
+    assert "no Istio VirtualServices are created" in stderr
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+def test_istio_gateway_guard_ignores_base_domain(kube_version):
+    """The guard fires with no baseDomain, where no VirtualService would have rendered anyway.
+
+    Gated on baseDomain it would let the same misconfiguration install everything else silently,
+    which is the trap documented in validate-mcp-server-auth-sidecar.yaml.
+    """
+    values = {"global": {"istio": {"gateway": {"enabled": True, "name": GATEWAY}}, "nginx": {"enabled": False}}}
+
+    with pytest.raises(CalledProcessError) as excinfo:
+        render_chart(kube_version=kube_version, baseDomain="", validate_objects=False, values=values)
+    assert "global.authSidecar.enabled is false" in excinfo.value.stderr.decode("utf-8")
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)

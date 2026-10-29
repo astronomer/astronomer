@@ -378,6 +378,10 @@ global:
     # Route platform traffic through an Istio Gateway instead of nginx Ingress.
     # When enabled, every platform Ingress is suppressed and VirtualServices are
     # rendered in its place.
+    # global.authSidecar.enabled is REQUIRED alongside this: the Gateway terminates
+    # traffic outside the platform and the auth sidecar is the only thing authenticating
+    # these hosts. Rendering fails if enabled is true and the auth sidecar is disabled,
+    # rather than publishing these hosts with no auth in front of them.
     # name is the <namespace>/<name> of a pre-existing Istio Gateway that the platform
     # VirtualServices attach to. There is no default: it has to name a Gateway that really
     # exists, and a VirtualService pointing at one that does not is accepted by the API server

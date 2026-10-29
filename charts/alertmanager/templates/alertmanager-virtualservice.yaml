@@ -32,11 +32,7 @@ spec:
         - destination:
             host: {{ template "alertmanager.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
             port:
-              {{- if .Values.global.authSidecar.enabled }}
               number: {{ .Values.global.authSidecar.port }}
-              {{- else }}
-              number: {{ .Values.ports.http }}
-              {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
