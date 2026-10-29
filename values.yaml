@@ -93,7 +93,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.2.2
+      tag: 2.2.3
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
@@ -330,7 +330,7 @@ global:
       enabled: false
       name: sidecar-log-consumer
       repository: quay.io/astronomer/ap-vector
-      tag: 0.60.0-1
+      tag: 0.60.0-3
       customConfig: false
       indexPattern: ~
       extraEnv: []
@@ -414,36 +414,36 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.31.0-3
+        tag: 0.31.0-4
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.10.2-1
+        tag: 8.10.3
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-34
+        tag: 1.24.1-35
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.1-14
+        tag: 0.12.1-15
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.10.23-1
+        tag: 2026.10.26
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.10.23
+        tag: 2026.10.26
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.10.23
+        tag: 2026.10.26
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.6.3
+        tag: 0.6.4
     metrics:
       enabled: false
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.25
+      tag: 0.1.26
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
