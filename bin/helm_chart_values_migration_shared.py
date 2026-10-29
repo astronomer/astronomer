@@ -1237,6 +1237,7 @@ _HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
     "deployment.airflow.backfill.delete",
 )
 
+# Mirrors EXTRA_KNOWN_KEYS in houston-api src/lib/custom-rbac/role-override-warnings.js.
 _HOUSTON_EXTRA_KNOWN_KEYS: Final[tuple[str, ...]] = (
     "deployment.airflow.op",
     "system.airflow.op",
@@ -1246,6 +1247,8 @@ _HOUSTON_EXTRA_KNOWN_KEYS: Final[tuple[str, ...]] = (
     "system.controlPlanes.update",
     "system.controlPlanes.deregister",
     "system.controlPlanes.get",
+    "system.getDeploymentById",
+    "system.getEmailById",
 )
 
 ROLE_OVERRIDE_SUPPORTED_KEYS: Final[frozenset[str]] = frozenset(_HOUSTON_PERMISSION_CATALOG_KEYS + _HOUSTON_EXTRA_KNOWN_KEYS)

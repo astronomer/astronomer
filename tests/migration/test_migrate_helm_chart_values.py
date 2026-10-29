@@ -1521,12 +1521,31 @@ class TestRoleOverrideCheck:
         )
         assert findings == []
 
+    # Enforced by Houston's schema shields and shipped in config/default.yaml, but not in its permission catalog.
+    SHIELDED_SYSTEM_KEYS = ("system.getDeploymentById", "system.getEmailById")
+
+    @pytest.mark.parametrize("key", SHIELDED_SYSTEM_KEYS)
+    def test_shielded_system_keys_not_reported(self, key):
+        findings = _check_roles(
+            f"""\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    SYSTEM_ADMIN:
+                      permissions:
+                        {key}: true
+            """
+        )
+        assert findings == []
+
     def test_supported_keys_include_catalog_op_and_defaults(self):
         keys = migrate_mod.ROLE_OVERRIDE_SUPPORTED_KEYS
-        # Houston's catalog (188 keys, which now include the six config defaults) plus the two Op keys.
-        assert len(keys) == 188 + 2
+        # Houston's catalog (188 keys, which now include the six config defaults) plus the two Op keys and the two shielded keys.
+        assert len(keys) == 188 + 4
         assert {"deployment.airflow.op", "system.airflow.op", "system.controlPlanes.get"} <= keys
         assert set(self.FINE_GRAINED_AIRFLOW_KEYS) <= keys
+        assert set(self.SHIELDED_SYSTEM_KEYS) <= keys
 
 
 class TestRoleOverrideCheckCli:
