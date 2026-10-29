@@ -2549,8 +2549,8 @@ DB_BOOTSTRAPPER_CONTAINERS = {
     ("release-name-houston-db-migrations", "houston-bootstrapper"),
     ("release-name-houston-upgrade-deployments", "houston-bootstrapper"),
     ("release-name-grafana", "bootstrapper"),
-    ("release-name-api-server", "laminar-bootstrapper"),
-    ("release-name-hypervisor", "laminar-bootstrapper"),
+    ("release-name-laminar-api-server", "laminar-bootstrapper"),
+    ("release-name-laminar-hypervisor", "laminar-bootstrapper"),
 }
 
 CP_REFRESH_GLOBAL = {
@@ -2661,8 +2661,8 @@ class TestDbBootstrapperSecretsFromFiles:
             ("release-name-houston-db-migrations", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
             ("release-name-houston-upgrade-deployments", {"astronomer": {"houston": {"backendSecretName": "my-houston-db"}}}),
             ("release-name-grafana", {"grafana": {"backendSecretName": "my-grafana-db"}}),
-            ("release-name-api-server", {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}}),
-            ("release-name-hypervisor", {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}}),
+            ("release-name-laminar-api-server", {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}}),
+            ("release-name-laminar-hypervisor", {"laminar": {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}}),
             ("release-name-commander", {"astronomer": {"flightDeck": {"enabled": False}}}),
         ],
     )
@@ -3786,9 +3786,9 @@ RESIDUAL_SECRET_KEY_REFS = {
         ("release-name-grafana", "wait-for-db", "GF_DATABASE_URL"),
         ("release-name-grafana", "grafana", "GF_DATABASE_URL"),
         ("release-name-registry", "registry", "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS"),
-        ("release-name-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
-        ("release-name-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
-        ("release-name-hypervisor", "laminar-hypervisor", "LAMINAR_JWKS"),
+        ("release-name-laminar-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
+        ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
+        ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_JWKS"),
         ("release-name-mcp-server", "mcp-server", "MCP_TOKEN"),
     },
     "control-ha": {
@@ -3798,9 +3798,9 @@ RESIDUAL_SECRET_KEY_REFS = {
     },
     "data": {
         ("release-name-registry", "registry", "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS"),
-        ("release-name-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
-        ("release-name-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
-        ("release-name-hypervisor", "laminar-hypervisor", "LAMINAR_JWKS"),
+        ("release-name-laminar-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
+        ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
+        ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_JWKS"),
     },
 }
 
