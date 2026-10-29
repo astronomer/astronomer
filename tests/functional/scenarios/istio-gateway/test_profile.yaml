@@ -1,0 +1,32 @@
+description: >-
+  Validates the Istio Gateway ingress path end to end: with global.istio.gateway.enabled the
+  platform suppresses every nginx Ingress and renders VirtualServices in their place, and all
+  north-south platform traffic is routed by a real Envoy. Installs Istio and creates the Gateway
+  pre-helm (bin/setup-istio.py) because both the VirtualService CRD and the Gateway named by
+  global.istio.gateway.name must exist before the platform install. The headline assertions are
+  the ones template-level tests structurally cannot make: that the Istio API server accepts the
+  chart's networking.istio.io/v1alpha3 objects at all, that every VirtualService's gateway
+  reference resolves to a Gateway that really exists (a dangling reference is accepted and
+  silently routes nothing), and that HTTP through the gateway really reaches Houston and really
+  gets a 403 on /v1/alerts and /v1/metrics from the VirtualService's fault-injection rule. Runs
+  with the nginx ingress controller switched off, so nothing but the Gateway can be carrying the
+  traffic, and with global.authSidecar on, which makes this the only coverage of auth-sidecar and
+  Istio-gateway routing in combination.
+topology: unified
+# Left unpinned, so this runs on test_k8s_versions[-1] like every other scenario. Worth
+# knowing if it starts failing in setup: Istio supports a trailing window of Kubernetes
+# minors, so the newest version this repo tests against can be ahead of what the Istio
+# release pinned in metadata.yaml supports. Pinning a mid-range version here (e.g.
+# kube_version: 1.34.3) is the fix for that, bumped alongside tools.istio.version.
+# kube_version: 1.34.3
+pre_helm_scripts:
+  # Namespaces and the Gateway name are passed explicitly and have no defaults, so the script
+  # aborts (rather than touching whatever cluster KUBECONFIG points at) if run by hand without
+  # them. These MUST match configs/enable-istio-gateway.yaml's global.istio values.
+  - bin/setup-istio.py --root-namespace istio-config --gateway-namespace istio-system --gateway-name astronomer-gateway
+values:
+  - configs/enable-istio-gateway.yaml
+# No resource_class override: this scenario creates no Airflow Deployment, so it does not hit
+# the CPU ceiling that pushed the deployment-creating scenarios to 2xlarge (see auth-sidecar /
+# PINF-1080). Istio adds only istiod and one gateway pod, both resource-trimmed by
+# bin/setup-istio.py, on top of the platform chart the default xlarge already fits.
