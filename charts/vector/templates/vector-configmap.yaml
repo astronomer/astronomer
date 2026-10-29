@@ -169,6 +169,9 @@ data:
               . = merge!(., parsed)
             }
           }
+          if is_string(.event) {
+            .message = .event
+          }
           .log_source = "airflow_3_file"
 
       parse_airflowV3_path:
