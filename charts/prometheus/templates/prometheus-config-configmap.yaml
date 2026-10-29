@@ -79,7 +79,7 @@ data:
         scrape_timeout: {{ .Values.config.scrape_configs.federated_dataplanes.scrape_timeout }}
         params:
           'match[]':
-            - '{job=~".*-kube-state$|airflow|airflows-operator-managed|kubernetes-nodes-cadvisor|node-exporter|laminar-hypervisor|laminar-api-server"}'
+            - '{job=~".*-kube-state$|airflow|airflow-operator|kubernetes-nodes-cadvisor|node-exporter|laminar-hypervisor|laminar-api-server"}'
             - '{__name__=~"git_sync.*"}'
         file_sd_configs:
           - files:
@@ -295,7 +295,7 @@ data:
       {{- end }}
 
       {{- if and $useClusterRoles .Values.global.airflowOperator.enabled   }}
-      - job_name: airflows-operator-managed
+      - job_name: airflow-operator
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
