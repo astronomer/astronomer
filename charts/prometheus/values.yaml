@@ -42,11 +42,11 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.3.11
+    tag: 0.3.12
     pullPolicy: IfNotPresent
   promproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.31.1-4
+    tag: 1.31.8
     pullPolicy: IfNotPresent
 
 
