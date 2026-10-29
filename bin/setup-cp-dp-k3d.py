@@ -132,7 +132,7 @@ def _install_service_monitor_crd(context: str) -> None:
 # (kedacore/keda#7663, fixed in 2.20.0). 2.17.0 was where a bound service account token became a
 # TriggerAuthentication source, and 2.20.0 keeps that; below 2.17.0 the scaling caller has no way
 # to prove who it is.
-KEDA_VERSION = "v2.20.0"
+KEDA_VERSION = "v2.20.2"
 KEDA_NAMESPACE = "keda"
 KEDA_MANIFEST_URL = f"https://github.com/kedacore/keda/releases/download/{KEDA_VERSION}/keda-{KEDA_VERSION.lstrip('v')}.yaml"
 # Our own field manager for the node pin, kept distinct from the `kubectl` manager that owns the
