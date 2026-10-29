@@ -260,3 +260,18 @@ class TestVectorConfigmap:
         condition = config_dict["transforms"]["filter_task_logs_only"]["condition"]
 
         assert condition == '.log_type == "task"'
+
+    def test_vector_configmap_file_logs_message_replaced_with_parsed_event(self, kube_version):
+        """The merged JSON line leaves .message raw; it is replaced by the parsed event text
+        before create_event_field copies .message into .event."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/vector/templates/vector-configmap.yaml"],
+        )
+
+        config_dict = yaml.safe_load(docs[0]["data"]["vector-config.yaml"])
+        source = config_dict["transforms"]["enrich_file_logs"]["source"]
+
+        assert "if is_string(.event)" in source
+        assert ".message = .event" in source
+        assert source.index(".message = .event") > source.index("merge!(., parsed)")
