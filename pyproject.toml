@@ -31,6 +31,10 @@ dependencies = [
 [tool.uv]
 exclude-newer = "7 days"
 
+[tool.uv.exclude-newer-package]
+pytest = "2026-10-30T00:00:00Z"
+
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
