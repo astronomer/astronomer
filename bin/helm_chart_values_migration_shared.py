@@ -1241,12 +1241,6 @@ _HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
 _HOUSTON_EXTRA_KNOWN_KEYS: Final[tuple[str, ...]] = (
     "deployment.airflow.op",
     "system.airflow.op",
-    "deployment.config.unadopt",
-    "system.regions.update",
-    "system.controlPlanes.register",
-    "system.controlPlanes.update",
-    "system.controlPlanes.deregister",
-    "system.controlPlanes.get",
     "system.getDeploymentById",
     "system.getEmailById",
 )
