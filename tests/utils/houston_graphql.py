@@ -170,6 +170,7 @@ def upsert_deployment(
     git_sync_repo_share_mode: str | None = None,
     runtime_version: str | None = None,
     deployment_uuid: str | None = None,
+    mode: str | None = None,
 ) -> dict:
     """
     Create (deployment_uuid=None) or update (deployment_uuid set) an Airflow Deployment.
@@ -185,6 +186,9 @@ def upsert_deployment(
 
     repository_url/auth_type only apply to dag_deployment_type="git_sync" (the DagDeployment
     fields git-sync-relay's own repositoryUrl/authType).
+
+    mode is the deployment mode: "helm" or "operator" (Houston's default). The operator path
+    only supports image-based deployments, so pair mode="operator" with dag_deployment_type="image".
 
     Validates label/workspace_id/cluster_id (on create) and repository_url/auth_type (for
     git_sync) locally rather than letting a caller mistake reach Houston -- a missing
@@ -204,6 +208,8 @@ def upsert_deployment(
         dag_deployment_type = dag_deployment_type or "image"
     if runtime_version:
         variables["runtimeVersion"] = runtime_version
+    if mode:
+        variables["mode"] = mode
 
     if dag_deployment_type:
         dag_deployment = {"type": dag_deployment_type}
@@ -237,6 +243,7 @@ def upsert_deployment(
       $dagDeployment: DagDeployment
       $runtimeVersion: String
       $deploymentUuid: Uuid
+      $mode: AllowedDeploymentModeValues
     ) {
       upsertDeployment(
         label: $label
@@ -246,6 +253,7 @@ def upsert_deployment(
         dagDeployment: $dagDeployment
         runtimeVersion: $runtimeVersion
         deploymentUuid: $deploymentUuid
+        mode: $mode
       ) {
         id
         releaseName

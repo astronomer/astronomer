@@ -15,13 +15,27 @@ gates the install, and this file deliberately checks only the Kyverno relationsh
 wait checks pod phase, which stays Running through a CrashLoopBackOff.
 
 Module-scoped clients built directly from KUBECONFIG_UNIFIED rather than conftest.py's
-function-scoped fixtures, the same pattern as auth-sidecar and custom-image-sha."""
+function-scoped fixtures, the same pattern as auth-sidecar and custom-image-sha.
+
+test_operator_deployment_* create a real Airflow Deployment (mode "operator", image-based) and
+check its `<release>-db` Secret lands in the platform namespace -- the only namespace the
+hypervisor can read Secrets in, so without it hibernation cannot reach the deployment."""
 
 import pytest
+import testinfra
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-from tests.utils.k8s import KUBECONFIG_UNIFIED, find_admission_rejection_events
+from tests.utils.houston_graphql import (
+    HoustonError,
+    create_user,
+    create_workspace,
+    dump_pod_logs,
+    get_cluster_id,
+    upsert_deployment,
+    wait_for_release_ready,
+)
+from tests.utils.k8s import KUBECONFIG_UNIFIED, find_admission_rejection_events, get_pod_by_label_selector
 
 NAMESPACE = "astronomer"
 
@@ -37,6 +51,15 @@ LAMINAR_DEPLOYMENTS = tuple(COMPONENT_LABELS)
 REPORT_GROUP = "wgpolicyk8s.io"
 REPORT_VERSION = "v1alpha2"
 PASSING_RESULTS = {"pass", "skip"}
+
+# The Airflow Deployment the operator tests below create, same shape as auth-sidecar's.
+ADMIN_EMAIL = "laminar-airflow-operator-test@astronomer.io"
+ADMIN_PASSWORD = "Astronomer%123"
+WORKSPACE_LABEL = "laminar-airflow-operator"
+DEPLOYMENT_LABEL = "laminar-airflow-operator"
+
+# PINF-1049: commander's first JWKS fetch can race Houston's readiness. Transient, not a regression.
+JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
 
 
 @pytest.fixture(scope="module")
@@ -148,3 +171,69 @@ def test_kyverno_evaluated_laminar_pods(laminar_pod_uids, custom_objects_client)
             for outcome, name, policy_rule, message in violations
         )
         print(f"Kyverno evaluated {len(results)} result(s) against {deployment_name} pods, all passing.")
+
+
+@pytest.fixture(scope="module")
+def apps_client() -> client.AppsV1Api:
+    config.load_kube_config(config_file=KUBECONFIG_UNIFIED)
+    return client.AppsV1Api()
+
+
+@pytest.fixture(scope="module")
+def houston_api():
+    """Module-scoped Houston exec host; conftest.py's own fixture is function-scoped."""
+    pod = get_pod_by_label_selector(NAMESPACE, "component=houston", KUBECONFIG_UNIFIED)
+    return testinfra.get_host(f"kubectl://{pod}?container=houston&namespace={NAMESPACE}", kubeconfig=KUBECONFIG_UNIFIED)
+
+
+@pytest.fixture(scope="module")
+def deployment(houston_api, apps_client, core_client) -> str:
+    """Create one real Airflow Deployment through Houston and return its release name.
+
+    Same mechanism as the auth-sidecar scenario's `deployment` fixture. Mode "operator" needs the
+    platform in operator mode too (configs/enable-airflow-operator.yaml) and only supports
+    image-based deployments. CeleryExecutor because its topology is what the hypervisor hibernates.
+    """
+    token = create_user(houston_api, ADMIN_EMAIL, ADMIN_PASSWORD)
+    workspace_id = create_workspace(houston_api, token, WORKSPACE_LABEL)
+    cluster_id = get_cluster_id(houston_api, token)
+    try:
+        created = upsert_deployment(
+            houston_api,
+            token,
+            executor="CeleryExecutor",
+            label=DEPLOYMENT_LABEL,
+            workspace_id=workspace_id,
+            cluster_id=cluster_id,
+            mode="operator",
+            dag_deployment_type="image",
+        )
+    except HoustonError:
+        dump_pod_logs(core_client, "component=houston")
+        dump_pod_logs(core_client, "component=commander")
+        raise
+    wait_for_release_ready(apps_client, core_client, created["releaseName"])
+    return created["releaseName"]
+
+
+@pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
+def test_operator_deployment_reaches_ready(deployment):
+    """The fixture already waits for readiness; this asserts that contract as its own named test."""
+    assert deployment
+
+
+def test_operator_deployment_db_secret_exists(deployment, core_client):
+    """The deployment's `<release>-db` Secret must land in the platform namespace for hibernation.
+
+    The hypervisor's Secret permissions are a Role in the release namespace only
+    (charts/laminar/templates/hypervisor/hypervisor-rbac.yaml), so a Secret created anywhere else
+    leaves it unable to reach the deployment's database -- while every readiness check still passes.
+    """
+    expected = f"{deployment}-db"
+    names = sorted(secret.metadata.name for secret in core_client.list_namespaced_secret(NAMESPACE).items)
+    assert expected in names, (
+        f"Expected Secret {NAMESPACE}/{expected} for the operator-mode Airflow Deployment "
+        f"{deployment!r}; the laminar hypervisor can only read Secrets in {NAMESPACE} "
+        f"(its Role is namespaced there), so without it hibernation cannot reach this deployment's "
+        f"database. Secrets present in {NAMESPACE}:\n" + "\n".join(f"  {name}" for name in names)
+    )

@@ -5,12 +5,16 @@ description: >-
   creates are never seen by the admission webhook -- the scenario's own tests therefore roll both
   Laminar Deployments after Kyverno is live, which is the only point at which their pod specs
   actually pass through admission, and then assert that Kyverno did evaluate the resulting pods
-  rather than matching nothing.
+  rather than matching nothing. Also installs the platform in Airflow operator mode and creates a
+  real, image-based CeleryExecutor Airflow Deployment through Houston, asserting its <release>-db
+  Secret lands in the platform namespace -- the only namespace the hypervisor can read Secrets in,
+  so without it Laminar cannot hibernate the deployment.
 topology: unified
 
 # The platform plus Laminar's own three pods (api-server x2 at 400m each, hypervisor x1 at 200m),
 # and both Laminar Deployments get rolled a second time mid-test. xlarge was already reported as
-# marginal for the platform alone in PINF-1080, so this follows the other scenarios up a size.
+# marginal for the platform alone in PINF-1080, and the Airflow Deployment test_laminar.py creates
+# costs what it costs the other deployment-creating scenarios, so this follows them up a size.
 resource_class: 2xlarge
 
 # Runs this scenario's tests against a real, live Kyverno admission controller, installed
@@ -29,12 +33,19 @@ kyverno_scan: true
 # pre_helm_scripts entry below can pull it. Adds the `quay.io` context to just this job.
 quay_login: true
 
+# enable-airflow-operator.yaml is the platform half of operator mode; test_laminar.py passes
+# upsertDeployment's own mode="operator" for the deployment it creates.
 values:
   - configs/enable-laminar.yaml
+  - configs/enable-airflow-operator.yaml
   - configs/disable-logging.yaml
 
+# The airflow-operator subchart renders a cert-manager Issuer/Certificate, which a kind cluster
+# cannot apply without cert-manager -- so it goes in before the chart, not after like Kyverno.
 pre_helm_scripts:
+  - bin/install-cert-manager.py
   - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/ap-laminar:1.0.0-rc4
+  - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/airflow-operator-dev:1.7.0-rc1
 
 namespace_labels:
   platform: astronomer
