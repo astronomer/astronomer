@@ -1,0 +1,27 @@
+{{- /*
+Istio Gateway + auth sidecar validation.
+
+The Gateway terminates platform traffic outside the platform, so global.authSidecar is the only
+thing authenticating the hosts the VirtualServices route (Houston, the registry, the astro UI,
+Grafana, Alertmanager, Prometheus, Elasticsearch). Enabling the Gateway without it would route
+every one of those straight at its own port with no auth in front, so this fails closed.
+
+Keyed only on the two values it concerns, with no baseDomain or plane.mode gate, so it fails on
+every install that is misconfigured this way rather than only the ones that happen to render a
+VirtualService. Matches validate-mcp-server-auth-sidecar.yaml's pattern. Emits no Kubernetes object.
+*/ -}}
+{{- $istioGateway := (.Values.global.istio | default dict).gateway | default dict }}
+{{- if and $istioGateway.enabled (not (.Values.global.authSidecar | default dict).enabled) }}
+{{- fail `ABORT! global.istio.gateway.enabled is true but global.authSidecar.enabled is false.
+
+The auth sidecar is required for Istio Gateway routing. The Gateway terminates platform traffic
+outside the platform, so the sidecar is the only thing authenticating these hosts, and without it
+no Istio VirtualServices are created and the platform is not reachable through the Gateway.
+
+To enable it, set the following and install again:
+
+global:
+  authSidecar:
+    enabled: true
+` }}
+{{- end }}

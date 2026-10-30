@@ -118,10 +118,13 @@ class TestAstronomerCommander:
 
         An unconditional block would change the commander metadata checksum, and so roll
         commander, on every upgrade of an install that does not use Istio.
+
+        The auth sidecar is enabled throughout because the gateway requires it — see
+        templates/validate-istio-gateway-auth-sidecar.yaml, which aborts the render otherwise.
         """
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"istio": istio_values}},
+            values={"global": {"istio": istio_values, "authSidecar": {"enabled": True}}},
             show_only=["charts/astronomer/templates/commander/commander-metadata.yaml"],
         )
 
@@ -425,10 +428,14 @@ class TestAstronomerCommander:
         ids=["default", "gateway_disabled", "gateway_enabled"],
     )
     def test_commander_rbac_istio_virtualservices(self, kube_version, istio_values, expected):
-        """Test that commander only gets VirtualService permissions when the istio gateway is enabled."""
+        """Test that commander only gets VirtualService permissions when the istio gateway is enabled.
+
+        The auth sidecar is enabled throughout because the gateway requires it — see
+        templates/validate-istio-gateway-auth-sidecar.yaml, which aborts the render otherwise.
+        """
         doc = render_chart(
             kube_version=kube_version,
-            values={"global": {"istio": istio_values}},
+            values={"global": {"istio": istio_values, "authSidecar": {"enabled": True}}},
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
         )[0]
 
