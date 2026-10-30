@@ -153,9 +153,6 @@ imagePullSecrets:
 {{- define "prometheus.LaminarHypervisorMetricsActionDrop" -}}
 - source_labels: [__name__]
   action: drop
-  regex: 'laminar_kubernetes_conns_(avail|inuse)'
-- source_labels: [__name__]
-  action: drop
   regex: 'hypervisor_laminar_hypervisor_num_upcoming_dag_runs'
 - source_labels: [__name__]
   action: drop
@@ -171,19 +168,19 @@ imagePullSecrets:
   regex: 'hypervisor_laminar_hypervisor_num_delayed_task_instances'
 - source_labels: [__name__]
   action: drop
-  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_scaling_duration_seconds_{created,sum}'
+  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_scaling_duration_seconds_(created|sum)'
 - source_labels: [__name__]
   action: drop
   regex: 'hypervisor_laminar_hypervisor_monitored_airflow_run_count_created'
 - source_labels: [__name__]
   action: drop
-  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_monitoring_scrape_duration_seconds_{count,created,sum}'
+  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_monitoring_scrape_duration_seconds_(count|created|sum)'
 - source_labels: [__name__]
   action: drop
-  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_monitoring_duration_seconds_{created,sum}'
+  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_monitoring_duration_seconds_(created|sum)'
 - source_labels: [__name__]
   action: drop
-  regex: 'hypervisor_laminar_hypervisor_db_scraper_query_duration_seconds_{count,created,sum}'
+  regex: 'hypervisor_laminar_hypervisor_db_scraper_query_duration_seconds_(count|created|sum)'
 {{- end }}
 
 {{ define "promproxy.image" -}}

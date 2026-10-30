@@ -52,7 +52,6 @@ laminar_api_server_metric_drop_config = [
 ]
 
 laminar_hypervisor_metric_drop_config = [
-    {"source_labels": ["__name__"], "action": "drop", "regex": "laminar_kubernetes_conns_(avail|inuse)"},
     {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_num_upcoming_dag_runs"},
     {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_num_stuck_queued_dag_runs"},
     {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_num_non_terminal_dag_runs"},
