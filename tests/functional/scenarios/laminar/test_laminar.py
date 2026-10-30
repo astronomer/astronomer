@@ -217,12 +217,12 @@ def deployment(houston_api, apps_client, core_client) -> str:
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
-def test_operator_deployment_reaches_ready(operator_deployment):
+def test_operator_deployment_reaches_ready(deployment):
     """The fixture already waits for readiness; this asserts that contract as its own named test."""
     assert deployment
 
 
-def test_operator_deployment_db_secret_exists(operator_deployment, core_client):
+def test_operator_deployment_db_secret_exists(deployment, core_client):
     """The deployment's `<release>-db` Secret must land in the platform namespace for hibernation.
 
     The hypervisor's Secret permissions are a Role in the release namespace only
@@ -233,7 +233,7 @@ def test_operator_deployment_db_secret_exists(operator_deployment, core_client):
     names = sorted(secret.metadata.name for secret in core_client.list_namespaced_secret(NAMESPACE).items)
     assert expected in names, (
         f"Expected Secret {NAMESPACE}/{expected} for the operator-mode Airflow Deployment "
-        f"{operator_deployment!r}; the laminar hypervisor can only read Secrets in {NAMESPACE} "
+        f"{deployment!r}; the laminar hypervisor can only read Secrets in {NAMESPACE} "
         f"(its Role is namespaced there), so without it hibernation cannot reach this deployment's "
         f"database. Secrets present in {NAMESPACE}:\n" + "\n".join(f"  {name}" for name in names)
     )
