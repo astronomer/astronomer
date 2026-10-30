@@ -589,6 +589,7 @@ data:
           - source_labels: [__meta_kubernetes_endpoint_ready]
             action: keep
             regex: "^true"
+        {{- include "prometheus.LaminarHypervisorMetricsActionDrop" . | nindent 10 }}
 
       - job_name: laminar-api-server
         metrics_path: /laminar/metrics
@@ -604,6 +605,7 @@ data:
           - source_labels: [__meta_kubernetes_endpoint_ready]
             action: keep
             regex: "^true"
+        {{- include "prometheus.LaminarApiServerMetricsActionDrop" . | nindent 10 }}
 
       {{- end }}
 
