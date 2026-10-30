@@ -1029,3 +1029,292 @@ def dump_yaml(yml: YAML, data: Any, output: Path | None = None) -> str | None:
     stream = StringIO()
     yml.dump(data, stream)
     return stream.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# Advisory built-in role override check (PLX-996)
+# ---------------------------------------------------------------------------
+
+# KEEP IN STEP WITH houston-api src/lib/custom-rbac/role-override-warnings.js
+# and src/lib/custom-rbac/permission-catalog.js. Houston treats a key as valid
+# when it is in PERMISSION_CATALOG or EXTRA_KNOWN_KEYS (the Op keys plus six
+# defaults from config/default.yaml, which the catalog now also lists). Update
+# this list whenever either changes, or the check will mislead operators.
+# Houston's REMOVED_KEYS set is empty, and the Op keys were restored (PINF-1278),
+# so they are treated as supported.
+#
+# Last synced with houston-api main at 64aa45c19. To regenerate the catalog keys, in
+# source order, from a houston-api checkout:
+#   grep -oE '^  "[a-z][A-Za-z0-9_.]+":' src/lib/custom-rbac/permission-catalog.js
+_HOUSTON_PERMISSION_CATALOG_KEYS: Final[tuple[str, ...]] = (
+    "system.adminCount.get",
+    "system.airflow.admin",
+    "system.airflow.get",
+    "system.airflow.user",
+    "system.airflow.viewer",
+    "system.cleanupAirflowDb.delete",
+    "system.cleanupDeployRevisions.delete",
+    "system.clusters.deregister",
+    "system.clusters.get",
+    "system.clusters.register",
+    "system.clusters.update",
+    "system.clusters.cordon",
+    "system.controlPlanes.get",
+    "system.controlPlanes.register",
+    "system.controlPlanes.update",
+    "system.controlPlanes.deregister",
+    "system.nodePools.get",
+    "system.nodePools.create",
+    "system.nodePools.update",
+    "system.nodePools.delete",
+    "system.deployRevisions.get",
+    "system.deployment.deployments.config.delete",
+    "system.deployment.deployments.config.update",
+    "system.deployment.variables.get",
+    "system.deployment.variables.update",
+    "system.deployments.adopt",
+    "system.deployments.cordon",
+    "system.deployments.create",
+    "system.deployments.dags.push",
+    "system.deployments.delete",
+    "system.deployments.get",
+    "system.deployments.images.push",
+    "system.deployments.logs",
+    "system.deployments.metrics",
+    "system.deployments.status",
+    "system.deployments.unadopt",
+    "system.deployments.update",
+    "system.deployments.upsert",
+    "system.iam.update",
+    "system.invite.get",
+    "system.invites.get",
+    "system.monitoring.get",
+    "system.regions.update",
+    "system.registryBaseImages.push",
+    "system.roles.create",
+    "system.roles.delete",
+    "system.roles.get",
+    "system.roles.update",
+    "system.serviceAccounts.create",
+    "system.serviceAccounts.delete",
+    "system.serviceAccounts.get",
+    "system.serviceAccounts.update",
+    "system.taskUsage.get",
+    "system.teams.create",
+    "system.teams.get",
+    "system.teams.remove",
+    "system.teams.update",
+    "system.updates.get",
+    "system.user.delete",
+    "system.user.forceDelete",
+    "system.user.invite",
+    "system.user.verifyEmail",
+    "system.users.get",
+    "system.workspace.create",
+    "system.workspace.delete",
+    "system.workspace.deployments.config.delete",
+    "system.workspace.deployments.config.get",
+    "system.workspace.deployments.config.update",
+    "system.workspace.get",
+    "system.workspace.update",
+    "cluster.config.create",
+    "cluster.config.delete",
+    "cluster.config.cordon",
+    "cluster.config.get",
+    "cluster.config.update",
+    "cluster.nodePools.get",
+    "cluster.nodePools.create",
+    "cluster.nodePools.update",
+    "cluster.nodePools.delete",
+    "cluster.roles.get",
+    "cluster.roles.update",
+    "workspace.adminCount.get",
+    "workspace.config.delete",
+    "workspace.config.get",
+    "workspace.config.update",
+    "workspace.deployments.config.delete",
+    "workspace.deployments.config.get",
+    "workspace.deployments.config.update",
+    "workspace.deployments.adopt",
+    "workspace.deployments.cordon",
+    "workspace.deployments.create",
+    "workspace.deployments.get",
+    "workspace.deployments.unadopt",
+    "workspace.deployments.upsert",
+    "workspace.iam.update",
+    "workspace.invites.get",
+    "workspace.roles.get",
+    "workspace.serviceAccounts.create",
+    "workspace.serviceAccounts.delete",
+    "workspace.serviceAccounts.get",
+    "workspace.serviceAccounts.update",
+    "workspace.taskUsage.get",
+    "workspace.teams.get",
+    "workspace.teams.getAll",
+    "workspace.users.get",
+    "workspace.users.getAll",
+    "deployment.adminCount.get",
+    "deployment.airflow.access",
+    "deployment.airflow.admin",
+    "deployment.airflow.get",
+    "deployment.airflow.user",
+    "deployment.config.delete",
+    "deployment.config.get",
+    "deployment.config.unadopt",
+    "deployment.config.update",
+    "deployment.config.upsert",
+    "deployment.dags.push",
+    "deployment.deployRevisions.get",
+    "deployment.deployments.config.delete",
+    "deployment.deployments.config.update",
+    "deployment.deployments.cordon",
+    "deployment.images.pull",
+    "deployment.images.push",
+    "deployment.logs.get",
+    "deployment.metrics.get",
+    "deployment.roles.get",
+    "deployment.serviceAccounts.create",
+    "deployment.serviceAccounts.delete",
+    "deployment.serviceAccounts.get",
+    "deployment.serviceAccounts.update",
+    "deployment.status.get",
+    "deployment.taskUsage.get",
+    "deployment.teamRoles.update",
+    "deployment.teams.get",
+    "deployment.userRoles.update",
+    "deployment.users.get",
+    "deployment.variables.get",
+    "deployment.variables.update",
+    "deployment.airflow.variable.read",
+    "deployment.airflow.variable.create",
+    "deployment.airflow.variable.edit",
+    "deployment.airflow.variable.delete",
+    "deployment.airflow.connection.read",
+    "deployment.airflow.connection.create",
+    "deployment.airflow.connection.edit",
+    "deployment.airflow.connection.delete",
+    "deployment.airflow.pool.read",
+    "deployment.airflow.pool.create",
+    "deployment.airflow.pool.edit",
+    "deployment.airflow.pool.delete",
+    "deployment.airflow.dag.read",
+    "deployment.airflow.dag.edit",
+    "deployment.airflow.dag.delete",
+    "deployment.airflow.dag_code.read",
+    "deployment.airflow.import_error.read",
+    "deployment.airflow.dag_run.read",
+    "deployment.airflow.dag_run.create",
+    "deployment.airflow.dag_run.edit",
+    "deployment.airflow.dag_run.delete",
+    "deployment.airflow.dag_run.clear",
+    "deployment.airflow.task_instance.read",
+    "deployment.airflow.task_instance.create",
+    "deployment.airflow.task_instance.edit",
+    "deployment.airflow.task_instance.delete",
+    "deployment.airflow.task_log.read",
+    "deployment.airflow.trigger.read",
+    "deployment.airflow.xcom.read",
+    "deployment.airflow.xcom.create",
+    "deployment.airflow.xcom.delete",
+    "deployment.airflow.config.read",
+    "deployment.airflow.provider.read",
+    "deployment.airflow.plugin.read",
+    "deployment.airflow.dataset.read",
+    "deployment.airflow.dataset.create",
+    "deployment.airflow.dataset.delete",
+    "deployment.airflow.sla_miss.read",
+    "deployment.airflow.sla_miss.edit",
+    "deployment.airflow.sla_miss.delete",
+    "deployment.airflow.task_reschedule.read",
+    "deployment.airflow.cluster_activity.read",
+    "deployment.airflow.dag_warning.read",
+    "deployment.airflow.audit_log.read",
+    "deployment.airflow.hitl_detail.read",
+    "deployment.airflow.hitl_detail.edit",
+    "deployment.airflow.backfill.read",
+    "deployment.airflow.backfill.create",
+    "deployment.airflow.backfill.edit",
+    "deployment.airflow.backfill.delete",
+)
+
+# Mirrors EXTRA_KNOWN_KEYS in houston-api src/lib/custom-rbac/role-override-warnings.js.
+_HOUSTON_EXTRA_KNOWN_KEYS: Final[tuple[str, ...]] = (
+    "deployment.airflow.op",
+    "system.airflow.op",
+    "system.getDeploymentById",
+    "system.getEmailById",
+)
+
+ROLE_OVERRIDE_SUPPORTED_KEYS: Final[frozenset[str]] = frozenset(_HOUSTON_PERMISSION_CATALOG_KEYS + _HOUSTON_EXTRA_KNOWN_KEYS)
+
+# Mirrors BUILT_IN_ROLE_SCOPE in houston-api src/lib/constants/index.js.
+ROLE_OVERRIDE_BUILT_IN_ROLES: Final[tuple[str, ...]] = (
+    "WORKSPACE_VIEWER",
+    "WORKSPACE_EDITOR",
+    "WORKSPACE_ADMIN",
+    "CLUSTER_ADMIN",
+    "DEPLOYMENT_VIEWER",
+    "DEPLOYMENT_EDITOR",
+    "DEPLOYMENT_ADMIN",
+    "SYSTEM_VIEWER",
+    "SYSTEM_EDITOR",
+    "SYSTEM_ADMIN",
+)
+
+ROLE_OVERRIDE_GUIDANCE_URL: Final[str] = (
+    "https://github.com/astronomer/astronomer/blob/master/docs/upgrade-values-migration.md#role-override-check"
+)
+
+
+@dataclass
+class RoleOverrideFinding:
+    """A built-in role override key that Houston does not act on."""
+
+    role: str
+    key: str
+
+
+def check_role_overrides(data: Any) -> list[RoleOverrideFinding]:
+    """Find unsupported permission keys in astronomer.houston.config.roles.
+
+    Advisory only: never modifies data and never raises. A key set to false is
+    an explicit removal and is ignored, as are non-built-in (custom) roles.
+
+    Parameters:
+        data: The parsed YAML document.
+
+    Returns:
+        One finding per unsupported key set to a non-false value.
+    """
+    roles = _get_nested_mapping(data, ["astronomer", "houston", "config", "roles"]) if isinstance(data, CommentedMap) else None
+    if not isinstance(roles, CommentedMap):
+        return []
+
+    findings: list[RoleOverrideFinding] = []
+    for role in ROLE_OVERRIDE_BUILT_IN_ROLES:
+        role_cfg = roles.get(role)
+        permissions = role_cfg.get("permissions") if isinstance(role_cfg, CommentedMap) else None
+        if not isinstance(permissions, CommentedMap):
+            continue
+        findings.extend(
+            RoleOverrideFinding(role, str(key))
+            for key, value in permissions.items()
+            if value is not False and key not in ROLE_OVERRIDE_SUPPORTED_KEYS
+        )
+    return findings
+
+
+def print_role_override_report(findings: list[RoleOverrideFinding], stream: Any) -> None:
+    """Print the advisory role override report.
+
+    Parameters:
+        findings: Results from check_role_overrides.
+        stream: File-like object to write to (stderr, so migrated YAML on stdout is unaffected).
+    """
+    for f in findings:
+        print(
+            f"Warning: role {f.role} sets permission key '{f.key}', which Houston does not recognise and ignores.",
+            file=stream,
+        )
+    if findings:
+        print(f"This check is advisory and does not block the upgrade. Guidance: {ROLE_OVERRIDE_GUIDANCE_URL}", file=stream)

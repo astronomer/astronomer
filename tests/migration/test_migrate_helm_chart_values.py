@@ -1394,3 +1394,197 @@ class TestCLI:
         )
         assert result.returncode == 1
         assert "not found" in result.stderr
+
+
+# ---------------------------------------------------------------------------
+# Advisory role override check (PLX-996)
+# ---------------------------------------------------------------------------
+
+
+def _check_roles(text: str):
+    return migrate_mod.check_role_overrides(_load_rt(dedent(text)))
+
+
+class TestRoleOverrideCheck:
+    """The check reports built-in role override keys Houston ignores. Advisory only."""
+
+    def test_op_keys_are_supported(self):
+        """The Op keys were restored (PINF-1278), so they are not reported."""
+        findings = _check_roles(
+            """\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    DEPLOYMENT_EDITOR:
+                      permissions:
+                        deployment.airflow.op: true
+                        deployment.airflow.user: false
+                        system.airflow.op: true
+            """
+        )
+        assert findings == []
+
+    def test_valid_keys_not_reported(self):
+        findings = _check_roles(
+            """\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    DEPLOYMENT_EDITOR:
+                      permissions:
+                        deployment.airflow.get: true
+                        deployment.config.unadopt: true
+            """
+        )
+        assert findings == []
+
+    def test_no_roles_block(self):
+        assert _check_roles("astronomer:\n  houston:\n    config: {}\n") == []
+        assert _check_roles("global:\n  rbac:\n    enabled: true\n") == []
+
+    def test_unknown_key_reported_with_role_and_key(self):
+        findings = _check_roles(
+            """\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    DEPLOYMENT_EDITOR:
+                      permissions:
+                        deployment.airflow.op: true
+                        deployment.airflow.bogus: true
+            """
+        )
+        assert [(f.role, f.key) for f in findings] == [("DEPLOYMENT_EDITOR", "deployment.airflow.bogus")]
+
+    def test_false_value_and_custom_roles_ignored(self):
+        findings = _check_roles(
+            """\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    DEPLOYMENT_EDITOR:
+                      permissions:
+                        deployment.airflow.bogus: false
+                    MY_CUSTOM_ROLE:
+                      permissions:
+                        whatever.key: true
+            """
+        )
+        assert findings == []
+
+    def test_malformed_roles_do_not_raise(self):
+        assert _check_roles("astronomer:\n  houston:\n    config:\n      roles: nope\n") == []
+        assert _check_roles("astronomer:\n  houston:\n    config:\n      roles:\n        DEPLOYMENT_EDITOR: 3\n") == []
+
+    # Houston accepts these per-resource Airflow keys. An earlier copy of its catalog lacked them, so an override
+    # that used one was reported as unsupported.
+    FINE_GRAINED_AIRFLOW_KEYS = (
+        "deployment.airflow.audit_log.read",
+        "deployment.airflow.cluster_activity.read",
+        "deployment.airflow.dag_code.read",
+        "deployment.airflow.dag_run.clear",
+        "deployment.airflow.dag_run.create",
+        "deployment.airflow.dag_run.delete",
+        "deployment.airflow.dag_run.edit",
+        "deployment.airflow.dag_run.read",
+        "deployment.airflow.dag_warning.read",
+        "deployment.airflow.hitl_detail.edit",
+        "deployment.airflow.hitl_detail.read",
+        "deployment.airflow.import_error.read",
+        "deployment.airflow.sla_miss.delete",
+        "deployment.airflow.sla_miss.edit",
+        "deployment.airflow.sla_miss.read",
+        "deployment.airflow.task_instance.create",
+        "deployment.airflow.task_instance.delete",
+        "deployment.airflow.task_instance.edit",
+        "deployment.airflow.task_instance.read",
+        "deployment.airflow.task_log.read",
+        "deployment.airflow.task_reschedule.read",
+    )
+
+    @pytest.mark.parametrize("key", FINE_GRAINED_AIRFLOW_KEYS)
+    def test_fine_grained_airflow_keys_not_reported(self, key):
+        findings = _check_roles(
+            f"""\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    DEPLOYMENT_EDITOR:
+                      permissions:
+                        {key}: true
+            """
+        )
+        assert findings == []
+
+    # Enforced by Houston's schema shields and shipped in config/default.yaml, but not in its permission catalog.
+    SHIELDED_SYSTEM_KEYS = ("system.getDeploymentById", "system.getEmailById")
+
+    @pytest.mark.parametrize("key", SHIELDED_SYSTEM_KEYS)
+    def test_shielded_system_keys_not_reported(self, key):
+        findings = _check_roles(
+            f"""\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    SYSTEM_ADMIN:
+                      permissions:
+                        {key}: true
+            """
+        )
+        assert findings == []
+
+    def test_supported_keys_include_catalog_op_and_defaults(self):
+        keys = migrate_mod.ROLE_OVERRIDE_SUPPORTED_KEYS
+        # Houston's catalog (188 keys, which now include the six config defaults) plus the two Op keys and the two shielded keys.
+        assert len(keys) == 188 + 4
+        assert {"deployment.airflow.op", "system.airflow.op", "system.controlPlanes.get"} <= keys
+        assert set(self.FINE_GRAINED_AIRFLOW_KEYS) <= keys
+        assert set(self.SHIELDED_SYSTEM_KEYS) <= keys
+
+
+class TestRoleOverrideCheckCli:
+    def _write(self, tmp_path: Path, body: str) -> Path:
+        p = tmp_path / "values.yaml"
+        p.write_text(dedent(body))
+        return p
+
+    def test_report_text_and_never_blocks(self, tmp_path: Path, capsys):
+        p = self._write(
+            tmp_path,
+            """\
+            astronomer:
+              houston:
+                config:
+                  roles:
+                    DEPLOYMENT_EDITOR:
+                      permissions:
+                        deployment.airflow.bogus: true
+            """,
+        )
+        assert main(["--dry-run", str(p)]) == 0
+        err = capsys.readouterr().err
+        assert (
+            "Warning: role DEPLOYMENT_EDITOR sets permission key 'deployment.airflow.bogus', "
+            "which Houston does not recognise and ignores." in err
+        )
+        assert "docs/upgrade-values-migration.md#role-override-check" in err
+
+    def test_stdout_yaml_unaffected(self, tmp_path: Path, capsys):
+        p = self._write(
+            tmp_path,
+            "astronomer:\n  houston:\n    config:\n      roles:\n        SYSTEM_ADMIN:\n          permissions:\n            nope.key: true\n",
+        )
+        assert main([str(p)]) == 0
+        out = capsys.readouterr().out
+        assert "nope.key" in out and "Warning" not in out
+
+    def test_clean_file_prints_no_warning(self, tmp_path: Path, capsys):
+        p = self._write(tmp_path, "global:\n  rbac:\n    enabled: true\n")
+        assert main(["--dry-run", str(p)]) == 0
+        assert "role" not in capsys.readouterr().err.lower().replace("rbac", "")
