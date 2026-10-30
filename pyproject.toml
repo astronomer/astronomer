@@ -32,13 +32,7 @@ dependencies = [
 exclude-newer = "7 days"
 
 [tool.uv.exclude-newer-package]
-certifi   =  "2026-10-23T00:00:00Z"
-conda     =  "2026-10-23T00:00:00Z"
-grpcio    =  "2026-10-23T00:00:00Z"
-pip       =  "2026-10-23T00:00:00Z"
-python    =  "2026-10-23T00:00:00Z"
-sigstore  =  "2026-10-23T00:00:00Z"
-uv        =  "2026-10-23T00:00:00Z"
+pytest = "2026-10-30T00:00:00Z"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
