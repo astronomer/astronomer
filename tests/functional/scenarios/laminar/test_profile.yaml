@@ -43,7 +43,6 @@ values:
 # The airflow-operator subchart renders a cert-manager Issuer/Certificate, which a kind cluster
 # cannot apply without cert-manager -- so its prerequisites go in before the chart.
 pre_helm_scripts:
-  - bin/install-airflow-operator-prereqs.py
   - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/ap-laminar:1.0.0-rc4
   - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/airflow-operator-dev:1.7.0-rc1
 
