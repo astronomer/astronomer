@@ -144,6 +144,45 @@ imagePullSecrets:
   action: drop
 {{- end }}
 
+{{- define "prometheus.LaminarApiServerMetricsActionDrop" -}}
+- source_labels: [__name__]
+  action: drop
+  regex: 'laminar_laminar_hypervisor_monitored_airflow_MonitoredAirflow_run_monitoring_timer_bucket'
+{{- end }}
+
+{{- define "prometheus.LaminarHypervisorMetricsActionDrop" -}}
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_num_upcoming_dag_runs'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_num_stuck_queued_dag_runs'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_num_non_terminal_dag_runs'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_num_monitored_airflow_deployments'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_num_delayed_task_instances'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_scaling_duration_seconds_(created|sum)'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_run_count_created'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_monitoring_scrape_duration_seconds_(count|created|sum)'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_monitored_airflow_monitoring_duration_seconds_(created|sum)'
+- source_labels: [__name__]
+  action: drop
+  regex: 'hypervisor_laminar_hypervisor_db_scraper_query_duration_seconds_(count|created|sum)'
+{{- end }}
+
 {{ define "promproxy.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-openresty:{{ .Values.images.promproxy.tag }}
