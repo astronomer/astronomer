@@ -220,7 +220,12 @@ def deployment(houston_api, apps_client, core_client) -> dict:
         dump_pod_logs(core_client, "component=commander")
         raise
     wait_for_release_ready(apps_client, core_client, created["releaseName"])
-    return {"id": created["id"], "release_name": created["releaseName"], "workspace_id": workspace_id}
+    return {
+        "id": created["id"],
+        "release_name": created["releaseName"],
+        "namespace": created["namespace"],
+        "workspace_id": workspace_id,
+    }
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
@@ -247,22 +252,30 @@ def test_operator_deployment_db_secret_exists(deployment, core_client):
     )
 
 
-def _airflow_cr(custom_objects_client, release_name: str) -> dict:
-    """The Airflow CR for this release, found by name across every namespace.
+def _airflow_cr(custom_objects_client, namespace: str, release_name: str) -> dict:
+    """The Airflow CR for this release: one GET in the deployment's own namespace.
 
-    Looked up by name rather than by the astronomer.io labels, which are the thing under test --
-    matching on them would let the assertions below pass against a CR that carries them for an
-    unrelated deployment, or vacuously skip a CR that is missing them entirely.
+    Fetched by name rather than matched on the astronomer.io labels, which are the thing under test
+    -- selecting on them would let the assertions below pass against some other deployment's CR, or
+    vacuously skip one that is missing them entirely. The 404 branch lists what the namespace does
+    hold, which is what distinguishes "Houston created no CR" from "the CR is not named after the
+    release" (this looks it up by release name, as commander names it).
     """
-    crs = custom_objects_client.list_cluster_custom_object(AIRFLOW_GROUP, AIRFLOW_VERSION, AIRFLOW_PLURAL)["items"]
-    matches = [cr for cr in crs if cr["metadata"]["name"] == release_name]
-    assert matches, (
-        f"No {AIRFLOW_GROUP}/{AIRFLOW_VERSION} Airflow CR named {release_name!r} in any namespace. "
-        "In operator mode the deployment IS this CR, so its absence means Houston did not create one "
-        f'-- check that mode="operator" reached Houston. Airflow CRs that do exist: '
-        + (", ".join(f"{cr['metadata']['namespace']}/{cr['metadata']['name']}" for cr in crs) or "(none)")
-    )
-    return matches[0]
+    try:
+        return custom_objects_client.get_namespaced_custom_object(
+            AIRFLOW_GROUP, AIRFLOW_VERSION, namespace, AIRFLOW_PLURAL, release_name
+        )
+    except ApiException as exc:
+        if exc.status != 404:
+            raise
+        present = custom_objects_client.list_namespaced_custom_object(AIRFLOW_GROUP, AIRFLOW_VERSION, namespace, AIRFLOW_PLURAL)[
+            "items"
+        ]
+        raise AssertionError(
+            f"No Airflow CR {namespace}/{release_name}. In operator mode the deployment IS this CR, so either "
+            'Houston never created one -- check that mode="operator" reached it -- or the operator failed to '
+            f"reconcile it. Airflow CRs in {namespace}: " + (", ".join(cr["metadata"]["name"] for cr in present) or "(none)")
+        ) from exc
 
 
 def test_operator_deployment_cr_labels(deployment, custom_objects_client):
@@ -282,7 +295,7 @@ def test_operator_deployment_cr_labels(deployment, custom_objects_client):
     on autoscaling is expected to change them, and should split them out rather than edit them in
     place, so the before and after are both pinned.
     """
-    cr = _airflow_cr(custom_objects_client, deployment["release_name"])
+    cr = _airflow_cr(custom_objects_client, deployment["namespace"], deployment["release_name"])
     airflow_labels = cr["metadata"].get("labels") or {}
     expected = {
         "astronomer.io/deploymentId": deployment["id"],
@@ -297,10 +310,7 @@ def test_operator_deployment_cr_labels(deployment, custom_objects_client):
     mismatched_labels = {
         key: (value, airflow_labels.get(key)) for key, value in expected.items() if airflow_labels.get(key) != value
     }
+    cr_name = f"{cr['metadata']['namespace']}/{cr['metadata']['name']}"
     assert not mismatched_labels, (
-        f"Airflow CR {cr['metadata']['namespace']}/{cr['metadata']['name']} has wrong or missing "
-        "astronomer.io labels (label: expected -> actual):\n"
-        + "\n".join(f"  {key}: {want!r} -> {got!r}" for key, (want, got) in sorted(mismatched_labels.items()))
-        + "\nAll labels on the CR:\n"
-        + "\n".join(f"  {key}: {value!r}" for key, value in sorted(airflow_labels.items()))
+        f"Airflow CR {cr_name} has wrong or missing astronomer.io labels (label: expected, actual): {mismatched_labels}"
     )
