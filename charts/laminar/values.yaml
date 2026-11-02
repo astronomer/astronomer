@@ -103,7 +103,6 @@ apiServer:
 # hypervisor component
 # ---------------------------------------------------------------------------
 hypervisor:
-  replicas: 1
   progressDeadlineSeconds: 1200
   minReadySeconds: 5
   port: 8000
