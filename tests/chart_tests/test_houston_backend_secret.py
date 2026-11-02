@@ -154,7 +154,10 @@ class TestHoustonBackendSecret:
 
         assert len(docs) == 1
         connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
-        assert connection == "postgresql://svc%40corp:p%2Fa%3Fs%23s@pg.example.com:5432/houston?connection_limit=20&schema=houston%24default"
+        assert (
+            connection
+            == "postgresql://svc%40corp:p%2Fa%3Fs%23s@pg.example.com:5432/houston?connection_limit=20&schema=houston%24default"
+        )
 
         # The point of the encoding: it has to parse back to what was configured.
         parsed = urlparse(connection)
