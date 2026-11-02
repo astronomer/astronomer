@@ -11,7 +11,8 @@ metadata:
     {{- include "laminar.labels" (list $ "hypervisor") | nindent 4 }}
 spec:
   progressDeadlineSeconds: {{ .Values.hypervisor.progressDeadlineSeconds }}
-  replicas: {{ .Values.hypervisor.replicas }}
+  # hardcoded by design no HA support
+  replicas: 1
   minReadySeconds: {{ .Values.hypervisor.minReadySeconds }}
   strategy:
     # only ever one hypervisor: multiple would all try to scale all airflows
