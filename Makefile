@@ -86,8 +86,8 @@ show-test-helper-files: ## Show all the test helper files downloaded and created
 	@find ~/.local/share/astronomer-software/ -type f | sort
 
 .PHONY: cache-docker-images
-cache-docker-images: ## Cache all docker images used in the base helm chart
-	bin/show_docker_images.py --no-enable-all-features | cut -w -f2 | xargs -t -r -n1 docker pull
+cache-docker-images: ## Cache all docker images used in the helm chart
+	bin/show_docker_images.py --with-houston | cut -w -f2 | xargs -t -r -n1 docker pull
 
 .PHONY: uv-lock-upgrade
 uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.

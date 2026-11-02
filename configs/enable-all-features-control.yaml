@@ -32,25 +32,32 @@ global:
   customLogging:
     awsSecretName: dummy
     enabled: true
-  dagOnlyDeployment:
-    enabled: true
-  loggingSidecar:
-    enabled: true
+  deployMechanisms:
+    dagOnlyDeployment:
+      enabled: true
+  logging:
+    loggingSidecar:
+      enabled: true
+  metricsReporting:
+    taskUsageMetrics:
+      enabled: true
   networkPolicy:
     enabled: true
   pgbouncer:
     enabled: true
   plane:
     mode: control
-  podDisruptionBudgetsEnabled: true
-  postgresqlEnabled: true
+  podDisruptionBudgets:
+    enabled: true
+  postgresql:
+    enabled: true
   privateCaCertsAddToHost:
     addToContainerd: true
     enabled: true
-  prometheusPostgresExporterEnabled: true
+  prometheusPostgresExporter:
+    enabled: true
   rbac:
     enabled: true
-  taskUsageMetricsEnabled: true
 nats:
   nats:
     exporter:
