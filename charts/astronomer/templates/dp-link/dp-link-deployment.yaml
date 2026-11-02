@@ -96,10 +96,6 @@ spec:
           {{- end }}
           env:
             {{- include "dp_link_environment" . | nindent 12 }}
-            {{- if .Values.dpLink.prismaConnectionLimit }}
-            - name: PRISMA_CONNECTION_LIMIT
-              value: {{ .Values.dpLink.prismaConnectionLimit | quote }}
-            {{- end }}
             - name: DB_NAME
               value: {{ .Release.Name }}-houston
             - name: NAMESPACE
