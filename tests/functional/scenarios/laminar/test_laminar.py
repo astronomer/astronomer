@@ -281,11 +281,6 @@ def _airflow_cr(custom_objects_client, namespace: str, release_name: str) -> dic
 def test_operator_deployment_cr_labels(deployment, custom_objects_client):
     """The Airflow CR carries the astronomer.io identity labels that tie it back to the platform.
 
-    These are how anything outside Houston -- billing, support tooling, and the hypervisor deciding
-    what it may hibernate -- attributes a running Airflow back to a deployment, workspace, and
-    organization. Nothing else in this scenario would notice them going missing or going stale: the
-    CR reconciles, the pods come up, and readiness passes either way.
-
     organizationId and workspaceId both carry the workspace id -- APC has no separate organization,
     so Houston maps one onto the other. Asserted as two distinct expectations rather than one shared
     value, so a change that starts populating organizationId from somewhere else fails here loudly.
