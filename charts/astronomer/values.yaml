@@ -32,7 +32,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.2.3
+    tag: 2.2.4
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
@@ -101,7 +101,8 @@ houston:
   secretsFromFiles:
     enabled: ~
 
-  prismaConnectionLimit: 5
+  # The most database connections each Houston and dp-link pod keeps open.
+  prismaConnectionLimit: 20
   replicas: 2
   # This only applies when replicas > 3
   maxUnavailable: 25%
