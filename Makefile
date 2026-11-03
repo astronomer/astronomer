@@ -96,3 +96,9 @@ uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.
 .PHONY: uv-lock-upgrade-and-sync
 uv-lock-upgrade-and-sync: uv-lock-upgrade ## Upgrade uv lockfile dependencies and sync venv
 	uv sync
+
+.PHONY: audit
+audit: ## Audit uv.lock dependencies; fail on HIGH/CRITICAL vulnerabilities that have a fix
+	@mkdir -p $(TEMPDIR)
+	uv audit --locked --preview-features audit-command,json-output --output-format json > $(TEMPDIR)/uv-audit.json || true
+	bin/audit-gate.py $(TEMPDIR)/uv-audit.json

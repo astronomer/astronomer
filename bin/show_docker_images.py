@@ -69,7 +69,7 @@ def find_images(node, path=()):
             yield node, path
         elif "\n" in node or node.startswith(("{", "[")):
             try:
-                embedded = yaml.load(node, Loader=YAML_LOADER)
+                embedded = yaml.safe_load(node)
             except yaml.YAMLError:
                 embedded = None
             if isinstance(embedded, (dict, list)):
@@ -123,13 +123,13 @@ def images_in_values():
     top-level values.yaml is reported at its bumped value.
     """
     with open(GIT_ROOT / "values.yaml") as f:
-        root = yaml.load(f, Loader=YAML_LOADER)
+        root = yaml.safe_load(f)
     subcharts = sorted(p.parent.name for p in (GIT_ROOT / "charts").glob("*/values.yaml"))
 
     trees = {"values.yaml": {k: v for k, v in root.items() if k not in subcharts}}
     for name in subcharts:
         with open(GIT_ROOT / "charts" / name / "values.yaml") as f:
-            trees[f"charts/{name}/values.yaml"] = deep_merge(yaml.load(f, Loader=YAML_LOADER) or {}, root.get(name) or {})
+            trees[f"charts/{name}/values.yaml"] = deep_merge(yaml.safe_load(f) or {}, root.get(name) or {})
 
     images = {}
     for filename, tree in trees.items():
@@ -144,9 +144,7 @@ def helm_template(args, label, files):
     for f in files:
         command += f" -f {f}"
     if args.private_registry:
-        command += (
-            f" --set global.privateRegistry.repository={PRIVATE_REGISTRY} --set global.privateRegistry.enabled=True"
-        )
+        command += f" --set global.privateRegistry.repository={PRIVATE_REGISTRY} --set global.privateRegistry.enabled=True"
 
     if args.verbose:
         print(f"Running helm template [{label}]: {command}", flush=True, file=sys.stderr)

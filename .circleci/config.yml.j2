@@ -205,6 +205,19 @@ jobs:
           command: |
             uv run bin/check-no-rc-images.py
 
+  uv-audit:
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Install uv {{ uv_version }}
+          command: curl -fsSL https://astral.sh/uv/{{ uv_version }}/install.sh | UV_INSTALL_DIR=/tmp/uv-bin UV_NO_MODIFY_PATH=1 sh
+      - run:
+          name: uv security audit (gate on fixable HIGH/CRITICAL CVEs)
+          command: PATH=/tmp/uv-bin:$PATH make audit
+
   release-to-public:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
@@ -333,6 +346,7 @@ workflows:
       - run_pre_commit
       - test-unit
       - check-commander-airflow-version
+      - uv-audit
       - build-artifact:
           requires:
             - check-commander-airflow-version
@@ -484,6 +498,7 @@ workflows:
             - github-repo
           requires:
             - validate-release-images
+            - uv-audit
           filters:
             branches:
               only:
