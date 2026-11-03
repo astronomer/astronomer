@@ -16,3 +16,4 @@ cluster_provider: openshift
 
 values:
   - configs/openshift.yaml
+  - configs/scenario-airflow-reduce-resources.yaml
