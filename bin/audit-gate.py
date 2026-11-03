@@ -14,6 +14,7 @@ rating Dependabot uses. uv lists an advisory's PYSEC and GHSA ids as separate en
 merged under the GHSA id. Allowlist entries look like {"GHSA-...": {"reason": "...", "ticket": "..."}}.
 """
 
+import argparse
 import json
 import sys
 from functools import cache
@@ -142,12 +143,12 @@ def report_and_gate(advisories, allowlist):
 
 
 def main():
-    if len(sys.argv) != 2:
-        raise SystemExit("Usage: bin/audit-gate.py <uv-audit.json>")
-    audit_file = Path(sys.argv[1])
-    if not audit_file.exists():
-        raise SystemExit(f"ERROR: file not found: {audit_file}")
-    return report_and_gate(parse_advisories(audit_file), load_allowlist())
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("audit_file", type=Path, help="JSON written by `uv audit --output-format json`")
+    args = parser.parse_args()
+    if not args.audit_file.exists():
+        raise SystemExit(f"ERROR: file not found: {args.audit_file}")
+    return report_and_gate(parse_advisories(args.audit_file), load_allowlist())
 
 
 if __name__ == "__main__":
