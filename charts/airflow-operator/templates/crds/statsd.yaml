@@ -179,13 +179,6 @@ spec:
                 type: string
               status:
                 type: string
-            required:
-            - ingestUrl
-            - readyReplicas
-            - replicas
-            - scrapeUrl
-            - selector
-            - status
             type: object
         type: object
     served: true
