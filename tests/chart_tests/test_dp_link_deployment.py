@@ -203,7 +203,6 @@ class TestDpLinkDeployment:
                     "reconnectDelayMultiplier": 3,
                     "jitterFraction": 0.5,
                     "replicas": 5,
-                    "prismaConnectionLimit": "50",
                 }
             },
         }
@@ -228,7 +227,6 @@ class TestDpLinkDeployment:
         assert dp_link_env["WORKERS__DPLINK__MAX_RECONNECT_DELAY_SECONDS"] == "60"
         assert dp_link_env["WORKERS__DPLINK__RECONNECT_DELAY_MULTIPLIER"] == "3"
         assert dp_link_env["WORKERS__DPLINK__JITTER_FRACTION"] == "0.5"
-        assert dp_link_env["PRISMA_CONNECTION_LIMIT"] == "50"
 
     def test_dp_link_deployment_with_pod_annotations(self, kube_version):
         """Test dp-link deployment with custom pod annotations."""

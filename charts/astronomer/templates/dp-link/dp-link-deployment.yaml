@@ -2,7 +2,7 @@
 ## Astronomer DP-Link Deployment ##
 ###################################
 {{- if eq (include "astronomer.controlPlaneEnabled" .) "true" }}
-{{- if or .Values.dpLink.enabled .Values.global.dataPlaneFailover.enabled .Values.global.laminar.enabled }}
+{{- if eq (include "dpLink.enabled" .) "true" }}
 {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values.dpLink "key" "astronomer.dpLink")) }}
 kind: Deployment
 apiVersion: apps/v1
@@ -96,10 +96,6 @@ spec:
           {{- end }}
           env:
             {{- include "dp_link_environment" . | nindent 12 }}
-            {{- if .Values.dpLink.prismaConnectionLimit }}
-            - name: PRISMA_CONNECTION_LIMIT
-              value: {{ .Values.dpLink.prismaConnectionLimit | quote }}
-            {{- end }}
             - name: DB_NAME
               value: {{ .Release.Name }}-houston
             - name: NAMESPACE
