@@ -108,7 +108,7 @@ class TestHoustonBackendSecret:
 
         assert len(docs) == 1
         connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
-        assert connection.endswith("?schema=public")
+        assert connection.endswith("&schema=public")
 
     def test_houston_backend_secret_url_encodes_schema_name(self, kube_version):
         """Test that a schema name containing "$" is percent-encoded.
@@ -127,7 +127,7 @@ class TestHoustonBackendSecret:
 
         assert len(docs) == 1
         connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
-        assert connection.endswith("?schema=my%24schema")
+        assert connection.endswith("&schema=my%24schema")
 
     def test_houston_backend_secret_percent_encodes_credentials(self, kube_version):
         """Test that credentials are percent-encoded rather than interpolated verbatim.
