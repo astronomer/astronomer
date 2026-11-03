@@ -235,7 +235,7 @@ def test_operator_deployment_reaches_ready(deployment):
 
 
 def test_operator_deployment_db_secret_exists(deployment, core_client):
-    """The deployment's `<release>-db` Secret must land in the platform namespace for hibernation.
+    """The deployment's `<release>-db` Secret must land in the platform namespace.
 
     The hypervisor's Secret permissions are a Role in the release namespace only
     (charts/laminar/templates/hypervisor/hypervisor-rbac.yaml), so a Secret created anywhere else
@@ -284,11 +284,6 @@ def test_operator_deployment_cr_labels(deployment, custom_objects_client):
     organizationId and workspaceId both carry the workspace id -- APC has no separate organization,
     so Houston maps one onto the other. Asserted as two distinct expectations rather than one shared
     value, so a change that starts populating organizationId from somewhere else fails here loudly.
-
-    The scaling/hibernation labels are the hypervisor's own inputs, asserted at their just-created
-    values. They are state, not identity: a future step here that hibernates the deployment or turns
-    on autoscaling is expected to change them, and should split them out rather than edit them in
-    place, so the before and after are both pinned.
     """
     cr = _airflow_cr(custom_objects_client, deployment["namespace"], deployment["release_name"])
     airflow_labels = cr["metadata"].get("labels") or {}
@@ -298,9 +293,6 @@ def test_operator_deployment_cr_labels(deployment, custom_objects_client):
         "astronomer.io/managed-by": "apc",
         "astronomer.io/organizationId": deployment["workspace_id"],
         "astronomer.io/workspaceId": deployment["workspace_id"],
-        "astronomer.io/eligible-for-scaling": "false",
-        "astronomer.io/enable-scaling": "false",
-        "astronomer.io/hibernation-spec": "{}",
     }
     mismatched_labels = {
         key: (value, airflow_labels.get(key)) for key, value in expected.items() if airflow_labels.get(key) != value
