@@ -22,6 +22,7 @@ import shlex
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -35,10 +36,10 @@ from kubernetes import client, config
 MICROSHIFT_IMAGE = "ghcr.io/microshift-io/microshift:4.22.0_202610071017_g0a516b4eb_4.22.0_okd_scos.ec.16"
 CONTAINER_NAME = "microshift"
 
-# What upstream's quickstart.sh sets, so the image runs as tested. Unrelated to the platform's
-# base domain (localtest.me): the chart's Ingress objects carry explicit hosts, which the router
-# admits whatever the cluster is called.
-CONTAINER_HOSTNAME = "127.0.0.1.nip.io"
+# The name the API certificate is issued for, so the kubeconfig can reach the API by a name
+# rather than a bare IP (TLS to an IP sends no SNI). The same wildcard-to-127.0.0.1 domain the
+# platform uses for its own hosts, so a developer only has to get one domain resolving.
+CONTAINER_HOSTNAME = "localtest.me"
 
 # Only the API is published by default -- all pytest needs. The router's 80/443 are opt-in
 # (--publish-router-ports) because they are usually already taken on a developer machine.
@@ -148,13 +149,45 @@ def check_podman_available() -> None:
         )
 
 
+def volume_group_state() -> str:
+    """Report VG_NAME as "absent", "apcmanagedvolumes" or "foreign".
+
+    host_sh runs as root on the machine itself, and "myvg1" is a name a developer's box may
+    already use for real data. The group is APC-managed only if its one physical volume is the loop
+    device behind LVM_DISK; a real disk, or a second PV, makes it someone else's.
+    """
+    return host_sh(
+        f"""
+        if ! vgs {VG_NAME} >/dev/null 2>&1; then
+            echo absent
+            exit 0
+        fi
+        loop_device=$(losetup -j {LVM_DISK} 2>/dev/null | cut -d: -f1 | head -1)
+        volume_pvs=$(pvs --noheadings -o pv_name --select vg_name={VG_NAME} 2>/dev/null | tr -d ' ')
+        if [ -n "$loop_device" ] && [ "$volume_pvs" = "$loop_device" ]; then
+            echo apcmanagedvolumes
+        else
+            echo foreign
+        fi
+        """,
+        check=False,
+    )
+
+
 def wipe_logical_volumes() -> None:
     """Remove every logical volume in the volume group.
 
     The group outlives the cluster and nothing reclaims a TopoLVM volume once its PV is gone, so
     they accumulate until the next install sits Pending on "not enough free storage". Every LV is
     an orphan here, because this only runs when the cluster is about to be recreated.
+
+    Only for a group this script created: `lvremove -f` on every LV of someone else's "myvg1"
+    destroys their data, and nothing about the name alone says whose it is.
     """
+    if volume_group_state() != "apcmanagedvolumes":
+        print(f"Skipping volume cleanup: '{VG_NAME}' is not backed by {LVM_DISK}")
+        return
+
     removed = host_sh(
         f"n=0\n"
         f"for lv in $(lvs --noheadings -o lv_name {VG_NAME} 2>/dev/null); do\n"
@@ -170,10 +203,20 @@ def wipe_logical_volumes() -> None:
 def ensure_volume_group() -> None:
     """Create the volume group TopoLVM provisions from: a sparse file behind a loop device,
     because neither a CI machine nor a podman VM has a spare block device."""
-    print(f"Ensuring LVM volume group '{VG_NAME}' exists")
+    state = volume_group_state()
+    if state == "foreign":
+        raise SystemExit(
+            f"ERROR: a volume group named '{VG_NAME}' exists here but is not backed by {LVM_DISK}.\n"
+            f"  TopoLVM would provision into it and every run would lvremove its volumes, so this\n"
+            f"  refuses to adopt a group it did not create. Rename it, or use a disposable machine."
+        )
+    if state == "apcmanagedvolumes":
+        print(f"Reusing volume group '{VG_NAME}'")
+        return
+
+    print(f"Creating LVM volume group '{VG_NAME}'")
     result = host_sh(
         f"set -e\n"
-        f"if vgs {VG_NAME} >/dev/null 2>&1; then echo 'reusing existing volume group'; exit 0; fi\n"
         f"mkdir -p {Path(LVM_DISK).parent}\n"
         # A leftover file from a half-made cluster: zero its header so vgcreate accepts it.
         f"if [ -f {LVM_DISK} ]; then dd if=/dev/zero of={LVM_DISK} bs=1M count=100 conv=notrunc >/dev/null 2>&1;\n"
@@ -214,15 +257,27 @@ def start_container(publish_router_ports: bool = False) -> None:
         if host_sh(f"test -d /dev/{device} && echo yes || true", check=False) == "yes":
             run_opts += ["--tmpfs", f"/dev/{device}:rw,notmpcopyup"]
 
-    published = ["--publish", f"{API_PORT}:6443"]
+    # Bound to loopback: the kubeconfig this serves is kubeadmin, i.e. cluster-admin, and
+    # podman's default binds every interface. 6443 is unprivileged, so this holds everywhere.
+    published = ["--publish", f"127.0.0.1:{API_PORT}:6443"]
     if publish_router_ports:
-        published += ["--publish", f"{HTTP_PORT}:80", "--publish", f"{HTTPS_PORT}:443"]
+        # The router's ports only take the same treatment where podman runs as root, i.e. Linux
+        # via sudo. On macOS the forward is gvproxy running as you, and binding a privileged port
+        # to a named host IP needs root -- podman fails the container with "bind: permission
+        # denied". Unprefixed it binds *:80 instead, so a local run is LAN-reachable while it is
+        # up; that is the cost of opening these at all here, and they stay opt-in because of it.
+        host_bind = "127.0.0.1:" if IS_LINUX else ""
+        published += [
+            "--publish",
+            f"{host_bind}{HTTP_PORT}:80",
+            "--publish",
+            f"{host_bind}{HTTPS_PORT}:443",
+        ]
 
     print(f"Starting {CONTAINER_NAME} from {MICROSHIFT_IMAGE} (this pulls a few GB on a cold machine)")
     podman(
-        "run",
+        "create",
         "--privileged",
-        "--detach",
         *run_opts,
         *published,
         "--name",
@@ -232,6 +287,20 @@ def start_container(publish_router_ports: bool = False) -> None:
         MICROSHIFT_IMAGE,
         capture=False,
     )
+
+    # MicroShift names the router apps.<dns.baseDomain>, which defaults to example.com. Point it
+    # at the domain the platform's own hosts use so there is one domain here, not two.
+    #
+    # A config.d drop-in because the image bakes its own entries there, and copied in between
+    # create and start rather than bind-mounted: a --volume source is resolved on the machine
+    # running podman, which on macOS is the VM, not this filesystem. baseDomain is also only read
+    # at first start, which is why this cannot be an exec afterwards.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dropin = Path(tmpdir) / "02-base-domain.yaml"
+        dropin.write_text(f"dns:\n  baseDomain: {CONTAINER_HOSTNAME}\n")
+        podman("cp", str(dropin), f"{CONTAINER_NAME}:/etc/microshift/config.d/{dropin.name}")
+
+    podman("start", CONTAINER_NAME, capture=False)
 
 
 def oc(*args: str, check: bool = True) -> str:
@@ -359,15 +428,15 @@ def write_kubeconfig(kubeconfig_file: Path) -> None:
 
 def verify_host_api_access(kubeconfig_file: Path) -> None:
     """Prove the API is reachable from here, not just from inside the container."""
-    # nip.io is public wildcard DNS, and a resolver with rebind protection will not return
-    # 127.0.0.1 for it.
+    # localtest.me is public DNS pointing at 127.0.0.1, and a resolver with rebind protection
+    # will not return a loopback address for a public name.
     try:
         socket.gethostbyname(CONTAINER_HOSTNAME)
     except OSError as exc:
         raise RuntimeError(
             f"{CONTAINER_HOSTNAME} does not resolve here, so the API cannot be reached by the name its "
             f"certificate is issued for. Add it to /etc/hosts as 127.0.0.1, or use a resolver that "
-            f"allows nip.io. ({exc})"
+            f"allows localtest.me. ({exc})"
         ) from exc
 
     config.load_kube_config(config_file=str(kubeconfig_file))
