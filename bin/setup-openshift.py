@@ -18,6 +18,7 @@ whatever MICROSHIFT_IMAGE ships.
 import argparse
 import platform
 import shlex
+import socket
 import subprocess
 import sys
 import time
@@ -50,7 +51,10 @@ VG_NAME = "myvg1"
 LVM_DISK = "/var/lib/microshift-okd/lvmdisk.image"
 LVM_SIZE = "50G"
 
+# The one `oc` reads inside the container, and the first file MicroShift writes.
 IN_CONTAINER_KUBECONFIG = "/var/lib/microshift/resources/kubeadmin/kubeconfig"
+# The one the HOST reads: see write_kubeconfig().
+HOST_KUBECONFIG_SOURCE = f"/var/lib/microshift/resources/kubeadmin/{CONTAINER_HOSTNAME}/kubeconfig"
 KUBECONFIG_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
 KUBECTL_EXE = str(Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "kubectl")
 READY_TIMEOUT = 600
@@ -261,17 +265,28 @@ def wait_for_cluster_components() -> None:
 
 
 def write_kubeconfig(kubeconfig_file: Path) -> None:
-    """Copy the kubeadmin kubeconfig out to the path helm-install.py and pytest read.
+    """Copy the per-hostname kubeadmin kubeconfig out to the path helm-install.py and pytest read.
 
-    The server is rewritten to the published host port -- usually a no-op, since MicroShift's own
-    kubeconfig points at 127.0.0.1 and its API cert covers it, but correct if API_PORT moves.
+    Per-hostname, not the default one: TLS to an IP sends no SNI, so https://127.0.0.1:6443 gets
+    MicroShift's fallback serving cert, which the default kubeconfig's CA does not sign --
+    "certificate verify failed: self-signed certificate in certificate chain". The kubeconfig
+    MicroShift writes for its own hostname carries the CA for the cert served under that name,
+    and the name resolves to 127.0.0.1, so TLS verifies without --insecure-skip-tls-verify.
+
+    Only the port is rewritten, to whichever one is published.
     """
-    raw = podman("exec", CONTAINER_NAME, "cat", IN_CONTAINER_KUBECONFIG).stdout
-    kubeconfig = yaml.safe_load(raw)
+    proc = podman("exec", CONTAINER_NAME, "cat", HOST_KUBECONFIG_SOURCE, check=False)
+    if proc.returncode != 0:
+        present = podman("exec", CONTAINER_NAME, "ls", Path(HOST_KUBECONFIG_SOURCE).parent.parent.as_posix(), check=False)
+        raise RuntimeError(
+            f"No kubeconfig at {HOST_KUBECONFIG_SOURCE}. MicroShift writes one per hostname it serves; "
+            f"present: {(present.stdout or '').split() or '(none)'}"
+        )
+    kubeconfig = yaml.safe_load(proc.stdout)
     if not kubeconfig or not kubeconfig.get("clusters"):
-        raise RuntimeError(f"Could not parse a kubeconfig out of {IN_CONTAINER_KUBECONFIG}")
+        raise RuntimeError(f"Could not parse a kubeconfig out of {HOST_KUBECONFIG_SOURCE}")
     for cluster in kubeconfig["clusters"]:
-        cluster["cluster"]["server"] = f"https://127.0.0.1:{API_PORT}"
+        cluster["cluster"]["server"] = f"https://{CONTAINER_HOSTNAME}:{API_PORT}"
 
     kubeconfig_file.parent.mkdir(parents=True, exist_ok=True)
     kubeconfig_file.write_text(yaml.safe_dump(kubeconfig))
@@ -281,10 +296,21 @@ def write_kubeconfig(kubeconfig_file: Path) -> None:
 
 def verify_host_api_access(kubeconfig_file: Path) -> None:
     """Prove the API is reachable from here, not just from inside the container."""
+    # nip.io is public wildcard DNS, and a resolver with rebind protection will not return
+    # 127.0.0.1 for it.
+    try:
+        socket.gethostbyname(CONTAINER_HOSTNAME)
+    except OSError as exc:
+        raise RuntimeError(
+            f"{CONTAINER_HOSTNAME} does not resolve here, so the API cannot be reached by the name its "
+            f"certificate is issued for. Add it to /etc/hosts as 127.0.0.1, or use a resolver that "
+            f"allows nip.io. ({exc})"
+        ) from exc
+
     config.load_kube_config(config_file=str(kubeconfig_file))
     nodes = client.CoreV1Api().list_node().items
     if not nodes:
-        raise RuntimeError(f"The API at https://127.0.0.1:{API_PORT} reports no nodes")
+        raise RuntimeError(f"The API at https://{CONTAINER_HOSTNAME}:{API_PORT} reports no nodes")
     print(f"API reachable from the host: node {nodes[0].metadata.name}")
 
 
