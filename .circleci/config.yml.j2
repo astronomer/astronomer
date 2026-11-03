@@ -279,6 +279,12 @@ jobs:
             sudo apt-get update && sudo apt-get install --yes podman
             podman version && conmon --version && runc --version
             sudo podman info --format 'cgroups={{ '{{' }}.Host.CgroupsVersion}} manager={{ '{{' }}.Host.CgroupManager}} runtime={{ '{{' }}.Host.OCIRuntime.Name}}'
+            # Docker is installed on this image and sets the FORWARD policy to DROP when it
+            # starts, which drops forwarded traffic for every other runtime on the host -- a
+            # podman container then resolves nothing and pulls nothing. Harmless on a
+            # single-use CI VM, and this is the standard remedy for runtimes sharing a host.
+            sudo iptables -P FORWARD ACCEPT
+            sudo iptables -S FORWARD | head -1
 {%- endif %}
 {%- if scenario.quay_login %}
       # This scenario sideloads an image from a private quay.io repository, which an
