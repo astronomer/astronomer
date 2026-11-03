@@ -3,9 +3,11 @@
 test_profile.yaml sets cluster_provider: openshift, so the cluster is MicroShift rather than
 KIND and these tests only read the result of that install.
 
-What KIND cannot tell us: SecurityContextConstraints do not exist there, so nothing checks that
-the platform's pods still fit OpenShift's restricted profile -- and a pod admitted by the wrong
-SCC is Running like any other, so helm-install.py's pod-phase wait never notices.
+Mirrors the auth-sidecar scenario, minus its git_sync stage: the same two platform-tier grafana
+checks, the same one Airflow Deployment, and the same assertions over its pods -- but with
+OpenShift's SecurityContextConstraints as the admission control rather than a PSS-Restricted
+namespace. A sidecar an SCC will not admit never becomes a Pod object, and a pod whose container
+cannot start stays in phase Running, so helm-install.py's pod-phase wait sees neither.
 """
 
 import re
@@ -26,16 +28,19 @@ from tests.utils.houston_graphql import (
 from tests.utils.k8s import KUBECONFIG_UNIFIED, find_admission_rejection_events, get_pod_by_label_selector
 
 NAMESPACE = "astronomer"
-
-# Written onto the pod at admission, so its presence proves SCC admission ran and its value says
-# which constraint was used.
-SCC_ANNOTATION = "openshift.io/scc"
-
-# Both names, because which is the default is a property of the cluster's OpenShift version:
-# restricted-v2 on anything current, restricted on older ones.
-RESTRICTED_SCCS = frozenset({"restricted-v2", "restricted"})
 AUTH_PROXY_CONTAINER = "auth-proxy"
+
+# configs/openshift.yaml turns global.authSidecar on, because with the bundled nginx off the
+# sidecar is what authenticates these endpoints. Grafana stands in for the platform tier, as in
+# the auth-sidecar scenario: of the components that get a sidecar it is the only Deployment,
+# alertmanager and prometheus being StatefulSets.
 GRAFANA_DEPLOYMENT_NAME = "astronomer-grafana"
+
+# The Airflow Deployment the tests below create, to reach the auth-sidecar consumers that live in
+# the deployment's own namespace rather than the platform's. dag_deploy gets three: the web
+# component and flower, injected server-side by houston-api, and dag-server's own copy from the
+# chart. Asserted as an exact set -- a consumer silently losing its sidecar is the regression
+# worth catching, and an at-least-one check sails past it.
 ADMIN_EMAIL = "openshift-scenario-test@astronomer.io"
 ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = "openshift-auth-sidecar"
@@ -44,66 +49,6 @@ AUTH_PROXY_COMPONENTS_DAG_DEPLOY = frozenset({"webserver", "flower", "dag-server
 
 # PINF-1049: commander's first JWKS fetch can race Houston's readiness. Transient, not a regression.
 JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
-
-
-@pytest.fixture(scope="module")
-def core_client() -> client.CoreV1Api:
-    config.load_kube_config(config_file=KUBECONFIG_UNIFIED)
-    return client.CoreV1Api()
-
-
-@pytest.fixture(scope="module")
-def platform_pods(core_client) -> list:
-    """Live pods in the platform namespace; one mid-deletion is from a revision on its way out."""
-    pods = [pod for pod in core_client.list_namespaced_pod(NAMESPACE).items if pod.metadata.deletion_timestamp is None]
-    assert pods, f"No pods at all in the {NAMESPACE} namespace -- the chart install cannot have succeeded"
-    return pods
-
-
-def test_no_admission_rejection_events(core_client):
-    """Nothing was refused admission while the chart installed.
-
-    A rejected pod is never created, so it leaves no unhealthy Pod object -- only a FailedCreate
-    Warning on whatever tried. Empty name prefix: every one in the namespace matters here.
-    """
-    rejections = find_admission_rejection_events(core_client, NAMESPACE, "")
-    assert not rejections, "Admission refused at least one platform pod:\n" + "\n".join(f"  {line}" for line in rejections)
-
-
-def test_every_pod_runs_under_a_restricted_scc(platform_pods):
-    """Every platform pod was admitted under a built-in restricted SCC.
-
-    The platform's pods satisfy restricted-v2 as they are, and with global.openshift.enabled as
-    the whole configuration that is all they get. A pod spec that gains a hostPath, a fixed uid
-    or a privileged container has to be fixed in the spec, and this is what notices.
-
-    Read from the pod, not from the SCC objects: what matters is which constraint OpenShift chose.
-    """
-    elevated = {
-        pod.metadata.name: (pod.metadata.annotations or {}).get(SCC_ANNOTATION)
-        for pod in platform_pods
-        if (pod.metadata.annotations or {}).get(SCC_ANNOTATION) not in RESTRICTED_SCCS
-    }
-    assert not elevated, (
-        f"These pods were not admitted by one of {sorted(RESTRICTED_SCCS)} (pod: {SCC_ANNOTATION}). "
-        "None means SCC admission never saw the pod -- is this really an OpenShift cluster? Any "
-        f"other name means it needs an elevated SCC: {elevated}"
-    )
-
-
-def test_bundled_nginx_is_not_deployed(core_client):
-    """The chart's own ingress controller is off, leaving the cluster's router to front the platform.
-
-    Left on, it would also fight openshift-ingress for host ports 80/443.
-    """
-    nginx_pods = sorted(
-        pod.metadata.name
-        for pod in core_client.list_namespaced_pod(NAMESPACE, label_selector="component=cp-ingress-controller").items
-    )
-    assert not nginx_pods, (
-        "global.nginx.enabled should be false on OpenShift (configs/openshift.yaml), but the bundled "
-        f"ingress controller is running: {', '.join(nginx_pods)}"
-    )
 
 
 def test_grafana_deployment_reaches_ready(k8s_apps_v1_client):
@@ -132,6 +77,27 @@ def test_grafana_has_auth_proxy_container(k8s_apps_v1_client):
     deployment = k8s_apps_v1_client.read_namespaced_deployment(GRAFANA_DEPLOYMENT_NAME, NAMESPACE)
     container_names = [container.name for container in deployment.spec.template.spec.containers]
     assert AUTH_PROXY_CONTAINER in container_names, f"Expected an auth-proxy container, got: {container_names}"
+
+
+def test_bundled_nginx_is_not_deployed(k8s_core_v1_client):
+    """The chart's own ingress controller is off, leaving the cluster's router to front the platform.
+
+    Left on, it would also fight openshift-ingress for host ports 80/443.
+    """
+    nginx_pods = sorted(
+        pod.metadata.name
+        for pod in k8s_core_v1_client.list_namespaced_pod(NAMESPACE, label_selector="component=cp-ingress-controller").items
+    )
+    assert not nginx_pods, (
+        "global.nginx.enabled should be false on OpenShift (configs/openshift.yaml), but the bundled "
+        f"ingress controller is running: {', '.join(nginx_pods)}"
+    )
+
+
+@pytest.fixture(scope="module")
+def core_client() -> client.CoreV1Api:
+    config.load_kube_config(config_file=KUBECONFIG_UNIFIED)
+    return client.CoreV1Api()
 
 
 @pytest.fixture(scope="module")
@@ -210,3 +176,64 @@ def test_deployment_has_auth_proxy_containers(deployment, core_client):
         f"  unexpectedly present: {sorted(injected - AUTH_PROXY_COMPONENTS_DAG_DEPLOY)}\n"
         f"  unexpectedly missing: {sorted(AUTH_PROXY_COMPONENTS_DAG_DEPLOY - injected)}"
     )
+
+
+def _restricted_offenders(pods) -> dict[str, list[str]]:
+    """Mirrors the auth-sidecar scenario's _pss_restricted_offenders, against live pods.
+
+    Same properties, different enforcer: there the namespace's PSA labels require them, here
+    OpenShift's restricted-v2 SCC does, and it goes further by assigning the uid rather than only
+    requiring non-root. Worth asserting anyway, because admission proves what was *allowed* in,
+    not what the SCC actually wrote -- and the auth-proxy is injected server-side by houston-api
+    and the chart, so no chart-render test in any repo sees its securityContext.
+    """
+    offenders = {}
+    for pod in pods:
+        pod_sc = pod.spec.security_context
+        pod_seccomp = pod_sc.seccomp_profile.type if pod_sc and pod_sc.seccomp_profile else None
+        pod_run_as_user = pod_sc.run_as_user if pod_sc else None
+        pod_run_as_non_root = pod_sc.run_as_non_root if pod_sc else None
+        for container in list(pod.spec.containers) + list(pod.spec.init_containers or []):
+            container_id = f"{pod.metadata.name}/{container.name}"
+            sc = container.security_context
+            if sc is None:
+                offenders[container_id] = ["no securityContext set"]
+                continue
+            problems = []
+            if sc.allow_privilege_escalation is not False:
+                problems.append(f"allowPrivilegeEscalation={sc.allow_privilege_escalation!r}")
+            if not sc.capabilities or "ALL" not in (sc.capabilities.drop or []):
+                problems.append(f"capabilities.drop={getattr(sc.capabilities, 'drop', None)!r}")
+            # Set at either the pod or the container level and inherited down.
+            run_as_non_root = sc.run_as_non_root if sc.run_as_non_root is not None else pod_run_as_non_root
+            if run_as_non_root is not True:
+                problems.append(f"runAsNonRoot={run_as_non_root!r}")
+            run_as_user = sc.run_as_user if sc.run_as_user is not None else pod_run_as_user
+            if run_as_user in (None, 0):
+                problems.append(f"runAsUser={run_as_user!r}")
+            container_seccomp = sc.seccomp_profile.type if sc.seccomp_profile else None
+            if "RuntimeDefault" not in (pod_seccomp, container_seccomp):
+                problems.append(f"seccompProfile={container_seccomp!r} (pod-level: {pod_seccomp!r})")
+            if problems:
+                offenders[container_id] = problems
+    return offenders
+
+
+def test_deployment_pods_have_restricted_security_context(deployment, core_client):
+    """Live-pod counterpart to test_deployment_reaches_ready -- see _restricted_offenders."""
+    pods = core_client.list_pod_for_all_namespaces(label_selector=f"release={deployment['release_name']}").items
+    assert pods, f"Expected at least one pod for release {deployment['release_name']!r}"
+    offenders = _restricted_offenders(pods)
+    assert not offenders, "Containers without a full restricted securityContext (container: problems):\n" + "\n".join(
+        f"  {key}: {value}" for key, value in sorted(offenders.items())
+    )
+
+
+def test_no_admission_rejection_events(core_client):
+    """Nothing was refused admission while the chart installed.
+
+    A rejected pod is never created, so it leaves no unhealthy Pod object -- only a FailedCreate
+    Warning on whatever tried. Empty name prefix: every one in the namespace matters here.
+    """
+    rejections = find_admission_rejection_events(core_client, NAMESPACE, "")
+    assert not rejections, "Admission refused at least one platform pod:\n" + "\n".join(f"  {line}" for line in rejections)

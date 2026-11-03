@@ -47,14 +47,14 @@ HTTP_PORT = 80
 HTTPS_PORT = 443
 
 # TopoLVM provisions PVs out of this group, so it caps every PVC the chart creates.
-# configs/openshift.yaml trims them to ~37Gi against the 50Gi here; raise both together.
+# configs/openshift.yaml trims them to ~37Gi against the 100Gi here; raise both together.
 #
 # The name is NOT a free choice: MicroShift generates the topolvm-lvmd-0 ConfigMap from a
 # built-in default that hardcodes myvg1 and ignores /etc/microshift/lvmd.yaml. Rename this and
 # lvmd crashloops with "volume group not found" unless you also patch that ConfigMap.
 VG_NAME = "myvg1"
 LVM_DISK = "/var/lib/microshift-okd/lvmdisk.image"
-LVM_SIZE = "50G"
+LVM_SIZE = "100G"
 
 IN_CONTAINER_KUBECONFIG = "/var/lib/microshift/resources/kubeadmin/kubeconfig"
 HOST_KUBECONFIG_SOURCE = f"/var/lib/microshift/resources/kubeadmin/{CONTAINER_HOSTNAME}/kubeconfig"

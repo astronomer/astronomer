@@ -1,9 +1,10 @@
 description: >-
   Installs the platform onto a real OpenShift API server -- a single-node MicroShift (OKD)
-  cluster -- and asserts that SecurityContextConstraints admitted every platform pod, and
-  admitted all of them under a built-in restricted profile. Nothing in KIND can fail that way,
-  so nothing in KIND notices the day a pod starts needing privileges an OpenShift customer
-  cannot grant it.
+  cluster -- and mirrors the auth-sidecar scenario over it, minus that scenario's git_sync stage:
+  the platform-tier grafana checks, one real dag_deploy Airflow Deployment, and the exact set of
+  its pods carrying an auth-proxy sidecar. The difference is the admission control: here
+  SecurityContextConstraints decide what runs, not a PSS-Restricted namespace, and nothing in KIND
+  can fail that way.
 topology: unified
 
 # MicroShift, TopoLVM and the whole platform on one node. xlarge was already reported as
