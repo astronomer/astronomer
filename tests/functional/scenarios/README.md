@@ -31,6 +31,7 @@ tests/functional/scenarios/<name>/
 | `description`       | no       | one-paragraph summary of what the scenario validates; printed when the scenario runs and when `bin/run-scenario.py` is invoked with no argument to list scenarios |
 | `values`            | yes      | ordered list of values files (repo-relative), passed as `--helm-values` in order; an empty list is fine if the scenario needs no overlay |
 | `kube_version`      | no       | pinned k8s version; defaults to the latest entry in `metadata.yaml`'s `test_k8s_versions`   |
+| `cluster_provider`  | no       | `kind` (default) or `openshift` — which cluster to create, i.e. which `bin/setup-<provider>.py` runs. `openshift` gives a single-node MicroShift (OKD) cluster, the only way to install against a real OpenShift API (SecurityContextConstraints, Routes, size-enforcing TopoLVM storage). Needs **podman** (the CI job installs it; locally `brew install podman` plus a rootful `podman machine`), and ignores `kube_version` — MicroShift ships its own. |
 | `namespace_labels`  | no       | labels to apply to the `astronomer` namespace *before* install (PSA is not retroactive)      |
 | `pre_helm_scripts`  | no       | ordered list of scripts run *after* the cluster is created but *before* `helm install` — for setup the chart's install-time values depend on (e.g. creating a private-CA Secret named in `global.privateCaCerts`). Each entry is a repo-relative script path, optionally followed by arguments (e.g. `bin/setup-forgejo-ca.py --platform-namespace astronomer --forgejo-namespace git-forgejo`). Each runs with `KUBECONFIG` pointed at the fresh cluster and the helper-tools PATH, and must be executable (shebang + `chmod +x`). |
 | `resource_class`    | no       | CircleCI machine-executor resource class for this scenario's CI job (e.g. `xlarge`, `2xlarge`); defaults to `xlarge` |
@@ -44,3 +45,9 @@ tests/functional/scenarios/<name>/
 uv run bin/run-scenario.py auth-sidecar
 uv run pytest tests/functional/scenarios/auth-sidecar
 ```
+
+A `cluster_provider: openshift` scenario runs the same way, but needs a rootful podman
+machine first — on macOS, `podman machine init --rootful --memory 20480 --cpus 10` and
+`podman machine start`. Only the API is published, on `127.0.0.1:6443`; pass
+`--publish-router-ports` to `bin/setup-openshift.py` to also bind `:80`/`:443` and open the
+platform in a browser.

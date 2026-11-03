@@ -6,6 +6,7 @@ GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 BIN_DIR="${GIT_ROOT_DIR}/bin"
 
 TOPOLOGY=""
+CLUSTER_PROVIDER="kind"
 PRE_HELM_SCRIPTS=()
 HELM_ARGS=()
 for arg in "$@"; do
@@ -13,6 +14,8 @@ for arg in "$@"; do
     # Siphoned off (not forwarded to helm-install.py): scenario setup that runs after
     # the cluster exists but before `helm install`. See run-scenario.py / scenarios/README.md.
     --pre-helm-script=*) PRE_HELM_SCRIPTS+=("${arg#--pre-helm-script=}") ;;
+    # Picks bin/setup-<provider>.py below; both write the same kubeconfig and secrets.
+    --cluster-provider=*) CLUSTER_PROVIDER="${arg#--cluster-provider=}" ;;
     --topology=*) TOPOLOGY="${arg#--topology=}" ; HELM_ARGS+=("$arg") ;;
     *) HELM_ARGS+=("$arg") ;;
   esac
@@ -21,6 +24,11 @@ if [[ -z "$TOPOLOGY" ]]; then
   echo "ABORT: --topology=<unified|control|data> is required" >&2
   exit 1
 fi
+# Named explicitly, so the flag can only select a setup script this repo ships.
+case "$CLUSTER_PROVIDER" in
+  kind|openshift) ;;
+  *) echo "ABORT: --cluster-provider must be kind or openshift, got '${CLUSTER_PROVIDER}'" >&2 ; exit 1 ;;
+esac
 
 # Use the venv if it exists
 [[ -f .venv/bin/activate ]] || { echo "ABORT: .venv does not exist!" ; exit 1 ; }
@@ -39,14 +47,14 @@ set -ex
 export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
 
 # Generate certificates in ~/.local/share/astronomer-software/certs. (No separate
-# "private CA" step: setup-kind.py resolves mkcert's own root CA directly, via the same
+# "private CA" step: the cluster setup script resolves mkcert's own root CA directly, via the same
 # mkcert -CAROOT mechanism the k3d CP/DP topology's setup script uses, and generate-tls
 # above already ran `mkcert -install` so that CA root exists.)
 "${BIN_DIR}/certs.py" cleanup
 "${BIN_DIR}/certs.py" generate-tls
 
-# Create a KIND cluster and configure it for testing
-"${BIN_DIR}/setup-kind.py" "--topology=${TOPOLOGY}"
+# Create the cluster and configure it for testing
+"${BIN_DIR}/setup-${CLUSTER_PROVIDER}.py" "--topology=${TOPOLOGY}"
 
 # Run scenario pre-helm setup steps (see tests/functional/scenarios/README.md). These run
 # after the cluster exists but before `helm install`, so a scenario can create Secrets or

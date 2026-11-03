@@ -37,6 +37,10 @@ def discover_scenarios() -> list[dict]:
       private quay repository, which the cluster node cannot pull unauthenticated.
       Scenario jobs use a machine executor, so the login lands in the host's own Docker
       config -- the store bin/kind-load-images.py --pull fetches into.
+    - `cluster_provider: openshift` to create a single-node MicroShift (OKD)
+      cluster instead of KIND, which is the only way to install against a real
+      OpenShift API. That job installs podman first, since the machine image
+      ships docker but not podman.
     - `ci: false` to keep a scenario out of the generated config entirely, while
       still being runnable locally via bin/run-scenario.py and pytest. For a
       scenario whose prerequisites are not published yet -- an image carrying
@@ -67,6 +71,7 @@ def discover_scenarios() -> list[dict]:
                 "resource_class": profile.get("resource_class", "xlarge"),
                 "kyverno_scan": profile.get("kyverno_scan", False),
                 "quay_login": profile.get("quay_login", False),
+                "cluster_provider": profile.get("cluster_provider", "kind"),
             }
         )
     return scenarios

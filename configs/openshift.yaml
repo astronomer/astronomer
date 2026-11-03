@@ -1,0 +1,63 @@
+# The OpenShift shape of the platform, for tests/functional/scenarios/openshift. Only what the
+# install needs on OpenShift -- CPU and memory requests stay at the chart's defaults.
+---
+global:
+  # The cluster's own router fronts the platform, with the auth sidecar doing the authentication
+  # the bundled nginx would. Leaving nginx on would also fight openshift-ingress for ports 80/443.
+  nginx:
+    enabled: false
+  authSidecar:
+    enabled: true
+    ingressAllowedNamespaces:
+      - astronomer
+  extraAnnotations:
+    kubernetes.io/ingress.class: "openshift-ingress"
+
+  # The only OpenShift flag needed: the platform's pods already satisfy the built-in restricted-v2
+  # (runAsNonRoot, every capability dropped, no hard-coded uid). global.scc.enabled is deprecated.
+  openshift:
+    enabled: true
+
+  # The vector DaemonSet needs hostPath volumes and uid 0, which nothing here grants it. Collect
+  # logs with the sidecar instead.
+  daemonsetLogging:
+    enabled: false
+  logging:
+    loggingSidecar:
+      enabled: true
+
+# TopoLVM provisions from the one 50Gi volume group bin/setup-openshift.py creates and honours
+# each request, where KIND's local-path provisioner ignores it. The chart's defaults total ~420Gi
+# and would leave every PVC Pending. These total ~37Gi; raise them and LVM_SIZE together.
+astronomer:
+  registry:
+    persistence:
+      size: 10Gi
+
+postgresql:
+  persistence:
+    size: 4Gi
+
+prometheus:
+  persistence:
+    size: 10Gi
+
+elasticsearch:
+  # Raising vm.max_map_count needs a privileged container, which restricted-v2 does not allow. Not
+  # needed either: systemd has defaulted it to 1048576 since v255, above the 262144 ES wants.
+  sysctlInitContainer:
+    enabled: false
+  common:
+    env:
+      # Must match master.replicas below.
+      NUMBER_OF_MASTERS: "1"
+  master:
+    replicas: 1
+    persistence:
+      size: 2Gi
+  data:
+    replicas: 1
+    persistence:
+      size: 10Gi
+  client:
+    replicas: 1

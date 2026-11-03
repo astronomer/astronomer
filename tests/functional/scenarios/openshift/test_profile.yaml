@@ -1,0 +1,18 @@
+description: >-
+  Installs the platform onto a real OpenShift API server -- a single-node MicroShift (OKD)
+  cluster -- and asserts that SecurityContextConstraints admitted every platform pod, and
+  admitted all of them under a built-in restricted profile. Nothing in KIND can fail that way,
+  so nothing in KIND notices the day a pod starts needing privileges an OpenShift customer
+  cannot grant it.
+topology: unified
+
+# MicroShift, TopoLVM and the whole platform on one node. xlarge was already reported as
+# marginal for the platform alone in PINF-1080.
+resource_class: 2xlarge
+
+# Creates the cluster with bin/setup-openshift.py instead of bin/setup-kind.py; everything
+# downstream of it is unchanged.
+cluster_provider: openshift
+
+values:
+  - configs/openshift.yaml

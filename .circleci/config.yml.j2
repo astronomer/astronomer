@@ -267,6 +267,14 @@ jobs:
       - run:
           name: Create venv
           command: uv venv -p {{ python_image_version }} --seed && uv sync
+{%- if scenario.cluster_provider == "openshift" %}
+      # The machine image ships docker, not podman, and the MicroShift image needs podman's
+      # --privileged plus the host's /dev. Unpinned: it comes from the already-pinned machine
+      # image's Ubuntu archive, which has no pin that survives archive updates.
+      - run:
+          name: Install podman
+          command: sudo apt-get update && sudo apt-get install --yes podman
+{%- endif %}
 {%- if scenario.quay_login %}
       # This scenario sideloads an image from a private quay.io repository, which an
       # unauthenticated node cannot pull. Scenario jobs run on a machine executor, so this
