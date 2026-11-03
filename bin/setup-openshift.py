@@ -186,6 +186,34 @@ def ensure_volume_group() -> None:
     print(result)
 
 
+def host_nameservers() -> list[str]:
+    """The host's real nameservers, but only when its own resolv.conf is a loopback stub.
+
+    Ubuntu points /etc/resolv.conf at systemd-resolved's 127.0.0.53, which inside a container
+    means the container itself and answers nothing. Docker substitutes the real servers in that
+    case, which is why the KIND path needs no DNS setup at all; podman is supposed to do the same
+    from /run/systemd/resolve/resolv.conf, and this is the fallback for when it does not.
+
+    Returns [] whenever the host's resolv.conf is already usable, so this is a no-op everywhere
+    that does not have the problem.
+    """
+
+    def nameservers(resolv: str) -> list[str]:
+        return [parts[1] for line in resolv.splitlines() if (parts := line.split())[:1] == ["nameserver"] and len(parts) > 1]
+
+    configured = nameservers(host_sh("cat /etc/resolv.conf 2>/dev/null || true", check=False))
+    if not configured or not all(server.startswith("127.") for server in configured):
+        return []
+    upstream = [
+        server
+        for server in nameservers(host_sh("cat /run/systemd/resolve/resolv.conf 2>/dev/null || true", check=False))
+        if not server.startswith("127.")
+    ]
+    if upstream:
+        print(f"Host resolv.conf is a loopback stub; giving the container its real nameservers: {upstream}")
+    return upstream
+
+
 def start_container(publish_router_ports: bool = False) -> None:
     """(Re)create the MicroShift container.
 
@@ -213,6 +241,9 @@ def start_container(publish_router_ports: bool = False) -> None:
     for device in ("input", "snd", "dri"):
         if host_sh(f"test -d /dev/{device} && echo yes || true", check=False) == "yes":
             run_opts += ["--tmpfs", f"/dev/{device}:rw,notmpcopyup"]
+
+    for nameserver in host_nameservers():
+        run_opts += ["--dns", nameserver]
 
     published = ["--publish", f"{API_PORT}:6443"]
     if publish_router_ports:
@@ -259,15 +290,30 @@ def wait_for_kubeconfig(timeout: int = 300) -> None:
 def check_container_dns() -> None:
     """Fail now if the container cannot resolve quay.io.
 
-    A VPN or custom resolver on the host leaves every pod in ContainerCreating until its image
-    pull times out, so the install looks hung rather than broken.
+    Every pod otherwise sits in ContainerCreating until its image pull times out, so the install
+    looks hung rather than broken.
     """
-    if podman("exec", CONTAINER_NAME, "getent", "hosts", "quay.io", check=False).returncode != 0:
-        raise RuntimeError(
-            "DNS resolution for 'quay.io' failed inside the container, so no pod will be able to pull "
-            "its image. This is usually a VPN or a custom DNS configuration on the host that the "
-            "container cannot reach -- disconnect from the VPN, or point podman at a resolver it can use."
-        )
+    proc = podman("exec", CONTAINER_NAME, "getent", "hosts", "quay.io", check=False)
+    if proc.returncode == 0:
+        return
+
+    stderr = (proc.stderr or "").strip()
+    # `getent` absent, or exec itself failing, says nothing about DNS. Warn rather than fail on a
+    # verdict this probe did not actually reach.
+    if "executable file not found" in stderr or "no such file or directory" in stderr.lower():
+        print(f"WARNING: could not probe DNS inside the container: {stderr}", file=sys.stderr)
+        return
+
+    resolv = (podman("exec", CONTAINER_NAME, "cat", "/etc/resolv.conf", check=False).stdout or "").strip()
+    raise RuntimeError(
+        "DNS resolution for 'quay.io' failed inside the container, so no pod will be able to pull its "
+        f"image.\n  getent said: {stderr or '(nothing)'}\n"
+        + "  container /etc/resolv.conf:\n"
+        + "\n".join(f"    {line}" for line in (resolv or "(empty)").splitlines())
+        + "\n  A nameserver of 127.0.0.53 there is the HOST's systemd-resolved stub, which resolves to the "
+        "container itself and answers nothing -- podman usually substitutes the real upstream servers, and "
+        "this is what it looks like when it does not. A VPN or custom resolver on the host does the same."
+    )
 
 
 def wait_for_node_ready(timeout: int = READY_TIMEOUT) -> None:

@@ -251,8 +251,10 @@ jobs:
       image: {{ machine_image_version }}
       resource_class: {{ scenario.resource_class }}
     steps:
+{%- if scenario.blocking %}
       - attach_workspace:
           at: /tmp/workspace
+{%- endif %}
       - checkout
       - run:
           name: Create venv-cache-key.txt
@@ -369,8 +371,10 @@ workflows:
       # every PR's workflow graph.
       - scenario-{{ scenario.name }}:
           name: scenario-{{ scenario.name }}-auto
+{%- if scenario.blocking %}
           requires:
             - build-artifact
+{%- endif %}
 {%- if scenario.kyverno_scan or scenario.quay_login %}
           context:
 {%- if scenario.kyverno_scan %}
@@ -389,8 +393,10 @@ workflows:
       # be approved without running the rest.
       - approve-{{ scenario.name }}:
           type: approval
+{%- if scenario.blocking %}
           requires:
             - build-artifact
+{%- endif %}
           filters:
             branches:
               ignore:
@@ -468,7 +474,7 @@ workflows:
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
-{%- for scenario in scenarios %}
+{%- for scenario in scenarios if scenario.blocking %}
             - scenario-{{ scenario.name }}-auto
 {%- endfor %}
       - approve-public-release:

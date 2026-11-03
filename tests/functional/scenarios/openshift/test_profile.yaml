@@ -14,5 +14,10 @@ resource_class: 2xlarge
 # downstream of it is unchanged.
 cluster_provider: openshift
 
+# Still being brought up: nothing waits on this job and it cannot hold up a release. Its approval
+# gate also stops queueing behind run_pre_commit/test-unit/build-artifact, so a run starts at once.
+# Flip back to true once it is green.
+blocking: false
+
 values:
   - configs/openshift.yaml

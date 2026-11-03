@@ -41,6 +41,11 @@ def discover_scenarios() -> list[dict]:
       cluster instead of KIND, which is the only way to install against a real
       OpenShift API. That job installs podman first, since the machine image
       ships docker but not podman.
+    - `blocking: false` to run the scenario without anything waiting on it: its
+      approval gate stops requiring build-artifact (so it no longer queues behind
+      run_pre_commit, test-unit and check-commander-airflow-version), and it is
+      dropped from release-to-internal's requires, so a red run cannot hold up a
+      release. For a scenario still being brought up. Default true.
     - `ci: false` to keep a scenario out of the generated config entirely, while
       still being runnable locally via bin/run-scenario.py and pytest. For a
       scenario whose prerequisites are not published yet -- an image carrying
@@ -72,6 +77,7 @@ def discover_scenarios() -> list[dict]:
                 "kyverno_scan": profile.get("kyverno_scan", False),
                 "quay_login": profile.get("quay_login", False),
                 "cluster_provider": profile.get("cluster_provider", "kind"),
+                "blocking": profile.get("blocking", True),
             }
         )
     return scenarios

@@ -622,8 +622,6 @@ jobs:
       image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
       - run:
           name: Create venv-cache-key.txt
@@ -971,8 +969,6 @@ workflows:
       # every PR's workflow graph.
       - scenario-openshift:
           name: scenario-openshift-auto
-          requires:
-            - build-artifact
           filters:
             branches:
               only:
@@ -982,8 +978,6 @@ workflows:
       # be approved without running the rest.
       - approve-openshift:
           type: approval
-          requires:
-            - build-artifact
           filters:
             branches:
               ignore:
@@ -1089,7 +1083,6 @@ workflows:
             - scenario-git-sync-private-ca-auto
             - scenario-git-sync-shared-volume-auto
             - scenario-laminar-auto
-            - scenario-openshift-auto
             - scenario-sidecar-logging-custom-config-auto
       - approve-public-release:
           type: approval
