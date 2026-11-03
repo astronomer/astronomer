@@ -10,8 +10,8 @@
 {#- https://github.com/astral-sh/uv/releases -#}
 {%- set uv_version = '0.11.25' -%}
 
-{#- https://circleci.com/developer/machine/image/ubuntu-2404#image-tags -#}
-{%- set machine_image_version = 'ubuntu-2404:2026.05.1' -%}
+{#- https://circleci.com/developer/machine/image/ubuntu-2604#image-tags -#}
+{%- set machine_image_version = 'ubuntu-2604:2026.07.1' -%}
 
 version: 2.1
 executors:
@@ -273,7 +273,10 @@ jobs:
       # image's Ubuntu archive, which has no pin that survives archive updates.
       - run:
           name: Install podman
-          command: sudo apt-get update && sudo apt-get install --yes podman
+          command: |
+            sudo apt-get update && sudo apt-get install --yes podman
+            podman version && conmon --version && runc --version
+            sudo podman info --format 'cgroups={{ '{{' }}.Host.CgroupsVersion}} manager={{ '{{' }}.Host.CgroupManager}} runtime={{ '{{' }}.Host.OCIRuntime.Name}}'
 {%- endif %}
 {%- if scenario.quay_login %}
       # This scenario sideloads an image from a private quay.io repository, which an

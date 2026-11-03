@@ -64,7 +64,12 @@ READY_TIMEOUT = 600
 MIN_MACHINE_MEMORY_MB = 8192
 
 IS_LINUX = platform.system() == "Linux"
-PODMAN = ["sudo", "podman"] if IS_LINUX else ["podman"]
+
+# cgroupfs rather than podman's default systemd cgroup manager on Linux. The systemd manager
+# places conmon in a cgroup over dbus, and where that is unavailable -- a CI VM with no usable
+# system dbus -- conmon dies before saying anything, which podman reports as the unhelpful
+# "container create failed (no logs from conmon)". cgroupfs needs neither.
+PODMAN = ["sudo", "podman", "--cgroup-manager=cgroupfs"] if IS_LINUX else ["podman"]
 
 
 def parse_args() -> argparse.Namespace:

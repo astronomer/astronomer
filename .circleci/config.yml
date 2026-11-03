@@ -207,7 +207,7 @@ jobs:
 
   scenario-unified-1-31-14:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.31.14
@@ -233,7 +233,7 @@ jobs:
           path: test-results
   scenario-unified-1-32-11:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.32.11
@@ -259,7 +259,7 @@ jobs:
           path: test-results
   scenario-unified-1-33-7:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.33.7
@@ -285,7 +285,7 @@ jobs:
           path: test-results
   scenario-unified-1-34-3:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.34.3
@@ -311,7 +311,7 @@ jobs:
           path: test-results
   scenario-unified-1-35-1:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.35.1
@@ -337,7 +337,7 @@ jobs:
           path: test-results
   scenario-unified-1-36-4:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.36.4
@@ -363,7 +363,7 @@ jobs:
           path: test-results
   scenario-unified-1-37-0:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.37.0
@@ -390,7 +390,7 @@ jobs:
 
   scenario-auth-sidecar:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -437,7 +437,7 @@ jobs:
             uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
   scenario-custom-image-sha:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -469,7 +469,7 @@ jobs:
           path: test-results
   scenario-deployment-lifecycle:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -501,7 +501,7 @@ jobs:
           path: test-results
   scenario-git-sync-private-ca:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -533,7 +533,7 @@ jobs:
           path: test-results
   scenario-git-sync-shared-volume:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -565,7 +565,7 @@ jobs:
           path: test-results
   scenario-laminar:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -619,7 +619,7 @@ jobs:
             uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
   scenario-openshift:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -643,7 +643,10 @@ jobs:
       # image's Ubuntu archive, which has no pin that survives archive updates.
       - run:
           name: Install podman
-          command: sudo apt-get update && sudo apt-get install --yes podman
+          command: |
+            sudo apt-get update && sudo apt-get install --yes podman
+            podman version && conmon --version && runc --version
+            sudo podman info --format 'cgroups={{.Host.CgroupsVersion}} manager={{.Host.CgroupManager}} runtime={{.Host.OCIRuntime.Name}}'
       - run:
           name: "Scenario: openshift"
           command: |
@@ -657,7 +660,7 @@ jobs:
           path: test-results
   scenario-sidecar-logging-custom-config:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:

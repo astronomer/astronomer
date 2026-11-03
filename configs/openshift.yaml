@@ -39,6 +39,21 @@ postgresql:
     size: 4Gi
 
 prometheus:
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  configMapReloader:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "250Mi"
+      limits:
+        cpu: "100m"
+        memory: "250Mi"
   persistence:
     size: 10Gi
 
@@ -49,15 +64,29 @@ elasticsearch:
     enabled: false
   common:
     env:
-      # Must match master.replicas below.
       NUMBER_OF_MASTERS: "1"
   master:
     replicas: 1
     persistence:
       size: 2Gi
+    heapMemory: 128m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 256Mi
   data:
     replicas: 1
     persistence:
       size: 10Gi
+    heapMemory: 256m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 512Mi
   client:
     replicas: 1
+    heapMemory: 128m
+    resources:
+      requests:
+        cpu: "100m"
+        memory: 256Mi
