@@ -273,6 +273,13 @@ it alone.
 {{- end }}
 {{- end }}
 
+
+{{- define "dpLink.enabled" -}}
+{{- if or .Values.dpLink.enabled .Values.global.dataPlaneFailover.enabled .Values.global.laminar.enabled -}}
+true
+{{- end -}}
+{{- end -}}
+
 {{ define "dpLink.serviceAccountName" -}}
 {{- if and .Values.dpLink.serviceAccount.create .Values.global.rbac.enabled -}}
 {{ default (printf "%s-dp-link" .Release.Name ) .Values.dpLink.serviceAccount.name }}

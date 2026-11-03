@@ -1,5 +1,5 @@
 import base64
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 import pytest
 
@@ -93,7 +93,7 @@ class TestHoustonBackendSecret:
 
         assert len(docs) == 1
         connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
-        assert connection == "postgresql://houston:s3cr3t@pg.example.com:5432/houston?schema=houston%24default"
+        assert connection == "postgresql://houston:s3cr3t@pg.example.com:5432/houston?connection_limit=20&schema=houston%24default"
 
     def test_houston_backend_secret_honours_custom_schema_name(self, kube_version):
         """Test that global.houston.database.schemaName reaches the connection URL."""
@@ -108,7 +108,7 @@ class TestHoustonBackendSecret:
 
         assert len(docs) == 1
         connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
-        assert connection.endswith("?schema=public")
+        assert connection.endswith("&schema=public")
 
     def test_houston_backend_secret_url_encodes_schema_name(self, kube_version):
         """Test that a schema name containing "$" is percent-encoded.
@@ -127,7 +127,7 @@ class TestHoustonBackendSecret:
 
         assert len(docs) == 1
         connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
-        assert connection.endswith("?schema=my%24schema")
+        assert connection.endswith("&schema=my%24schema")
 
     def test_houston_backend_secret_percent_encodes_credentials(self, kube_version):
         """Test that credentials are percent-encoded rather than interpolated verbatim.
@@ -154,7 +154,10 @@ class TestHoustonBackendSecret:
 
         assert len(docs) == 1
         connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
-        assert connection == "postgresql://svc%40corp:p%2Fa%3Fs%23s@pg.example.com:5432/houston?schema=houston%24default"
+        assert (
+            connection
+            == "postgresql://svc%40corp:p%2Fa%3Fs%23s@pg.example.com:5432/houston?connection_limit=20&schema=houston%24default"
+        )
 
         # The point of the encoding: it has to parse back to what was configured.
         parsed = urlparse(connection)
@@ -206,3 +209,31 @@ class TestHoustonBackendSecret:
         )
 
         assert len(docs) == 0
+
+    def test_houston_backend_secret_carries_a_custom_connection_limit(self, kube_version):
+        """Test that prismaConnectionLimit reaches a URL built from backendConnection.
+
+        The bootstrapper doesn't run for these installs, so this URL is the only
+        place the limit can be applied.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"houston": {**BACKEND_CONNECTION_VALUES, "prismaConnectionLimit": 35}}},
+            show_only=[BACKEND_SECRET_FILE],
+        )
+
+        assert len(docs) == 1
+        connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
+        assert parse_qs(urlparse(connection).query)["connection_limit"] == ["35"]
+
+    def test_houston_backend_secret_omits_an_unset_connection_limit(self, kube_version):
+        """Test that clearing prismaConnectionLimit leaves the pool to Prisma's own default."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"houston": {**BACKEND_CONNECTION_VALUES, "prismaConnectionLimit": None}}},
+            show_only=[BACKEND_SECRET_FILE],
+        )
+
+        assert len(docs) == 1
+        connection = base64.b64decode(docs[0]["data"]["connection"]).decode()
+        assert connection.endswith("/houston?schema=houston%24default")
