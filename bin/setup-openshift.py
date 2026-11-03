@@ -16,6 +16,7 @@ whatever MICROSHIFT_IMAGE ships.
 """
 
 import argparse
+import os
 import platform
 import shlex
 import socket
@@ -47,17 +48,20 @@ HTTPS_PORT = 443
 
 # TopoLVM provisions PVs out of this group, so it caps every PVC the chart creates.
 # configs/openshift.yaml trims them to ~37Gi against the 50Gi here; raise both together.
+#
+# The name is NOT a free choice: MicroShift generates the topolvm-lvmd-0 ConfigMap from a
+# built-in default that hardcodes myvg1 and ignores /etc/microshift/lvmd.yaml. Rename this and
+# lvmd crashloops with "volume group not found" unless you also patch that ConfigMap.
 VG_NAME = "myvg1"
 LVM_DISK = "/var/lib/microshift-okd/lvmdisk.image"
 LVM_SIZE = "50G"
 
-# The one `oc` reads inside the container, and the first file MicroShift writes.
 IN_CONTAINER_KUBECONFIG = "/var/lib/microshift/resources/kubeadmin/kubeconfig"
-# The one the HOST reads: see write_kubeconfig().
 HOST_KUBECONFIG_SOURCE = f"/var/lib/microshift/resources/kubeadmin/{CONTAINER_HOSTNAME}/kubeconfig"
 KUBECONFIG_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
 KUBECTL_EXE = str(Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "kubectl")
 READY_TIMEOUT = 600
+MIN_MACHINE_MEMORY_MB = 8192
 
 IS_LINUX = platform.system() == "Linux"
 PODMAN = ["sudo", "podman"] if IS_LINUX else ["podman"]
@@ -76,9 +80,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--publish-router-ports",
         action="store_true",
-        help=f"Also publish the router's ports {HTTP_PORT} and {HTTPS_PORT}, so the platform's Routes can "
-        "be opened in a browser. Off by default: they are usually already taken on a developer machine, "
-        "which fails the container with 'bind: address already in use'.",
+        # Also readable from the environment, because bin/run-scenario.py has no way to pass a flag
+        # through to this script, and this is the only knob a local run wants.
+        default=os.environ.get("PUBLISH_ROUTER_PORTS", "").lower() in ("1", "true", "yes"),
+        help=f"Also publish the router's ports {HTTP_PORT} and {HTTPS_PORT}, so the platform can be opened "
+        "in a browser (also settable as PUBLISH_ROUTER_PORTS=1, which is how a scenario run reaches it). "
+        f"Off by default: {HTTPS_PORT} is usually already taken on a developer machine, which fails the "
+        "container with 'bind: address already in use'.",
     )
     return parser.parse_args()
 
@@ -114,10 +122,24 @@ def check_podman_available() -> None:
             "  CircleCI's machine executor does not ship it: `sudo apt-get install -y podman`.\n"
             "  macOS: `brew install podman`, then `podman machine init --rootful` and `podman machine start`."
         )
-    if not IS_LINUX and run(["podman", "machine", "inspect", "--format", "{{.Rootful}}"], check=False).stdout.strip() != "true":
+    if IS_LINUX:
+        return
+
+    fields = run(["podman", "machine", "inspect", "--format", "{{.Rootful}} {{.Resources.Memory}}"], check=False).stdout.split()
+    if len(fields) != 2:
+        raise SystemExit("ERROR: could not inspect the podman machine -- is one initialised and started?")
+    rootful, memory_mb = fields[0], int(fields[1])
+
+    if rootful != "true":
         raise SystemExit(
             "ERROR: the podman machine must be rootful -- MicroShift runs --privileged with the host's /dev.\n"
             "  podman machine stop && podman machine set --rootful && podman machine start"
+        )
+    if memory_mb < MIN_MACHINE_MEMORY_MB:
+        raise SystemExit(
+            f"ERROR: the podman machine has {memory_mb}MiB, below the {MIN_MACHINE_MEMORY_MB}MiB this needs. "
+            "The platform's pods will sit Pending on Insufficient memory.\n"
+            f"  podman machine stop && podman machine set --memory {MIN_MACHINE_MEMORY_MB} && podman machine start"
         )
 
 
@@ -165,6 +187,11 @@ def start_container(publish_router_ports: bool = False) -> None:
     --replace, not reuse: a cluster left from an earlier run has that run's chart in it. No --rm,
     so a container that dies during startup is still there for `podman logs`.
     """
+    # The image declares VOLUME /var, so each run's container owns an anonymous volume holding
+    # etcd and the cluster certs. --replace would delete the container and leave that volume
+    # behind, one per run; -v drops them together, which also keeps /var and the volume group
+    # consistent, since the next line wipes the volume group too.
+    podman("rm", "--force", "--volumes", CONTAINER_NAME, check=False)
     wipe_logical_volumes()
 
     # Only an OVN-K build needs this; harmless otherwise, and upstream does it unconditionally.
@@ -186,7 +213,6 @@ def start_container(publish_router_ports: bool = False) -> None:
         "run",
         "--privileged",
         "--detach",
-        "--replace",
         *run_opts,
         *published,
         "--name",

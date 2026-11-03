@@ -47,7 +47,9 @@ uv run pytest tests/functional/scenarios/auth-sidecar
 ```
 
 A `cluster_provider: openshift` scenario runs the same way, but needs a rootful podman
-machine first — on macOS, `podman machine init --rootful --memory 20480 --cpus 10` and
+machine first — on macOS, `podman machine init --rootful --memory 8192` and
 `podman machine start`. Only the API is published, on `127.0.0.1:6443`; pass
-`--publish-router-ports` to `bin/setup-openshift.py` to also bind `:80`/`:443` and open the
-platform in a browser.
+`PUBLISH_ROUTER_PORTS=1` (or `--publish-router-ports`) to also bind `:80`/`:443` and open the
+platform at `https://app.localtest.me`. It must be those ports: the UI calls Houston at
+`https://houston.localtest.me/v1`, with no port, so forwarding to any other port loads the UI
+but breaks every API call.
