@@ -204,10 +204,15 @@ def start_container(publish_router_ports: bool = False) -> None:
         host_sh("modprobe openvswitch || true", check=False)
 
     # TopoLVM needs the host's device nodes; mask the ones that come along with them.
+    #
+    # notmpcopyup because the default copies the directory's existing contents into the new
+    # tmpfs, which is both the opposite of masking and a hard failure: runc cannot recreate a
+    # device node in its staging dir, so /dev/input dies on "lchown .../event0: no such file or
+    # directory". An empty tmpfs is what a mask means.
     run_opts = ["--tty", "--volume", "/dev:/dev"]
     for device in ("input", "snd", "dri"):
         if host_sh(f"test -d /dev/{device} && echo yes || true", check=False) == "yes":
-            run_opts += ["--tmpfs", f"/dev/{device}"]
+            run_opts += ["--tmpfs", f"/dev/{device}:rw,notmpcopyup"]
 
     published = ["--publish", f"{API_PORT}:6443"]
     if publish_router_ports:
