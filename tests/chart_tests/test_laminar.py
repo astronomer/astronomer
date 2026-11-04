@@ -739,7 +739,7 @@ class TestLaminar:
             kube_version=kube_version,
             values={
                 "global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}},
-                "laminar": {"databaseBootstrapper": {"dbName": "custom-db-name"}},
+                "laminar": {"dbName": "custom-db-name"},
             },
             show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE, *LAMINAR_HYPEVISOR_TEMPLATES],
         )

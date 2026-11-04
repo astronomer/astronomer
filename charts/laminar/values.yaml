@@ -41,8 +41,6 @@ databaseBootstrapper:
   # Name of an existing secret holding the database connection for Laminar, under a "connection"
   # key. Leave unset to have the database and the secret created for you.
   backendSecretName: ~
-  # Allows to customize the database name
-  dbName: ~
 
 # ---------------------------------------------------------------------------
 # laminar.env config file mounted at /laminar.env (subPath laminar.env).
@@ -142,3 +140,6 @@ hypervisor:
 
 extraVolumes: []
 extraVolumeMounts: []
+
+# Allows to customize the database name
+dbName: ~

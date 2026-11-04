@@ -151,9 +151,9 @@ laminar.env volume.
 {{- end }}
 {{- end }}
 
-{{ define "dbBootstrapper.dbName" -}}
-{{- if .Values.databaseBootstrapper.dbName -}}
-{{ .Values.databaseBootstrapper.dbName }}
+{{ define "laminar.dbName" -}}
+{{- if .Values.dbName -}}
+{{ .Values.dbName }}
 {{- else -}}
 {{ .Release.Name }}-laminar
 {{- end -}}
@@ -181,7 +181,7 @@ idempotent, which is the same contract houston's copy already has.
   env:
     {{- include "astronomer.dbBootstrapper.secretEnv" . | nindent 4 }}
     - name: DB_NAME
-      value: {{ template "dbBootstrapper.dbName" . }}
+      value: {{ template "laminar.dbName" . }}
     - name: SECRET_NAME
       value: {{ template "laminar.backend.secret" . }}
     {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
