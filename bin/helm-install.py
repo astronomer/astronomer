@@ -244,12 +244,9 @@ def show_pod_status() -> None:
 def dump_pod_diagnostics(pod_names: list[str]) -> None:
     """Print why each named pod never became healthy: its events, then its containers' logs.
 
-    A status table says a pod is Pending; it never says why. The distinction matters most for
-    exactly the case it reads worst on: a pod whose init container is failing stays in phase
-    Pending for as long as it keeps restarting, so the table looks like a scheduling problem
-    when it is a crashing container. `kubectl logs` defaults to the app container and would
-    show nothing for that pod, hence --all-containers, and --previous for the crash loop's
-    last exit -- the current attempt is usually still starting up and empty.
+    A status table says a pod is Pending, never why -- and a failing init container keeps it
+    Pending, so a crash reads as a scheduling problem. Hence --all-containers, since `kubectl
+    logs` would show nothing for that pod, and --previous, since the current attempt is empty.
     """
     for name in pod_names:
         print(f"\n{'=' * 72}\n=== {name}\n{'=' * 72}", flush=True)
@@ -265,14 +262,35 @@ def dump_pod_diagnostics(pod_names: list[str]) -> None:
             )
 
 
-def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=120) -> None:
+def pod_is_healthy(pod: dict) -> bool:
+    """Whether one pod counts as healthy, by readiness rather than by phase alone.
+
+    A container in CrashLoopBackOff keeps its pod in phase Running, so a phase check calls a
+    crash loop healthy -- which is how an admitted pod that cannot actually run looks, e.g. one
+    that dies on a permission error under an OpenShift SCC's arbitrary UID.
+
+    A Job's pod goes by phase instead, since it exits when its work is done and sits at Ready
+    False from then on. A Failed one stays ignored: the Job's own retries decide if it mattered.
     """
-    Wait for all pods in the 'astronomer' namespace to be in a healthy state.
+    phase = (pod.get("status") or {}).get("phase", "")
+    owners = (pod.get("metadata") or {}).get("ownerReferences") or []
+    if any(owner.get("kind") == "Job" for owner in owners):
+        return phase in ("Running", "Succeeded")
+    conditions = {c.get("type"): c.get("status") for c in (pod.get("status") or {}).get("conditions") or []}
+    return conditions.get("Ready") == "True"
+
+
+def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=600) -> None:
+    """
+    Wait for all pods in the 'astronomer' namespace to be ready.
+
+    The only gate on the install: `helm install` runs without --wait, so it returns once the
+    manifests are applied, long before anything is serving.
     """
     debug_print(f"Starting pod health check with max wait time: {max_wait_time}s")
     if ignore_substrings:
         debug_print(f"Ignoring pods containing: {ignore_substrings}")
-    print("Waiting for pods in the 'astronomer' namespace to be healthy...")
+    print("Waiting for pods in the 'astronomer' namespace to be ready...")
     end_time = time.time() + max_wait_time
     while True:
         debug_print(f"Checking pod status... {int(end_time - time.time())}s remaining")
@@ -285,38 +303,32 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
                 "get",
                 "pods",
                 "-o",
-                "custom-columns=NAME:.metadata.name,STATUS:.status.phase,OWNER:.metadata.ownerReferences[0].kind",
+                "json",
             ],
             capture_output=True,
             text=True,
             check=True,
         )
-        lines = output.stdout.splitlines()[1:]  # Skip the header line
         unhealthy_pods = []
-        for line in lines:
-            parts = line.split()
-            if len(parts) < 3:
+        for pod in json.loads(output.stdout).get("items", []):
+            name = pod["metadata"]["name"]
+            if pod_is_healthy(pod):
                 continue
-            name, status, owner_kind = parts[0], parts[1], parts[2]
-            if status == "Failed" and owner_kind == "Job":
-                debug_print(f"Ignoring failed Job pod: {name}")
+            if ignore_substrings and any(substring in name for substring in ignore_substrings):
+                debug_print(f"Ignoring unready pod: {name}")
                 continue
-            if status not in ["Running", "Succeeded"]:
-                unhealthy_pods.append(name)
-                if ignore_substrings and any(substring in name for substring in ignore_substrings):
-                    debug_print(f"Ignoring unhealthy pod: {name} (status: {status})")
-                    continue
+            unhealthy_pods.append(name)
         if not unhealthy_pods:
-            debug_print("All pods are healthy, exiting wait loop")
-            print("All pods in the 'astronomer' namespace are healthy.")
+            debug_print("All pods are ready, exiting wait loop")
+            print("All pods in the 'astronomer' namespace are ready.")
             show_pod_status()
             return
-        date_print(f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}")
+        date_print(f"Found {len(unhealthy_pods)} pods not ready: {', '.join(unhealthy_pods)}")
         show_pod_status()
 
         if time.time() >= end_time:
             dump_pod_diagnostics(unhealthy_pods)
-            raise RuntimeError(f"Timeout waiting for pods to become healthy: {', '.join(unhealthy_pods)}")
+            raise RuntimeError(f"Timeout waiting for pods to become ready: {', '.join(unhealthy_pods)}")
 
         time.sleep(5)
 

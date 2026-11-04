@@ -36,23 +36,22 @@ from kubernetes import client, config
 MICROSHIFT_IMAGE = "ghcr.io/microshift-io/microshift:4.22.0_202610071017_g0a516b4eb_4.22.0_okd_scos.ec.16"
 CONTAINER_NAME = "microshift"
 
-# The name the API certificate is issued for, so the kubeconfig can reach the API by a name
-# rather than a bare IP (TLS to an IP sends no SNI). The same wildcard-to-127.0.0.1 domain the
-# platform uses for its own hosts, so a developer only has to get one domain resolving.
+# The name the API certificate is issued for: TLS to a bare IP sends no SNI. Same domain the
+# platform's own hosts use, so only one has to resolve.
 CONTAINER_HOSTNAME = "localtest.me"
 
-# Only the API is published by default -- all pytest needs. The router's 80/443 are opt-in
-# (--publish-router-ports) because they are usually already taken on a developer machine.
+# Only the API is published by default. The router's 80/443 are opt-in because they are
+# usually already taken on a developer machine.
 API_PORT = 6443
 HTTP_PORT = 80
 HTTPS_PORT = 443
 
-# TopoLVM provisions PVs out of this group, so it caps every PVC the chart creates.
-# configs/openshift.yaml trims them to ~37Gi against the 100Gi here; raise both together.
+# Caps every PVC the chart creates; configs/openshift.yaml trims them to ~37Gi against the
+# 100Gi here, so raise both together.
 #
-# The name is NOT a free choice: MicroShift generates the topolvm-lvmd-0 ConfigMap from a
-# built-in default that hardcodes myvg1 and ignores /etc/microshift/lvmd.yaml. Rename this and
-# lvmd crashloops with "volume group not found" unless you also patch that ConfigMap.
+# The name is NOT a free choice: MicroShift's built-in topolvm-lvmd-0 ConfigMap hardcodes myvg1
+# and ignores /etc/microshift/lvmd.yaml, so renaming it crashloops lvmd on "volume group not
+# found".
 VG_NAME = "myvg1"
 LVM_DISK = "/var/lib/microshift-okd/lvmdisk.image"
 LVM_SIZE = "100G"
@@ -66,10 +65,9 @@ MIN_MACHINE_MEMORY_MB = 8192
 
 IS_LINUX = platform.system() == "Linux"
 
-# cgroupfs rather than podman's default systemd cgroup manager on Linux. The systemd manager
-# places conmon in a cgroup over dbus, and where that is unavailable -- a CI VM with no usable
-# system dbus -- conmon dies before saying anything, which podman reports as the unhelpful
-# "container create failed (no logs from conmon)". cgroupfs needs neither.
+# cgroupfs, not podman's default systemd manager: that one places conmon in a cgroup over dbus,
+# and on a CI VM with no usable system dbus conmon dies silently -- surfacing only as
+# "container create failed (no logs from conmon)".
 PODMAN = ["sudo", "podman", "--cgroup-manager=cgroupfs"] if IS_LINUX else ["podman"]
 
 
@@ -177,12 +175,11 @@ def volume_group_state() -> str:
 def wipe_logical_volumes() -> None:
     """Remove every logical volume in the volume group.
 
-    The group outlives the cluster and nothing reclaims a TopoLVM volume once its PV is gone, so
-    they accumulate until the next install sits Pending on "not enough free storage". Every LV is
-    an orphan here, because this only runs when the cluster is about to be recreated.
+    The group outlives the cluster and nothing reclaims a TopoLVM volume, so they accumulate
+    until the next install sits Pending on "not enough free storage". All of them are orphans by
+    the time this runs, which is only ever just before the cluster is recreated.
 
-    Only for a group this script created: `lvremove -f` on every LV of someone else's "myvg1"
-    destroys their data, and nothing about the name alone says whose it is.
+    Guarded, because `lvremove -f` across someone else's "myvg1" destroys their data.
     """
     if volume_group_state() != "apcmanagedvolumes":
         print(f"Skipping volume cleanup: '{VG_NAME}' is not backed by {LVM_DISK}")
@@ -235,10 +232,9 @@ def start_container(publish_router_ports: bool = False) -> None:
     --replace, not reuse: a cluster left from an earlier run has that run's chart in it. No --rm,
     so a container that dies during startup is still there for `podman logs`.
     """
-    # The image declares VOLUME /var, so each run's container owns an anonymous volume holding
-    # etcd and the cluster certs. --replace would delete the container and leave that volume
-    # behind, one per run; -v drops them together, which also keeps /var and the volume group
-    # consistent, since the next line wipes the volume group too.
+    # The image declares VOLUME /var, so etcd and the cluster certs live in an anonymous volume.
+    # --replace would leak one per run; --volumes drops it with the container, which also keeps
+    # /var consistent with the volume group the next line wipes.
     podman("rm", "--force", "--volumes", CONTAINER_NAME, check=False)
     wipe_logical_volumes()
 
@@ -246,26 +242,21 @@ def start_container(publish_router_ports: bool = False) -> None:
     if IS_LINUX:
         host_sh("modprobe openvswitch || true", check=False)
 
-    # TopoLVM needs the host's device nodes; mask the ones that come along with them.
-    #
-    # notmpcopyup because the default copies the directory's existing contents into the new
-    # tmpfs, which is both the opposite of masking and a hard failure: runc cannot recreate a
-    # device node in its staging dir, so /dev/input dies on "lchown .../event0: no such file or
-    # directory". An empty tmpfs is what a mask means.
+    # TopoLVM needs the host's device nodes; mask the ones that come along with them. The
+    # default tmpfs copies the directory in first, which both defeats the mask and fails outright
+    # -- runc cannot recreate a device node, so /dev/input dies on "lchown .../event0".
     run_opts = ["--tty", "--volume", "/dev:/dev"]
     for device in ("input", "snd", "dri"):
         if host_sh(f"test -d /dev/{device} && echo yes || true", check=False) == "yes":
             run_opts += ["--tmpfs", f"/dev/{device}:rw,notmpcopyup"]
 
-    # Bound to loopback: the kubeconfig this serves is kubeadmin, i.e. cluster-admin, and
-    # podman's default binds every interface. 6443 is unprivileged, so this holds everywhere.
+    # Loopback: this serves a kubeadmin (cluster-admin) kubeconfig and podman otherwise binds
+    # every interface. 6443 is unprivileged, so the bind succeeds everywhere.
     published = ["--publish", f"127.0.0.1:{API_PORT}:6443"]
     if publish_router_ports:
-        # The router's ports only take the same treatment where podman runs as root, i.e. Linux
-        # via sudo. On macOS the forward is gvproxy running as you, and binding a privileged port
-        # to a named host IP needs root -- podman fails the container with "bind: permission
-        # denied". Unprefixed it binds *:80 instead, so a local run is LAN-reachable while it is
-        # up; that is the cost of opening these at all here, and they stay opt-in because of it.
+        # Only where podman runs as root (Linux, via sudo). On macOS the forward is gvproxy
+        # running as you, and a privileged port with a named host IP needs root -- "bind:
+        # permission denied". Unprefixed it binds *:80, so these stay opt-in: LAN-reachable.
         host_bind = "127.0.0.1:" if IS_LINUX else ""
         published += [
             "--publish",
@@ -288,13 +279,10 @@ def start_container(publish_router_ports: bool = False) -> None:
         capture=False,
     )
 
-    # MicroShift names the router apps.<dns.baseDomain>, which defaults to example.com. Point it
-    # at the domain the platform's own hosts use so there is one domain here, not two.
-    #
-    # A config.d drop-in because the image bakes its own entries there, and copied in between
-    # create and start rather than bind-mounted: a --volume source is resolved on the machine
-    # running podman, which on macOS is the VM, not this filesystem. baseDomain is also only read
-    # at first start, which is why this cannot be an exec afterwards.
+    # The router is named apps.<dns.baseDomain>, which defaults to example.com. A config.d
+    # drop-in because the image bakes its own entries there, copied in rather than bind-mounted
+    # because a --volume source resolves on the machine running podman -- the VM, on macOS -- and
+    # written before start because baseDomain is only read on first boot.
     with tempfile.TemporaryDirectory() as tmpdir:
         dropin = Path(tmpdir) / "02-base-domain.yaml"
         dropin.write_text(f"dns:\n  baseDomain: {CONTAINER_HOSTNAME}\n")
@@ -399,11 +387,10 @@ def wait_for_cluster_components() -> None:
 def write_kubeconfig(kubeconfig_file: Path) -> None:
     """Copy the per-hostname kubeadmin kubeconfig out to the path helm-install.py and pytest read.
 
-    Per-hostname, not the default one: TLS to an IP sends no SNI, so https://127.0.0.1:6443 gets
-    MicroShift's fallback serving cert, which the default kubeconfig's CA does not sign --
-    "certificate verify failed: self-signed certificate in certificate chain". The kubeconfig
-    MicroShift writes for its own hostname carries the CA for the cert served under that name,
-    and the name resolves to 127.0.0.1, so TLS verifies without --insecure-skip-tls-verify.
+    Per-hostname, not the default one: TLS to an IP sends no SNI, so https://127.0.0.1:6443 is
+    served MicroShift's fallback cert, which the default kubeconfig's CA does not sign --
+    "self-signed certificate in certificate chain". The per-hostname copy carries the matching
+    CA, and the name resolves to 127.0.0.1, so TLS verifies without --insecure-skip-tls-verify.
 
     Only the port is rewritten, to whichever one is published.
     """
