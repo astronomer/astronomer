@@ -181,6 +181,18 @@ class TestLaminar:
             "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
         }
 
+    @pytest.mark.parametrize("values", [{}, {"laminar": {"hypervisor": {"replicas": 3}}}], ids=["default", "override"])
+    def test_laminar_hypervisor_replicas_is_always_one(self, kube_version, values):
+        """Only ever one hypervisor: multiple would all try to scale all airflows, so
+        replicas is hardcoded and user overrides must not take effect."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values=laminar_values(values),
+            show_only=[HYPERVISOR_DEPLOYMENT_TEMPLATE],
+        )
+        assert len(docs) == 1
+        assert docs[0]["spec"]["replicas"] == 1
+
     def test_laminar_apiserver_keeps_houston_auth(self, kube_version):
         """The shared laminar.env helper drives both deployments, so guard that the
         commander/local-issuer override applies to the hypervisor ONLY

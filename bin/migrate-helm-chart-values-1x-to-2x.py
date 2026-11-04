@@ -32,6 +32,7 @@ if str(_BIN) not in sys.path:
 from helm_chart_values_migration_shared import (  # noqa: E402
     GLOBAL_FEATURE_FLAG_RULES,
     HOUSTON_DEPLOYMENT_PATH_MIGRATIONS,
+    ROLE_OVERRIDE_SUPPORTED_KEYS,  # noqa: F401
     AddKeyIfMissing,
     BoolToNested,  # noqa: F401
     InvertedBoolToNested,  # noqa: F401
@@ -41,8 +42,10 @@ from helm_chart_values_migration_shared import (  # noqa: E402
     apply_houston_config_flag_migrations,
     apply_houston_deployment_migrations,
     apply_nginx_csp_policy_migrations,
+    check_role_overrides,
     dump_yaml,
     load_yaml,
+    print_role_override_report,
 )
 
 MIGRATIONS = GLOBAL_FEATURE_FLAG_RULES
@@ -134,6 +137,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     yml, data = load_yaml(input_path)
+    print_role_override_report(check_role_overrides(data), sys.stderr)
     changes = migrate_values(data)
 
     if args.dry_run:

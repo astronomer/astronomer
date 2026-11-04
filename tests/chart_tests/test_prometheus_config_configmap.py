@@ -43,6 +43,43 @@ airflow_scrape_relabel_config = [
     },
 ]
 
+laminar_api_server_metric_drop_config = [
+    {
+        "source_labels": ["__name__"],
+        "action": "drop",
+        "regex": "laminar_laminar_hypervisor_monitored_airflow_MonitoredAirflow_run_monitoring_timer_bucket",
+    },
+]
+
+laminar_hypervisor_metric_drop_config = [
+    {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_num_upcoming_dag_runs"},
+    {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_num_stuck_queued_dag_runs"},
+    {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_num_non_terminal_dag_runs"},
+    {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_num_monitored_airflow_deployments"},
+    {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_num_delayed_task_instances"},
+    {
+        "source_labels": ["__name__"],
+        "action": "drop",
+        "regex": "hypervisor_laminar_hypervisor_monitored_airflow_scaling_duration_seconds_(created|sum)",
+    },
+    {"source_labels": ["__name__"], "action": "drop", "regex": "hypervisor_laminar_hypervisor_monitored_airflow_run_count_created"},
+    {
+        "source_labels": ["__name__"],
+        "action": "drop",
+        "regex": "hypervisor_laminar_hypervisor_monitored_airflow_monitoring_scrape_duration_seconds_(count|created|sum)",
+    },
+    {
+        "source_labels": ["__name__"],
+        "action": "drop",
+        "regex": "hypervisor_laminar_hypervisor_monitored_airflow_monitoring_duration_seconds_(created|sum)",
+    },
+    {
+        "source_labels": ["__name__"],
+        "action": "drop",
+        "regex": "hypervisor_laminar_hypervisor_db_scraper_query_duration_seconds_(count|created|sum)",
+    },
+]
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -463,6 +500,39 @@ class TestPrometheusConfigConfigmap:
         laminar_api_server_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-api-server"]
         assert len(laminar_hypervisor_scrape_config) == 1
         assert len(laminar_api_server_scrape_config) == 1
+
+    def test_prometheus_laminar_metric_drop_config(self, kube_version):
+        """Unwanted laminar series should be dropped via metric_relabel_configs on both laminar jobs."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"laminar": {"enabled": True}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+
+        hypervisor = next(scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-hypervisor")
+        api_server = next(scrape for scrape in scrape_configs if scrape["job_name"] == "laminar-api-server")
+
+        # the hypervisor job prefixes every metric before dropping, so the drops come last
+        assert hypervisor["metric_relabel_configs"][0] == {
+            "source_labels": ["__name__"],
+            "target_label": "__name__",
+            "replacement": "hypervisor_${1}",
+        }
+        for index in range(len(laminar_hypervisor_metric_drop_config)):
+            expected = laminar_hypervisor_metric_drop_config[index]
+            actual = hypervisor["metric_relabel_configs"][index + 1]
+            assert expected == actual
+
+        for index in range(len(laminar_api_server_metric_drop_config)):
+            expected = laminar_api_server_metric_drop_config[index]
+            actual = api_server["metric_relabel_configs"][index]
+            assert expected == actual
+
+        # drops are metric-level, they must not leak into target relabeling
+        for job in (hypervisor, api_server):
+            assert not [rule for rule in job["relabel_configs"] if rule["action"] == "drop"]
 
     def test_prometheus_laminar_scrape_config_disabled(self, kube_version):
         doc = render_chart(
