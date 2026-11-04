@@ -1,0 +1,20 @@
+description: >-
+  Installs the platform onto a real OpenShift API server -- a single-node MicroShift (OKD)
+  cluster -- and mirrors the auth-sidecar scenario over it, minus that scenario's git_sync stage:
+  the platform-tier grafana checks, one real dag_deploy Airflow Deployment, and the exact set of
+  its pods carrying an auth-proxy sidecar. The difference is the admission control: here
+  SecurityContextConstraints decide what runs, not a PSS-Restricted namespace, and nothing in KIND
+  can fail that way.
+topology: unified
+
+# MicroShift, TopoLVM and the whole platform on one node. xlarge was already reported as
+# marginal for the platform alone in PINF-1080.
+resource_class: 2xlarge
+
+# Creates the cluster with bin/setup-openshift.py instead of bin/setup-kind.py; everything
+# downstream of it is unchanged.
+cluster_provider: openshift
+
+values:
+  - configs/openshift.yaml
+  - configs/scenario-airflow-reduce-resources.yaml
