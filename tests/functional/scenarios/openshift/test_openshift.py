@@ -114,13 +114,26 @@ def houston_api():
 
 
 @pytest.fixture(scope="module")
-def deployment(houston_api, apps_client, core_client) -> dict:
+def admin_token(houston_api) -> str:
+    """Bootstrap the cluster's one and only admin.
+
+    Its own fixture rather than a line inside `deployment`, because createUser's unauthenticated
+    signup succeeds exactly once per cluster. pytest-rerunfailures drops the cached result of a
+    fixture that raised, so a JWKS retry re-executes `deployment` -- and a createUser in there
+    would meet "Public sign ups are disabled" instead of retrying what actually failed. This
+    fixture succeeded, so its token stays cached across those reruns.
+    """
+    return create_user(houston_api, ADMIN_EMAIL, ADMIN_PASSWORD)
+
+
+@pytest.fixture(scope="module")
+def deployment(admin_token, houston_api, apps_client, core_client) -> dict:
     """One real Airflow Deployment, dag_deploy so dag-server and its own sidecar exist too.
 
     Ported from the auth-sidecar scenario, minus its git_sync stage: this runs the deployment
     under OpenShift's SCC admission rather than under a PSS-Restricted namespace.
     """
-    token = create_user(houston_api, ADMIN_EMAIL, ADMIN_PASSWORD)
+    token = admin_token
     workspace_id = create_workspace(houston_api, token, WORKSPACE_LABEL)
     cluster_id = get_cluster_id(houston_api, token)
     try:

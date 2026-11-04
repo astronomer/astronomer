@@ -262,22 +262,31 @@ def dump_pod_diagnostics(pod_names: list[str]) -> None:
             )
 
 
-def pod_is_healthy(pod: dict) -> bool:
-    """Whether one pod counts as healthy, by readiness rather than by phase alone.
+# Ready as well as phase: a container in CrashLoopBackOff keeps its pod in phase Running, so a
+# phase check calls a crash loop healthy -- which is how an admitted pod that cannot actually run
+# looks, e.g. one that dies on a permission error under an OpenShift SCC's arbitrary UID.
+# kubectl prints <none> for a path a pod does not have, so every row has all four columns.
+POD_HEALTH_COLUMNS = (
+    "custom-columns="
+    "NAME:.metadata.name,"
+    "PHASE:.status.phase,"
+    'READY:.status.conditions[?(@.type=="Ready")].status,'
+    "OWNER:.metadata.ownerReferences[0].kind"
+)
 
-    A container in CrashLoopBackOff keeps its pod in phase Running, so a phase check calls a
-    crash loop healthy -- which is how an admitted pod that cannot actually run looks, e.g. one
-    that dies on a permission error under an OpenShift SCC's arbitrary UID.
 
-    A Job's pod goes by phase instead, since it exits when its work is done and sits at Ready
-    False from then on. A Failed one stays ignored: the Job's own retries decide if it mattered.
+def pod_is_healthy(phase: str, ready: str, owner_kind: str) -> bool:
+    """Whether one pod's row counts as healthy.
+
+    A Job's pod goes by phase, since it exits when its work is done and sits at Ready False from
+    then on. Failed counts as healthy here because the Job, not this loop, decides whether a dead
+    attempt mattered: it replaces the pod, and the failed one lingers. houston-db-migrations does
+    this routinely -- two pods race to create the database, the loser dies on "duplicate key
+    value violates unique constraint", and the replacement completes.
     """
-    phase = (pod.get("status") or {}).get("phase", "")
-    owners = (pod.get("metadata") or {}).get("ownerReferences") or []
-    if any(owner.get("kind") == "Job" for owner in owners):
-        return phase in ("Running", "Succeeded")
-    conditions = {c.get("type"): c.get("status") for c in (pod.get("status") or {}).get("conditions") or []}
-    return conditions.get("Ready") == "True"
+    if owner_kind == "Job":
+        return phase in ("Running", "Succeeded", "Failed")
+    return ready == "True"
 
 
 def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=600) -> None:
@@ -303,16 +312,18 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
                 "get",
                 "pods",
                 "-o",
-                "json",
+                POD_HEALTH_COLUMNS,
             ],
             capture_output=True,
             text=True,
             check=True,
         )
         unhealthy_pods = []
-        for pod in json.loads(output.stdout).get("items", []):
-            name = pod["metadata"]["name"]
-            if pod_is_healthy(pod):
+        for line in output.stdout.splitlines()[1:]:  # skip the header row
+            name, _, rest = line.partition(" ")
+            columns = rest.split()
+            # Not silently skipped: a row this cannot read is a pod whose state is unknown.
+            if len(columns) == 3 and pod_is_healthy(*columns):
                 continue
             if ignore_substrings and any(substring in name for substring in ignore_substrings):
                 debug_print(f"Ignoring unready pod: {name}")
