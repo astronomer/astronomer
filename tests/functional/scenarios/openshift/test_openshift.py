@@ -229,11 +229,16 @@ def test_deployment_pods_have_restricted_security_context(deployment, core_clien
     )
 
 
-def test_no_admission_rejection_events(core_client):
-    """Nothing was refused admission while the chart installed.
-
-    A rejected pod is never created, so it leaves no unhealthy Pod object -- only a FailedCreate
-    Warning on whatever tried. Empty name prefix: every one in the namespace matters here.
-    """
-    rejections = find_admission_rejection_events(core_client, NAMESPACE, "")
-    assert not rejections, "Admission refused at least one platform pod:\n" + "\n".join(f"  {line}" for line in rejections)
+def test_no_admission_rejection_events(core_client, deployment):
+    """Check platform and Airflow namespaces for refused pod creation."""
+    pods = core_client.list_pod_for_all_namespaces(label_selector=f"release={deployment['release_name']}").items
+    assert pods, f"Expected at least one pod for release {deployment['release_name']!r}"
+    namespaces = {NAMESPACE} | {pod.metadata.namespace for pod in pods}
+    rejections = [
+        f"{namespace}: {line}"
+        for namespace in sorted(namespaces)
+        for line in find_admission_rejection_events(core_client, namespace, "")
+    ]
+    assert not rejections, "Admission refused at least one platform or Airflow pod:\n" + "\n".join(
+        f"  {line}" for line in rejections
+    )
