@@ -743,15 +743,15 @@ class TestLaminar:
             },
             show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE, *LAMINAR_HYPEVISOR_TEMPLATES],
         )
-        # Laminar Api Server Deployment
         by_kind_and_name = get_docs_by_kind_and_name(docs)
+
+        # Laminar Api Server Deployment
         apiserver_deployment = by_kind_and_name["deployment_laminar_api_server"]
         c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
         bootstrapper_apiserver_container_env = get_env_vars_dict(c_by_name["laminar-bootstrapper"]["env"])
         assert bootstrapper_apiserver_container_env["DB_NAME"] == "custom-db-name"
 
         # Laminar Hypervisor Deployment
-        by_kind_and_name = get_docs_by_kind_and_name(docs)
         hypervisor_deployment = by_kind_and_name["deployment_laminar_hypervisor"]
         c_by_name = get_containers_by_name(hypervisor_deployment, include_init_containers=True)
         bootstrapper_hypervisor_container_env = get_env_vars_dict(c_by_name["laminar-bootstrapper"]["env"])
