@@ -47,6 +47,8 @@ spec:
               allowSchedulerPodPatching:
                 default: false
                 type: boolean
+              allowTriggererPodDeletion:
+                type: boolean
               allowTriggererPodLogReading:
                 default: true
                 type: boolean

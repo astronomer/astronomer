@@ -370,6 +370,9 @@ spec:
                     x-kubernetes-preserve-unknown-fields: true
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              readOnlyRootFilesystemEnabled:
+                default: false
+                type: boolean
               replicas:
                 default: 1
                 format: int32
@@ -522,10 +525,6 @@ spec:
                 type: string
               status:
                 type: string
-            required:
-            - readyReplicas
-            - replicas
-            - selector
             type: object
         type: object
     served: true
