@@ -49,7 +49,10 @@ def test_tags_monitoring_enabled(template, chart_values=chart_values, kube_versi
         chart_values["global"] = {"plane": {"mode": "unified"}}
     if "virtualservice" in template:
         # VirtualServices only render in place of the Ingresses, once an Istio Gateway is configured.
+        # The auth sidecar is required alongside the gateway, or the render aborts -- see
+        # templates/validate-istio-gateway-auth-sidecar.yaml.
         chart_values["global"]["istio"] = {"gateway": {"enabled": True, "name": "istio-system/default-gateway"}}
+        chart_values["global"]["authSidecar"] = {"enabled": True}
     docs = render_chart(kube_version=kube_version, values=chart_values, show_only=template)
     assert len(docs) >= 1
 
