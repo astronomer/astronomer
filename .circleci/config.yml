@@ -207,7 +207,7 @@ jobs:
 
   scenario-unified-1-31-14:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.31.14
@@ -233,7 +233,7 @@ jobs:
           path: test-results
   scenario-unified-1-32-11:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.32.11
@@ -259,7 +259,7 @@ jobs:
           path: test-results
   scenario-unified-1-33-7:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.33.7
@@ -285,7 +285,7 @@ jobs:
           path: test-results
   scenario-unified-1-34-3:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.34.3
@@ -311,7 +311,7 @@ jobs:
           path: test-results
   scenario-unified-1-35-1:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.35.1
@@ -337,7 +337,7 @@ jobs:
           path: test-results
   scenario-unified-1-36-4:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.36.4
@@ -363,7 +363,7 @@ jobs:
           path: test-results
   scenario-unified-1-37-0:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.37.0
@@ -390,7 +390,7 @@ jobs:
 
   scenario-auth-sidecar:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -437,7 +437,7 @@ jobs:
             uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
   scenario-custom-image-sha:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -469,7 +469,7 @@ jobs:
           path: test-results
   scenario-deployment-lifecycle:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -501,7 +501,7 @@ jobs:
           path: test-results
   scenario-git-sync-private-ca:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -533,7 +533,7 @@ jobs:
           path: test-results
   scenario-git-sync-shared-volume:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -565,7 +565,7 @@ jobs:
           path: test-results
   scenario-laminar:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -617,9 +617,56 @@ jobs:
           name: "Kyverno report: laminar"
           command: |
             uv run bin/report-kyverno-scan.py --verbose --kubeconfig="${HOME}/.local/share/astronomer-software/kubeconfig/unified"
+  scenario-openshift:
+    machine:
+      image: ubuntu-2604:2026.07.1
+      resource_class: 2xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp uv.lock /tmp/uv-lock-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ checksum "/tmp/uv-lock-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Create venv
+          command: uv venv -p 3.13 --seed && uv sync
+      # The machine image ships docker, not podman, and the MicroShift image needs podman's
+      # --privileged plus the host's /dev. Unpinned: it comes from the already-pinned machine
+      # image's Ubuntu archive, which has no pin that survives archive updates.
+      - run:
+          name: Install podman
+          command: |
+            sudo apt-get update && sudo apt-get install --yes podman
+            podman version && conmon --version && runc --version
+            sudo podman info --format 'cgroups={{.Host.CgroupsVersion}} manager={{.Host.CgroupManager}} runtime={{.Host.OCIRuntime.Name}}'
+            # Docker is installed on this image and sets the FORWARD policy to DROP when it
+            # starts, which drops forwarded traffic for every other runtime on the host -- a
+            # podman container then resolves nothing and pulls nothing. Harmless on a
+            # single-use CI VM, and this is the standard remedy for runtimes sharing a host.
+            sudo iptables -P FORWARD ACCEPT
+            sudo iptables -S FORWARD | head -1
+      - run:
+          name: "Scenario: openshift"
+          command: |
+            uv run bin/run-scenario.py openshift
+            # run-scenario.py's own PATH export (inside reset-local-dev) only reaches that
+            # subprocess tree, not this shell -- needed here too for any fixture (e.g.
+            # testinfra's kubectl:// backend) that shells out to kubectl from within pytest.
+            export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
+            uv run pytest -sv --junitxml=test-results/junit.xml "tests/functional/scenarios/openshift"
+      - store_test_results:
+          path: test-results
   scenario-sidecar-logging-custom-config:
     machine:
-      image: ubuntu-2404:2026.05.1
+      image: ubuntu-2604:2026.07.1
       resource_class: 2xlarge
     steps:
       - attach_workspace:
@@ -928,6 +975,39 @@ workflows:
       # one workflow, even when their branch filters are mutually exclusive. The plain
       # name goes to the approval-gated instance below, since that is the one shown in
       # every PR's workflow graph.
+      - scenario-openshift:
+          name: scenario-openshift-auto
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # every other branch: each scenario gets its own manual gate, so one scenario can
+      # be approved without running the rest.
+      - approve-openshift:
+          type: approval
+          requires:
+            - build-artifact
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      - scenario-openshift:
+          requires:
+            - approve-openshift
+          filters:
+            branches:
+              ignore:
+                - master
+                - '/^release-\d+\.\d+$/'
+      # master + release-X.Y: run automatically, and gate release-to-internal. The
+      # -auto suffix is only there because CircleCI rejects two jobs sharing a name in
+      # one workflow, even when their branch filters are mutually exclusive. The plain
+      # name goes to the approval-gated instance below, since that is the one shown in
+      # every PR's workflow graph.
       - scenario-sidecar-logging-custom-config:
           name: scenario-sidecar-logging-custom-config-auto
           requires:
@@ -1015,6 +1095,7 @@ workflows:
             - scenario-git-sync-private-ca-auto
             - scenario-git-sync-shared-volume-auto
             - scenario-laminar-auto
+            - scenario-openshift-auto
             - scenario-sidecar-logging-custom-config-auto
       - approve-public-release:
           type: approval
