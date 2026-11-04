@@ -732,3 +732,27 @@ class TestLaminar:
         assert volume_mount_search_result == expected_volume_mounts_result
         assert volume_search_result == expected_volume_result
         assert apiserver_container_env["SSL_CERT_DIR"] == "/etc/ssl/certs"
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_laminar_database_name_override(self, kube_version, plane_mode):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"laminar": {"enabled": True}, "plane": {"mode": plane_mode}},
+                "laminar": {"databaseBootstrapper": {"dbName": "custom-db-name"}},
+            },
+            show_only=[*LAMINAR_APISERVER_TEMPLATES, LAMINAR_ENV_CONFIGMAP_TEMPLATE, *LAMINAR_HYPEVISOR_TEMPLATES],
+        )
+        by_kind_and_name = get_docs_by_kind_and_name(docs)
+
+        # Laminar Api Server Deployment
+        apiserver_deployment = by_kind_and_name["deployment_laminar_api_server"]
+        c_by_name = get_containers_by_name(apiserver_deployment, include_init_containers=True)
+        bootstrapper_apiserver_container_env = get_env_vars_dict(c_by_name["laminar-bootstrapper"]["env"])
+        assert bootstrapper_apiserver_container_env["DB_NAME"] == "custom-db-name"
+
+        # Laminar Hypervisor Deployment
+        hypervisor_deployment = by_kind_and_name["deployment_laminar_hypervisor"]
+        c_by_name = get_containers_by_name(hypervisor_deployment, include_init_containers=True)
+        bootstrapper_hypervisor_container_env = get_env_vars_dict(c_by_name["laminar-bootstrapper"]["env"])
+        assert bootstrapper_hypervisor_container_env["DB_NAME"] == "custom-db-name"
