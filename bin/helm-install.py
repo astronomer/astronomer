@@ -278,15 +278,19 @@ POD_HEALTH_COLUMNS = (
 def pod_is_healthy(phase: str, ready: str, owner_kind: str) -> bool:
     """Whether one pod's row counts as healthy.
 
-    A Job's pod goes by phase, since it exits when its work is done and sits at Ready False from
-    then on. Failed counts as healthy here because the Job, not this loop, decides whether a dead
-    attempt mattered: it replaces the pod, and the failed one lingers. houston-db-migrations does
-    this routinely -- two pods race to create the database, the loser dies on "duplicate key
-    value violates unique constraint", and the replacement completes.
+    Succeeded is healthy whatever owns it: a pod that ran to completion has Ready False from the
+    moment it exits, and never comes back. Failed is healthy only for a Job's pod, because the
+    Job rather than this loop decides whether a dead attempt mattered -- it replaces the pod and
+    the corpse lingers. houston-db-migrations does this routinely: two pods race to create the
+    database, the loser dies on "duplicate key value violates unique constraint", and the
+    replacement completes.
     """
+    if phase == "Succeeded":
+        return True
     if owner_kind == "Job":
-        return phase in ("Running", "Succeeded", "Failed")
-    return ready == "True"
+        return phase in ("Running", "Failed")
+    # Both, not Ready alone: a node that drops out leaves phase Unknown with a stale Ready.
+    return phase == "Running" and ready == "True"
 
 
 def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=600) -> None:
