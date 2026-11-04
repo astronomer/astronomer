@@ -41,7 +41,7 @@ databaseBootstrapper:
   # Name of an existing secret holding the database connection for Laminar, under a "connection"
   # key. Leave unset to have the database and the secret created for you.
   backendSecretName: ~
-  # Allows users customize the database name
+  # Allows users to customize the database name
   dbName: ~
 
 # ---------------------------------------------------------------------------
