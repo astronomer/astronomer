@@ -101,6 +101,9 @@ houston:
   secretsFromFiles:
     enabled: ~
 
+  # Allows users to customize the database name
+  dbName: ~
+
   # The most database connections each Houston and dp-link pod keeps open.
   prismaConnectionLimit: 20
   replicas: 2

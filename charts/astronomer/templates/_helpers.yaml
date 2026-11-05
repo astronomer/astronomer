@@ -1418,3 +1418,11 @@ true
 {{- .Values.ports.commanderGRPC -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "houston.dbName" -}}
+{{- if .Values.houston.dbName -}}
+{{- .Values.houston.dbName -}}
+{{- else -}}
+{{ .Release.Name }}-houston
+{{- end -}}
+{{- end -}}

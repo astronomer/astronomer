@@ -105,7 +105,7 @@ spec:
               value: {{ .Values.houston.prismaConnectionLimit | quote }}
             {{ end }}
             - name: DB_NAME
-              value: {{ .Release.Name }}-houston
+              value: {{ template "houston.dbName" . }}
             - name: SECRET_NAME
               value: {{ template "houston.airflowBackendSecret" . }}
             - name: NAMESPACE
