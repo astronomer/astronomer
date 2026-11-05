@@ -53,6 +53,11 @@ repos:
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.13.7
+    hooks:
+      - id: uv-audit
+        args: ["--preview-features", "audit-command"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.17.3"
     hooks:
