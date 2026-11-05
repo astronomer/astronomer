@@ -254,6 +254,33 @@ class TestHoustonHookJob:
         env = get_env_vars_dict(c_by_name["houston-bootstrapper"].get("env", []))
         assert env.get("SSLMODE") == sslmode_expected
 
+    @pytest.mark.parametrize(
+        "job_template",
+        [
+            "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml",
+            "charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml",
+        ],
+        ids=["db-migration", "upgrade-deployments"],
+    )
+    @pytest.mark.parametrize(
+        "houston_values,expected_db_name",
+        [({}, "release-name-houston"), ({"dbName": "custom-db-name"}, "custom-db-name")],
+        ids=["default", "override"],
+    )
+    def test_hook_job_db_name(self, kube_version, job_template, houston_values, expected_db_name):
+        """Test that the houston-bootstrapper init container gets the expected DB_NAME."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"houston": houston_values}},
+            show_only=[job_template],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env = get_env_vars_dict(c_by_name["houston-bootstrapper"]["env"])
+        assert env["DB_NAME"] == expected_db_name
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -377,3 +404,24 @@ class TestRefreshCpChartVersionHookJob:
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
         env = get_env_vars_dict(c_by_name["houston-bootstrapper"].get("env", []))
         assert env.get("SSLMODE") == sslmode_expected
+
+    @pytest.mark.parametrize(
+        "houston_values,expected_db_name",
+        [({}, "release-name-houston"), ({"dbName": "custom-db-name"}, "custom-db-name")],
+        ids=["default", "override"],
+    )
+    def test_db_name(self, kube_version, houston_values, expected_db_name):
+        """Test that the houston-bootstrapper init container gets the expected DB_NAME."""
+
+        values = _ha_values()
+        values["astronomer"] = {"houston": houston_values}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[REFRESH_CP_CHART_VERSION_FILE],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env = get_env_vars_dict(c_by_name["houston-bootstrapper"]["env"])
+        assert env["DB_NAME"] == expected_db_name

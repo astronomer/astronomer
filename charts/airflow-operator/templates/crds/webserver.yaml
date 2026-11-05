@@ -497,12 +497,6 @@ spec:
                 type: string
               url:
                 type: string
-            required:
-            - readyReplicas
-            - replicas
-            - selector
-            - status
-            - url
             type: object
         type: object
     served: true

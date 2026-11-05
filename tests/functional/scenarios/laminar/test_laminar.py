@@ -57,6 +57,10 @@ ADMIN_EMAIL = "laminar-airflow-operator-test@astronomer.io"
 ADMIN_PASSWORD = "Astronomer%123"
 WORKSPACE_LABEL = "laminar-airflow-operator"
 DEPLOYMENT_LABEL = "laminar-airflow-operator"
+EXECUTOR = "CeleryExecutor"
+AIRFLOW_GROUP = "airflow.apache.org"
+AIRFLOW_VERSION = "v1beta1"
+AIRFLOW_PLURAL = "airflows"
 
 # PINF-1049: commander's first JWKS fetch can race Houston's readiness. Transient, not a regression.
 JWKS_COLD_START_ERROR = "13 INTERNAL: failed to validate token"
@@ -187,21 +191,37 @@ def houston_api():
 
 
 @pytest.fixture(scope="module")
-def deployment(houston_api, apps_client, core_client) -> str:
-    """Create one real Airflow Deployment through Houston and return its release name.
+def admin_token(houston_api) -> str:
+    """Bootstrap the cluster's one and only admin.
+
+    Its own fixture rather than a line inside `deployment`, because createUser's unauthenticated
+    signup succeeds exactly once per cluster. pytest-rerunfailures drops the cached result of a
+    fixture that raised, so a JWKS retry re-executes `deployment` -- and a createUser in there
+    would meet "Public sign ups are disabled" instead of retrying what actually failed. This
+    fixture succeeded, so its token stays cached across those reruns.
+    """
+    return create_user(houston_api, ADMIN_EMAIL, ADMIN_PASSWORD)
+
+
+@pytest.fixture(scope="module")
+def deployment(admin_token, houston_api, apps_client, core_client) -> dict:
+    """Create one real Airflow Deployment through Houston; returns its release name and ids.
 
     Same mechanism as the auth-sidecar scenario's `deployment` fixture. Mode "operator" needs the
     platform in operator mode too (configs/enable-airflow-operator.yaml) and only supports
     image-based deployments. CeleryExecutor because its topology is what the hypervisor hibernates.
+
+    Returns the workspace id alongside the deployment's own, because the Airflow CR labels the
+    workspace under two different keys -- see test_operator_deployment_cr_labels.
     """
-    token = create_user(houston_api, ADMIN_EMAIL, ADMIN_PASSWORD)
+    token = admin_token
     workspace_id = create_workspace(houston_api, token, WORKSPACE_LABEL)
     cluster_id = get_cluster_id(houston_api, token)
     try:
         created = upsert_deployment(
             houston_api,
             token,
-            executor="CeleryExecutor",
+            executor=EXECUTOR,
             label=DEPLOYMENT_LABEL,
             workspace_id=workspace_id,
             cluster_id=cluster_id,
@@ -213,27 +233,84 @@ def deployment(houston_api, apps_client, core_client) -> str:
         dump_pod_logs(core_client, "component=commander")
         raise
     wait_for_release_ready(apps_client, core_client, created["releaseName"])
-    return created["releaseName"]
+    return {
+        "id": created["id"],
+        "release_name": created["releaseName"],
+        "namespace": created["namespace"],
+        "workspace_id": workspace_id,
+    }
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[JWKS_COLD_START_ERROR])
 def test_operator_deployment_reaches_ready(deployment):
     """The fixture already waits for readiness; this asserts that contract as its own named test."""
-    assert deployment
+    assert deployment["release_name"]
 
 
 def test_operator_deployment_db_secret_exists(deployment, core_client):
-    """The deployment's `<release>-db` Secret must land in the platform namespace for hibernation.
+    """The deployment's `<release>-db` Secret must land in the platform namespace.
 
     The hypervisor's Secret permissions are a Role in the release namespace only
     (charts/laminar/templates/hypervisor/hypervisor-rbac.yaml), so a Secret created anywhere else
     leaves it unable to reach the deployment's database -- while every readiness check still passes.
     """
-    expected = f"{deployment}-db"
+    release_name = deployment["release_name"]
+    expected = f"{release_name}-db"
     names = sorted(secret.metadata.name for secret in core_client.list_namespaced_secret(NAMESPACE).items)
     assert expected in names, (
         f"Expected Secret {NAMESPACE}/{expected} for the operator-mode Airflow Deployment "
-        f"{deployment!r}; the laminar hypervisor can only read Secrets in {NAMESPACE} "
+        f"{release_name!r}; the laminar hypervisor can only read Secrets in {NAMESPACE} "
         f"(its Role is namespaced there), so without it hibernation cannot reach this deployment's "
         f"database. Secrets present in {NAMESPACE}:\n" + "\n".join(f"  {name}" for name in names)
+    )
+
+
+def _airflow_cr(custom_objects_client, namespace: str, release_name: str) -> dict:
+    """The Airflow CR for this release: one GET in the deployment's own namespace.
+
+    Fetched by name rather than matched on the astronomer.io labels, which are the thing under test
+    -- selecting on them would let the assertions below pass against some other deployment's CR, or
+    vacuously skip one that is missing them entirely. The 404 branch lists what the namespace does
+    hold, which is what distinguishes "Houston created no CR" from "the CR is not named after the
+    release" (this looks it up by release name, as commander names it).
+    """
+    try:
+        return custom_objects_client.get_namespaced_custom_object(
+            AIRFLOW_GROUP, AIRFLOW_VERSION, namespace, AIRFLOW_PLURAL, release_name
+        )
+    except ApiException as exc:
+        if exc.status != 404:
+            raise
+        present = custom_objects_client.list_namespaced_custom_object(AIRFLOW_GROUP, AIRFLOW_VERSION, namespace, AIRFLOW_PLURAL)[
+            "items"
+        ]
+        raise AssertionError(
+            f"No Airflow CR {namespace}/{release_name}. In operator mode the deployment IS this CR, so either "
+            'Houston never created one -- check that mode="operator" reached it -- or the operator failed to '
+            f"reconcile it. Airflow CRs in {namespace}: " + (", ".join(cr["metadata"]["name"] for cr in present) or "(none)")
+        ) from exc
+
+
+def test_operator_deployment_cr_labels(deployment, custom_objects_client):
+    """The Airflow CR carries the astronomer.io identity labels that tie it back to the platform.
+
+    organizationId and workspaceId both carry the workspace id -- APC has no separate organization,
+    so Houston maps one onto the other. Asserted as two distinct expectations rather than one shared
+    value, so a change that starts populating organizationId from somewhere else fails here loudly.
+    """
+    cr = _airflow_cr(custom_objects_client, deployment["namespace"], deployment["release_name"])
+    airflow_labels = cr["metadata"].get("labels") or {}
+    expected = {
+        "astronomer.io/deploymentId": deployment["id"],
+        "astronomer.io/executor": EXECUTOR,
+        "astronomer.io/managed-by": "apc",
+        "astronomer.io/organizationId": deployment["workspace_id"],
+        "astronomer.io/workspaceId": deployment["workspace_id"],
+    }
+    mismatched_labels = {
+        key: (value, airflow_labels.get(key)) for key, value in expected.items() if airflow_labels.get(key) != value
+    }
+    cr_name = f"{cr['metadata']['namespace']}/{cr['metadata']['name']}"
+    assert not mismatched_labels, (
+        f"Airflow CR {cr_name} has wrong or missing astronomer.io labels (label: expected, actual): {mismatched_labels}"
     )

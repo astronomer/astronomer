@@ -200,14 +200,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cryptography", specifier = ">=48.0" },
+    { name = "cryptography", specifier = ">=50.0" },
     { name = "deepmerge", specifier = ">=2.0" },
     { name = "docker", specifier = ">=7.1" },
-    { name = "filelock", specifier = ">=3.30" },
+    { name = "filelock", specifier = ">=4.2" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "jmespath", specifier = ">=1.1" },
     { name = "jsonschema", specifier = ">=4.26" },
-    { name = "kubernetes", specifier = ">=34.1.0" },
+    { name = "kubernetes", specifier = ">=37.0.0" },
     { name = "pytest", specifier = ">=9.1" },
     { name = "pytest-forked", specifier = ">=1.6" },
     { name = "pytest-pretty", specifier = ">=1.3" },
