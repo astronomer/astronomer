@@ -1,0 +1,20 @@
+---
+# This is for generating images, not for testing. It turns on what the other enable-all-features
+# files can't: features that conflict with something they enable, and optional containers.
+astronomer:
+  # Conflicts with global.authSidecar, which the other files enable.
+  mcpServer:
+    enabled: true
+global:
+  baseDomain: foo.com
+  postgresql:
+    enabled: true
+postgresql:
+  metrics:
+    enabled: true
+  postgresqlDatabase: astronomer
+  # volumePermissions only renders on the replica StatefulSet.
+  replication:
+    enabled: true
+  volumePermissions:
+    enabled: true
