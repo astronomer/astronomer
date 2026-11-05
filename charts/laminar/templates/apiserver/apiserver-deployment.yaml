@@ -41,7 +41,7 @@ spec:
         {{- include "laminar.sslCertCopierInitContainer" . | nindent 8 }}
       {{- end }}
       containers:
-        - name: apiserver
+        - name: laminar-apiserver
           image: {{ include "laminar.image" . }}
           imagePullPolicy: {{ .Values.images.laminar.pullPolicy }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}

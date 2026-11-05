@@ -15,11 +15,11 @@ imagePullSecrets: []
 images:
   laminar:
     repository: quay.io/astronomer/ap-laminar
-    tag: 1.0.0-rc4
+    tag: 1.0.0-rc6
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 2.2.1
+    tag: 2.2.5
     pullPolicy: IfNotPresent
 
 priorityClassName: ~
@@ -41,6 +41,8 @@ databaseBootstrapper:
   # Name of an existing secret holding the database connection for Laminar, under a "connection"
   # key. Leave unset to have the database and the secret created for you.
   backendSecretName: ~
+  # Allows users to customize the database name
+  dbName: ~
 
 # ---------------------------------------------------------------------------
 # laminar.env config file mounted at /laminar.env (subPath laminar.env).
@@ -103,7 +105,6 @@ apiServer:
 # hypervisor component
 # ---------------------------------------------------------------------------
 hypervisor:
-  replicas: 1
   progressDeadlineSeconds: 1200
   minReadySeconds: 5
   port: 8000

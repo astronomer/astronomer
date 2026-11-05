@@ -40,7 +40,7 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: {{ .Release.Name }}-api-server
+              name: {{ include "laminar.fullname" (list $ "api-server") }}
               port:
                 name: http
 {{- end }}

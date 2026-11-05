@@ -38,6 +38,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from enum import StrEnum
 from pathlib import Path
 
@@ -181,6 +182,7 @@ def main(
         "--no-cache",
         help="Skip cache reads and query the registry fresh for every image, but write new cache data.",
     ),
+    jobs: int = typer.Option(8, "-j", "--jobs", min=1, help="Number of images to query concurrently. Use 1 to query serially."),
 ):
     data = load_bom(bom)
     images = collect_images(data)
@@ -200,21 +202,24 @@ def main(
         return cached_fn(*args)
 
     public_key_fingerprint = cache_key_for_public_key(public_key)
-    rows = []
-    for image in images:
+
+    def build_row(image: dict) -> dict:
+        """Look up one image's architectures and signed status. Safe to run from worker threads."""
         signed = call_fresh_if_requested(
             check_signed_cached, image["repository"], image["sha256"], public_key, public_key_fingerprint
         )
-        rows.append(
-            {
-                "chart": image["chart"],
-                "image": image["repository"],
-                "version": image["tag"],
-                "sha256": image["sha256"],
-                "architectures": call_fresh_if_requested(get_architectures_cached, image["repository"], image["sha256"]),
-                "signed": signed,
-            }
-        )
+        return {
+            "chart": image["chart"],
+            "image": image["repository"],
+            "version": image["tag"],
+            "sha256": image["sha256"],
+            "architectures": call_fresh_if_requested(get_architectures_cached, image["repository"], image["sha256"]),
+            "signed": signed,
+        }
+
+    # The work is subprocess waits on registry round trips, so threads are enough. map() preserves input order.
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        rows = list(pool.map(build_row, images))
 
     if output is OutputFormat.json:
         typer.echo(json.dumps(rows, indent=2))

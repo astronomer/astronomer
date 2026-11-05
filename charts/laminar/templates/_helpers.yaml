@@ -9,13 +9,13 @@ Laminar runs on the data plane, so only in data / unified mode.
 {{- end -}}
 
 {{/*
-Fully qualified component name: <release>-<component>.
+Fully qualified component name: <release>-laminar-<component>.
 Call with (list $ "<component>"), e.g. (list $ "api-server").
 */}}
 {{- define "laminar.fullname" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
-{{- printf "%s-%s" $.Release.Name $component | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-laminar-%s" $.Release.Name $component | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -151,6 +151,14 @@ laminar.env volume.
 {{- end }}
 {{- end }}
 
+{{ define "laminar.dbBootstrapper.dbName" -}}
+{{- if .Values.databaseBootstrapper.dbName -}}
+{{ .Values.databaseBootstrapper.dbName | quote -}}
+{{- else -}}
+{{ .Release.Name }}-laminar
+{{- end -}}
+{{- end -}}
+
 {{/*
 Database bootstrapper, as an init container on each laminar component.
 
@@ -173,7 +181,7 @@ idempotent, which is the same contract houston's copy already has.
   env:
     {{- include "astronomer.dbBootstrapper.secretEnv" . | nindent 4 }}
     - name: DB_NAME
-      value: {{ .Release.Name }}-laminar
+      value: {{ template "laminar.dbBootstrapper.dbName" . }}
     - name: SECRET_NAME
       value: {{ template "laminar.backend.secret" . }}
     {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}

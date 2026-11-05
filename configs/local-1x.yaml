@@ -31,10 +31,8 @@ astronomer:
     worker:
       replicas: 1
     config:
-      emailConfirmation:
-        enabled: false
-      publicSignups:
-        enabled: false
+      emailConfirmation: false
+      publicSignups: false
       auth:
         local:
           enabled: true

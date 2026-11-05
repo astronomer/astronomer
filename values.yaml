@@ -155,7 +155,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-db-bootstrapper
-      tag: 2.2.1
+      tag: 2.2.5
       pullPolicy: IfNotPresent
       startupProbe: {}
     containerdCertCopier:
@@ -183,7 +183,7 @@ global:
   laminar:
     enabled: false
 
-  # Worker autoscaling. You install and run KEDA 2.17 or later yourself; turn this on
+  # Worker autoscaling. You install and run KEDA 2.20.0 or later yourself; turn this on
   # to have the platform create the identity KEDA presents when it asks how many
   # workers a queue needs. Doing so writes a service account, a role and a role
   # binding into the namespace below, plus one cluster-scoped authentication object. It
@@ -266,7 +266,7 @@ global:
     dagOnlyDeployment:
       enabled: false
       repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.10.4
+      tag: 0.10.7
       securityContexts:
         pod:
           fsGroup: 50000
@@ -292,7 +292,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.31.7-1
+    tag: 1.31.8
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -378,6 +378,10 @@ global:
     # Route platform traffic through an Istio Gateway instead of nginx Ingress.
     # When enabled, every platform Ingress is suppressed and VirtualServices are
     # rendered in its place.
+    # global.authSidecar.enabled is REQUIRED alongside this: the Gateway terminates
+    # traffic outside the platform and the auth sidecar is the only thing authenticating
+    # these hosts. Rendering fails if enabled is true and the auth sidecar is disabled,
+    # rather than publishing these hosts with no auth in front of them.
     # name is the <namespace>/<name> of a pre-existing Istio Gateway that the platform
     # VirtualServices attach to. There is no default: it has to name a Gateway that really
     # exists, and a VirtualService pointing at one that does not is accepted by the API server
@@ -426,7 +430,7 @@ global:
       enabled: false
       name: sidecar-log-consumer
       repository: quay.io/astronomer/ap-vector
-      tag: 0.60.0
+      tag: 0.61.0-1
       customConfig: false
       indexPattern: ~
       extraEnv: []
@@ -522,36 +526,36 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.31.0-3
+        tag: 0.31.0-5
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 8.10.2-1
+        tag: 8.10.3-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.24.1-33
+        tag: 1.24.1-38
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.12.1-13
+        tag: 0.12.1-18
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 2026.10.21
+        tag: 2026.11.5
       xcom:
         repository: quay.io/astronomer/ap-init
-        tag: 2026.10.21
+        tag: 2026.11.5
   gitSyncRelay:
     images:
       gitDaemon:
         repository: quay.io/astronomer/ap-git-daemon
-        tag: 2026.10.21
+        tag: 2026.11.5
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.6.3
+        tag: 0.6.6
     metrics:
       enabled: false
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.23
+      tag: 0.1.27
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:

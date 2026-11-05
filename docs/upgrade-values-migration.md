@@ -95,6 +95,43 @@ helm upgrade <release-name> astronomer/astronomer \
   --namespace <namespace>
 ```
 
+## Behaviour Changes
+
+### PGBouncer client authentication carries over (scram-sha-256)
+
+This is not a values change — the migration script rewrites nothing here. It is
+documented because the SCRAM CPU cost travels into 2.x with the values, and the
+script prints an advisory to that effect.
+
+The Airflow Helm chart sets PGBouncer `auth_type = scram-sha-256`, the upstream
+default since Airflow chart 1.12.0. Helm remains the default deployment mode on
+2.x (`deployments.mode.operator.enabled` comes from
+`global.airflowOperator.enabled`, which defaults to `false`), and an existing
+deployment cannot be converted from Helm mode to operator mode. So every
+deployment that survives the upgrade stays Helm-rendered, and
+`astronomer.houston.config.deployments.helm.airflow.pgbouncer.*` — `auth_type`
+and `extraIni` included — stays fully effective.
+
+**Impact**: With `scram-sha-256` and a plain-text password in the PGBouncer auth
+file, the proxy derives a SCRAM secret (PBKDF2, 4096 iterations) on **every
+client login**, and PGBouncer is single-threaded. Both probes are `tcpSocket`
+checks, so saturation produces no log output: only probe failures, container
+restarts during peak runs, and idle server connections accumulating on the
+database side. Upgrading a deployment re-renders and restarts its PGBouncer,
+which is when this surfaces.
+
+**Action required**: upgrade deployments outside their scheduled batch windows,
+watch PGBouncer CPU and restarts through the first peak run, and size PGBouncer
+for the peak login rate (the default request is `200m`). To remove the per-login
+PBKDF2 cost, set
+`astronomer.houston.config.deployments.helm.airflow.pgbouncer.auth_type: md5` in
+your values file — still supported on 2.x for Helm-mode deployments, with the
+usual `md5` security trade-off.
+
+**Exception**: deployments *created* in operator mode (2.1+, opt-in, new
+deployments only) don't use these values. The operator maps no `auth_type` onto
+the Airflow CR and uses `md5`.
+
 ## Complete Migration Mapping
 
 | Old Path (1.x) | New Path (2.x) | Type |
@@ -171,6 +208,16 @@ These keys already use the correct schema and are not modified:
 - Most keys under `nginx` (except `nginx.cspPolicy.cdnEnabled`, migrated as
   described above), `grafana`, `prometheus`, `elasticsearch`, `vector`,
   `kube-state`, `nats`, `tags`
+
+## Role Override Check
+
+If your values file overrides built-in roles under `astronomer.houston.config.roles.<ROLE>.permissions`, the migration script also checks those keys. It prints a warning to stderr for each permission key that Houston does not recognise (and therefore ignores), naming the role and the key:
+
+```text
+Warning: role DEPLOYMENT_EDITOR sets permission key 'deployment.airflow.bogus', which Houston does not recognise and ignores.
+```
+
+The check is advisory: it never changes your file, never affects the exit code and never blocks an upgrade. Keys set to `false` and custom (non built-in) roles are skipped. The `deployment.airflow.op` and `system.airflow.op` keys are valid, since Op support was restored. Remove or correct any key reported, then upgrade. The supported key list matches the one Houston uses for its startup warning for unknown role keys.
 
 ## Rollback
 

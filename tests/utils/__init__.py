@@ -102,6 +102,15 @@ def get_docs_by_kind_and_name(docs) -> dict:
     return {f"{x['kind'].lower()}_{x['metadata']['name'].replace('-', '_').replace('release_name_', '')}": x for x in docs}
 
 
+def get_helm_lifecycle_annotations(doc) -> dict:
+    """Return the doc's helm.sh/ annotations, such as a hook or resource-policy: keep.
+
+    A doc with none is an ordinary release object, so Helm deletes it once a later revision stops rendering it.
+    """
+    annotations = (doc.get("metadata") or {}).get("annotations") or {}
+    return {key: value for key, value in annotations.items() if key.startswith("helm.sh/")}
+
+
 def dot_notation_to_dict(dotted_string, default_value=None):
     """Return a dotted string for a nested dict structure where the deepest values is assigned to None or the given default.
 

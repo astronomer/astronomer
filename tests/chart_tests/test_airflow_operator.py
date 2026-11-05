@@ -194,6 +194,37 @@ class TestAirflowOperator:
             assert "cert-manager.io/inject-ca-from" in doc["metadata"]["annotations"]
             assert "airflow.apache.org" in doc["metadata"]["name"]
 
+    @pytest.mark.parametrize(
+        "crd_name,keda_path",
+        [
+            ("airflows.airflow.apache.org", ["workers", "items", "properties", "keda"]),
+            ("workers.airflow.apache.org", ["keda"]),
+        ],
+    )
+    def test_airflow_operator_crds_declare_the_keda_triggers(self, kube_version, crd_name, keda_path):
+        """Test that both CRDs declare every trigger field the platform writes.
+
+        A structural CRD prunes an undeclared field on apply without an error, so a missing field
+        leaves a worker on the operator's built-in database trigger instead of the scaling service.
+        """
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={"airflow-operator": {"crd": {"create": True}}, "global": {"airflowOperator": {"enabled": True}}},
+            show_only=["charts/airflow-operator/templates/crds/airflow.yaml", "charts/airflow-operator/templates/crds/worker.yaml"],
+        )
+        crd = next(doc for doc in docs if doc["metadata"]["name"] == crd_name)
+
+        for version in crd["spec"]["versions"]:
+            keda = version["schema"]["openAPIV3Schema"]["properties"]["spec"]["properties"]
+            for key in keda_path:
+                keda = keda[key]
+            triggers = keda["properties"]["triggers"]
+            assert triggers["type"] == "array"
+            trigger = triggers["items"]["properties"]
+            assert {"type", "metadata", "metricType", "authenticationRef"} <= set(trigger)
+            assert "ClusterTriggerAuthentication" in trigger["authenticationRef"]["properties"]["kind"]["enum"]
+
     @pytest.mark.parametrize("crd_create", [True, False])
     def test_airflow_operator_crd_create_toggle(self, kube_version, crd_create):
         docs = render_chart(

@@ -116,6 +116,13 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-sync-dataplane-clusters
+    {{- if eq (include "dpLink.enabled" .) "true" }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: dp-link
+    {{- end }}
     {{- end }}
     ports:
     {{- if and .Values.global.authSidecar.enabled (eq .Values.global.plane.mode "data") }}
