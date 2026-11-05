@@ -1421,7 +1421,7 @@ true
 
 {{- define "houston.dbName" -}}
 {{- if .Values.houston.dbName -}}
-{{- .Values.houston.dbName -}}
+{{- .Values.houston.dbName | quote -}}
 {{- else -}}
 {{ .Release.Name }}-houston
 {{- end -}}

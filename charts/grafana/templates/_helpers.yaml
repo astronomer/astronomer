@@ -87,7 +87,7 @@ imagePullSecrets:
 
 {{ define "grafana.dbName" -}}
 {{- if .Values.dbName -}}
-{{ .Values.dbName }}
+{{ .Values.dbName | quote }}
 {{- else -}}
 {{ .Release.Name }}-grafana
 {{- end -}}
