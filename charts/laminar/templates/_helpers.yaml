@@ -153,7 +153,7 @@ laminar.env volume.
 
 {{ define "laminar.dbBootstrapper.dbName" -}}
 {{- if .Values.databaseBootstrapper.dbName -}}
-{{ .Values.databaseBootstrapper.dbName }}
+{{ .Values.databaseBootstrapper.dbName | quote -}}
 {{- else -}}
 {{ .Release.Name }}-laminar
 {{- end -}}
