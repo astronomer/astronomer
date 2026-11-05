@@ -37,7 +37,7 @@ unittest-charts: test-unit
 .PHONY: test-unit
 test-unit: venv ## Run unit tests
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
-	uv run pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
+	uv run pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests tests/bin_tests
 
 .PHONY: validate-commander-airflow-version
 validate-commander-airflow-version: ## Validate that airflowChartVersion is the same in astronomer configs and the commander docker image
@@ -98,7 +98,7 @@ uv-lock-upgrade-and-sync: uv-lock-upgrade ## Upgrade uv lockfile dependencies an
 	uv sync
 
 .PHONY: audit
-audit: ## Audit uv.lock dependencies; fail on HIGH/CRITICAL vulnerabilities that have a fix
+audit: ## Audit uv.lock dependencies; fail on HIGH/CRITICAL or unrated vulnerabilities that have a fix
 	@mkdir -p $(TEMPDIR)
-	uv audit --locked --preview-features audit-command,json-output --output-format json > $(TEMPDIR)/uv-audit.json || true
-	bin/audit-gate.py $(TEMPDIR)/uv-audit.json
+	uv audit --locked --preview-features audit-command,json-output --output-format json > $(TEMPDIR)/uv-audit.json; \
+		bin/audit-gate.py --uv-exit-code $$? $(TEMPDIR)/uv-audit.json

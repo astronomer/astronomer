@@ -125,7 +125,7 @@ jobs:
           name: unittest the Astronomer chart
           command: |
             mkdir test-results
-            TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
+            TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" "tests/bin_tests/test_*.py" | circleci tests split --split-by=timings)
             echo "TEST_FILES=\"$TEST_FILES\""
             uv run pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
@@ -207,16 +207,13 @@ jobs:
 
   uv-audit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
+      - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
     resource_class: small
     steps:
       - checkout
       - run:
-          name: Install uv {{ uv_version }}
-          command: curl -fsSL https://astral.sh/uv/{{ uv_version }}/install.sh | UV_INSTALL_DIR=/tmp/uv-bin UV_NO_MODIFY_PATH=1 sh
-      - run:
-          name: uv security audit (gate on fixable HIGH/CRITICAL CVEs)
-          command: PATH=/tmp/uv-bin:$PATH make audit
+          name: uv security audit (gate on fixable HIGH/CRITICAL or unrated CVEs)
+          command: make audit
 
   release-to-public:
     docker:
