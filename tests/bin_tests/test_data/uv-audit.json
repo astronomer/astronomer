@@ -1,0 +1,70 @@
+{
+  "schema": {
+    "version": "preview"
+  },
+  "summary": {
+    "audited_packages": 120,
+    "vulnerabilities": 3,
+    "adverse_statuses": 0
+  },
+  "vulnerabilities": [
+    {
+      "dependency": {
+        "name": "examplepkg",
+        "version": "1.0.0"
+      },
+      "id": "PYSEC-2026-1",
+      "display_id": "PYSEC-2026-1",
+      "aliases": [
+        "CVE-2026-0001",
+        "GHSA-aaaa-bbbb-cccc"
+      ],
+      "summary": null,
+      "description": "examplepkg mishandles chunked requests.",
+      "link": null,
+      "fix_versions": [
+        "1.0.1"
+      ],
+      "published": "2026-10-01T00:00:00Z",
+      "modified": "2026-10-02T00:00:00Z"
+    },
+    {
+      "dependency": {
+        "name": "examplepkg",
+        "version": "1.0.0"
+      },
+      "id": "GHSA-aaaa-bbbb-cccc",
+      "display_id": "GHSA-aaaa-bbbb-cccc",
+      "aliases": [
+        "CVE-2026-0001",
+        "PYSEC-2026-1"
+      ],
+      "summary": "examplepkg request smuggling",
+      "description": "examplepkg mishandles chunked requests.",
+      "link": "https://github.com/advisories/GHSA-aaaa-bbbb-cccc",
+      "fix_versions": [
+        "1.0.1"
+      ],
+      "published": "2026-10-01T00:00:00Z",
+      "modified": "2026-10-02T00:00:00Z"
+    },
+    {
+      "dependency": {
+        "name": "otherpkg",
+        "version": "2.0.0"
+      },
+      "id": "PYSEC-2026-2",
+      "display_id": "PYSEC-2026-2",
+      "aliases": [
+        "CVE-2026-0002"
+      ],
+      "summary": "otherpkg path traversal",
+      "description": null,
+      "link": null,
+      "fix_versions": [],
+      "published": null,
+      "modified": null
+    }
+  ],
+  "adverse_statuses": []
+}
