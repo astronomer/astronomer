@@ -1588,3 +1588,65 @@ class TestRoleOverrideCheckCli:
         p = self._write(tmp_path, "global:\n  rbac:\n    enabled: true\n")
         assert main(["--dry-run", str(p)]) == 0
         assert "role" not in capsys.readouterr().err.lower().replace("rbac", "")
+
+
+class TestPgbouncerAuthTypeAdvisoryCli:
+    """The PgBouncer advisory is printed by every output mode of ``main()``.
+
+    ``main()`` calls ``print_migration_notes`` from four places (dry-run, in-place,
+    output file, stdout). These tests pin each one so the wiring cannot stop firing
+    silently, and check that the advisory goes to stderr and never into the YAML.
+    """
+
+    _ADVISORY_HEADER = "Notes — review before upgrading:"
+    _ADVISORY_MARKER = "PgBouncer client authentication carries over unchanged"
+
+    def _write(self, tmp_path: Path, body: str = "global:\n  baseDomain: example.com\n") -> Path:
+        p = tmp_path / "values.yaml"
+        p.write_text(body)
+        return p
+
+    def _assert_advisory(self, stderr: str) -> None:
+        assert self._ADVISORY_HEADER in stderr
+        assert self._ADVISORY_MARKER in stderr
+        assert "scram-sha-256" in stderr
+
+    def test_dry_run_prints_advisory(self, tmp_path: Path, capsys):
+        p = self._write(tmp_path)
+        assert main(["--dry-run", str(p)]) == 0
+        self._assert_advisory(capsys.readouterr().err)
+
+    def test_in_place_prints_advisory(self, tmp_path: Path, capsys):
+        p = self._write(tmp_path)
+        assert main(["--in-place", str(p)]) == 0
+        self._assert_advisory(capsys.readouterr().err)
+
+    def test_output_file_prints_advisory(self, tmp_path: Path, capsys):
+        p = self._write(tmp_path)
+        out_file = tmp_path / "output.yaml"
+        assert main([str(p), str(out_file)]) == 0
+        self._assert_advisory(capsys.readouterr().err)
+
+    def test_stdout_prints_advisory_to_stderr_only(self, tmp_path: Path, capsys):
+        p = self._write(tmp_path)
+        assert main([str(p)]) == 0
+        captured = capsys.readouterr()
+        self._assert_advisory(captured.err)
+        assert self._ADVISORY_MARKER not in captured.out
+        assert self._ADVISORY_HEADER not in captured.out
+
+    def test_advisory_printed_without_auth_type_key(self, tmp_path: Path, capsys):
+        """The common case: no auth_type key anywhere, and nothing to migrate."""
+        p = self._write(tmp_path, "global:\n  rbac:\n    enabled: true\n")
+        assert main(["--dry-run", str(p)]) == 0
+        self._assert_advisory(capsys.readouterr().err)
+
+    def test_advisory_does_not_change_migrated_values(self, tmp_path: Path):
+        """The advisory pins nothing: an explicit auth_type passes through untouched."""
+        body = (
+            "astronomer:\n  houston:\n    config:\n      deployments:\n        helm:\n"
+            "          airflow:\n            pgbouncer:\n              auth_type: md5\n"
+        )
+        p = self._write(tmp_path, body)
+        assert main(["--in-place", str(p)]) == 0
+        assert "auth_type: md5" in p.read_text()
