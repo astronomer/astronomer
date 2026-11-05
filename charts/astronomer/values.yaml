@@ -24,7 +24,7 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 2.2.4
+    tag: 2.2.5
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -36,12 +36,12 @@ images:
     pullPolicy: IfNotPresent
   vector:
     repository: quay.io/astronomer/ap-vector
-    tag: "0.61.0"
+    tag: 0.61.0
     pullPolicy: IfNotPresent
   # Unlike navigator/dp-link, the MCP server is a separate binary with its own image.
   mcpServer:
     repository: quay.io/astronomer/ap-apc-mcp-server
-    tag: "1.0.6"
+    tag: 1.0.6
     pullPolicy: IfNotPresent
 
 securityContext:
