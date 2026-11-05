@@ -112,3 +112,6 @@ waitForDB:
   livenessProbe: {}
 
 podAnnotations: {}
+
+# Allows users to customize the database name
+dbName: ~
