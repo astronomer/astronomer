@@ -56,7 +56,7 @@ class TestPrometheusAlertConfigmap:
 
         # Validate the contents of an embedded yaml doc
         groups = yaml.safe_load(doc["data"]["alerts"])["groups"]
-        assert len(groups) == 16
+        assert len(groups) == 17
         for group in groups:
             assert isinstance(group.get("name"), str)
             assert isinstance(group.get("rules"), list)
@@ -109,8 +109,11 @@ class TestPrometheusAlertConfigmap:
             config_yaml,
         )
 
-    @pytest.mark.parametrize("section", ["airflow", "platform", "laminar"])
-    def test_default_alerts_section_disabled(self, kube_version, section):
+    @pytest.mark.parametrize(
+        "section,group",
+        [("airflow", "airflow"), ("platform", "platform"), ("laminar", "laminar"), ("airflowOperator", "airflow-operator")],
+    )
+    def test_default_alerts_section_disabled(self, kube_version, section, group):
         """Should only disable the alert rules for the given section."""
         values = {
             "prometheus": {
@@ -128,12 +131,15 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 16
-        assert [x["rules"] for x in groups if x["name"] == section] == [[]]
-        assert len([x["rules"] for x in groups if x["name"] != section]) == 15
+        assert len(groups) == 17
+        assert [x["rules"] for x in groups if x["name"] == group] == [[]]
+        assert len([x["rules"] for x in groups if x["name"] != group]) == 16
 
-    @pytest.mark.parametrize("section", ["airflow", "platform", "laminar"])
-    def test_default_alerts_section_disabled_with_additional_alerts(self, kube_version, section):
+    @pytest.mark.parametrize(
+        "section,group",
+        [("airflow", "airflow"), ("platform", "platform"), ("laminar", "laminar"), ("airflowOperator", "airflow-operator")],
+    )
+    def test_default_alerts_section_disabled_with_additional_alerts(self, kube_version, section, group):
         """Should only show the additional alert rules for the given section."""
         values = {
             "prometheus": {
@@ -159,8 +165,6 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 16
-        assert [x["rules"] for x in groups if x["name"] == section] == [
-            [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
-        ]
-        assert [x["rules"] != [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}] for x in groups if x["name"] != section]
+        assert len(groups) == 17
+        assert [x["rules"] for x in groups if x["name"] == group] == [[{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]]
+        assert [x["rules"] != [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}] for x in groups if x["name"] != group]

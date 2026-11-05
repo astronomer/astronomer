@@ -41,8 +41,10 @@ from helm_chart_values_migration_shared import (  # noqa: E402
     apply_houston_deployment_migrations,
     apply_nginx_csp_policy_migrations,
     check_role_overrides,
+    collect_pgbouncer_auth_type_notes,
     dump_yaml,
     load_yaml,
+    print_migration_notes,
     print_role_override_report,
 )
 
@@ -438,6 +440,7 @@ def main(argv: list[str] | None = None) -> int:
     yml, data = load_yaml(input_path)
     print_role_override_report(check_role_overrides(data), sys.stderr)
     changes = migrate_values(data)
+    notes = collect_pgbouncer_auth_type_notes(data)
 
     if args.dry_run:
         if not changes:
@@ -446,6 +449,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Found {len(changes)} migration(s) to apply:", file=sys.stderr)
             for change in changes:
                 print(f"  {change.old_path} -> {change.new_path}: {change.description}", file=sys.stderr)
+        print_migration_notes(notes)
         return 0
 
     if args.in_place:
@@ -458,15 +462,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Applied {len(changes)} migration(s) to {input_path}", file=sys.stderr)
         else:
             print("No migrations needed. File unchanged.", file=sys.stderr)
+        print_migration_notes(notes)
     elif args.output:
         dump_yaml(yml, data, args.output)
         if changes:
             print(f"Applied {len(changes)} migration(s). Output written to {args.output}", file=sys.stderr)
         else:
             print("No migrations needed. Output written unchanged.", file=sys.stderr)
+        print_migration_notes(notes)
     else:
         result = dump_yaml(yml, data)
         sys.stdout.write(result or "")
+        print_migration_notes(notes)
 
     return 0
 

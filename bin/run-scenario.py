@@ -20,6 +20,8 @@ GIT_ROOT_DIR = next((p for p in Path(__file__).resolve().parents if (p / ".git")
 if GIT_ROOT_DIR is None:
     raise SystemExit(f"ERROR: could not locate the repository root: no .git entry found above {Path(__file__).resolve()}")
 SCENARIOS_DIR = GIT_ROOT_DIR / "tests" / "functional" / "scenarios"
+CLUSTER_PROVIDERS = ("kind", "openshift")
+DEFAULT_CLUSTER_PROVIDER = "kind"
 CHART_METADATA = yaml.safe_load((GIT_ROOT_DIR / "metadata.yaml").read_text())
 
 
@@ -73,6 +75,11 @@ def load_profile(scenario: str) -> dict:
         raise SystemExit(f"ERROR: {profile_path} must set topology to one of unified/control/data, got {profile.get('topology')!r}")
     if profile.get("values") is None:
         raise SystemExit(f"ERROR: {profile_path} must set a 'values' key (an empty list is fine if no overlay is needed)")
+    provider = profile.setdefault("cluster_provider", DEFAULT_CLUSTER_PROVIDER)
+    if provider not in CLUSTER_PROVIDERS:
+        raise SystemExit(
+            f"ERROR: {profile_path} sets cluster_provider to {provider!r}; it must be one of {'/'.join(CLUSTER_PROVIDERS)}"
+        )
     return profile
 
 
@@ -92,10 +99,12 @@ def main() -> None:
     env = os.environ.copy()
     env["KUBE_VERSION"] = f"v{kube_version}"
 
-    reset_local_dev_args = [f"--topology={profile['topology']}"]
+    reset_local_dev_args = [
+        f"--topology={profile['topology']}",
+        f"--cluster-provider={profile['cluster_provider']}",
+    ]
     reset_local_dev_args += [f"--helm-values={value_file}" for value_file in profile["values"]]
-    for key, value in profile.get("namespace_labels", {}).items():
-        reset_local_dev_args.append(f"--namespace-label={key}={value}")
+    reset_local_dev_args.extend(f"--namespace-label={key}={value}" for key, value in profile.get("namespace_labels", {}).items())
     # Scenario setup that must run after the cluster exists but before `helm install`
     # (e.g. creating a Secret the chart's install-time values reference). Forwarded to
     # reset-local-dev, which runs each between setup-kind.py and helm-install.py.
@@ -109,7 +118,10 @@ def main() -> None:
         reset_local_dev_args.append(f"--pre-helm-script={shlex.join([str(script_path), *tokens[1:]])}")
 
     command = [str(GIT_ROOT_DIR / "bin" / "reset-local-dev"), *reset_local_dev_args]
-    print(f"Running scenario {args.scenario!r}: topology={profile['topology']} kube_version={kube_version}")
+    print(
+        f"Running scenario {args.scenario!r}: topology={profile['topology']} "
+        f"cluster_provider={profile['cluster_provider']} kube_version={kube_version}"
+    )
     if profile.get("description"):
         print(profile["description"].strip())
     print(f"Command: {command}")

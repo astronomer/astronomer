@@ -257,6 +257,7 @@ def upsert_deployment(
       ) {
         id
         releaseName
+        namespace
         runtimeAirflowVersion
       }
     }

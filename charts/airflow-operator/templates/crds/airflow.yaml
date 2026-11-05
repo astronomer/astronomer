@@ -1505,6 +1505,9 @@ spec:
                         x-kubernetes-preserve-unknown-fields: true
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  readOnlyRootFilesystemEnabled:
+                    default: false
+                    type: boolean
                   replicas:
                     default: 1
                     format: int32
@@ -2180,6 +2183,8 @@ spec:
                     type: boolean
                   allowSchedulerPodPatching:
                     default: false
+                    type: boolean
+                  allowTriggererPodDeletion:
                     type: boolean
                   allowTriggererPodLogReading:
                     default: true
@@ -4180,6 +4185,11 @@ spec:
                   - type
                   type: object
                 type: array
+              hibernationState:
+                enum:
+                - active
+                - hibernated
+                type: string
               isReconciliationPaused:
                 type: boolean
               migrationAstroAgentVersion:
@@ -4198,6 +4208,42 @@ spec:
               replicas:
                 format: int32
                 type: integer
+              runtimeMigration:
+                properties:
+                  attempts:
+                    format: int32
+                    type: integer
+                  completedAt:
+                    format: date-time
+                    type: string
+                  direction:
+                    enum:
+                    - Upgrade
+                    - Downgrade
+                    type: string
+                  fromVersion:
+                    type: string
+                  migrationStartedAt:
+                    format: date-time
+                    type: string
+                  startedAt:
+                    format: date-time
+                    type: string
+                  state:
+                    enum:
+                    - InProgress
+                    - Succeeded
+                    - Canceled
+                    type: string
+                  toVersion:
+                    type: string
+                required:
+                - direction
+                - fromVersion
+                - startedAt
+                - state
+                - toVersion
+                type: object
               status:
                 type: string
             required:
