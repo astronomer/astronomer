@@ -374,3 +374,20 @@ class TestHoustonApiDeployment:
         c_by_name = get_containers_by_name(docs[0])
         env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
         assert env_vars["REGISTRY__HOST"] == "custom-registry"
+
+    @pytest.mark.parametrize(
+        "houston_values,expected_db_name",
+        [({}, "release-name-houston"), ({"dbName": "custom-db-name"}, "custom-db-name")],
+        ids=["default", "override"],
+    )
+    def test_houston_api_deployment_db_name(self, kube_version, houston_values, expected_db_name):
+        """Test that the houston-bootstrapper init container gets the expected DB_NAME."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"houston": houston_values}},
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env_vars = get_env_vars_dict(c_by_name["houston-bootstrapper"]["env"])
+        assert env_vars["DB_NAME"] == expected_db_name

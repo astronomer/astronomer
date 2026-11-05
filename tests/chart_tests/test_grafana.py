@@ -1,7 +1,7 @@
 import pytest
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 DEPLOYMENT_FILE = "charts/grafana/templates/grafana-deployment.yaml"
@@ -315,3 +315,24 @@ def test_grafana_auth_sidecar_disabled_no_sidecar_volumes(kube_version, plane_mo
     assert "grafana-sidecar-conf" not in volume_names
     assert "nginx-write-dir" not in volume_names
     assert "nginx-run-dir" not in volume_names
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified"])
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+@pytest.mark.parametrize(
+    "grafana_values,expected_db_name",
+    [({}, "release-name-grafana"), ({"dbName": "custom-db-name"}, "custom-db-name")],
+    ids=["default", "override"],
+)
+def test_deployment_bootstrapper_db_name(kube_version, plane_mode, grafana_values, expected_db_name):
+    """Test that the bootstrapper init container gets the expected DB_NAME."""
+    docs = render_chart(
+        kube_version=kube_version,
+        values={"global": {"plane": {"mode": plane_mode}}, "grafana": grafana_values},
+        show_only=[DEPLOYMENT_FILE],
+    )
+
+    assert len(docs) == 1
+    c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+    bootstrapper_env = get_env_vars_dict(c_by_name["bootstrapper"]["env"])
+    assert bootstrapper_env["DB_NAME"] == expected_db_name

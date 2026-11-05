@@ -97,7 +97,7 @@ spec:
           env:
             {{- include "dp_link_environment" . | nindent 12 }}
             - name: DB_NAME
-              value: {{ .Release.Name }}-houston
+              value: {{ template "houston.dbName" . }}
             - name: NAMESPACE
               value: {{ .Release.Namespace }}
             # Claim loop configuration
