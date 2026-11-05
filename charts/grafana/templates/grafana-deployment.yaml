@@ -98,7 +98,7 @@ spec:
           env:
             {{- include "astronomer.dbBootstrapper.secretEnv" $ | nindent 12 }}
             - name: DB_NAME
-              value: {{ .Release.Name }}-grafana
+              value: {{ template "grafana.dbName" . }}
             {{ if .Values.global.ssl.enabled }}
             - name: SSLMODE
               value: {{ .Values.global.ssl.grafana.sslmode }}

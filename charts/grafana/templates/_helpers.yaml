@@ -84,3 +84,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{ define "grafana.dbName" -}}
+{{- if .Values.dbName -}}
+{{ .Values.dbName }}
+{{- else -}}
+{{ .Release.Name }}-grafana
+{{- end -}}
+{{- end -}}
