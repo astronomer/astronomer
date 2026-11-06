@@ -53,8 +53,13 @@ repos:
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.13.6
+    hooks:
+      - id: uv-audit
+        args: ["--preview-features", "audit-command"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.16.5"
+    rev: "v0.17.3"
     hooks:
       - id: ruff-check
         args:
@@ -96,7 +101,6 @@ repos:
   - repo: https://github.com/astronomer/pre-commit-hooks
     rev: 37614dad793bbbdea699c63c8b341ce1e2bf855a
     hooks:
-      - id: CVE-2017-18342
       - id: remove-unicode-zero-width-non-breaking-spaces
       - id: remove-unicode-zero-width-space
       - id: replace-en-dashes
