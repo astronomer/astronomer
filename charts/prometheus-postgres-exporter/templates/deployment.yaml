@@ -5,26 +5,23 @@
 {{- if and .Values.config.datasource.connectionSecret (or .Values.config.datasource.passwordSecret .Values.config.datasource.password) -}}
 {{ fail (printf "ERROR: when .Values.config.datasource.connectionSecret is specified, .Values.config.datasource.passwordSecret and .Values.config.datasource.password must not be defined") }}
 {{- end -}}
-{{- /* Load the password from a file rather than the environment.
+{{- /* Load the credentials from files rather than the environment.
 
-       That needs the split DATA_SOURCE_URI/_USER/_PASS form *and* a password source
-       to mount, so with the toggle on anything else fails the render, rather than
-       leaving a secret in the exporter's environment:
-         - the default connectionSecret form delivers the whole DSN as
-           DATA_SOURCE_NAME, and postgres_exporter has no DATA_SOURCE_NAME_FILE
-           (verified against the 0.19.1-2 binary), so that DSN could only arrive as
-           an env var;
-         - with neither passwordSecret nor password set, the only form left is a
-           secretKeyRef on a Secret the chart never creates. */}}
+       postgres_exporter reads DATA_SOURCE_URI_FILE, _USER_FILE and _PASS_FILE, but has
+       no DATA_SOURCE_NAME_FILE, so with the toggle on:
+         - in the default connectionSecret form, an init container
+           (files/split-data-source-name.sh) splits the connection string into those
+           three files, in a memory-backed emptyDir. The Secret holding the whole DSN is
+           mounted only in that init container;
+         - in the split form, the password Secret is mounted and read through
+           DATA_SOURCE_PASS_FILE. With neither passwordSecret nor password set, the only
+           form left is a secretKeyRef on a Secret the chart never creates, so the
+           render fails rather than leaving a secret in the exporter's environment. */}}
 {{- $secretsFromFiles := eq "true" (include "secretsFromFiles.enabled" (dict "ctx" $ "component" .Values "key" "prometheus-postgres-exporter")) }}
-{{- if $secretsFromFiles }}
-{{- if .Values.config.datasource.connectionSecret }}
-{{- fail "secret-in-environment: prometheus-postgres-exporter.config.datasource.connectionSecret delivers the whole DSN as DATA_SOURCE_NAME, which postgres_exporter can only read from its environment (it has no DATA_SOURCE_NAME_FILE), but secrets-from-files is on for the exporter. Use the split form, whose password is read from a file through DATA_SOURCE_PASS_FILE: set config.datasource.connectionSecret to null and set config.datasource.host, user and passwordSecret (or password). Or set prometheus-postgres-exporter.secretsFromFiles.enabled=false to keep the exporter on environment variables." }}
-{{- end }}
-{{- if not (or .Values.config.datasource.passwordSecret .Values.config.datasource.password) }}
+{{- if and $secretsFromFiles (not .Values.config.datasource.connectionSecret) (not (or .Values.config.datasource.passwordSecret .Values.config.datasource.password)) }}
 {{- fail "secret-file-missing: prometheus-postgres-exporter.config.datasource sets neither passwordSecret nor password, so secrets-from-files has no password file to give the exporter, and the only alternative is a secretKeyRef on a Secret the chart never creates. Set config.datasource.passwordSecret to the Secret and key holding the password (or set password), or set prometheus-postgres-exporter.secretsFromFiles.enabled=false to keep the exporter on environment variables." }}
 {{- end }}
-{{- end }}
+{{- $dsnFromFile := and $secretsFromFiles .Values.config.datasource.connectionSecret }}
 {{- $passwordFromFile := and $secretsFromFiles (not .Values.config.datasource.connectionSecret) (or .Values.config.datasource.passwordSecret .Values.config.datasource.password) }}
 apiVersion: apps/v1
 kind: Deployment
@@ -69,6 +66,28 @@ spec:
       serviceAccountName: {{ template "prometheus-postgres-exporter.serviceAccountName" . }}
       securityContext: {{- include "platform.podSecurityContext" (list $ nil) | nindent 8 }}
 {{- include "prometheus-postgres-exporter.imagePullSecrets" . | indent 6 }}
+      {{- if $dsnFromFile }}
+      initContainers:
+        - name: split-data-source-name
+          image: {{ include "prometheus-postgres-exporter.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              {{- .Files.Get "files/split-data-source-name.sh" | trim | nindent 14 }}
+            - split-data-source-name
+            - /etc/astronomer/data-source-name/data_source_name
+            - /etc/astronomer/secrets
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data-source-name
+              mountPath: /etc/astronomer/data-source-name
+              readOnly: true
+            - name: data-source-files
+              mountPath: /etc/astronomer/secrets
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
@@ -92,7 +111,14 @@ spec:
           - name: SSL_MODE_OFF
             value: "1"
           {{- end }}
-          {{- if .Values.config.datasource.connectionSecret }}
+          {{- if $dsnFromFile }}
+          - name: DATA_SOURCE_URI_FILE
+            value: /etc/astronomer/secrets/data_source_uri
+          - name: DATA_SOURCE_USER_FILE
+            value: /etc/astronomer/secrets/data_source_user
+          - name: DATA_SOURCE_PASS_FILE
+            value: /etc/astronomer/secrets/data_source_password
+          {{- else if .Values.config.datasource.connectionSecret }}
           - name: DATA_SOURCE_NAME
             valueFrom:
               secretKeyRef:
@@ -162,6 +188,11 @@ spec:
               mountPath: /etc/astronomer/secrets
               readOnly: true
             {{- end }}
+            {{- if $dsnFromFile }}
+            - name: data-source-files
+              mountPath: /etc/astronomer/secrets
+              readOnly: true
+            {{- end }}
 {{- with .Values.extraContainers }}
 {{ tpl . $ | indent 8 }}
 {{- end }}
@@ -189,6 +220,23 @@ spec:
           - key: data_source_password
             path: data_source_password
           {{- end }}
+      {{- end }}
+      {{- if $dsnFromFile }}
+      {{- /* Mounted only in the init container. No defaultMode, for the same reason as
+             data-source-pass. */}}
+      - name: data-source-name
+        secret:
+          secretName: {{ .Values.config.datasource.connectionSecret.name }}
+          items:
+          - key: {{ .Values.config.datasource.connectionSecret.key }}
+            path: data_source_name
+      {{- /* The split files, the password among them, kept off the node's disk. Both
+             containers run as the same user, so the init container's 0600 files are
+             readable by the exporter and no one else. */}}
+      - name: data-source-files
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1Mi
       {{- end }}
 {{- with .Values.extraVolumes }}
 {{ tpl . $ | indent 6 }}
