@@ -24,8 +24,14 @@ structurally cannot check:
      ^/v1/(alerts|metrics).* (charts/astronomer/templates/houston/houston-virtualservice.yaml),
      with everything else falling through to Houston's Service. Asserting the 403 and the
      non-403 proves an Envoy actually evaluated the routing rules, not just that the YAML
-     said so. Same for the bare-domain 301 redirect the common VirtualService defines, and
-     for reaching grafana through its auth-proxy sidecar.
+     said so. Same for the bare-domain 301 redirect the common VirtualService defines.
+
+  4. (test_auth_sidecar_runs_on_the_port_the_gateway_routes_to) The auth sidecar the Gateway
+     requires is actually running. templates/validate-istio-gateway-auth-sidecar.yaml makes
+     global.authSidecar.enabled a precondition of global.istio.gateway.enabled, and
+     tests/chart_tests/test_istio_virtualservice.py covers that render-time abort -- but the
+     guard only reads two values and never looks at a pod, so only a live install can show
+     the proxy it forced on is serving the port the VirtualServices route to.
 
 Istio itself and the Gateway are created pre-helm by bin/setup-istio.py -- see that
 script's docstring for why both have to exist before the platform install rather than
@@ -48,6 +54,18 @@ Deliberately out of scope:
   - HTTPS at the gateway. bin/setup-istio.py's Gateway serves HTTP only; VirtualServices
     attach to a Gateway by name regardless of protocol, so TLS termination would exercise
     no additional chart code.
+  - A real request *through* an admin UI's auth proxy. The proxy's own auth subrequest is
+    `proxy_pass https://houston.<baseDomain>/v1/authorization`
+    (charts/grafana/templates/grafana-auth-sidecar-configmap.yaml), i.e. a PUBLIC hostname.
+    `localtest.me` resolves to 127.0.0.1 and CoreDNS has no rewrite for it, so inside the
+    pod that subrequest reaches its own loopback:443, where nothing listens -- nginx answers
+    the subrequest 502 and the client 500. Not an Istio problem and not a chart bug: pod DNS
+    resolves the public hostname to loopback with nginx ingress just the same, which is why
+    the auth-sidecar scenario only asserts the container's presence and never drives a
+    request through it. Making this testable needs a CoreDNS rewrite pointing the base
+    domain at the gateway AND TLS on the gateway (see above). What IS covered without that:
+    the VirtualServices' declared port (test_admin_ui_virtualservices_route_to_the_auth_sidecar)
+    and the proxy actually running on it (test_auth_sidecar_runs_on_the_port_the_gateway_routes_to).
 """
 
 import contextlib
@@ -104,11 +122,15 @@ HOUSTON_BLOCKED_PATHS = ("/v1/alerts", "/v1/metrics")
 # VirtualServices route here instead of to the component's own port, so this is where
 # gateway routing and the auth proxy meet.
 AUTH_SIDECAR_PORT = 8084
-AUTH_SIDECAR_VIRTUALSERVICES = (
-    f"{RELEASE_NAME}-alertmanager-virtualservice",
-    f"{RELEASE_NAME}-grafana-virtualservice",
-    f"{RELEASE_NAME}-prometheus-virtualservice",
-)
+# The sidecar container's name, identical in all three charts -- see the `- name: auth-proxy`
+# entry in charts/grafana/templates/grafana-deployment.yaml and its prometheus/alertmanager
+# statefulset counterparts.
+AUTH_SIDECAR_CONTAINER = "auth-proxy"
+# The components whose VirtualServices are redirected to the auth proxy. Each `component`
+# label selects exactly one single-replica workload in the platform namespace, so one
+# constant drives both the VirtualService names below and the pods the sidecar must run in.
+AUTH_SIDECAR_COMPONENTS = ("alertmanager", "grafana", "prometheus")
+AUTH_SIDECAR_VIRTUALSERVICES = tuple(f"{RELEASE_NAME}-{component}-virtualservice" for component in AUTH_SIDECAR_COMPONENTS)
 
 
 @pytest.fixture(scope="module")
@@ -351,38 +373,64 @@ def test_admin_ui_virtualservices_route_to_the_auth_sidecar(_custom_objects_clie
     )
 
 
-@pytest.mark.flaky(reruns=10, reruns_delay=6)
-def test_gateway_reaches_grafana_through_the_auth_sidecar(gateway_port):
-    """A real request through the Gateway reaches grafana's auth proxy.
+@pytest.mark.parametrize("component", AUTH_SIDECAR_COMPONENTS)
+def test_auth_sidecar_runs_on_the_port_the_gateway_routes_to(k8s_core_v1_client, component):
+    """global.authSidecar is a hard precondition of the Gateway, and this is the half of it
+    that only a live install can show: the auth proxy is really running, on the port the
+    VirtualServices send Gateway traffic to.
 
-    Deliberately does not assert an exact status: an unauthenticated request can legitimately
-    be answered with a 200 login page, a 302 to an identity provider, or a 401, and which one
-    is the auth sidecar's business rather than this scenario's. What it pins instead are the
-    ways this wiring actually breaks, each of which has its own status:
+    templates/validate-istio-gateway-auth-sidecar.yaml fails the render closed when
+    global.istio.gateway.enabled is set without global.authSidecar.enabled -- the Gateway
+    terminates platform traffic outside the platform, so the sidecar is the only thing
+    authenticating the hosts these VirtualServices publish. That abort is already covered at
+    the template level, across every supported k8s version, by
+    tests/chart_tests/test_istio_virtualservice.py::test_istio_gateway_requires_auth_sidecar.
 
-      - 404: Envoy has no route for the host (VirtualService not attached to this Gateway).
-      - 503: the route exists but the connection is refused -- nothing is serving
-        AUTH_SIDECAR_PORT, i.e. the VirtualService names a port the sidecar is not on.
-      - 504: the connection is DROPPED rather than refused, which on this chart means
-        NetworkPolicy. The admin UIs only admit port 8084 from namespaces in
-        global.authSidecar.ingressAllowedNamespaces (plus the OpenShift ingress policy-group
-        label), so an istio-system missing from that list times out here while every
-        VirtualService still looks perfectly correct.
+    What the guard cannot promise is that the sidecar it forced on is actually serving. It
+    only reads two values; it never looks at a pod. An auth-proxy container that is missing
+    from the workload, crash-looping, or listening on a port other than the one
+    global.authSidecar.port also renders into the VirtualService leaves
+    test_admin_ui_virtualservices_route_to_the_auth_sidecar passing against a declared port
+    with nothing behind it -- and publishes the component through the Gateway with no
+    authentication in front of it. Asserted per component rather than "at least one
+    sidecar exists anywhere", so one component losing its proxy cannot hide behind the
+    other two.
     """
-    response = _get_through_gateway(gateway_port, f"grafana.{BASE_DOMAIN}")
+    pods = k8s_core_v1_client.list_namespaced_pod(
+        PLATFORM_NAMESPACE, label_selector=f"release={RELEASE_NAME},component={component}"
+    ).items
 
-    assert response.status_code != 404, (
-        f"GET / through the gateway as grafana.{BASE_DOMAIN} returned 404 -- Envoy has no route "
-        f"for this host, so grafana's VirtualService is not attached to the Gateway this gateway "
-        f"pod serves."
+    assert pods, (
+        f"No pod matches release={RELEASE_NAME},component={component} in {PLATFORM_NAMESPACE}, so there "
+        f"is nothing for {RELEASE_NAME}-{component}-virtualservice to route to. The Gateway publishes "
+        f"this component's host, so an absent workload means that host is served by nothing."
     )
-    assert response.status_code < 500, (
-        f"GET / through the gateway as grafana.{BASE_DOMAIN} returned {response.status_code}. The "
-        f"route exists but the gateway could not reach the auth sidecar on port "
-        f"{AUTH_SIDECAR_PORT}: 503 means refused (wrong port), 504 means dropped -- check that "
-        f"global.authSidecar.ingressAllowedNamespaces includes the gateway's namespace, or "
-        f"NetworkPolicy is discarding the gateway's traffic."
-    )
+
+    for pod in pods:
+        container = next((c for c in pod.spec.containers if c.name == AUTH_SIDECAR_CONTAINER), None)
+        assert container is not None, (
+            f"{pod.metadata.name} has no {AUTH_SIDECAR_CONTAINER} container (containers: "
+            f"{sorted(c.name for c in pod.spec.containers)}). global.authSidecar.enabled is on in this "
+            f"scenario and the Gateway requires it, so this component is reachable through the Gateway "
+            f"with nothing authenticating it."
+        )
+
+        ports = {port.container_port for port in container.ports or []}
+        assert ports == {AUTH_SIDECAR_PORT}, (
+            f"{pod.metadata.name}'s {AUTH_SIDECAR_CONTAINER} declares port(s) {sorted(ports)}, not "
+            f"global.authSidecar.port ({AUTH_SIDECAR_PORT}). The VirtualServices route to "
+            f"{AUTH_SIDECAR_PORT}, so a sidecar listening elsewhere makes this host a 503 through the "
+            f"Gateway while every VirtualService still looks correct."
+        )
+
+        statuses = {status.name: status for status in pod.status.container_statuses or []}
+        sidecar_status = statuses.get(AUTH_SIDECAR_CONTAINER)
+        assert sidecar_status is not None and sidecar_status.ready, (
+            f"{pod.metadata.name}'s {AUTH_SIDECAR_CONTAINER} is not ready "
+            f"(state: {sidecar_status.state if sidecar_status else None}, "
+            f"restarts: {sidecar_status.restart_count if sidecar_status else None}). The container is in "
+            f"the pod spec but not serving, so the port the Gateway routes to refuses connections."
+        )
 
 
 @pytest.mark.flaky(reruns=10, reruns_delay=6)
