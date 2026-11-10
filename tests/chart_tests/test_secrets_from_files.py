@@ -2222,18 +2222,29 @@ def test_federation_auth_toggle_override_precedence(global_enabled, component_en
 PG_EXPORTER_TEMPLATE = "charts/prometheus-postgres-exporter/templates/deployment.yaml"
 PG_EXPORTER_SECRET_VOLUME = "data-source-pass"
 PG_EXPORTER_PASS_FILE = "/etc/astronomer/secrets/data_source_password"
+PG_EXPORTER_DSN_VOLUME = "data-source-name"
+PG_EXPORTER_SPLIT_VOLUME = "data-source-files"
+PG_EXPORTER_SPLIT_SCRIPT = git_root_dir / "charts/prometheus-postgres-exporter/files/split-data-source-name.sh"
+# What the split-data-source-name init container writes, and the exporter reads instead of DATA_SOURCE_NAME.
+PG_EXPORTER_SPLIT_FILES = {
+    "DATA_SOURCE_URI_FILE": "/etc/astronomer/secrets/data_source_uri",
+    "DATA_SOURCE_USER_FILE": "/etc/astronomer/secrets/data_source_user",
+    "DATA_SOURCE_PASS_FILE": PG_EXPORTER_PASS_FILE,
+}
 
 
-def pg_exporter_values(enabled=None, component_enabled=None, datasource=None):
+def pg_exporter_values(enabled=None, component_enabled=None, datasource=None, connection_secret=None):
     """Values for the standalone postgres-exporter.
 
     datasource=None keeps the chart default, which is the connectionSecret
-    (DATA_SOURCE_NAME) form. Pass a dict to switch to the split
-    URI/USER/PASS form.
+    (DATA_SOURCE_NAME) form; connection_secret replaces that Secret's name and
+    key. Pass a datasource dict to switch to the split URI/USER/PASS form.
     """
     exporter = {}
     if component_enabled is not None:
         exporter["secretsFromFiles"] = {"enabled": component_enabled}
+    if connection_secret is not None:
+        exporter["config"] = {"datasource": {"connectionSecret": connection_secret}}
     if datasource is not None:
         exporter["config"] = {"datasource": {"connectionSecret": None, "host": "pg.example.com", "user": "exporter", **datasource}}
 
@@ -2245,9 +2256,9 @@ def pg_exporter_values(enabled=None, component_enabled=None, datasource=None):
     return values
 
 
-def pg_exporter(enabled=None, component_enabled=None, datasource=None, show_secret=False):
+def pg_exporter(enabled=None, component_enabled=None, datasource=None, show_secret=False, connection_secret=None):
     """Render the standalone postgres-exporter Deployment; see pg_exporter_values."""
-    values = pg_exporter_values(enabled, component_enabled, datasource)
+    values = pg_exporter_values(enabled, component_enabled, datasource, connection_secret)
 
     show_only = [PG_EXPORTER_TEMPLATE]
     if show_secret:
@@ -2268,33 +2279,68 @@ INLINE_PASSWORD = {"password": "s3cr3t"}
 
 
 class TestPostgresExporterSecretsFromFiles:
-    """postgres_exporter can read the password from a file, but only in the split
-    DATA_SOURCE_URI/_USER/_PASS form. Verified against the ap-postgres-exporter
-    0.19.1-2 binary: it ships DATA_SOURCE_URI_FILE, _USER_FILE and _PASS_FILE, and
-    no _NAME_FILE.
+    """postgres_exporter reads DATA_SOURCE_URI_FILE, _USER_FILE and _PASS_FILE, but
+    has no DATA_SOURCE_NAME_FILE. The split form mounts its password Secret; the
+    default connectionSecret form gets an init container that splits the DSN into
+    all three files.
     """
 
-    def test_the_dsn_form_fails_the_render_while_on(self):
-        """connectionSecret is the chart default, and that path uses DATA_SOURCE_NAME,
-        for which postgres_exporter has no _FILE variant: the DSN could only stay in
-        the environment. Strict mode refuses that rather than leaving one component
-        quietly on env vars, and points at the split form, which has a file path.
+    def test_the_dsn_form_is_split_into_files_while_on(self):
+        """connectionSecret is the chart default and holds the whole DSN, which
+        postgres_exporter could only read from DATA_SOURCE_NAME in its environment.
+        An init container splits it into the URI, user and password files instead,
+        and only that init container mounts the DSN's Secret.
         """
-        stderr = render_failure(pg_exporter_values(enabled=True), [PG_EXPORTER_TEMPLATE])
-        assert "secret-in-environment: prometheus-postgres-exporter.config.datasource.connectionSecret" in stderr
-        assert "DATA_SOURCE_PASS_FILE" in stderr
-        assert "prometheus-postgres-exporter.secretsFromFiles.enabled=false" in stderr
+        spec, container, _secrets = pg_exporter(enabled=True)
+
+        env_vars = get_env_vars_dict(container["env"])
+        assert {name: env_vars.get(name) for name in PG_EXPORTER_SPLIT_FILES} == PG_EXPORTER_SPLIT_FILES
+        assert not {"DATA_SOURCE_NAME", "DATA_SOURCE_URI", "DATA_SOURCE_USER", "DATA_SOURCE_PASS"} & env_vars.keys()
+        assert not [e["name"] for e in container["env"] if "valueFrom" in e]
+        mounts = {m["name"]: (m["mountPath"], m.get("readOnly", False)) for m in container["volumeMounts"]}
+        assert mounts[PG_EXPORTER_SPLIT_VOLUME] == ("/etc/astronomer/secrets", True)
+        assert PG_EXPORTER_DSN_VOLUME not in mounts
+
+        (init,) = spec["initContainers"]
+        assert init["name"] == "split-data-source-name"
+        # Same image and user as the exporter: the files it writes are 0600, readable only by that user.
+        assert init["image"] == container["image"]
+        assert init["securityContext"] == container["securityContext"]
+        shell, flag, script, *argv = init["command"]
+        assert [shell, flag] == ["/bin/sh", "-c"]
+        assert script.strip() == PG_EXPORTER_SPLIT_SCRIPT.read_text().strip()
+        assert argv == ["split-data-source-name", "/etc/astronomer/data-source-name/data_source_name", "/etc/astronomer/secrets"]
+        assert {m["name"]: (m["mountPath"], m.get("readOnly", False)) for m in init["volumeMounts"]} == {
+            PG_EXPORTER_DSN_VOLUME: ("/etc/astronomer/data-source-name", True),
+            PG_EXPORTER_SPLIT_VOLUME: ("/etc/astronomer/secrets", False),
+        }
+
+        volumes = {v["name"]: v for v in spec["volumes"]}
+        assert volumes[PG_EXPORTER_DSN_VOLUME]["secret"] == {
+            "secretName": "astronomer-bootstrap",
+            "items": [{"key": "connection", "path": "data_source_name"}],
+        }
+        # The decoded password lives here, so on tmpfs rather than the node's disk.
+        assert volumes[PG_EXPORTER_SPLIT_VOLUME]["emptyDir"]["medium"] == "Memory"
+
+    def test_the_dsn_form_mounts_the_configured_connection_secret(self):
+        spec, _container, _secrets = pg_exporter(enabled=True, connection_secret={"name": "my-dsn", "key": "uri"})
+
+        volume = next(v for v in spec["volumes"] if v["name"] == PG_EXPORTER_DSN_VOLUME)
+        assert volume["secret"] == {"secretName": "my-dsn", "items": [{"key": "uri", "path": "data_source_name"}]}
 
     def test_the_dsn_form_still_renders_with_the_exporter_off(self):
-        """The way out: the platform on, the exporter alone kept on its DSN env var."""
-        _spec, container, _secrets = pg_exporter(enabled=True, component_enabled=False)
+        """Off on its own, the exporter keeps its DSN env var, with no init container."""
+        spec, container, _secrets = pg_exporter(enabled=True, component_enabled=False)
 
         env_vars = get_env_vars_dict(container["env"])
         assert env_vars["DATA_SOURCE_NAME"]["secretKeyRef"] == {
             "name": "astronomer-bootstrap",
             "key": "connection",
         }
-        assert "DATA_SOURCE_PASS_FILE" not in env_vars
+        assert not PG_EXPORTER_SPLIT_FILES.keys() & env_vars.keys()
+        assert "initContainers" not in spec
+        assert not {PG_EXPORTER_DSN_VOLUME, PG_EXPORTER_SPLIT_VOLUME} & {v["name"] for v in spec["volumes"]}
 
     @pytest.mark.parametrize("datasource", [EXTERNAL_PASSWORD, INLINE_PASSWORD], ids=["passwordSecret", "inline-password"])
     def test_split_form_defaults_keep_the_env_var(self, datasource):
@@ -2322,6 +2368,8 @@ class TestPostgresExporterSecretsFromFiles:
         mount = next(m for m in container["volumeMounts"] if m["name"] == PG_EXPORTER_SECRET_VOLUME)
         assert mount["mountPath"] == "/etc/astronomer/secrets"
         assert mount["readOnly"] is True
+        # Only the DSN form needs splitting.
+        assert "initContainers" not in spec
 
     def test_split_form_enabled_mounts_the_chart_created_secret(self):
         """With an inline password the chart creates the Secret itself, so the
@@ -2357,32 +2405,40 @@ class TestPostgresExporterSecretsFromFiles:
         env_vars = get_env_vars_dict(container["env"])
         assert "secretKeyRef" in env_vars["DATA_SOURCE_PASS"]
 
-    def test_no_dangling_mount(self):
-        spec, container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+    @pytest.mark.parametrize("datasource", [None, EXTERNAL_PASSWORD], ids=["dsn-form", "split-form"])
+    def test_no_dangling_mount(self, datasource):
+        spec, _container, _secrets = pg_exporter(enabled=True, datasource=datasource)
 
         volume_names = {v["name"] for v in spec["volumes"]}
-        for mount in container["volumeMounts"]:
-            assert mount["name"] in volume_names
+        for c in spec["containers"] + spec.get("initContainers", []):
+            for mount in c["volumeMounts"]:
+                assert mount["name"] in volume_names, f"{c['name']} mounts {mount['name']}, which is not a volume"
+            paths = [m["mountPath"] for m in c["volumeMounts"]]
+            assert len(paths) == len(set(paths))
 
-        paths = [m["mountPath"] for m in container["volumeMounts"]]
-        assert len(paths) == len(set(paths))
-
-    def test_secret_file_mode_is_left_at_the_image_default(self):
+    @pytest.mark.parametrize(
+        "datasource,volume_name",
+        [(None, PG_EXPORTER_DSN_VOLUME), (EXTERNAL_PASSWORD, PG_EXPORTER_SECRET_VOLUME)],
+        ids=["dsn-form", "split-form"],
+    )
+    def test_secret_file_mode_is_left_at_the_image_default(self, datasource, volume_name):
         """Not 0440: the container is runAsNonRoot with no runAsUser and this pod
         sets no fsGroup, so 0440 on a root-owned file would be unreadable. Same
         deferred decision as external-es-proxy and federation-auth.
         """
-        spec, _container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+        spec, _container, _secrets = pg_exporter(enabled=True, datasource=datasource)
 
-        volume = next(v for v in spec["volumes"] if v["name"] == PG_EXPORTER_SECRET_VOLUME)
+        volume = next(v for v in spec["volumes"] if v["name"] == volume_name)
         assert "defaultMode" not in volume["secret"]
         assert not (spec.get("securityContext") or {}).get("fsGroup")
 
-    def test_the_mount_path_is_never_under_run_secrets(self):
-        _spec, container, _secrets = pg_exporter(enabled=True, datasource=EXTERNAL_PASSWORD)
+    @pytest.mark.parametrize("datasource", [None, EXTERNAL_PASSWORD], ids=["dsn-form", "split-form"])
+    def test_the_mount_path_is_never_under_run_secrets(self, datasource):
+        spec, container, _secrets = pg_exporter(enabled=True, datasource=datasource)
 
-        for mount in container["volumeMounts"]:
-            assert not mount["mountPath"].startswith("/run/secrets")
+        for c in spec["containers"] + spec.get("initContainers", []):
+            for mount in c["volumeMounts"]:
+                assert not mount["mountPath"].startswith("/run/secrets")
         env_vars = get_env_vars_dict(container["env"])
         assert not env_vars["DATA_SOURCE_PASS_FILE"].startswith("/run/secrets")
 
