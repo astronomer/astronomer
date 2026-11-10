@@ -108,9 +108,9 @@ PLATFORM_NAMESPACE = "astronomer"
 # test_virtualservice_gateway_references_resolve failing on a Gateway that does not exist,
 # rather than as two constants that silently agree with each other and not with the cluster.
 ISTIO_GATEWAY_OVERLAY = git_root_dir / "configs" / "enable-istio-gateway.yaml"
-ISTIO_NAMESPACE, _, GATEWAY_NAME = (
-    yaml.safe_load(ISTIO_GATEWAY_OVERLAY.read_text())["global"]["istio"]["gateway"]["name"].partition("/")
-)
+ISTIO_NAMESPACE, _, GATEWAY_NAME = yaml.safe_load(ISTIO_GATEWAY_OVERLAY.read_text())["global"]["istio"]["gateway"][
+    "name"
+].partition("/")
 assert ISTIO_NAMESPACE and GATEWAY_NAME, (
     f"{ISTIO_GATEWAY_OVERLAY}'s global.istio.gateway.name must be in <namespace>/<name> form, so these "
     f"tests know which namespace to resolve the Gateway and port-forward the ingress gateway in."
