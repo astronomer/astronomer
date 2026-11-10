@@ -2411,6 +2411,237 @@ def test_postgres_exporter_toggle_override_precedence(global_enabled, component_
     assert ("DATA_SOURCE_PASS" in env_vars) is not expected
 
 
+# laminar has no secrets loader, and needs none: it reads LAMINAR_DATABASE_URL_FILE natively,
+# and its JWKS reaches it through the laminar.env settings file, which an init container
+# writes (charts/laminar/files/write-laminar-env.sh).
+LAMINAR_APISERVER_TEMPLATE = "charts/laminar/templates/apiserver/apiserver-deployment.yaml"
+LAMINAR_HYPERVISOR_TEMPLATE = "charts/laminar/templates/hypervisor/hypervisor-deployment.yaml"
+LAMINAR_ENV_SCRIPT = git_root_dir / "charts/laminar/files/write-laminar-env.sh"
+LAMINAR_DB_URL_FILE = "/etc/astronomer/secrets/LAMINAR_DATABASE_URL"
+LAMINAR_SECRETS_VOLUME = "laminar-secrets"
+LAMINAR_ENV_FILE_VOLUME = "laminar-env-file"
+LAMINAR_APISERVER = "release-name-laminar-api-server"
+LAMINAR_HYPERVISOR = "release-name-laminar-hypervisor"
+LAMINAR_APP_CONTAINERS = {LAMINAR_APISERVER: "laminar-apiserver", LAMINAR_HYPERVISOR: "laminar-hypervisor"}
+LAMINAR_DB_SOURCE = {
+    "secret": {"name": "release-name-laminar-backend", "items": [{"key": "connection", "path": "LAMINAR_DATABASE_URL"}]}
+}
+LAMINAR_JWKS_SOURCE = {
+    "secret": {"name": "release-name-commander-signing-cert", "items": [{"key": "tls.crt", "path": "LAMINAR_JWKS"}]}
+}
+
+
+def laminar_values(enabled=True, component_enabled=None, **laminar):
+    """A unified install with laminar on. None leaves a switch at its default."""
+    values = {"global": {"plane": {"mode": "unified"}, "laminar": {"enabled": True}}, "laminar": dict(laminar)}
+    if enabled is not None:
+        values["global"]["secretsFromFiles"] = {"enabled": enabled}
+    if component_enabled is not None:
+        values["laminar"]["secretsFromFiles"] = {"enabled": component_enabled}
+    return values
+
+
+def laminar_specs(**kwargs):
+    """{workload: pod spec} for the two laminar Deployments; see laminar_values."""
+    docs = render_chart(
+        kube_version=newest_supported_kube_version,
+        values=laminar_values(**kwargs),
+        show_only=[LAMINAR_APISERVER_TEMPLATE, LAMINAR_HYPERVISOR_TEMPLATE],
+    )
+    return dict(pod_specs(docs))
+
+
+def laminar_secrets(**kwargs):
+    """{name: Secret} from the whole render; see laminar_values."""
+    docs = render_chart(kube_version=newest_supported_kube_version, values=laminar_values(**kwargs))
+    return {d["metadata"]["name"]: d for d in docs if d["kind"] == "Secret"}
+
+
+def laminar_app(spec, workload):
+    return next(c for c in spec["containers"] if c["name"] == LAMINAR_APP_CONTAINERS[workload])
+
+
+def laminar_volume(spec, name):
+    return next((v for v in spec.get("volumes") or [] if v["name"] == name), None)
+
+
+class TestLaminarSecretsFromFiles:
+    @pytest.mark.parametrize("workload", list(LAMINAR_APP_CONTAINERS))
+    def test_both_pods_read_the_database_url_from_a_file(self, workload):
+        spec = laminar_specs()[workload]
+        app = laminar_app(spec, workload)
+
+        env_vars = get_env_vars_dict(app["env"])
+        assert env_vars["LAMINAR_DATABASE_URL_FILE"] == LAMINAR_DB_URL_FILE
+        assert "LAMINAR_DATABASE_URL" not in env_vars
+        assert not [e["name"] for e in app["env"] if "secretKeyRef" in (e.get("valueFrom") or {})]
+
+        mount = next(m for m in app["volumeMounts"] if m["name"] == LAMINAR_SECRETS_VOLUME)
+        assert (mount["mountPath"], mount["readOnly"]) == ("/etc/astronomer/secrets", True)
+        projected = laminar_volume(spec, LAMINAR_SECRETS_VOLUME)["projected"]
+        assert projected["defaultMode"] == 0o440
+        assert projected["sources"][0] == LAMINAR_DB_SOURCE
+
+    def test_the_hypervisor_jwks_goes_into_a_generated_laminar_env(self):
+        """laminar reads its JWKS only from its settings, and laminar.env outranks its environment."""
+        spec = laminar_specs()[LAMINAR_HYPERVISOR]
+        app = laminar_app(spec, LAMINAR_HYPERVISOR)
+
+        assert "LAMINAR_JWKS" not in get_env_vars_dict(app["env"])
+        # Only tls.crt: the signing key lives in another Secret, and nothing else of this one reaches the pod.
+        assert laminar_volume(spec, LAMINAR_SECRETS_VOLUME)["projected"]["sources"] == [LAMINAR_DB_SOURCE, LAMINAR_JWKS_SOURCE]
+
+        (init,) = [c for c in spec["initContainers"] if c["name"] == "laminar-env"]
+        # Same image and user as the app: the file it writes is 0600, readable only by that user.
+        assert init["image"] == app["image"]
+        assert init["securityContext"] == app["securityContext"]
+        shell, flag, script, *argv = init["command"]
+        assert [shell, flag] == ["/bin/sh", "-c"]
+        assert script.strip() == LAMINAR_ENV_SCRIPT.read_text().strip()
+        assert argv == [
+            "write-laminar-env",
+            "/etc/laminar/config/laminar.env",
+            "/etc/astronomer/secrets/LAMINAR_JWKS",
+            "/etc/laminar/env/laminar.env",
+        ]
+        assert {m["name"]: (m["mountPath"], m.get("readOnly", False)) for m in init["volumeMounts"]} == {
+            "laminar-env": ("/etc/laminar/config", True),
+            LAMINAR_SECRETS_VOLUME: ("/etc/astronomer/secrets", True),
+            LAMINAR_ENV_FILE_VOLUME: ("/etc/laminar/env", False),
+        }
+
+        env_mount = next(m for m in app["volumeMounts"] if m["mountPath"] == "/laminar.env")
+        assert (env_mount["name"], env_mount["subPath"]) == (LAMINAR_ENV_FILE_VOLUME, "laminar.env")
+        # The JWKS lives there, so on tmpfs rather than the node's disk.
+        assert laminar_volume(spec, LAMINAR_ENV_FILE_VOLUME)["emptyDir"]["medium"] == "Memory"
+
+    def test_the_api_server_has_no_jwks_to_deliver(self):
+        spec = laminar_specs()[LAMINAR_APISERVER]
+        app = laminar_app(spec, LAMINAR_APISERVER)
+
+        assert "laminar-env" not in [c["name"] for c in spec["initContainers"]]
+        assert laminar_volume(spec, LAMINAR_ENV_FILE_VOLUME) is None
+        assert laminar_volume(spec, LAMINAR_SECRETS_VOLUME)["projected"]["sources"] == [LAMINAR_DB_SOURCE]
+        env_mount = next(m for m in app["volumeMounts"] if m["mountPath"] == "/laminar.env")
+        assert env_mount["name"] == "laminar-env"
+
+    def test_a_jwt_issuer_brings_the_jwks_file_with_it(self):
+        """Any component with a jwtIssuer gets its JWKS, from the Secret jwksSecretName names."""
+        spec = laminar_specs(
+            apiServer={"jwtIssuer": "https://issuer.example.com", "jwtAudience": "aud", "jwksSecretName": "my-jwks"}
+        )[LAMINAR_APISERVER]
+
+        assert "laminar-env" in [c["name"] for c in spec["initContainers"]]
+        sources = laminar_volume(spec, LAMINAR_SECRETS_VOLUME)["projected"]["sources"]
+        assert sources[1] == {"secret": {"name": "my-jwks", "items": [{"key": "tls.crt", "path": "LAMINAR_JWKS"}]}}
+
+    @pytest.mark.parametrize(
+        "workload,init",
+        [
+            (LAMINAR_APISERVER, ["laminar-bootstrapper", "wait-for-secret", "etc-ssl-certs-copier"]),
+            (LAMINAR_HYPERVISOR, ["laminar-bootstrapper", "wait-for-secret", "laminar-env"]),
+        ],
+    )
+    def test_laminar_waits_for_the_bootstrapped_connection(self, workload, init):
+        """The volume holds the chart's sentinel until laminar-bootstrapper has written the connection."""
+        spec = laminar_specs()[workload]
+
+        assert [c["name"] for c in spec["initContainers"]] == init
+        wait = next(c for c in spec["initContainers"] if c["name"] == "wait-for-secret")
+        assert LAMINAR_DB_URL_FILE in wait["command"][-1]
+        assert [(m["name"], m["mountPath"]) for m in wait["volumeMounts"]] == [(LAMINAR_SECRETS_VOLUME, "/etc/astronomer/secrets")]
+
+    def test_the_chart_creates_the_backend_secret_with_the_sentinel(self):
+        """Mounted, it must exist before the pod starts: only laminar-bootstrapper, inside the pod, creates it."""
+        secret = laminar_secrets()["release-name-laminar-backend"]
+
+        assert base64.b64decode(secret["data"]["connection"]).decode() == "__ASTRONOMER_NOT_BOOTSTRAPPED__"
+        assert secret["metadata"]["annotations"] == {"helm.sh/resource-policy": "keep"}
+
+    def test_argocd_refuses_the_chart_managed_backend_secret(self):
+        """ArgoCD renders without cluster access, so each sync would put the sentinel back into
+        the Secret, and laminar restarts when its file changes: it would fail until recreated."""
+        values = laminar_values()
+        values["global"]["argoCD"] = {"annotation": {"enabled": True}}
+        stderr = render_failure(values)
+
+        assert "global.argoCD.annotation.enabled is set" in stderr
+        assert "release-name-laminar-backend" in stderr
+        assert "Set laminar.databaseBootstrapper.backendSecretName" in stderr
+        assert "laminar.secretsFromFiles.enabled=false" in stderr
+
+    @pytest.mark.parametrize(
+        "laminar,component_enabled",
+        [({"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}, None), ({}, False)],
+        ids=["operator-supplied-secret", "laminar-off"],
+    )
+    def test_argocd_renders_without_a_chart_managed_backend_secret(self, laminar, component_enabled):
+        values = laminar_values(component_enabled=component_enabled, **laminar)
+        values["global"]["argoCD"] = {"annotation": {"enabled": True}}
+        docs = render_chart(kube_version=newest_supported_kube_version, values=values)
+
+        assert "release-name-laminar-backend" not in {d["metadata"]["name"] for d in docs if d["kind"] == "Secret"}
+
+    @pytest.mark.parametrize("enabled,component_enabled", [(False, None), (True, False)], ids=["off", "laminar-off"])
+    def test_no_backend_secret_while_laminar_reads_env_vars(self, enabled, component_enabled):
+        """The bootstrapper creates it at runtime, as it always has; nothing changes for an upgrade."""
+        assert "release-name-laminar-backend" not in laminar_secrets(enabled=enabled, component_enabled=component_enabled)
+
+    def test_an_operator_supplied_secret_is_mounted_without_the_placeholder(self):
+        byo = {"databaseBootstrapper": {"backendSecretName": "my-laminar-db"}}
+        specs = laminar_specs(**byo)
+
+        assert "release-name-laminar-backend" not in laminar_secrets(**byo)
+        assert "initContainers" not in specs[LAMINAR_APISERVER]
+        # The JWKS file is laminar's, not the bootstrapper's: it is written either way.
+        assert [c["name"] for c in specs[LAMINAR_HYPERVISOR]["initContainers"]] == ["laminar-env"]
+        for workload, spec in specs.items():
+            source = laminar_volume(spec, LAMINAR_SECRETS_VOLUME)["projected"]["sources"][0]
+            assert source["secret"]["name"] == "my-laminar-db", workload
+
+    @pytest.mark.parametrize("workload", list(LAMINAR_APP_CONTAINERS))
+    def test_no_mount_dangles(self, workload):
+        spec = laminar_specs()[workload]
+
+        volume_names = {v["name"] for v in spec["volumes"]}
+        for container in all_containers(spec):
+            mounts = container.get("volumeMounts") or []
+            assert {m["name"] for m in mounts} <= volume_names, container["name"]
+            assert len({m["mountPath"] for m in mounts}) == len(mounts), container["name"]
+
+    def test_a_lowercase_name_is_refused_because_laminar_settings_fold_case(self):
+        stderr = render_failure(
+            laminar_values(apiServer={"env": [{"name": "laminar_jwks", "value": SECRET_MARKER}]}), [LAMINAR_APISERVER_TEMPLATE]
+        )
+
+        assert "secret-in-environment: laminar.apiServer.env sets laminar_jwks," in stderr
+        # laminar has no loader, so the message must not claim it refuses to start.
+        assert "an entry here would put it back in laminar's environment" in stderr
+        assert "refuses to start" not in stderr
+        assert SECRET_MARKER not in stderr
+
+
+@pytest.mark.parametrize(
+    "global_enabled,component_enabled,expected",
+    [
+        (False, None, False),
+        (True, None, True),
+        (False, True, True),
+        (True, False, False),
+        (None, True, True),
+        (None, None, False),
+    ],
+)
+def test_laminar_toggle_override_precedence(global_enabled, component_enabled, expected):
+    """The component toggle wins when set; otherwise the global one applies."""
+    specs = laminar_specs(enabled=global_enabled, component_enabled=component_enabled)
+
+    for workload, spec in specs.items():
+        env_vars = get_env_vars_dict(laminar_app(spec, workload)["env"])
+        assert ("LAMINAR_DATABASE_URL_FILE" in env_vars) is expected, workload
+        assert ("LAMINAR_DATABASE_URL" in env_vars) is not expected, workload
+
+
 COMMANDER_TEMPLATE = "charts/astronomer/templates/commander/commander-deployment.yaml"
 
 
@@ -2977,6 +3208,28 @@ GUARDED_ENV_LISTS = {
         "managed": ("ES_SECRET", "ES_SECRET_NAME"),
         "raw": True,
         "key": "global.customLogging",
+    },
+    "laminar.apiServer.env": {
+        "values": lambda env, on: {
+            "global": {"plane": {"mode": "unified"}, "laminar": {"enabled": True}, "secretsFromFiles": {"enabled": True}},
+            "laminar": {"apiServer": {"env": env}, **_switch(on)},
+        },
+        "template": LAMINAR_APISERVER_TEMPLATE,
+        "container": "laminar-apiserver",
+        "managed": ("LAMINAR_DATABASE_URL", "LAMINAR_JWKS"),
+        "raw": True,
+        "key": "laminar",
+    },
+    "laminar.hypervisor.env": {
+        "values": lambda env, on: {
+            "global": {"plane": {"mode": "unified"}, "laminar": {"enabled": True}, "secretsFromFiles": {"enabled": True}},
+            "laminar": {"hypervisor": {"env": env}, **_switch(on)},
+        },
+        "template": LAMINAR_HYPERVISOR_TEMPLATE,
+        "container": "laminar-hypervisor",
+        "managed": ("LAMINAR_DATABASE_URL", "LAMINAR_JWKS"),
+        "raw": True,
+        "key": "laminar",
     },
 }
 
@@ -3786,9 +4039,6 @@ RESIDUAL_SECRET_KEY_REFS = {
         ("release-name-grafana", "wait-for-db", "GF_DATABASE_URL"),
         ("release-name-grafana", "grafana", "GF_DATABASE_URL"),
         ("release-name-registry", "registry", "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS"),
-        ("release-name-laminar-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
-        ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
-        ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_JWKS"),
         ("release-name-mcp-server", "mcp-server", "MCP_TOKEN"),
     },
     "control-ha": {
@@ -3798,9 +4048,6 @@ RESIDUAL_SECRET_KEY_REFS = {
     },
     "data": {
         ("release-name-registry", "registry", "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS"),
-        ("release-name-laminar-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
-        ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
-        ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_JWKS"),
     },
 }
 
@@ -3917,8 +4164,22 @@ SWITCH_MATRIX = {
         "refs": refs(BOOTSTRAPPERS, {"BOOTSTRAP_DB"}),
         "stopped": BOOTSTRAPPERS,
         "volumes": {workload: {DB_BOOTSTRAPPER_VOLUME} for workload, _c in BOOTSTRAPPERS},
-        # houston and commander are still on in those pods; grafana and laminar have nothing else.
+        # houston and commander are still on in those pods; grafana has nothing else, and laminar's
+        # pods set their own fsGroup either way.
         "keep_fs_group": HOUSTON_GATED_WORKLOADS | {"release-name-commander"},
+    },
+    "laminar": {
+        "values": {"laminar": _switch(False)},
+        "refs": refs(LAMINAR_APP_CONTAINERS.items(), {"LAMINAR_DATABASE_URL"})
+        | {(LAMINAR_HYPERVISOR, "laminar-hypervisor", "LAMINAR_JWKS")},
+        "stopped": set(LAMINAR_APP_CONTAINERS.items())
+        | {(LAMINAR_APISERVER, "wait-for-secret"), (LAMINAR_HYPERVISOR, "wait-for-secret"), (LAMINAR_HYPERVISOR, "laminar-env")},
+        "volumes": {
+            LAMINAR_APISERVER: {LAMINAR_SECRETS_VOLUME},
+            LAMINAR_HYPERVISOR: {LAMINAR_SECRETS_VOLUME, LAMINAR_ENV_FILE_VOLUME},
+        },
+        # Init containers that exist only while the component reads files.
+        "file_mode_only": {"laminar-env"},
     },
     "filesd-reloader": {
         "values": {"prometheus": {"filesdReloader": _switch(False)}},
@@ -4036,7 +4297,9 @@ def test_one_switch_off_takes_only_its_component_back_to_env_vars(switch):
     for workload, container_name in case["stopped"]:
         container = next((c for c in all_containers(specs[workload]) if c["name"] == container_name), None)
         if container is None:
-            assert container_name == "wait-for-secret", f"{workload}/{container_name} disappeared"
+            assert container_name in {"wait-for-secret", *case.get("file_mode_only", ())}, (
+                f"{workload}/{container_name} disappeared"
+            )
             continue
         env_vars = get_env_vars_dict(container.get("env") or [])
         assert not loader_gates_on(container), f"{workload}/{container_name} still sets its gate"

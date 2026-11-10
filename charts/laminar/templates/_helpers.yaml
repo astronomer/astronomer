@@ -82,23 +82,77 @@ tier: laminar
 {{- end -}}
 
 {{/*
+Whether laminar reads its secrets from mounted files. Renders "true" or "false"; call it
+through `eq`. Takes the root context.
+
+laminar has no secrets loader of its own, and needs none: it reads LAMINAR_DATABASE_URL_FILE
+natively, and the JWKS reaches it through its laminar.env settings file (see
+laminar.envFileInitContainer).
+*/}}
+{{- define "laminar.secretsFromFiles.enabled" -}}
+{{- include "secretsFromFiles.enabled" (dict "ctx" . "component" .Values "key" "laminar") -}}
+{{- end -}}
+
+{{/*
+The Secret holding the certificate a component with a jwtIssuer verifies tokens against, under
+a "tls.crt" key. Call with (list $ $componentValues).
+*/}}
+{{- define "laminar.jwksSecretName" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+{{- $component.jwksSecretName | default (printf "%s-commander-signing-cert" $.Release.Name) -}}
+{{- end -}}
+
+{{/*
+Whether a component gets its laminar.env from laminar.envFileInitContainer rather than straight
+from the ConfigMap: while it reads secrets from files and has a JWKS to deliver. Renders "true"
+or nothing. Call with (list $ $componentValues).
+*/}}
+{{- define "laminar.envFileGenerated" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+{{- if and (eq "true" (include "laminar.secretsFromFiles.enabled" $)) $component.jwtIssuer -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether the chart renders the <release>-laminar-backend placeholder Secret: while laminar reads
+its database connection from a file and the bootstrapper, rather than the operator, provides
+that Secret. Renders "true" or nothing. Takes the root context.
+*/}}
+{{- define "laminar.backendSecretRendered" -}}
+{{- if and (eq "true" (include "laminar.secretsFromFiles.enabled" .)) (not .Values.databaseBootstrapper.backendSecretName) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
 The env block shared by both deployments: injects LAMINAR_DATABASE_URL from the
 database secret, then appends the component's own env list.
 Call with (list $ $componentValues).
+
+While laminar reads secrets from files, the connection comes from LAMINAR_DATABASE_URL_FILE
+instead. laminar then uses only the file: it never falls back to LAMINAR_DATABASE_URL, does not
+start if the file is missing or empty, and restarts itself when the file changes. The JWKS goes
+in the generated laminar.env instead of LAMINAR_JWKS (see laminar.envFileInitContainer).
 */}}
 {{- define "laminar.env" -}}
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
+{{- $secretsFromFiles := eq "true" (include "laminar.secretsFromFiles.enabled" $) -}}
 {{- if $component.jwtIssuer }}
 - name: LAMINAR_JWT_ISSUER
   value: {{ $component.jwtIssuer | quote }}
 - name: LAMINAR_JWT_AUDIENCE
   value: {{ $component.jwtAudience | quote }}
+{{- if not $secretsFromFiles }}
 - name: LAMINAR_JWKS
   valueFrom:
     secretKeyRef:
-      name: {{ $component.jwksSecretName | default (printf "%s-commander-signing-cert" $.Release.Name) }}
+      name: {{ include "laminar.jwksSecretName" (list $ $component) }}
       key: tls.crt
+{{- end }}
 {{- else }}
 - name: LAMINAR_JWT_ISSUER
   value: https://houston.{{ include "houston.controlPlaneBaseDomain" $ }}/v2
@@ -113,24 +167,122 @@ Call with (list $ $componentValues).
   valueFrom:
     fieldRef:
       fieldPath: metadata.namespace
+{{- if $secretsFromFiles }}
+- name: LAMINAR_DATABASE_URL_FILE
+  value: /etc/astronomer/secrets/LAMINAR_DATABASE_URL
+{{- else }}
 - name: LAMINAR_DATABASE_URL
   valueFrom:
     secretKeyRef:
       name: {{ template "laminar.backend.secret" $ }}
       key: connection
+{{- end }}
 {{- with $component.env }}
 {{ toYaml . }}
 {{- end }}
 {{- end -}}
 
 {{/*
-laminar.env volumeMount (mounted read-only at /laminar.env).
+laminar.env volumeMount (mounted read-only at /laminar.env): the generated file while
+laminar.envFileGenerated, else the ConfigMap's. Call with (list $ $componentValues).
 */}}
 {{- define "laminar.envVolumeMount" -}}
-- name: laminar-env
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+- name: {{ ternary "laminar-env-file" "laminar-env" (eq "true" (include "laminar.envFileGenerated" (list $ $component))) }}
   mountPath: /laminar.env
   subPath: laminar.env
   readOnly: true
+{{- end -}}
+
+{{/*
+The volumes a component reads its secrets from while laminar reads secrets from files: the
+database connection and, for a component with a jwtIssuer, the JWKS certificate, plus the
+memory-backed volume its generated laminar.env is written to. Renders nothing while laminar is
+on environment variables. Call with (list $ $componentValues).
+
+Only the two keys are projected: the files are named after the variables they replace, and
+nothing else in either Secret reaches the pod.
+*/}}
+{{- define "laminar.secretsVolumes" -}}
+{{- $ := index . 0 -}}
+{{- $component := index . 1 -}}
+{{- if eq "true" (include "laminar.secretsFromFiles.enabled" $) }}
+- name: laminar-secrets
+  projected:
+    {{- include "astronomer.secretsFromFiles.defaultMode" $ | nindent 4 }}
+    sources:
+      - secret:
+          name: {{ template "laminar.backend.secret" $ }}
+          items:
+            - key: connection
+              path: LAMINAR_DATABASE_URL
+      {{- if $component.jwtIssuer }}
+      - secret:
+          name: {{ include "laminar.jwksSecretName" (list $ $component) }}
+          items:
+            - key: tls.crt
+              path: LAMINAR_JWKS
+      {{- end }}
+{{- end }}
+{{- if eq "true" (include "laminar.envFileGenerated" (list $ $component)) }}
+- name: laminar-env-file
+  emptyDir:
+    medium: Memory
+    sizeLimit: 1Mi
+{{- end }}
+{{- end -}}
+
+{{/*
+The app container's mount of laminar-secrets. Renders nothing while laminar is on environment
+variables. Takes the root context.
+*/}}
+{{- define "laminar.secretsVolumeMount" -}}
+{{- if eq "true" (include "laminar.secretsFromFiles.enabled" .) }}
+- name: laminar-secrets
+  mountPath: /etc/astronomer/secrets
+  readOnly: true
+{{- end }}
+{{- end -}}
+
+{{/*
+An init container that writes a component's laminar.env: the ConfigMap's file, then the JWKS
+certificate as a laminar_jwks setting (files/write-laminar-env.sh). Rendered while
+laminar.envFileGenerated.
+
+laminar reads its JWKS only from its settings, which come from laminar.env as well as the
+environment, and laminar.env takes precedence. So this delivers the certificate without an
+environment variable, and nothing in the environment can override it. The file goes to a
+memory-backed volume, and the app container mounts it at /laminar.env in place of the
+ConfigMap's. Same image and securityContext as the app container, so the 0600 file it writes
+is readable by the app and nobody else.
+
+Takes the root context.
+*/}}
+{{- define "laminar.envFileInitContainer" -}}
+- name: laminar-env
+  image: {{ include "laminar.image" . }}
+  imagePullPolicy: {{ .Values.images.laminar.pullPolicy }}
+  securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 4 }}
+  resources: {{- toYaml .Values.apiServer.resources | nindent 4 }}
+  command:
+    - /bin/sh
+    - -c
+    - |
+      {{- .Files.Get "files/write-laminar-env.sh" | trim | nindent 6 }}
+    - write-laminar-env
+    - /etc/laminar/config/laminar.env
+    - /etc/astronomer/secrets/LAMINAR_JWKS
+    - /etc/laminar/env/laminar.env
+  volumeMounts:
+    - name: laminar-env
+      mountPath: /etc/laminar/config
+      readOnly: true
+    - name: laminar-secrets
+      mountPath: /etc/astronomer/secrets
+      readOnly: true
+    - name: laminar-env-file
+      mountPath: /etc/laminar/env
 {{- end -}}
 
 {{/*
@@ -265,7 +417,7 @@ Call with (list $ $componentValues).
 {{- $ := index . 0 -}}
 {{- $component := index . 1 -}}
 {{- if $component.jwtIssuer -}}
-{{- $name := $component.jwksSecretName | default (printf "%s-commander-signing-cert" $.Release.Name) -}}
+{{- $name := include "laminar.jwksSecretName" (list $ $component) -}}
 {{- $data := (get ((lookup "v1" "Secret" $.Release.Namespace $name) | default dict) "data") | default dict -}}
 checksum/commander-jwks-secret: {{ (get $data "tls.crt") | b64dec | sha256sum }}
 {{- end -}}
