@@ -63,11 +63,8 @@ global:
     # list, the Istio ingress gateway's requests to grafana/prometheus/alertmanager are
     # DROPPED by NetworkPolicy and those three UIs are unreachable, even though every
     # VirtualService looks correct. Must match the scenario's --gateway-namespace in
-    # test_profile.yaml.
-    # NOTE: no test asserts this. The only one that did drove a real request through an
-    # admin UI's auth proxy and was removed -- the proxy's auth subrequest targets a public
-    # hostname that resolves to loopback inside the pod, so it cannot succeed in kind (see
-    # the out-of-scope list in tests/functional/scenarios/istio-gateway/test_istio_gateway.py).
-    # Dropping istio-system from this list would therefore go unnoticed by the suite.
+    # test_profile.yaml. Measured by removing istio-system from the live policy: all three
+    # hosts go from 500 in ~0.02s to 503 after a ~30s Envoy connect timeout, which is what
+    # test_istio_gateway.py::test_gateway_reaches_the_auth_sidecar asserts against.
     ingressAllowedNamespaces:
       - istio-system

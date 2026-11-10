@@ -24,7 +24,12 @@ structurally cannot check:
      ^/v1/(alerts|metrics).* (charts/astronomer/templates/houston/houston-virtualservice.yaml),
      with everything else falling through to Houston's Service. Asserting the 403 and the
      non-403 proves an Envoy actually evaluated the routing rules, not just that the YAML
-     said so. Same for the bare-domain 301 redirect the common VirtualService defines.
+     said so. Same for the bare-domain 301 redirect the common VirtualService defines, and
+     for test_gateway_reaches_the_auth_sidecar, which asserts the admin UIs answer from
+     their auth proxy rather than from Envoy -- what notices
+     global.authSidecar.ingressAllowedNamespaces losing the gateway's namespace at the
+     auth-proxy tier (houston's own NetworkPolicy reads that value too, so
+     test_gateway_routes_houston fails on the same misconfiguration).
 
   4. (test_auth_sidecar_runs_on_the_port_the_gateway_routes_to) The auth sidecar the Gateway
      requires is actually running. templates/validate-istio-gateway-auth-sidecar.yaml makes
@@ -54,18 +59,19 @@ Deliberately out of scope:
   - HTTPS at the gateway. bin/setup-istio.py's Gateway serves HTTP only; VirtualServices
     attach to a Gateway by name regardless of protocol, so TLS termination would exercise
     no additional chart code.
-  - A real request *through* an admin UI's auth proxy. The proxy's own auth subrequest is
-    `proxy_pass https://houston.<baseDomain>/v1/authorization`
+  - A *successfully authenticated* request through an admin UI's auth proxy. The proxy's own
+    auth subrequest is `proxy_pass https://houston.<baseDomain>/v1/authorization`
     (charts/grafana/templates/grafana-auth-sidecar-configmap.yaml), i.e. a PUBLIC hostname.
     `localtest.me` resolves to 127.0.0.1 and CoreDNS has no rewrite for it, so inside the
     pod that subrequest reaches its own loopback:443, where nothing listens -- nginx answers
     the subrequest 502 and the client 500. Not an Istio problem and not a chart bug: pod DNS
     resolves the public hostname to loopback with nginx ingress just the same, which is why
     the auth-sidecar scenario only asserts the container's presence and never drives a
-    request through it. Making this testable needs a CoreDNS rewrite pointing the base
-    domain at the gateway AND TLS on the gateway (see above). What IS covered without that:
-    the VirtualServices' declared port (test_admin_ui_virtualservices_route_to_the_auth_sidecar)
-    and the proxy actually running on it (test_auth_sidecar_runs_on_the_port_the_gateway_routes_to).
+    request through it. Getting a 200/302/401 out of the proxy would need a CoreDNS rewrite
+    pointing the base domain at the gateway AND TLS on the gateway (see above). The 500 is
+    still a response the proxy produced, though, which is what
+    test_gateway_reaches_the_auth_sidecar asserts on -- so the routing, the port and the
+    NetworkPolicy are all covered without it.
 """
 
 import contextlib
@@ -131,6 +137,23 @@ AUTH_SIDECAR_CONTAINER = "auth-proxy"
 # constant drives both the VirtualService names below and the pods the sidecar must run in.
 AUTH_SIDECAR_COMPONENTS = ("alertmanager", "grafana", "prometheus")
 AUTH_SIDECAR_VIRTUALSERVICES = tuple(f"{RELEASE_NAME}-{component}-virtualservice" for component in AUTH_SIDECAR_COMPONENTS)
+
+# The statuses Envoy itself returns when it never got a response from the auth proxy at all,
+# as opposed to a response the proxy produced. Measured against this scenario's own cluster
+# (calico enforcing, istio-system removed from global.authSidecar.ingressAllowedNamespaces):
+#   - 404: Envoy has no route for the host -- the VirtualService is not attached to this Gateway.
+#   - 503: what the NetworkPolicy case actually produces. Calico DROPS the gateway's packets, so
+#     Envoy sits in connect-timeout for ~30s and answers 503 with `upstream connect error ...
+#     reset reason: connection timeout` and no x-envoy-upstream-service-time header. The same
+#     status also covers an outright refusal, i.e. nothing serving AUTH_SIDECAR_PORT.
+#   - 504: not observed for either failure above, kept because a response-timeout (rather than a
+#     connect-timeout) is the same class of "the proxy never answered".
+# A reached proxy returns 500 here in ~0.02s; see test_gateway_reaches_the_auth_sidecar.
+GATEWAY_UNREACHED_STATUSES = (404, 503, 504)
+# Must outlast Envoy's ~30s connect-timeout on the blocked path, or requests raises ReadTimeout
+# before the 503 arrives and the failure reports as a client timeout rather than as the routing
+# failure it is. Only ever costs time when something is actually broken.
+GATEWAY_UNREACHED_TIMEOUT = 60
 
 
 @pytest.fixture(scope="module")
@@ -199,13 +222,13 @@ def gateway_port():
         yield local_port
 
 
-def _get_through_gateway(gateway_port: int, host: str, path: str = "/", allow_redirects: bool = False):
+def _get_through_gateway(gateway_port: int, host: str, path: str = "/", allow_redirects: bool = False, timeout: int = 30):
     """GET path through the ingress gateway, routed by the Host header alone."""
     return requests.get(
         f"http://127.0.0.1:{gateway_port}{path}",
         headers={"Host": host},
         allow_redirects=allow_redirects,
-        timeout=30,
+        timeout=timeout,
     )
 
 
@@ -431,6 +454,48 @@ def test_auth_sidecar_runs_on_the_port_the_gateway_routes_to(k8s_core_v1_client,
             f"restarts: {sidecar_status.restart_count if sidecar_status else None}). The container is in "
             f"the pod spec but not serving, so the port the Gateway routes to refuses connections."
         )
+
+
+@pytest.mark.flaky(reruns=10, reruns_delay=6)
+@pytest.mark.parametrize("component", AUTH_SIDECAR_COMPONENTS)
+def test_gateway_reaches_the_auth_sidecar(gateway_port, component):
+    """A real request through the Gateway gets a response FROM the auth proxy.
+
+    The status is deliberately not asserted, because in kind it is a 500: the proxy's own auth
+    subrequest targets a public hostname that resolves to loopback inside the pod, so it cannot
+    succeed here (see the out-of-scope list in the module docstring). What this asserts instead
+    is where the response came from. nginx answering *at all* -- even with its own 500 -- proves
+    Envoy matched the host, connected to AUTH_SIDECAR_PORT and was not dropped on the way; the
+    statuses that mean it never got there are excluded by GATEWAY_UNREACHED_STATUSES.
+
+    It is also the only coverage of the ADMIN UIs' half of
+    global.authSidecar.ingressAllowedNamespaces, which is the likeliest way a real install ends up
+    with unreachable UIs while every VirtualService still looks correct. Their NetworkPolicies
+    admit AUTH_SIDECAR_PORT only from namespaces labelled
+    `network.openshift.io/policy-group: ingress` (an OpenShift convention nothing applies to
+    istio-system) plus the namespaces listed in that value (see
+    charts/grafana/templates/grafana-networkpolicy.yaml). Verified by removing istio-system from
+    the live policy: all three hosts go from 500 in ~0.02s to 503 after a ~30s connect timeout.
+
+    Note the value is NOT only read by these three. astronomer-houston-policy takes the same
+    namespaceSelector, so dropping istio-system also makes test_gateway_routes_houston fail --
+    this test narrows such a failure to the auth-proxy tier rather than being the sole detector.
+
+    Parametrized over all three components rather than grafana alone -- each has its own
+    NetworkPolicy, so one of them losing the allowance is invisible if only another is checked.
+    """
+    response = _get_through_gateway(gateway_port, f"{component}.{BASE_DOMAIN}", timeout=GATEWAY_UNREACHED_TIMEOUT)
+
+    assert response.status_code not in GATEWAY_UNREACHED_STATUSES, (
+        f"GET / through the gateway as {component}.{BASE_DOMAIN} returned {response.status_code}, "
+        f"so nothing answered from {component}'s auth proxy. A 404 means Envoy has no route for "
+        f"this host, so the VirtualService is not attached to the Gateway this gateway pod serves. "
+        f"A 503 or 504 means the route exists but the proxy never answered: either nothing is "
+        f"serving port {AUTH_SIDECAR_PORT}, or -- far more likely -- NetworkPolicy is dropping the "
+        f"gateway's traffic, so check that global.authSidecar.ingressAllowedNamespaces includes "
+        f"{ISTIO_NAMESPACE}. An `upstream connect error ... connection timeout` body is Envoy's, "
+        f"not the proxy's, and confirms the drop. Body: {response.text[:300]}"
+    )
 
 
 @pytest.mark.flaky(reruns=10, reruns_delay=6)
