@@ -684,6 +684,17 @@ dpLink:
   # @default -- 0.2
   jitterFraction: 0.2
 
+  # Health-triggered fallback pull: while a cluster's DP-Link connection is
+  # UNREACHABLE, DP-Link pulls that cluster's metadata over HTTP on this interval.
+  # The hourly sync-dataplane-clusters CronJob runs either way.
+  fallbackPull:
+    # -- Turn on the fallback pull
+    # @default -- false
+    enabled: false
+    # -- Seconds between fallback pulls for an unreachable cluster
+    # @default -- 300
+    intervalSeconds: 300
+
   # -- Pod annotations
   podAnnotations: {}
 
