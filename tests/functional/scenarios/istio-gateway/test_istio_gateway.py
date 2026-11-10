@@ -82,8 +82,10 @@ import time
 import pytest
 import requests
 import testinfra
+import yaml
 from kubernetes import client, config
 
+from tests import git_root_dir
 from tests.utils.houston_graphql import (
     HoustonError,
     create_user,
@@ -95,10 +97,24 @@ from tests.utils.houston_graphql import (
 )
 from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_by_label_selector
 
-# See bin/setup-istio.py and configs/enable-istio-gateway.yaml -- these MUST match both.
 PLATFORM_NAMESPACE = "astronomer"
-ISTIO_NAMESPACE = "istio-system"
-GATEWAY_NAME = "astronomer-gateway"
+# Read out of the overlay rather than restated, so the Gateway these tests resolve references
+# against is by construction the one the install was pointed at. global.istio.gateway.name is
+# the <namespace>/<name> of a Gateway that must already exist, which makes it the single value
+# that fixes both. The third copy -- test_profile.yaml's pre_helm_scripts arguments -- cannot be
+# derived this way: bin/setup-istio.py runs before helm and creates the Gateway, so it has no
+# values to read and deliberately requires the namespace and name as explicit arguments (see
+# its docstring). A mismatch between that invocation and this file now surfaces as
+# test_virtualservice_gateway_references_resolve failing on a Gateway that does not exist,
+# rather than as two constants that silently agree with each other and not with the cluster.
+ISTIO_GATEWAY_OVERLAY = git_root_dir / "configs" / "enable-istio-gateway.yaml"
+ISTIO_NAMESPACE, _, GATEWAY_NAME = (
+    yaml.safe_load(ISTIO_GATEWAY_OVERLAY.read_text())["global"]["istio"]["gateway"]["name"].partition("/")
+)
+assert ISTIO_NAMESPACE and GATEWAY_NAME, (
+    f"{ISTIO_GATEWAY_OVERLAY}'s global.istio.gateway.name must be in <namespace>/<name> form, so these "
+    f"tests know which namespace to resolve the Gateway and port-forward the ingress gateway in."
+)
 INGRESS_GATEWAY_SERVICE = "istio-ingressgateway"
 INGRESS_GATEWAY_PORT = 80
 

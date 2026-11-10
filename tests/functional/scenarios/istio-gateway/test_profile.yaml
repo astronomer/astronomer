@@ -13,12 +13,19 @@ description: >-
   traffic, and with global.authSidecar on, which makes this the only coverage of auth-sidecar and
   Istio-gateway routing in combination.
 topology: unified
-# Left unpinned, so this runs on test_k8s_versions[-1] like every other scenario. Worth
-# knowing if it starts failing in setup: Istio supports a trailing window of Kubernetes
-# minors, so the newest version this repo tests against can be ahead of what the Istio
-# release pinned in metadata.yaml supports. Pinning a mid-range version here (e.g.
-# kube_version: 1.34.3) is the fix for that, bumped alongside tools.istio.version.
-# kube_version: 1.34.3
+# PINNED, unlike most scenarios, which follow test_k8s_versions[-1]. Istio supports only a
+# trailing window of Kubernetes minors, so the newest version this repo tests against can
+# drift ahead of what the Istio release in metadata.yaml (tools.istio.version) supports --
+# and the symptom is an unhelpful failure in this scenario's pre_helm_scripts step, not a
+# test assertion. Pinning decouples the two: adding a newer minor to test_k8s_versions
+# cannot break this scenario, and the only thing that can is an Istio bump.
+#
+# Bump this TOGETHER WITH tools.istio.version, not independently. The two drift in opposite
+# directions: a newer Kubernetes can outrun the pinned Istio, and a newer Istio drops support
+# for the oldest Kubernetes minors. 1.37.0 is the version this scenario is verified on with
+# Istio 1.30.7; it is also the newest entry in test_k8s_versions, so it has no room to fall
+# off the TOP of Istio's window, only off the bottom if Istio is ever bumped far enough.
+kube_version: 1.37.0
 pre_helm_scripts:
   # Namespaces and the Gateway name are passed explicitly and have no defaults, so the script
   # aborts (rather than touching whatever cluster KUBECONFIG points at) if run by hand without

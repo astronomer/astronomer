@@ -15,6 +15,11 @@ tools:
   # Only used by bin/setup-istio.py (the istio-gateway scenario's pre-helm step), which
   # installs the base/istiod/gateway charts at this version. Not downloaded by
   # bin/install-ci-tools.py -- there is no istioctl in the helper bin dir.
+  #
+  # COUPLED to kube_version in tests/functional/scenarios/istio-gateway/test_profile.yaml:
+  # Istio supports only a trailing window of Kubernetes minors, so bumping this can drop the
+  # pinned Kubernetes version out of support. Check that pin whenever this changes -- the
+  # failure lands in the scenario's pre-helm Istio install, not in a test assertion.
   istio:
     version: 1.30.7
     url: https://github.com/istio/istio
