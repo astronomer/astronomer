@@ -576,7 +576,7 @@ jobs:
   scenario-istio-gateway:
     machine:
       image: ubuntu-2604:2026.07.1
-      resource_class: xlarge
+      resource_class: 2xlarge
     steps:
       - attach_workspace:
           at: /tmp/workspace

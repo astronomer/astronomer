@@ -81,9 +81,19 @@ import time
 
 import pytest
 import requests
+import testinfra
 from kubernetes import client, config
 
-from tests.utils.k8s import KUBECONFIG_UNIFIED
+from tests.utils.houston_graphql import (
+    HoustonError,
+    create_user,
+    create_workspace,
+    dump_pod_logs,
+    get_cluster_id,
+    upsert_deployment,
+    wait_for_release_ready,
+)
+from tests.utils.k8s import KUBECONFIG_UNIFIED, get_pod_by_label_selector
 
 # See bin/setup-istio.py and configs/enable-istio-gateway.yaml -- these MUST match both.
 PLATFORM_NAMESPACE = "astronomer"
@@ -155,6 +165,19 @@ GATEWAY_UNREACHED_STATUSES = (404, 503, 504)
 # failure it is. Only ever costs time when something is actually broken.
 GATEWAY_UNREACHED_TIMEOUT = 60
 
+# The Airflow Deployment this scenario creates, to cover the commander-metadata -> airflow-chart
+# VirtualService path. Houston rejects a password that fails its complexity rules or repeats the
+# email's local part, so this reuses the pair every other deployment-creating scenario uses.
+ADMIN_EMAIL = "istio-gateway-test@astronomer.io"
+ADMIN_PASSWORD = "Astronomer%123"
+WORKSPACE_LABEL = "istio-gateway-workspace"
+DEPLOYMENT_LABEL = "istio-gateway-deployment"
+# The shared host every Deployment's webserver is published under, distinguished by a
+# /<release>/airflow path prefix. The per-deployment subdomain below is the second host on the
+# same VirtualService -- both are asserted, since they are separate `match` entries and a
+# regression can drop one while leaving the other working.
+DEPLOYMENTS_HOST = f"deployments.{BASE_DOMAIN}"
+
 
 @pytest.fixture(scope="module")
 def _custom_objects_client() -> client.CustomObjectsApi:
@@ -220,6 +243,72 @@ def gateway_port():
     """One port-forward to the ingress gateway for the whole module."""
     with _port_forward(INGRESS_GATEWAY_SERVICE, ISTIO_NAMESPACE, INGRESS_GATEWAY_PORT) as local_port:
         yield local_port
+
+
+@pytest.fixture(scope="module")
+def _apps_v1_client() -> client.AppsV1Api:
+    config.load_kube_config(config_file=KUBECONFIG_UNIFIED)
+    return client.AppsV1Api()
+
+
+@pytest.fixture(scope="module")
+def _core_v1_client() -> client.CoreV1Api:
+    config.load_kube_config(config_file=KUBECONFIG_UNIFIED)
+    return client.CoreV1Api()
+
+
+@pytest.fixture(scope="module")
+def _houston_api():
+    """Houston's own container. GraphQL runs from inside it, because the pytest process has no
+    network path into the kind cluster's pod network (see tests/utils/houston_graphql.graphql)."""
+    pod = get_pod_by_label_selector(PLATFORM_NAMESPACE, "component=houston", KUBECONFIG_UNIFIED)
+    return testinfra.get_host(f"kubectl://{pod}?container=houston&namespace={PLATFORM_NAMESPACE}", kubeconfig=KUBECONFIG_UNIFIED)
+
+
+@pytest.fixture(scope="module")
+def airflow_deployment(_houston_api, _apps_v1_client, _core_v1_client):
+    """One real Airflow Deployment for the whole module, created through Houston's API.
+
+    Module-scoped because a Deployment is by far the most expensive thing this scenario does;
+    every deployment-namespace assertion below reads the same release rather than paying for its
+    own. image-based with a LocalExecutor, deliberately the cheapest shape that still renders a
+    webserver VirtualService: the CeleryExecutor extras (statsd/pgbouncer/flower/redis) add no
+    Istio objects, and this scenario's CI node has to fit the Deployment on top of a platform
+    chart whose nginx is off but whose monitoring tier is fully on.
+
+    createUser's unauthenticated signup only succeeds once per cluster, which makes this fixture
+    unrunnable twice against the same cluster -- fine in CI (every job builds a fresh one) but
+    worth knowing locally, where a second `pytest` run against a surviving cluster fails here
+    with "Public sign ups are disabled" until bin/run-scenario.py rebuilds it.
+    """
+    token = create_user(_houston_api, ADMIN_EMAIL, ADMIN_PASSWORD)
+    workspace_id = create_workspace(_houston_api, token, WORKSPACE_LABEL)
+    cluster_id = get_cluster_id(_houston_api, token)
+    try:
+        created = upsert_deployment(
+            _houston_api,
+            token,
+            executor="LocalExecutor",
+            label=DEPLOYMENT_LABEL,
+            workspace_id=workspace_id,
+            cluster_id=cluster_id,
+            dag_deployment_type="image",
+        )
+    except HoustonError:
+        # Which side rejected the create is the whole diagnosis: houston-api's own validation, or
+        # commander failing to apply the release (the istio RBAC in commander-role.yaml is
+        # gateway-gated, so a regression there surfaces as a commander-side failure here).
+        dump_pod_logs(_core_v1_client, "component=houston")
+        dump_pod_logs(_core_v1_client, "component=commander")
+        raise
+    release_name = created["releaseName"]
+    wait_for_release_ready(_apps_v1_client, _core_v1_client, release_name)
+    return {"release_name": release_name, "namespace": f"astronomer-{release_name}"}
+
+
+def _deployment_virtualservices(custom_objects_client: client.CustomObjectsApi, namespace: str) -> dict:
+    """{name: object} for the VirtualServices commander created in a Deployment's namespace."""
+    return _list_istio_objects(custom_objects_client, "virtualservices", namespace)
 
 
 def _get_through_gateway(gateway_port: int, host: str, path: str = "/", allow_redirects: bool = False, timeout: int = 30):
@@ -511,4 +600,170 @@ def test_unclaimed_host_is_not_routed(gateway_port):
     assert response.status_code == 404, (
         f"GET / through the gateway as an unclaimed host returned {response.status_code}, not 404 -- "
         f"the gateway is routing hosts no VirtualService claims."
+    )
+
+
+def test_deployment_virtualservice_exists(_custom_objects_client, airflow_deployment):
+    """An Airflow Deployment gets a webserver VirtualService in its own namespace.
+
+    This is the commander-metadata -> airflow-chart half of the gateway path, and the only part
+    of it this repo can check end to end. The chart's side is just
+    charts/astronomer/templates/commander/commander-metadata.yaml writing
+    `istio.gateway.{enabled,name}` into commander's metadata ConfigMap, plus the gateway-gated
+    networking.istio.io grant in commander-role.yaml; the template that turns that metadata into
+    a VirtualService lives in airflow-chart, which this repo does not contain. So nothing here can
+    be asserted by rendering -- either commander really created the object against the live Istio
+    API or the deployment is published by nothing.
+    """
+    namespace = airflow_deployment["namespace"]
+    found = _deployment_virtualservices(_custom_objects_client, namespace)
+
+    expected = f"{airflow_deployment['release_name']}-webserver-virtualservice"
+    assert expected in found, (
+        f"{namespace} has no {expected} (found {sorted(found)}). With global.istio.gateway.enabled "
+        f"the deployment's webserver should be published by a VirtualService. An empty namespace "
+        f"here means commander never created one -- check that commander's metadata ConfigMap still "
+        f"carries the istio.gateway block, and that commander-role.yaml still grants "
+        f"networking.istio.io/virtualservices."
+    )
+
+
+def test_deployment_virtualservice_hosts(_custom_objects_client, airflow_deployment):
+    """The deployment's VirtualService claims both of its published hosts.
+
+    airflow-chart publishes a Deployment two ways on one VirtualService: the shared
+    deployments.<baseDomain> host narrowed by a /<release>/airflow URI prefix, and a
+    <release>-airflow.<baseDomain> subdomain of its own. Both are asserted because they are
+    separate `match` entries -- a regression can drop either while the other keeps working, and
+    which one a given install's UI links to is not this scenario's business.
+    """
+    release_name = airflow_deployment["release_name"]
+    virtualservice = _deployment_virtualservices(_custom_objects_client, airflow_deployment["namespace"])[
+        f"{release_name}-webserver-virtualservice"
+    ]
+
+    expected_hosts = {DEPLOYMENTS_HOST, f"{release_name}-airflow.{BASE_DOMAIN}"}
+    assert set(virtualservice["spec"]["hosts"]) == expected_hosts, (
+        f"{release_name}'s webserver VirtualService claims hosts {sorted(virtualservice['spec']['hosts'])}, "
+        f"not {sorted(expected_hosts)}. These are the hostnames the platform publishes an Airflow "
+        f"Deployment on, so a drift here is a real change in its externally reachable surface."
+    )
+
+    prefixes = {
+        match["uri"]["prefix"]
+        for http in virtualservice["spec"].get("http", [])
+        for match in http.get("match", [])
+        if "uri" in match
+    }
+    assert f"/{release_name}/airflow" in prefixes, (
+        f"{release_name}'s webserver VirtualService has URI prefixes {sorted(prefixes)}, missing "
+        f"/{release_name}/airflow. Without it the shared {DEPLOYMENTS_HOST} host cannot tell this "
+        f"deployment's traffic from any other deployment's."
+    )
+
+
+def test_deployment_virtualservice_gateway_reference_resolves(_custom_objects_client, airflow_deployment):
+    """The deployment's VirtualService attaches to a Gateway that really exists.
+
+    The same silent failure as test_virtualservice_gateway_references_resolve, one layer out: this
+    reference is not rendered by this repo's templates but passed through commander's metadata as a
+    string, so a wrong namespace or a typo survives all the way to a VirtualService the API server
+    accepts and that routes nothing.
+    """
+    release_name = airflow_deployment["release_name"]
+    virtualservice = _deployment_virtualservices(_custom_objects_client, airflow_deployment["namespace"])[
+        f"{release_name}-webserver-virtualservice"
+    ]
+
+    references = virtualservice["spec"]["gateways"]
+    assert references == [f"{ISTIO_NAMESPACE}/{GATEWAY_NAME}"], (
+        f"{release_name}'s webserver VirtualService attaches to {references}, not the "
+        f"{ISTIO_NAMESPACE}/{GATEWAY_NAME} this scenario created. commander passes this through from "
+        f"global.istio.gateway.name verbatim."
+    )
+    for reference in references:
+        namespace, _, gateway_name = reference.partition("/")
+        _custom_objects_client.get_namespaced_custom_object(
+            group=ISTIO_GROUP, version=ISTIO_VERSION, namespace=namespace, plural="gateways", name=gateway_name
+        )
+
+
+def test_no_deployment_ingresses(_networking_v1_client, airflow_deployment):
+    """The Gateway suppresses the Deployment's Ingress too, not just the platform's.
+
+    The deployment-namespace counterpart to test_no_platform_ingresses. Both objects serving the
+    same host is the failure mode: airflow-chart has to gate its webserver Ingress on the same flag
+    that renders the VirtualService, and nothing in this repo can check that it does.
+    """
+    namespace = airflow_deployment["namespace"]
+    ingresses = _networking_v1_client.list_namespaced_ingress(namespace).items
+
+    names = [ingress.metadata.name for ingress in ingresses]
+    assert not names, (
+        f"global.istio.gateway.enabled is on, so the Airflow Deployment should have no Ingress, but "
+        f"{namespace} has: {sorted(names)}. An Ingress alongside the VirtualService means two objects "
+        f"publishing the same host, and with nginx disabled in this scenario the Ingress is dead "
+        f"config that still claims it."
+    )
+
+
+def test_deployment_virtualservice_routes_to_the_auth_sidecar(_custom_objects_client, airflow_deployment):
+    """The deployment's VirtualService routes to the auth proxy, not straight at the webserver.
+
+    Same reasoning as test_admin_ui_virtualservices_route_to_the_auth_sidecar: with the Gateway
+    terminating traffic outside the platform and nginx disabled, the sidecar is the only thing
+    authenticating the Airflow UI. A route to the webserver's own port would serve it
+    unauthenticated while looking perfectly healthy.
+    """
+    release_name = airflow_deployment["release_name"]
+    virtualservice = _deployment_virtualservices(_custom_objects_client, airflow_deployment["namespace"])[
+        f"{release_name}-webserver-virtualservice"
+    ]
+
+    ports = {
+        route["destination"]["port"]["number"] for http in virtualservice["spec"].get("http", []) for route in http.get("route", [])
+    }
+    assert ports == {AUTH_SIDECAR_PORT}, (
+        f"{release_name}'s webserver VirtualService routes to port(s) {sorted(ports)}, not the auth "
+        f"sidecar's {AUTH_SIDECAR_PORT}. Routing straight to the webserver's own port means "
+        f"unauthenticated access to the Airflow UI through the Gateway."
+    )
+
+
+# only_rerun, unlike every other flaky mark in this module: a rerun re-invokes the
+# module-scoped airflow_deployment fixture, whose create_user call is one-shot per cluster
+# (Houston's createUser signup). So a fixture failure retried 10 times reports
+# "Public sign ups are disabled" from the LAST attempt and buries the real first failure --
+# observed masking a wait_for_release_ready timeout exactly this way. Narrowed to assertion
+# failures, which is all this test's own flakiness (istiod's xDS push) ever produces.
+@pytest.mark.flaky(reruns=10, reruns_delay=6, only_rerun=["AssertionError"])
+@pytest.mark.parametrize("host_form", ["subdomain", "shared-host-with-prefix"])
+def test_gateway_routes_the_deployment_webserver(gateway_port, airflow_deployment, host_form):
+    """Real HTTP through the Gateway reaches the Deployment's webserver tier.
+
+    The headline assertion for the deployment path, and the reason this scenario creates a real
+    Deployment at all: everything above reads objects, and a VirtualService can be perfectly shaped
+    while Envoy has no route for it. Both published host forms are driven, since they are separate
+    `match` entries on the same object.
+
+    Asserted the same way as test_gateway_reaches_the_auth_sidecar, and for the same reason: the
+    route's destination is the auth proxy (see test_deployment_virtualservice_routes_to_the_auth_sidecar),
+    whose own auth subrequest cannot succeed in kind, so what is provable is that the response came
+    from the proxy rather than from Envoy giving up.
+    """
+    release_name = airflow_deployment["release_name"]
+    if host_form == "subdomain":
+        host, path = f"{release_name}-airflow.{BASE_DOMAIN}", "/"
+    else:
+        host, path = DEPLOYMENTS_HOST, f"/{release_name}/airflow"
+
+    response = _get_through_gateway(gateway_port, host, path=path, timeout=GATEWAY_UNREACHED_TIMEOUT)
+
+    assert response.status_code not in GATEWAY_UNREACHED_STATUSES, (
+        f"GET {path} through the gateway as {host} returned {response.status_code}, so nothing "
+        f"answered from the deployment's auth proxy. A 404 means Envoy has no route for this host "
+        f"and prefix -- the deployment's VirtualService is not attached to the Gateway this gateway "
+        f"pod serves, or the {host_form} match entry is gone. A 503 or 504 means the route exists "
+        f"but the proxy never answered: nothing serving port {AUTH_SIDECAR_PORT}, or NetworkPolicy "
+        f"dropping the gateway's traffic into {airflow_deployment['namespace']}. Body: {response.text[:300]}"
     )

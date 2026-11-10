@@ -26,7 +26,15 @@ pre_helm_scripts:
   - bin/setup-istio.py --root-namespace istio-config --gateway-namespace istio-system --gateway-name astronomer-gateway
 values:
   - configs/enable-istio-gateway.yaml
-# No resource_class override: this scenario creates no Airflow Deployment, so it does not hit
-# the CPU ceiling that pushed the deployment-creating scenarios to 2xlarge (see auth-sidecar /
-# PINF-1080). Istio adds only istiod and one gateway pod, both resource-trimmed by
-# bin/setup-istio.py, on top of the platform chart the default xlarge already fits.
+  # Trims the authSidecar resource requests, which this scenario multiplies across the platform
+  # admin UIs AND the Airflow Deployment's webserver. See the file's own header for why the
+  # Airflow component resources themselves can't be reduced this way (houston-api computes them
+  # server-side) and why resource_class below is the actual fix for CPU exhaustion.
+  - configs/scenario-airflow-reduce-resources.yaml
+# 2xlarge because this scenario creates a real Airflow Deployment, which is what pushed every
+# other deployment-creating scenario off the default xlarge (FailedScheduling: Insufficient cpu
+# -- auth-sidecar / PINF-1080). Istio's own addition is small: istiod and one gateway pod, both
+# resource-trimmed by bin/setup-istio.py. What does not fit on xlarge is a Deployment on top of
+# a platform chart whose monitoring tier is fully on. The Deployment is a LocalExecutor
+# image-based one, the cheapest shape that still renders a webserver VirtualService.
+resource_class: 2xlarge
