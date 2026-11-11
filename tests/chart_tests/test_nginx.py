@@ -544,3 +544,4 @@ def test_nginx_add_headers_matches_headers_configmap_name(plane_mode, plane, sub
     referenced_namespace, referenced_name = controller_cm["data"]["add-headers"].split("/", 1)
     assert referenced_namespace == namespace
     assert referenced_name == headers_cm["metadata"]["name"]
+    assert {"Content-Security-Policy", "X-Frame-Options", "X-Content-Type-Options", "Referrer-Policy"} <= set(headers_cm["data"])

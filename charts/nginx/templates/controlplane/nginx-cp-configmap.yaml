@@ -16,7 +16,7 @@ data:
   main-snippet: |
     load_module /etc/nginx/modules/ngx_http_subs_filter_module.so;
   allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
-  add-headers: {{ .Release.Namespace }}/{{ .Release.Name }}-cp-{{ template "nginx.name" . }}-ingress-controller-headers
+  add-headers: {{ .Release.Namespace }}/{{ template "nginx.cp.headersConfigMapName" .}}
   annotations-risk-level: Critical
   proxy-add-original-uri-header: "true"
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}
