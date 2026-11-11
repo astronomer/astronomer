@@ -44,7 +44,7 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               image:
-                default: astrocrpublic.azurecr.io/astronomer/ap-postgresql:17.5.0
+                default: astrocrpublic.azurecr.io/astronomer/ap-postgresql:17.11.0-4
                 type: string
               password:
                 default: postgres
