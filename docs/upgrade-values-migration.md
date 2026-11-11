@@ -172,6 +172,16 @@ These keys already use the correct schema and are not modified:
   described above), `grafana`, `prometheus`, `elasticsearch`, `vector`,
   `kube-state`, `nats`, `tags`
 
+## Role Override Check
+
+If your values file overrides built-in roles under `astronomer.houston.config.roles.<ROLE>.permissions`, the migration script also checks those keys. It prints a warning to stderr for each permission key that Houston does not recognise (and therefore ignores), naming the role and the key:
+
+```text
+Warning: role DEPLOYMENT_EDITOR sets permission key 'deployment.airflow.bogus', which Houston does not recognise and ignores.
+```
+
+The check is advisory: it never changes your file, never affects the exit code and never blocks an upgrade. Keys set to `false` and custom (non built-in) roles are skipped. The `deployment.airflow.op` and `system.airflow.op` keys are valid, since Op support was restored. Remove or correct any key reported, then upgrade. The supported key list matches the one Houston uses for its startup warning for unknown role keys.
+
 ## Rollback
 
 If you need to revert after migration:
