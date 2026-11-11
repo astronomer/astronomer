@@ -24,6 +24,18 @@ HOUSTON_JOB_SWITCHES = [
     "syncDataplaneClusters",
 ]
 
+# Waiting workloads that only render behind a switch the fixture turns on. If one stops rendering,
+# the fixture has drifted from the chart and the test would pass without checking it.
+GATED_WAITING_COMPONENTS = {
+    "houston-cleanup-cluster-audits",
+    "houston-cp-refresh",
+    "houston-populate-daily-task-metrics",
+    "houston-populate-hourly-ta-metrics",
+    "houston-sync-dataplane-clusters",
+    "houston-update-check",
+    "houston-update-runtime-check",
+}
+
 # The wait flag each policy has to satisfy, keyed by the NetworkPolicy's component label.
 POLICIES = {
     "commander-policy": "COMMANDER_WAIT_ENABLED",
@@ -35,7 +47,14 @@ POLICIES = {
 def unified_docs():
     return render_chart(
         values={
-            "global": {"networkPolicy": {"enabled": True}, "plane": {"mode": "unified"}},
+            "global": {
+                "networkPolicy": {"enabled": True},
+                "plane": {"mode": "unified"},
+                # Off by default. Each gates Houston workloads that wait for Commander and the registry:
+                # the task-usage CronJobs, and the houston-cp-refresh hook.
+                "metricsReporting": {"taskUsageMetrics": {"enabled": True}},
+                "controlPlaneHA": {"enabled": True, "globalBaseDomain": "example.com"},
+            },
             "astronomer": {"houston": {switch: {"enabled": True} for switch in HOUSTON_JOB_SWITCHES}},
         },
     )
@@ -74,7 +93,8 @@ def test_unified_networkpolicy_admits_every_workload_that_waits_for_it(unified_d
         if doc["kind"] == "NetworkPolicy" and (doc["metadata"].get("labels") or {}).get("component") == policy_component
     ]
     waiting = _waiting_workloads(unified_docs, wait_var)
-    assert waiting, f"no rendered workload sets {wait_var}=true, so this test checks nothing"
+    not_rendered = GATED_WAITING_COMPONENTS - waiting.keys()
+    assert not not_rendered, f"the fixture no longer renders {sorted(not_rendered)} with {wait_var}=true, so they go unchecked"
 
     missing = {component: workload for component, workload in waiting.items() if component not in _admitted_components(policy)}
 
