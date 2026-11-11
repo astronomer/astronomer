@@ -455,10 +455,13 @@ Call it with a dict:
   fileHint         optional: the values path that delivers extra secrets to this component as files
   delivered        optional, with fileHint: the secrets the chart delivers itself, which that
                    path cannot take, so a <VAR>_FILE for one of them gets no such hint
+  consequence      optional: what a managed name in the list would do, for the message. The
+                   default says the component refuses to start, which only a loader does
 */}}
 {{- define "secretsFromFiles.assertNoSecretEnv" -}}
 {{- if .enabled -}}
 {{- $folded := default false .caseInsensitive -}}
+{{- $consequence := .consequence | default (printf "%s refuses to start with that secret in its environment" .component) -}}
 {{- $managed := dict -}}
 {{- $owned := dict -}}
 {{- range .names -}}
@@ -495,7 +498,7 @@ Call it with a dict:
 {{- fail (printf "loader-setting-in-environment: %s sets %s, a setting of %s's secrets loader. While secrets-from-files is on for %s the chart owns the loader's gate and file paths, and an entry here would override them. %s, %s." $.listKey $name $.component $.component $fix $off) -}}
 {{- end -}}
 {{- if and (hasKey $managed $match) (or $hasValue $hasValueFrom) -}}
-{{- fail (printf "secret-in-environment: %s sets %s, a secret %s loads from a file while secrets-from-files is on for it, and %s refuses to start with that secret in its environment. Remove %s from %s, %s." $.listKey $name $.component $.component $name $.listKey $off) -}}
+{{- fail (printf "secret-in-environment: %s sets %s, a secret %s loads from a file while secrets-from-files is on for it, and %s. Remove %s from %s, %s." $.listKey $name $.component $consequence $name $.listKey $off) -}}
 {{- end -}}
 {{- if and $.raw (kindIs "map" $valueFrom) (hasKey $valueFrom "secretKeyRef") -}}
 {{- $fix := printf "Remove %s from %s" $name $.listKey -}}

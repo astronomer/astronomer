@@ -37,6 +37,28 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
+# -- Read laminar's secrets from mounted files instead of injecting them with
+# valueFrom.secretKeyRef. Leave unset to inherit `global.secretsFromFiles.enabled`;
+# set false to keep laminar on environment variables.
+#
+# On, both pods read the database connection from `LAMINAR_DATABASE_URL_FILE`, which
+# laminar supports natively: it uses only the file, does not start if the file is
+# missing or empty, and restarts itself when the file changes. laminar has no file
+# setting for its JWKS, so a component with a jwtIssuer (by default only the
+# hypervisor) gets an init container that writes the certificate into the laminar.env
+# file laminar loads its settings from, ahead of its environment.
+#
+# Unless `databaseBootstrapper.backendSecretName` is set, the chart then also manages
+# the `<release>-laminar-backend` Secret the bootstrapper writes. An existing release
+# has that Secret without Helm ownership, so run
+# `bin/adopt-bootstrap-secrets-pre-upgrade.py` before the upgrade that turns this on.
+# With `global.argoCD.annotation.enabled`, the chart refuses to manage that Secret, so
+# set `databaseBootstrapper.backendSecretName`: every ArgoCD sync would put the chart's
+# placeholder back into it, and laminar restarts when that file changes.
+# @default -- inherits global.secretsFromFiles.enabled
+secretsFromFiles:
+  enabled: ~
+
 databaseBootstrapper:
   # Name of an existing secret holding the database connection for Laminar, under a "connection"
   # key. Leave unset to have the database and the secret created for you.

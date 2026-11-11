@@ -4,10 +4,12 @@
 
 Some Secrets that the Astronomer chart renders as release-managed manifests with
 secrets-from-files on (``<release>-flightdeck-backend``, while commander or pilot
-reads the FlightDeck DSN from a file) were, in older releases or with file mode
-off, created out of band by a bootstrapper init container and therefore carry no
-Helm ownership metadata. Helm 3 refuses to adopt a live resource it did not
-create, so the ``helm upgrade`` that turns that file mode on aborts with:
+reads the FlightDeck DSN from a file, and ``<release>-laminar-backend``, while
+laminar reads its database connection from a file) were, in older releases or
+with file mode off, created out of band by a bootstrapper init container and
+therefore carry no Helm ownership metadata. Helm 3 refuses to adopt a live
+resource it did not create, so the ``helm upgrade`` that turns that file mode on
+aborts with:
 
     Secret "<release>-flightdeck-backend" ... cannot be imported into the
     current release: invalid ownership metadata; missing key
@@ -19,7 +21,7 @@ This script stamps the required Helm ownership label and annotations onto the
 live Secret(s) so the next ``helm upgrade`` can adopt them.
 
 It is idempotent and safe to run before every upgrade: a Secret that does not
-exist (fresh install, or FlightDeck disabled) or that is already owned by this
+exist (fresh install, or its component disabled) or that is already owned by this
 release is left untouched. A Secret owned by a *different* release is never
 reassigned -- the script errors out so the conflict is resolved deliberately.
 
@@ -44,7 +46,7 @@ RELEASE_NAMESPACE_ANNOTATION = "meta.helm.sh/release-namespace"
 # Secret name suffixes that the secrets-from-files feature newly renders as
 # release-managed manifests but that older releases created unmanaged via a
 # bootstrapper init container. Prefixed with the release name at runtime.
-DEFAULT_SECRET_SUFFIXES = ["flightdeck-backend"]
+DEFAULT_SECRET_SUFFIXES = ["flightdeck-backend", "laminar-backend"]
 
 
 def run(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -170,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             secret = get_secret(base, name)
             if secret is None:
-                print(f"SKIP  {name}: not found (fresh install, or FlightDeck disabled) - nothing to adopt")
+                print(f"SKIP  {name}: not found (fresh install, or its component disabled) - nothing to adopt")
                 skipped.append(name)
                 continue
             if not needs_adoption(secret, args.release_name, args.namespace):
