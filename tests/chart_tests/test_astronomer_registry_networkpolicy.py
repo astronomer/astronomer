@@ -27,6 +27,27 @@ class TestRegistryNetworkPolicyHoustonCpRefresh:
         }
         assert cp_refresh_selector in ingress_from
 
+    def test_unified_mode_adds_houston_cleanup_cluster_audits_ingress_rule(self, kube_version):
+        """houston-cleanup-cluster-audits podSelector is present in unified mode, where its entrypoint waits for the registry."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[NP_FILE],
+            values={
+                "global": {
+                    "networkPolicy": {"enabled": True},
+                    "plane": {"mode": "unified"},
+                }
+            },
+        )
+        assert len(docs) == 1
+        ingress_from = docs[0]["spec"]["ingress"][0]["from"]
+        audits_selector = {
+            "podSelector": {
+                "matchLabels": {"component": "houston-cleanup-cluster-audits", "release": "release-name", "tier": "astronomer"}
+            }
+        }
+        assert audits_selector in ingress_from
+
     def test_data_mode_omits_houston_cp_refresh_ingress_rule(self, kube_version):
         """houston-cp-refresh podSelector is absent in data mode, where the job is not rendered."""
         docs = render_chart(
