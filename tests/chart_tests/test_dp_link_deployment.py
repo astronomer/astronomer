@@ -74,13 +74,18 @@ class TestDpLinkDeployment:
         assert dp_link_env["WORKERS__DPLINK__MAX_RECONNECT_DELAY_SECONDS"] == "30"
         assert dp_link_env["WORKERS__DPLINK__RECONNECT_DELAY_MULTIPLIER"] == "2"
         assert dp_link_env["WORKERS__DPLINK__JITTER_FRACTION"] == "0.2"
+        # Houston's own defaults: the fallback pull is off, every 300s when on. APC-2197.
+        assert dp_link_env["DPLINK_FALLBACK_PULL_ENABLED"] == "false"
+        assert dp_link_env["DPLINK_FALLBACK_PULL_INTERVAL_SECONDS"] == "300"
 
         # Bare names are not bound to DP-Link config in houston (CLAIM_INTERVAL_SECONDS
         # belongs to workers.navigator), so they must not be emitted. APC-1958.
+        # DPLINK_* is not bare: houston binds DPLINK_FALLBACK_PULL_* to workers.dplink.
         bare_tunables = {
             n
             for n in dp_link_env
-            if n.endswith(("_SECONDS", "_ATTEMPTS", "_MULTIPLIER", "_FRACTION")) and not n.startswith("WORKERS__DPLINK__")
+            if n.endswith(("_SECONDS", "_ATTEMPTS", "_MULTIPLIER", "_FRACTION"))
+            and not n.startswith(("WORKERS__DPLINK__", "DPLINK_"))
         }
         assert not bare_tunables
 
@@ -203,6 +208,7 @@ class TestDpLinkDeployment:
                     "reconnectDelayMultiplier": 3,
                     "jitterFraction": 0.5,
                     "replicas": 5,
+                    "fallbackPull": {"enabled": True, "intervalSeconds": 120},
                 }
             },
         }
@@ -227,6 +233,12 @@ class TestDpLinkDeployment:
         assert dp_link_env["WORKERS__DPLINK__MAX_RECONNECT_DELAY_SECONDS"] == "60"
         assert dp_link_env["WORKERS__DPLINK__RECONNECT_DELAY_MULTIPLIER"] == "3"
         assert dp_link_env["WORKERS__DPLINK__JITTER_FRACTION"] == "0.5"
+        assert dp_link_env["DPLINK_FALLBACK_PULL_ENABLED"] == "true"
+        assert dp_link_env["DPLINK_FALLBACK_PULL_INTERVAL_SECONDS"] == "120"
+        # Rendered once each, so a strategic merge patch has no duplicate to trip on.
+        names = [e["name"] for e in get_containers_by_name(docs[0])["dp-link"]["env"]]
+        assert names.count("DPLINK_FALLBACK_PULL_ENABLED") == 1
+        assert names.count("DPLINK_FALLBACK_PULL_INTERVAL_SECONDS") == 1
 
     def test_dp_link_deployment_with_pod_annotations(self, kube_version):
         """Test dp-link deployment with custom pod annotations."""
