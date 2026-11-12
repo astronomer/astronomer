@@ -1,0 +1,23 @@
+# Keep developer, CI, and AI-assistant tooling out of the GitHub source
+# archives (the "Source code" .tar.gz/.zip on each release, and any
+# /archive/refs/tags/<tag>.tar.gz download).
+# This only affects `git archive` output; clones are unchanged.
+# Mirrors the dev-only entries already in .helmignore.
+
+# AI assistant config and skills
+/.agents export-ignore
+/.claude export-ignore
+/.cursor export-ignore
+
+# Editor / dev environment
+/.devcontainer export-ignore
+/.vscode export-ignore
+
+# CI and repo management
+/.circleci export-ignore
+/.github export-ignore
+/.pre-commit-config.yaml export-ignore
+/CODEOWNERS export-ignore
+
+# This file itself
+/.gitattributes export-ignore
