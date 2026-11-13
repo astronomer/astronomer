@@ -89,6 +89,12 @@ jobs:
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 5
+    environment:
+      # `-n auto` counts the docker host's CPUs, not this container's allotment, so it
+      # starts about twice as many workers as `large` (4 vCPU, 8 GB) is sized for and
+      # peak memory approaches the 8 GB limit. Pin the count to the resource class.
+      # If you change resource_class, revisit this number.
+      PYTEST_XDIST_AUTO_NUM_WORKERS: 4
     steps:
       - checkout
       - run:
