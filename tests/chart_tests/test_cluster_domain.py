@@ -36,7 +36,7 @@ def rendered_text_by_object(values):
 
 SCENARIOS = {
     "unified": (
-        scenario_values("unified"),
+        scenario_values("unified", global_overrides={"customLogging": {"enabled": False}}),
         {
             "Secret/astronomer-bootstrap",
             "ConfigMap/release-name-houston-config",
