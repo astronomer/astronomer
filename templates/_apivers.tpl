@@ -46,7 +46,7 @@ batch/v1
 {{- end -}}
 
 {{- define "apiVersion.istio.networking" -}}
-networking.istio.io/v1alpha3
+networking.istio.io/v1
 {{- end -}}
 
 {{- define "apiVersion.Namespace" -}}

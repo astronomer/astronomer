@@ -124,6 +124,12 @@ spec:
               value: {{ .Values.dpLink.reconnectDelayMultiplier | quote }}
             - name: WORKERS__DPLINK__JITTER_FRACTION
               value: {{ .Values.dpLink.jitterFraction | quote }}
+            # Fallback pull. Houston binds these two names (not WORKERS__DPLINK__*)
+            # to workers.dplink.fallbackPull and parses them as JSON. APC-2197.
+            - name: DPLINK_FALLBACK_PULL_ENABLED
+              value: {{ .Values.dpLink.fallbackPull.enabled | quote }}
+            - name: DPLINK_FALLBACK_PULL_INTERVAL_SECONDS
+              value: {{ .Values.dpLink.fallbackPull.intervalSeconds | quote }}
             {{- /* Rendered verbatim, so valueFrom entries and templated values work.
                    dp_link_environment renders the same entries once more as name and
                    value, on purpose (see the note there), and checks them against

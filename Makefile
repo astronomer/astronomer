@@ -37,7 +37,7 @@ unittest-charts: test-unit
 .PHONY: test-unit
 test-unit: venv ## Run unit tests
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
-	uv run pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
+	uv run pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests tests/bin_tests
 
 .PHONY: validate-commander-airflow-version
 validate-commander-airflow-version: ## Validate that airflowChartVersion is the same in astronomer configs and the commander docker image
@@ -90,8 +90,8 @@ show-test-helper-files: ## Show all the test helper files downloaded and created
 	@find ~/.local/share/astronomer-software/ -type f | sort
 
 .PHONY: cache-docker-images
-cache-docker-images: ## Cache all docker images used in the base helm chart
-	bin/show_docker_images.py --no-enable-all-features | cut -w -f2 | xargs -t -r -n1 docker pull
+cache-docker-images: ## Cache all docker images used in the helm chart
+	bin/show_docker_images.py --with-houston | cut -w -f2 | xargs -t -r -n1 docker pull
 
 .PHONY: uv-lock-upgrade
 uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.
@@ -100,3 +100,9 @@ uv-lock-upgrade: ## Upgrade dependencies in the uv.lock file.
 .PHONY: uv-lock-upgrade-and-sync
 uv-lock-upgrade-and-sync: uv-lock-upgrade ## Upgrade uv lockfile dependencies and sync venv
 	uv sync
+
+.PHONY: audit
+audit: ## Audit uv.lock dependencies; fail on HIGH/CRITICAL or unrated vulnerabilities that have a fix
+	@mkdir -p $(TEMPDIR)
+	uv audit --locked --preview-features audit-command,json-output --output-format json > $(TEMPDIR)/uv-audit.json; \
+		bin/audit-gate.py --uv-exit-code $$? $(TEMPDIR)/uv-audit.json

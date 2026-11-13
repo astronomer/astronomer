@@ -102,10 +102,6 @@ from tests.utils.k8s import KUBECONFIG_UNIFIED, KUBECONFIG_CONTROL, KUBECONFIG_D
 
 These resolve to `~/.local/share/astronomer-software/kubeconfig/<scenario>`.
 
-> **Known bug**: `tests/functional/control/test_container_user_is_not_root.py` imports
-> `kubeconfig_control` (lowercase), which does not exist in `tests.utils.k8s`. Fix this to
-> `KUBECONFIG_CONTROL` whenever you touch that file.
-
 ---
 
 ## Shared Fixtures
@@ -162,10 +158,10 @@ container_ignore_list = ["kube-state", "houston", "astro-ui"]
 def test_container_user_is_not_root():
     containers = get_pod_running_containers(kubeconfig=KUBECONFIG_UNIFIED, namespace="astronomer")
     for container in containers.values():
-        if container["_name"] in container_ignore_list:
-            pytest.skip(f"Unsupported container: {container['_name']}")
+        if container["name"] in container_ignore_list:
+            pytest.skip(f"Unsupported container: {container['name']}")
         host = testinfra.get_host(
-            f"kubectl://{container['pod_name']}?container={container['_name']}&namespace={container['namespace']}",
+            f"kubectl://{container['pod_name']}?container={container['name']}&namespace={container['namespace']}",
             kubeconfig=KUBECONFIG_UNIFIED,
         )
         user = host.user()
@@ -222,7 +218,7 @@ def test_houston_can_reach_prometheus(houston_api):
 From `tests.utils.k8s`:
 
 **`get_pod_running_containers(namespace, kubeconfig=None) -> dict`**
-Returns `{pod_name_container_name: container_info}` for all **ready** containers. Each value includes `pod_name`, `namespace`, and `_name` (container name).
+Returns `{pod_name_container_name: container_info}` for all **ready** containers. Each value is the container status as a dict (`name`, `ready`, `image`, ...) plus `pod_name` and `namespace`.
 
 **`get_pod_by_label_selector(namespace, label_selector, kubeconfig) -> str`**
 Returns the name of the first pod matching the given label selector. Asserts at least one pod is found.

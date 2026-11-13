@@ -44,8 +44,7 @@ values:
 # cannot apply without cert-manager -- so it goes in before the chart, not after like Kyverno.
 pre_helm_scripts:
   - bin/install-cert-manager.py
-  - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/ap-laminar:1.0.0-rc6
-  - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/airflow-operator-dev:1.7.0-rc3
+  - bin/kind-load-images.py --cluster unified --pull quay.io/astronomer/ap-laminar:1.0.1
 
 namespace_labels:
   platform: astronomer
