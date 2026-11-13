@@ -317,6 +317,7 @@ class TestElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}},
             },
+            {"podSelector": {"matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}}},
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(self, kube_version):
@@ -335,6 +336,7 @@ class TestElasticSearch:
         assert [
             {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
             {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "api-server"}}},
+            {"podSelector": {"matchLabels": {"tier": "nginx", "component": "cp-ingress-controller", "release": "release-name"}}},
             {
                 "namespaceSelector": {},
                 "podSelector": {
@@ -943,7 +945,7 @@ class TestElasticSearch:
                 "pathType": "Prefix",
                 "backend": {
                     "service": {
-                        "name": "release-name-elasticsearch",
+                        "name": "release-name-elasticsearch-nginx",
                         "port": {"number": 9200},
                     }
                 },
@@ -956,7 +958,7 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/elasticsearch/templates/client/es-client-networkpolicy.yaml"],
-            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
         )
         assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
         assert docs[0]["kind"] == "NetworkPolicy"
@@ -966,6 +968,23 @@ class TestElasticSearch:
             "matchLabels": {"tier": "logging", "component": "elasticsearch", "release": "release-name", "role": "client"}
         }
         assert docs[0]["spec"]["policyTypes"] == ["Ingress"]
+        # APC-2206: ingress controllers must never reach the unauthenticated ES client directly
+        peers = [p["podSelector"]["matchLabels"]["component"] for p in docs[0]["spec"]["ingress"][0]["from"] if "podSelector" in p]
+        assert "dp-ingress-controller" not in peers
+        assert "cp-ingress-controller" not in peers
+        assert not any("namespaceSelector" in p for p in docs[0]["spec"]["ingress"][0]["from"])
+
+    @pytest.mark.parametrize("plane_mode,controller", [("data", "dp-ingress-controller"), ("unified", "cp-ingress-controller")])
+    def test_elasticsearch_nginx_network_policy_admits_ingress_controller(self, kube_version, plane_mode, controller):
+        """The nginx auth proxy is the only ES entry point for the ingress controller."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml"],
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
+        )
+        assert len(docs) == 1
+        components = [p["podSelector"]["matchLabels"].get("component") for p in docs[0]["spec"]["ingress"][0]["from"] if "podSelector" in p]
+        assert controller in components
 
     def test_elasticsearch_nginx_auth_cache_enabled_by_default(self, kube_version):
         """Test that auth caching is enabled by default in nginx-es configmap."""

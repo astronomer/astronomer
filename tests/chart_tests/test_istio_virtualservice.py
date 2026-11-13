@@ -279,7 +279,7 @@ def test_prometheus_federate_virtualservice_route(kube_version):
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 def test_elasticsearch_virtualservice_route(kube_version):
-    """Backend and timeout match es-ingress.yaml.
+    """Backend (the nginx auth proxy, never raw ES) and timeout match es-ingress.yaml.
 
     The Ingress sets proxy-read-timeout/proxy-send-timeout to 300s. Istio's default route timeout is
     15s, so the timeout has to be templated explicitly or long log queries would break under Istio
@@ -288,7 +288,7 @@ def test_elasticsearch_virtualservice_route(kube_version):
     rendered = _virtualservices(render_chart(kube_version=kube_version, show_only=[ELASTICSEARCH_VS], values=_istio_values()))
     route = rendered["release-name-elasticsearch-virtualservice"]["spec"]["http"][0]
     assert route["timeout"] == "300s"
-    assert route["route"][0]["destination"]["host"] == "release-name-elasticsearch.default.svc.cluster.local"
+    assert route["route"][0]["destination"]["host"] == "release-name-elasticsearch-nginx.default.svc.cluster.local"
     assert route["route"][0]["destination"]["port"]["number"] == 9200
 
 
