@@ -18,9 +18,9 @@ spec:
     # allow egress traffic to pods in istio-system
     - "istio-system/*"
     # allow egress to pods in the nginx-elasticsearch service
-    - "{{ .Release.Namespace }}/{{ .Release.Name }}-elasticsearch-nginx.{{ .Release.Namespace }}.svc.cluster.local"
+    - "{{ .Release.Namespace }}/{{ .Release.Name }}-elasticsearch-nginx.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}"
     # allow egress to sql proxy
-    - "{{ .Release.Namespace }}/pg-sqlproxy-gcloud-sqlproxy.{{ .Release.Namespace }}.svc.cluster.local"
+    - "{{ .Release.Namespace }}/pg-sqlproxy-gcloud-sqlproxy.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}"
 ---
 # This is used to overwrite the default configuration
 # for the platform namespace. This is the defaults

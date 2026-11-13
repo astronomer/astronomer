@@ -266,6 +266,8 @@ spec:
               value: {{ .Release.Namespace }}
             - name: COMMANDER_PLATFORM_RELEASE
               value: {{ .Release.Name }}
+            - name: COMMANDER_CLUSTER_DOMAIN
+              value: {{ .Values.global.clusterDomain }}
             - name: COMMANDER_HELM_REPO
               value: {{ .Values.global.helmRepo }}
             {{ if .Values.commander.upgradeTimeout -}}
@@ -286,7 +288,7 @@ spec:
             - name: COMMANDER_LAMINAR_HYPERVISOR_JWT_AUDIENCE
               value: {{ .Values.commander.laminar.hypervisor.jwtAudience | quote }}
             - name: COMMANDER_LAMINAR_HYPERVISOR_BASE_URL
-              value: {{ printf "http://%s.%s.svc.cluster.local.:%v" (include "laminar.fullname" (list $ "hypervisor")) .Release.Namespace .Values.commander.laminar.hypervisor.port | quote }}
+              value: {{ printf "http://%s.%s.svc.%s.:%v" (include "laminar.fullname" (list $ "hypervisor")) .Release.Namespace .Values.global.clusterDomain .Values.commander.laminar.hypervisor.port | quote }}
             - name: COMMANDER_LAMINAR_HYPERVISOR_POLL_INTERVAL_SECS
               value: {{ .Values.commander.laminar.hypervisor.pollIntervalSecs | quote }}
             {{- end }}
