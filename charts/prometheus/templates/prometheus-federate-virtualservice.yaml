@@ -25,7 +25,7 @@ spec:
             prefix: /
       route:
         - destination:
-            host: {{ template "prometheus.fullname" . }}-prom-proxy.{{ .Release.Namespace }}.svc.cluster.local
+            host: {{ template "prometheus.fullname" . }}-prom-proxy.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
             port:
               number: {{ .Values.global.authSidecar.port | default 80 }}
 {{- end }}

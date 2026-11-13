@@ -26,7 +26,7 @@ spec:
             prefix: /
       route:
         - destination:
-            host: {{ .Release.Name }}-commander.{{ .Release.Namespace }}.svc.cluster.local
+            host: {{ .Release.Name }}-commander.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
             port:
               number: {{ .Values.ports.commanderGRPC }}
 {{- end }}

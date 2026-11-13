@@ -30,7 +30,7 @@ spec:
             prefix: /
       route:
         - destination:
-            host: {{ .Release.Name }}-astro-ui.{{ .Release.Namespace }}.svc.cluster.local
+            host: {{ .Release.Name }}-astro-ui.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
             port:
               number: {{ .Values.ports.astroUIHTTP }}
 ---
