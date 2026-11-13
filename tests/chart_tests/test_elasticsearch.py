@@ -983,7 +983,9 @@ class TestElasticSearch:
             values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
         )
         assert len(docs) == 1
-        components = [p["podSelector"]["matchLabels"].get("component") for p in docs[0]["spec"]["ingress"][0]["from"] if "podSelector" in p]
+        components = [
+            p["podSelector"]["matchLabels"].get("component") for p in docs[0]["spec"]["ingress"][0]["from"] if "podSelector" in p
+        ]
         assert controller in components
 
     def test_elasticsearch_nginx_auth_cache_enabled_by_default(self, kube_version):
