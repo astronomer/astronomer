@@ -72,6 +72,13 @@ SCENARIOS = {
             "VirtualService/release-name-prometheus-federate-virtualservice",
         },
     ),
+    "data-without-domain-prefix": (
+        scenario_values(
+            "data",
+            global_overrides={"customLogging": {"enabled": False}, "plane": {"mode": "data", "domainPrefix": None}},
+        ),
+        {"Deployment/release-name-commander"},
+    ),
     "control-mcp-server": (
         scenario_values(
             "control",
