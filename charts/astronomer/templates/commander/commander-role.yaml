@@ -123,9 +123,6 @@ rules:
   resources: ["ingresses"]
   verbs: ["get", "create", "delete", "patch", "list", "watch"]
 - apiGroups: ["networking.k8s.io"]
-  resources: ["ingresses/status"]
-  verbs: ["update", "list", "watch"]
-- apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
   verbs: ["create", "delete", "get", "patch", "list", "watch"]
 {{- if (($.Values.global.istio | default dict).gateway | default dict).enabled }}
