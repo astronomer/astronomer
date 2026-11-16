@@ -43,6 +43,8 @@ SCENARIOS = {
             "ConfigMap/release-name-houston-config",
             "Deployment/release-name-commander",
             "Deployment/release-name-pilot",
+            "StatefulSet/release-name-prometheus",
+            "ConfigMap/release-name-laminar-env",
             "Certificate/release-name-airflow-operator-serving-cert",
             "Sidecar/default-sidecar-config",
             "VirtualService/release-name-alertmanager-virtualservice",
@@ -63,6 +65,7 @@ SCENARIOS = {
             "Secret/astronomer-bootstrap",
             "Deployment/release-name-commander",
             "Deployment/release-name-pilot",
+            "ConfigMap/release-name-laminar-env",
             "VirtualService/release-name-commander-api-virtualservice",
             "VirtualService/release-name-commander-metadata-virtualservice",
             "VirtualService/release-name-elasticsearch-virtualservice",
@@ -108,3 +111,15 @@ def test_yaml_ambiguous_cluster_domain_renders_as_string():
 
     assert commander_env["COMMANDER_CLUSTER_DOMAIN"] == "true"
     assert houston_config["helm"]["clusterDomain"] == "true"
+
+
+def test_airflow_operator_manager_receives_cluster_domain():
+    docs = render_chart(
+        values={"global": {"airflowOperator": {"enabled": True}, "clusterDomain": CUSTOM_CLUSTER_DOMAIN}},
+        show_only=["charts/airflow-operator/templates/manager/controller-manager-deployment.yaml"],
+        validate_objects=False,
+    )
+
+    manager_env = get_env_vars_dict(get_containers_by_name(docs[0])["manager"]["env"])
+
+    assert manager_env["CLUSTER_DOMAIN"] == CUSTOM_CLUSTER_DOMAIN
