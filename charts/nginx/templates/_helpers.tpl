@@ -31,6 +31,13 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{/*
+Shared by the headers ConfigMap's name and the controller's add-headers setting so the two cannot drift apart.
+*/}}
+{{- define "nginx.cp.headersConfigMapName" -}}
+{{ .Release.Name }}-cp-{{ template "nginx.name" . }}-ingress-controller-headers
+{{- end -}}
+
 {{ define "nginx.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-nginx:{{ .Values.images.nginx.tag }}
