@@ -2,8 +2,9 @@ import base64
 import json
 
 import pytest
+import yaml
 
-from tests.utils import get_all_features
+from tests.utils import get_all_features, get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 CUSTOM_CLUSTER_DOMAIN = "cluster.example.net"
@@ -52,6 +53,10 @@ SCENARIOS = {
             "VirtualService/release-name-registry-virtualservice",
         },
     ),
+    "unified-custom-logging": (
+        scenario_values("unified"),
+        {"Deployment/release-name-commander"},
+    ),
     "data": (
         scenario_values("data", global_overrides={"customLogging": {"enabled": False}}),
         {
@@ -86,3 +91,20 @@ def test_custom_cluster_domain_replaces_cluster_local_everywhere(scenario):
 
     assert [name for name, text in rendered.items() if "cluster.local" in text] == []
     assert {name for name in objects_using_cluster_domain if CUSTOM_CLUSTER_DOMAIN not in rendered.get(name, "")} == set()
+
+
+def test_yaml_ambiguous_cluster_domain_renders_as_string():
+    docs = render_chart(
+        values={"global": {"clusterDomain": "true"}},
+        show_only=[
+            "charts/astronomer/templates/commander/commander-deployment.yaml",
+            "charts/astronomer/templates/houston/houston-configmap.yaml",
+        ],
+    )
+    docs_by_kind = {doc["kind"]: doc for doc in docs}
+
+    commander_env = get_env_vars_dict(get_containers_by_name(docs_by_kind["Deployment"])["commander"]["env"])
+    houston_config = yaml.safe_load(docs_by_kind["ConfigMap"]["data"]["production.yaml"])
+
+    assert commander_env["COMMANDER_CLUSTER_DOMAIN"] == "true"
+    assert houston_config["helm"]["clusterDomain"] == "true"
