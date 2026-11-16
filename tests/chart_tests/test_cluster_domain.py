@@ -130,3 +130,35 @@ def test_airflow_operator_manager_receives_cluster_domain():
     manager_env = get_env_vars_dict(get_containers_by_name(docs[0])["manager"]["env"])
 
     assert manager_env["CLUSTER_DOMAIN"] == CUSTOM_CLUSTER_DOMAIN
+
+
+def test_filesd_reloader_receives_cluster_domain():
+    docs = render_chart(
+        values={"global": {"clusterDomain": CUSTOM_CLUSTER_DOMAIN}},
+        show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        validate_objects=False,
+    )
+
+    reloader_env = get_env_vars_dict(get_containers_by_name(docs[0])["filesd-reloader"]["env"])
+
+    assert reloader_env["CLUSTER_DOMAIN"] == CUSTOM_CLUSTER_DOMAIN
+
+
+def test_laminar_receives_cluster_domain():
+    docs = render_chart(
+        values={"global": {"laminar": {"enabled": True}, "plane": {"mode": "data"}, "clusterDomain": CUSTOM_CLUSTER_DOMAIN}},
+        show_only=["charts/laminar/templates/configmap.yaml"],
+        validate_objects=False,
+    )
+
+    env_vars = dict(line.split("=", 1) for line in docs[0]["data"]["laminar.env"].strip().splitlines())
+
+    assert env_vars["laminar_cluster_domain"] == CUSTOM_CLUSTER_DOMAIN
+
+
+@pytest.mark.parametrize("cluster_domain", ["", None])
+def test_empty_cluster_domain_is_rejected(cluster_domain):
+    with pytest.raises(Exception) as err:
+        render_chart(values={"global": {"clusterDomain": cluster_domain}})
+
+    assert "global.clusterDomain must not be empty" in err.value.stderr.decode()
