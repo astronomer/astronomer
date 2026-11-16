@@ -115,7 +115,13 @@ def _exposures_with_port(docs):
             for rule in doc["spec"]["rules"]:
                 for path in rule["http"]["paths"]:
                     port = path["backend"]["service"]["port"]
-                    yield doc["kind"], doc["metadata"]["name"], path["backend"]["service"]["name"], annotations, port.get("number", port.get("name"))
+                    yield (
+                        doc["kind"],
+                        doc["metadata"]["name"],
+                        path["backend"]["service"]["name"],
+                        annotations,
+                        port.get("number", port.get("name")),
+                    )
         elif doc["kind"] == "VirtualService":
             for http in doc["spec"].get("http", []):
                 for route in http.get("route", []):
@@ -196,7 +202,9 @@ def test_external_es_proxy_is_exposed_on_its_authenticated_port():
     )
     wrong = sorted(
         f"{kind}/{name} -> {backend}:{port}"
-        for kind, name, backend, _, port in _exposures_with_port(d for d in docs if d and d["kind"] in ("Ingress", "VirtualService"))
+        for kind, name, backend, _, port in _exposures_with_port(
+            d for d in docs if d and d["kind"] in ("Ingress", "VirtualService")
+        )
         if backend.removeprefix(RELEASE_PREFIX) == "external-es-proxy" and port != EXTERNAL_ES_PROXY_AUTH_PORT
     )
     assert not wrong, f"external-es-proxy exposed on a port without authentication: {wrong}"
