@@ -90,14 +90,20 @@ def _remove_resolver_file(base_domain: str) -> None:
     _run(["sudo", "rm", "-f", str(path)], check=True)
 
 
+def _container_exists(name: str) -> bool:
+    # List rather than `docker inspect` so we never depend on a runtime's "no such object" wording or casing.
+    # The name filter is a substring match, so compare names exactly.
+    listing = _run(["docker", "ps", "-a", "--filter", f"name={name}", "--format", "{{.Names}}"], check=False)
+    if listing.returncode != 0:
+        stderr = (listing.stderr or "").strip()
+        raise CommandError(f"Could not list containers: {stderr or 'docker ps failed'}")
+    return name in listing.stdout.split()
+
+
 def _remove_container(name: str) -> None:
-    inspect = _run(["docker", "inspect", name], check=False)
-    if inspect.returncode != 0:
-        stderr = (inspect.stderr or "").strip()
-        if f"No such object: {name}" in stderr or f"No such container: {name}" in stderr:
-            _print(f"  Container not found, skipping: {name}")
-            return
-        raise CommandError(f"Could not inspect container {name}: {stderr or 'docker inspect failed'}")
+    if not _container_exists(name):
+        _print(f"  Container not found, skipping: {name}")
+        return
     _print(f"  Removing container: {name}")
     _run(["docker", "rm", "-f", name], check=True)
 
