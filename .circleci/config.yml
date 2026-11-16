@@ -25,7 +25,7 @@ parameters:
 jobs:
   sign-released-image:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-10
+      - image: quay.io/astronomer/ci-helm-release:2026-11
     parameters:
       version:
         type: string
@@ -45,7 +45,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-10
+      - image: quay.io/astronomer/ci-helm-release:2026-11
     parameters:
       version:
         type: string
@@ -62,7 +62,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2026-10
+      - image: quay.io/astronomer/ci-pre-commit:2026-11
     resource_class: small
     steps:
       - checkout
@@ -87,7 +87,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-10
+      - image: quay.io/astronomer/ci-helm-release:2026-11
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -123,7 +123,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-10
+      - image: quay.io/astronomer/ci-helm-release:2026-11
     parameters:
       qa_release:
         type: boolean
@@ -142,7 +142,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-10
+      - image: quay.io/astronomer/ci-helm-release:2026-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -181,7 +181,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2026-10
+      - image: quay.io/astronomer/ci-helm-release:2026-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
