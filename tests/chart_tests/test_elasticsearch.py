@@ -381,7 +381,7 @@ class TestElasticSearch:
             for x in [
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { if ($es_index_scope = \"*\") { break; } rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;",
+                'location ~* /_search$ { if ($es_index_scope = "*") { break; } rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;',
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -456,7 +456,7 @@ class TestElasticSearch:
             for x in [
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { if ($es_index_scope = \"*\") { break; } rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
+                'location ~* /_search$ { if ($es_index_scope = "*") { break; } rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;',
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -483,7 +483,7 @@ class TestElasticSearch:
             for x in [
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { if ($es_index_scope = \"*\") { break; } rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;",
+                'location ~* /_search$ { if ($es_index_scope = "*") { break; } rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;',
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -514,7 +514,7 @@ class TestElasticSearch:
             for x in [
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { if ($es_index_scope = \"*\") { break; } rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
+                'location ~* /_search$ { if ($es_index_scope = "*") { break; } rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;',
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
