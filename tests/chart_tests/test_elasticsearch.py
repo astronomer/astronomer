@@ -381,12 +381,45 @@ class TestElasticSearch:
             for x in [
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;",
+                "location ~* /_search$ { if ($es_index_scope = \"*\") { break; } rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
             ]
         )
+
+    def test_elastic_nginx_config_lets_houston_bot_search_but_not_write(self, kube_version):
+        """Houston's astronomer-bot (scope "*") may search the indices it asks for; nobody gets that for _bulk/_count."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
+        )
+        nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
+        assert "auth_request_set $es_index_scope $upstream_http_x_elasticsearch_index_user;" in nginx_config
+        assert nginx_config.count('$es_index_scope = "*"') == 1
+        search_location = nginx_config.split("location ~* /_search$ {")[1].split("}")[0:2]
+        assert 'if ($es_index_scope = "*") { break; }' in "}".join(search_location) + "}"
+        for other in ("/_bulk$", "/_count$"):
+            block = nginx_config.split(f"location ~* {other} {{")[1].split("}")[0]
+            assert "es_index_scope" not in block, f"{other} must keep the per-deployment rewrite for every caller"
+
+    @pytest.mark.parametrize(
+        "plane_mode,expected",
+        [
+            ("unified", "http://release-name-houston.default:8871/v1/elasticsearch"),
+            ("data", "https://houston.example.com/v1/elasticsearch"),
+        ],
+    )
+    def test_elasticsearch_ingress_authenticates_against_houston(self, kube_version, plane_mode, expected):
+        """APC-2206: the public ES Ingress rejects callers Houston does not recognise, before the nginx proxy."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 1
+        assert docs[0]["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"] == expected
 
     def test_elastic_nginx_config_custom_max_body_size(self, kube_version):
         """Test that custom max body size is properly set."""
@@ -423,7 +456,7 @@ class TestElasticSearch:
             for x in [
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
+                "location ~* /_search$ { if ($es_index_scope = \"*\") { break; } rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -450,7 +483,7 @@ class TestElasticSearch:
             for x in [
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;",
+                "location ~* /_search$ { if ($es_index_scope = \"*\") { break; } rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -481,7 +514,7 @@ class TestElasticSearch:
             for x in [
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
+                "location ~* /_search$ { if ($es_index_scope = \"*\") { break; } rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",

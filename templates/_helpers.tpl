@@ -165,10 +165,19 @@ imagePullSecrets:
 {{- end }}
 
 {{- define "houston-proxy" -}}
+proxy_pass {{ include "houston-elasticsearch-auth-url" . }};
+{{- end }}
+
+{{/*
+Houston's Elasticsearch authorization endpoint (HTTP basic: <release>:<password>, or the astronomer-bot key).
+In unified mode Houston is in-cluster; on a data plane it is the control plane's public host.
+Used by the nginx auth proxies (auth_request) and by the public ES Ingress (auth-url).
+*/}}
+{{- define "houston-elasticsearch-auth-url" -}}
 {{- if eq .Values.global.plane.mode "unified" -}}
-proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch
 {{- else -}}
-proxy_pass https://houston.{{ include "global.authBaseDomain" . }}/v1/elasticsearch;
+https://houston.{{ include "global.authBaseDomain" . }}/v1/elasticsearch
 {{- end -}}
 {{- end }}
 
