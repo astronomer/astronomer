@@ -45,10 +45,6 @@ data:
       server {
         listen {{ .Values.common.ports.http }};
         auth_request /auth;
-        # Houston answers "*" here only for its own astronomer-bot credential (it reads
-        # component logs for every deployment). Deployments never get it, so they stay
-        # confined to their own indices by the rewrites below.
-        auth_request_set $es_index_scope $upstream_http_x_elasticsearch_index_user;
         {{- if $authCacheEnabled }}
         auth_request_set $auth_cache_status $upstream_cache_status;
         {{- end }}
@@ -71,10 +67,13 @@ data:
           proxy_pass http://elasticsearch;
         }
 
-        # Houston's astronomer-bot searches the indices it asked for, read-only.
-        # _count and _bulk keep the per-deployment rewrite for every caller.
+        # Houston reads component logs for every deployment as the astronomer-bot service
+        # account and searches the indices it asks for. Rewrite-phase directives run before
+        # auth_request, so this keys on $remote_user; a request claiming that name is still
+        # rejected by the auth subrequest unless it carries the bot's real key. Deployments
+        # cannot use the name. _search only: _count and _bulk keep the per-deployment rewrite.
         location ~* /_search$ {
-          if ($es_index_scope = "*") {
+          if ($remote_user = "astronomer-bot") {
             break;
           }
           rewrite /_search(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_search$1 break;
