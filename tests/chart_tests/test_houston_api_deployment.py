@@ -87,6 +87,25 @@ class TestHoustonApiDeployment:
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
+    def test_houston_api_deployment_unified_mode_registry_disabled(self, kube_version):
+        """registry.enabled=false stops houston waiting for the registry, even in unified mode."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"plane": {"mode": "unified"}},
+                "astronomer": {"registry": {"enabled": False}},
+            },
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+
+        for name in ("houston", "houston-wait-for-db"):
+            env_vars = get_env_vars_dict(c_by_name[name]["env"])
+            assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
+            assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
+
     def test_houston_api_deployment_with_helm_set_database(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
