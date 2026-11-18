@@ -379,36 +379,61 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
-                "location ~* /_count$ { rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;",
-                'location ~* /_search$ { if ($remote_user = "astronomer-bot") { break; } rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;',
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_bulk$is_args$args; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_count$is_args$args; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_search$is_args$args; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
             ]
         )
 
-    def test_elastic_nginx_config_lets_houston_bot_search_but_not_write(self, kube_version):
-        """Houston's astronomer-bot may search the indices it asks for; nobody gets that for _bulk/_count."""
+    @pytest.mark.parametrize(
+        "plane_mode,expected_url",
+        [
+            ("unified", "http://release-name-houston.default:8871/v1/authorization/elasticsearch"),
+            ("data", "https://houston.example.com/v1/authorization/elasticsearch"),
+        ],
+    )
+    def test_elastic_nginx_scope_comes_from_houston_not_the_url(self, kube_version, plane_mode, expected_url):
+        """The proxy authorizes with /v1/authorization/elasticsearch and builds the index from Houston's answer.
+
+        nginx rewrite directives run before auth_request, so the scope Houston returns is used in proxy_pass, which
+        is evaluated afterwards. The index must never come from the client's URL or from $remote_user.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
+        )
+        nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
+        assert "auth_request_set $es_scope $upstream_http_x_elasticsearch_index_scope;" in nginx_config
+        assert "location = /auth { internal;" in nginx_config
+        assert f"proxy_pass {expected_url};" in nginx_config
+        assert "rewrite /" not in nginx_config, "an index built by a rewrite directive cannot use the scope Houston returns"
+        assert "$remote_user." not in nginx_config, "the index must not be built from the caller-supplied user name"
+
+    def test_elastic_nginx_auth_cache_is_keyed_on_the_path_too(self, kube_version):
+        """Houston's answer depends on the path (a read-only caller may _search but not _bulk).
+
+        If the auth cache were keyed on Authorization alone, a read-only credential that had searched once would
+        inherit the cached 'allowed' for a later _bulk. Verified against a real nginx: with the old key _bulk
+        returned 200 for a read-only caller, with this key it returns 403.
+        """
         docs = render_chart(
             kube_version=kube_version,
             values={},
             show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
         )
         nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
-        assert "es_index_scope" not in nginx_config, "rewrite-phase directives cannot see auth_request_set variables"
-        assert nginx_config.count('$remote_user = "astronomer-bot"') == 1
-        search_block = nginx_config.split("location ~* /_search$ {")[1].split("proxy_pass")[0]
-        assert 'if ($remote_user = "astronomer-bot") { break; }' in search_block
-        for other in ("/_bulk$", "/_count$"):
-            block = nginx_config.split(f"location ~* {other} {{")[1].split("}")[0]
-            assert "astronomer-bot" not in block, f"{other} must keep the per-deployment rewrite for every caller"
+        assert 'proxy_cache_key "$http_authorization|$request_uri";' in nginx_config
+        assert 'proxy_cache_key "$http_authorization";' not in nginx_config
 
     @pytest.mark.parametrize(
         "plane_mode,expected",
         [
-            ("unified", "http://release-name-houston.default:8871/v1/elasticsearch"),
-            ("data", "https://houston.example.com/v1/elasticsearch"),
+            ("unified", "http://release-name-houston.default:8871/v1/authorization/elasticsearch"),
+            ("data", "https://houston.example.com/v1/authorization/elasticsearch"),
         ],
     )
     def test_elasticsearch_ingress_authenticates_against_houston(self, kube_version, plane_mode, expected):
@@ -454,9 +479,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
-                "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
-                'location ~* /_search$ { if ($remote_user = "astronomer-bot") { break; } rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;',
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_bulk$is_args$args; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_count$is_args$args; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_search$is_args$args; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -481,9 +506,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
-                "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
-                'location ~* /_search$ { if ($remote_user = "astronomer-bot") { break; } rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;',
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_bulk$is_args$args; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_count$is_args$args; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_search$is_args$args; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -512,9 +537,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
-                "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
-                'location ~* /_search$ { if ($remote_user = "astronomer-bot") { break; } rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;',
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_bulk$is_args$args; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_count$is_args$args; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_search$is_args$args; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -1045,7 +1070,7 @@ class TestElasticSearch:
 
         # Verify cache directives in /auth location
         assert "proxy_cache auth_cache" in nginx_config
-        assert 'proxy_cache_key "$http_authorization"' in nginx_config
+        assert 'proxy_cache_key "$http_authorization|$request_uri"' in nginx_config
         assert "proxy_cache_valid 200 5m" in nginx_config
         assert "proxy_cache_valid 401 403 1m" in nginx_config
         assert "proxy_ignore_headers Cache-Control Expires" in nginx_config
