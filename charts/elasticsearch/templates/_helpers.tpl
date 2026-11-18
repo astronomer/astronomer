@@ -176,3 +176,42 @@ elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDoma
 elasticsearch.{{ .Values.global.baseDomain }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+NetworkPolicy ingress peers allowed to reach the ES nginx auth proxy (<release>-elasticsearch-nginx)
+from the platform's ingress layer, so the public ES Ingress/VirtualService can route to it (APC-2206).
+
+This is the ONLY ES policy that admits an ingress controller. The ES client policy must not: external
+traffic has to go through the proxy, which authenticates every request with Houston and scopes it
+to the caller's indices, never straight to Elasticsearch (which runs with xpack security off).
+
+Behaviour, in order:
+  * global.authSidecar.enabled (the auth sidecar / OpenShift or Istio gateway model): the ingress is
+    not one of our controllers, so admit the OpenShift ingress policy-group namespaces, plus any
+    namespaces listed in global.authSidecar.ingressAllowedNamespaces.
+  * otherwise: admit the platform's own ingress controller pods of this release:
+      - data plane:        component "dp-ingress-controller"
+      - unified / control: component "cp-ingress-controller"
+
+Renders a list of NetworkPolicyPeer items, to be spliced into a `from:` list.
+*/}}
+{{- define "nginx-es.ingressControllerPeers" -}}
+{{- if .Values.global.authSidecar.enabled }}
+- namespaceSelector:
+    matchLabels:
+      network.openshift.io/policy-group: ingress
+{{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+- namespaceSelector:
+    matchExpressions:
+    - key: kubernetes.io/metadata.name
+      operator: In
+      values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+{{- end }}
+{{- else }}
+- podSelector:
+    matchLabels:
+      tier: nginx
+      component: {{ ternary "dp-ingress-controller" "cp-ingress-controller" (eq .Values.global.plane.mode "data") }}
+      release: {{ .Release.Name }}
+{{- end }}
+{{- end -}}
