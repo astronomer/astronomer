@@ -1264,12 +1264,12 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
-Whether the registry should be rendered.
-Master switch registry.enabled (default true) AND the registry plane modes (data/unified).
-Returns the string "true" or "false" — compare with eq.
+Check whether the registry wait check should be enabled.
+validates registry.enabled helm flag (default true) AND unified plane mode.
+Returns the string "true" or "false".
 */}}
 {{- define "registry.enabled" -}}
-{{- and .Values.registry.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
+{{- ternary "true" "false" (and .Values.registry.enabled (eq .Values.global.plane.mode "unified")) -}}
 {{- end }}
 
 {{/*
