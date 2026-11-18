@@ -837,7 +837,7 @@ secrets from files (houston_wait_for_db_environment).
 - name: COMMANDER_WAIT_ENABLED
   value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
 - name: REGISTRY_WAIT_ENABLED
-  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
+  value: {{ include "houston.registry.check" . | quote }}
 {{- end }}
 
 {{/*
@@ -1264,11 +1264,20 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
-Check whether the registry wait check should be enabled.
-validates registry.enabled helm flag (default true) AND unified plane mode.
-Returns the string "true" or "false".
+Whether the registry should be rendered.
+Master switch registry.enabled (default true) AND the registry plane modes (data/unified).
+Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "registry.enabled" -}}
+{{- and .Values.registry.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
+{{- end }}
+
+{{/*
+Whether houston should wait for the registry (REGISTRY_WAIT_ENABLED).
+registry.enabled (default true) AND unified plane mode.
+Returns the string "true" or "false".
+*/}}
+{{- define "houston.registry.check" -}}
 {{- ternary "true" "false" (and .Values.registry.enabled (eq .Values.global.plane.mode "unified")) -}}
 {{- end }}
 
