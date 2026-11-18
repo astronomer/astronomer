@@ -181,6 +181,25 @@ https://houston.{{ include "global.authBaseDomain" . }}/v1/elasticsearch
 {{- end -}}
 {{- end }}
 
+{{- define "houston-es-authorization-proxy" -}}
+proxy_pass {{ include "houston-elasticsearch-authorization-url" . }};
+{{- end }}
+
+{{/*
+Houston's Elasticsearch authorizer under /v1/authorization (auth_request target of the ES nginx proxy,
+auth-url of the public ES Ingress). It accepts a deployment's Basic credentials, Houston's own short-lived
+read token, and a Houston user or service account (Bearer), and answers with the deployment the caller may
+reach in the X-Elasticsearch-Index-Scope header.
+In unified mode Houston is in-cluster; on a data plane it is the control plane's public host.
+*/}}
+{{- define "houston-elasticsearch-authorization-url" -}}
+{{- if eq .Values.global.plane.mode "unified" -}}
+http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/authorization/elasticsearch
+{{- else -}}
+https://houston.{{ include "global.authBaseDomain" . }}/v1/authorization/elasticsearch
+{{- end -}}
+{{- end }}
+
 {{ define "registry.authHeaderSecret" -}}
 {{ default (printf "%s-registry-auth-key" .Release.Name) .Values.global.authHeaderSecretName }}
 {{- end }}
