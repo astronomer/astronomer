@@ -411,6 +411,9 @@ class TestElasticSearch:
         assert "location = /auth { internal;" in nginx_config
         assert f"proxy_pass {expected_url};" in nginx_config
         assert "rewrite /" not in nginx_config, "an index built by a rewrite directive cannot use the scope Houston returns"
+        assert "proxy_set_header X-ES-Original-URI $request_uri;" in nginx_config, (
+            "the control plane's ingress overwrites X-Original-URI, so Houston needs its own header for the real path"
+        )
         assert "$remote_user." not in nginx_config, "the index must not be built from the caller-supplied user name"
 
     def test_elastic_nginx_auth_cache_is_keyed_on_the_path_too(self, kube_version):
