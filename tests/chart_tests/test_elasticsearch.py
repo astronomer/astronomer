@@ -416,12 +416,16 @@ class TestElasticSearch:
         )
         assert "$remote_user." not in nginx_config, "the index must not be built from the caller-supplied user name"
 
-    def test_elastic_nginx_auth_cache_is_keyed_on_the_path_too(self, kube_version):
-        """Houston's answer depends on the path (a read-only caller may _search but not _bulk).
+    def test_elastic_nginx_auth_cache_is_keyed_on_the_path_and_the_whole_credential(self, kube_version):
+        """Houston's answer depends on the path and on who is asking, so the cache key must carry both.
 
-        If the auth cache were keyed on Authorization alone, a read-only credential that had searched once would
-        inherit the cached 'allowed' for a later _bulk. Verified against a real nginx: with the old key _bulk
-        returned 200 for a read-only caller, with this key it returns 403.
+        * Path: if the key were Authorization alone, a read-only credential that had searched once would inherit
+          the cached 'allowed' for a later _bulk. Verified against a real nginx: with that key _bulk returned 200
+          for a read-only caller, with the path in the key it returns 403.
+        * Cookie: Houston also identifies a caller by session cookie, which sends no Authorization header. Without the
+          cookie in the key, one session's cached 'allowed' (and its deployment scope) was served to every other
+          cookie-only or anonymous request for the same URI. Verified against a real nginx: after an allowed session,
+          an anonymous request and a session that was not allowed both got 200.
         """
         docs = render_chart(
             kube_version=kube_version,
@@ -429,8 +433,21 @@ class TestElasticSearch:
             show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
         )
         nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
-        assert 'proxy_cache_key "$http_authorization|$request_uri";' in nginx_config
+        assert 'proxy_cache_key "$http_authorization|$http_cookie|$request_uri";' in nginx_config
         assert 'proxy_cache_key "$http_authorization";' not in nginx_config
+        assert 'proxy_cache_key "$http_authorization|$request_uri";' not in nginx_config
+
+    def test_elastic_nginx_auth_cache_skips_requests_with_no_credential(self, kube_version):
+        """A request with neither an Authorization header nor a cookie is never stored in or served from the auth cache."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
+        )
+        nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
+        assert 'map "$http_authorization$http_cookie" $es_auth_uncacheable { default 0; "" 1; }' in nginx_config
+        assert "proxy_cache_bypass $es_auth_uncacheable;" in nginx_config
+        assert "proxy_no_cache $es_auth_uncacheable;" in nginx_config
 
     @pytest.mark.parametrize(
         "plane_mode,expected",
@@ -1073,7 +1090,7 @@ class TestElasticSearch:
 
         # Verify cache directives in /auth location
         assert "proxy_cache auth_cache" in nginx_config
-        assert 'proxy_cache_key "$http_authorization|$request_uri"' in nginx_config
+        assert 'proxy_cache_key "$http_authorization|$http_cookie|$request_uri"' in nginx_config
         assert "proxy_cache_valid 200 5m" in nginx_config
         assert "proxy_cache_valid 401 403 1m" in nginx_config
         assert "proxy_ignore_headers Cache-Control Expires" in nginx_config
@@ -1102,6 +1119,9 @@ class TestElasticSearch:
         assert "proxy_cache_path" not in nginx_config
         assert "proxy_cache auth_cache" not in nginx_config
         assert "proxy_cache_key" not in nginx_config
+        assert "proxy_cache_bypass" not in nginx_config
+        assert "proxy_no_cache" not in nginx_config
+        assert "es_auth_uncacheable" not in nginx_config
         assert "proxy_cache_valid" not in nginx_config
         assert "X-Auth-Cache-Status" not in nginx_config
 

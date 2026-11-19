@@ -35,6 +35,13 @@ data:
       {{- if $authCacheEnabled }}
 
       proxy_cache_path /tmp/nginx-auth-cache levels={{ .Values.nginx.authCache.levels }} keys_zone={{ .Values.nginx.authCache.keysZone }} max_size={{ .Values.nginx.authCache.maxSize }} inactive={{ .Values.nginx.authCache.inactive }};
+
+      # A request with neither an Authorization header nor a cookie has no credential to key a cached answer on, so
+      # its answer must not be stored or served from the cache (see proxy_cache_bypass in /auth below).
+      map "$http_authorization$http_cookie" $es_auth_uncacheable {
+        default 0;
+        "" 1;
+      }
       {{- end }}
 
       upstream elasticsearch {
@@ -82,7 +89,13 @@ data:
           proxy_cache auth_cache;
           # Houston's answer depends on the path as well as the caller (a read-only caller must not
           # inherit a cached "allowed" from a _search when it later sends a _bulk), so key on both.
-          proxy_cache_key "$http_authorization|$request_uri";
+          # Houston also identifies a caller by session cookie, which sends no Authorization header: without
+          # the cookie in the key, one session's cached "allowed" (and its deployment scope) would be served to
+          # every other cookie-only or anonymous request for the same URI. A request with neither header is
+          # never cached at all.
+          proxy_cache_key "$http_authorization|$http_cookie|$request_uri";
+          proxy_cache_bypass $es_auth_uncacheable;
+          proxy_no_cache $es_auth_uncacheable;
           proxy_cache_valid 200 {{ .Values.nginx.authCache.validSuccess }};
           proxy_cache_valid 401 403 {{ .Values.nginx.authCache.validFailure }};
           proxy_ignore_headers Cache-Control Expires;
