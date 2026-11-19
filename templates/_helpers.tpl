@@ -169,9 +169,11 @@ proxy_pass {{ include "houston-elasticsearch-auth-url" . }};
 {{- end }}
 
 {{/*
-Houston's Elasticsearch authorization endpoint (HTTP basic: <release>:<password>, or the astronomer-bot key).
+Houston's /v1/elasticsearch endpoint: deployment credentials only (HTTP basic: <release>:<password>).
 In unified mode Houston is in-cluster; on a data plane it is the control plane's public host.
-Used by the nginx auth proxies (auth_request) and by the public ES Ingress (auth-url).
+Used by external-es-proxy's auth_request. The ES nginx auth proxy and the public ES Ingress use
+houston-elasticsearch-authorization-url instead, which also accepts Houston's own read token and Houston users,
+and tells the proxy which deployment the caller may reach.
 */}}
 {{- define "houston-elasticsearch-auth-url" -}}
 {{- if eq .Values.global.plane.mode "unified" -}}
