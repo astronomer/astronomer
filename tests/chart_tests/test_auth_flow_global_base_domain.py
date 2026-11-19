@@ -150,7 +150,7 @@ class TestHoustonProxyGlobalBaseDomain:
             show_only=[ES_NGINX_CONFIGMAP],
             values=_values("data", ha=True, global_base_domain=GLOBAL_BASE_DOMAIN),
         )
-        assert f"proxy_pass https://houston.{GLOBAL_BASE_DOMAIN}/v1/authorization/elasticsearch;" in _es_nginx_conf(docs)
+        assert f"proxy_pass https://houston.{GLOBAL_BASE_DOMAIN}/v2/elasticsearch;" in _es_nginx_conf(docs)
 
     def test_ha_off_uses_base_domain(self, kube_version):
         docs = render_chart(
@@ -158,7 +158,7 @@ class TestHoustonProxyGlobalBaseDomain:
             show_only=[ES_NGINX_CONFIGMAP],
             values=_values("data"),
         )
-        assert f"proxy_pass https://houston.{BASE_DOMAIN}/v1/authorization/elasticsearch;" in _es_nginx_conf(docs)
+        assert f"proxy_pass https://houston.{BASE_DOMAIN}/v2/elasticsearch;" in _es_nginx_conf(docs)
 
     def test_ha_on_without_global_base_domain_fails(self, kube_version):
         """PINF-1070: HA on without globalBaseDomain now fails the render on every plane (the

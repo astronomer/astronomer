@@ -62,7 +62,7 @@ data:
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
 
-        # Houston's /v1/authorization/elasticsearch authorizes each request and answers with the one
+        # Houston's /v2/elasticsearch authorizes each request and answers with the one
         # deployment ($es_scope) the caller may reach, or "*" for a system-level caller. The index is
         # built from that and never from the URL, so a client cannot widen its own scope.
         # The scope is only known after auth_request (access phase), so it is used in proxy_pass, which

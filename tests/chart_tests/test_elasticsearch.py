@@ -391,12 +391,12 @@ class TestElasticSearch:
     @pytest.mark.parametrize(
         "plane_mode,expected_url",
         [
-            ("unified", "http://release-name-houston.default:8871/v1/authorization/elasticsearch"),
-            ("data", "https://houston.example.com/v1/authorization/elasticsearch"),
+            ("unified", "http://release-name-houston.default:8871/v2/elasticsearch"),
+            ("data", "https://houston.example.com/v2/elasticsearch"),
         ],
     )
     def test_elastic_nginx_scope_comes_from_houston_not_the_url(self, kube_version, plane_mode, expected_url):
-        """The proxy authorizes with /v1/authorization/elasticsearch and builds the index from Houston's answer.
+        """The proxy authorizes with /v2/elasticsearch and builds the index from Houston's answer.
 
         nginx rewrite directives run before auth_request, so the scope Houston returns is used in proxy_pass, which
         is evaluated afterwards. The index must never come from the client's URL or from $remote_user.
@@ -452,8 +452,8 @@ class TestElasticSearch:
     @pytest.mark.parametrize(
         "plane_mode,expected",
         [
-            ("unified", "http://release-name-houston.default:8871/v1/authorization/elasticsearch"),
-            ("data", "https://houston.example.com/v1/authorization/elasticsearch"),
+            ("unified", "http://release-name-houston.default:8871/v2/elasticsearch"),
+            ("data", "https://houston.example.com/v2/elasticsearch"),
         ],
     )
     def test_elasticsearch_ingress_authenticates_against_houston(self, kube_version, plane_mode, expected):
