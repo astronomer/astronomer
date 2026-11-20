@@ -48,8 +48,10 @@ spec:
           - path: /
             pathType: Prefix
             backend:
+              # Not the raw ES Service: the nginx proxy authenticates every request itself (auth_request to Houston's
+              # /v2/elasticsearch) and pins the index, so this Ingress needs no auth-url of its own.
               service:
-                name: {{ .Release.Name }}-elasticsearch
+                name: {{ template "nginx-es.fullname" . }}-nginx
                 port:
                   number: {{ .Values.common.ports.http }}
 {{- end }}

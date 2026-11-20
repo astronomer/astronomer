@@ -110,18 +110,82 @@ imagePullSecrets:
 
 
 {{/*
+"true" when the customer's Elasticsearch is reached through the AWS signing proxy (the `awsproxy` sidecar container on
+localhost:<service.awsproxy>), which any of the three AWS authentication options turns on: a static key Secret
+(awsSecretName), IRSA (awsServiceAccountAnnotation) or kube2iam (awsIAMRole). Empty otherwise, when requests go to the
+customer's host directly with the credential added by setenv.lua. Every place that has to agree on this (the sidecar in
+the Deployment, where nginx forwards, the upstream) uses this one definition so they cannot drift apart.
+*/}}
+{{- define "external-es-proxy-uses-aws" -}}
+{{- $csc := .Values.global.customLogging -}}
+{{- if or $csc.awsSecretName $csc.awsServiceAccountAnnotation $csc.awsIAMRole -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
 Switches the elasticsearch configuratiob based on customLogging
 when aws managed elastic search is confired awsesproxy settings is required
 to authenticate with aws managed elastic search or opensearch
 */}}
 
 {{- define "external-es-proxy-nginx-location-common" -}}
-{{- if or .Values.global.customLogging.awsSecretName .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+{{- if eq (include "external-es-proxy-uses-aws" .) "true" }}
 proxy_pass http://localhost:{{ .Values.service.awsproxy }};
 {{- else }}
 access_by_lua_file /usr/local/openresty/nginx/conf/setenv.lua;
 proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
 {{- include "external-es-proxy-trustcerts" . }}
+{{- end }}
+{{- end }}
+
+{{/*
+The server the authenticated port (securehttp) forwards to: the signing proxy when one is configured, else the
+customer's Elasticsearch. It is an nginx `upstream` because the scoped locations below build the request URI from a
+variable ($es_scope), and nginx resolves a proxy_pass host at request time (needing a resolver) unless it names an
+upstream group.
+*/}}
+{{- define "external-es-proxy-upstream-server" -}}
+{{- if eq (include "external-es-proxy-uses-aws" .) "true" -}}
+localhost:{{ .Values.service.awsproxy }}
+{{- else -}}
+{{ .Values.global.customLogging.host }}:{{ include "external-es-proxy-customer-port" . }}
+{{- end -}}
+{{- end }}
+
+{{/*
+The customer Elasticsearch port. A bare `host:` is not valid in an `upstream`, so fall back to the scheme's default
+when customLogging.port is unset.
+*/}}
+{{- define "external-es-proxy-customer-port" -}}
+{{- $csc := .Values.global.customLogging -}}
+{{- if $csc.port -}}
+{{ $csc.port }}
+{{- else if eq (toString $csc.scheme) "http" -}}
+80
+{{- else -}}
+443
+{{- end -}}
+{{- end }}
+
+{{/*
+A location body for the authenticated port: forward to the one index pattern Houston's /v2/elasticsearch answered with
+(`$es_scope`), never to a path the client chose. Takes a dict with `ctx` (the root context) and `op` (_search, _count
+or _bulk). Same behaviour as the ES nginx proxy, plus what the single-server external proxy needs to keep working
+through an `upstream`: the Host header and the TLS name must still be the customer's host, not the group name.
+*/}}
+{{- define "external-es-proxy-nginx-scoped-location" -}}
+{{- $ctx := .ctx -}}
+{{- $csc := $ctx.Values.global.customLogging -}}
+{{- if eq (include "external-es-proxy-uses-aws" $ctx) "true" }}
+proxy_set_header Host localhost:{{ $ctx.Values.service.awsproxy }};
+proxy_pass http://external_es/{{ include "logging.indexNamePrefix" $ctx }}.$es_scope.*/{{ .op }}$is_args$args;
+{{- else }}
+access_by_lua_file /usr/local/openresty/nginx/conf/setenv.lua;
+proxy_set_header Host {{ $csc.host }}:{{ include "external-es-proxy-customer-port" $ctx }};
+proxy_ssl_name {{ $csc.host }};
+proxy_pass {{ $csc.scheme }}://external_es/{{ include "logging.indexNamePrefix" $ctx }}.$es_scope.*/{{ .op }}$is_args$args;
+{{- include "external-es-proxy-trustcerts" $ctx }}
 {{- end }}
 {{- end }}
 
