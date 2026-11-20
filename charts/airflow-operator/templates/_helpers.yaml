@@ -82,6 +82,8 @@ service:
     - name: AIRFLOW_OPERATOR_ENVIRONMENT
       value: {{ .Values.environment | quote }}
 {{- end }}
+    - name: CLUSTER_DOMAIN
+      value: {{ .Values.global.clusterDomain | quote }}
 {{- range $i, $config := .Values.manager.env }}
     - name: {{ $config.name }}
       value: {{ $config.value | quote }}

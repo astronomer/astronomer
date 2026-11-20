@@ -28,7 +28,7 @@ spec:
       timeout: 300s
       route:
         - destination:
-            host: {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local
+            host: {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
             port:
               number: {{ .Values.common.ports.http }}
 {{- end }}

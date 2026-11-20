@@ -131,7 +131,7 @@ spec:
             {{- end }}
             # Infrastructure
             - name: PILOT_COMMANDER_ADDR
-              value: {{ printf "%s-commander-headless.%s.svc.cluster.local.:%d" .Release.Name .Release.Namespace (int (include "getCommanderGRPCport" .)) | quote }}
+              value: {{ printf "%s-commander-headless.%s.svc.%s.:%d" .Release.Name .Release.Namespace .Values.global.clusterDomain (int (include "getCommanderGRPCport" .)) | quote }}
             {{- if and $flightDeckEnabled (not $secretsFromFiles) }}
             - name: COMMANDER_FLIGHTDECK_DSN
               valueFrom:

@@ -179,6 +179,7 @@ class TestLaminar:
             "laminar_hypervisor__queued_task_second_threshold": "480",
             "laminar_hypervisor__disabled_metrics_csv": '""',
             "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
+            "laminar_cluster_domain": "cluster.local",
         }
 
     @pytest.mark.parametrize("values", [{}, {"laminar": {"hypervisor": {"replicas": 3}}}], ids=["default", "override"])
@@ -683,6 +684,7 @@ class TestLaminar:
             "laminar_hypervisor__queued_task_second_threshold": "480",
             "laminar_hypervisor__disabled_metrics_csv": '""',
             "laminar_hypervisor__dry_run_healers_csv": "CatatonicWorkerTerminator",
+            "laminar_cluster_domain": "cluster.local",
         }
 
         apiserver_ingress = by_kind_and_name["ingress_laminar_ingress"]
