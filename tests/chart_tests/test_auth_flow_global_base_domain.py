@@ -6,7 +6,7 @@ flow still hardcoded `global.baseDomain`; under control-plane HA they must resol
 is scoped to), falling back to `baseDomain` when HA is off:
 
   * `houston.internalauthurl` helper  -> `auth-url` annotation (shared by the three ingresses)
-  * `houston-proxy` helper            -> elasticsearch `proxy_pass`
+  * `houston-es-authorization-proxy` helper -> elasticsearch `proxy_pass`
   * `auth-signin` annotation          -> prometheus / alertmanager / grafana ingresses
 
 Precedence is gated on `and controlPlaneHA.enabled controlPlaneHA.globalBaseDomain`. The
@@ -138,7 +138,7 @@ class TestAuthUrlGlobalBaseDomain:
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestHoustonProxyGlobalBaseDomain:
-    """elasticsearch proxy_pass via the houston-proxy helper.
+    """elasticsearch proxy_pass via the houston-es-authorization-proxy helper.
 
     The configmap renders in data/unified mode; unified uses the in-cluster URL, so the
     domain branch is exercised on a data-plane render (parity with the auth-url helper).

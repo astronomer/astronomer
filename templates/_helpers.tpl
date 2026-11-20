@@ -164,34 +164,16 @@ imagePullSecrets:
 {{- end }}
 {{- end }}
 
-{{- define "houston-proxy" -}}
-proxy_pass {{ include "houston-elasticsearch-auth-url" . }};
-{{- end }}
-
-{{/*
-Houston's /v1/elasticsearch endpoint: deployment credentials only (HTTP basic: <release>:<password>).
-In unified mode Houston is in-cluster; on a data plane it is the control plane's public host.
-Used by external-es-proxy's auth_request. The ES nginx auth proxy uses houston-elasticsearch-authorization-url
-instead, which also accepts Houston's own read token and Houston users, and tells the proxy which deployment the
-caller may reach.
-*/}}
-{{- define "houston-elasticsearch-auth-url" -}}
-{{- if eq .Values.global.plane.mode "unified" -}}
-http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch
-{{- else -}}
-https://houston.{{ include "global.authBaseDomain" . }}/v1/elasticsearch
-{{- end -}}
-{{- end }}
-
 {{- define "houston-es-authorization-proxy" -}}
 proxy_pass {{ include "houston-elasticsearch-authorization-url" . }};
 {{- end }}
 
 {{/*
-Houston's /v2/elasticsearch authorizer (auth_request target of the ES nginx proxy). /v1/elasticsearch, which accepts deployment credentials only, stays for external-es-proxy and
-older charts, so the two can be switched independently. It accepts a deployment's Basic credentials, Houston's own short-lived
-read token, and a Houston user or service account (Bearer), and answers with the deployment the caller may
-reach in the X-Elasticsearch-Index-Scope header.
+Houston's /v2/elasticsearch authorizer: the auth_request target of both ES nginx proxies (the platform ES proxy and
+external-es-proxy). It accepts a deployment's Basic credentials, Houston's own short-lived read token, and a Houston
+user or service account (Bearer), and answers with the deployment the caller may reach in the
+X-Elasticsearch-Index-Scope header. (Houston still serves the older /v1/elasticsearch, deployment credentials only,
+for installs on an older chart; nothing in this chart calls it.)
 In unified mode Houston is in-cluster; on a data plane it is the control plane's public host.
 */}}
 {{- define "houston-elasticsearch-authorization-url" -}}
