@@ -1,0 +1,7 @@
+{{- /*
+Every in-cluster hostname is built as <svc>.<ns>.svc.<clusterDomain>, so an empty value would
+render unresolvable "svc." hosts across the platform. Emits no Kubernetes object.
+*/ -}}
+{{- if not .Values.global.clusterDomain }}
+{{- fail "global.clusterDomain must not be empty; set it to the kubelet --cluster-domain (default cluster.local)" }}
+{{- end }}
