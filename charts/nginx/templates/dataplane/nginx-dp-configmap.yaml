@@ -22,6 +22,7 @@ data:
   proxy-read-timeout: {{ .Values.proxyReadTimeout | quote }}
   proxy-send-timeout: {{ .Values.proxySendTimeout | quote }}
   proxy-body-size: {{ .Values.proxyBodySize | quote }}
+  proxy-buffer-size: {{ .Values.proxyBufferSize | quote }}
   hsts-include-subdomains: {{ .Values.hstsIncludeSubdomains | quote }}
   server-name-hash-bucket-size: {{ .Values.serverNameHashBucketSize | quote }}
   enable-vts-status: "true"
