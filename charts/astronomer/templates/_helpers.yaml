@@ -1118,8 +1118,14 @@ http://{{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:
 {{- end }}
 {{- end -}}
 
+{{/*
+Where Commander tells Houston to read logs from (COMMANDER_ELASTICSEARCH_NODE, stored by Houston in the cluster's
+config) when a unified install uses customLogging. It is the external-es-proxy's authenticated port (9200): Houston
+sends its own read token with every search and /v2/elasticsearch authorizes it. The unauthenticated port (9201) is
+for the Vector DaemonSet only, which has no credentials.
+*/}}
 {{- define "esproxy.url" -}}
-{{ .Release.Name }}-external-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
+{{ .Release.Name }}-external-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9200
 {{- end -}}
 
 {{- define "elasticsearch.url" -}}
