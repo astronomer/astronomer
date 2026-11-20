@@ -52,7 +52,7 @@ AUTH_PROXY_CONFIGMAPS = {
 
 # external-es-proxy runs two nginx servers: securehttp (9200) with auth_request, and http (9201) with
 # no auth that forwards every path to the customer's external ES with the stored credentials injected.
-# 9201 is for in-cluster trusted clients (vector, houston) and must never be what an Ingress targets.
+# 9201 is for in-cluster trusted clients (vector) and must never be what an Ingress targets.
 EXTERNAL_ES_PROXY_AUTH_PORT = 9200
 
 # Raw Elasticsearch Services (unauthenticated: xpack security is off). Never expose these.
@@ -188,11 +188,6 @@ def test_ingress_auth_required_backends_have_auth_url(rendered):
     assert not missing, f"Ingress has no auth-url annotation but its backend has no authentication of its own: {missing}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="KNOWN, UNFIXED: the external-es-proxy Ingress targets service.http (9201), the unauthenticated "
-    "server block that injects the external ES credentials. Remove this xfail when it targets 9200.",
-)
 def test_external_es_proxy_is_exposed_on_its_authenticated_port():
     """The external-es-proxy Ingress must target the port that runs auth_request, not the trusted in-cluster one."""
     docs = render_chart(
