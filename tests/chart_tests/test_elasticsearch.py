@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import yaml
 
@@ -414,6 +416,7 @@ class TestElasticSearch:
         assert "proxy_set_header X-ES-Original-URI $request_uri;" in nginx_config, (
             "the control plane's ingress overwrites X-Original-URI, so Houston needs its own header for the real path"
         )
+        assert "proxy_set_header X-Original-URI" not in nginx_config, "nothing reads it: the ingress controller overwrites it"
         assert "$remote_user." not in nginx_config, "the index must not be built from the caller-supplied user name"
 
     def test_elastic_nginx_auth_cache_is_keyed_on_the_path_and_the_whole_credential(self, kube_version):
@@ -1187,3 +1190,48 @@ class TestElasticSearch:
 
         assert len(docs) == 1
         assert "tls" not in docs[0]["spec"]
+
+    @pytest.mark.parametrize("plane_mode", ["unified", "data"])
+    def test_elasticsearch_ingress_with_auth_sidecar_and_openshift_still_reaches_only_the_proxy(self, kube_version, plane_mode):
+        """APC-2206: on OpenShift (routed by the OpenShift router, with the auth sidecar model) the Ingress carries no
+        nginx-ingress annotations at all. It must still point at the authenticating proxy, never the raw ES Service."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": plane_mode},
+                    "authSidecar": {"enabled": True},
+                    "openshift": {"enabled": True},
+                },
+            },
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 1
+        assert not (docs[0]["metadata"].get("annotations") or {}).get("nginx.ingress.kubernetes.io/auth-url")
+        backend = docs[0]["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]
+        assert backend["name"] == "release-name-elasticsearch-nginx"
+        assert backend["port"]["number"] == 9200
+
+    def test_elasticsearch_proxy_network_policy_admits_the_openshift_router_with_auth_sidecar(self, kube_version):
+        """The OpenShift router (not ingress-nginx) is the peer that must reach the proxy, and only the proxy."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": "data"},
+                    "authSidecar": {"enabled": True},
+                    "openshift": {"enabled": True},
+                },
+            },
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
+                "charts/elasticsearch/templates/client/es-client-networkpolicy.yaml",
+            ],
+        )
+        proxy_policy, client_policy = docs
+        proxy_peers = json.dumps([peer for rule in proxy_policy["spec"]["ingress"] for peer in rule["from"]])
+        client_peers = json.dumps([peer for rule in client_policy["spec"]["ingress"] for peer in rule["from"]])
+        assert "network.openshift.io/policy-group" in proxy_peers
+        assert "network.openshift.io/policy-group" not in client_peers, "the raw ES must not admit the router"

@@ -1107,6 +1107,7 @@ class TestExternalEsProxyAuthorization:
         """Houston decides per path, and the control plane's ingress controller overwrites X-Original-URI."""
         auth_server = _server_blocks(self._nginx_conf(kube_version))[9200]
         assert "proxy_set_header X-ES-Original-URI $request_uri;" in auth_server
+        assert "proxy_set_header X-Original-URI" not in auth_server, "nothing reads it: the ingress controller overwrites it"
 
     @pytest.mark.parametrize("operation", ["_search", "_count", "_bulk"])
     def test_authenticated_port_builds_the_index_from_houstons_scope(self, kube_version, operation):
