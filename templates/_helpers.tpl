@@ -171,9 +171,9 @@ proxy_pass {{ include "houston-elasticsearch-auth-url" . }};
 {{/*
 Houston's /v1/elasticsearch endpoint: deployment credentials only (HTTP basic: <release>:<password>).
 In unified mode Houston is in-cluster; on a data plane it is the control plane's public host.
-Used by external-es-proxy's auth_request. The ES nginx auth proxy and the public ES Ingress use
-houston-elasticsearch-authorization-url instead, which also accepts Houston's own read token and Houston users,
-and tells the proxy which deployment the caller may reach.
+Used by external-es-proxy's auth_request. The ES nginx auth proxy uses houston-elasticsearch-authorization-url
+instead, which also accepts Houston's own read token and Houston users, and tells the proxy which deployment the
+caller may reach.
 */}}
 {{- define "houston-elasticsearch-auth-url" -}}
 {{- if eq .Values.global.plane.mode "unified" -}}
@@ -188,8 +188,7 @@ proxy_pass {{ include "houston-elasticsearch-authorization-url" . }};
 {{- end }}
 
 {{/*
-Houston's /v2/elasticsearch authorizer (auth_request target of the ES nginx proxy, auth-url of the public
-ES Ingress). /v1/elasticsearch, which accepts deployment credentials only, stays for external-es-proxy and
+Houston's /v2/elasticsearch authorizer (auth_request target of the ES nginx proxy). /v1/elasticsearch, which accepts deployment credentials only, stays for external-es-proxy and
 older charts, so the two can be switched independently. It accepts a deployment's Basic credentials, Houston's own short-lived
 read token, and a Houston user or service account (Bearer), and answers with the deployment the caller may
 reach in the X-Elasticsearch-Index-Scope header.

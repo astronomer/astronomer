@@ -30,7 +30,6 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/auth-url: {{ include "houston-elasticsearch-authorization-url" . | quote }}
     {{- end }}
     {{- if .Values.ingress.annotation  }}
     {{- toYaml .Values.ingress.annotation  | nindent 4  }}
@@ -49,6 +48,8 @@ spec:
           - path: /
             pathType: Prefix
             backend:
+              # Not the raw ES Service: the nginx proxy authenticates every request itself (auth_request to Houston's
+              # /v2/elasticsearch) and pins the index, so this Ingress needs no auth-url of its own.
               service:
                 name: {{ template "nginx-es.fullname" . }}-nginx
                 port:

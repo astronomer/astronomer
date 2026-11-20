@@ -449,22 +449,18 @@ class TestElasticSearch:
         assert "proxy_cache_bypass $es_auth_uncacheable;" in nginx_config
         assert "proxy_no_cache $es_auth_uncacheable;" in nginx_config
 
-    @pytest.mark.parametrize(
-        "plane_mode,expected",
-        [
-            ("unified", "http://release-name-houston.default:8871/v2/elasticsearch"),
-            ("data", "https://houston.example.com/v2/elasticsearch"),
-        ],
-    )
-    def test_elasticsearch_ingress_authenticates_against_houston(self, kube_version, plane_mode, expected):
-        """APC-2206: the public ES Ingress rejects callers Houston does not recognise, before the nginx proxy."""
+    def test_elasticsearch_ingress_relies_on_the_proxy_for_authentication(self, kube_version):
+        """APC-2206: the Ingress points at the nginx proxy, which calls Houston itself, so it adds no auth-url of its
+        own (that would make a second Houston call for every request)."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
+            values={},
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
         )
         assert len(docs) == 1
-        assert docs[0]["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"] == expected
+        assert not any(key.endswith("/auth-url") for key in docs[0]["metadata"]["annotations"])
+        backend = docs[0]["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"]
+        assert backend == "release-name-elasticsearch-nginx"
 
     def test_elastic_nginx_config_custom_max_body_size(self, kube_version):
         """Test that custom max body size is properly set."""
