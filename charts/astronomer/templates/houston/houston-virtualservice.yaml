@@ -35,7 +35,7 @@ spec:
             value: 100
       route:
         - destination:
-            host: {{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local
+            host: {{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
             port:
               number: {{ .Values.ports.houstonHTTP }}
     - match:
@@ -43,7 +43,7 @@ spec:
             prefix: /
       route:
         - destination:
-            host: {{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local
+            host: {{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
             port:
               number: {{ .Values.ports.houstonHTTP }}
 {{- end }}

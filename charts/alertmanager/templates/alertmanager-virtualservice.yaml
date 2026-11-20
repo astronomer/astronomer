@@ -30,7 +30,7 @@ spec:
             prefix: /
       route:
         - destination:
-            host: {{ template "alertmanager.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+            host: {{ template "alertmanager.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
             port:
               number: {{ .Values.global.authSidecar.port }}
 {{- end }}

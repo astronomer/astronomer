@@ -27,7 +27,7 @@ spec:
             prefix: /
       route:
         - destination:
-            host: {{ template "registry.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+            host: {{ template "registry.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
             port:
               number: {{ .Values.ports.registryHTTP }}
 {{- end }}

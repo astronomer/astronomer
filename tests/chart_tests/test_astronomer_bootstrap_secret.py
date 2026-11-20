@@ -1,3 +1,4 @@
+import base64
 from subprocess import CalledProcessError
 
 import pytest
@@ -34,3 +35,26 @@ def test_astronomer_bootstrap_secret_postgres_enabled():
             },
         }
     ]
+
+
+@pytest.mark.parametrize(
+    "pgbouncer_enabled,expected_connection",
+    [
+        (False, "postgres://postgres:postgres@release-name-postgresql.default.svc.cluster.example.net.:5432"),
+        (True, "postgres://postgres:postgres@release-name-pgbouncer.default.svc.cluster.example.net.:6543"),
+    ],
+    ids=["postgresql", "pgbouncer"],
+)
+def test_astronomer_bootstrap_secret_honors_cluster_domain(pgbouncer_enabled, expected_connection):
+    docs = render_chart(
+        show_only="charts/postgresql/templates/astronomer-bootstrap-secret.yaml",
+        values={
+            "global": {
+                "clusterDomain": "cluster.example.net",
+                "postgresql": {"enabled": True},
+                "pgbouncer": {"enabled": pgbouncer_enabled},
+            }
+        },
+    )
+
+    assert base64.b64decode(docs[0]["data"]["connection"]).decode() == expected_connection
