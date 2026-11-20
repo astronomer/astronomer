@@ -244,6 +244,8 @@ spec:
               value: {{ ternary "true" "false" .Values.global.namespaceManagement.namespacePools.enabled | quote  }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: {{ if .Values.global.rbac.enabled }}"true"{{ else }}"false"{{ end }}
+            - name: COMMANDER_CLUSTER_DOMAIN
+              value: {{ .Values.global.clusterDomain | quote }}
             {{- if .Values.global.privateCaCerts }}
             - name: UPDATE_CA_CERTS
               value: "true"
