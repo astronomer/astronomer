@@ -837,7 +837,7 @@ secrets from files (houston_wait_for_db_environment).
 - name: COMMANDER_WAIT_ENABLED
   value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
 - name: REGISTRY_WAIT_ENABLED
-  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
+  value: {{ include "houston.registry.check" . | quote }}
 {{- end }}
 
 {{/*
@@ -1270,6 +1270,15 @@ Returns the string "true" or "false" — compare with eq.
 */}}
 {{- define "registry.enabled" -}}
 {{- and .Values.registry.enabled (eq (include "astronomer.dataPlaneEnabled" .) "true") -}}
+{{- end }}
+
+{{/*
+Whether houston should wait for the registry (REGISTRY_WAIT_ENABLED).
+registry.enabled (default true) AND unified plane mode.
+Returns the string "true" or "false".
+*/}}
+{{- define "houston.registry.check" -}}
+{{- ternary "true" "false" (and .Values.registry.enabled (eq .Values.global.plane.mode "unified")) -}}
 {{- end }}
 
 {{/*
