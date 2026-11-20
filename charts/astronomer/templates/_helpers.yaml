@@ -532,7 +532,7 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- if (eq .Values.global.plane.mode "data") -}}
 {{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else -}}
-{{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:{{ .Values.ports.commanderHTTP }}
+{{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.{{ .Values.global.clusterDomain }}.:{{ .Values.ports.commanderHTTP }}
 {{- end }}
 {{- end -}}
 
@@ -545,14 +545,14 @@ http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/e
 {{- end -}}
 
 {{- define "esproxy.url" -}}
-{{ .Release.Name }}-external-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
+{{ .Release.Name }}-external-es-proxy.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:9201
 {{- end -}}
 
 {{- define "elasticsearch.url" -}}
 {{- if eq .Values.global.plane.mode "data" -}}
 elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDomain }}
 {{- else if eq .Values.global.plane.mode "unified" -}}
-{{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local.:9200
+{{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}.:9200
 {{- end -}}
 {{- end -}}
 
@@ -573,7 +573,7 @@ checksum/jetstream-tls-cert: {{ $actualCert }}
 {{- if (eq .Values.global.plane.mode "data") -}}
 https://houston.{{ .Values.global.baseDomain }}
 {{- else -}}
-http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}
+http://{{ .Release.Name }}-houston.{{ .Release.Namespace}}.svc.{{ .Values.global.clusterDomain }}:{{ .Values.ports.houstonHTTP }}
 {{- end }}
 {{- end -}}
 

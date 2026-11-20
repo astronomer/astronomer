@@ -2,9 +2,9 @@
 
 PostgreSQL can be accessed via port {{ template "postgresql.port" . }} on the following DNS name from within your cluster:
 
-    {{ template "postgresql.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local - Read/Write connection
+    {{ template "postgresql.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }} - Read/Write connection
 {{- if .Values.replication.enabled }}
-    {{ template "postgresql.fullname" . }}-read.{{ .Release.Namespace }}.svc.cluster.local - Read only connection
+    {{ template "postgresql.fullname" . }}-read.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }} - Read only connection
 {{- end }}
 To get the password for "{{ template "postgresql.username" . }}" run:
 
