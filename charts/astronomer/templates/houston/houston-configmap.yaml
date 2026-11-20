@@ -69,6 +69,7 @@ data:
       {{- end }}
       releaseName: {{ .Release.Name }}
       releaseNamespace: {{ .Release.Namespace }}
+      clusterDomain: {{ .Values.global.clusterDomain | quote }}
       releaseVersion: {{ .Chart.Version }}
       {{- if .Values.global.tlsSecret }}
       tlsSecretName: {{ .Values.global.tlsSecret }}
