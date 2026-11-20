@@ -52,10 +52,6 @@ spec:
         matchLabels:
           tier: airflow
     {{- end }}
-    ports:
-    - protocol: TCP
-      port: {{ .Values.service.securehttp }}
-  - from:
     {{- if (eq .Values.global.plane.mode "data") }}
     {{- if .Values.global.authSidecar.enabled }}
     - namespaceSelector:
@@ -78,11 +74,6 @@ spec:
     {{- end }}
     - podSelector:
         matchLabels:
-          component: vector
-          tier: logging
-          release: {{ .Release.Name }}
-    - podSelector:
-        matchLabels:
           component: houston
           tier: astronomer
           release: {{ .Release.Name }}
@@ -91,7 +82,15 @@ spec:
           component: houston-worker
           tier: astronomer
           release: {{ .Release.Name }}
-
+    ports:
+    - protocol: TCP
+      port: {{ .Values.service.securehttp }}
+  - from:
+    - podSelector:
+        matchLabels:
+          component: vector
+          tier: logging
+          release: {{ .Release.Name }}
     ports:
     - protocol: TCP
       port: {{ .Values.service.http }}
