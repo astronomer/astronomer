@@ -71,6 +71,7 @@ class TestAstronomerNamespacePools:
             assert doc["kind"] == "Role"
             assert len(doc["rules"]) > 0
             assert doc["metadata"]["namespace"] == expected_namespaces[i]
+            assert all("namespaces" not in rule.get("resources", []) for rule in doc["rules"])
 
         role_bindings = docs[3:]
         for i, doc in enumerate(role_bindings):
@@ -89,6 +90,28 @@ class TestAstronomerNamespacePools:
             assert doc["metadata"]["namespace"] == expected_namespaces[i]
             assert doc["roleRef"] == expected_role
             assert doc["subjects"][0] == expected_subject
+
+    def test_commander_cluster_role_has_namespaces_rule(self, kube_version):
+        """Test that commander ClusterRole keeps full namespaces privileges when namespace pools are disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "clusterRoles": True,
+                    "namespaceManagement": {"namespacePools": {"enabled": False}},
+                    "rbac": {"enabled": True},
+                }
+            },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "ClusterRole"
+        namespaces_rules = [rule for rule in docs[0]["rules"] if "namespaces" in rule.get("resources", [])]
+        assert len(namespaces_rules) == 1
+        assert {"create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"} == set(
+            namespaces_rules[0]["verbs"]
+        )
 
     @pytest.mark.parametrize(
         "namespace_labels", [{}, {"foo": "FOO", "bar": "BAR"}], ids=["empty-namespaceLabels", "with-namespaceLabels"]
