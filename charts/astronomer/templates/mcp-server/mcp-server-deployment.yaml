@@ -101,7 +101,7 @@ spec:
             # public-hostname branch houston.internalauthurl carries for the
             # data-plane case.
             - name: HOUSTON_API_URL
-              value: "http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.ports.houstonHTTP }}/v1"
+              value: "http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:{{ .Values.ports.houstonHTTP }}/v1"
 
             # Chart toggle for the tool groups the catalog exposes (internal/config,
             # internal/toolreg.Group in apc-mcp-server) — a CSV of group names.
