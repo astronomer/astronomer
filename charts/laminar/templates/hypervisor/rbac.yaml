@@ -27,6 +27,7 @@ rules:
       - dagprocessors
       - eventschedulers
       - apiservers
+      - workers
     verbs: ["get", "list", "watch"]
   - apiGroups: ["airflow.apache.org"]
     resources:
@@ -39,6 +40,7 @@ rules:
       - dagprocessors/scale
       - eventschedulers/scale
       - apiservers/scale
+      - workers/scale
     verbs: ["get", "list", "watch", "patch"]
   - apiGroups: ["apps"]
     resources: ["deployments", "deployments/status", "deployments/scale"]
