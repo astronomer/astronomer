@@ -32,6 +32,12 @@ REGISTRY_IMAGE = "registry:2"
 
 DEFAULT_DOCKER_NETWORK = "astronomer-net"
 
+CP_DP_LOCAL_DNS_PORT = 15354
+CP_DP_DNSMASQ_CONF_PATH = HELPER_DIR / "cp-dp-dnsmasq.conf"
+CP_DP_DNSMASQ_CONTAINER_NAME = "astro-cp-dp-dnsmasq"
+CP_DP_PROXY_CONF_PATH = HELPER_DIR / "cp-dp-proxy-nginx.conf"
+CP_DP_PROXY_CONTAINER_NAME = "astro-cp-dp-proxy"
+
 HELM_REPO_NAME = "astronomer-internal"
 HELM_CHART = f"{HELM_REPO_NAME}/astronomer"
 HELM_REPO_URL = "https://internal-helm.astronomer.io"
