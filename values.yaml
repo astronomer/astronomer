@@ -4,6 +4,8 @@
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
+  # DNS suffix of in-cluster Service names. Must match the kubelet --cluster-domain of every cluster this chart is installed on.
+  clusterDomain: cluster.local
     # Name of Kubernetes secret containing registry auth token used for cross-plane authentication (registry, federation, etc.)
   authHeaderSecretName: ~
   # This is to select the mode in which the Astronomer platform will run.

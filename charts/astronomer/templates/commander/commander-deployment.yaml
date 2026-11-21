@@ -143,6 +143,8 @@ spec:
               value: {{ .Release.Namespace }}
             - name: COMMANDER_PLATFORM_RELEASE
               value: {{ .Release.Name }}
+            - name: COMMANDER_CLUSTER_DOMAIN
+              value: {{ .Values.global.clusterDomain | quote }}
             - name: COMMANDER_HELM_REPO
               value: {{ .Values.global.helmRepo }}
             {{ if .Values.commander.upgradeTimeout -}}
