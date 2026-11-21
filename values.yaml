@@ -97,7 +97,7 @@ global:
   #
   # Components with no `secretsFromFiles` setting of their own are not converted
   # and keep their secretKeyRefs either way: grafana's database URL, the
-  # registry's notification header, laminar, and the MCP server's secrets.
+  # registry's notification header, and the MCP server's secrets.
   secretsFromFiles:
     # -- Load secrets from mounted files instead of environment variables
     # @default -- false
