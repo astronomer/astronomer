@@ -17,7 +17,7 @@ PREREQUISITES = """You MUST set your environment variable TEST_SCENARIO to one o
 - control: Install with the controlplane application mode.
 """
 
-GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 HELPER_BIN_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "bin"
 KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
 HELM_EXE = str(HELPER_BIN_DIR / "helm")

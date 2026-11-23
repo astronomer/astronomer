@@ -8,7 +8,7 @@ from pathlib import Path
 import yaml
 from jinja2 import Template
 
-git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").exists()]), None)
 metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
@@ -17,7 +17,7 @@ machine_image_version = "ubuntu-2404:2026.05.1"  # https://circleci.com/develope
 
 
 def list_docker_images():
-    command = f"{git_root_dir}/bin/show-docker-images.py --with-houston"
+    command = f"{git_root_dir}/bin/show_docker_images.py --with-houston"
     docker_images_output = subprocess.check_output(command, shell=True)
     docker_image_list = [x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")]
 
