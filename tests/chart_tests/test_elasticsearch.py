@@ -454,8 +454,8 @@ class TestElasticSearch:
         assert "proxy_no_cache $es_auth_uncacheable;" in nginx_config
 
     def test_elasticsearch_ingress_relies_on_the_proxy_for_authentication(self, kube_version):
-        """APC-2206: the Ingress points at the nginx proxy, which calls Houston itself, so it adds no auth-url of its
-        own (that would make a second Houston call for every request)."""
+        """The Ingress points at the nginx proxy, which authenticates every request itself, so it adds no auth-url of
+        its own (that would make a second authorization call for every request)."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "data"}}},
@@ -999,9 +999,8 @@ class TestElasticSearch:
 
     @pytest.mark.parametrize("plane_mode", ["unified", "control"])
     def test_elasticsearch_ingress_is_data_plane_only(self, kube_version, plane_mode):
-        """APC-2206: nothing in a unified or control plane install uses elasticsearch.<base-domain> (Houston and
-        Airflow read ES through the in-cluster Services), so publishing it would only add an internet-facing
-        entry point. Only the data plane renders the Ingress, the same as external-es-proxy-ingress.yaml."""
+        """Only the data plane renders the Ingress. A unified or control plane install reads ES through in-cluster
+        Services and has no use for elasticsearch.<base-domain>, the same as external-es-proxy-ingress.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
@@ -1076,7 +1075,7 @@ class TestElasticSearch:
             "matchLabels": {"tier": "logging", "component": "elasticsearch", "release": "release-name", "role": "client"}
         }
         assert docs[0]["spec"]["policyTypes"] == ["Ingress"]
-        # APC-2206: ingress controllers must never reach the unauthenticated ES client directly
+        # ingress controllers must never reach the unauthenticated ES client directly
         peers = [p["podSelector"]["matchLabels"]["component"] for p in docs[0]["spec"]["ingress"][0]["from"] if "podSelector" in p]
         assert "dp-ingress-controller" not in peers
         assert "cp-ingress-controller" not in peers
@@ -1223,7 +1222,7 @@ class TestElasticSearch:
         assert "tls" not in docs[0]["spec"]
 
     def test_elasticsearch_ingress_with_auth_sidecar_and_openshift_still_reaches_only_the_proxy(self, kube_version):
-        """APC-2206: on OpenShift (routed by the OpenShift router, with the auth sidecar model) the Ingress carries no
+        """On OpenShift (routed by the OpenShift router, with the auth sidecar model) the Ingress carries no
         nginx-ingress annotations at all. It must still point at the authenticating proxy, never the raw ES Service."""
         docs = render_chart(
             kube_version=kube_version,

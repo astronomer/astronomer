@@ -21,7 +21,7 @@ class TestGlobalIngressAnnotation:
             values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
             show_only=sorted(always_rendered_ingress),
         )
-        # The Elasticsearch Ingress renders on the data plane only (APC-2206), so a unified install has five.
+        # The Elasticsearch Ingress renders on the data plane only, so a unified install has five.
         assert len(docs) == 5
         for doc in docs:
             assert doc["kind"] == "Ingress"
@@ -60,7 +60,7 @@ class TestGlobalIngressAnnotation:
             values={"global": {"extraAnnotations": {"kubernetes.io/ingress.class": custom_class}}},
             show_only=sorted(always_rendered_ingress),
         )
-        # The Elasticsearch Ingress renders on the data plane only (APC-2206), so a unified install has five.
+        # The Elasticsearch Ingress renders on the data plane only, so a unified install has five.
         assert len(docs) == 5
         for doc in docs:
             assert doc["kind"] == "Ingress"
@@ -97,7 +97,7 @@ class TestGlobalIngressAnnotation:
             values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
             show_only=sorted(always_rendered_ingress),
         )
-        # The Elasticsearch Ingress renders on the data plane only (APC-2206), so a unified install has five.
+        # The Elasticsearch Ingress renders on the data plane only, so a unified install has five.
         assert len(docs) == 5
         for doc in docs:
             assert doc["metadata"]["annotations"]["kubernetes.io/ingress.class"].endswith("-nginx")

@@ -42,7 +42,7 @@ GLOBAL_BASE_DOMAIN = "astro.example.com"
 GATEWAY = "istio-system/default-gateway"
 
 # VirtualServices expected on a control/unified plane, and the host each one serves. The Elasticsearch one is
-# data-plane only (APC-2206): nothing on a control/unified plane uses that host.
+# data-plane only: nothing on a control/unified plane uses that host.
 CONTROL_PLANE_VS_HOSTS = {
     "release-name-astroui-virtualservice": [f"app.{BASE_DOMAIN}"],
     "release-name-common-virtualservice": [BASE_DOMAIN],
@@ -311,7 +311,7 @@ def test_elasticsearch_virtualservice_route(kube_version):
 def test_elasticsearch_virtualservice_logging_gates(kube_version, plane_mode, shared_es, custom_logging, expected):
     """Renders only on a data plane, when the logging.enabled helper is true and customLogging is off.
 
-    Unified and control plane installs never publish the Elasticsearch host (APC-2206).
+    Unified and control plane installs never publish the Elasticsearch host.
     """
     values = _istio_values(plane_mode=plane_mode)
     values["global"]["sharedElasticsearch"] = {"enabled": shared_es}

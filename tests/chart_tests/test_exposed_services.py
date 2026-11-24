@@ -1,9 +1,5 @@
 """Cross-cutting guard for everything the chart exposes through an Ingress or an Istio VirtualService.
 
-APC-2206: the Elasticsearch Ingress pointed straight at the raw ES client Service. ES runs with
-xpack security off, so anyone who could reach the ingress controller could read, write and delete
-every deployment's logs. Nothing in the render caught it.
-
 Two rules, applied to every Ingress and VirtualService in several representative installs:
 
 1. Every exposed backend Service must be on an explicit allowlist, each entry with the reason it is
@@ -147,7 +143,7 @@ def test_scenarios_expose_something(rendered):
 
 
 def test_no_ingress_or_virtualservice_targets_raw_elasticsearch(rendered):
-    """APC-2206: ES has no authentication, so it may only be reached via an authenticating proxy."""
+    """No Ingress or VirtualService may route to a raw Elasticsearch Service (it has no authentication); only to an authenticating proxy."""
     _, docs = rendered
     offenders = sorted(
         f"{kind}/{name} -> {backend}" for kind, name, backend, _ in _exposures(docs) if RAW_ES_SERVICE.match(backend)

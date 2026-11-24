@@ -85,7 +85,7 @@ class TestIngress:
     def test_single_ingress_per_host(self, kube_version):
         default_docs = render_chart(values={"global": {"perHostIngress": {"enabled": True}}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
-        # The Elasticsearch Ingress renders on the data plane only (APC-2206), so a unified install has seven.
+        # The Elasticsearch Ingress renders on the data plane only, so a unified install has seven.
         assert len(ingresses) == 7
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
         assert all(len(doc["spec"]["tls"][0]["hosts"]) == 1 for doc in ingresses)

@@ -27,7 +27,7 @@ spec:
   ingress:
   - from:
     # Ingress controllers are intentionally not admitted here: external traffic must
-    # go through the nginx auth proxy (es-ingress-controller), never directly to ES.
+    # go through the nginx auth proxy, never directly to Elasticsearch.
     {{- if (eq .Values.global.plane.mode "unified") }}
     - podSelector:
         matchLabels:

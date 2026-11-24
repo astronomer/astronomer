@@ -1084,8 +1084,8 @@ def _server_blocks(nginx_conf: str) -> dict[int, str]:
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestExternalEsProxyAuthorization:
-    """APC-2206: the authenticated port (9200) is the one reachable from outside and must scope every request to the
-    deployment Houston names; the in-cluster port (9201) stays open for the Vector DaemonSet and must stay private."""
+    """The authenticated port (9200) is the one reachable from outside and must scope every request to the
+    deployment the authorizer names; the in-cluster port (9201) stays open for the Vector DaemonSet and must stay private."""
 
     custom_logging = {"enabled": True, "scheme": "https", "host": "esdemo.example.com", "port": 9243, "secret": secret}
 
@@ -1249,7 +1249,7 @@ class TestExternalEsProxyAuthorization:
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)
 class TestHoustonReadsLogsThroughTheAuthenticatedPort:
-    """APC-2206: Commander relays COMMANDER_ELASTICSEARCH_NODE to Houston, which stores it and reads logs from it.
+    """The node that log reads go to (COMMANDER_ELASTICSEARCH_NODE, stored by Houston).
     On a unified install with customLogging that must be the authenticated port, never the Vector-only one."""
 
     houston_configmap = "charts/astronomer/templates/houston/houston-configmap.yaml"

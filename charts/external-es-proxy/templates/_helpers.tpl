@@ -110,11 +110,7 @@ imagePullSecrets:
 
 
 {{/*
-"true" when the customer's Elasticsearch is reached through the AWS signing proxy (the `awsproxy` sidecar container on
-localhost:<service.awsproxy>), which any of the three AWS authentication options turns on: a static key Secret
-(awsSecretName), IRSA (awsServiceAccountAnnotation) or kube2iam (awsIAMRole). Empty otherwise, when requests go to the
-customer's host directly with the credential added by setenv.lua. Every place that has to agree on this (the sidecar in
-the Deployment, where nginx forwards, the upstream) uses this one definition so they cannot drift apart.
+"true" when requests reach Elasticsearch through the AWS signing proxy (awsSecretName, awsServiceAccountAnnotation or awsIAMRole is set).
 */}}
 {{- define "external-es-proxy-uses-aws" -}}
 {{- $csc := .Values.global.customLogging -}}
@@ -140,10 +136,7 @@ proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogg
 {{- end }}
 
 {{/*
-The server the authenticated port (securehttp) forwards to: the signing proxy when one is configured, else the
-customer's Elasticsearch. It is an nginx `upstream` because the scoped locations below build the request URI from a
-variable ($es_scope), and nginx resolves a proxy_pass host at request time (needing a resolver) unless it names an
-upstream group.
+The server the authenticated port forwards to: the AWS signing proxy if configured, else the customer's Elasticsearch.
 */}}
 {{- define "external-es-proxy-upstream-server" -}}
 {{- if eq (include "external-es-proxy-uses-aws" .) "true" -}}
@@ -154,8 +147,7 @@ localhost:{{ .Values.service.awsproxy }}
 {{- end }}
 
 {{/*
-The customer Elasticsearch port. A bare `host:` is not valid in an `upstream`, so fall back to the scheme's default
-when customLogging.port is unset.
+The customer Elasticsearch port, defaulting to the scheme's (443 or 80) when customLogging.port is unset.
 */}}
 {{- define "external-es-proxy-customer-port" -}}
 {{- $csc := .Values.global.customLogging -}}
@@ -169,10 +161,7 @@ when customLogging.port is unset.
 {{- end }}
 
 {{/*
-A location body for the authenticated port: forward to the one index pattern Houston's /v2/elasticsearch answered with
-(`$es_scope`), never to a path the client chose. Takes a dict with `ctx` (the root context) and `op` (_search, _count
-or _bulk). Same behaviour as the ES nginx proxy, plus what the single-server external proxy needs to keep working
-through an `upstream`: the Host header and the TLS name must still be the customer's host, not the group name.
+A location body for the authenticated port: forwards to the index pattern for $es_scope. Takes ctx and op (_search, _count or _bulk).
 */}}
 {{- define "external-es-proxy-nginx-scoped-location" -}}
 {{- $ctx := .ctx -}}
