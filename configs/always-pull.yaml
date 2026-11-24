@@ -84,12 +84,6 @@ pgbouncer:
 postgresql:
   image:
     pullPolicy: Always
-  metrics:
-    image:
-      pullPolicy: Always
-  volumePermissions:
-    image:
-      pullPolicy: Always
 prometheus:
   images:
     configReloader:
