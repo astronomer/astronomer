@@ -275,6 +275,16 @@ def test_nginx_allowSnippetAnnotations_defaults():
         assert doc["data"]["annotations-risk-level"] == "Critical"
 
 
+def test_nginx_dp_proxy_buffer_size():
+    """Test DP nginx ingress proxy buffer size defaults and overrides."""
+    show_only = ["charts/nginx/templates/dataplane/nginx-dp-configmap.yaml"]
+    plane = {"global": {"plane": {"mode": "data"}}}
+    doc = render_chart(values=plane, show_only=show_only)[0]
+    assert doc["data"]["proxy-buffer-size"] == "16k"
+    doc = render_chart(values={**plane, "nginx": {"proxyBufferSize": "32k"}}, show_only=show_only)[0]
+    assert doc["data"]["proxy-buffer-size"] == "32k"
+
+
 def test_nginx_backend_serviceaccount_defaults():
     """Test nginx ingress deployment service account defaults."""
     docs = render_chart(
