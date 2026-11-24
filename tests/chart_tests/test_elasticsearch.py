@@ -1242,6 +1242,52 @@ class TestElasticSearch:
         assert backend["name"] == "release-name-elasticsearch-nginx"
         assert backend["port"]["number"] == 9200
 
+    @pytest.mark.parametrize(
+        "gateway_name,expected_namespace",
+        [("istio-system/default-gateway", "istio-system"), ("default-gateway", "default")],
+        ids=["namespaced-gateway", "gateway-without-namespace"],
+    )
+    def test_elasticsearch_proxy_network_policy_admits_the_istio_gateway_namespace(
+        self, kube_version, gateway_name, expected_namespace
+    ):
+        """With an Istio gateway the traffic comes from the gateway's namespace, which is not an ingress-controller pod and
+        need not carry the OpenShift policy-group label, so the proxy policy has to admit it by name. A gateway named without a
+        namespace lives in the release namespace."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": "data"},
+                    "authSidecar": {"enabled": True},
+                    "istio": {"gateway": {"enabled": True, "name": gateway_name}},
+                    "nginx": {"enabled": False},
+                },
+            },
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml"],
+        )
+        peers = [peer for rule in docs[0]["spec"]["ingress"] for peer in rule["from"]]
+        assert {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": expected_namespace}}} in peers
+
+    def test_elasticsearch_proxy_network_policy_has_no_gateway_peer_without_istio(self, kube_version):
+        """No gateway, no namespace peer: the proxy is reached by the platform's ingress controller only."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml"],
+        )
+        peers = json.dumps([peer for rule in docs[0]["spec"]["ingress"] for peer in rule["from"]])
+        assert "kubernetes.io/metadata.name" not in peers
+
+    def test_elasticsearch_ingress_limits_the_request_body(self, kube_version):
+        """The public host carries searches only, so a small body limit is enough."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert docs[0]["metadata"]["annotations"]["nginx.ingress.kubernetes.io/proxy-body-size"] == "2m"
+
     def test_elasticsearch_proxy_network_policy_admits_the_openshift_router_with_auth_sidecar(self, kube_version):
         """The OpenShift router (not ingress-nginx) is the peer that must reach the proxy, and only the proxy."""
         docs = render_chart(
