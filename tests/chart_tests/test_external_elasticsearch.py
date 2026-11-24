@@ -915,7 +915,7 @@ class TestExternalElasticSearch:
 
         # Verify cache directives in /auth location
         assert "proxy_cache auth_cache" in nginx_config
-        assert 'proxy_cache_key "$http_authorization|$http_cookie|$request_uri"' in nginx_config
+        assert 'proxy_cache_key "$http_authorization|$http_cookie|$host|$request_uri"' in nginx_config
         assert "proxy_cache_valid 200 5m" in nginx_config
         assert "proxy_cache_valid 401 403 1m" in nginx_config
         assert "proxy_ignore_headers Cache-Control Expires" in nginx_config
@@ -1106,7 +1106,7 @@ class TestExternalEsProxyAuthorization:
     def test_authenticated_port_sends_the_real_path_to_houston(self, kube_version):
         """Houston decides per path, and the control plane's ingress controller overwrites X-Original-URI."""
         auth_server = _server_blocks(self._nginx_conf(kube_version))[9200]
-        assert "proxy_set_header X-ES-Original-URI $request_uri;" in auth_server
+        assert "proxy_set_header X-ES-Original-URI $scheme://$host$request_uri;" in auth_server
         assert "proxy_set_header X-Original-URI" not in auth_server, "nothing reads it: the ingress controller overwrites it"
 
     @pytest.mark.parametrize("operation", ["_search", "_count", "_bulk"])
@@ -1187,7 +1187,7 @@ class TestExternalEsProxyAuthorization:
     def test_auth_cache_is_keyed_on_the_whole_request(self, kube_version):
         """Houston's answer depends on credential, cookie and path, so the cache key carries all three."""
         auth_server = _server_blocks(self._nginx_conf(kube_version))[9200]
-        assert 'proxy_cache_key "$http_authorization|$http_cookie|$request_uri";' in auth_server
+        assert 'proxy_cache_key "$http_authorization|$http_cookie|$host|$request_uri";' in auth_server
 
     def test_auth_cache_skips_requests_without_a_credential(self, kube_version):
         """A request with neither header has nothing to key an answer on, so it must never be cached."""

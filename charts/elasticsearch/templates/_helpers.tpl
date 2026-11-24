@@ -189,9 +189,12 @@ Behaviour, in order:
   * global.authSidecar.enabled (the auth sidecar / OpenShift or Istio gateway model): the ingress is
     not one of our controllers, so admit the OpenShift ingress policy-group namespaces, plus any
     namespaces listed in global.authSidecar.ingressAllowedNamespaces.
-  * otherwise: admit the platform's own ingress controller pods of this release:
-      - data plane:        component "dp-ingress-controller"
-      - unified / control: component "cp-ingress-controller"
+  * otherwise: admit the data plane's own ingress controller pods of this release (component
+    "dp-ingress-controller").
+
+Only the data plane publishes this host. Unified and control plane installs read ES in-cluster, so
+their Ingress, VirtualService and this peer are not rendered at all (the caller wraps the include in a
+data-mode check).
 
 Renders a list of NetworkPolicyPeer items, to be spliced into a `from:` list.
 */}}
@@ -211,7 +214,7 @@ Renders a list of NetworkPolicyPeer items, to be spliced into a `from:` list.
 - podSelector:
     matchLabels:
       tier: nginx
-      component: {{ ternary "dp-ingress-controller" "cp-ingress-controller" (eq .Values.global.plane.mode "data") }}
+      component: dp-ingress-controller
       release: {{ .Release.Name }}
 {{- end }}
 {{- end -}}

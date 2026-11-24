@@ -92,8 +92,10 @@ data:
           # Houston also identifies a caller by session cookie, which sends no Authorization header: without
           # the cookie in the key, one session's cached "allowed" (and its deployment scope) would be served to
           # every other cookie-only or anonymous request for the same URI. A request with neither header is
-          # never cached at all.
-          proxy_cache_key "$http_authorization|$http_cookie|$request_uri";
+          # never cached at all. The host is in the key too: Houston answers differently for the same credential
+          # depending on whether it arrived by a Service name or by the public host, so an answer cached for one
+          # must never be served to the other.
+          proxy_cache_key "$http_authorization|$http_cookie|$host|$request_uri";
           proxy_cache_bypass $es_auth_uncacheable;
           proxy_no_cache $es_auth_uncacheable;
           proxy_cache_valid 200 {{ .Values.nginx.authCache.validSuccess }};
@@ -106,8 +108,10 @@ data:
           proxy_set_header Content-Length "";
           # Houston decides per path (which deployment, read vs write). On a data plane this call goes through
           # the control plane's ingress controller, which overwrites X-Original-URI with the URL of this auth
-          # call, so send the real path in a header nothing in between rewrites.
-          proxy_set_header X-ES-Original-URI $request_uri;
+          # call, so send the real URL in a header nothing in between rewrites. It carries the host the client
+          # used as well as the path: Houston accepts a deployment's own credential only from a Service name
+          # inside the cluster, never through the public Elasticsearch host.
+          proxy_set_header X-ES-Original-URI $scheme://$host$request_uri;
         }
 
         location = /_cluster/state/version {

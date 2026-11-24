@@ -2,6 +2,7 @@
 ## Elasticsearch Logging Ingress ##
 ########################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if eq .Values.global.plane.mode "data" }}
 {{- if not ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if not .Values.global.customLogging.enabled }}
 {{- if eq (include "logging.enabled" .) "true" }}
@@ -54,6 +55,7 @@ spec:
                 name: {{ template "nginx-es.fullname" . }}-nginx
                 port:
                   number: {{ .Values.common.ports.http }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

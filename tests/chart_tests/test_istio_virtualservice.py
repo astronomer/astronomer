@@ -41,14 +41,14 @@ BASE_DOMAIN = "example.com"
 GLOBAL_BASE_DOMAIN = "astro.example.com"
 GATEWAY = "istio-system/default-gateway"
 
-# VirtualServices expected on a control/unified plane, and the host each one serves.
+# VirtualServices expected on a control/unified plane, and the host each one serves. The Elasticsearch one is
+# data-plane only (APC-2206): nothing on a control/unified plane uses that host.
 CONTROL_PLANE_VS_HOSTS = {
     "release-name-astroui-virtualservice": [f"app.{BASE_DOMAIN}"],
     "release-name-common-virtualservice": [BASE_DOMAIN],
     "release-name-houston-virtualservice": [f"houston.{BASE_DOMAIN}"],
     "release-name-registry-virtualservice": [f"registry.{BASE_DOMAIN}"],
     "release-name-alertmanager-virtualservice": [f"alertmanager.{BASE_DOMAIN}"],
-    "release-name-elasticsearch-virtualservice": [f"elasticsearch.{BASE_DOMAIN}"],
     "release-name-grafana-virtualservice": [f"grafana.{BASE_DOMAIN}"],
     "release-name-prometheus-virtualservice": [f"prometheus.{BASE_DOMAIN}"],
 }
@@ -285,7 +285,9 @@ def test_elasticsearch_virtualservice_route(kube_version):
     15s, so the timeout has to be templated explicitly or long log queries would break under Istio
     while working under nginx.
     """
-    rendered = _virtualservices(render_chart(kube_version=kube_version, show_only=[ELASTICSEARCH_VS], values=_istio_values()))
+    rendered = _virtualservices(
+        render_chart(kube_version=kube_version, show_only=[ELASTICSEARCH_VS], values=_istio_values(plane_mode="data"))
+    )
     route = rendered["release-name-elasticsearch-virtualservice"]["spec"]["http"][0]
     assert route["timeout"] == "300s"
     assert route["route"][0]["destination"]["host"] == "release-name-elasticsearch-nginx.default.svc.cluster.local"
@@ -296,17 +298,21 @@ def test_elasticsearch_virtualservice_route(kube_version):
 @pytest.mark.parametrize(
     "plane_mode,shared_es,custom_logging,expected",
     [
-        ("unified", False, False, True),
+        ("unified", False, False, False),
         ("unified", False, True, False),
         ("control", False, False, False),
-        ("control", True, False, True),
+        ("control", True, False, False),
         ("data", False, False, True),
+        ("data", False, True, False),
         ("data", True, False, False),
     ],
-    ids=["unified", "unified-customLogging", "control", "control-shared", "data", "data-shared"],
+    ids=["unified", "unified-customLogging", "control", "control-shared", "data", "data-customLogging", "data-shared"],
 )
 def test_elasticsearch_virtualservice_logging_gates(kube_version, plane_mode, shared_es, custom_logging, expected):
-    """Renders exactly when the logging.enabled helper is true and customLogging is off."""
+    """Renders only on a data plane, when the logging.enabled helper is true and customLogging is off.
+
+    Unified and control plane installs never publish the Elasticsearch host (APC-2206).
+    """
     values = _istio_values(plane_mode=plane_mode)
     values["global"]["sharedElasticsearch"] = {"enabled": shared_es}
     values["global"]["customLogging"] = {"enabled": custom_logging}
