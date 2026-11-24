@@ -100,7 +100,9 @@ data:
 
         # Houston's /v2/elasticsearch authorizes each request and answers with the one deployment ($es_scope) the
         # caller may reach, or "*" for a system-level caller. The index is built from that and never from the URL,
-        # so a client cannot widen its own scope. The scope is only known after auth_request (access phase), so it
+        # so a client cannot widen its own scope through the URL. That pins reads and the URL of a write; it does not
+        # look inside a _bulk body, where an action line can still name its own _index (a deployment credential,
+        # accepted from inside the cluster only). The scope is only known after auth_request (access phase), so it
         # is used in proxy_pass, which is evaluated later, rather than in a rewrite, which runs before it.
         auth_request_set $es_scope $upstream_http_x_elasticsearch_index_scope;
 
