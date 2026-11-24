@@ -65,8 +65,5 @@ spec:
             release: {{ .Release.Name | quote }}
             role: slave
     {{- end }}
-    # Allow prometheus scrapes
-    - ports:
-      - port: 9187
 {{- end }}
 {{- end }}

@@ -72,6 +72,11 @@ spec:
     - podSelector:
         matchLabels:
           tier: astronomer
+          component: houston-cleanup-cluster-audits
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
           component: houston-worker
           release: {{ .Release.Name }}
     - podSelector:

@@ -1,0 +1,47 @@
+description: >-
+  Validates the Istio Gateway ingress path end to end: with global.istio.gateway.enabled the
+  platform suppresses every nginx Ingress and renders VirtualServices in their place, and all
+  north-south platform traffic is routed by a real Envoy. Installs Istio and creates the Gateway
+  pre-helm (bin/setup-istio.py) because both the VirtualService CRD and the Gateway named by
+  global.istio.gateway.name must exist before the platform install. The headline assertions are
+  the ones template-level tests structurally cannot make: that the Istio API server accepts the
+  chart's networking.istio.io/v1 objects at all, that every VirtualService's gateway
+  reference resolves to a Gateway that really exists (a dangling reference is accepted and
+  silently routes nothing), and that HTTP through the gateway really reaches Houston and really
+  gets a 403 on /v1/alerts and /v1/metrics from the VirtualService's fault-injection rule. Runs
+  with the nginx ingress controller switched off, so nothing but the Gateway can be carrying the
+  traffic, and with global.authSidecar on, which makes this the only coverage of auth-sidecar and
+  Istio-gateway routing in combination.
+topology: unified
+# PINNED, unlike most scenarios, which follow test_k8s_versions[-1]. Istio supports only a
+# trailing window of Kubernetes minors, so the newest version this repo tests against can
+# drift ahead of what the Istio release in metadata.yaml (tools.istio.version) supports --
+# and the symptom is an unhelpful failure in this scenario's pre_helm_scripts step, not a
+# test assertion. Pinning decouples the two: adding a newer minor to test_k8s_versions
+# cannot break this scenario, and the only thing that can is an Istio bump.
+#
+# Bump this TOGETHER WITH tools.istio.version, not independently. The two drift in opposite
+# directions: a newer Kubernetes can outrun the pinned Istio, and a newer Istio drops support
+# for the oldest Kubernetes minors. 1.37.0 is the version this scenario is verified on with
+# Istio 1.30.7; it is also the newest entry in test_k8s_versions, so it has no room to fall
+# off the TOP of Istio's window, only off the bottom if Istio is ever bumped far enough.
+kube_version: 1.37.0
+pre_helm_scripts:
+  # Namespaces and the Gateway name are passed explicitly and have no defaults, so the script
+  # aborts (rather than touching whatever cluster KUBECONFIG points at) if run by hand without
+  # them. These MUST match configs/enable-istio-gateway.yaml's global.istio values.
+  - bin/setup-istio.py --root-namespace istio-config --gateway-namespace istio-system --gateway-name astronomer-gateway
+values:
+  - configs/enable-istio-gateway.yaml
+  # Trims the authSidecar resource requests, which this scenario multiplies across the platform
+  # admin UIs AND the Airflow Deployment's webserver. See the file's own header for why the
+  # Airflow component resources themselves can't be reduced this way (houston-api computes them
+  # server-side) and why resource_class below is the actual fix for CPU exhaustion.
+  - configs/scenario-airflow-reduce-resources.yaml
+# 2xlarge because this scenario creates a real Airflow Deployment, which is what pushed every
+# other deployment-creating scenario off the default xlarge (FailedScheduling: Insufficient cpu
+# -- auth-sidecar / PINF-1080). Istio's own addition is small: istiod and one gateway pod, both
+# resource-trimmed by bin/setup-istio.py. What does not fit on xlarge is a Deployment on top of
+# a platform chart whose monitoring tier is fully on. The Deployment is a LocalExecutor
+# image-based one, the cheapest shape that still renders a webserver VirtualService.
+resource_class: 2xlarge

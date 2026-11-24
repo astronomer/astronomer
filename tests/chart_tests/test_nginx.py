@@ -275,6 +275,16 @@ def test_nginx_allowSnippetAnnotations_defaults():
         assert doc["data"]["annotations-risk-level"] == "Critical"
 
 
+def test_nginx_dp_proxy_buffer_size():
+    """Test DP nginx ingress proxy buffer size defaults and overrides."""
+    show_only = ["charts/nginx/templates/dataplane/nginx-dp-configmap.yaml"]
+    plane = {"global": {"plane": {"mode": "data"}}}
+    doc = render_chart(values=plane, show_only=show_only)[0]
+    assert doc["data"]["proxy-buffer-size"] == "16k"
+    doc = render_chart(values={**plane, "nginx": {"proxyBufferSize": "32k"}}, show_only=show_only)[0]
+    assert doc["data"]["proxy-buffer-size"] == "32k"
+
+
 def test_nginx_backend_serviceaccount_defaults():
     """Test nginx ingress deployment service account defaults."""
     docs = render_chart(
@@ -515,3 +525,33 @@ def test_nginx_extraArgs():
     for doc in docs:
         c_by_name = get_containers_by_name(doc)
         assert EnableSSLPassthrough in c_by_name["nginx"]["args"]
+
+
+@pytest.mark.parametrize(
+    "plane_mode,plane,subdir",
+    [
+        ("unified", "cp", "controlplane"),
+        ("control", "cp", "controlplane"),
+        ("data", "dp", "dataplane"),
+    ],
+)
+def test_nginx_add_headers_matches_headers_configmap_name(plane_mode, plane, subdir):
+    """Test nginx add-headers setting names the headers ConfigMap rendered for the same plane, in the release namespace."""
+    namespace = "astronomer-test"
+    docs = render_chart(
+        namespace=namespace,
+        values={"global": {"plane": {"mode": plane_mode}}},
+        show_only=[
+            f"charts/nginx/templates/{subdir}/nginx-{plane}-configmap.yaml",
+            f"charts/nginx/templates/{subdir}/nginx-{plane}-headers-configmap.yaml",
+        ],
+    )
+
+    assert len(docs) == 2
+    controller_cm = next(d for d in docs if "add-headers" in d["data"])
+    headers_cm = next(d for d in docs if "add-headers" not in d["data"])
+
+    referenced_namespace, referenced_name = controller_cm["data"]["add-headers"].split("/", 1)
+    assert referenced_namespace == namespace
+    assert referenced_name == headers_cm["metadata"]["name"]
+    assert {"Content-Security-Policy", "X-Frame-Options", "X-Content-Type-Options", "Referrer-Policy"} <= set(headers_cm["data"])

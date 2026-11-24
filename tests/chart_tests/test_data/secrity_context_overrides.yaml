@@ -56,11 +56,6 @@ pgbouncer:
   securityContext:
     dummy_key: dummy_value
     readOnlyRootFilesystem: false
-postgresql:
-  volumePermissions:
-    securityContext:
-      dummy_key: dummy_value
-      readOnlyRootFilesystem: false
 prometheus:
   securityContext:
     dummy_key: dummy_value

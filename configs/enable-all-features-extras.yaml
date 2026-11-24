@@ -9,12 +9,3 @@ global:
   baseDomain: foo.com
   postgresql:
     enabled: true
-postgresql:
-  metrics:
-    enabled: true
-  postgresqlDatabase: astronomer
-  # volumePermissions only renders on the replica StatefulSet.
-  replication:
-    enabled: true
-  volumePermissions:
-    enabled: true

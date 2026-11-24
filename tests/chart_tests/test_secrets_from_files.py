@@ -744,41 +744,6 @@ class TestPostgresqlSecretsFromFiles:
         assert "postgresql-replication-password" not in projected
 
 
-class TestPostgresqlMetricsSidecarSecretsFromFiles:
-    show_only = ["charts/postgresql/templates/statefulset.yaml"]
-
-    def test_defaults_keep_env_var(self):
-        docs = render_chart(
-            kube_version=newest_supported_kube_version,
-            values=pg_values(metrics={"enabled": True}),
-            show_only=self.show_only,
-        )
-        metrics = next(c for c in docs[0]["spec"]["template"]["spec"]["containers"] if c["name"] == "metrics")
-        assert get_env_vars_dict(metrics["env"])["DATA_SOURCE_PASS"]["secretKeyRef"]["key"] == "postgresql-password"
-        assert metrics["volumeMounts"] == []
-
-    def test_enabled_uses_data_source_pass_file(self):
-        """postgres_exporter's precedence is DATA_SOURCE_NAME > *_FILE > *, and it
-        TrimSpace's the file, so a Secret mount's trailing newline is handled."""
-        docs = render_chart(
-            kube_version=newest_supported_kube_version,
-            values=pg_values(enabled=True, metrics={"enabled": True}),
-            show_only=self.show_only,
-        )
-        spec = docs[0]["spec"]["template"]["spec"]
-        metrics = next(c for c in spec["containers"] if c["name"] == "metrics")
-        env_vars = get_env_vars_dict(metrics["env"])
-
-        assert env_vars["DATA_SOURCE_PASS_FILE"] == PG_PASSWORD_FILE
-        assert "DATA_SOURCE_PASS" not in env_vars
-        # DATA_SOURCE_NAME would take precedence over the file and silently win.
-        assert "DATA_SOURCE_NAME" not in env_vars
-
-        mount = next(m for m in metrics["volumeMounts"] if m["name"] == "postgresql-password")
-        assert mount["mountPath"] == PG_PASSWORD_FILE.rsplit("/", 1)[0]
-        assert mount["name"] in {v["name"] for v in spec["volumes"]}
-
-
 @pytest.mark.parametrize(
     "global_enabled,component_enabled,expected",
     [(None, None, False), (True, None, True), (True, False, False), (False, True, True)],
@@ -3682,7 +3647,7 @@ STRICT_ALL_ON = {
         "dpLink": {"enabled": True, "secret": [{"envName": "DPL_TOKEN", "secretName": "dpl-secret"}]},
         "mcpServer": {"enabled": True, "secret": [{"envName": "MCP_TOKEN", "secretName": "mcp-secret"}]},
     },
-    "postgresql": {"postgresqlDatabase": "astrodb", "replication": {"enabled": True}, "metrics": {"enabled": True}},
+    "postgresql": {"postgresqlDatabase": "astrodb", "replication": {"enabled": True}},
     "prometheus-postgres-exporter": {
         "config": {
             "datasource": {
@@ -3987,13 +3952,11 @@ SWITCH_MATRIX = {
         "refs": {
             ("release-name-postgresql-master", "release-name-postgresql", "POSTGRES_PASSWORD"),
             ("release-name-postgresql-master", "release-name-postgresql", "POSTGRES_REPLICATION_PASSWORD"),
-            ("release-name-postgresql-master", "metrics", "DATA_SOURCE_PASS"),
             ("release-name-postgresql-slave", "release-name-postgresql", "POSTGRES_PASSWORD"),
             ("release-name-postgresql-slave", "release-name-postgresql", "POSTGRES_REPLICATION_PASSWORD"),
         },
         "stopped": {
             ("release-name-postgresql-master", "release-name-postgresql"),
-            ("release-name-postgresql-master", "metrics"),
             ("release-name-postgresql-slave", "release-name-postgresql"),
         },
         "volumes": {
