@@ -118,6 +118,13 @@ spec:
         - name: grafana
           image: {{ template "grafana.image" . }}
           imagePullPolicy: {{ .Values.images.grafana.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              {{- .Files.Get "files/database-connection-string.sh" | trim | nindent 14 }}
+            - database-connection-string
+            - /opt/grafana/run.sh
           securityContext: {{- include "platform.containerSecurityContext" (list $ nil) | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           ports:
@@ -175,7 +182,8 @@ spec:
             {{- end }}
             {{- end }}
           env:
-            - name: GF_DATABASE_URL
+            # Not GF_DATABASE_URL: Grafana does not quote the password it takes from it.
+            - name: GRAFANA_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ template "grafana.backend.secret" . }}
