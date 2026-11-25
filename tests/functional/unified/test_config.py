@@ -57,8 +57,9 @@ def test_grafana_check_db_info(grafana):
         print("No release_name env var, using release_name=astronomer")
         release_name = "astronomer"
 
-    grafana_db_info = grafana.check_output("env | grep GF_DATABASE_URL")
-    assert f"{release_name}_grafana" in grafana_db_info
+    # PID 1 is grafana, after database-connection-string.sh has exported its connection string.
+    grafana_db_info = grafana.check_output("tr '\\0' '\\n' < /proc/1/environ | grep ^GF_DATABASE_CONNECTION_STRING=")
+    assert f"dbname='{release_name}_grafana'" in grafana_db_info
 
 
 def test_grafana_dashboard_provisioner_mounted(grafana):

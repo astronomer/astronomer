@@ -3805,7 +3805,7 @@ def test_every_gated_container_is_strictly_consistent(plane):
 RESIDUAL_SECRET_KEY_REFS = {
     "unified": {
         ("release-name-grafana", "wait-for-db", "GF_DATABASE_URL"),
-        ("release-name-grafana", "grafana", "GF_DATABASE_URL"),
+        ("release-name-grafana", "grafana", "GRAFANA_DATABASE_URL"),
         ("release-name-registry", "registry", "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS"),
         ("release-name-laminar-api-server", "laminar-apiserver", "LAMINAR_DATABASE_URL"),
         ("release-name-laminar-hypervisor", "laminar-hypervisor", "LAMINAR_DATABASE_URL"),
@@ -3814,7 +3814,7 @@ RESIDUAL_SECRET_KEY_REFS = {
     },
     "control-ha": {
         ("release-name-grafana", "wait-for-db", "GF_DATABASE_URL"),
-        ("release-name-grafana", "grafana", "GF_DATABASE_URL"),
+        ("release-name-grafana", "grafana", "GRAFANA_DATABASE_URL"),
         ("release-name-mcp-server", "mcp-server", "MCP_TOKEN"),
     },
     "data": {

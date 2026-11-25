@@ -42,6 +42,10 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ~
 
+# The secret's `connection` key is a postgres:// or postgresql:// URL. Percent-encode
+# reserved characters in the user and password (for example `@` as %40, `/` as %2F).
+# Any password character is supported, including backslash, single quote and space:
+# the grafana container converts the URL to a quoted connection string before Grafana starts.
 backendSecretName: ~
 backendConnection:
   {}

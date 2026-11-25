@@ -1,6 +1,6 @@
 import pytest
 
-from tests import supported_k8s_versions
+from tests import git_root_dir, supported_k8s_versions
 from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
@@ -167,7 +167,7 @@ def test_grafana_init_containers_disabled_with_custom_secret_name(kube_version, 
     assert "default" == spec["serviceAccountName"]
     c_by_name = get_containers_by_name(doc, include_init_containers=False)
     assert {
-        "name": "GF_DATABASE_URL",
+        "name": "GRAFANA_DATABASE_URL",
         "valueFrom": {"secretKeyRef": {"name": "grafanabackend", "key": "connection"}},
     } in c_by_name["grafana"]["env"]
 
@@ -336,3 +336,25 @@ def test_deployment_bootstrapper_db_name(kube_version, plane_mode, grafana_value
     c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
     bootstrapper_env = get_env_vars_dict(c_by_name["bootstrapper"]["env"])
     assert bootstrapper_env["DB_NAME"] == expected_db_name
+
+
+@pytest.mark.parametrize("plane_mode", ["control", "unified"])
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+def test_grafana_container_builds_quoted_connection_string(kube_version, plane_mode):
+    """Test that grafana starts through database-connection-string.sh and never gets GF_DATABASE_URL."""
+    docs = render_chart(
+        kube_version=kube_version,
+        values={"global": {"plane": {"mode": plane_mode}}},
+        show_only=[DEPLOYMENT_FILE],
+    )
+
+    assert len(docs) == 1
+    grafana = get_containers_by_name(docs[0])["grafana"]
+    script = (git_root_dir / "charts/grafana/files/database-connection-string.sh").read_text().strip() + "\n"
+    assert grafana["command"] == ["/bin/sh", "-c", script, "database-connection-string", "/opt/grafana/run.sh"]
+    assert "args" not in grafana
+    assert {
+        "name": "GRAFANA_DATABASE_URL",
+        "valueFrom": {"secretKeyRef": {"name": "release-name-grafana-backend", "key": "connection"}},
+    } in grafana["env"]
+    assert not {"GF_DATABASE_URL", "GF_DATABASE_CONNECTION_STRING", "GF_DATABASE_TYPE"} & {e["name"] for e in grafana["env"]}
