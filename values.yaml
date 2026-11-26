@@ -292,7 +292,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.31.9
+    tag: 1.31.10
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
