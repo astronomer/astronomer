@@ -63,11 +63,6 @@ The following tables lists the configurable parameters of the PostgreSQL chart a
 | `image.debug`                                 | Specify if debug values should be set                                                                                  | `false`                                                     |
 | `nameOverride`                                | String to partially override postgresql.fullname template with a string (will prepend the release name)                | `nil`                                                       |
 | `fullnameOverride`                            | String to fully override postgresql.fullname template with a string                                                    | `nil`                                                       |
-| `volumePermissions.image.registry`            | Init container volume-permissions image registry                                                                       | `docker.io`                                                 |
-| `volumePermissions.image.repository`          | Init container volume-permissions image name                                                                           | `bitnami/minideb`                                           |
-| `volumePermissions.image.tag`                 | Init container volume-permissions image tag                                                                            | `stretch`                                                   |
-| `volumePermissions.image.pullPolicy`          | Init container volume-permissions image pull policy                                                                    | `Always`                                                    |
-| `volumePermissions.securityContext.runAsUser` | User ID for the init container                                                                                         | `0`                                                         |
 | `usePasswordFile`                             | Have the secrets mounted as a file instead of env vars                                                                 | `false`                                                     |
 | `replication.enabled`                         | Enable replication                                                                                                     | `false`                                                     |
 | `replication.user`                            | Replication user                                                                                                       | `repl_user`                                                 |
@@ -141,29 +136,7 @@ The following tables lists the configurable parameters of the PostgreSQL chart a
 | `readinessProbe.timeoutSeconds`               | When the probe times out                                                                                               | 5                                                           |
 | `readinessProbe.failureThreshold`             | Minimum consecutive failures for the probe to be considered failed after having succeeded.                             | 6                                                           |
 | `readinessProbe.successThreshold`             | Minimum consecutive successes for the probe to be considered successful after having failed                            | 1                                                           |
-| `metrics.enabled`                             | Start a prometheus exporter                                                                                            | `false`                                                     |
-| `metrics.service.type`                        | Kubernetes Service type                                                                                                | `ClusterIP`                                                 |
 | `service.clusterIP`                           | Static clusterIP or None for headless services                                                                         | `nil`                                                       |
-| `metrics.service.annotations`                 | Additional annotations for metrics exporter pod                                                                        | `{ prometheus.io/scrape: "true", prometheus.io/port: "9187"}` |
-| `metrics.service.loadBalancerIP`              | loadBalancerIP if redis metrics service type is `LoadBalancer`                                                         | `nil`                                                       |
-| `metrics.image.registry`                      | PostgreSQL Image registry                                                                                              | `docker.io`                                                 |
-| `metrics.image.repository`                    | PostgreSQL Image name                                                                                                  | `bitnami/postgres-exporter`                               |
-| `metrics.image.tag`                           | PostgreSQL Image tag                                                                                                   | `{TAG_NAME}`                                                    |
-| `metrics.image.pullPolicy`                    | PostgreSQL Image pull policy                                                                                           | `IfNotPresent`                                              |
-| `metrics.image.pullSecrets`                   | Specify Image pull secrets                                                                                             | `nil` (does not add image pull secrets to deployed pods)    |
-| `metrics.securityContext.enabled`             | Enable security context for metrics                                                                                    | `false`                                                     |
-| `metrics.securityContext.runAsUser`           | User ID for the container for metrics                                                                                  | `1001`                                                      |
-| `metrics.livenessProbe.initialDelaySeconds`   | Delay before liveness probe is initiated                                                                               | 30                                                          |
-| `metrics.livenessProbe.periodSeconds`         | How often to perform the probe                                                                                         | 10                                                          |
-| `metrics.livenessProbe.timeoutSeconds`        | When the probe times out                                                                                               | 5                                                           |
-| `metrics.livenessProbe.failureThreshold`      | Minimum consecutive failures for the probe to be considered failed after having succeeded.                             | 6                                                           |
-| `metrics.livenessProbe.successThreshold`      | Minimum consecutive successes for the probe to be considered successful after having failed                            | 1                                                           |
-| `metrics.readinessProbe.enabled`              | would you like a readinessProbe to be enabled                                                                          | `true`                                                      |
-| `metrics.readinessProbe.initialDelaySeconds`  | Delay before liveness probe is initiated                                                                               | 5                                                           |
-| `metrics.readinessProbe.periodSeconds`        | How often to perform the probe                                                                                         | 10                                                          |
-| `metrics.readinessProbe.timeoutSeconds`       | When the probe times out                                                                                               | 5                                                           |
-| `metrics.readinessProbe.failureThreshold`     | Minimum consecutive failures for the probe to be considered failed after having succeeded.                             | 6                                                           |
-| `metrics.readinessProbe.successThreshold`     | Minimum consecutive successes for the probe to be considered successful after having failed                            | 1                                                           |
 | `extraEnv`                                    | Any extra environment variables you would like to pass on to the pod. The value is evaluated as a template.            | `{}`                                                        |
 | `updateStrategy`                              | Update strategy policy                                                                                                 | `{type: "RollingUpdate"}`                                   |
 
@@ -217,12 +190,6 @@ $ helm install --name my-release -f ./values-production.yaml stable/postgresql
 + replication.numSynchronousReplicas: 1
 ```
 
-- Start a prometheus exporter:
-```diff
-- metrics.enabled: false
-+ metrics.enabled: true
-```
-
 To horizontally scale this chart, first download the [values-production.yaml](values-production.yaml) file to your local folder, then:
 
 ```console
@@ -269,12 +236,6 @@ The [Bitnami PostgreSQL](https://github.com/bitnami/bitnami-docker-postgresql) i
 
 Persistent Volume Claims are used to keep the data across deployments. This is known to work in GCE, AWS, and minikube.
 See the [Configuration](#configuration) section to configure the PVC or to disable persistence.
-
-## Metrics
-
-The chart optionally can start a metrics exporter for [prometheus](https://prometheus.io). The metrics endpoint (port 9187) is not exposed and it is expected that the metrics are collected from inside the k8s cluster using something similar as the described in the [example Prometheus scrape configuration](https://github.com/prometheus/prometheus/blob/master/documentation/examples/prometheus-kubernetes.yml).
-
-The exporter allows to create custom metrics from additional SQL queries. See the Chart's `values.yaml` for an example and consult the [exporters documentation](https://github.com/wrouesnel/postgres_exporter#adding-new-metrics-via-a-config-file) for more details.
 
 ## NetworkPolicy
 

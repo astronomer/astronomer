@@ -187,56 +187,6 @@ spec:
         {{- if .Values.master.extraVolumeMounts }}
         {{- toYaml .Values.master.extraVolumeMounts | nindent 8 }}
         {{- end }}
-{{- if .Values.metrics.enabled }}
-      - name: metrics
-        image: {{ template "postgresql.metrics.image" . }}
-        imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
-        securityContext:
-          readOnlyRootFilesystem: true
-        {{- if .Values.metrics.securityContext.enabled }}
-          runAsUser: {{ .Values.metrics.securityContext.runAsUser }}
-        {{- end }}
-        env:
-        {{- $database := required "In order to enable metrics you need to specify a database (.Values.postgresqlDatabase or .Values.global.postgresql.postgresqlDatabase)" (include "postgresql.database" .) }}
-        - name: DATA_SOURCE_URI
-          value: {{ printf "127.0.0.1:%d/%s?sslmode=disable" (int (include "postgresql.port" .)) $database | quote }}
-        - name: DATA_SOURCE_PASS
-          valueFrom:
-            secretKeyRef:
-              name: {{ template "postgresql.secretName" . }}
-              key: postgresql-password
-        - name: DATA_SOURCE_USER
-          value: {{ template "postgresql.username" . }}
-        {{- if .Values.metrics.livenessProbe }}
-        livenessProbe: {{ tpl (toYaml .Values.metrics.livenessProbe) . | nindent 10 }}
-        {{- else }}
-        livenessProbe:
-          httpGet:
-            path: /
-            port: metrics
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 6
-          successThreshold: 1
-        {{- end }}
-        {{- if .Values.metrics.readinessProbe }}
-        readinessProbe:
-          httpGet:
-            path: /
-            port: metrics
-          initialDelaySeconds: 6
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 6
-          successThreshold: 1
-        {{- end }}
-        volumeMounts: []
-        ports:
-        - name: metrics
-          containerPort: 9187
-        resources: {{- toYaml .Values.metrics.resources | nindent 10 }}
-{{- end }}
       volumes:
       - emptyDir: {}
         name: tmp
