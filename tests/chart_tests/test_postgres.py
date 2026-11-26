@@ -197,3 +197,40 @@ class TestPostgresql:
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["postgresql"]["slave"]["tolerations"]
+
+    @pytest.mark.parametrize(
+        "legacy_values",
+        [
+            {},
+            {"metrics": {"enabled": True}},
+            {"volumePermissions": {"enabled": True}},
+            {"metrics": {"enabled": True}, "volumePermissions": {"enabled": True}},
+        ],
+        ids=["defaults", "legacy-metrics", "legacy-volumePermissions", "legacy-both"],
+    )
+    def test_postgresql_only_runs_astronomer_images(self, kube_version, legacy_values):
+        """The postgresql subchart has no bitnami metrics sidecar or volume-permissions init container (PINF-1023).
+
+        `metrics` and `volumePermissions` were removed from the subchart's values. Setting them
+        from an older values file must not bring back a non-Astronomer image or any extra container.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"postgresqlEnabled": True},
+                "postgresql": {"replication": {"enabled": True}, "postgresqlDatabase": "astronomer", **legacy_values},
+            },
+            show_only=[
+                "charts/postgresql/templates/statefulset.yaml",
+                "charts/postgresql/templates/statefulset-slaves.yaml",
+            ],
+        )
+        assert len(docs) == 2
+        for sts in docs:
+            pod_spec = sts["spec"]["template"]["spec"]
+            containers = pod_spec["containers"] + (pod_spec.get("initContainers") or [])
+            assert {c["name"] for c in pod_spec["containers"]} == {"release-name-postgresql"}
+            assert "init-chmod-data" not in {c["name"] for c in containers}
+            images = {c["image"] for c in containers}
+            assert images, sts["metadata"]["name"]
+            assert all(i.startswith("quay.io/astronomer/") for i in images), images
