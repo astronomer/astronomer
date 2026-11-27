@@ -65,18 +65,25 @@ data:
         # The index is built from the authorized scope ($es_scope), never from the request URL. It is used in proxy_pass, not a rewrite.
         auth_request_set $es_scope $upstream_http_x_elasticsearch_index_scope;
 
+        # The timeouts match the 300s of the public Ingress and VirtualService, so a slow search is not cut at nginx's 60s default.
         # The following "location" rules limit callers to only their indices. Any further
         # additions should follow this pattern.
         location ~* /_count$ {
           proxy_pass http://elasticsearch/{{ include "logging.indexNamePrefix" . }}.$es_scope.*/_count$is_args$args;
+          proxy_read_timeout 300s;
+          proxy_send_timeout 300s;
         }
 
         location ~* /_bulk$ {
           proxy_pass http://elasticsearch/{{ include "logging.indexNamePrefix" . }}.$es_scope.*/_bulk$is_args$args;
+          proxy_read_timeout 300s;
+          proxy_send_timeout 300s;
         }
 
         location ~* /_search$ {
           proxy_pass http://elasticsearch/{{ include "logging.indexNamePrefix" . }}.$es_scope.*/_search$is_args$args;
+          proxy_read_timeout 300s;
+          proxy_send_timeout 300s;
         }
 
         location = /auth {

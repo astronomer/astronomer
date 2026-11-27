@@ -379,9 +379,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_bulk$is_args$args; }",
-                "location ~* /_count$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_count$is_args$args; }",
-                "location ~* /_search$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_search$is_args$args; }",
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_bulk$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_count$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_search$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -453,6 +453,17 @@ class TestElasticSearch:
         assert "proxy_cache_bypass $es_auth_uncacheable;" in nginx_config
         assert "proxy_no_cache $es_auth_uncacheable;" in nginx_config
 
+    def test_elastic_nginx_upstream_timeouts_match_the_public_routes(self, kube_version):
+        """The public Ingress and VirtualService allow 300s, so the proxy behind them must not cut a slow search at
+        nginx's 60s default."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
+        )
+        nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
+        assert nginx_config.count("proxy_read_timeout 300s; proxy_send_timeout 300s;") == 3
+
     def test_elasticsearch_ingress_relies_on_the_proxy_for_authentication(self, kube_version):
         """The Ingress points at the nginx proxy, which authenticates every request itself, so it adds no auth-url of
         its own (that would make a second authorization call for every request)."""
@@ -499,9 +510,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_bulk$is_args$args; }",
-                "location ~* /_count$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_count$is_args$args; }",
-                "location ~* /_search$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_search$is_args$args; }",
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_bulk$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_count$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_search$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -526,9 +537,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_bulk$is_args$args; }",
-                "location ~* /_count$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_count$is_args$args; }",
-                "location ~* /_search$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_search$is_args$args; }",
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_bulk$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_count$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_search$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -557,9 +568,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_bulk$is_args$args; }",
-                "location ~* /_count$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_count$is_args$args; }",
-                "location ~* /_search$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_search$is_args$args; }",
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_bulk$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_count$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_search$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",

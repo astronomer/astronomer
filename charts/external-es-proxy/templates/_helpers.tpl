@@ -176,6 +176,8 @@ proxy_ssl_name {{ $csc.host }};
 proxy_pass {{ $csc.scheme }}://external_es/{{ include "logging.indexNamePrefix" $ctx }}.$es_scope.*/{{ .op }}$is_args$args;
 {{- include "external-es-proxy-trustcerts" $ctx }}
 {{- end }}
+proxy_read_timeout 300s;
+proxy_send_timeout 300s;
 {{- end }}
 
 {{- define "es-proxy.url" -}}
