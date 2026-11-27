@@ -74,8 +74,20 @@ data:
       client_max_body_size 1024M;
       {{- if $authCacheEnabled }}
       proxy_cache_path /tmp/nginx-auth-cache levels={{ .Values.authCache.levels }} keys_zone={{ .Values.authCache.keysZone }} max_size={{ .Values.authCache.maxSize }} inactive={{ .Values.authCache.inactive }};
+
+      # A request with neither an Authorization header nor a cookie has no credential to key a cached answer on, so
+      # its answer must not be stored or served from the cache (see proxy_cache_bypass in /auth below).
+      map "$http_authorization$http_cookie" $es_auth_uncacheable {
+        default 0;
+        "" 1;
+      }
       {{- end }}
 
+      upstream external_es {
+        server {{ include "external-es-proxy-upstream-server" . }};
+      }
+
+      # Authenticated port: the one the public Ingress and Airflow's sidecars use.
       server {
         listen {{ .Values.service.securehttp }};
         auth_request /auth;
@@ -86,39 +98,41 @@ data:
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
 
-        # The following "location" rules limit airflow interactions to only their indices. Any further
+        # The index is built from the authorized scope ($es_scope), never from the request URL. It is used in proxy_pass, not a rewrite.
+        auth_request_set $es_scope $upstream_http_x_elasticsearch_index_scope;
+
+        # The following "location" rules limit callers to only their indices. Any further
         # additions should follow this pattern.
         location ~* /_count$ {
-          rewrite /_count(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_count$1 break;
-          {{- include "external-es-proxy-nginx-location-common" . | indent 10 }}
+          {{- include "external-es-proxy-nginx-scoped-location" (dict "ctx" . "op" "_count") | indent 10 }}
         }
 
         location ~* /_bulk$ {
-          rewrite /_bulk(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_bulk$1 break;
-          {{- include "external-es-proxy-nginx-location-common" . | indent 10 }}
+          {{- include "external-es-proxy-nginx-scoped-location" (dict "ctx" . "op" "_bulk") | indent 10 }}
         }
 
         location ~* /_search$ {
-          # This combined with disabling explicit index searching downstream
-          # prevents any deployment from being able to query any other indexes.
-          rewrite /_search(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_search$1 break;
-          {{- include "external-es-proxy-nginx-location-common" . | indent 10 }}
+          {{- include "external-es-proxy-nginx-scoped-location" (dict "ctx" . "op" "_search") | indent 10 }}
         }
 
         location = /auth {
           internal;
           {{- if $authCacheEnabled }}
           proxy_cache auth_cache;
-          proxy_cache_key "$http_authorization";
+          # Keyed on credential, cookie, host and URI, since the authorization answer can differ by each.
+          proxy_cache_key "$http_authorization|$http_cookie|$host|$request_uri";
+          proxy_cache_bypass $es_auth_uncacheable;
+          proxy_no_cache $es_auth_uncacheable;
           proxy_cache_valid 200 {{ .Values.authCache.validSuccess }};
           proxy_cache_valid 401 403 {{ .Values.authCache.validFailure }};
           proxy_ignore_headers Cache-Control Expires;
           add_header X-Auth-Cache-Status $upstream_cache_status always;
           {{- end }}
-          {{- include "houston-proxy" . | nindent 10 }}
+          {{- include "houston-es-authorization-proxy" . | nindent 10 }}
           proxy_pass_request_body off;
           proxy_set_header Content-Length "";
-          proxy_set_header X-Original-URI $request_uri;
+          # The original URL, host included. The control plane's ingress overwrites X-Original-URI.
+          proxy_set_header X-ES-Original-URI $scheme://$host$request_uri;
         }
 
         location = /_cluster/state/version {
@@ -129,7 +143,13 @@ data:
           {{- include "external-es-proxy-nginx-location-common" . | indent 10 }}
         }
 
+        location ~ ^/ {
+          deny all;
+        }
       }
+
+      # Unauthenticated, in-cluster only: the Vector DaemonSet has no credentials, so this port injects the stored
+      # one. The NetworkPolicy admits only Vector here; it must never be exposed through an Ingress.
       server {
         listen {{ .Values.service.http }};
         proxy_http_version 1.1;

@@ -139,7 +139,7 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-{{- if or .Values.global.customLogging.awsSecretName .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+{{- if eq (include "external-es-proxy-uses-aws" .) "true" }}
         - name: awsproxy
           image: {{ template "awsesproxy.image" . }}
           command: ["/bin/sh", "-c"]

@@ -673,7 +673,7 @@ data:
     elasticsearch:
       enabled: true
       client:
-        node: {{ printf "http://%s-external-es-proxy:9201" .Release.Name }}
+        node: {{ printf "http://%s-external-es-proxy:9200" .Release.Name }}
         log: error
     {{- end }}
 

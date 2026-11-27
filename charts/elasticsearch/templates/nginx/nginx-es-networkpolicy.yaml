@@ -34,6 +34,9 @@ spec:
         matchLabels:
           tier: airflow
           component: api-server
+    {{- if eq .Values.global.plane.mode "data" }}
+    {{- include "nginx-es.ingressControllerPeers" . | trim | nindent 4 }}
+    {{- end }}
     {{- if .Values.global.logging.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:

@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import yaml
 
@@ -377,14 +379,103 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
-                "location ~* /_count$ { rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;",
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_bulk$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_count$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/fluentd.$es_scope.*/_search$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
             ]
         )
+
+    @pytest.mark.parametrize(
+        "plane_mode,expected_url",
+        [
+            ("unified", "http://release-name-houston.default:8871/v2/elasticsearch"),
+            ("data", "https://houston.example.com/v2/elasticsearch"),
+        ],
+    )
+    def test_elastic_nginx_scope_comes_from_houston_not_the_url(self, kube_version, plane_mode, expected_url):
+        """The proxy authorizes with /v2/elasticsearch and builds the index from Houston's answer.
+
+        nginx rewrite directives run before auth_request, so the scope Houston returns is used in proxy_pass, which
+        is evaluated afterwards. The index must never come from the client's URL or from $remote_user.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
+        )
+        nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
+        assert "auth_request_set $es_scope $upstream_http_x_elasticsearch_index_scope;" in nginx_config
+        assert "location = /auth { internal;" in nginx_config
+        assert f"proxy_pass {expected_url};" in nginx_config
+        assert "rewrite /" not in nginx_config, "an index built by a rewrite directive cannot use the scope Houston returns"
+        assert "proxy_set_header X-ES-Original-URI $scheme://$host$request_uri;" in nginx_config, (
+            "the control plane's ingress overwrites X-Original-URI, so Houston needs its own header for the real URL, host included"
+        )
+        assert "proxy_set_header X-Original-URI" not in nginx_config, "nothing reads it: the ingress controller overwrites it"
+        assert "$remote_user." not in nginx_config, "the index must not be built from the caller-supplied user name"
+
+    def test_elastic_nginx_auth_cache_is_keyed_on_the_path_and_the_whole_credential(self, kube_version):
+        """Houston's answer depends on the path and on who is asking, so the cache key must carry both.
+
+        * Path: if the key were Authorization alone, a read-only credential that had searched once would inherit
+          the cached 'allowed' for a later _bulk. Verified against a real nginx: with that key _bulk returned 200
+          for a read-only caller, with the path in the key it returns 403.
+        * Cookie: Houston also identifies a caller by session cookie, which sends no Authorization header. Without the
+          cookie in the key, one session's cached 'allowed' (and its deployment scope) was served to every other
+          cookie-only or anonymous request for the same URI. Verified against a real nginx: after an allowed session,
+          an anonymous request and a session that was not allowed both got 200.
+        """
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
+        )
+        nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
+        assert 'proxy_cache_key "$http_authorization|$http_cookie|$host|$request_uri";' in nginx_config
+        assert 'proxy_cache_key "$http_authorization";' not in nginx_config
+        assert 'proxy_cache_key "$http_authorization|$request_uri";' not in nginx_config
+        assert 'proxy_cache_key "$http_authorization|$http_cookie|$request_uri";' not in nginx_config, (
+            "the host must be in the key: Houston treats the same credential differently on the public host"
+        )
+
+    def test_elastic_nginx_auth_cache_skips_requests_with_no_credential(self, kube_version):
+        """A request with neither an Authorization header nor a cookie is never stored in or served from the auth cache."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
+        )
+        nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
+        assert 'map "$http_authorization$http_cookie" $es_auth_uncacheable { default 0; "" 1; }' in nginx_config
+        assert "proxy_cache_bypass $es_auth_uncacheable;" in nginx_config
+        assert "proxy_no_cache $es_auth_uncacheable;" in nginx_config
+
+    def test_elastic_nginx_upstream_timeouts_match_the_public_routes(self, kube_version):
+        """The public Ingress and VirtualService allow 300s, so the proxy behind them must not cut a slow search at
+        nginx's 60s default."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml"],
+        )
+        nginx_config = " ".join(docs[0]["data"]["nginx.conf"].split())
+        assert nginx_config.count("proxy_read_timeout 300s; proxy_send_timeout 300s;") == 3
+
+    def test_elasticsearch_ingress_relies_on_the_proxy_for_authentication(self, kube_version):
+        """The Ingress points at the nginx proxy, which authenticates every request itself, so it adds no auth-url of
+        its own (that would make a second authorization call for every request)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 1
+        assert not any(key.endswith("/auth-url") for key in docs[0]["metadata"]["annotations"])
+        backend = docs[0]["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"]
+        assert backend == "release-name-elasticsearch-nginx"
 
     def test_elastic_nginx_config_custom_max_body_size(self, kube_version):
         """Test that custom max body size is properly set."""
@@ -419,9 +510,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
-                "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_bulk$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_count$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_search$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -446,9 +537,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
-                "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;",
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_bulk$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_count$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/vector.$es_scope.*/_search$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -477,9 +568,9 @@ class TestElasticSearch:
         assert all(
             x in nginx_config
             for x in [
-                "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
-                "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
-                "location ~* /_search$ { rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
+                "location ~* /_bulk$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_bulk$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_count$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_count$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
+                "location ~* /_search$ { proxy_pass http://elasticsearch/astronomer.$es_scope.*/_search$is_args$args; proxy_read_timeout 300s; proxy_send_timeout 300s; }",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
@@ -917,16 +1008,45 @@ class TestElasticSearch:
         )
         assert len(docs) == 0
 
-    @pytest.mark.parametrize("plane_mode", ["data", "unified"])
-    def test_elasticsearch_ingress(self, kube_version, plane_mode):
+    @pytest.mark.parametrize("plane_mode", ["unified", "control"])
+    def test_elasticsearch_ingress_is_data_plane_only(self, kube_version, plane_mode):
+        """Only the data plane renders the Ingress. A unified or control plane install reads ES through in-cluster
+        Services and has no use for elasticsearch.<base-domain>, the same as external-es-proxy-ingress.yaml."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
+        )
+        assert docs == []
+
+    def test_elasticsearch_nginx_network_policy_admits_no_ingress_controller_in_unified_mode(self, kube_version):
+        """Without a published host there is no reason for any ingress controller, nor the OpenShift router, to reach
+        the proxy in a unified install (a control plane renders no ES at all)."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml"],
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": "unified"},
+                    "authSidecar": {"enabled": True},
+                    "openshift": {"enabled": True},
+                }
+            },
+        )
+        peers = json.dumps([peer for rule in docs[0]["spec"]["ingress"] for peer in rule["from"]])
+        assert "ingress-controller" not in peers
+        assert "policy-group" not in peers
+
+    def test_elasticsearch_ingress(self, kube_version):
         """Test elasticsearch ingress configuration"""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
         )
 
-        assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
+        assert len(docs) == 1
         assert docs[0]["kind"] == "Ingress"
         assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
         annotations = docs[0]["metadata"]["annotations"]
@@ -943,7 +1063,7 @@ class TestElasticSearch:
                 "pathType": "Prefix",
                 "backend": {
                     "service": {
-                        "name": "release-name-elasticsearch",
+                        "name": "release-name-elasticsearch-nginx",
                         "port": {"number": 9200},
                     }
                 },
@@ -956,7 +1076,7 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/elasticsearch/templates/client/es-client-networkpolicy.yaml"],
-            values={"global": {"baseDomain": "example.com"}, "plane": {"mode": plane_mode}},
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": plane_mode}}},
         )
         assert len(docs) == 1, f"Document {docs} should render in {plane_mode} mode"
         assert docs[0]["kind"] == "NetworkPolicy"
@@ -966,6 +1086,25 @@ class TestElasticSearch:
             "matchLabels": {"tier": "logging", "component": "elasticsearch", "release": "release-name", "role": "client"}
         }
         assert docs[0]["spec"]["policyTypes"] == ["Ingress"]
+        # ingress controllers must never reach the unauthenticated ES client directly
+        peers = [p["podSelector"]["matchLabels"]["component"] for p in docs[0]["spec"]["ingress"][0]["from"] if "podSelector" in p]
+        assert "dp-ingress-controller" not in peers
+        assert "cp-ingress-controller" not in peers
+        assert not any("namespaceSelector" in p for p in docs[0]["spec"]["ingress"][0]["from"])
+
+    def test_elasticsearch_nginx_network_policy_admits_ingress_controller(self, kube_version):
+        """The nginx auth proxy is the only ES entry point for the data plane's ingress controller."""
+        controller = "dp-ingress-controller"
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml"],
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
+        )
+        assert len(docs) == 1
+        components = [
+            p["podSelector"]["matchLabels"].get("component") for p in docs[0]["spec"]["ingress"][0]["from"] if "podSelector" in p
+        ]
+        assert controller in components
 
     def test_elasticsearch_nginx_auth_cache_enabled_by_default(self, kube_version):
         """Test that auth caching is enabled by default in nginx-es configmap."""
@@ -991,7 +1130,7 @@ class TestElasticSearch:
 
         # Verify cache directives in /auth location
         assert "proxy_cache auth_cache" in nginx_config
-        assert 'proxy_cache_key "$http_authorization"' in nginx_config
+        assert 'proxy_cache_key "$http_authorization|$http_cookie|$host|$request_uri"' in nginx_config
         assert "proxy_cache_valid 200 5m" in nginx_config
         assert "proxy_cache_valid 401 403 1m" in nginx_config
         assert "proxy_ignore_headers Cache-Control Expires" in nginx_config
@@ -1020,6 +1159,9 @@ class TestElasticSearch:
         assert "proxy_cache_path" not in nginx_config
         assert "proxy_cache auth_cache" not in nginx_config
         assert "proxy_cache_key" not in nginx_config
+        assert "proxy_cache_bypass" not in nginx_config
+        assert "proxy_no_cache" not in nginx_config
+        assert "es_auth_uncacheable" not in nginx_config
         assert "proxy_cache_valid" not in nginx_config
         assert "X-Auth-Cache-Status" not in nginx_config
 
@@ -1069,7 +1211,7 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com", "tlsSecret": "my-tls-secret"}},
+            values={"global": {"baseDomain": "example.com", "tlsSecret": "my-tls-secret", "plane": {"mode": "data"}}},
         )
 
         assert len(docs) == 1
@@ -1084,8 +1226,98 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
-            values={"global": {"baseDomain": "example.com", "tlsSecret": ""}},
+            values={"global": {"baseDomain": "example.com", "tlsSecret": "", "plane": {"mode": "data"}}},
         )
 
         assert len(docs) == 1
         assert "tls" not in docs[0]["spec"]
+
+    def test_elasticsearch_ingress_with_auth_sidecar_and_openshift_still_reaches_only_the_proxy(self, kube_version):
+        """On OpenShift (routed by the OpenShift router, with the auth sidecar model) the Ingress carries no
+        nginx-ingress annotations at all. It must still point at the authenticating proxy, never the raw ES Service."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": "data"},
+                    "authSidecar": {"enabled": True},
+                    "openshift": {"enabled": True},
+                },
+            },
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 1
+        assert not (docs[0]["metadata"].get("annotations") or {}).get("nginx.ingress.kubernetes.io/auth-url")
+        backend = docs[0]["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]
+        assert backend["name"] == "release-name-elasticsearch-nginx"
+        assert backend["port"]["number"] == 9200
+
+    @pytest.mark.parametrize(
+        "gateway_name,expected_namespace",
+        [("istio-system/default-gateway", "istio-system"), ("default-gateway", "default")],
+        ids=["namespaced-gateway", "gateway-without-namespace"],
+    )
+    def test_elasticsearch_proxy_network_policy_admits_the_istio_gateway_namespace(
+        self, kube_version, gateway_name, expected_namespace
+    ):
+        """With an Istio gateway the traffic comes from the gateway's namespace, which is not an ingress-controller pod and
+        need not carry the OpenShift policy-group label, so the proxy policy has to admit it by name. A gateway named without a
+        namespace lives in the release namespace."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": "data"},
+                    "authSidecar": {"enabled": True},
+                    "istio": {"gateway": {"enabled": True, "name": gateway_name}},
+                    "nginx": {"enabled": False},
+                },
+            },
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml"],
+        )
+        peers = [peer for rule in docs[0]["spec"]["ingress"] for peer in rule["from"]]
+        assert {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": expected_namespace}}} in peers
+
+    def test_elasticsearch_proxy_network_policy_has_no_gateway_peer_without_istio(self, kube_version):
+        """No gateway, no namespace peer: the proxy is reached by the platform's ingress controller only."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml"],
+        )
+        peers = json.dumps([peer for rule in docs[0]["spec"]["ingress"] for peer in rule["from"]])
+        assert "kubernetes.io/metadata.name" not in peers
+
+    def test_elasticsearch_ingress_limits_the_request_body(self, kube_version):
+        """The public host carries searches only, so a small body limit is enough."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"baseDomain": "example.com", "plane": {"mode": "data"}}},
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert docs[0]["metadata"]["annotations"]["nginx.ingress.kubernetes.io/proxy-body-size"] == "2m"
+
+    def test_elasticsearch_proxy_network_policy_admits_the_openshift_router_with_auth_sidecar(self, kube_version):
+        """The OpenShift router (not ingress-nginx) is the peer that must reach the proxy, and only the proxy."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "example.com",
+                    "plane": {"mode": "data"},
+                    "authSidecar": {"enabled": True},
+                    "openshift": {"enabled": True},
+                },
+            },
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
+                "charts/elasticsearch/templates/client/es-client-networkpolicy.yaml",
+            ],
+        )
+        proxy_policy, client_policy = docs
+        proxy_peers = json.dumps([peer for rule in proxy_policy["spec"]["ingress"] for peer in rule["from"]])
+        client_peers = json.dumps([peer for rule in client_policy["spec"]["ingress"] for peer in rule["from"]])
+        assert "network.openshift.io/policy-group" in proxy_peers
+        assert "network.openshift.io/policy-group" not in client_peers, "the raw ES must not admit the router"

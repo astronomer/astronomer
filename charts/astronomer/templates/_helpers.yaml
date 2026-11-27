@@ -1118,8 +1118,11 @@ http://{{ .Release.Name }}-commander.{{ .Release.Namespace}}.svc.cluster.local.:
 {{- end }}
 {{- end -}}
 
+{{/*
+The external-es-proxy's authenticated port (9200), used as the log-read node when customLogging is on.
+*/}}
 {{- define "esproxy.url" -}}
-{{ .Release.Name }}-external-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9201
+{{ .Release.Name }}-external-es-proxy.{{ .Release.Namespace }}.svc.cluster.local:9200
 {{- end -}}
 
 {{- define "elasticsearch.url" -}}

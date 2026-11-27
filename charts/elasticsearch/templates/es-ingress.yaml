@@ -2,6 +2,7 @@
 ## Elasticsearch Logging Ingress ##
 ########################################
 {{- if eq (include "global.ingress.enabled" .) "true" }}
+{{- if eq .Values.global.plane.mode "data" }}
 {{- if not ((.Values.global.istio | default dict).gateway | default dict).enabled }}
 {{- if not .Values.global.customLogging.enabled }}
 {{- if eq (include "logging.enabled" .) "true" }}
@@ -25,7 +26,7 @@ metadata:
       {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
@@ -48,10 +49,12 @@ spec:
           - path: /
             pathType: Prefix
             backend:
+              # The nginx auth proxy, which authenticates every request. Never the raw Elasticsearch Service.
               service:
-                name: {{ .Release.Name }}-elasticsearch
+                name: {{ template "nginx-es.fullname" . }}-nginx
                 port:
                   number: {{ .Values.common.ports.http }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

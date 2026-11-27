@@ -48,7 +48,7 @@ spec:
               service:
                 name: {{ include "external-es-proxy.fullname" . }}
                 port:
-                  number: {{ .Values.service.http }}
+                  number: {{ .Values.service.securehttp }}
 {{- end }}
 {{- end }}
 {{- end }}

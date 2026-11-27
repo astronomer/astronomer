@@ -176,3 +176,37 @@ elasticsearch.{{ .Values.global.plane.domainPrefix }}.{{ .Values.global.baseDoma
 elasticsearch.{{ .Values.global.baseDomain }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+NetworkPolicy peers allowed to reach the ES nginx auth proxy from the ingress layer.
+With global.authSidecar.enabled: the OpenShift ingress namespaces, global.authSidecar.ingressAllowedNamespaces and,
+with an Istio gateway, the namespace of global.istio.gateway.name (the release namespace when it names no namespace).
+Otherwise: the data plane's ingress controller pods.
+Renders a list of peers for a `from:` list.
+*/}}
+{{- define "nginx-es.ingressControllerPeers" -}}
+{{- if .Values.global.authSidecar.enabled }}
+- namespaceSelector:
+    matchLabels:
+      network.openshift.io/policy-group: ingress
+{{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+- namespaceSelector:
+    matchExpressions:
+    - key: kubernetes.io/metadata.name
+      operator: In
+      values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+{{- end }}
+{{- if ((.Values.global.istio | default dict).gateway | default dict).enabled }}
+{{- $gateway := toString .Values.global.istio.gateway.name }}
+- namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: {{ ternary (index (splitList "/" $gateway) 0) .Release.Namespace (contains "/" $gateway) | quote }}
+{{- end }}
+{{- else }}
+- podSelector:
+    matchLabels:
+      tier: nginx
+      component: dp-ingress-controller
+      release: {{ .Release.Name }}
+{{- end }}
+{{- end -}}

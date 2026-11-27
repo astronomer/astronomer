@@ -110,19 +110,74 @@ imagePullSecrets:
 
 
 {{/*
+"true" when requests reach Elasticsearch through the AWS signing proxy (awsSecretName, awsServiceAccountAnnotation or awsIAMRole is set).
+*/}}
+{{- define "external-es-proxy-uses-aws" -}}
+{{- $csc := .Values.global.customLogging -}}
+{{- if or $csc.awsSecretName $csc.awsServiceAccountAnnotation $csc.awsIAMRole -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
 Switches the elasticsearch configuratiob based on customLogging
 when aws managed elastic search is confired awsesproxy settings is required
 to authenticate with aws managed elastic search or opensearch
 */}}
 
 {{- define "external-es-proxy-nginx-location-common" -}}
-{{- if or .Values.global.customLogging.awsSecretName .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+{{- if eq (include "external-es-proxy-uses-aws" .) "true" }}
 proxy_pass http://localhost:{{ .Values.service.awsproxy }};
 {{- else }}
 access_by_lua_file /usr/local/openresty/nginx/conf/setenv.lua;
 proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
 {{- include "external-es-proxy-trustcerts" . }}
 {{- end }}
+{{- end }}
+
+{{/*
+The server the authenticated port forwards to: the AWS signing proxy if configured, else the customer's Elasticsearch.
+*/}}
+{{- define "external-es-proxy-upstream-server" -}}
+{{- if eq (include "external-es-proxy-uses-aws" .) "true" -}}
+localhost:{{ .Values.service.awsproxy }}
+{{- else -}}
+{{ .Values.global.customLogging.host }}:{{ include "external-es-proxy-customer-port" . }}
+{{- end -}}
+{{- end }}
+
+{{/*
+The customer Elasticsearch port, defaulting to the scheme's (443 or 80) when customLogging.port is unset.
+*/}}
+{{- define "external-es-proxy-customer-port" -}}
+{{- $csc := .Values.global.customLogging -}}
+{{- if $csc.port -}}
+{{ $csc.port }}
+{{- else if eq (toString $csc.scheme) "http" -}}
+80
+{{- else -}}
+443
+{{- end -}}
+{{- end }}
+
+{{/*
+A location body for the authenticated port: forwards to the index pattern for $es_scope. Takes ctx and op (_search, _count or _bulk).
+*/}}
+{{- define "external-es-proxy-nginx-scoped-location" -}}
+{{- $ctx := .ctx -}}
+{{- $csc := $ctx.Values.global.customLogging -}}
+{{- if eq (include "external-es-proxy-uses-aws" $ctx) "true" }}
+proxy_set_header Host localhost:{{ $ctx.Values.service.awsproxy }};
+proxy_pass http://external_es/{{ include "logging.indexNamePrefix" $ctx }}.$es_scope.*/{{ .op }}$is_args$args;
+{{- else }}
+access_by_lua_file /usr/local/openresty/nginx/conf/setenv.lua;
+proxy_set_header Host {{ $csc.host }}:{{ include "external-es-proxy-customer-port" $ctx }};
+proxy_ssl_name {{ $csc.host }};
+proxy_pass {{ $csc.scheme }}://external_es/{{ include "logging.indexNamePrefix" $ctx }}.$es_scope.*/{{ .op }}$is_args$args;
+{{- include "external-es-proxy-trustcerts" $ctx }}
+{{- end }}
+proxy_read_timeout 300s;
+proxy_send_timeout 300s;
 {{- end }}
 
 {{- define "es-proxy.url" -}}
